@@ -1,0 +1,73 @@
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License").
+ *   You may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
+
+:root {
+  --amplify-primary-color: #2d5cb4;
+  --amplify-primary-tint: #2d5cb4;
+  --amplify-primary-shade: #2d5cb4;
+}
+
+div.app-container {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 460px;
+}
+
+div.app-container-header {
+  background-color: #191d24;
+  height: 30px;
+}
+
+div.datamaker-logo {
+  width: 460px;
+}
+
+img.datamaker-logo {
+  width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+div.datamaker-content {
+  width: 460px;
+  height: 442px;
+}
+
+div.authenticated-content {
+  width: 460px;
+  height: 442px;
+}
+
+div.teamspaces-container {
+  width: 460px;
+}
+
+div.teamspaces {
+  width: 250px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+div.sign-out {
+  width: 154px;
+  height: 49px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}

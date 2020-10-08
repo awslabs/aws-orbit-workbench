@@ -1,0 +1,8 @@
+# Ignore everything
+*
+
+# But not these files...
+!jupyterhub_config.py
+!utils/setup.py
+!utils/requirements.txt
+!utils/jupyterhub_utils

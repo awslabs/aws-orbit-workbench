@@ -1,0 +1,187 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    app: jupyterhub
+  name: jupyterhub-${team}
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 5Gi
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${efsid}
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: efs-storage-class
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${team}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jupyterhub
+  namespace: ${team}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: efs-storage-class
+  volumeName: jupyterhub-${team}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: datamaker-jupyterhub
+  name: jupyterhub
+  namespace: ${team}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: datamaker-jupyterhub
+  name: jupyterhub
+  namespace: ${team}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - persistentvolumeclaims
+    verbs:
+      - get
+      - watch
+      - list
+      - create
+      - delete
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - get
+      - watch
+      - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: datamaker-jupyterhub
+  name: jupyterhub
+  namespace: ${team}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: jupyterhub
+subjects:
+  - kind: ServiceAccount
+    name: jupyterhub
+    namespace: ${team}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: datamaker-jupyterhub
+  name: jupyterhub-private
+  namespace: ${team}
+spec:
+  ports:
+    - port: 8081
+      protocol: TCP
+      targetPort: 8081
+  selector:
+    app: datamaker-jupyterhub
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: datamaker-jupyterhub
+  name: jupyterhub-api
+  namespace: ${team}
+spec:
+  ports:
+    - port: 8001
+      protocol: TCP
+      targetPort: 8001
+  selector:
+    app: datamaker-jupyterhub
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: datamaker-jupyterhub
+  name: jupyterhub-public
+  namespace: ${team}
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 8000
+  selector:
+    app: datamaker-jupyterhub
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: datamaker-jupyterhub
+  name: jupyterhub
+  namespace: ${team}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: datamaker-jupyterhub
+  template:
+    metadata:
+      labels:
+        app: datamaker-jupyterhub
+      name: jupyterhub
+    spec:
+      containers:
+        - image: ${account_id}.dkr.ecr.${region}.amazonaws.com/datamaker-${env_name}-jupyter-hub:latest
+          env:
+            - name: AWS_DEFAULT_REGION
+              value: ${region}
+            - name: ENV_NAME 
+              value: ${env_name}
+            - name: TEAM 
+              value: ${team}
+          imagePullPolicy: Always
+          name: container
+          ports:
+            - containerPort: 8080
+            - containerPort: 8001
+            - containerPort: 8081
+          volumeMounts:
+            - mountPath: /efs
+              name: efs-volume
+          resources:
+            limits:
+              cpu: "2"
+              memory: "3G"
+            requests:
+              cpu: "2"
+              memory: "3G"
+      nodeSelector:
+        team: ${team}
+      serviceAccountName: jupyterhub
+      volumes:
+        - name: efs-volume
+          persistentVolumeClaim:
+            claimName: jupyterhub

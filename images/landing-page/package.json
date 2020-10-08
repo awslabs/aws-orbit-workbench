@@ -1,0 +1,55 @@
+{
+  "name": "landing-page",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@aws-amplify/ui-components": "^0.8.0",
+    "@aws-amplify/ui-react": "^0.2.17",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "@typescript-eslint/eslint-plugin": "2.x",
+    "@typescript-eslint/parser": "2.x",
+    "antd": "^4.6.2",
+    "aws-amplify": "^3.1.0",
+    "aws-amplify-react": "^4.2.1",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-scripts": "3.4.3"
+  },
+  "scripts": {
+    "lint": "eslint src",
+    "style": "prettier --write --print-width 120 src",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "prettier": "^2.1.1",
+    "aws-sdk": "^2.761.0",
+    "babel-eslint": "10.x",
+    "eslint": "6.x",
+    "eslint-config-react-app": "^5.2.1",
+    "eslint-plugin-flowtype": "4.x",
+    "eslint-plugin-import": "2.x",
+    "eslint-plugin-jsx-a11y": "6.x",
+    "eslint-plugin-react": "7.x",
+    "eslint-plugin-react-hooks": "2.x"
+  }
+}

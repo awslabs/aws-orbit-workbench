@@ -1,0 +1,81 @@
+/*
+ * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License").
+ *   You may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
+
+import { useState, useEffect } from "react";
+import AWS from "aws-sdk";
+import { Auth } from "aws-amplify";
+
+const toTitleCase = (phrase) => {
+  return phrase
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
+const fetchParameters = async (groups, jwt) => {
+  const session = await Auth.currentSession();
+  AWS.config.region = window.REACT_APP_REGION;
+  AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+    IdentityPoolId: window.REACT_APP_IDENTITY_POOL_ID,
+    Logins: {
+      [`cognito-idp.${window.REACT_APP_REGION}.amazonaws.com/${window.REACT_APP_USER_POOL_ID}`]: session
+        .getIdToken()
+        .getJwtToken(),
+    },
+  });
+  let urls = [];
+  if (Array.isArray(groups) && groups.length) {
+    const params = {
+      Names: groups.map((x) => `/datamaker/${window.REACT_APP_ENV_NAME}/teams/${x}/manifest`),
+    };
+    const ssm = new AWS.SSM();
+    // await new Promise(r => setTimeout(r, 3000));
+    const response = await ssm.getParameters(params).promise();
+    urls = response.Parameters.map((x) => ({
+      title: toTitleCase(x.Name.slice(x.Name.slice(0, -9).lastIndexOf("/") + 1, -9).replace("-", " ")),
+      url: `http://${JSON.parse(x.Value)["jupyter-url"]}/hub/login?next=%2Fhub%2Fhome&token=${jwt}`,
+    }));
+  }
+  console.log(urls);
+  return urls;
+};
+
+const useUrls = (groups, jwt) => {
+  let default_urls = [];
+  if (Array.isArray(groups) && groups.length) {
+    default_urls = groups.map((x) => ({
+      title: toTitleCase(x.replace("-", " ")),
+      url: null,
+    }));
+  }
+  const [urls, setUrls] = useState(default_urls);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setUrls(await fetchParameters(groups, jwt));
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, [groups, jwt]);
+
+  return [urls, isLoading];
+};
+
+export default useUrls;

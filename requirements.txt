@@ -1,0 +1,7 @@
+isort~=5.5.3
+black~=20.8b1
+flake8~=3.8.3
+mypy~=0.782
+papermill~=2.2.0
+-e ./cli/
+-e ./images/jupyter-hub/utils/
