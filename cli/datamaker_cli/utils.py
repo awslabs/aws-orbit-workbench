@@ -12,19 +12,20 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List
+import logging
+import math
+import os
+from typing import Any, Callable, Dict, Iterable, List, Optional
 
 import boto3
 import botocore.exceptions
-import click
-from kubernetes import config
 
-if TYPE_CHECKING:
-    from datamaker_cli.manifest import Manifest
+_logger: logging.Logger = logging.getLogger(__name__)
 
 
-def stylize(text: str) -> str:
-    return click.style(text=text, bold=True, fg="bright_blue")
+def chunkify(lst: List[Any], num_chunks: int = 1, max_length: Optional[int] = None) -> List[List[Any]]:
+    num: int = num_chunks if max_length is None else int(math.ceil((float(len(lst)) / float(max_length))))
+    return [lst[i : i + num] for i in range(0, len(lst), num)]  # noqa: E203
 
 
 def get_region() -> str:
@@ -67,9 +68,7 @@ def does_cfn_exist(stack_name: str) -> bool:
 
 
 def path_from_filename(filename: str) -> str:
-    if "/" in filename:
-        return filename.rsplit(sep="/", maxsplit=1)[0] + "/"
-    return "./"
+    return os.path.dirname(os.path.realpath(filename))
 
 
 def upsert_subnet_tag(subnet_id: str, key: str, value: str) -> None:
@@ -85,13 +84,26 @@ def replace_underscores(original: Dict[str, Any]) -> Dict[str, Any]:
     return {k.replace("_", "-"): v for k, v in original.items()}
 
 
-def get_k8s_context(manifest: "Manifest") -> str:
+def extract_plugin_name(func: Callable[..., None]) -> str:
+    name = func.__module__.split(sep=".", maxsplit=1)[0]
+    return name
+
+
+def extract_images_names(stack_name: str) -> List[str]:
+    resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
     try:
-        contexts: List[str] = [str(c["name"]) for c in config.list_kube_config_contexts()[0]]
-    except config.config_exception.ConfigException:
-        raise RuntimeError("Context not found")
-    expected_domain: str = f"@datamaker-{manifest.name}.{manifest.region}.eksctl.io"
-    for context in contexts:
-        if context.endswith(expected_domain):
-            return context
-    raise RuntimeError(f"Context not found for domain: {expected_domain}")
+        response: resp_type = boto3.client("cloudformation").describe_stacks(StackName=stack_name)
+    except botocore.exceptions.ClientError as ex:
+        error: Dict[str, Any] = ex.response["Error"]
+        if error["Code"] == "ValidationError" and f"Stack with id {stack_name} does not exist" in error["Message"]:
+            return []
+        raise
+    if len(response["Stacks"]) < 1:
+        return []
+    if "Outputs" not in response["Stacks"][0]:
+        return []
+    for output in response["Stacks"][0]["Outputs"]:
+        if output["ExportName"] == f"{stack_name}-repos":
+            _logger.debug("Export value: %s", output["OutputValue"])
+            return output["OutputValue"].split(",")
+    raise RuntimeError(f"Stack {stack_name} does not have the expected {stack_name}-repos output.")

@@ -12,10 +12,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from enum import Enum
+from typing import Callable
 
-class ManifestNotFound(Exception):
-    """Manifest not found."""
+from datamaker_cli.remote_files import deploy as deploy_module
+from datamaker_cli.remote_files import destroy as destroy_module
 
 
-class VpcNotFound(Exception):
-    """VPC not found."""
+class RemoteCommands(Enum):
+    deploy: Callable[[str], None] = deploy_module.deploy
+    destroy: Callable[[str], None] = destroy_module.destroy

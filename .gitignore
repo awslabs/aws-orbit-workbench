@@ -381,6 +381,7 @@ cdk.json
 
 # DataMaker
 *.yaml
+!cli/**/*.yaml
 landing-page/public/config.js
-.datamaker
+.datamaker.out
 *.zip

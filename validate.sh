@@ -14,21 +14,24 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-
 set -ex
 
 pushd cli
 ./validate.sh
 popd
 
-pushd images/jupyter-hub
-./validate.sh
-popd
+# pushd images/jupyter-hub
+# ./validate.sh
+# popd
 
-pushd images/jupyter-user
-./validate.sh
-popd
+# pushd images/jupyter-user
+# ./validate.sh
+# popd
 
-pushd images/landing-page
+# pushd images/landing-page
+# ./validate.sh
+# popd
+
+pushd plugins/hello_world
 ./validate.sh
 popd
