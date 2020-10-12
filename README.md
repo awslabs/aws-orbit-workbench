@@ -4,6 +4,12 @@ Data & ML Unified Development and Production Environment.
 
 > One-stop-shop solution for data engineers, scientists and analysts powered by AWS
 
+[![Python Version](https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-brightgreen.svg)](https://github.com/awslabs/aws-eks-data-maker)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Checked with mypy](http://www.mypy-lang.org/static/mypy_badge.svg)](http://mypy-lang.org/)
+[![Static Checking]](https://github.com/awslabs/aws-eks-data-maker/workflows/Static%20Checking/badge.svg)
+
 ## 1 - Components
 
 DataMaker is built through a composition of several projects with specific scopes, based on different programming languages and sometimes relying on conflicting dependencies. So, in the end, this repository is a [monorepo](https://en.wikipedia.org/wiki/Monorepo) tying up all componets around to deliver a solid and integrated data environment.
