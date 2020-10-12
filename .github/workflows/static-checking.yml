@@ -1,0 +1,38 @@
+name: Static Checking
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Setup Environment
+        run: ./setup.sh
+      - name: mypy check
+        run: |
+          mypy --python-version 3.6 --strict --ignore-missing-imports cli
+          mypy --python-version 3.6 --strict --ignore-missing-imports plugins/hello_world
+      - name: Flake8 Lint
+        run: flake8 --max-line-length 120 cli plugins/hello_world
+      - name: Black style
+        run: black --check --line-length 120 --target-version py36 cli plugins/hello_world
+      - name: Imports order check (isort)
+        run: | 
+          isort --check-only --line-length 120 cli
+          isort --check-only --line-length 120 plugins/hello_world
