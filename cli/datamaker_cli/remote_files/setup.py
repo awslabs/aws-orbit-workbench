@@ -18,6 +18,18 @@ from typing import Dict
 
 from setuptools import find_packages, setup
 
+cdk_version = "~=1.67.0"
+cdk_modules = [
+    "aws_cdk.core",
+    "aws-cdk.aws-ec2",
+    "aws-cdk.aws-iam",
+    "aws-cdk.aws-efs",
+    "aws-cdk.aws-ecr",
+    "aws-cdk.aws-ecs",
+    "aws-cdk.aws-ssm",
+    "aws_cdk.aws_cognito",
+]
+
 here = os.path.abspath(os.path.dirname(__file__))
 about: Dict[str, str] = {}
 path = os.path.join(here, "datamaker_cli", "__metadata__.py")
@@ -31,7 +43,15 @@ setup(
     license=about["__license__"],
     packages=find_packages(include=["datamaker_cli", "datamaker_cli.*"]),
     python_requires=">=3.6, <3.9",
-    install_requires=["boto3~=1.12", "botocore~=1.15", "PyYAML~=5.3.0", "click~=7.1.0", "tqdm~=4.50.2"],
+    install_requires=[
+        "boto3~=1.12",
+        "botocore~=1.15",
+        "PyYAML~=5.3.0",
+        "click~=7.1.0",
+        "kubernetes~=11.0.0",
+        "sh~=1.14.0",
+    ]
+    + [f"{m}{cdk_version}" for m in cdk_modules],
     entry_points={"console_scripts": ["datamaker = datamaker_cli.__main__:main"]},
     classifiers=[
         "Programming Language :: Python :: 3.6",

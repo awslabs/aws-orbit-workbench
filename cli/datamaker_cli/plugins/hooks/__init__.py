@@ -12,10 +12,4 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-
-class ManifestNotFound(Exception):
-    """Manifest not found."""
-
-
-class VpcNotFound(Exception):
-    """VPC not found."""
+from datamaker_cli.plugins.hooks import deploy, destroy  # noqa

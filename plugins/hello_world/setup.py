@@ -12,10 +12,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from setuptools import setup
 
-class ManifestNotFound(Exception):
-    """Manifest not found."""
-
-
-class VpcNotFound(Exception):
-    """VPC not found."""
+setup(
+    name="hello-world",
+    version="0.0b0",
+    description="Minimal DataMaker Plugin.",
+    license="Apache License 2.0",
+    packages=["hello_world"],
+    python_requires=">=3.6, <3.9",
+    install_requires=open("requirements.txt").read().strip().split("\n"),
+    include_package_data=True,
+)

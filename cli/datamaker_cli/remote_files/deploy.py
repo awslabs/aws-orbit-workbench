@@ -12,10 +12,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import logging
 
-class ManifestNotFound(Exception):
-    """Manifest not found."""
+from datamaker_cli.manifest import Manifest, read_manifest_file
+from datamaker_cli.remote_files import demo, env
+
+_logger: logging.Logger = logging.getLogger(__name__)
 
 
-class VpcNotFound(Exception):
-    """VPC not found."""
+def deploy(filename: str) -> None:
+    manifest: Manifest = read_manifest_file(filename=filename)
+    demo.deploy(manifest=manifest, filename=filename)
+    env.deploy(manifest=manifest, filename=filename)

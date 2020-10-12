@@ -22,6 +22,7 @@ import boto3
 import yaml
 from botocore.exceptions import ClientError
 
+from datamaker_cli.exceptions import VpcNotFound
 from datamaker_cli.utils import get_account_id, replace_dashes, replace_underscores
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -110,7 +111,7 @@ class VpcManifest:
             vpc_ids = set(s.vpc_id for s in self.subnets if s.vpc_id is not None)
         _logger.debug("vpc_ids: %s", vpc_ids)
         if len(vpc_ids) != 1:
-            raise ValueError(
+            raise VpcNotFound(
                 "All your subnet IDs MUST belong to the same VPC. "
                 f"Currently you have these VPC IDS referenced: {vpc_ids} "
             )
@@ -207,8 +208,30 @@ class TeamManifest:
         client.put_parameter(Name=self.ssm_parameter_name, Value=self.repr_full_as_string(), Overwrite=True)
 
 
-MANIFEST_REPR_MINIMAL_TYPE = Dict[str, Union[str, bool, VPC_REPR_MINIMAL_TYPE, List[TEAM_REPR_MINIMAL_TYPE]]]
-MANIFEST_REPR_FULL_TYPE = Dict[str, Union[str, bool, VPC_REPR_FULL_TYPE, List[TEAM_REPR_MINIMAL_TYPE]]]
+PLUGIN_REPR_MINIMAL_TYPE = Dict[str, str]
+PLUGIN_REPR_FULL_TYPE = Dict[str, str]
+
+
+class PluginManifest:
+    def __init__(
+        self,
+        name: str,
+    ) -> None:
+        self.name = name
+
+    def repr_minimal(self) -> PLUGIN_REPR_MINIMAL_TYPE:
+        return self.repr_full()
+
+    def repr_full(self) -> PLUGIN_REPR_FULL_TYPE:
+        return replace_underscores(vars(self))
+
+
+MANIFEST_REPR_MINIMAL_TYPE = Dict[
+    str, Union[str, bool, VPC_REPR_MINIMAL_TYPE, List[TEAM_REPR_MINIMAL_TYPE], List[PLUGIN_REPR_MINIMAL_TYPE]]
+]
+MANIFEST_REPR_FULL_TYPE = Dict[
+    str, Union[str, bool, VPC_REPR_FULL_TYPE, List[TEAM_REPR_MINIMAL_TYPE], List[PLUGIN_REPR_MINIMAL_TYPE]]
+]
 
 
 class Manifest:
@@ -217,9 +240,10 @@ class Manifest:
         name: str,
         region: str,
         demo: bool,
-        images_from_source: bool,
+        dev: bool,
         vpc: VpcManifest,
         teams: List[TeamManifest],
+        plugins: List[PluginManifest],
         account_id: Optional[str] = None,
         available_eks_regions: Optional[List[str]] = None,
         eks_cluster_role_arn: Optional[str] = None,
@@ -231,10 +255,11 @@ class Manifest:
         self.name = name
         self.region = region
         self.demo = demo
-        self.images_from_source = images_from_source
+        self.dev = dev
         self.vpc = vpc
         self.teams = teams
-        self.account_id = account_id
+        self.plugins = plugins
+        self._account_id = account_id
         self.available_eks_regions = available_eks_regions
         self.eks_cluster_role_arn = eks_cluster_role_arn
         self.eks_env_nodegroup_role_arn = eks_env_nodegroup_role_arn
@@ -243,13 +268,20 @@ class Manifest:
         self.identity_pool_id = identity_pool_id
         self.ssm_parameter_name = f"/datamaker/{self.name}/manifest"
         boto3.setup_default_session(region_name=self.region)
+        self.toolkit_s3_bucket = f"datamaker-{self.name}-toolkit-{self.account_id}"
+        self.toolkit_codebuild_project = f"datamaker-{self.name}"
+
+    @property
+    def account_id(self) -> str:
+        if self._account_id is None:
+            self._account_id = get_account_id()
+        return self._account_id
 
     def read_ssm(self) -> None:
         client = boto3.client(service_name="ssm")
         try:
             json_str: str = client.get_parameter(Name=f"/datamaker/{self.name}/manifest")["Parameter"]["Value"]
         except client.exceptions.ParameterNotFound:
-            self.account_id = get_account_id()
             self.available_eks_regions = boto3.Session().get_available_regions("eks")
             self.vpc.fetch_vpc_properties()
         else:
@@ -264,8 +296,9 @@ class Manifest:
             self.teams = [TeamManifest(env_name=self.name, **replace_dashes(team)) for team in raw["teams"]]
             for team in self.teams:
                 team.read_ssm()
+            self.plugins = [PluginManifest(**replace_dashes(plugin)) for plugin in raw["plugins"]]
             for k, v in replace_dashes(raw).items():
-                if k not in ("vpc", "teams"):
+                if k not in ("vpc", "teams", "plugins"):
                     setattr(self, k, v)
 
     def repr_minimal(self) -> MANIFEST_REPR_MINIMAL_TYPE:
@@ -274,17 +307,19 @@ class Manifest:
             "region": self.region,
             "vpc": self.vpc.repr_minimal(),
             "teams": [t.repr_minimal() for t in self.teams],
+            "plugins": [p.repr_minimal() for p in self.plugins],
         }
         if self.demo:
             repr["demo"] = True
-        if self.images_from_source:
-            repr["images-from-source"] = True
+        if self.dev:
+            repr["dev"] = True
         return repr
 
     def repr_full(self) -> MANIFEST_REPR_FULL_TYPE:
         repr: MANIFEST_REPR_FULL_TYPE = replace_underscores(vars(self))
         repr["vpc"] = self.vpc.repr_full()
         repr["teams"] = [t.repr_minimal() for t in self.teams]
+        repr["plugins"] = [p.repr_full() for p in self.plugins]
         return repr
 
     def repr_full_as_string(self) -> str:
@@ -315,6 +350,7 @@ def read_manifest_file(filename: str) -> Manifest:
             region=raw["region"],
             vpc=VpcManifest(subnets=subnets),
             teams=[TeamManifest(env_name=raw["name"], **replace_dashes(team)) for team in raw["teams"]],
+            plugins=[PluginManifest(**replace_dashes(plugin)) for plugin in raw["plugins"]],
             demo=raw.get("demo", False),
-            images_from_source=raw.get("images-from-source", False),
+            dev=raw.get("dev", False),
         )

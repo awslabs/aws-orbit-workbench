@@ -14,4 +14,6 @@
 
 import os
 
+from datamaker_cli.__metadata__ import __description__, __license__, __title__, __version__  # noqa
+
 DATAMAKER_CLI_ROOT = os.path.dirname(os.path.abspath(__file__))

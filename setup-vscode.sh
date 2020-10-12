@@ -14,8 +14,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-
-set -ex
+set -e
 
 ./setup.sh
 
@@ -30,19 +29,16 @@ code --install-extension ms-python.python
 code --install-extension ms-python.vscode-pylance
 code --install-extension redhat.vscode-yaml
 code --install-extension twixes.pypi-assistant
+code --install-extension aws-scripting-guy.cform
+
+python_path=$(which python)
 
 vscode_settings='{
   "explorer.autoReveal": false,
   "files.autoSave": "onFocusChange",
   "files.exclude": {
     "**/*.egg-info": true,
-    "**/.mypy_cache/": true,
-    "**/.pytest_cache/": true,
     "**/__pycache__/": true,
-    "**/build/": true,
-    "**/cdk.context.json": true,
-    "**/cdk.out/": true,
-    "**/node_modules/": true
   },
   "outline.showArrays": false,
   "outline.showConstants": false,
@@ -59,7 +55,7 @@ vscode_settings='{
     "images/jupyter-user/sdk/",
   ],
   "python.analysis.memory.keepLibraryAst": true,
-  "python.formatting.blackArgs": ["--line-length 120", "--target-version py3"],
+  "python.formatting.blackArgs": ["--line-length 120", "--target-version py36"],
   "python.formatting.provider": "black",
   "python.languageServer": "Pylance",
   "python.linting.enabled": true,
@@ -69,10 +65,22 @@ vscode_settings='{
   "python.linting.mypyCategorySeverity.note": "Hint",
   "python.linting.mypyEnabled": true,
   "python.linting.pylintEnabled": false,
-  "python.pythonPath": "./.venv/bin/python",
+  "python.pythonPath": "'$python_path'",
   "python.terminal.activateEnvironment": true,
   "workbench.editor.labelFormat": "default",
-  "workbench.tree.indent": 16
+  "workbench.tree.indent": 16,
+  "yaml.customTags": [
+    "!Equals sequence",
+    "!FindInMap sequence",
+    "!GetAtt",
+    "!GetAZs",
+    "!ImportValue",
+    "!Join sequence",
+    "!Ref",
+    "!Select sequence",
+    "!Split sequence",
+    "!Sub"
+  ]
 }
 '
 

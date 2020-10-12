@@ -14,15 +14,12 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-
 set -ex
 
-python3 -m venv .venv
-source .venv/bin/activate
 pip install --upgrade --upgrade-strategy eager pip wheel
 pip --use-feature=2020-resolver install --upgrade --upgrade-strategy eager --requirement requirements.txt
-pip --use-feature=2020-resolver install --upgrade --upgrade-strategy eager --requirement images/jupyter-user/requirements.txt
+# pip --use-feature=2020-resolver install --upgrade --upgrade-strategy eager --requirement images/jupyter-user/requirements.txt
 
-pushd images/landing-page
-yarn install
-popd
+# pushd images/landing-page
+# yarn install
+# popd
