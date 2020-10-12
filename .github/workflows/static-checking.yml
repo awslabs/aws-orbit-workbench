@@ -34,5 +34,7 @@ jobs:
         run: black --check --line-length 120 --target-version py36 cli plugins/hello_world
       - name: Imports order check (isort)
         run: | 
-          isort --check-only --line-length 120 cli
-          isort --check-only --line-length 120 plugins/hello_world
+          cd cli
+          isort --check-only --line-length 120 .
+          cd ../plugins/hello_world
+          isort --check-only --line-length 120 .
