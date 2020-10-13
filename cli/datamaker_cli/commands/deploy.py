@@ -21,7 +21,7 @@ from datamaker_cli import plugins, toolkit
 from datamaker_cli.manifest import Manifest, SubnetKind, SubnetManifest, read_manifest_file
 from datamaker_cli.messages import MessagesContext
 from datamaker_cli.remote import execute_remote
-from datamaker_cli.services.cloudformation import deploy_template
+from datamaker_cli.services.cfn import deploy_template
 from datamaker_cli.utils import does_cfn_exist
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -56,17 +56,18 @@ def deploy(filename: str, debug: bool) -> None:
     with MessagesContext("Deploying", debug=debug) as ctx:
         manifest = read_manifest_file(filename=filename)
         ctx.info(f"Manifest loaded: {filename}")
+        ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
         ctx.progress(2)
 
         plugins.load_plugins(manifest=manifest)
-        ctx.info(f"Plugins loaded: {','.join([p.name for p in manifest.plugins])}")
+        ctx.info(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
         ctx.progress(3)
 
         deploy_toolkit(filename=filename, manifest=manifest)
         ctx.info("Toolkit deployed")
         ctx.progress(10)
 
-        execute_remote(filename=filename, manifest=manifest, command="deploy")
+        execute_remote(filename=filename, manifest=manifest, command="deploy", progress_callback=ctx.progress_callback)
         ctx.info("DataMaker deployed")
         ctx.progress(99)
 

@@ -24,7 +24,7 @@ from datamaker_cli.commands.deploy import refresh_manifest_file_with_demo_attrs
 from datamaker_cli.exceptions import VpcNotFound
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.remote_files.cdk import demo
-from datamaker_cli.services.cloudformation import deploy_template, destroy_stack
+from datamaker_cli.services.cfn import deploy_template, destroy_stack
 from datamaker_cli.utils import does_cfn_exist
 
 STACK_NAME = "datamaker-{env_name}-demo"

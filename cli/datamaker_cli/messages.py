@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import logging
-from typing import Any
+from typing import Any, Optional
 
 import click
 import tqdm
@@ -22,13 +22,31 @@ COLOR_DATAMAKER = "bright_blue"
 COLOR_ERROR = "bright_red"
 COLOR_WARN = "bright_yellow"
 
-PROGRESS_BAR_FORMAT = "{desc} {bar}| {percentage:3.0f}% [Elapsed: {elapsed} | Remaining: {remaining}]"
+PROGRESS_BAR_FORMAT = "{desc} {bar}| {percentage:3.0f}%"
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def stylize(text: str, color: str = COLOR_DATAMAKER, bold: bool = False, underline: bool = False) -> str:
     return click.style(text=text, bold=bold, underline=underline, fg=color)
+
+
+REMOTE_PROGRESS_LOOKUP = {
+    "Deploying": {
+        "Waiting for agent ping": 20,
+        "Entering phase PRE_BUILD": 25,
+        "Entering phase BUILD": 40,
+        "Demo Stack deployed": 60,
+        "Env Stack deployed": 80,
+    },
+    "Destroying": {
+        "Waiting for agent ping": 20,
+        "Entering phase PRE_BUILD": 25,
+        "Entering phase BUILD": 40,
+        "Env Stack deployed": 60,
+        "Demo Stack deployed": 80,
+    },
+}
 
 
 class MessagesContext:
@@ -38,7 +56,7 @@ class MessagesContext:
         if self.debug:
             self.pbar = None
         else:
-            self.pbar = tqdm.tqdm(total=100, desc=task_name, bar_format=PROGRESS_BAR_FORMAT, ncols=80, colour="green")
+            self.pbar = tqdm.tqdm(total=100, desc=task_name, bar_format=PROGRESS_BAR_FORMAT, ncols=50, colour="green")
 
     def __enter__(self) -> "MessagesContext":
         if self.pbar is not None:
@@ -86,3 +104,24 @@ class MessagesContext:
             self.pbar.update(n - current)
         else:
             _logger.debug(f"Progress bar: {n}%")
+
+    def _progress_codebuild_log(self, msg: str) -> bool:
+        msg = msg[32:]
+        n: Optional[int] = REMOTE_PROGRESS_LOOKUP[self.task_name].get(msg)
+        if n is not None:
+            self.progress(n=n)
+            return True
+        return False
+
+    def _progress_cli_log(self, msg: str) -> bool:
+        msg_begining = "] "
+        if msg_begining in msg:
+            n: Optional[int] = REMOTE_PROGRESS_LOOKUP[self.task_name].get(msg.split(sep=msg_begining, maxsplit=1)[-1])
+            if n is not None:
+                self.progress(n=n)
+                return True
+        return False
+
+    def progress_callback(self, msg: str) -> None:
+        if self._progress_codebuild_log(msg=msg) is False:
+            self._progress_cli_log(msg=msg)

@@ -23,4 +23,6 @@ _logger: logging.Logger = logging.getLogger(__name__)
 def deploy(filename: str) -> None:
     manifest: Manifest = read_manifest_file(filename=filename)
     demo.deploy(manifest=manifest, filename=filename)
+    _logger.debug("Demo Stack deployed")
     env.deploy(manifest=manifest, filename=filename)
+    _logger.debug("Env Stack deployed")
