@@ -18,7 +18,7 @@ from datamaker_cli.manifest import Manifest, read_manifest_file
 from datamaker_cli.messages import MessagesContext
 from datamaker_cli.remote import execute_remote
 from datamaker_cli.services import s3
-from datamaker_cli.services.cloudformation import destroy_stack
+from datamaker_cli.services.cfn import destroy_stack
 from datamaker_cli.utils import does_cfn_exist
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -36,12 +36,13 @@ def destroy_toolkit(manifest: Manifest) -> None:
 
 
 def destroy(filename: str, debug: bool) -> None:
-    with MessagesContext("Deploying", debug=debug) as ctx:
+    with MessagesContext("Destroying", debug=debug) as ctx:
         manifest = read_manifest_file(filename=filename)
         ctx.info(f"Manifest loaded: {filename}")
+        ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
         ctx.progress(2)
 
-        execute_remote(filename=filename, manifest=manifest, command="destroy")
+        execute_remote(filename=filename, manifest=manifest, command="destroy", progress_callback=ctx.progress_callback)
         ctx.info("Toolkit destroyed")
         ctx.progress(85)
 

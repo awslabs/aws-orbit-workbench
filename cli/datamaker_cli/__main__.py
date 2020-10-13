@@ -21,12 +21,13 @@ from datamaker_cli.commands.deploy import deploy
 from datamaker_cli.commands.destroy import destroy
 from datamaker_cli.commands.init import init
 
-DEBUG_LOGGING_FORMAT = "[%(asctime)s][%(name)s.%(funcName)s:%(lineno)d] %(message)s"
+DEBUG_LOGGING_FORMAT = "[%(asctime)s][%(filename)-13s:%(lineno)3d] %(message)s"
+DEBUG_LOGGING_FORMAT_REMOTE = "[%(filename)-13s:%(lineno)3d] %(message)s"
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def enable_debug() -> None:
-    logging.basicConfig(level=logging.DEBUG, format="[%(asctime)s][%(name)s.%(funcName)s:%(lineno)d] %(message)s")
+def enable_debug(format: str = DEBUG_LOGGING_FORMAT) -> None:
+    logging.basicConfig(level=logging.DEBUG, format=DEBUG_LOGGING_FORMAT)
     _logger.setLevel(logging.DEBUG)
     logging.getLogger("boto3").setLevel(logging.ERROR)
     logging.getLogger("botocore").setLevel(logging.ERROR)
@@ -147,7 +148,7 @@ def destroy_cli(filename: str, debug: bool) -> None:
 @click.option("--command", "-c", type=str, required=True)
 def remote_cli(filename: str, command: str) -> None:
     """Run command remotely on CodeBuild"""
-    enable_debug()
+    enable_debug(format=DEBUG_LOGGING_FORMAT_REMOTE)
     filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
     _logger.debug("command: %s", command)

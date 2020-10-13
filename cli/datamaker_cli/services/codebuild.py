@@ -16,7 +16,7 @@ import logging
 import time
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, NamedTuple, Optional, Union
+from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Union
 
 import boto3
 import yaml
@@ -86,6 +86,12 @@ class BuildPhase(NamedTuple):
     contexts: List[BuildPhaseContext]
 
 
+class BuildCloudWatchLogs(NamedTuple):
+    enabled: bool
+    group_name: Optional[str]
+    stream_name: Optional[str]
+
+
 class BuildInfo(NamedTuple):
     build_id: str
     status: BuildStatus
@@ -94,9 +100,10 @@ class BuildInfo(NamedTuple):
     end_time: Optional[datetime]
     duration_in_seconds: float
     phases: List[BuildPhase]
+    logs: BuildCloudWatchLogs
 
 
-def start(project_name: str, bundle_location: str, spec: Dict[str, Any], timeout: int) -> str:
+def start(project_name: str, stream_name: str, bundle_location: str, spec: Dict[str, Any], timeout: int) -> str:
     client = boto3.client("codebuild")
     response: Dict[str, Any] = client.start_build(
         projectName=project_name,
@@ -104,6 +111,14 @@ def start(project_name: str, bundle_location: str, spec: Dict[str, Any], timeout
         sourceLocationOverride=bundle_location,
         buildspecOverride=yaml.safe_dump(data=spec, sort_keys=False, indent=4),
         timeoutInMinutesOverride=timeout,
+        logsConfigOverride={
+            "cloudWatchLogs": {
+                "status": "ENABLED",
+                "groupName": f"/aws/codebuild/{project_name}",
+                "streamName": stream_name,
+            },
+            "s3Logs": {"status": "DISABLED"},
+        },
     )
     return str(response["build"]["id"])
 
@@ -115,6 +130,7 @@ def fetch_build_info(build_id: str) -> BuildInfo:
         raise RuntimeError(f"CodeBuild build {build_id} not found.")
     build = response["builds"][0]
     now = datetime.now(timezone.utc)
+    log_enabled = True if build.get("logs", {}).get("cloudWatchLogs", {}).get("status") == "ENABLED" else False
     return BuildInfo(
         build_id=build_id,
         status=BuildStatus(value=build["buildStatus"]),
@@ -136,19 +152,25 @@ def fetch_build_info(build_id: str) -> BuildInfo:
             )
             for p in build["phases"]
         ],
+        logs=BuildCloudWatchLogs(
+            enabled=log_enabled,
+            group_name=build["logs"]["cloudWatchLogs"].get("groupName") if log_enabled else None,
+            stream_name=build["logs"]["cloudWatchLogs"].get("streamName") if log_enabled else None,
+        ),
     )
 
 
-def wait(build_id: str) -> BuildInfo:
+def wait(build_id: str) -> Iterable[BuildInfo]:
     build = fetch_build_info(build_id=build_id)
     while build.status is BuildStatus.in_progress:
         time.sleep(_BUILD_WAIT_POLLING_DELAY)
         build = fetch_build_info(build_id=build_id)
         _logger.debug("phase: %s (%s)", build.current_phase.value, build.status.value)
+        yield build
+
     if build.status is not BuildStatus.succeeded:
         raise RuntimeError(f"CodeBuild build ({build_id}) is {build.status.value}")
     _logger.debug("start: %s | end: %s | elapsed: %s", build.start_time, build.end_time, build.duration_in_seconds)
-    return build
 
 
 SPEC_TYPE = Dict[str, Union[float, Dict[str, Dict[str, Union[List[str], Dict[str, float]]]]]]

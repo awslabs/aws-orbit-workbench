@@ -23,4 +23,6 @@ _logger: logging.Logger = logging.getLogger(__name__)
 def destroy(filename: str) -> None:
     manifest: Manifest = read_manifest_file(filename=filename)
     env.destroy(manifest=manifest)
+    _logger.debug("Env Stack destroyed")
     demo.destroy(manifest=manifest)
+    _logger.debug("Demo Stack destroyed")

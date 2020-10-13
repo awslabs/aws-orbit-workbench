@@ -16,7 +16,7 @@ import logging
 
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.remote_files import cdk
-from datamaker_cli.services.cloudformation import deploy_template, destroy_stack
+from datamaker_cli.services.cfn import deploy_template, destroy_stack
 from datamaker_cli.utils import does_cfn_exist
 
 STACK_NAME = "datamaker-{env_name}"

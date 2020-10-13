@@ -173,3 +173,9 @@ Resources:
               commands:
                 - ls -la
       TimeoutInMinutes: 20
+      LogsConfig:
+        CloudWatchLogs: 
+          Status: ENABLED
+          GroupName: /aws/codebuild/datamaker-${env_name}
+        S3Logs: 
+          Status: DISABLED
