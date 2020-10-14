@@ -15,7 +15,7 @@
 import logging
 
 from datamaker_cli.manifest import Manifest, read_manifest_file
-from datamaker_cli.remote_files import demo, env
+from datamaker_cli.remote_files import demo, eksctl, env, teams
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -26,3 +26,7 @@ def deploy(filename: str) -> None:
     _logger.debug("Demo Stack deployed")
     env.deploy(manifest=manifest, filename=filename)
     _logger.debug("Env Stack deployed")
+    teams.deploy(manifest=manifest, filename=filename)
+    _logger.debug("Teams Stacks deployed")
+    eksctl.deploy(manifest=manifest, filename=filename)
+    _logger.debug("EKS Stack deployed")

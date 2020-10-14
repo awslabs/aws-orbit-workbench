@@ -47,9 +47,9 @@ def generate_self_dir(bundle_dir: str) -> str:
     return cli_dir
 
 
-def generate_bundle(filename: str) -> str:
+def generate_bundle(filename: str, env_name: str) -> str:
     filename_dir = path_from_filename(filename=filename)
-    remote_dir = os.path.join(filename_dir, ".datamaker.out", "remote")
+    remote_dir = os.path.join(filename_dir, ".datamaker.out", env_name, "remote")
     bundle_dir = os.path.join(remote_dir, "bundle")
     os.makedirs(bundle_dir, exist_ok=True)
     shutil.rmtree(bundle_dir)

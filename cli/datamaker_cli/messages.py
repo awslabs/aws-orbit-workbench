@@ -36,15 +36,19 @@ REMOTE_PROGRESS_LOOKUP = {
         "Waiting for agent ping": 20,
         "Entering phase PRE_BUILD": 25,
         "Entering phase BUILD": 40,
-        "Demo Stack deployed": 60,
-        "Env Stack deployed": 80,
+        "Demo Stack deployed": 50,
+        "Env Stack deployed": 70,
+        "Teams Stacks deployed": 80,
+        "EKS Stack deployed": 90,
     },
     "Destroying": {
         "Waiting for agent ping": 20,
         "Entering phase PRE_BUILD": 25,
         "Entering phase BUILD": 40,
-        "Env Stack deployed": 60,
-        "Demo Stack deployed": 80,
+        "EKS Stack destroyed": 60,
+        "Teams Stacks destroyed": 70,
+        "Env Stack destroyed": 80,
+        "Demo Stack destroyed": 90,
     },
 }
 

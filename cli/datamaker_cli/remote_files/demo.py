@@ -63,9 +63,17 @@ def delete_sec_group(sec_group: str) -> None:
         sgroup = ec2.SecurityGroup(sec_group)
         if sgroup.ip_permissions:
             sgroup.revoke_ingress(IpPermissions=sgroup.ip_permissions)
-        sgroup.delete()
+        try:
+            sgroup.delete()
+        except botocore.exceptions.ClientError as ex:
+            error: Dict[str, Any] = ex.response["Error"]
+            if f"resource {sec_group} has a dependent object" not in error["Message"]:
+                raise
+            time.sleep(60)
+            _logger.warning(f"Waiting 60 seconds to have {sec_group} free of dependents.")
+            sgroup.delete()
     except botocore.exceptions.ClientError as ex:
-        error: Dict[str, Any] = ex.response["Error"]
+        error = ex.response["Error"]
         if f"The security group '{sec_group}' does not exist" not in error["Message"]:
             raise
 
@@ -109,5 +117,11 @@ def destroy(manifest: Manifest) -> None:
     stack_name = STACK_NAME.format(env_name=manifest.name)
     _logger.debug("Stack name: %s", stack_name)
     if manifest.demo and does_cfn_exist(stack_name=stack_name):
+        waited: bool = False
+        while does_cfn_exist(stack_name=f"eksctl-{stack_name}-cluster"):
+            waited = True
+            time.sleep(2)
+        if waited:
+            time.sleep(60)  # Given extra 60 seconds if the EKS stack was just delete
         _cleanup_remaining_dependencies(manifest=manifest)
         destroy_stack(stack_name=stack_name)

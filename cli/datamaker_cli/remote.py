@@ -46,7 +46,7 @@ def _execute_codebuild(manifest: Manifest, command: str, progress_callback: Call
             post_cmds=[],
             bundle_location=bundle_location,
         ),
-        timeout=10,
+        timeout=40,
     )
     start_time: Optional[datetime] = None
     stream_name: Optional[str] = None
@@ -68,7 +68,7 @@ def _execute_codebuild(manifest: Manifest, command: str, progress_callback: Call
 
 
 def execute_remote(filename: str, manifest: Manifest, command: str, progress_callback: Callable[[str], None]) -> None:
-    bundle_path = bundle.generate_bundle(filename=filename)
+    bundle_path = bundle.generate_bundle(filename=filename, env_name=manifest.name)
     bucket = manifest.toolkit_s3_bucket
     key = f"cli/remote/{command}/bundle.zip"
     s3.delete_objects(bucket=bucket, keys=[key])
