@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import os
+import shutil
 from typing import List, cast
 
 import aws_cdk.aws_cognito as cognito
@@ -75,7 +77,7 @@ class Team(Stack):
         code_artifact_user_policy = iam.ManagedPolicy(
             scope=self,
             id="code_artifact_user",
-            managed_policy_name=f"datamaker-ca-access-for-{env_name}-{team_name}",
+            managed_policy_name=f"datamaker-{env_name}-{team_name}-ca-access",
             statements=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -103,7 +105,7 @@ class Team(Stack):
         lake_operational_policy = iam.ManagedPolicy(
             scope=self,
             id="lake_operational_policy",
-            managed_policy_name=f"datamaker-user-access-for-{env_name}-{team_name}",
+            managed_policy_name=f"datamaker-{env_name}-{team_name}-user-access",
             statements=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -331,9 +333,13 @@ class Team(Stack):
 
 
 def synth(stack_name: str, filename: str, manifest: Manifest, team_manifest: TeamManifest) -> str:
-    outdir = f"{path_from_filename(filename=filename)}.datamaker.out/{manifest.name}/cdk/{stack_name}/"
+    filename_dir = path_from_filename(filename=filename)
+    outdir = os.path.join(filename_dir, ".datamaker.out", manifest.name, "cdk", stack_name)
+    os.makedirs(outdir, exist_ok=True)
+    shutil.rmtree(outdir)
+    output_filename = os.path.join(outdir, f"{stack_name}.template.json")
+
     app = App(outdir=outdir)
     Team(scope=app, id=stack_name, manifest=manifest, team_manifest=team_manifest)
     app.synth(force=True)
-    cfn_template_filename = f"{outdir}{stack_name}.template.json"
-    return cfn_template_filename
+    return output_filename

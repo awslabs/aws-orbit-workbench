@@ -15,13 +15,17 @@
 import logging
 
 from datamaker_cli.manifest import Manifest, read_manifest_file
-from datamaker_cli.remote_files import demo, env
+from datamaker_cli.remote_files import demo, eksctl, env, teams
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def destroy(filename: str) -> None:
     manifest: Manifest = read_manifest_file(filename=filename)
+    eksctl.destroy(manifest=manifest, filename=filename)
+    _logger.debug("EKS Stack destroyed")
+    teams.destroy(manifest=manifest)
+    _logger.debug("Teams Stacks destroyed")
     env.destroy(manifest=manifest)
     _logger.debug("Env Stack destroyed")
     demo.destroy(manifest=manifest)

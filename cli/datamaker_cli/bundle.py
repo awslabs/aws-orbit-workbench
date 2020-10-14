@@ -1,12 +1,3 @@
-import glob
-import logging
-import os
-import shutil
-from typing import List
-
-from datamaker_cli import DATAMAKER_CLI_ROOT
-from datamaker_cli.utils import path_from_filename
-
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License").
@@ -21,6 +12,14 @@ from datamaker_cli.utils import path_from_filename
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import glob
+import logging
+import os
+import shutil
+from typing import List
+
+from datamaker_cli import DATAMAKER_CLI_ROOT
+from datamaker_cli.utils import path_from_filename
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -48,9 +47,9 @@ def generate_self_dir(bundle_dir: str) -> str:
     return cli_dir
 
 
-def generate_bundle(filename: str) -> str:
+def generate_bundle(filename: str, env_name: str) -> str:
     filename_dir = path_from_filename(filename=filename)
-    remote_dir = os.path.join(filename_dir, ".datamaker.out", "remote")
+    remote_dir = os.path.join(filename_dir, ".datamaker.out", env_name, "remote")
     bundle_dir = os.path.join(remote_dir, "bundle")
     os.makedirs(bundle_dir, exist_ok=True)
     shutil.rmtree(bundle_dir)

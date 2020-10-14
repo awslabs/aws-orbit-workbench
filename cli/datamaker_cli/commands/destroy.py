@@ -42,9 +42,12 @@ def destroy(filename: str, debug: bool) -> None:
         ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
         ctx.progress(2)
 
-        execute_remote(filename=filename, manifest=manifest, command="destroy", progress_callback=ctx.progress_callback)
-        ctx.info("Toolkit destroyed")
-        ctx.progress(85)
+        if does_cfn_exist(f"datamaker-{manifest.name}-demo") or does_cfn_exist(f"datamaker-{manifest.name}"):
+            execute_remote(
+                filename=filename, manifest=manifest, command="destroy", progress_callback=ctx.progress_callback
+            )
+        ctx.info("Env destroyed")
+        ctx.progress(95)
 
         destroy_toolkit(manifest=manifest)
         ctx.info("Toolkit destroyed")
