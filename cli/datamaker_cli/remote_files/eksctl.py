@@ -97,7 +97,7 @@ def deploy(manifest: Manifest, filename: str) -> None:
             raise RuntimeError(ex.stdout)
         _logger.debug("EKSCTL deployed")
     else:
-        sh.eksctl("utils", "write-kubeconfig", "--cluster", f"datamaker-{manifest.name}",  "--set-kubeconfig-context")
+        sh.eksctl("utils", "write-kubeconfig", "--cluster", f"datamaker-{manifest.name}", "--set-kubeconfig-context")
 
 
 def destroy(manifest: Manifest, filename: str) -> None:
@@ -105,7 +105,7 @@ def destroy(manifest: Manifest, filename: str) -> None:
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
     if does_cfn_exist(stack_name=final_eks_stack_name):
-        sh.eksctl("utils", "write-kubeconfig", "--cluster", f"datamaker-{manifest.name}",  "--set-kubeconfig-context")
+        sh.eksctl("utils", "write-kubeconfig", "--cluster", f"datamaker-{manifest.name}", "--set-kubeconfig-context")
         manifest.read_ssm()
         output_filename = generate_manifest(manifest=manifest, filename=filename, name=stack_name)
         sh.eksctl("delete", "cluster", "-f", output_filename)
