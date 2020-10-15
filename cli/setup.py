@@ -38,6 +38,6 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],
-    package_data={"datamaker_cli": ["data/k8s/*.yaml", "data/toolkit/*.yaml"]},
+    package_data={"datamaker_cli": ["data/kubectl/*.yaml", "data/toolkit/*.yaml"]},
     include_package_data=True,
 )

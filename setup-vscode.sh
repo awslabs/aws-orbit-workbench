@@ -30,10 +30,14 @@ code --install-extension ms-python.vscode-pylance
 code --install-extension redhat.vscode-yaml
 code --install-extension twixes.pypi-assistant
 code --install-extension aws-scripting-guy.cform
+code --install-extension kddejong.vscode-cfn-lint
 
 python_path=$(which python)
+cfn_lint_path="$(dirname $python_path)/cfn-lint"
 
 vscode_settings='{
+  "cfnLint.path": "'$cfn_lint_path'",
+  "cfnLint.ignoreRules": ["E1029", "E3031"],
   "explorer.autoReveal": false,
   "files.autoSave": "onFocusChange",
   "files.exclude": {

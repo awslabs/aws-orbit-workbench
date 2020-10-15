@@ -39,22 +39,25 @@ def _network_interface(vpc_id: str) -> None:
         try:
             network_interface = ec2.NetworkInterface(i["NetworkInterfaceId"])
             if "Interface for NAT Gateway" not in network_interface.description:
+                _logger.debug(f"Forgotten NetworkInterface: {i['NetworkInterfaceId']}.")
                 if network_interface.attachment is not None and network_interface.attachment["Status"] == "attached":
                     network_interface.detach()
                     network_interface.reload()
                     while network_interface.attachment is None or network_interface.attachment["Status"] != "detached":
                         time.sleep(1)
                         network_interface.reload()
-                    network_interface.delete()
+                network_interface.delete()
+                _logger.debug(f"NetWorkInterface {i['NetworkInterfaceId']} deleted.")
         except botocore.exceptions.ClientError as ex:
             error: Dict[str, Any] = ex.response["Error"]
-            if "is currently in use" not in error["Message"]:
+            if "is currently in use" in error["Message"]:
                 _logger.warning(f"Ignoring NetWorkInterface {i['NetworkInterfaceId']} because it stills in use.")
-            if "does not exist" not in error["Message"]:
+            elif "does not exist" in error["Message"]:
                 _logger.warning(
                     f"Ignoring NetWorkInterface {i['NetworkInterfaceId']} because it does not exist anymore."
                 )
-            raise
+            else:
+                raise
 
 
 def delete_sec_group(sec_group: str) -> None:
@@ -75,6 +78,10 @@ def delete_sec_group(sec_group: str) -> None:
     except botocore.exceptions.ClientError as ex:
         error = ex.response["Error"]
         if f"The security group '{sec_group}' does not exist" not in error["Message"]:
+            _logger.warning(f"Ignoring security group {sec_group} because it does not exist anymore.")
+        elif f"resource {sec_group} has a dependent object" not in error["Message"]:
+            _logger.warning(f"Ignoring security group {sec_group} because it has a dependent object")
+        else:
             raise
 
 
@@ -121,7 +128,10 @@ def destroy(manifest: Manifest) -> None:
         while does_cfn_exist(stack_name=f"eksctl-{stack_name}-cluster"):
             waited = True
             time.sleep(2)
+        else:
+            _logger.debug("EKSCTL stack already is cleaned")
         if waited:
+            _logger.debug("Waiting EKSCTL stack clean up...")
             time.sleep(60)  # Given extra 60 seconds if the EKS stack was just delete
         _cleanup_remaining_dependencies(manifest=manifest)
         destroy_stack(stack_name=stack_name)
