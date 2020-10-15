@@ -72,6 +72,7 @@ Resources:
                   - cognito-identity:TagResource
                   - cognito-identity:SetIdentityPoolRoles
                   - ec2:*
+                  - elasticloadbalancing:*
                 Resource: '*'
               - Effect: Allow
                 Action:

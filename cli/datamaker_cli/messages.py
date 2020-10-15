@@ -40,11 +40,13 @@ REMOTE_PROGRESS_LOOKUP = {
         "Env Stack deployed": 70,
         "Teams Stacks deployed": 80,
         "EKS Stack deployed": 90,
+        "Kubernetes components deployed": 95,
     },
     "Destroying": {
         "Waiting for agent ping": 20,
         "Entering phase PRE_BUILD": 25,
         "Entering phase BUILD": 40,
+        "Kubernetes components destroyed": 50,
         "EKS Stack destroyed": 60,
         "Teams Stacks destroyed": 70,
         "Env Stack destroyed": 80,
