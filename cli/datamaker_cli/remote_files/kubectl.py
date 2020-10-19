@@ -96,7 +96,6 @@ def _cleanup_output(output_path: str) -> None:
 
 
 def _generate_manifest(manifest: Manifest, filename: str) -> str:
-
     output_path = f"{manifest.filename_dir}.datamaker.out/{manifest.name}/kubectl/"
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     _cleanup_output(output_path=output_path)
