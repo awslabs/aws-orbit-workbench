@@ -31,6 +31,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 class SubnetKind(Enum):
     private = "private"
     public = "public"
+    isolated = "isolated"
 
 
 class SubnetManifest:
@@ -97,6 +98,7 @@ class VpcManifest:
         return {
             "private-subnets-ids": [s.subnet_id for s in self.subnets if s.kind is SubnetKind.private],
             "public-subnets-ids": [s.subnet_id for s in self.subnets if s.kind is SubnetKind.public],
+            "isolated-subnets-ids": [s.subnet_id for s in self.subnets if s.kind is SubnetKind.isolated],
         }
 
     def repr_full(self) -> VPC_REPR_FULL_TYPE:

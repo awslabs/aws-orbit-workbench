@@ -116,7 +116,7 @@ def deploy(manifest: Manifest, filename: str) -> None:
     if manifest.demo and (not does_cfn_exist(stack_name=stack_name) or manifest.dev):
         template_filename: str = demo.synth(stack_name=stack_name, filename=filename, env_name=manifest.name)
         _logger.debug("template_filename: %s", template_filename)
-        deploy_template(stack_name=stack_name, filename=template_filename, env_tag=manifest.name)
+        deploy_template(stack_name=stack_name, filename=template_filename, env_tag=manifest.name, toolkit_s3_bucket=manifest.toolkit_s3_bucket)
         refresh_manifest_file_with_demo_attrs(filename=filename, manifest=manifest)
 
 
