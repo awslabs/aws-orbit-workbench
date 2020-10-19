@@ -15,6 +15,8 @@
 import logging
 import math
 import os
+import random
+import time
 from typing import Any, Callable, Dict, Iterable, List, Optional
 
 import boto3
@@ -53,20 +55,6 @@ def namedtuple_to_dict(obj: Any) -> Any:
     return obj
 
 
-def does_cfn_exist(stack_name: str) -> bool:
-    client = boto3.client("cloudformation")
-    try:
-        resp = client.describe_stacks(StackName=stack_name)
-        if len(resp["Stacks"]) < 1:
-            return False
-    except botocore.exceptions.ClientError as ex:
-        error: Dict[str, Any] = ex.response["Error"]
-        if error["Code"] == "ValidationError" and f"Stack with id {stack_name} does not exist" in error["Message"]:
-            return False
-        raise
-    return True
-
-
 def path_from_filename(filename: str) -> str:
     return os.path.dirname(os.path.realpath(filename))
 
@@ -81,7 +69,14 @@ def replace_dashes(original: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def replace_underscores(original: Dict[str, Any]) -> Dict[str, Any]:
-    return {k.replace("_", "-"): v for k, v in original.items()}
+    aux = {k.replace("_", "-"): v for k, v in original.items()}
+    ret = {}
+    for k, v in aux.items():
+        if k.startswith("-"):
+            ret[k[1:]] = v
+        else:
+            ret[k] = v
+    return ret
 
 
 def extract_plugin_name(func: Callable[..., None]) -> str:
@@ -89,13 +84,16 @@ def extract_plugin_name(func: Callable[..., None]) -> str:
     return name
 
 
-def extract_images_names(stack_name: str) -> List[str]:
+def extract_images_names(env_name: str) -> List[str]:
     resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
     try:
-        response: resp_type = boto3.client("cloudformation").describe_stacks(StackName=stack_name)
+        response: resp_type = boto3.client("cloudformation").describe_stacks(StackName=f"datamaker-{env_name}")
     except botocore.exceptions.ClientError as ex:
         error: Dict[str, Any] = ex.response["Error"]
-        if error["Code"] == "ValidationError" and f"Stack with id {stack_name} does not exist" in error["Message"]:
+        if (
+            error["Code"] == "ValidationError"
+            and f"Stack with id datamaker-{env_name} does not exist" in error["Message"]
+        ):
             return []
         raise
     if len(response["Stacks"]) < 1:
@@ -103,7 +101,24 @@ def extract_images_names(stack_name: str) -> List[str]:
     if "Outputs" not in response["Stacks"][0]:
         return []
     for output in response["Stacks"][0]["Outputs"]:
-        if output["ExportName"] == f"{stack_name}-repos":
+        if output["ExportName"] == f"datamaker-{env_name}-repos":
             _logger.debug("Export value: %s", output["OutputValue"])
             return output["OutputValue"].split(",")
-    raise RuntimeError(f"Stack {stack_name} does not have the expected {stack_name}-repos output.")
+    raise RuntimeError(f"Stack datamaker-{env_name} does not have the expected datamaker-{env_name}-repos output.")
+
+
+def try_it(f: Callable[..., Any], ex: Any, base: float = 1.0, max_num_tries: int = 3, **kwargs: Any) -> Any:
+    """Run function with decorrelated Jitter.
+
+    Reference: https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+    """
+    delay: float = base
+    for i in range(max_num_tries):
+        try:
+            return f(**kwargs)
+        except ex as exception:
+            if i == (max_num_tries - 1):
+                raise exception
+            delay = random.uniform(base, delay * 3)
+            _logger.error("Retrying %s | Fail number %s/%s | Exception: %s", f, i + 1, max_num_tries, exception)
+            time.sleep(delay)

@@ -73,6 +73,7 @@ vscode_settings='{
   "python.terminal.activateEnvironment": true,
   "workbench.editor.labelFormat": "default",
   "workbench.tree.indent": 16,
+  "terminal.integrated.showExitAlert": false,
   "yaml.customTags": [
     "!Equals sequence",
     "!FindInMap sequence",

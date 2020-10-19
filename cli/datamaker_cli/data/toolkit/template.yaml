@@ -5,7 +5,7 @@ Resources:
   Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: datamaker-${env_name}-toolkit-${account_id}
+      BucketName: datamaker-${env_name}-toolkit-${account_id}-${deploy_id}
       Tags: 
         - Key: Env
           Value: datamaker-${env_name}
@@ -28,6 +28,7 @@ Resources:
             AbortIncompleteMultipartUpload:
               DaysAfterInitiation: 1
             NoncurrentVersionExpirationInDays: 1
+            Prefix: cli/remote/
   CodeBuildRole:
     Type: AWS::IAM::Role
     Properties:
@@ -48,12 +49,18 @@ Resources:
               - Effect: Allow
                 Action:
                   - logs:*
+                  - kms:CreateKey
+                  - secretsmanager:GetRandomPassword
+                  - ecr:GetAuthorizationToken
+                  - ecr:DescribeRepositories
+                  - ecr:ListTagsForResource
                   - cloudformation:ListStacks
                   - elasticfilesystem:CreateFileSystem
                   - elasticfilesystem:CreateMountTarget
                   - elasticfilesystem:DescribeFileSystems
                   - elasticfilesystem:DeleteMountTarget
                   - elasticfilesystem:DescribeMountTargets
+                  - elasticfilesystem:DeleteFileSystem
                   - iam:GetPolicy
                   - iam:ListPolicyVersions
                   - iam:GetRole
@@ -78,8 +85,8 @@ Resources:
                 Action:
                   - s3:*
                 Resource:
-                  - arn:aws:s3:::datamaker-${env_name}-toolkit-${account_id}/*
-                  - arn:aws:s3:::datamaker-${env_name}-toolkit-${account_id}
+                  - arn:aws:s3:::datamaker-${env_name}-toolkit-${account_id}-${deploy_id}/*
+                  - arn:aws:s3:::datamaker-${env_name}-toolkit-${account_id}-${deploy_id}
               - Effect: Allow
                 Action:
                     - codebuild:CreateReportGroup
@@ -89,6 +96,17 @@ Resources:
                     - codebuild:BatchPutCodeCoverages
                 Resource:
                   - arn:aws:codebuild:*
+              - Effect: Allow
+                Action:
+                    - codebuild:StartBuild
+                    - codebuild:BatchGetBuilds
+                Resource:
+                  - arn:aws:codebuild:${region}:${account_id}:project/datamaker-${env_name}
+              - Effect: Allow
+                Action:
+                    - ecr:*
+                Resource:
+                  - arn:aws:ecr:${region}:${account_id}:repository/datamaker-${env_name}-*
               - Effect: Allow
                 Action:
                   - cloudformation:*
@@ -129,6 +147,17 @@ Resources:
                   - arn:aws:ssm:${region}:${account_id}:parameter/datamaker/${env_name}/teams/*
               - Effect: Allow
                 Action:
+                  - kms:*
+                Resource:
+                  - arn:aws:kms:${region}:${account_id}:alias/datamaker-{env_name}*
+                  - arn:aws:kms:${region}:${account_id}:key/*
+              - Effect: Allow
+                Action:
+                  - secretsmanager:*
+                Resource:
+                  - arn:aws:secretsmanager:${region}:${account_id}:secret:datamaker-${env_name}*
+              - Effect: Allow
+                Action:
                   - eks:*
                 Resource:
                   - arn:aws:eks:${region}:${account_id}:cluster/datamaker-${env_name}
@@ -167,3 +196,57 @@ Resources:
           GroupName: /aws/codebuild/datamaker-${env_name}
         S3Logs: 
           Status: DISABLED
+  KmsKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/datamaker-${env_name}-${deploy_id}
+      TargetKeyId:
+        Ref: KmsKey
+  KmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Tags:
+        - Key: Env
+          Value: datamaker-${env_name}
+      Description: DataMaker key for ${env_name}.
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: datamaker-${env_name}
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: arn:aws:iam::${account_id}:root
+            Action: kms:*
+            Resource: '*'
+          - Sid: Allow administration of the key
+            Effect: Allow
+            Principal:
+              AWS:
+                Ref: AWS::AccountId
+            Action:
+              - kms:Create*
+              - kms:Describe*
+              - kms:Enable*
+              - kms:List*
+              - kms:Put*
+              - kms:Update*
+              - kms:Revoke*
+              - kms:Disable*
+              - kms:Get*
+              - kms:Delete*
+              - kms:ScheduleKeyDeletion
+              - kms:CancelKeyDeletion
+            Resource: '*'
+Outputs:
+  DeployId:
+    Value: ${deploy_id}
+    Export:
+      Name: datamaker-${env_name}-deploy-id
+  KmsKeyArn:
+    Value:
+      Fn::GetAtt:
+        - KmsKey
+        - Arn
+    Export:
+      Name: datamaker-${env_name}-kms-arn

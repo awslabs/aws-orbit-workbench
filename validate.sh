@@ -20,13 +20,13 @@ pushd cli
 ./validate.sh
 popd
 
-# pushd images/jupyter-hub
-# ./validate.sh
-# popd
+pushd images/jupyter-hub
+./validate.sh
+popd
 
-# pushd images/jupyter-user
-# ./validate.sh
-# popd
+pushd images/jupyter-user
+./validate.sh
+popd
 
 # pushd images/landing-page
 # ./validate.sh

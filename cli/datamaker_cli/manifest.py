@@ -23,7 +23,8 @@ import yaml
 from botocore.exceptions import ClientError
 
 from datamaker_cli.exceptions import VpcNotFound
-from datamaker_cli.utils import get_account_id, replace_dashes, replace_underscores
+from datamaker_cli.services import cognito
+from datamaker_cli.utils import get_account_id, path_from_filename, replace_dashes, replace_underscores
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -157,7 +158,7 @@ class TeamManifest:
         policy: str,
         efs_id: Optional[str] = None,
         eks_nodegroup_role_arn: Optional[str] = None,
-        jupyterhub_url: Optional[str] = None,
+        jupyter_url: Optional[str] = None,
     ) -> None:
         self.name = name
         self.env_name = env_name
@@ -169,7 +170,7 @@ class TeamManifest:
         self.policy = policy
         self.efs_id = efs_id
         self.eks_nodegroup_role_arn = eks_nodegroup_role_arn
-        self.jupyterhub_url = jupyterhub_url
+        self.jupyter_url = jupyter_url
         self.ssm_parameter_name = f"/datamaker/{self.env_name}/teams/{self.name}/manifest"
 
     def read_ssm(self) -> None:
@@ -213,11 +214,9 @@ PLUGIN_REPR_FULL_TYPE = Dict[str, str]
 
 
 class PluginManifest:
-    def __init__(
-        self,
-        name: str,
-    ) -> None:
+    def __init__(self, name: str, path: Optional[str] = None) -> None:
         self.name = name
+        self.path = path
 
     def repr_minimal(self) -> PLUGIN_REPR_MINIMAL_TYPE:
         return self.repr_full()
@@ -238,6 +237,7 @@ class Manifest:
     def __init__(
         self,
         name: str,
+        filename: str,
         region: str,
         demo: bool,
         dev: bool,
@@ -251,8 +251,13 @@ class Manifest:
         user_pool_id: Optional[str] = None,
         user_pool_client_id: Optional[str] = None,
         identity_pool_id: Optional[str] = None,
+        deploy_id: Optional[str] = None,
+        toolkit_kms_arn: Optional[str] = None,
+        landing_page_url: Optional[str] = None,
     ) -> None:
         self.name = name
+        self.filename = filename
+        self.filename_dir = path_from_filename(filename=filename)
         self.region = region
         self.demo = demo
         self.dev = dev
@@ -263,13 +268,94 @@ class Manifest:
         self.available_eks_regions = available_eks_regions
         self.eks_cluster_role_arn = eks_cluster_role_arn
         self.eks_env_nodegroup_role_arn = eks_env_nodegroup_role_arn
-        self.user_pool_id = user_pool_id
         self.user_pool_client_id = user_pool_client_id
         self.identity_pool_id = identity_pool_id
         self.ssm_parameter_name = f"/datamaker/{self.name}/manifest"
+        self.ssm_dockerhub_parameter_name = f"/datamaker/{self.name}/dockerhub"
         boto3.setup_default_session(region_name=self.region)
-        self.toolkit_s3_bucket = f"datamaker-{self.name}-toolkit-{self.account_id}"
         self.toolkit_codebuild_project = f"datamaker-{self.name}"
+        self.landing_page_url = landing_page_url
+        self._deploy_id: Optional[str] = deploy_id
+        if self._deploy_id is None:
+            self._toolkit_s3_bucket: Optional[str] = None
+            self._toolkit_kms_alias: Optional[str] = None
+        else:
+            self._toolkit_s3_bucket = f"datamaker-{self.name}-toolkit-{self.account_id}-{self.deploy_id}"
+            self._toolkit_kms_alias = f"datamaker-{self.name}-{self.deploy_id}"
+        self._toolkit_kms_arn: Optional[str] = toolkit_kms_arn
+        self._user_pool_id: Optional[str] = user_pool_id
+        if self._user_pool_id is None:
+            self.cognito_users_urls: Optional[str] = None
+        else:
+            self.cognito_users_urls = cognito.get_users_url(user_pool_id=self._user_pool_id, region=self.region)
+
+    def fetch_toolkit_info(self) -> None:
+        toolkit_stack = f"datamaker-{self.name}-toolkit"
+        resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
+        response: resp_type = boto3.client("cloudformation").describe_stacks(StackName=toolkit_stack)
+        if len(response["Stacks"]) < 1:
+            raise RuntimeError("Toolkit stack not found.")
+        if "Outputs" not in response["Stacks"][0]:
+            raise RuntimeError("Toolkit stack with empty outputs")
+        for output in response["Stacks"][0]["Outputs"]:
+            if output["ExportName"] == f"datamaker-{self.name}-deploy-id":
+                _logger.debug("Export value: %s", output["OutputValue"])
+                self.deploy_id = output["OutputValue"]
+            if output["ExportName"] == f"datamaker-{self.name}-kms-arn":
+                _logger.debug("Export value: %s", output["OutputValue"])
+                self._toolkit_kms_arn = output["OutputValue"]
+        if self.deploy_id is None:
+            raise RuntimeError(
+                f"Stack {toolkit_stack} does not have the expected datamaker-{self.name}-deploy-id output."
+            )
+        if self._toolkit_kms_arn is None:
+            raise RuntimeError(
+                f"Stack {toolkit_stack} does not have the expected datamaker-{self.name}-kms-arn output."
+            )
+
+    @property
+    def user_pool_id(self) -> Optional[str]:
+        return self._user_pool_id
+
+    @user_pool_id.setter
+    def user_pool_id(self, value: str) -> None:
+        self._user_pool_id = value
+        self.cognito_users_urls = cognito.get_users_url(user_pool_id=self._user_pool_id, region=self.region)
+
+    @property
+    def toolkit_kms_arn(self) -> str:
+        if self._toolkit_kms_arn is None:
+            self.fetch_toolkit_info()
+        return cast(str, self._toolkit_kms_arn)
+
+    @toolkit_kms_arn.setter
+    def toolkit_kms_arn(self, toolkit_kms_arn: str) -> None:
+        self._toolkit_kms_arn = toolkit_kms_arn
+
+    @property
+    def toolkit_s3_bucket(self) -> str:
+        if self._toolkit_s3_bucket is None:
+            self.fetch_toolkit_info()
+        return cast(str, self._toolkit_s3_bucket)
+
+    @property
+    def toolkit_kms_alias(self) -> str:
+        if self._toolkit_kms_alias is None:
+            self.fetch_toolkit_info()
+        return cast(str, self._toolkit_kms_alias)
+
+    @property
+    def deploy_id(self) -> str:
+        if self._deploy_id is None:
+            self.fetch_toolkit_info()
+        return cast(str, self._deploy_id)
+
+    @deploy_id.setter
+    def deploy_id(self, deploy_id: str) -> None:
+        _logger.debug("deploy_id: %s", deploy_id)
+        self._deploy_id = deploy_id
+        self._toolkit_s3_bucket = f"datamaker-{self.name}-toolkit-{self.account_id}-{deploy_id}"
+        self._toolkit_kms_alias = f"datamaker-{self.name}-{deploy_id}"
 
     @property
     def account_id(self) -> str:
@@ -284,6 +370,7 @@ class Manifest:
         except client.exceptions.ParameterNotFound:
             self.available_eks_regions = boto3.Session().get_available_regions("eks")
             self.vpc.fetch_vpc_properties()
+            self.fetch_toolkit_info()
         else:
             raw = cast(Dict[str, Any], json.loads(json_str))
             subnets_args = [replace_dashes(s) for s in raw["vpc"]["subnets"]]
@@ -298,7 +385,7 @@ class Manifest:
                 team.read_ssm()
             self.plugins = [PluginManifest(**replace_dashes(plugin)) for plugin in raw["plugins"]]
             for k, v in replace_dashes(raw).items():
-                if k not in ("vpc", "teams", "plugins"):
+                if k not in ("vpc", "teams", "plugins", "account_id", "toolkit_s3_bucket", "toolkit_kms_alias"):
                     setattr(self, k, v)
 
     def repr_minimal(self) -> MANIFEST_REPR_MINIMAL_TYPE:
@@ -320,6 +407,8 @@ class Manifest:
         repr["vpc"] = self.vpc.repr_full()
         repr["teams"] = [t.repr_minimal() for t in self.teams]
         repr["plugins"] = [p.repr_full() for p in self.plugins]
+        del repr["filename"]
+        del repr["filename-dir"]
         return repr
 
     def repr_full_as_string(self) -> str:
@@ -347,6 +436,7 @@ def read_manifest_file(filename: str) -> Manifest:
         subnets += [SubnetManifest(subnet_id=i, kind=SubnetKind.public) for i in raw["vpc"]["public-subnets-ids"]]
         return Manifest(
             name=raw["name"],
+            filename=filename,
             region=raw["region"],
             vpc=VpcManifest(subnets=subnets),
             teams=[TeamManifest(env_name=raw["name"], **replace_dashes(team)) for team in raw["teams"]],

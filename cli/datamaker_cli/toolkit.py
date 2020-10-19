@@ -36,8 +36,15 @@ def synth(filename: str, manifest: Manifest) -> str:
     _logger.debug("Reading %s", MODEL_FILENAME)
     with open(MODEL_FILENAME, "r") as file:
         content: str = file.read()
+    _logger.debug(
+        "manifest.name: %s | manifest.account_id: %s | manifest.region: %s | manifest.deploy_id: %s",
+        manifest.name,
+        manifest.account_id,
+        manifest.region,
+        manifest.deploy_id,
+    )
     content = content.replace("$", "").format(
-        env_name=manifest.name, account_id=manifest.account_id, region=manifest.region
+        env_name=manifest.name, account_id=manifest.account_id, region=manifest.region, deploy_id=manifest.deploy_id
     )
     _logger.debug("Writing %s", output_filename)
     os.makedirs(os.path.dirname(output_filename), exist_ok=True)

@@ -96,7 +96,7 @@ class Env(Stack):
         return repo
 
     def _create_ecr_repos(self) -> List[ecr.Repository]:
-        current_images_names = extract_images_names(stack_name=self.stack_name)
+        current_images_names = extract_images_names(env_name=self.manifest.name)
         current_images_names = list(set(current_images_names) - set(self.remove_images))
         repos = [self.create_repo(image_name=r) for r in current_images_names]
         for image_name in self.add_images:
@@ -104,10 +104,11 @@ class Env(Stack):
                 repos.append(self.create_repo(image_name=image_name))
                 current_images_names.append(image_name)
         if current_images_names:
+            current_images_names.sort()
             CfnOutput(
                 scope=self,
                 id="repos",
-                export_name=f"{self.stack_name}-repos",
+                export_name=f"datamaker-{self.manifest.name}-repos",
                 value=",".join([x for x in current_images_names]),
             )
         return repos
@@ -257,7 +258,6 @@ class Env(Stack):
                 ),
             },
         )
-        Tags.of(scope=authenticated_role).add(key="Env", value=f"datamaker-{self.manifest.name}")
         name = f"{self.id}-cognito-unauthenticated-identity-role"
         unauthenticated_role = iam.Role(
             scope=self,
@@ -285,7 +285,6 @@ class Env(Stack):
                 )
             },
         )
-        Tags.of(scope=unauthenticated_role).add(key="Env", value=f"datamaker-{self.manifest.name}")
         cognito.CfnIdentityPoolRoleAttachment(
             scope=self,
             id=f"{self.id}-role-attachment",
@@ -310,7 +309,6 @@ class Env(Stack):
             parameter_name=self.manifest.ssm_parameter_name,
             simple_name=False,
         )
-        Tags.of(scope=cast(IConstruct, parameter)).add(key="Env", value=f"datamaker-{self.manifest.name}")
         return parameter
 
 
