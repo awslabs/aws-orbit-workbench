@@ -14,9 +14,9 @@
 
 import logging
 
+from datamaker_cli import sh
 from datamaker_cli.manifest import Manifest, TeamManifest
 from datamaker_cli.plugins import hooks
-from datamaker_cli import sh
 
 _logger: logging.Logger = logging.getLogger("datamaker_cli")
 

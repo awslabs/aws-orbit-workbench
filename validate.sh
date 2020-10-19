@@ -24,14 +24,6 @@ pushd images/jupyter-hub
 ./validate.sh
 popd
 
-pushd images/jupyter-user
-./validate.sh
-popd
-
-# pushd images/landing-page
-# ./validate.sh
-# popd
-
 pushd plugins/hello_world
 ./validate.sh
 popd

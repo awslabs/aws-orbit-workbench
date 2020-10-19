@@ -27,14 +27,17 @@ jobs:
       - name: mypy check
         run: |
           mypy --python-version 3.6 --strict --ignore-missing-imports cli
+          mypy --python-version 3.6 --strict --ignore-missing-imports images/jupyter-hub images/jupyter-hub/utils
           mypy --python-version 3.6 --strict --ignore-missing-imports plugins/hello_world
       - name: Flake8 Lint
-        run: flake8 --max-line-length 120 cli plugins/hello_world
+        run: flake8 --max-line-length 120 cli images/jupyter-hub/utils plugins/hello_world
       - name: Black style
-        run: black --check --line-length 120 --target-version py36 cli plugins/hello_world
+        run: black --check --line-length 120 --target-version py36 cli images/jupyter-hub plugins/hello_world
       - name: Imports order check (isort)
         run: | 
           cd cli
           isort --check-only --line-length 120 .
-          cd ../plugins/hello_world
+          cd ../images/jupyter-hub
+          isort --check-only --line-length 120 .
+          cd ../../plugins/hello_world
           isort --check-only --line-length 120 .
