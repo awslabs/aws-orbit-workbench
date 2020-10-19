@@ -40,7 +40,6 @@ CDK_MODULES = [
     "aws-cdk.aws-ecs",
     "aws-cdk.aws-ssm",
     "aws-cdk.aws-kms",
-    "aws-cdk.aws_secretsmanager",
     "aws_cdk.aws_cognito",
 ]
 
