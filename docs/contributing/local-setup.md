@@ -18,22 +18,24 @@
 
 ## 1 - Requirements
 
+* [DockerHub account](https://hub.docker.com/)
 * MacOS *or* Linux
-* [git](https://git-scm.com/)
-* [python 3.6](https://www.python.org/)
+* [python 3.6+](https://www.python.org/)
 * [node.js](https://nodejs.org/en/)
-* [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
-* [Docker](https://www.docker.com/)
-* [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-* [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/getting-started-eksctl.html)
 
 ## 2 - Project Setting Up
 
 ### Cloning the code base locally and checkout the k8s branch
 
-* `git clone ssh://git.amazon.com/pkg/DataMakerMain`
-* `cd DataMakerMain`
-* `git chechout k8s`
+* `git clone https://github.com/awslabs/aws-eks-data-maker`
+* `cd aws-eks-data-maker`
+
+### Setting up a Python Virtual Environment
+
+* `python -m venv .venv`
+
+### Load the Python Virtual Environment
+* `source .venv/bin/activate`
 
 ### Setting up the local environment
 
@@ -41,17 +43,17 @@
 
 ## 3 - Deploying and Destroying
 
-### Load the python virtual environment
-
-* `source .venv/bin/activate`
-
 ### Running static validations
 
 * `./validate.sh`
 
-### Initiating a DataMaker environment with DEMO enabled
+### Initiating a DataMaker environment with DEMO and DEV enabled
 
-* `datamaker init --demo`
+> The `demo` flag will ensure that a mocked environment will also be deployed.
+> 
+> The `dev` flag will ensure that all artifacts will be built from source (W/o DockerHub and PyPi).
+
+* `datamaker init --demo --dev`
 
 ### Deploying
 
