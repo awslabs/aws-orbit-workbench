@@ -1,46 +1,24 @@
-#  Copyright 2019 Amazon.com, Inc. and its affiliates. All Rights Reserved.
-#  #
-#  Licensed under the Amazon Software License (the 'License').
-#  You may not use this file except in compliance with the License.
-#  A copy of the License is located at
-#  #
-#    http://aws.amazon.com/asl/
-#  #
-#  or in the 'license' file accompanying this file. This file is distributed
-#  on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-#  express or implied. See the License for the specific language governing
-#  permissions and limitations under the License.
-
-import os
-import sys
-import subprocess
-from tempfile import mkstemp
-import os
-import logging
-from ..common import get_properties,get_workspace,split_s3_path
-import time
-from IPython.display import JSON
-import IPython.display
-import json
-from pathlib import Path
-import boto3
-from os.path import expanduser
 import glob
+import json
+import logging
+import os
+import subprocess
+from os.path import expanduser
+from pathlib import Path
+from tempfile import mkstemp
+from typing import Any, Dict, List, Optional, Union
 
-from typing import Dict, Any, Optional, Union, List
+import boto3
+import IPython.display
+from IPython.display import JSON
 
+from datamaker_sdk.common import get_properties, get_workspace, split_s3_path
 
-logging.basicConfig(
-    format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.INFO,
-    datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
 
 
-def display_json(
-    doc: Dict[str, Any],
-    root: Optional[str] ='root'
-) -> IPython.core.display.JSON:
+def display_json(doc: Dict[str, Any], root: Optional[str] = "root") -> IPython.core.display.JSON:
     """
     Create a JSON display object given raw JSON data.
 
@@ -65,10 +43,7 @@ def display_json(
     return JSON(doc)
 
 
-def write_json(
-    doc: Any,
-    path: str
-) -> None:
+def write_json(doc: Any, path: str) -> None:
     """
     Write data to a s3 bucket path.
 
@@ -95,24 +70,20 @@ def write_json(
     >>> write_json(doc=data, path='testbucket123')
     """
 
-    s3 = boto3.client('s3')
-    if (path.startswith('s3://')):
-        (bucket,key) = split_s3_path(path)
+    s3 = boto3.client("s3")
+    if path.startswith("s3://"):
+        (bucket, key) = split_s3_path(path)
         s3.put_object(Body=doc, Bucket=bucket, Key=key)
 
     dir = os.path.dirname(path)
     Path(dir).mkdir(parents=True, exist_ok=True)
 
-    with open(path, 'w') as outfile:
+    with open(path, "w") as outfile:
         json.dump(doc, outfile)
 
 
 def run_schema_induction(
-    data_path: str,
-    table_name: str,
-    s3_location: str,
-    root_definition_name: str,
-    is_array: Optional[bool] = True
+    data_path: str, table_name: str, s3_location: str, root_definition_name: str, is_array: Optional[bool] = True
 ) -> Dict[str, Dict[str, str]]:
     """
     Calls on helper functions to run Schema Induction with given user arguments and returns ddl and schema metadata.
@@ -151,11 +122,7 @@ def run_schema_induction(
 
     logger.info("Start induction process for " + table_name)
 
-    args = [ "-i", data_path,
-             "-c", "ec2",
-             "-t", table_name,
-             "--location", s3_location,
-             "--root", root_definition_name]
+    args = ["-i", data_path, "-c", "ec2", "-t", table_name, "--location", s3_location, "--root", root_definition_name]
     if is_array:
         args.append("-a")
 
@@ -188,16 +155,17 @@ def run_process(args: Union[str, List[str]]) -> None:
             stderr=subprocess.PIPE,
         )
     except subprocess.CalledProcessError as err:
-        logger.error(f'ERROR: {err}')
+        logger.error(f"ERROR: {err}")
     else:
-        out = completed.stdout.decode('utf-8')
-        err = completed.stderr.decode('utf-8')
+        out = completed.stdout.decode("utf-8")
+        err = completed.stderr.decode("utf-8")
         if len(out) > 0:
             logger.info(out)
         if len(err):
             logger.error(err)
 
-def run_schema_induction_args(user_args: Union[str, List[str]]) -> Dict[str, Dict[str,str]]:
+
+def run_schema_induction_args(user_args: Union[str, List[str]]) -> Dict[str, Dict[str, str]]:
     """
     Calls on run_process to run Schema Induction with given user arguments gets ddl and schema metadata for a specified
     table.
@@ -228,10 +196,9 @@ def run_schema_induction_args(user_args: Union[str, List[str]]) -> Dict[str, Dic
 
     home = expanduser("~")
 
-    jar = glob.glob(f'{home}/datamaker/java/schema-induction*.jar')[0]
+    jar = glob.glob(f"{home}/datamaker/java/schema-induction*.jar")[0]
 
-    args = ["/opt/jdk-13.0.1/bin/java", "-jar", f"{jar}",
-            "-s", schema_path, "-d", ddl_path]
+    args = ["/opt/jdk-13.0.1/bin/java", "-jar", f"{jar}", "-s", schema_path, "-d", ddl_path]
     args.extend(user_args)
 
     run_process(args)
@@ -239,13 +206,10 @@ def run_schema_induction_args(user_args: Union[str, List[str]]) -> Dict[str, Dic
     ddl = readFile(ddl_path, ddlFd)
     schema = readFile(schema_path, schemaFd)
 
-    return {'ddl': ddl, 'schema': schema}
+    return {"ddl": ddl, "schema": schema}
 
 
-def readFile(
-    path: str,
-    fd: int
-) -> Any:
+def readFile(path: str, fd: int) -> Any:
     """
     Read File Contents located at a specified path.
 
@@ -269,11 +233,9 @@ def readFile(
     >>>data = json_utils.readFile(path=path,fd=fd)
     """
 
-    file = open(path, 'r')
+    file = open(path, "r")
     content = file.read()
     file.close()
     os.close(fd)
     os.remove(path)
     return content
-
-

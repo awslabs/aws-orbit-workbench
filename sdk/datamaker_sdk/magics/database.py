@@ -1,23 +1,11 @@
-#  Copyright 2019 Amazon.com, Inc. and its affiliates. All Rights Reserved.
-#  #
-#  Licensed under the Amazon Software License (the 'License').
-#  You may not use this file except in compliance with the License.
-#  A copy of the License is located at
-#  #
-#    http://aws.amazon.com/asl/
-#  #
-#  or in the 'license' file accompanying this file. This file is distributed
-#  on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-#  express or implied. See the License for the specific language governing
-#  permissions and limitations under the License.
-from typing import Dict, Optional, Any
-from IPython.core.magic import (Magics, magics_class, line_magic,
-                                cell_magic, line_cell_magic, needs_local_scope)
-import sys
 import argparse
-from IPython.display import JSON
+import sys
+from typing import Any, Dict, Optional
+
 import IPython.display
 from IPython import get_ipython
+from IPython.core.magic import Magics, cell_magic, line_magic, magics_class, needs_local_scope
+from IPython.display import JSON
 
 
 def exception_handler(exception_type, exception, traceback):
@@ -36,7 +24,7 @@ class DatabaseMagics(Magics):
     Database functions, inherited by both Redshift and Athena classes.
     """
 
-    def __init__(self, shell,  database_utils):
+    def __init__(self, shell, database_utils):
         super().__init__(shell)
         self.ip = get_ipython()
         self.database_utils = database_utils
@@ -65,7 +53,7 @@ class RedshiftMagics(DatabaseMagics):
         Create external table in S3 and Glue Catalog.
     """
 
-    def __init__(self, shell,  database_utils):
+    def __init__(self, shell, database_utils):
         super().__init__(shell, database_utils)
 
     @line_magic
@@ -95,32 +83,29 @@ class RedshiftMagics(DatabaseMagics):
         >>> %connect_to_redshift -cluster db-test -reuse -start -func Standard Nodes=3
         """
 
-
         if len(line) == 0:
             print("must provide redshift cluster name")
             return
 
-        parser = ArgumentParserNoSysExit(description='start Redshift connection')
-        parser.add_argument('-cluster', required=True,
-                            help='specify cluster name')
-        parser.add_argument('-start',  action='store_true',
-                            help='start cluster if not exists')
-        parser.add_argument('-reuse', action='store_true',
-                            help='reuse cluster if exists')
-        parser.add_argument('-func', nargs='*', default=None,
-                            help='specify cluster function name')
+        parser = ArgumentParserNoSysExit(description="start Redshift connection")
+        parser.add_argument("-cluster", required=True, help="specify cluster name")
+        parser.add_argument("-start", action="store_true", help="start cluster if not exists")
+        parser.add_argument("-reuse", action="store_true", help="reuse cluster if exists")
+        parser.add_argument("-func", nargs="*", default=None, help="specify cluster function name")
         try:
-            args = parser.parse_args(line.strip().split(' '))
+            args = parser.parse_args(line.strip().split(" "))
             clusterArgs = dict()
             if args.func != None:
-                clusterArgs['redshift_start_function'] = args.func[0]
+                clusterArgs["redshift_start_function"] = args.func[0]
                 for arg in args.func[1:]:
-                    keypair = arg.split('=')
+                    keypair = arg.split("=")
                     clusterArgs[keypair[0]] = keypair[1]
 
-            connProp = self.database_utils.connect_to_redshift(cluster_name = args.cluster, reuseCluster=args.reuse, startCluster=args.start, clusterArgs=clusterArgs)
-            dbUrl = connProp['db_url']
-            self.ip.run_line_magic('sql', dbUrl)
+            connProp = self.database_utils.connect_to_redshift(
+                cluster_name=args.cluster, reuseCluster=args.reuse, startCluster=args.start, clusterArgs=clusterArgs
+            )
+            dbUrl = connProp["db_url"]
+            self.ip.run_line_magic("sql", dbUrl)
             print("connected!")
         except Exception as e:
             print("Error!")
@@ -157,20 +142,18 @@ class RedshiftMagics(DatabaseMagics):
             print("must provide redshift cluster name")
             return
 
-        parser = ArgumentParserNoSysExit(description='start Redshift connection')
-        parser.add_argument('-cluster', required=True,
-                            help='specify cluster name')
-        parser.add_argument('-DbName', required=True,
-                            help='specify DB name')
-        parser.add_argument('-DbUser', required=True,
-                            help='specify DB user')
-        parser.add_argument('-lambdaName', default=None,
-                            help='specify credentials lambda name')
+        parser = ArgumentParserNoSysExit(description="start Redshift connection")
+        parser.add_argument("-cluster", required=True, help="specify cluster name")
+        parser.add_argument("-DbName", required=True, help="specify DB name")
+        parser.add_argument("-DbUser", required=True, help="specify DB user")
+        parser.add_argument("-lambdaName", default=None, help="specify credentials lambda name")
         try:
-            args = parser.parse_args(line.strip().split(' '))
-            connProp = self.database_utils.get_connection_to_redshift(clusterIdentifier = args.cluster, DbName=args.DbName, DbUser=args.DbUser, lambdaName=args.lambdaName)
-            dbUrl = connProp['db_url']
-            self.ip.run_line_magic('sql', dbUrl)
+            args = parser.parse_args(line.strip().split(" "))
+            connProp = self.database_utils.get_connection_to_redshift(
+                clusterIdentifier=args.cluster, DbName=args.DbName, DbUser=args.DbUser, lambdaName=args.lambdaName
+            )
+            dbUrl = connProp["db_url"]
+            self.ip.run_line_magic("sql", dbUrl)
             print("connected!")
         except Exception as e:
             print("Error!")
@@ -200,25 +183,18 @@ class RedshiftMagics(DatabaseMagics):
             print("must provide redshift cluster name")
             return
 
-        parser = ArgumentParserNoSysExit(description='start Redshift connection')
-        parser.add_argument('-cluster', required=True,
-                            help='specify cluster name')
+        parser = ArgumentParserNoSysExit(description="start Redshift connection")
+        parser.add_argument("-cluster", required=True, help="specify cluster name")
         try:
-            args = parser.parse_args(line.strip().split(' '))
+            args = parser.parse_args(line.strip().split(" "))
             self.database_utils.delete_redshift_cluster(args.cluster)
         except Exception as e:
             print("Error!")
             print(str(e))
 
-
     @needs_local_scope
     @cell_magic
-    def ddl(
-        self,
-        line: str,
-        cell: str,
-        local_ns: Optional[Dict[str, str]] = None
-    ) -> None:
+    def ddl(self, line: str, cell: str, local_ns: Optional[Dict[str, str]] = None) -> None:
         """
         Executes a SQL ddl statement.
 
@@ -269,14 +245,12 @@ class RedshiftMagics(DatabaseMagics):
 
         if len(line) == 0:
             return self.database_utils.getCatalog()
-        parser = ArgumentParserNoSysExit(description='display all databases, tables and columns')
-        parser.add_argument('-s', nargs='?', default=None,
-                            help='specify external schema name')
-        parser.add_argument('-t', nargs='?', default=None,
-                            help='specify external table name')
+        parser = ArgumentParserNoSysExit(description="display all databases, tables and columns")
+        parser.add_argument("-s", nargs="?", default=None, help="specify external schema name")
+        parser.add_argument("-t", nargs="?", default=None, help="specify external table name")
 
         try:
-            args = parser.parse_args(line.strip().split(' '))
+            args = parser.parse_args(line.strip().split(" "))
             return self.database_utils.getCatalog(schema_name=args.s, table_name=args.t)
         except Exception as e:
             print("Error!")
@@ -306,26 +280,21 @@ class RedshiftMagics(DatabaseMagics):
         """
         if len(line) == 0:
             return self.database_utils.getCatalog()
-        parser = ArgumentParserNoSysExit(description='create external schema in Redshift to point to Glue Catalog')
-        parser.add_argument('-s', nargs='?', default=None,
-                            help='specify external schema name')
-        parser.add_argument('-g', nargs='?', default=None,
-                            help='specify glue database')
+        parser = ArgumentParserNoSysExit(description="create external schema in Redshift to point to Glue Catalog")
+        parser.add_argument("-s", nargs="?", default=None, help="specify external schema name")
+        parser.add_argument("-g", nargs="?", default=None, help="specify glue database")
 
         try:
-            args = parser.parse_args(line.strip().split(' '))
+            args = parser.parse_args(line.strip().split(" "))
 
-            self.database_utils.create_external_schema(schema_name = args.s, glue_database =args.g)
+            self.database_utils.create_external_schema(schema_name=args.s, glue_database=args.g)
         except Exception as e:
             print("Error!")
             print(str(e))
 
     @cell_magic
     def create_external_table(
-        self,
-        line: str,
-        cell: str,
-        local_ns: Optional[Dict[str, str]] = None
+        self, line: str, cell: str, local_ns: Optional[Dict[str, str]] = None
     ) -> IPython.core.display.JSON:
         """
         Create external table in S3 and Glue Catalog
@@ -356,25 +325,25 @@ class RedshiftMagics(DatabaseMagics):
         """
         if len(line) == 0:
             return self.database_utils.getCatalog()
-        parser = ArgumentParserNoSysExit(description='create external table in S3 and Glue Catalog')
-        parser.add_argument('-g',
-                            help='specify glue database name')
-        parser.add_argument('-t',
-                            help='specify table name')
-        parser.add_argument('-f', nargs='?', default='parquet', choices=['parquet', 'csv'],
-                            help='specify file format')
-        parser.add_argument('-l', nargs='?', default=None,
-                            help='specify s3 location or leave out to use Glue DB location')
-        parser.add_argument('-u', nargs='?', default='',
-                            help='other unload properties')
+        parser = ArgumentParserNoSysExit(description="create external table in S3 and Glue Catalog")
+        parser.add_argument("-g", help="specify glue database name")
+        parser.add_argument("-t", help="specify table name")
+        parser.add_argument("-f", nargs="?", default="parquet", choices=["parquet", "csv"], help="specify file format")
+        parser.add_argument(
+            "-l", nargs="?", default=None, help="specify s3 location or leave out to use Glue DB location"
+        )
+        parser.add_argument("-u", nargs="?", default="", help="other unload properties")
 
         try:
-            args = parser.parse_args(line.strip().split(' '))
+            args = parser.parse_args(line.strip().split(" "))
 
-            return self.database_utils.create_external_table(select=cell,database_name=args.g, table_name=args.t, format=args.f, s3_location=args.l, options=args.u)
+            return self.database_utils.create_external_table(
+                select=cell, database_name=args.g, table_name=args.t, format=args.f, s3_location=args.l, options=args.u
+            )
         except Exception as e:
             print("Error!")
             print(str(e))
+
     #
     # def apt_completers(self, event):
     #     """ This should return a list of strings with possible completions.
@@ -430,14 +399,13 @@ class AthenaMagics(DatabaseMagics):
             print("must provide an athena database name")
             return
 
-        parser = ArgumentParserNoSysExit(description='start Redshift connection')
-        parser.add_argument('-database', required=True,
-                            help='specify database name')
+        parser = ArgumentParserNoSysExit(description="start Redshift connection")
+        parser.add_argument("-database", required=True, help="specify database name")
         try:
-            args = parser.parse_args(line.strip().split(' '))
+            args = parser.parse_args(line.strip().split(" "))
             connProp = self.database_utils.get_connection_to_athena(args.database)
-            dbUrl = connProp['db_url']
-            self.ip.run_line_magic('sql', dbUrl)
+            dbUrl = connProp["db_url"]
+            self.ip.run_line_magic("sql", dbUrl)
             print("connected!")
         except Exception as e:
             print("Error!")
@@ -464,12 +432,11 @@ class AthenaMagics(DatabaseMagics):
         """
         if len(line) == 0:
             return self.database_utils.getCatalog()
-        parser = ArgumentParserNoSysExit(description='display all databases, tables and columns')
-        parser.add_argument('-database', nargs='?', default=None, required=True,
-                            help='specify database name ')
+        parser = ArgumentParserNoSysExit(description="display all databases, tables and columns")
+        parser.add_argument("-database", nargs="?", default=None, required=True, help="specify database name ")
 
         try:
-            args = parser.parse_args(line.strip().split(' '))
+            args = parser.parse_args(line.strip().split(" "))
             return self.database_utils.getCatalog(database=args.database)
         except Exception as e:
             print("Error!")

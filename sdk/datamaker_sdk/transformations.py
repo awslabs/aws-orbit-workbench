@@ -1,41 +1,35 @@
-from aws.utils.notebooks.common import get_workspace
-import aws.utils.notebooks.spark.emr as sparkConnection
-import boto3
-import logging
-import os
-import time
 import datetime
-import aws.utils.notebooks.controller as controller
 import json
-from pathlib import Path
-from typing import Dict, List, Any
+import logging
+import time
+from typing import Any, Dict, List
+
+import boto3
+
+import datamaker_sdk.controller as controller
+import datamaker_sdk.emr as sparkConnection
+from datamaker_sdk.common import get_workspace
 
 # Initialize parameters
-logging.basicConfig(
-    format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.INFO,
-    datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
 
 logger = logging.getLogger()
-glue = boto3.client('glue')
-sns = boto3.client('sns')
-s3 = boto3.client('s3')
+glue = boto3.client("glue")
+sns = boto3.client("sns")
+s3 = boto3.client("s3")
 
 # Adding output path and other parameters for the reports
 notebook_name = "Automated-Data-Transformations.ipynb"
 workspace = get_workspace()
-team_space = workspace['team_space']
-env_name = workspace['env_name']
+team_space = workspace["team_space"]
+env_name = workspace["env_name"]
 source_path = "$DATAMAKERE_TRANSFORMATION_NOTEBOOKS_ROOT"
-base_path = 'datamaker/profiling'
+base_path = "datamaker/profiling"
 logger.info(f"Team space: {team_space}, Environment name: {env_name}")
 
 
 def create_tasks(
-    glue_tables: List[str],
-    target_folder: str,
-    database: str,
-    samplingRatio: float
+    glue_tables: List[str], target_folder: str, database: str, samplingRatio: float
 ) -> List[Dict[str, str]]:
     """
     Creating a data profiling task for each Glue table in the database.
@@ -71,18 +65,14 @@ def create_tasks(
     """
     i = 0
     tasks = []
-    for table in glue_tables['TableList']:
+    for table in glue_tables["TableList"]:
         i = i + 1
         task = {
             "notebookName": notebook_name,
             "sourcePath": source_path,
             "targetPath": f"{base_path}/{target_folder}",
             "targetPrefix": "p{}".format(i),
-            "params": {
-                "database_name": database,
-                "table_to_profile": table['Name'],
-                "samplingRatio": samplingRatio
-            }
+            "params": {"database_name": database, "table_to_profile": table["Name"], "samplingRatio": samplingRatio},
         }
         tasks.append(task)
     logger.debug(f"Tasks: {json.dumps(tasks, indent=4, sort_keys=True, default=str)}")
@@ -151,86 +141,67 @@ def data_profile(parameters: Dict[str, str]) -> Dict[str, Any]:
     """
 
     # Initialize: Check if there are missing optional parameters
-    if 'reuse_cluster' not in parameters:
-        parameters['reuse_cluster'] = "True"
-    if 'start_cluster' not in parameters:
-        parameters['start_cluster'] = "True"
-    if 'cluster_name' not in parameters:
-        parameters['cluster_name'] = "lake-user-TestCluster"
-    if 'terminate_cluster' not in parameters:
-        parameters['terminate_cluster'] = "False"
-    if 'container_concurrency' not in parameters:
-        parameters['container_concurrency'] = 1
-    if 'show_container_log' not in parameters:
-        parameters['show_container_log'] = False
-    if 'core_instance_count' not in parameters:
-        parameters['core_instance_count'] = 4
-    if 'samplingRatio' not in parameters:
-        parameters['samplingRatio'] = 0.05
+    if "reuse_cluster" not in parameters:
+        parameters["reuse_cluster"] = "True"
+    if "start_cluster" not in parameters:
+        parameters["start_cluster"] = "True"
+    if "cluster_name" not in parameters:
+        parameters["cluster_name"] = "lake-user-TestCluster"
+    if "terminate_cluster" not in parameters:
+        parameters["terminate_cluster"] = "False"
+    if "container_concurrency" not in parameters:
+        parameters["container_concurrency"] = 1
+    if "show_container_log" not in parameters:
+        parameters["show_container_log"] = False
+    if "core_instance_count" not in parameters:
+        parameters["core_instance_count"] = 4
+    if "samplingRatio" not in parameters:
+        parameters["samplingRatio"] = 0.05
 
     # Start Spark
     logger.info(f"Starting Spark cluster")
-    livy_url, cluster_id, started = sparkConnection.connect_to_spark(parameters['cluster_name'],
-                                                                     reuseCluster=parameters['reuse_cluster'],
-                                                                     startCluster=parameters['start_cluster'],
-                                                                     clusterArgs={
-                                                                         "CoreInstanceCount": parameters['core_instance_count']
-                                                                     })
+    livy_url, cluster_id, started = sparkConnection.connect_to_spark(
+        parameters["cluster_name"],
+        reuseCluster=parameters["reuse_cluster"],
+        startCluster=parameters["start_cluster"],
+        clusterArgs={"CoreInstanceCount": parameters["core_instance_count"]},
+    )
     logger.info(f"Cluster is ready:{livy_url} livy_url:{cluster_id} cluster_id: started:{started}")
 
     # Get profiling data and print pretty json
-    response = glue.get_tables(
-        DatabaseName=parameters['database'],
-        Expression=parameters['table_filter']
-    )
+    response = glue.get_tables(DatabaseName=parameters["database"], Expression=parameters["table_filter"])
     logger.debug(f"Glue response: {json.dumps(response, indent=4, sort_keys=True, default=str)}")
 
-    if len(response['TableList']) == 0:
+    if len(response["TableList"]) == 0:
         assert False
 
-    tasks = create_tasks(response, parameters['target_folder'], parameters['database'], parameters['samplingRatio'])
+    tasks = create_tasks(response, parameters["target_folder"], parameters["database"], parameters["samplingRatio"])
 
     # Running the tasks
     logger.info(f"Starting to run spark tasks")
     notebooks_to_run = {
-        "compute": {
-            "container": {
-                "p_concurrent": parameters['container_concurrency']
-            }
-        },
+        "compute": {"container": {"p_concurrent": parameters["container_concurrency"]}},
         "tasks": tasks,
         "env_vars": [
-            {
-                'name': 'cluster_name',
-                'value': parameters['cluster_name']
-            },
-            {
-                'name': 'start_cluster',
-                'value': parameters['start_cluster']
-            },
-            {
-                'name': 'reuse_cluster',
-                'value': parameters['reuse_cluster']
-            },
-            {
-                'name': 'terminate_cluster',
-                'value': parameters['terminate_cluster']
-            }
-        ]
+            {"name": "cluster_name", "value": parameters["cluster_name"]},
+            {"name": "start_cluster", "value": parameters["start_cluster"]},
+            {"name": "reuse_cluster", "value": parameters["reuse_cluster"]},
+            {"name": "terminate_cluster", "value": parameters["terminate_cluster"]},
+        ],
     }
 
     # Append sns topic if given as parameter
-    if 'sns_topic' in parameters:
-        notebooks_to_run['compute']["sns.topic.name"] = parameters['sns_topic']
+    if "sns_topic" in parameters:
+        notebooks_to_run["compute"]["sns.topic.name"] = parameters["sns_topic"]
 
     # Running the tasks on containers
     t = time.localtime()
     current_time = time.strftime("%H:%M:%S", t)
 
-    if 'trigger_name' in parameters:
-        if 'frequency' not in parameters:
+    if "trigger_name" in parameters:
+        if "frequency" not in parameters:
             raise Exception("Missing frequency parameter while a trigger_name was given")
-        container = controller.schedule_notebooks(parameters['trigger_name'], parameters['frequency'], notebooks_to_run)
+        container = controller.schedule_notebooks(parameters["trigger_name"], parameters["frequency"], notebooks_to_run)
     else:
         container = controller.run_notebooks(notebooks_to_run)
 
@@ -241,14 +212,17 @@ def data_profile(parameters: Dict[str, str]) -> Dict[str, Any]:
         containers = containers + container
 
     logger.info(
-        f"Task : {current_time}, {str(container)}, --> {notebooks_to_run['tasks'][0]['params']['table_to_profile']}")
+        f"Task : {current_time}, {str(container)}, --> {notebooks_to_run['tasks'][0]['params']['table_to_profile']}"
+    )
 
     logger.debug(f"Starting time: {datetime.datetime.now()}")
-    controller.wait_for_tasks_to_complete(containers, 120, int(parameters['total_runtime'] / 120), parameters['show_container_log'])
+    controller.wait_for_tasks_to_complete(
+        containers, 120, int(parameters["total_runtime"] / 120), parameters["show_container_log"]
+    )
     logger.debug(f"Ending time: {datetime.datetime.now()}")
 
     # Shutting down Spark cluster
-    if started and parameters['terminate_cluster'] == 'True':
+    if started and parameters["terminate_cluster"] == "True":
         logger.info(f"Shutting down Spark cluster")
         sparkConnection.stop_cluster(cluster_id)
 
@@ -256,11 +230,8 @@ def data_profile(parameters: Dict[str, str]) -> Dict[str, Any]:
 
     # Returning the result path and tables that ran on
     tables = []
-    for table in response['TableList']:
-        tables.append(table['Name'])
-    res = {'tables': tables,
-           'result_path': f"{base_path}/{parameters['target_folder']}"}
+    for table in response["TableList"]:
+        tables.append(table["Name"])
+    res = {"tables": tables, "result_path": f"{base_path}/{parameters['target_folder']}"}
 
     return res
-
-

@@ -1,30 +1,15 @@
-#  Copyright 2019 Amazon.com, Inc. and its affiliates. All Rights Reserved.
-#  #
-#  Licensed under the Amazon Software License (the 'License').
-#  You may not use this file except in compliance with the License.
-#  A copy of the License is located at
-#  #
-#    http://aws.amazon.com/asl/
-#  #
-#  or in the 'license' file accompanying this file. This file is distributed
-#  on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-#  express or implied. See the License for the specific language governing
-#  permissions and limitations under the License.
-
-from IPython.core.magic import (Magics, magics_class, line_magic,
-                                cell_magic, line_cell_magic, needs_local_scope)
-import IPython.core.display
-from IPython import get_ipython
-import sys
-from .database import get_redshift,get_athena
-from .json import run_schema_induction_args, display_json
-import IPython.core.completerlib as completerlib
-import qgrid
-from pandas import DataFrame
 import argparse
-from .controller import controller
 import json
-from typing import Dict, Any, Union, Optional, List
+import sys
+from typing import Any, Dict, List, Optional, Union
+
+import IPython.core.display
+import qgrid
+from IPython import get_ipython
+from IPython.core.magic import Magics, cell_magic, line_cell_magic, line_magic, magics_class, needs_local_scope
+
+from datamaker_sdk.controller import controller
+from datamaker_sdk.json import display_json, run_schema_induction_args
 
 
 def exception_handler(exception_type, exception, traceback):
@@ -40,14 +25,11 @@ class ArgumentParserNoSysExit(argparse.ArgumentParser):
 @magics_class
 class DataMakerMagics(Magics):
     def __init__(self, shell):
-        super(DataMakerMagics,self).__init__(shell)
+        super(DataMakerMagics, self).__init__(shell)
         self.ip = get_ipython()
 
     @line_magic
-    def schema_induction(
-        self,
-        line: str
-    ) -> Dict[str, Union[str, Dict[str, str]]]:
+    def schema_induction(self, line: str) -> Dict[str, Union[str, Dict[str, str]]]:
         """
         Calls on run_process to run Schema Induction with given user arguments gets ddl and schema metadata for a
         specified table.
@@ -85,11 +67,7 @@ class DataMakerMagics(Magics):
 
     @needs_local_scope
     @line_magic
-    def display_grid(
-        self,
-        line: str,
-        local_ns: Optional[Dict[str, str]] = None
-    ) -> qgrid.QGridWidget:
+    def display_grid(self, line: str, local_ns: Optional[Dict[str, str]] = None) -> qgrid.QGridWidget:
         """
         Renders a DataFrame or Series as an interactive qgrid, represented by an instance of the QgridWidget class.
 
@@ -114,18 +92,15 @@ class DataMakerMagics(Magics):
         """
         lineArgs = line.split(" ")
         dataset = local_ns[lineArgs[0]]
-        return qgrid.show_grid(dataset.DataFrame(), show_toolbar=False, grid_options={'forceFitColumns': False,
-                                                                                     'defaultColumnWidth': 140,
-                                                                                      'editable': False,
-                                                                                     'autoEdit': False})
+        return qgrid.show_grid(
+            dataset.DataFrame(),
+            show_toolbar=False,
+            grid_options={"forceFitColumns": False, "defaultColumnWidth": 140, "editable": False, "autoEdit": False},
+        )
 
     @needs_local_scope
     @line_magic
-    def display_tree(
-        self,
-        line: str,
-        local_ns: Optional[Dict[str, str]] = None
-    ) -> IPython.core.display.JSON:
+    def display_tree(self, line: str, local_ns: Optional[Dict[str, str]] = None) -> IPython.core.display.JSON:
         """
 
         Parameters
@@ -150,17 +125,12 @@ class DataMakerMagics(Magics):
         return display_json(dataset)
 
     @line_magic
-    def short_errors(self,line):
+    def short_errors(self, line):
         ip = get_ipython()
         ip._showtraceback = exception_handler
 
     @cell_magic
-    def schedule_notebook(
-        self,
-        line: str,
-        cell: str,
-        local_ns: Optional[Dict[str, str]] = None
-    ) -> str:
+    def schedule_notebook(self, line: str, cell: str, local_ns: Optional[Dict[str, str]] = None) -> str:
         """
         Schedule a notebook execution.
 
@@ -227,28 +197,23 @@ class DataMakerMagics(Magics):
             print("must provide -cron and -id parameters")
             return
 
-        parser = ArgumentParserNoSysExit(description='schedule a task to be executed on container')
-        parser.add_argument('-cron', required=True, nargs='+',
-                            help='specify cron-based schedule')
+        parser = ArgumentParserNoSysExit(description="schedule a task to be executed on container")
+        parser.add_argument("-cron", required=True, nargs="+", help="specify cron-based schedule")
 
-        parser.add_argument('-id', required=True,
-                            help='specify unique identifier for this scheduled task')
+        parser.add_argument("-id", required=True, help="specify unique identifier for this scheduled task")
 
         try:
-            args = parser.parse_args(line.strip().split(' '))
-            cronStr = ' '.join(args.cron)
-            return controller.schedule_notebooks(triggerName=args.id, frequency=cronStr, taskConfiguration=json.loads(cell))
+            args = parser.parse_args(line.strip().split(" "))
+            cronStr = " ".join(args.cron)
+            return controller.schedule_notebooks(
+                triggerName=args.id, frequency=cronStr, taskConfiguration=json.loads(cell)
+            )
         except Exception as e:
             print("Error!")
             print(str(e))
 
     @cell_magic
-    def run_notebook(
-        self,
-        line: Optional[str],
-        cell: str,
-        local_ns: Optional[Dict[str, str]] = None
-    ) -> List[str]:
+    def run_notebook(self, line: Optional[str], cell: str, local_ns: Optional[Dict[str, str]] = None) -> List[str]:
         """
         Run a notebook execution.
 
@@ -321,14 +286,8 @@ class DataMakerMagics(Magics):
             print("Error!")
             print(str(e))
 
-
     @cell_magic
-    def run_python(
-        self,
-        line: Optional[str],
-        cell: str,
-        local_ns: Optional[Dict[str, str]] = None
-    ) -> List[str]:
+    def run_python(self, line: Optional[str], cell: str, local_ns: Optional[Dict[str, str]] = None) -> List[str]:
         """
         Run some python code.
 
@@ -402,10 +361,7 @@ class DataMakerMagics(Magics):
             print(str(e))
 
     @line_magic
-    def delete_schedule_task(
-        self,
-        line: str
-    ) -> None:
+    def delete_schedule_task(self, line: str) -> None:
         """
         Deletes a scheduled task execution.
 
@@ -426,11 +382,10 @@ class DataMakerMagics(Magics):
         if len(line) == 0:
             print("must provide -id parameter")
             return
-        parser = ArgumentParserNoSysExit(description='delete schedule task')
-        parser.add_argument('-id', required=True,
-                            help='specify unique identifier for this scheduled task')
+        parser = ArgumentParserNoSysExit(description="delete schedule task")
+        parser.add_argument("-id", required=True, help="specify unique identifier for this scheduled task")
         try:
-            args = parser.parse_args(line.strip().split(' '))
+            args = parser.parse_args(line.strip().split(" "))
             return controller.delete_task_schedule(triggerName=args.id)
         except Exception as e:
             print("Error!")
@@ -449,6 +404,7 @@ def load_ipython_extension(ipython):
     # call the default constructor on it.
     ipython.register_magics(DataMakerMagics)
 
+
 #
 # def apt_completers(self, event):
 #     """ This should return a list of strings with possible completions.
@@ -466,4 +422,3 @@ def load_ipython_extension(ipython):
 ip = get_ipython()
 magics = DataMakerMagics(ip)
 ip.register_magics(magics)
-

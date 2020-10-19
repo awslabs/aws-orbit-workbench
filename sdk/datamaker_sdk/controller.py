@@ -1,97 +1,73 @@
-#  Copyright 2019 Amazon.com, Inc. and its affiliates. All Rights Reserved.
-#  #
-#  Licensed under the Amazon Software License (the 'License').
-#  You may not use this file except in compliance with the License.
-#  A copy of the License is located at
-#  #
-#    http://aws.amazon.com/asl/
-#  #
-#  or in the 'license' file accompanying this file. This file is distributed
-#  on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
-#  express or implied. See the License for the specific language governing
-#  permissions and limitations under the License.
+import json
+import logging
+import os
+import time
+import urllib
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
 
 import boto3
-import json
-import os
 import pandas as pd
-import urllib
-from yaml import safe_load, YAMLError
-import logging
-import time
-from ..common import get_properties
-from dateutil import tz
-from datetime import datetime
-from typing import Any, Optional, Dict, List, Union
+
+from datamaker_sdk.common import get_properties
 
 logger = logging.getLogger()
-logging.basicConfig(
-    format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.INFO,
-    datefmt='%Y-%m-%d %H:%M:%S')
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
 
 
-def get_execution_history(
-        notebookDir: str,
-        notebookName: str
-) -> pd.DataFrame:
+def get_execution_history(notebookDir: str, notebookName: str) -> pd.DataFrame:
     """
-    Get Notebook Execution History
+     Get Notebook Execution History
 
-    Parameters
-    ----------
-    notebookDir: str
-        Name of notebook directory.
-    notebookName: str
-        Name of notebook.
+     Parameters
+     ----------
+     notebookDir: str
+         Name of notebook directory.
+     notebookName: str
+         Name of notebook.
 
-    Returns
-    -------
-    df: pd.DataFrame
-        Notebook execution history from s3.
+     Returns
+     -------
+     df: pd.DataFrame
+         Notebook execution history from s3.
 
-    Example
-    --------
-   >>> import aws.utils.notebooks.controller as controller
-   >>> controller.get_execution_history(notebookDir="notebook-directory", notebookName='mynotebook')
+     Example
+     --------
+    >>> import aws.utils.notebooks.controller as controller
+    >>> controller.get_execution_history(notebookDir="notebook-directory", notebookName='mynotebook')
     """
     props = get_properties()
 
     return _get_execution_history_from_s3(notebookDir, notebookName, props)
 
 
-def _get_execution_history_from_s3(
-        notebookBaseDir: str,
-        srcNotebook: str,
-        props: str
-) -> pd.DataFrame:
+def _get_execution_history_from_s3(notebookBaseDir: str, srcNotebook: str, props: str) -> pd.DataFrame:
     """
     Get Notebook Execution History from s3
     """
-    s3 = boto3.client('s3')
+    s3 = boto3.client("s3")
 
     notebookDir = os.path.join(notebookBaseDir, srcNotebook.split(".")[0])
 
-    path = "{}/output/notebooks/{}/".format(props['DATAMAKER_TEAM_SPACE'], notebookDir)
+    path = "{}/output/notebooks/{}/".format(props["DATAMAKER_TEAM_SPACE"], notebookDir)
     executions = []
-    objects = s3.list_objects_v2(Bucket=props['AWS_DATAMAKER_S3_BUCKET'], Prefix=path)
-    if ('Contents' in objects.keys()):
-        for key in s3.list_objects_v2(Bucket=props['AWS_DATAMAKER_S3_BUCKET'], Prefix=path)['Contents']:
-            if key['Key'][-1] == '/':
+    objects = s3.list_objects_v2(Bucket=props["AWS_DATAMAKER_S3_BUCKET"], Prefix=path)
+    if "Contents" in objects.keys():
+        for key in s3.list_objects_v2(Bucket=props["AWS_DATAMAKER_S3_BUCKET"], Prefix=path)["Contents"]:
+            if key["Key"][-1] == "/":
                 continue
-            notebookName = os.path.basename(key['Key'])
-            path = key['Key']
+            notebookName = os.path.basename(key["Key"])
+            path = key["Key"]
             arg = urllib.parse.quote(path)
-            s3path = 's3://{}/{}'.format(props['AWS_DATAMAKER_S3_BUCKET'], path)
+            s3path = "s3://{}/{}".format(props["AWS_DATAMAKER_S3_BUCKET"], path)
             #     link = '<a href="{}" target="_blank">{}</a>'.format(site + arg,"open")
-            timestamp = key['LastModified']
+            timestamp = key["LastModified"]
             executions.append((notebookName, timestamp, s3path))
     else:
-        print("No output notebooks founds at: s3://{}/{}".format(props['AWS_DATAMAKER_S3_BUCKET'], path))
+        print("No output notebooks founds at: s3://{}/{}".format(props["AWS_DATAMAKER_S3_BUCKET"], path))
 
-
-    df = pd.DataFrame(executions, columns=['relativePath', 'timestamp', 's3path'])
+    df = pd.DataFrame(executions, columns=["relativePath", "timestamp", "s3path"])
     return df
 
 
@@ -169,7 +145,7 @@ def run_python(taskConfiguration: dict) -> Any:
     ...          ]
     ...      })
     """
-    taskConfiguration['task_type'] = 'python'
+    taskConfiguration["task_type"] = "python"
     return _run_task(taskConfiguration)
 
 
@@ -237,7 +213,7 @@ def run_notebooks(taskConfiguration: dict) -> Any:
     ...         }
     ... )
     """
-    taskConfiguration['task_type'] = 'jupyter'
+    taskConfiguration["task_type"] = "jupyter"
     return _run_task(taskConfiguration)
 
 
@@ -254,26 +230,24 @@ def _run_task(taskConfiguration: dict) -> Any:
     -------
     Response Payload
     """
-    lambda_client = boto3.client('lambda')
+    lambda_client = boto3.client("lambda")
     payload = json.dumps(taskConfiguration)
     logger.debug(payload)
     response = lambda_client.invoke(
         FunctionName=_get_invoke_function_name(),
-        InvocationType='RequestResponse',
-        LogType='Tail',
-        Payload=bytes(payload, 'utf-8')
+        InvocationType="RequestResponse",
+        LogType="Tail",
+        Payload=bytes(payload, "utf-8"),
     )
-    if (response["ResponseMetadata"]["HTTPStatusCode"] == 200):
-        response_payload = json.loads(response['Payload'].read().decode("utf-8"))
+    if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
+        response_payload = json.loads(response["Payload"].read().decode("utf-8"))
+    else:
+        response_payload = None
 
     return response_payload
 
 
-def schedule_python(
-        triggerName: str,
-        frequency: str,
-        taskConfiguration: Dict[str, Any]
-) -> str:
+def schedule_python(triggerName: str, frequency: str, taskConfiguration: Dict[str, Any]) -> str:
     """
     Schedule Python Task
 
@@ -314,7 +288,7 @@ def schedule_python(
     --------
     Schedule python task similar to 'run_python' task config. example (refer to 'run_python').
     """
-    taskConfiguration['task_type'] = 'python'
+    taskConfiguration["task_type"] = "python"
     return schedule_task(triggerName, frequency, taskConfiguration)
 
 
@@ -358,15 +332,11 @@ def schedule_notebooks(triggerName: str, frequency: str, taskConfiguration: dict
     --------
     Schedule python task similar to 'run_notebook' task config. example (refer to 'run_notebook').
     """
-    taskConfiguration['task_type'] = 'jupyter'
+    taskConfiguration["task_type"] = "jupyter"
     return schedule_task(triggerName, frequency, taskConfiguration)
 
 
-def schedule_task(
-        triggerName: str,
-        frequency: str,
-        notebookConfiguration: dict
-) -> Any:
+def schedule_task(triggerName: str, frequency: str, notebookConfiguration: dict) -> Any:
     """
     Parameters
     ----------
@@ -385,13 +355,11 @@ def schedule_task(
     -------
     Example for schedule_task similar to run_python and run_notebook tasks (refer to 'run_python').
     """
-    lambda_client = boto3.client('lambda')
-    events_client = boto3.client('events')
-    fn_response = lambda_client.get_function(
-        FunctionName=_get_invoke_function_name()
-    )
+    lambda_client = boto3.client("lambda")
+    events_client = boto3.client("events")
+    fn_response = lambda_client.get_function(FunctionName=_get_invoke_function_name())
 
-    fn_arn = fn_response['Configuration']['FunctionArn']
+    fn_arn = fn_response["Configuration"]["FunctionArn"]
 
     try:
         events_client.delete_rule(Name=triggerName)
@@ -403,21 +371,17 @@ def schedule_task(
     rule_response = events_client.put_rule(
         Name=triggerName,
         ScheduleExpression=frequency.strip(),
-        State='ENABLED',
+        State="ENABLED",
     )
 
     target_response = events_client.put_targets(
         Rule=triggerName,
         Targets=[
-            {
-                'Id': "1",
-                'Arn': fn_arn,
-                'Input': json.dumps(notebookConfiguration)
-            },
-        ]
+            {"Id": "1", "Arn": fn_arn, "Input": json.dumps(notebookConfiguration)},
+        ],
     )
 
-    return rule_response['RuleArn']
+    return rule_response["RuleArn"]
 
 
 def delete_task_schedule(triggerName: str) -> None:
@@ -439,12 +403,8 @@ def delete_task_schedule(triggerName: str) -> None:
     >>> import aws.utils.notebooks.controller as controller
     >>> controller.delete_scheduled_task(triggerName = 'arn:aws:events:...')
     """
-    events_client = boto3.client('events')
-    response = events_client.remove_targets(
-        Rule=triggerName,
-        Ids=['1'],
-        Force=True
-    )
+    events_client = boto3.client("events")
+    response = events_client.remove_targets(Rule=triggerName, Ids=["1"], Force=True)
 
     events_client.delete_rule(Name=triggerName, Force=True)
     print("notebook schedule deleted: ", triggerName)
@@ -470,56 +430,60 @@ def get_active_tasks(user_filter: Optional[Any]) -> Union[dict, List[Dict[str, A
     """
     ecs = boto3.client("ecs")
     props = get_properties()
-    clusterName = props['ecs_cluster']
+    clusterName = props["ecs_cluster"]
 
     task_definitions = []
     tasks = ecs.list_tasks(
         cluster=clusterName,
-    )['taskArns']
+    )["taskArns"]
 
     if len(tasks) == 0:
         return {}
     task_descs = ecs.describe_tasks(
-        cluster=f"datamaker-{props['AWS_DATAMAKER_ENV']}-{props['DATAMAKER_TEAM_SPACE']}-Cluster",
-        tasks=tasks
-    )['tasks']
+        cluster=f"datamaker-{props['AWS_DATAMAKER_ENV']}-{props['DATAMAKER_TEAM_SPACE']}-Cluster", tasks=tasks
+    )["tasks"]
     for t in task_descs:
         task_definition = {}
-        task_definition['lastStatus'] = t['lastStatus']
+        task_definition["lastStatus"] = t["lastStatus"]
         #         task_definition['container'] = t
         vars = {}
 
-        for k in t['overrides']['containerOverrides'][0]['environment']:
-            vars[k['name']] = k['value']
-        datamaker_task = json.loads(vars['tasks'].replace("'", '"'))
-        if 'notebookName' in datamaker_task['tasks'][0]:
-            task_name = datamaker_task['tasks'][0]['notebookName'].split('.')[0] if 'notebookName' in \
-                                                                                    datamaker_task['tasks'][0] else ''
-        elif 'module' in datamaker_task['tasks'][0]:
-            module = datamaker_task['tasks'][0]['module']
-            functionName = datamaker_task['tasks'][0]['functionName'] if 'functionName' in datamaker_task['tasks'][0] else ''
-            task_name = f'{module}.{functionName}'
+        for k in t["overrides"]["containerOverrides"][0]["environment"]:
+            vars[k["name"]] = k["value"]
+        datamaker_task = json.loads(vars["tasks"].replace("'", '"'))
+        if "notebookName" in datamaker_task["tasks"][0]:
+            task_name = (
+                datamaker_task["tasks"][0]["notebookName"].split(".")[0]
+                if "notebookName" in datamaker_task["tasks"][0]
+                else ""
+            )
+        elif "module" in datamaker_task["tasks"][0]:
+            module = datamaker_task["tasks"][0]["module"]
+            functionName = (
+                datamaker_task["tasks"][0]["functionName"] if "functionName" in datamaker_task["tasks"][0] else ""
+            )
+            task_name = f"{module}.{functionName}"
         else:
-            task_name = 'unknown'
+            task_name = "unknown"
 
-        task_definition['task_name'] = task_name
-        task_definition['taskArn'] = t['taskArn']
-        task_definition['taskID'] = t['taskArn']
+        task_definition["task_name"] = task_name
+        task_definition["taskArn"] = t["taskArn"]
+        task_definition["taskID"] = t["taskArn"]
 
-        if 'startedAt' in t:
-            start_at = t['startedAt']
-            task_definition['epoch'] = start_at.timestamp()
-            start_time = start_at.strftime('%Y-%m-%d %H:%M:%S')
-            task_definition['start_time'] = start_time
-            if 'stoppedAt' in t:
-                duration = t['stoppedAt'] - start_at
-                task_definition['stop_time'] = t['stoppedAt']
+        if "startedAt" in t:
+            start_at = t["startedAt"]
+            task_definition["epoch"] = start_at.timestamp()
+            start_time = start_at.strftime("%Y-%m-%d %H:%M:%S")
+            task_definition["start_time"] = start_time
+            if "stoppedAt" in t:
+                duration = t["stoppedAt"] - start_at
+                task_definition["stop_time"] = t["stoppedAt"]
             else:
                 now = datetime.now()
                 start_at = start_at.replace(tzinfo=None)
                 duration = now - start_at
 
-            task_definition['duration'] = str(duration).split('.')[0]
+            task_definition["duration"] = str(duration).split(".")[0]
 
         task_definitions.append(task_definition)
 
@@ -541,16 +505,13 @@ def order_def(task_definition: Any) -> datetime:
         Timestamp for a specific task definition, or the current timestamp if one does not already exist.
     """
 
-    if 'epoch' in task_definition:
-        return task_definition['epoch']
+    if "epoch" in task_definition:
+        return task_definition["epoch"]
     return datetime.now().timestamp()
 
 
 def wait_for_tasks_to_complete(
-        tasks: List[str],
-        delay: Optional[int] = 60,
-        maxAttempts: Optional[str] = 10,
-        tail_log: Optional[bool] = False
+    tasks: List[str], delay: Optional[int] = 60, maxAttempts: Optional[str] = 10, tail_log: Optional[bool] = False
 ) -> None:
     """
     Parameters
@@ -577,39 +538,27 @@ def wait_for_tasks_to_complete(
     """
     ecs = boto3.client("ecs")
     logs = boto3.client("logs")
-    paginator = logs.get_paginator('filter_log_events')
+    paginator = logs.get_paginator("filter_log_events")
 
     props = get_properties()
-    clusterName = props['ecs_cluster']
+    clusterName = props["ecs_cluster"]
 
     if not tail_log:
-        waiter = ecs.get_waiter('tasks_stopped')
-        waiter.wait(
-            cluster=clusterName,
-            tasks=tasks,
-            WaiterConfig={
-                'Delay': delay,
-                'MaxAttempts': maxAttempts
-            }
-        )
+        waiter = ecs.get_waiter("tasks_stopped")
+        waiter.wait(cluster=clusterName, tasks=tasks, WaiterConfig={"Delay": delay, "MaxAttempts": maxAttempts})
     else:
         logGroupName = f"/datamaker/tasks/{props['AWS_DATAMAKER_ENV']}/{props['DATAMAKER_TEAM_SPACE']}"
         logger.info("start logging from %s", logGroupName)
         logStreams = []
         for t in tasks:
-            id = t.split('/')[1]
-            logStreams.append('ecs/datamaker-runner/' + id)
+            id = t.split("/")[1]
+            logStreams.append("ecs/datamaker-runner/" + id)
 
         logger.info("waiting until tasks start running")
 
         try:
-            ecs.get_waiter('tasks_running').wait(
-                cluster=clusterName,
-                tasks=tasks,
-                WaiterConfig={
-                    'Delay': delay,
-                    'MaxAttempts': maxAttempts
-                }
+            ecs.get_waiter("tasks_running").wait(
+                cluster=clusterName, tasks=tasks, WaiterConfig={"Delay": delay, "MaxAttempts": maxAttempts}
             )
             logger.info("Tasks started running...")
         except:
@@ -620,19 +569,16 @@ def wait_for_tasks_to_complete(
         try:
             while True:
                 lastTime = logEvents(paginator, logGroupName, logStreams, lastTime)
-                tasks_state = ecs.describe_tasks(
-                    cluster=clusterName,
-                    tasks=tasks
-                )
+                tasks_state = ecs.describe_tasks(cluster=clusterName, tasks=tasks)
 
                 if all_tasks_stopped(tasks_state):
                     logger.info("All tasks stopped")
                     return
 
-                if (remainingDelay < 0):
+                if remainingDelay < 0:
                     maxAttempts -= 1
                     remainingDelay = delay
-                if (maxAttempts < 0):
+                if maxAttempts < 0:
                     logger.info("Stopped waiting as maxAttempts reached")
                     return
                 throttle = 10
@@ -642,12 +588,7 @@ def wait_for_tasks_to_complete(
             logger.error("Error logging from %s.%s", logGroupName, ",".join(logStreams))
 
 
-def logEvents(
-        paginator: Any,
-        logGroupName: Any,
-        logStreams: Any,
-        fromTime: Any
-) -> int:
+def logEvents(paginator: Any, logGroupName: Any, logStreams: Any, fromTime: Any) -> int:
     """
     Parameters
     ----------
@@ -662,10 +603,7 @@ def logEvents(
     Example
     -------
     """
-    logging.basicConfig(
-        format='%(message)s',
-        level=logging.INFO,
-        datefmt='%Y-%m-%d %H:%M:%S')
+    logging.basicConfig(format="%(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
     event_logger = logging.getLogger("event")
 
     response_iterator = paginator.paginate(
@@ -673,22 +611,19 @@ def logEvents(
         logStreamNames=logStreams,
         interleaved=True,
         startTime=fromTime,
-        PaginationConfig={
-            'MaxItems': 10,
-            'PageSize': 10
-        }
+        PaginationConfig={"MaxItems": 10, "PageSize": 10},
     )
     lastTime = 0
     while True:
         for page in response_iterator:
-            for e in page['events']:
-                t = datetime.datetime.fromtimestamp(e['timestamp'] / 1000).strftime('%Y-%m-%d %H:%M:%S')
-                m = e['message']
+            for e in page["events"]:
+                t = datetime.datetime.fromtimestamp(e["timestamp"] / 1000).strftime("%Y-%m-%d %H:%M:%S")
+                m = e["message"]
                 print(t, m)
-                lastTime = e['timestamp']
+                lastTime = e["timestamp"]
 
-            if 'nextToken' in page.keys():
-                marker = page['nextToken']
+            if "nextToken" in page.keys():
+                marker = page["nextToken"]
             else:
                 marker = None
 
@@ -699,11 +634,7 @@ def logEvents(
                 logGroupName=logGroupName,
                 logStreamNames=logStreams,
                 interleaved=True,
-                PaginationConfig={
-                    'MaxItems': 500,
-                    'PageSize': 100,
-                    'StartingToken': marker
-                }
+                PaginationConfig={"MaxItems": 500, "PageSize": 100, "StartingToken": marker},
             )
 
 
@@ -722,7 +653,7 @@ def all_tasks_stopped(tasks_state: Any) -> bool:
         True if all tasks are stopped.
 
     """
-    for t in tasks_state['tasks']:
-        if t['lastStatus'] in ('PENDING', 'RUNNING'):
+    for t in tasks_state["tasks"]:
+        if t["lastStatus"] in ("PENDING", "RUNNING"):
             return False
     return True

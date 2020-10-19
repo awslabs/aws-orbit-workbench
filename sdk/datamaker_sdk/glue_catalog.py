@@ -1,13 +1,13 @@
-import boto3
-import logging
-from ..common import get_workspace
-import time
 import json
-from typing import Any, Optional, List, Dict
-logging.basicConfig(
-    format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.INFO,
-    datefmt='%Y-%m-%d %H:%M:%S')
+import logging
+import time
+from typing import Any, Dict, List, Optional
+
+import boto3
+
+from datamaker_sdk.common import get_workspace
+
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
 
 
@@ -30,17 +30,12 @@ def delete_crawler(crawler: str) -> None:
     >>> import aws.utils.notebooks.glue as glue
     >>> delete_crawler(crawler= "crawler-name")
     """
-    glue = boto3.client('glue')
+    glue = boto3.client("glue")
     glue.delete_crawler(Name=crawler)
     logger.info("existing crawler deleted")
 
 
-def run_crawler(
-        crawler: str,
-        target_db: str,
-        target_path: str,
-        wait: Optional[Any] = True
-) -> str:
+def run_crawler(crawler: str, target_db: str, target_path: str, wait: Optional[Any] = True) -> str:
     """
     This API starts a glue crawler for the given path and will create the tables base on data found in the provided
     database. The call can wait until the crawler is done and table created.
@@ -65,50 +60,41 @@ def run_crawler(
     >>> import aws.utils.notebooks.glue as glue
     >>> response = glue.run_crawler(crawler, target_db, target_path, wait=True)
     """
-    role = get_workspace()['role_arn']
-    glue = boto3.client('glue')
-    try:      
+    role = get_workspace()["role_arn"]
+    glue = boto3.client("glue")
+    try:
         glue.delete_crawler(Name=crawler)
         logger.info("existing crawler deleted")
     except Exception as e:
         error = str(e)
-        if 'EntityNotFoundException' not in error:
+        if "EntityNotFoundException" not in error:
             logger.error(error)
         pass
 
     response = glue.create_crawler(
-            Name=crawler,
-            Role=role,
-            DatabaseName=target_db,
-            Targets={
-                'S3Targets': [
-                    {
-                        'Path': target_path
-                    }
-                ]
-            }
-        )
-    state = response['ResponseMetadata']['HTTPStatusCode']
-    if (state != 200):
+        Name=crawler, Role=role, DatabaseName=target_db, Targets={"S3Targets": [{"Path": target_path}]}
+    )
+    state = response["ResponseMetadata"]["HTTPStatusCode"]
+    if state != 200:
         raise Exception("Failed to create crawler")
 
     glue.start_crawler(Name=crawler)
 
     logger.info("Crawler started...")
-    state = 'INIT'
-    while (state != 'READY'):
+    state = "INIT"
+    while state != "READY":
         response = glue.get_crawler(Name=crawler)
-        state = response['Crawler']['State']
+        state = response["Crawler"]["State"]
         if not wait:
             return state
         logger.info(f"Crawler in state: {state}, waiting a min... ")
         time.sleep(60)
 
     response = glue.get_crawler_metrics(CrawlerNameList=[crawler])
-    if 'CrawlerMetricsList' not in response or 'TablesCreated' not in response['CrawlerMetricsList'][0]:
+    if "CrawlerMetricsList" not in response or "TablesCreated" not in response["CrawlerMetricsList"][0]:
         raise Exception("Crawler failed to create table")
 
-    stats = response['CrawlerMetricsList'][0]
+    stats = response["CrawlerMetricsList"][0]
 
     logger.info(stats)
 
@@ -116,7 +102,7 @@ def run_crawler(
     return state
 
 
-def update_teamspace_lakeformation_permissions(db_name: Optional[str] = '*') -> None:
+def update_teamspace_lakeformation_permissions(db_name: Optional[str] = "*") -> None:
     """
     This call will perform a scan over the provided database's tables. Base on the security selector for the given
     Team Space and base on the current column tags, the permissions will be update to allow access for permitted
@@ -138,59 +124,54 @@ def update_teamspace_lakeformation_permissions(db_name: Optional[str] = '*') -> 
     >>> glue.update_teamspace_lakeformation_permissions(database_name)
     """
     workspace = get_workspace()
-    lambda_client = boto3.client('lambda')
+    lambda_client = boto3.client("lambda")
 
     inp = {
-      "env_name": workspace['env_name'],
-      "team_space": workspace['team_space'],
-      "db_name": db_name,
-      "role_arn": get_workspace()['role_arn']
+        "env_name": workspace["env_name"],
+        "team_space": workspace["team_space"],
+        "db_name": db_name,
+        "role_arn": get_workspace()["role_arn"],
     }
     payload = json.dumps(inp)
     response = lambda_client.invoke(
         FunctionName=f"datamaker-{workspace['env_name']}-authorize_lake_formation_for_role",
-        InvocationType='RequestResponse',
-        LogType='Tail',
-        Payload=bytes(payload, 'utf-8')
+        InvocationType="RequestResponse",
+        LogType="Tail",
+        Payload=bytes(payload, "utf-8"),
     )
 
-    if (response["ResponseMetadata"]["HTTPStatusCode"] == 200):
-        response_payload = json.loads(response['Payload'].read().decode("utf-8"))
-        if 'errorMessage' in response_payload:
-            raise Exception(response_payload['errorMessage'])
+    if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
+        response_payload = json.loads(response["Payload"].read().decode("utf-8"))
+        if "errorMessage" in response_payload:
+            raise Exception(response_payload["errorMessage"])
 
     print("Lakeformation permissions have been updated")
 
 
-def _update_column_parameters(
-        table: Dict[str, Any],
-        name: str,
-        key: str,
-        value: Optional[Any] = None
-) -> None:
+def _update_column_parameters(table: Dict[str, Any], name: str, key: str, value: Optional[Any] = None) -> None:
     """
     Updates the column parameters of a given table.
     """
-    columns = table['StorageDescriptor']['Columns']
+    columns = table["StorageDescriptor"]["Columns"]
     for c in columns:
-        if c['Name'] == name:
-            if value!=None:
-                if 'Parameters' not in c:
-                    c['Parameters'] = {}
+        if c["Name"] == name:
+            if value != None:
+                if "Parameters" not in c:
+                    c["Parameters"] = {}
 
-                c['Parameters'][key]=value
+                c["Parameters"][key] = value
             else:
-                if 'Parameters' in c and key in c['Parameters']:
-                    del c['Parameters'][key]
+                if "Parameters" in c and key in c["Parameters"]:
+                    del c["Parameters"][key]
 
 
 def tag_columns(
-        database: str,
-        table_name: str,
-        key: str,
-        table_tag_value: str,
-        columns: Optional[List[str]] = None,
-        column_tag_value: Optional[str] = None
+    database: str,
+    table_name: str,
+    key: str,
+    table_tag_value: str,
+    columns: Optional[List[str]] = None,
+    column_tag_value: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Update the tag values for a specific table or set of columns to increase or decrease security permissions.
@@ -224,38 +205,37 @@ def tag_columns(
     ...                        key='security-level',
     ...                        table_tag_value='sec-4')
     """
-    glue = boto3.client('glue')
-    response = glue.get_table(
-        DatabaseName=database,
-        Name=table_name
-    )
-    update_table = response['Table']
-    if 'Parameters' not in update_table['StorageDescriptor']:
-        update_table['StorageDescriptor']['Parameters'] = {}
+    glue = boto3.client("glue")
+    response = glue.get_table(DatabaseName=database, Name=table_name)
+    update_table = response["Table"]
+    if "Parameters" not in update_table["StorageDescriptor"]:
+        update_table["StorageDescriptor"]["Parameters"] = {}
 
-    update_table['StorageDescriptor']['Parameters'][key] = table_tag_value
+    update_table["StorageDescriptor"]["Parameters"][key] = table_tag_value
 
-    if 'DatabaseName' in update_table: del update_table['DatabaseName']
-    if 'CreateTime' in update_table: del update_table['CreateTime']
-    if 'UpdateTime' in update_table: del update_table['UpdateTime']
-    if 'CreatedBy' in update_table: del update_table['CreatedBy']
-    if 'IsRegisteredWithLakeFormation' in update_table: del update_table['IsRegisteredWithLakeFormation']
+    if "DatabaseName" in update_table:
+        del update_table["DatabaseName"]
+    if "CreateTime" in update_table:
+        del update_table["CreateTime"]
+    if "UpdateTime" in update_table:
+        del update_table["UpdateTime"]
+    if "CreatedBy" in update_table:
+        del update_table["CreatedBy"]
+    if "IsRegisteredWithLakeFormation" in update_table:
+        del update_table["IsRegisteredWithLakeFormation"]
     if columns != None:
         for c in columns:
             _update_column_parameters(update_table, c, key, column_tag_value)
-    glue.update_table(
-        DatabaseName=database,
-        TableInput=update_table
-    )
+    glue.update_table(DatabaseName=database, TableInput=update_table)
     return update_table
 
 
 def untag_columns(
-        database: str,
-        table_name: Optional[str] = None,
-        columns: Optional[List[str]] = None,
-        key: Optional[str] = None,
-        table_tag: Optional[str] = None
+    database: str,
+    table_name: Optional[str] = None,
+    columns: Optional[List[str]] = None,
+    key: Optional[str] = None,
+    table_tag: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Removes tags from a specified column or table, or all the tables in a given database.
@@ -287,52 +267,49 @@ def untag_columns(
     >>> import aws.utils.notebooks.glue as glue
     >>> datamaker_catalog_api.untag_columns(database='secured_database',key='security-level')
     """
-    glue = boto3.client('glue')
+    glue = boto3.client("glue")
     table_names = []
     if table_name != None:
         table_names = [table_name]
     else:
-        tables = glue.get_tables(
-            DatabaseName=database
-        )['TableList']
+        tables = glue.get_tables(DatabaseName=database)["TableList"]
 
         for table in tables:
-            table_names.append(table['Name'])
+            table_names.append(table["Name"])
 
     update_table = {}
     for table_name in table_names:
-        response = glue.get_table(
-            DatabaseName=database,
-            Name=table_name
-        )
-        update_table = response['Table']
-        if 'Parameters' not in update_table['StorageDescriptor']:
-            update_table['StorageDescriptor']['Parameters'] = {}
+        response = glue.get_table(DatabaseName=database, Name=table_name)
+        update_table = response["Table"]
+        if "Parameters" not in update_table["StorageDescriptor"]:
+            update_table["StorageDescriptor"]["Parameters"] = {}
 
         if table_tag != None:
-            update_table['StorageDescriptor']['Parameters'][key] = table_tag
+            update_table["StorageDescriptor"]["Parameters"][key] = table_tag
         else:
-            if key in update_table['StorageDescriptor']['Parameters']:
-                del update_table['StorageDescriptor']['Parameters'][key]
+            if key in update_table["StorageDescriptor"]["Parameters"]:
+                del update_table["StorageDescriptor"]["Parameters"][key]
 
-        if 'DatabaseName' in update_table: del update_table['DatabaseName']
-        if 'CreateTime' in update_table: del update_table['CreateTime']
-        if 'UpdateTime' in update_table: del update_table['UpdateTime']
-        if 'CreatedBy' in update_table: del update_table['CreatedBy']
-        if 'IsRegisteredWithLakeFormation' in update_table: del update_table['IsRegisteredWithLakeFormation']
+        if "DatabaseName" in update_table:
+            del update_table["DatabaseName"]
+        if "CreateTime" in update_table:
+            del update_table["CreateTime"]
+        if "UpdateTime" in update_table:
+            del update_table["UpdateTime"]
+        if "CreatedBy" in update_table:
+            del update_table["CreatedBy"]
+        if "IsRegisteredWithLakeFormation" in update_table:
+            del update_table["IsRegisteredWithLakeFormation"]
 
         if columns == None:
-            cols = table['StorageDescriptor']['Columns']
+            cols = table["StorageDescriptor"]["Columns"]
             columns = []
             for c in cols:
-                columns.append(c['Name'])
+                columns.append(c["Name"])
 
         for c in columns:
-            _update_column_parameters(update_table,c,key)
+            _update_column_parameters(update_table, c, key)
 
         logger.info(f"untagging table {table_name}")
-        glue.update_table(
-            DatabaseName=database,
-            TableInput=update_table
-        )
+        glue.update_table(DatabaseName=database, TableInput=update_table)
     return update_table
