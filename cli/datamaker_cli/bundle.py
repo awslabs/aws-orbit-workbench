@@ -16,19 +16,33 @@ import glob
 import logging
 import os
 import shutil
-from typing import List
+from typing import List, Optional, Tuple
 
 from datamaker_cli import DATAMAKER_CLI_ROOT
-from datamaker_cli.utils import path_from_filename
+from datamaker_cli.manifest import Manifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _list_self_files() -> List[str]:
-    return [f for f in glob.iglob(DATAMAKER_CLI_ROOT + "/**", recursive=True) if f.endswith((".py", ".yaml", ".typed"))]
+    path = os.path.join(DATAMAKER_CLI_ROOT, "**")
+    extensions = (".py", ".yaml", ".typed")
+    return [f for f in glob.iglob(path, recursive=True) if os.path.isfile(f) and f.endswith(extensions)]
 
 
-def generate_self_dir(bundle_dir: str) -> str:
+def _is_valid_image_file(file_path: str) -> bool:
+    for word in ("/node_modules/", "/build/", "/.mypy_cache/"):
+        if word in file_path:
+            return False
+    return True
+
+
+def _list_files(path: str) -> List[str]:
+    path = os.path.join(path, "**")
+    return [f for f in glob.iglob(path, recursive=True) if os.path.isfile(f) and _is_valid_image_file(file_path=f)]
+
+
+def _generate_self_dir(bundle_dir: str) -> str:
     cli_dir = os.path.join(bundle_dir, "cli")
     module_dir = os.path.join(cli_dir, "datamaker_cli")
     os.makedirs(module_dir, exist_ok=True)
@@ -39,23 +53,59 @@ def generate_self_dir(bundle_dir: str) -> str:
         relpath = os.path.relpath(file, DATAMAKER_CLI_ROOT)
         new_file = os.path.join(module_dir, relpath)
         os.makedirs(os.path.dirname(new_file), exist_ok=True)
+        _logger.debug("Copying file to %s", new_file)
         shutil.copy(src=file, dst=new_file)
 
-    src_file = os.path.join(DATAMAKER_CLI_ROOT, "..", "setup.py")  # Only if manifest.dev is True
+    src_file = os.path.join(DATAMAKER_CLI_ROOT, "..", "setup.py")
     dst_file = os.path.join(cli_dir, "setup.py")
     shutil.copy(src=src_file, dst=dst_file)
     return cli_dir
 
 
-def generate_bundle(filename: str, env_name: str) -> str:
-    filename_dir = path_from_filename(filename=filename)
-    remote_dir = os.path.join(filename_dir, ".datamaker.out", env_name, "remote")
-    bundle_dir = os.path.join(remote_dir, "bundle")
-    os.makedirs(bundle_dir, exist_ok=True)
-    shutil.rmtree(bundle_dir)
-    generate_self_dir(bundle_dir=bundle_dir)
+def _generate_dir(bundle_dir: str, dir: str, name: str) -> str:
+    absolute_dir = os.path.realpath(dir)
+    image_dir = os.path.join(bundle_dir, name)
+    _logger.debug("absolute_dir: %s", absolute_dir)
+    _logger.debug("image_dir: %s", image_dir)
+    os.makedirs(image_dir, exist_ok=True)
+    shutil.rmtree(image_dir)
 
-    shutil.copy(src=filename, dst=os.path.join(bundle_dir, "manifest.yaml"))  # manifest
+    _logger.debug("Copying files to %s", image_dir)
+    for file in _list_files(path=absolute_dir):
+        relpath = os.path.relpath(file, absolute_dir)
+        new_file = os.path.join(image_dir, relpath)
+        os.makedirs(os.path.dirname(new_file), exist_ok=True)
+        _logger.debug("Copying file to %s", new_file)
+        shutil.copy(src=file, dst=new_file)
+
+    return image_dir
+
+
+def generate_bundle(command_name: str, manifest: Manifest, dirs: Optional[List[Tuple[str, str]]] = None) -> str:
+    remote_dir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "remote", command_name)
+    bundle_dir = os.path.join(remote_dir, "bundle")
+    try:
+        shutil.rmtree(bundle_dir)
+    except FileNotFoundError:
+        pass
+
+    # manifest
+    bundled_manifest_path = os.path.join(bundle_dir, "manifest.yaml")
+    os.makedirs(bundle_dir, exist_ok=True)
+    shutil.copy(src=manifest.filename, dst=bundled_manifest_path)
+
+    # DataMaker CLI Source
+    _generate_self_dir(bundle_dir=bundle_dir)
+
+    # Plugins
+    for plugin in manifest.plugins:
+        if plugin.path:
+            _generate_dir(bundle_dir=bundle_dir, dir=plugin.path, name=plugin.name)
+
+    # Extra Directories
+    if dirs is not None:
+        for dir, name in dirs:
+            _generate_dir(bundle_dir=bundle_dir, dir=dir, name=name)
 
     _logger.debug("bundle_dir: %s", bundle_dir)
     shutil.make_archive(base_name=bundle_dir, format="zip", root_dir=remote_dir, base_dir="bundle")

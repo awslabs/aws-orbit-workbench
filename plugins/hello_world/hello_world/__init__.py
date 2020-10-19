@@ -14,6 +14,7 @@
 
 import logging
 
+from datamaker_cli import sh
 from datamaker_cli.manifest import Manifest, TeamManifest
 from datamaker_cli.plugins import hooks
 
@@ -23,28 +24,34 @@ _logger: logging.Logger = logging.getLogger("datamaker_cli")
 @hooks.deploy.demo
 def deploy_demo(manifest: Manifest) -> None:
     _logger.debug("Env name: %s", manifest.name)
+    sh.run(f"echo 'Env name: {manifest.name}'")
 
 
 @hooks.deploy.env
 def deploy_env(manifest: Manifest) -> None:
     _logger.debug("Env VPC: %s", manifest.vpc.vpc_id)
+    sh.run(f"echo 'Env VPC: {manifest.vpc.vpc_id}'")
 
 
 @hooks.deploy.team
 def deploy_team(manifest: Manifest, team_manifest: TeamManifest) -> None:
     _logger.debug("Team Env name: %s | Team name: %s", manifest.name, team_manifest.name)
+    sh.run(f"echo 'Team Env name: {manifest.name} | Team name: {team_manifest.name}'")
 
 
 @hooks.destroy.demo
 def destroy_demo(manifest: Manifest) -> None:
     _logger.debug("Env name: %s", manifest.name)
+    sh.run(f"echo 'Env name: {manifest.name}'")
 
 
 @hooks.destroy.env
 def destroy_env(manifest: Manifest) -> None:
     _logger.debug("Env VPC: %s", manifest.vpc.vpc_id)
+    sh.run(f"echo 'Env VPC: {manifest.vpc.vpc_id}'")
 
 
 @hooks.destroy.team
 def destroy_team(manifest: Manifest, team_manifest: TeamManifest) -> None:
     _logger.debug("Team Env name: %s | Team name: %s", manifest.name, team_manifest.name)
+    sh.run(f"echo 'Team Env name: {manifest.name} | Team name: {team_manifest.name}'")

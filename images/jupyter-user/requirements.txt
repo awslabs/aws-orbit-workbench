@@ -1,1 +1,1 @@
-awswrangler~=1.9.4
+awswrangler~=1.9.6

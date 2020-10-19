@@ -19,3 +19,7 @@ class ManifestNotFound(Exception):
 
 class VpcNotFound(Exception):
     """VPC not found."""
+
+
+class FailedShellCommand(Exception):
+    """Failed Shell Command."""

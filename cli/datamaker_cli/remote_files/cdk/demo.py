@@ -33,13 +33,13 @@ class VpcStack(Stack):
         CfnOutput(
             scope=self,
             id=f"{id}publicsubnetsids",
-            export_name=f"{id}-public-subnets-ids",
+            export_name=f"datamaker-{self.env_name}-public-subnets-ids",
             value=",".join(self.public_subnets_ids),
         )
         CfnOutput(
             scope=self,
             id=f"{id}privatesubnetsids",
-            export_name=f"{id}-private-subnets-ids",
+            export_name=f"datamaker-{self.env_name}-private-subnets-ids",
             value=",".join(self.private_subnets_ids),
         )
 
@@ -58,7 +58,6 @@ class VpcStack(Stack):
                 ec2.SubnetConfiguration(name="Private", subnet_type=ec2.SubnetType.PRIVATE, cidr_mask=21),
             ],
         )
-        Tags.of(scope=vpc).add(key="Env", value=f"datamaker-{self.env_name}")
         return vpc
 
 

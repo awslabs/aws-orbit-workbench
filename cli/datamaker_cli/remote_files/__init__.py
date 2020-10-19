@@ -13,12 +13,16 @@
 #    limitations under the License.
 
 from enum import Enum
-from typing import Callable
+from typing import Callable, Tuple
 
 from datamaker_cli.remote_files import deploy as deploy_module
 from datamaker_cli.remote_files import destroy as destroy_module
 
+REMOTE_FUNC_TYPE = Callable[[str, Tuple[str, ...]], None]
+
 
 class RemoteCommands(Enum):
-    deploy: Callable[[str], None] = deploy_module.deploy
-    destroy: Callable[[str], None] = destroy_module.destroy
+    deploy: REMOTE_FUNC_TYPE = deploy_module.deploy
+    destroy: REMOTE_FUNC_TYPE = destroy_module.destroy
+    deploy_image: REMOTE_FUNC_TYPE = deploy_module.deploy_image
+    destroy_image: REMOTE_FUNC_TYPE = destroy_module.destroy_image
