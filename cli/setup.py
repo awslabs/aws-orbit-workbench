@@ -24,7 +24,7 @@ path = os.path.join(here, "datamaker_cli", "__metadata__.py")
 with open(file=path, mode="r", encoding="utf-8") as f:
     exec(f.read(), about)
 
-with open('VERSION', 'r') as version_file:
+with open("VERSION", "r") as version_file:
     version = version_file.read().strip()
 
 setup(

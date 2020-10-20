@@ -15,7 +15,8 @@
 import os
 import pkg_resources
 
-from datamaker_cli.__metadata__ import __description__, __license__, __title__# noqa
+from datamaker_cli.__metadata__ import __description__, __license__, __title__  # noqa
+
 __version__: str = pkg_resources.get_distribution(__title__).version
 
 DATAMAKER_CLI_ROOT = os.path.dirname(os.path.abspath(__file__))
