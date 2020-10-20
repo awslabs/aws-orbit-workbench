@@ -59,6 +59,11 @@ def _generate_self_dir(bundle_dir: str) -> str:
     src_file = os.path.join(DATAMAKER_CLI_ROOT, "..", "setup.py")
     dst_file = os.path.join(cli_dir, "setup.py")
     shutil.copy(src=src_file, dst=dst_file)
+
+    src_file = os.path.join(DATAMAKER_CLI_ROOT, "..", "VERSION")
+    dst_file = os.path.join(cli_dir, "VERSION")
+    shutil.copy(src=src_file, dst=dst_file)
+
     return cli_dir
 
 
