@@ -385,3 +385,5 @@ cdk.json
 landing-page/public/config.js
 .datamaker.out
 *.zip
+images/landing-page/yarn.lock
+efs-clean-up.py

@@ -17,5 +17,5 @@
 
 set -ex
 
+yarn install --production
 yarn build
-docker build --tag datamaker-landing-page .

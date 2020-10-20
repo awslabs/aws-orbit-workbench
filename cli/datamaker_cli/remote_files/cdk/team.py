@@ -124,7 +124,7 @@ class Team(Stack):
                     actions=["ssm:Describe*", "ssm:Get*"],
                     resources=[
                         f"arn:{partition}:ssm:{region}:{self.account}:parameter/datamaker*",
-                        f"arn:{partition}:ssm:{region}:{self.account}:parameter/emr_launch/" "emr_launch_functions/*",
+                        f"arn:{partition}:ssm:{region}:{self.account}:parameter/emr_launch/",
                     ],
                 ),
                 iam.PolicyStatement(

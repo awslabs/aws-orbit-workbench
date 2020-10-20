@@ -17,14 +17,7 @@
 
 set -ex
 
-ENV_NAME=$1
-REGION=$2
-
-LOCAL_NAME=datamaker-landing-page
-ECR_NAME=datamaker-$ENV_NAME-landing-page
-ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
-
-aws ecr get-login-password --region "${REGION}" | docker login --username AWS --password-stdin "${ACCOUNT_ID}".dkr.ecr."${REGION}".amazonaws.com || true
-
-docker tag "${LOCAL_NAME}":latest "${ACCOUNT_ID}".dkr.ecr."${REGION}".amazonaws.com/"${ECR_NAME}":latest
-docker push "${ACCOUNT_ID}".dkr.ecr."${REGION}".amazonaws.com/"${ECR_NAME}":latest
+isort --line-length 120 .
+black --line-length 120 --target-version py36 .
+mypy --python-version 3.6 .
+flake8 --max-line-length 120 .

@@ -20,12 +20,12 @@ from typing import Any, Dict, List, cast
 import boto3
 import botocore.exceptions
 
+from datamaker_cli import plugins
 from datamaker_cli.commands.deploy import refresh_manifest_file_with_demo_attrs
 from datamaker_cli.exceptions import VpcNotFound
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.remote_files.cdk import demo
-from datamaker_cli.services.cfn import deploy_template, destroy_stack
-from datamaker_cli.utils import does_cfn_exist
+from datamaker_cli.services import cfn
 
 STACK_NAME = "datamaker-{env_name}-demo"
 
@@ -113,19 +113,25 @@ def _cleanup_remaining_dependencies(manifest: Manifest) -> None:
 def deploy(manifest: Manifest, filename: str) -> None:
     stack_name = STACK_NAME.format(env_name=manifest.name)
     _logger.debug("Stack name: %s", stack_name)
-    if manifest.demo and (not does_cfn_exist(stack_name=stack_name) or manifest.dev):
+    if manifest.demo and (not cfn.does_cfn_exist(stack_name=stack_name) or manifest.dev):
         template_filename: str = demo.synth(stack_name=stack_name, filename=filename, env_name=manifest.name)
         _logger.debug("template_filename: %s", template_filename)
-        deploy_template(stack_name=stack_name, filename=template_filename, env_tag=manifest.name, toolkit_s3_bucket=manifest.toolkit_s3_bucket)
+        cfn.deploy_template(stack_name=stack_name, filename=template_filename, env_tag=manifest.name, toolkit_s3_bucket=manifest.toolkit_s3_bucket)
         refresh_manifest_file_with_demo_attrs(filename=filename, manifest=manifest)
+    for plugin in plugins.PLUGINS_REGISTRY.values():
+        if plugin.deploy_demo_hook is not None:
+            plugin.deploy_demo_hook(manifest)
 
 
 def destroy(manifest: Manifest) -> None:
     stack_name = STACK_NAME.format(env_name=manifest.name)
+    for plugin in plugins.PLUGINS_REGISTRY.values():
+        if plugin.destroy_demo_hook is not None:
+            plugin.destroy_demo_hook(manifest)
     _logger.debug("Stack name: %s", stack_name)
-    if manifest.demo and does_cfn_exist(stack_name=stack_name):
+    if manifest.demo and cfn.does_cfn_exist(stack_name=stack_name):
         waited: bool = False
-        while does_cfn_exist(stack_name=f"eksctl-{stack_name}-cluster"):
+        while cfn.does_cfn_exist(stack_name=f"eksctl-{stack_name}-cluster"):
             waited = True
             time.sleep(2)
         else:
@@ -134,4 +140,4 @@ def destroy(manifest: Manifest) -> None:
             _logger.debug("Waiting EKSCTL stack clean up...")
             time.sleep(60)  # Given extra 60 seconds if the EKS stack was just delete
         _cleanup_remaining_dependencies(manifest=manifest)
-        destroy_stack(stack_name=stack_name)
+        cfn.destroy_stack(stack_name=stack_name)

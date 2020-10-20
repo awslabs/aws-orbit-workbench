@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import logging
-from typing import Optional, Sequence
+from typing import Optional
 
 from datamaker_cli.manifest import Manifest, PluginManifest, SubnetKind, SubnetManifest, TeamManifest, VpcManifest
 from datamaker_cli.messages import MessagesContext, stylize
@@ -25,11 +25,9 @@ _logger: logging.Logger = logging.getLogger(__name__)
 def create_manifest(
     name: str,
     filename: str,
-    teams_names: Sequence[str],
-    plugins: Sequence[str],
+    region: Optional[str],
     demo: bool,
     dev: bool,
-    region: Optional[str],
 ) -> None:
     subnets = [
         SubnetManifest(subnet_id="PRIVATE_SUBNET_ID_PLACEHOLDER_A", kind=SubnetKind.private),
@@ -41,7 +39,7 @@ def create_manifest(
     vpc = VpcManifest(subnets=subnets)
     teams = [
         TeamManifest(
-            name=team_name,
+            name="my-team",
             env_name=name,
             instance_type="m5.4xlarge",
             local_storage_size=128,
@@ -50,30 +48,26 @@ def create_manifest(
             nodes_num_min=1,
             policy="AdministratorAccess",
         )
-        for team_name in teams_names
     ]
     manifest = Manifest(
         name=name,
+        filename=filename,
         region=region if region is not None else get_region(),
         demo=demo,
         dev=dev,
         vpc=vpc,
         teams=teams,
-        plugins=[PluginManifest(name=x) for x in plugins],
+        plugins=[PluginManifest(name="hello_world", path="plugins/hello_world/")],
     )
     manifest.write_file(filename=filename)
 
 
-def init(
-    name: str, teams: Sequence[str], plugins: Sequence[str], demo: bool, dev: bool, region: Optional[str], debug: bool
-) -> None:
+def init(name: str, region: Optional[str], demo: bool, dev: bool, debug: bool) -> None:
     """Creates the DataMaker manifest file (yaml) where all your deployment settings will rest."""
     with MessagesContext("Initializing", debug=debug) as ctx:
         name = name.lower()
         filename: str = f"./{name}.yaml"
-        create_manifest(
-            name=name, filename=filename, teams_names=teams, demo=demo, dev=dev, region=region, plugins=plugins
-        )
+        create_manifest(name=name, filename=filename, demo=demo, dev=dev, region=region)
         ctx.info(f"Manifest generated as {filename}")
         ctx.progress(100)
         if demo:

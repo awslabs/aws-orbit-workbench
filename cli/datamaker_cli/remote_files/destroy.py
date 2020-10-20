@@ -13,15 +13,35 @@
 #    limitations under the License.
 
 import logging
+from typing import Tuple
 
+from datamaker_cli import plugins
 from datamaker_cli.manifest import Manifest, read_manifest_file
 from datamaker_cli.remote_files import demo, eksctl, env, kubectl, teams
+from datamaker_cli.services import ecr
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def destroy(filename: str) -> None:
+def destroy_image(filename: str, args: Tuple[str, ...]) -> None:
     manifest: Manifest = read_manifest_file(filename=filename)
+    _logger.debug("manifest.name %s", manifest.name)
+    _logger.debug("args %s", args)
+    if len(args) == 1:
+        image_name: str = args[0]
+    else:
+        raise ValueError("Unexpected number of values in args.")
+
+    env.deploy(manifest=manifest, filename=filename, add_images=[], remove_images=[image_name])
+    _logger.debug("Env changes deployed")
+    ecr.delete_repo(f"datamaker-{manifest.name}-{image_name}")
+    _logger.debug("Docker Image Destroyed from ECR")
+
+
+def destroy(filename: str, args: Tuple[str, ...]) -> None:
+    manifest: Manifest = read_manifest_file(filename=filename)
+    plugins.load_plugins(manifest=manifest)
+    _logger.debug(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
     kubectl.destroy(manifest=manifest, filename=filename)
     _logger.debug("Kubernetes components destroyed")
     eksctl.destroy(manifest=manifest, filename=filename)

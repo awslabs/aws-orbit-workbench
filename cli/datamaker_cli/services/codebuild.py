@@ -19,7 +19,11 @@ from enum import Enum
 from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Union
 
 import boto3
+import botocore.exceptions
 import yaml
+
+from datamaker_cli.manifest import Manifest
+from datamaker_cli.utils import try_it
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -35,6 +39,7 @@ CDK_MODULES = [
     "aws-cdk.aws-ecr",
     "aws-cdk.aws-ecs",
     "aws-cdk.aws-ssm",
+    "aws-cdk.aws-kms",
     "aws_cdk.aws_cognito",
 ]
 
@@ -103,14 +108,15 @@ class BuildInfo(NamedTuple):
     logs: BuildCloudWatchLogs
 
 
-def start(project_name: str, stream_name: str, bundle_location: str, spec: Dict[str, Any], timeout: int) -> str:
+def start(project_name: str, stream_name: str, bundle_location: str, buildspec: Dict[str, Any], timeout: int) -> str:
     client = boto3.client("codebuild")
     response: Dict[str, Any] = client.start_build(
         projectName=project_name,
         sourceTypeOverride="S3",
         sourceLocationOverride=bundle_location,
-        buildspecOverride=yaml.safe_dump(data=spec, sort_keys=False, indent=4),
+        buildspecOverride=yaml.safe_dump(data=buildspec, sort_keys=False, indent=4),
         timeoutInMinutesOverride=timeout,
+        privilegedModeOverride=True,
         logsConfigOverride={
             "cloudWatchLogs": {
                 "status": "ENABLED",
@@ -125,7 +131,9 @@ def start(project_name: str, stream_name: str, bundle_location: str, spec: Dict[
 
 def fetch_build_info(build_id: str) -> BuildInfo:
     client = boto3.client("codebuild")
-    response: Dict[str, List[Dict[str, Any]]] = client.batch_get_builds(ids=[build_id])
+    response: Dict[str, List[Dict[str, Any]]] = try_it(
+        f=client.batch_get_builds, ex=botocore.exceptions.ClientError, ids=[build_id]
+    )
     if not response["builds"]:
         raise RuntimeError(f"CodeBuild build {build_id} not found.")
     build = response["builds"][0]
@@ -164,8 +172,14 @@ def wait(build_id: str) -> Iterable[BuildInfo]:
     build = fetch_build_info(build_id=build_id)
     while build.status is BuildStatus.in_progress:
         time.sleep(_BUILD_WAIT_POLLING_DELAY)
+
+        last_phase = build.current_phase
+        last_status = build.status
         build = fetch_build_info(build_id=build_id)
-        _logger.debug("phase: %s (%s)", build.current_phase.value, build.status.value)
+
+        if build.current_phase is not last_phase or build.status is not last_status:
+            _logger.debug("phase: %s (%s)", build.current_phase.value, build.status.value)
+
         yield build
 
     if build.status is not BuildStatus.succeeded:
@@ -176,23 +190,43 @@ def wait(build_id: str) -> Iterable[BuildInfo]:
 SPEC_TYPE = Dict[str, Union[float, Dict[str, Dict[str, Union[List[str], Dict[str, float]]]]]]
 
 
-def generate_spec(pre_cmds: List[str], build_cmds: List[str], post_cmds: List[str], bundle_location: str) -> SPEC_TYPE:
-    pre_cmds_default = [
-        f"aws s3 rm s3://{bundle_location}",
+def generate_spec(
+    manifest: Manifest,
+    plugins: bool = True,
+    cmds_install: Optional[List[str]] = None,
+    cmds_pre: Optional[List[str]] = None,
+    cmds_build: Optional[List[str]] = None,
+    cmds_post: Optional[List[str]] = None,
+) -> SPEC_TYPE:
+    pre: List[str] = [] if cmds_pre is None else cmds_pre
+    build: List[str] = [] if cmds_build is None else cmds_build
+    post: List[str] = [] if cmds_post is None else cmds_post
+    install = [
         "ls -la",
         "cd bundle",
         "ls -la",
-        f"pip install kubernetes~=11.0.0 sh~=1.14.0 {' '.join([f'{m}{CDK_VERSION}' for m in CDK_MODULES])}",
-        "pip install cli/",
+        f"pip install kubernetes~=11.0.0 {' '.join([f'{m}{CDK_VERSION}' for m in CDK_MODULES])}",
+        "npm -g install yarn",
+        "npm install -g aws-cdk",
     ]
-    build_cmds_default = ["echo 'build'"]
-    post_cmds_default = ["echo 'post_build'"]
+
+    # DataMaker CLI
+    install.append("pip install -e cli/")
+
+    # Plugins
+    if plugins:
+        for plugin in manifest.plugins:
+            if plugin.path:
+                install.append(f"pip install -e {plugin.name}")
+
+    if cmds_install is not None:
+        install += cmds_install
     return {
         "version": 0.2,
         "phases": {
-            "install": {"runtime-versions": {"python": 3.7, "nodejs": 12}},
-            "pre_build": {"commands": pre_cmds_default + pre_cmds},
-            "build": {"commands": build_cmds_default + build_cmds},
-            "post_build": {"commands": post_cmds_default + post_cmds},
+            "install": {"runtime-versions": {"python": 3.7, "nodejs": 12, "docker": 19}, "commands": install},
+            "pre_build": {"commands": pre},
+            "build": {"commands": build},
+            "post_build": {"commands": post},
         },
     }

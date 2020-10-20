@@ -16,7 +16,7 @@ import logging
 import os
 import time
 from datetime import datetime
-from typing import Tuple
+from typing import Any, Dict, Tuple
 
 import boto3
 import botocore.exceptions
@@ -30,6 +30,20 @@ from datamaker_cli.utils import does_cfn_exist
 CHANGESET_PREFIX = "aws-datamaker-cli-deploy-"
 
 _logger: logging.Logger = logging.getLogger(__name__)
+
+
+def does_stack_exist(stack_name: str) -> bool:
+    client = boto3.client("cloudformation")
+    try:
+        resp = client.describe_stacks(StackName=stack_name)
+        if len(resp["Stacks"]) < 1:
+            return False
+    except botocore.exceptions.ClientError as ex:
+        error: Dict[str, Any] = ex.response["Error"]
+        if error["Code"] == "ValidationError" and f"Stack with id {stack_name} does not exist" in error["Message"]:
+            return False
+        raise
+    return True
 
 
 def _wait_for_changeset(changeset_id: str, stack_name: str) -> bool:
@@ -56,7 +70,7 @@ def _create_changeset(stack_name: str, template_str: str,  env_tag: str, templat
     now = datetime.utcnow().isoformat()
     description = f"Created by AWS DataMaker CLI at {now} UTC"
     changeset_name = CHANGESET_PREFIX + str(int(time.time()))
-    changeset_type = "UPDATE" if does_cfn_exist(stack_name=stack_name) else "CREATE"
+    changeset_type = "UPDATE" if does_stack_exist(stack_name=stack_name) else "CREATE"
     kwargs = {
         "ChangeSetName": changeset_name,
         "StackName": stack_name,
@@ -95,6 +109,7 @@ def _wait_for_execute(stack_name: str, changeset_type: str) -> None:
 
 
 def deploy_template(stack_name: str, filename: str, env_tag: str, toolkit_s3_bucket: str = "") -> None:
+    _logger.debug("Deploying template %s", filename)
     if not os.path.isfile(filename):
         raise FileNotFoundError(f"CloudFormation template not found at {filename}")
     template_size = os.path.getsize(filename)

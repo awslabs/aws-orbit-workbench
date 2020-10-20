@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import logging
-from typing import Any, Optional
+from typing import Any, Dict, Optional, Sequence
 
 import click
 import tqdm
@@ -31,26 +31,66 @@ def stylize(text: str, color: str = COLOR_DATAMAKER, bold: bool = False, underli
     return click.style(text=text, bold=bold, underline=underline, fg=color)
 
 
-REMOTE_PROGRESS_LOOKUP = {
+def print_list(tittle: str, items: Sequence[str]) -> None:
+    click.echo(message=(f"{tittle}\n\n" + "\n".join([f"{stylize('>')} {i}" for i in items])))
+
+
+REMOTE_PROGRESS_LOOKUP: Dict[str, Dict[str, int]] = {
     "Deploying": {
         "Waiting for agent ping": 20,
-        "Entering phase PRE_BUILD": 25,
-        "Entering phase BUILD": 40,
+        "Waiting for DOWNLOAD_SOURCE": 21,
+        "Phase is DOWNLOAD_SOURCE": 22,
+        "Phase complete: DOWNLOAD_SOURCE State: SUCCEEDED": 23,
+        "Running command npm install -g aws-cdk": 25,
+        "Phase complete: INSTALL State: SUCCEEDED": 27,
+        "Phase complete: PRE_BUILD State: SUCCEEDED": 30,
         "Demo Stack deployed": 50,
-        "Env Stack deployed": 70,
-        "Teams Stacks deployed": 80,
-        "EKS Stack deployed": 90,
+        "Env Stack deployed": 60,
+        "Teams Stacks deployed": 70,
+        "EKS Stack deployed": 80,
         "Kubernetes components deployed": 95,
+        "Phase complete: BUILD State: SUCCEEDED": 97,
     },
     "Destroying": {
         "Waiting for agent ping": 20,
-        "Entering phase PRE_BUILD": 25,
-        "Entering phase BUILD": 40,
-        "Kubernetes components destroyed": 50,
-        "EKS Stack destroyed": 60,
-        "Teams Stacks destroyed": 70,
-        "Env Stack destroyed": 80,
-        "Demo Stack destroyed": 90,
+        "Waiting for DOWNLOAD_SOURCE": 21,
+        "Phase is DOWNLOAD_SOURCE": 22,
+        "Phase complete: DOWNLOAD_SOURCE State: SUCCEEDED": 23,
+        "Running command npm install -g aws-cdk": 25,
+        "Phase complete: INSTALL State: SUCCEEDED": 27,
+        "Phase complete: PRE_BUILD State: SUCCEEDED": 30,
+        "Kubernetes components destroyed": 35,
+        "EKS Stack destroyed": 40,
+        "Teams Stacks destroyed": 65,
+        "Env Stack destroyed": 75,
+        "Demo Stack destroyed": 85,
+        "Phase complete: BUILD State: SUCCEEDED": 94,
+    },
+    "Deploying Docker Image": {
+        "Waiting for agent ping": 20,
+        "Waiting for DOWNLOAD_SOURCE": 21,
+        "Phase is DOWNLOAD_SOURCE": 22,
+        "Phase complete: DOWNLOAD_SOURCE State: SUCCEEDED": 23,
+        "Running command npm install -g aws-cdk": 25,
+        "Phase complete: INSTALL State: SUCCEEDED": 27,
+        "Phase complete: PRE_BUILD State: SUCCEEDED": 30,
+        "Env changes deployed": 70,
+        "Logged in": 75,
+        "Docker Image built": 85,
+        "Docker Image Deployed to ECR": 97,
+        "Phase complete: BUILD State: SUCCEEDED": 99,
+    },
+    "Destroying Docker Image": {
+        "Waiting for agent ping": 20,
+        "Waiting for DOWNLOAD_SOURCE": 21,
+        "Phase is DOWNLOAD_SOURCE": 22,
+        "Phase complete: DOWNLOAD_SOURCE State: SUCCEEDED": 23,
+        "Running command npm install -g aws-cdk": 25,
+        "Phase complete: INSTALL State: SUCCEEDED": 27,
+        "Phase complete: PRE_BUILD State: SUCCEEDED": 30,
+        "Env changes deployed": 70,
+        "Docker Image Destroyed from ECR": 95,
+        "Phase complete: BUILD State: SUCCEEDED": 99,
     },
 }
 
@@ -128,6 +168,6 @@ class MessagesContext:
                 return True
         return False
 
-    def progress_callback(self, msg: str) -> None:
+    def progress_bar_callback(self, msg: str) -> None:
         if self._progress_codebuild_log(msg=msg) is False:
             self._progress_cli_log(msg=msg)

@@ -15,7 +15,8 @@
     "aws-amplify-react": "^4.2.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.3"
+    "react-scripts": "3.4.3",
+    "aws-sdk": "^2.761.0"
   },
   "scripts": {
     "lint": "eslint src",
@@ -42,7 +43,6 @@
   },
   "devDependencies": {
     "prettier": "^2.1.1",
-    "aws-sdk": "^2.761.0",
     "babel-eslint": "10.x",
     "eslint": "6.x",
     "eslint-config-react-app": "^5.2.1",
