@@ -17,7 +17,7 @@ import math
 import os
 import random
 import time
-from typing import Any, Callable, Dict, Iterable, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Optional
 
 import boto3
 import botocore.exceptions
