@@ -33,19 +33,22 @@ def _print_codebuild_logs(
 
 
 def _wait_execution(
-    build_id: str, stream_name_prefix: str, codebuild_log_callback: Optional[Callable[[str], None]] = None
+    manifest: Manifest,
+    build_id: str,
+    stream_name_prefix: str,
+    codebuild_log_callback: Optional[Callable[[str], None]] = None,
 ) -> None:
     start_time: Optional[datetime] = None
     stream_name: Optional[str] = None
-    for status in codebuild.wait(build_id=build_id):
+    for status in codebuild.wait(manifest=manifest, build_id=build_id):
         if codebuild_log_callback is not None and status.logs.enabled and status.logs.group_name:
             if stream_name is None:
                 stream_name = cloudwatch.get_stream_name_by_prefix(
-                    group_name=status.logs.group_name, prefix=f"{stream_name_prefix}/"
+                    manifest=manifest, group_name=status.logs.group_name, prefix=f"{stream_name_prefix}/"
                 )
             if stream_name is not None:
                 events = cloudwatch.get_log_events(
-                    group_name=status.logs.group_name, stream_name=stream_name, start_time=start_time
+                    manifest=manifest, group_name=status.logs.group_name, stream_name=stream_name, start_time=start_time
                 )
                 _print_codebuild_logs(events=events.events, codebuild_log_callback=codebuild_log_callback)
                 if events.last_timestamp is not None:
@@ -64,6 +67,7 @@ def _execute_codebuild(
     stream_name_prefix = f"{command_name}-{int(datetime.now(timezone.utc).timestamp() * 1_000_000)}"
     _logger.debug("stream_name_prefix: %s", stream_name_prefix)
     build_id = codebuild.start(
+        manifest=manifest,
         project_name=manifest.toolkit_codebuild_project,
         stream_name=stream_name_prefix,
         bundle_location=bundle_location,
@@ -71,7 +75,10 @@ def _execute_codebuild(
         timeout=timeout,
     )
     _wait_execution(
-        build_id=build_id, stream_name_prefix=stream_name_prefix, codebuild_log_callback=codebuild_log_callback
+        manifest=manifest,
+        build_id=build_id,
+        stream_name_prefix=stream_name_prefix,
+        codebuild_log_callback=codebuild_log_callback,
     )
 
 
@@ -85,8 +92,8 @@ def run(
 ) -> None:
     bucket = manifest.toolkit_s3_bucket
     key = f"cli/remote/{command_name}/bundle.zip"
-    s3.delete_objects(bucket=bucket, keys=[key])
-    s3.upload_file(src=bundle_path, bucket=bucket, key=key)
+    s3.delete_objects(manifest=manifest, bucket=bucket, keys=[key])
+    s3.upload_file(manifest=manifest, src=bundle_path, bucket=bucket, key=key)
     time.sleep(3)  # Avoiding eventual consistence issues
     _execute_codebuild(
         manifest=manifest,
@@ -95,4 +102,4 @@ def run(
         codebuild_log_callback=codebuild_log_callback,
         timeout=timeout,
     )
-    s3.delete_objects(bucket=bucket, keys=[key])
+    s3.delete_objects(manifest=manifest, bucket=bucket, keys=[key])

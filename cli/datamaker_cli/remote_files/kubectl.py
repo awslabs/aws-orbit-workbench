@@ -18,8 +18,6 @@ import os
 import shutil
 from typing import Any, Dict
 
-import boto3
-
 from datamaker_cli import DATAMAKER_CLI_ROOT, exceptions, k8s, sh
 from datamaker_cli.manifest import Manifest, TeamManifest
 from datamaker_cli.remote_files.utils import get_k8s_context
@@ -137,7 +135,7 @@ def _generate_manifest(manifest: Manifest, filename: str) -> str:
 
 
 def _update_teams_urls(manifest: Manifest, context: str) -> None:
-    client = boto3.client(service_name="ssm")
+    client = manifest.get_boto3_client(service_name="ssm")
     for team in manifest.teams:
         _logger.debug("Updating team %s URL parameter", team.name)
         url = k8s.get_service_hostname(name="jupyterhub-public", context=context, namespace=team.name)
@@ -159,7 +157,7 @@ def _update_landing_page_url(manifest: Manifest, context: str) -> None:
 def deploy(manifest: Manifest, filename: str) -> None:
     eks_stack_name: str = f"eksctl-datamaker-{manifest.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
-    if cfn.does_stack_exist(stack_name=eks_stack_name):
+    if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
         context = get_k8s_context(manifest=manifest)
         _logger.debug("kubectl context: %s", context)
         output_path = _generate_manifest(manifest=manifest, filename=filename)
@@ -172,7 +170,7 @@ def deploy(manifest: Manifest, filename: str) -> None:
 def destroy(manifest: Manifest, filename: str) -> None:
     eks_stack_name: str = f"eksctl-datamaker-{manifest.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
-    if cfn.does_stack_exist(stack_name=eks_stack_name):
+    if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
         context = get_k8s_context(manifest=manifest)
         _logger.debug("kubectl context: %s", context)

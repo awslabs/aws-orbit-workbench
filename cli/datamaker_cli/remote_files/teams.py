@@ -32,7 +32,9 @@ def deploy(manifest: Manifest, filename: str) -> None:
             stack_name=stack_name, filename=filename, manifest=manifest, team_manifest=team_manifest
         )
         _logger.debug("template_filename: %s", template_filename)
-        cfn.deploy_template(stack_name=stack_name, filename=template_filename, env_tag=f"datamaker-{manifest.name}")
+        cfn.deploy_template(
+            manifest=manifest, stack_name=stack_name, filename=template_filename, env_tag=f"datamaker-{manifest.name}"
+        )
         for plugin in plugins.PLUGINS_REGISTRY.values():
             if plugin.deploy_team_hook is not None:
                 plugin.deploy_team_hook(manifest, team_manifest)
@@ -45,5 +47,5 @@ def destroy(manifest: Manifest) -> None:
                 plugin.destroy_team_hook(manifest, team_manifest)
         stack_name = STACK_NAME.format(env_name=manifest.name, team_name=team_manifest.name)
         _logger.debug("Stack name: %s", stack_name)
-        if cfn.does_stack_exist(stack_name=stack_name):
-            cfn.destroy_stack(stack_name=stack_name)
+        if cfn.does_stack_exist(manifest=manifest, stack_name=stack_name):
+            cfn.destroy_stack(manifest=manifest, stack_name=stack_name)

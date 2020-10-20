@@ -1,7 +1,6 @@
 import logging
 from typing import Dict, List
 
-import boto3
 import click
 
 from datamaker_cli.manifest import Manifest, read_manifest_file
@@ -11,24 +10,24 @@ from datamaker_cli.utils import extract_images_names
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def _fetch_repo_uri(names: List[str], env_name: str) -> Dict[str, str]:
-    names = [f"datamaker-{env_name}-{x}" for x in names]
+def _fetch_repo_uri(names: List[str], manifest: Manifest) -> Dict[str, str]:
+    names = [f"datamaker-{manifest.name}-{x}" for x in names]
     ret: Dict[str, str] = {x: "" for x in names}
-    client = boto3.client("ecr")
+    client = manifest.get_boto3_client("ecr")
     paginator = client.get_paginator("describe_repositories")
     for page in paginator.paginate(repositoryNames=names):
         for repo in page["repositories"]:
             ret[repo["repositoryName"]] = repo["repositoryUri"]
-    ret = {k.replace(f"datamaker-{env_name}-", ""): v for k, v in ret.items()}
+    ret = {k.replace(f"datamaker-{manifest.name}-", ""): v for k, v in ret.items()}
     return ret
 
 
 def list_images(filename: str) -> None:
     manifest: Manifest = read_manifest_file(filename=filename)
-    names = extract_images_names(env_name=manifest.name)
+    names = extract_images_names(manifest=manifest)
     _logger.debug("names: %s", names)
     if names:
-        uris = _fetch_repo_uri(names=names, env_name=manifest.name)
+        uris = _fetch_repo_uri(names=names, manifest=manifest)
         print_list(
             tittle=f"Available docker images into the {stylize(manifest.name)} env:",
             items=[f"{k} {stylize(':')} {v}" for k, v in uris.items()],
