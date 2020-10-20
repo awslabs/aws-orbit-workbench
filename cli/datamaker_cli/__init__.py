@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import os
+
 import pkg_resources
 
 from datamaker_cli.__metadata__ import __description__, __license__, __title__  # noqa
