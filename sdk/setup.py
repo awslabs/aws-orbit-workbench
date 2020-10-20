@@ -8,7 +8,7 @@ with open("README.md") as fp:
 
 
 setuptools.setup(
-    name="aws-eks-data-maker-sdk",
+    name="datamaker-sdk",
     version=version,
     description="AWS DataMaker SDK",
     long_description=long_description,

@@ -4,9 +4,6 @@ flake8~=3.8.4
 mypy~=0.782
 cfn-lint~=0.38.0
 pydot~=1.4.1
--e ./cli/
--e ./images/jupyter-hub/utils/
--e ./plugins/hello_world/
 kubernetes~=11.0.0
 aws_cdk.core~=1.67.0
 aws-cdk.aws-ec2~=1.67.0
