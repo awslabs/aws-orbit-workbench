@@ -14,7 +14,7 @@ def login(manifest: "Manifest") -> None:
     username, password = dockerhub.get_credential(manifest)
     sh.run(f"docker login --username {username} --password {password}", hide_cmd=True)
     _logger.debug("DockerHub logged in.")
-    username, password = ecr.get_credential()
+    username, password = ecr.get_credential(manifest=manifest)
     ecr_address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com"
     sh.run(f"docker login --username {username} --password {password} {ecr_address}", hide_cmd=True)
     _logger.debug("ECR logged in.")

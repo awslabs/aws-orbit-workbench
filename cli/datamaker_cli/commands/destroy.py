@@ -24,16 +24,16 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 def destroy_toolkit(manifest: Manifest) -> None:
     stack_name = f"datamaker-{manifest.name}-toolkit"
-    if cfn.does_stack_exist(stack_name=stack_name):
-        s3.delete_bucket(manifest.toolkit_s3_bucket)
-        cfn.destroy_stack(stack_name=stack_name)
+    if cfn.does_stack_exist(manifest=manifest, stack_name=stack_name):
+        s3.delete_bucket(manifest=manifest, bucket=manifest.toolkit_s3_bucket)
+        cfn.destroy_stack(manifest=manifest, stack_name=stack_name)
 
 
 def destroy_image(filename: str, name: str, debug: bool) -> None:
     with MessagesContext("Destroying Docker Image", debug=debug) as ctx:
         manifest = read_manifest_file(filename=filename)
         ctx.info(f"Manifest loaded: {filename}")
-        if cfn.does_stack_exist(stack_name=f"datamaker-{manifest.name}") is False:
+        if cfn.does_stack_exist(manifest=manifest, stack_name=f"datamaker-{manifest.name}") is False:
             ctx.error("Please, deploy your environment before deploy/destroy any docker image")
             return
         bundle_path = bundle.generate_bundle(command_name=f"destroy_image-{name}", manifest=manifest, dirs=[])
@@ -66,9 +66,9 @@ def destroy(filename: str, debug: bool) -> None:
         ctx.info(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
         ctx.progress(3)
 
-        if cfn.does_stack_exist(f"datamaker-{manifest.name}-demo") or cfn.does_stack_exist(
-            f"datamaker-{manifest.name}"
-        ):
+        if cfn.does_stack_exist(
+            manifest=manifest, stack_name=f"datamaker-{manifest.name}-demo"
+        ) or cfn.does_stack_exist(manifest=manifest, stack_name=f"datamaker-{manifest.name}"):
             manifest.read_ssm()
             bundle_path = bundle.generate_bundle(command_name="destroy", manifest=manifest)
             ctx.progress(5)

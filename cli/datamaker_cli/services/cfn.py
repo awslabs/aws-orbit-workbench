@@ -16,18 +16,20 @@ import logging
 import os
 import time
 from datetime import datetime
-from typing import Any, Dict, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Tuple
 
-import boto3
 import botocore.exceptions
+
+if TYPE_CHECKING:
+    from datamaker_cli.manifest import Manifest
 
 CHANGESET_PREFIX = "aws-datamaker-cli-deploy-"
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def does_stack_exist(stack_name: str) -> bool:
-    client = boto3.client("cloudformation")
+def does_stack_exist(manifest: "Manifest", stack_name: str) -> bool:
+    client = manifest.get_boto3_client("cloudformation")
     try:
         resp = client.describe_stacks(StackName=stack_name)
         if len(resp["Stacks"]) < 1:
@@ -40,8 +42,8 @@ def does_stack_exist(stack_name: str) -> bool:
     return True
 
 
-def _wait_for_changeset(changeset_id: str, stack_name: str) -> bool:
-    waiter = boto3.client("cloudformation").get_waiter("change_set_create_complete")
+def _wait_for_changeset(manifest: "Manifest", changeset_id: str, stack_name: str) -> bool:
+    waiter = manifest.get_boto3_client("cloudformation").get_waiter("change_set_create_complete")
     waiter_config = {"Delay": 1}
     try:
         waiter.wait(ChangeSetName=changeset_id, StackName=stack_name, WaiterConfig=waiter_config)
@@ -60,11 +62,11 @@ def _wait_for_changeset(changeset_id: str, stack_name: str) -> bool:
     return True
 
 
-def _create_changeset(stack_name: str, template_str: str, env_tag: str) -> Tuple[str, str]:
+def _create_changeset(manifest: "Manifest", stack_name: str, template_str: str, env_tag: str) -> Tuple[str, str]:
     now = datetime.utcnow().isoformat()
     description = f"Created by AWS DataMaker CLI at {now} UTC"
     changeset_name = CHANGESET_PREFIX + str(int(time.time()))
-    changeset_type = "UPDATE" if does_stack_exist(stack_name=stack_name) else "CREATE"
+    changeset_type = "UPDATE" if does_stack_exist(manifest=manifest, stack_name=stack_name) else "CREATE"
     kwargs = {
         "ChangeSetName": changeset_name,
         "StackName": stack_name,
@@ -74,19 +76,19 @@ def _create_changeset(stack_name: str, template_str: str, env_tag: str) -> Tuple
         "Description": description,
         "Tags": ({"Key": "Env", "Value": env_tag},),
     }
-    resp = boto3.client("cloudformation").create_change_set(**kwargs)
+    resp = manifest.get_boto3_client("cloudformation").create_change_set(**kwargs)
     return str(resp["Id"]), changeset_type
 
 
-def _execute_changeset(changeset_id: str, stack_name: str) -> None:
-    boto3.client("cloudformation").execute_change_set(ChangeSetName=changeset_id, StackName=stack_name)
+def _execute_changeset(manifest: "Manifest", changeset_id: str, stack_name: str) -> None:
+    manifest.get_boto3_client("cloudformation").execute_change_set(ChangeSetName=changeset_id, StackName=stack_name)
 
 
-def _wait_for_execute(stack_name: str, changeset_type: str) -> None:
+def _wait_for_execute(manifest: "Manifest", stack_name: str, changeset_type: str) -> None:
     if changeset_type == "CREATE":
-        waiter = boto3.client("cloudformation").get_waiter("stack_create_complete")
+        waiter = manifest.get_boto3_client("cloudformation").get_waiter("stack_create_complete")
     elif changeset_type == "UPDATE":
-        waiter = boto3.client("cloudformation").get_waiter("stack_update_complete")
+        waiter = manifest.get_boto3_client("cloudformation").get_waiter("stack_update_complete")
     else:
         raise RuntimeError(f"Invalid changeset type {changeset_type}")
     waiter_config = {
@@ -96,7 +98,7 @@ def _wait_for_execute(stack_name: str, changeset_type: str) -> None:
     waiter.wait(StackName=stack_name, WaiterConfig=waiter_config)
 
 
-def deploy_template(stack_name: str, filename: str, env_tag: str) -> None:
+def deploy_template(manifest: "Manifest", stack_name: str, filename: str, env_tag: str) -> None:
     _logger.debug("Deploying template %s", filename)
     if not os.path.isfile(filename):
         raise FileNotFoundError(f"CloudFormation template not found at {filename}")
@@ -105,15 +107,17 @@ def deploy_template(stack_name: str, filename: str, env_tag: str) -> None:
         raise RuntimeError(f"The CloudFormation template ({filename}) is too big to be deployed w/o an s3 bucket.")
     with open(filename, "r") as handle:
         template_str = handle.read()
-    changeset_id, changeset_type = _create_changeset(stack_name=stack_name, template_str=template_str, env_tag=env_tag)
-    has_changes = _wait_for_changeset(changeset_id, stack_name)
+    changeset_id, changeset_type = _create_changeset(
+        manifest=manifest, stack_name=stack_name, template_str=template_str, env_tag=env_tag
+    )
+    has_changes = _wait_for_changeset(manifest=manifest, changeset_id=changeset_id, stack_name=stack_name)
     if has_changes:
-        _execute_changeset(changeset_id=changeset_id, stack_name=stack_name)
-        _wait_for_execute(stack_name, changeset_type)
+        _execute_changeset(manifest=manifest, changeset_id=changeset_id, stack_name=stack_name)
+        _wait_for_execute(manifest=manifest, stack_name=stack_name, changeset_type=changeset_type)
 
 
-def destroy_stack(stack_name: str) -> None:
-    client = boto3.client("cloudformation")
+def destroy_stack(manifest: "Manifest", stack_name: str) -> None:
+    client = manifest.get_boto3_client("cloudformation")
     client.delete_stack(StackName=stack_name)
     waiter = client.get_waiter("stack_delete_complete")
     waiter.wait(StackName=stack_name, WaiterConfig={"Delay": 5, "MaxAttempts": 200})

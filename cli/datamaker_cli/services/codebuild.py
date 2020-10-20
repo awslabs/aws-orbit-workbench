@@ -18,7 +18,6 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Union
 
-import boto3
 import botocore.exceptions
 import yaml
 
@@ -108,8 +107,15 @@ class BuildInfo(NamedTuple):
     logs: BuildCloudWatchLogs
 
 
-def start(project_name: str, stream_name: str, bundle_location: str, buildspec: Dict[str, Any], timeout: int) -> str:
-    client = boto3.client("codebuild")
+def start(
+    manifest: Manifest,
+    project_name: str,
+    stream_name: str,
+    bundle_location: str,
+    buildspec: Dict[str, Any],
+    timeout: int,
+) -> str:
+    client = manifest.get_boto3_client("codebuild")
     response: Dict[str, Any] = client.start_build(
         projectName=project_name,
         sourceTypeOverride="S3",
@@ -129,8 +135,8 @@ def start(project_name: str, stream_name: str, bundle_location: str, buildspec: 
     return str(response["build"]["id"])
 
 
-def fetch_build_info(build_id: str) -> BuildInfo:
-    client = boto3.client("codebuild")
+def fetch_build_info(manifest: Manifest, build_id: str) -> BuildInfo:
+    client = manifest.get_boto3_client("codebuild")
     response: Dict[str, List[Dict[str, Any]]] = try_it(
         f=client.batch_get_builds, ex=botocore.exceptions.ClientError, ids=[build_id]
     )
@@ -168,14 +174,14 @@ def fetch_build_info(build_id: str) -> BuildInfo:
     )
 
 
-def wait(build_id: str) -> Iterable[BuildInfo]:
-    build = fetch_build_info(build_id=build_id)
+def wait(manifest: Manifest, build_id: str) -> Iterable[BuildInfo]:
+    build = fetch_build_info(manifest=manifest, build_id=build_id)
     while build.status is BuildStatus.in_progress:
         time.sleep(_BUILD_WAIT_POLLING_DELAY)
 
         last_phase = build.current_phase
         last_status = build.status
-        build = fetch_build_info(build_id=build_id)
+        build = fetch_build_info(manifest=manifest, build_id=build_id)
 
         if build.current_phase is not last_phase or build.status is not last_status:
             _logger.debug("phase: %s (%s)", build.current_phase.value, build.status.value)

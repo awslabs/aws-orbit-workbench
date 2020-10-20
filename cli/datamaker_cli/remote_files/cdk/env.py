@@ -96,7 +96,7 @@ class Env(Stack):
         return repo
 
     def _create_ecr_repos(self) -> List[ecr.Repository]:
-        current_images_names = extract_images_names(env_name=self.manifest.name)
+        current_images_names = extract_images_names(manifest=self.manifest)
         current_images_names = list(set(current_images_names) - set(self.remove_images))
         repos = [self.create_repo(image_name=r) for r in current_images_names]
         for image_name in self.add_images:
@@ -119,9 +119,13 @@ class Env(Stack):
             scope=self,
             id=name,
             role_name=name,
-            assumed_by=cast(iam.IPrincipal, iam.ServicePrincipal(service="eks.amazonaws.com")),
+            assumed_by=iam.CompositePrincipal(
+                iam.ServicePrincipal("eks.amazonaws.com"), iam.ServicePrincipal("eks-fargate-pods.amazonaws.com")
+            ),
             managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSClusterPolicy")
+                iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSClusterPolicy"),
+                iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSServicePolicy"),
+                iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSVPCResourceController"),
             ],
             inline_policies={
                 "Extras": iam.PolicyDocument(
@@ -131,6 +135,8 @@ class Env(Stack):
                                 "elasticloadbalancing:*",
                                 "ec2:CreateSecurityGroup",
                                 "ec2:Describe*",
+                                "cloudwatch:PutMetricData",
+                                "iam:ListAttachedRolePolicies",
                             ],
                             resources=["*"],
                         )
