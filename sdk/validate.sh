@@ -18,7 +18,7 @@
 set -ex
 
 isort --check --line-length 120 .
-black --check --line-length 120 --target-version py38 .
-mypy --pretty --python-version 3.8 .
+black --check --line-length 120 --target-version py36 .
+mypy --pretty --python-version 3.6 .
 flake8 --max-line-length 120 .
 
