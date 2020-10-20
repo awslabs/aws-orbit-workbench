@@ -24,9 +24,12 @@ path = os.path.join(here, "datamaker_cli", "__metadata__.py")
 with open(file=path, mode="r", encoding="utf-8") as f:
     exec(f.read(), about)
 
+with open("VERSION", "r") as version_file:
+    version = version_file.read().strip()
+
 setup(
     name=about["__title__"],
-    version=about["__version__"],
+    version=version,
     description=about["__description__"],
     license=about["__license__"],
     packages=find_packages(include=["datamaker_cli", "datamaker_cli.*"]),
