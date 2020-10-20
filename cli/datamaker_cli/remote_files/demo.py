@@ -33,7 +33,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 def _network_interface(manifest: Manifest, vpc_id: str) -> None:
     client = manifest.get_boto3_client("ec2")
-    ec2 = manifest.get_boto3_client("ec2")
+    ec2 = manifest.get_boto3_session().resource("ec2")
     for i in client.describe_network_interfaces(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}])["NetworkInterfaces"]:
         try:
             network_interface = ec2.NetworkInterface(i["NetworkInterfaceId"])
