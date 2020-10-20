@@ -113,7 +113,7 @@ def _cleanup_remaining_dependencies(manifest: Manifest) -> None:
 def deploy(manifest: Manifest, filename: str) -> None:
     stack_name = STACK_NAME.format(env_name=manifest.name)
     _logger.debug("Stack name: %s", stack_name)
-    if manifest.demo and (not cfn.does_cfn_exist(stack_name=stack_name) or manifest.dev):
+    if manifest.demo and (not cfn.does_stack_exist(stack_name=stack_name) or manifest.dev):
         template_filename: str = demo.synth(stack_name=stack_name, filename=filename, env_name=manifest.name)
         _logger.debug("template_filename: %s", template_filename)
         cfn.deploy_template(stack_name=stack_name, filename=template_filename, env_tag=manifest.name, toolkit_s3_bucket=manifest.toolkit_s3_bucket)
@@ -129,9 +129,9 @@ def destroy(manifest: Manifest) -> None:
         if plugin.destroy_demo_hook is not None:
             plugin.destroy_demo_hook(manifest)
     _logger.debug("Stack name: %s", stack_name)
-    if manifest.demo and cfn.does_cfn_exist(stack_name=stack_name):
+    if manifest.demo and cfn.does_stack_exist(stack_name=stack_name):
         waited: bool = False
-        while cfn.does_cfn_exist(stack_name=f"eksctl-{stack_name}-cluster"):
+        while cfn.does_stack_exist(stack_name=f"eksctl-{stack_name}-cluster"):
             waited = True
             time.sleep(2)
         else:

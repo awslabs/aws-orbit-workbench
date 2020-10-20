@@ -24,9 +24,6 @@ import botocore.exceptions
 from datamaker_cli.services import  s3
 from datamaker_cli.utils import path_from_filename
 
-
-from datamaker_cli.utils import does_cfn_exist
-
 CHANGESET_PREFIX = "aws-datamaker-cli-deploy-"
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -115,7 +112,6 @@ def deploy_template(stack_name: str, filename: str, env_tag: str, toolkit_s3_buc
     template_size = os.path.getsize(filename)
     if template_size > 51_200:
         _logger.info(f"The CloudFormation template ({filename}) is too big to be deployed w/o an s3 bucket.")
-        #filename_dir = path_from_filename(filename=filename)
         local_template_path=filename
         s3_file_name= filename.split("/")[-1]
         key = f"cli/remote/demo/{s3_file_name}"
