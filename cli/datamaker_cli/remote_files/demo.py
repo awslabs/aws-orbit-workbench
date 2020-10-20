@@ -15,6 +15,7 @@
 import concurrent.futures
 import logging
 import time
+from itertools import repeat
 from typing import Any, Dict, List, cast
 
 import botocore.exceptions
@@ -93,7 +94,7 @@ def _security_group(manifest: Manifest, vpc_id: str) -> None:
     ]
     if sec_groups:
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(sec_groups)) as executor:
-            list(executor.map(delete_sec_group, sec_groups))
+            list(executor.map(delete_sec_group, repeat(manifest), sec_groups))
 
 
 def _cleanup_remaining_dependencies(manifest: Manifest) -> None:
