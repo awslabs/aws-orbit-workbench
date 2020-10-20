@@ -61,6 +61,7 @@ Resources:
                   - elasticfilesystem:DeleteMountTarget
                   - elasticfilesystem:DescribeMountTargets
                   - elasticfilesystem:DeleteFileSystem
+                  - iam:ListAttachedRolePolicies
                   - iam:GetPolicy
                   - iam:ListPolicyVersions
                   - iam:GetRole
@@ -125,8 +126,14 @@ Resources:
                   - iam:TagRole
                   - iam:PassRole
                   - iam:ListAttachedRolePolicies
+                  - iam:UpdateAssumeRolePolicy
                 Resource:
                   - arn:aws:iam::${account_id}:role/datamaker-${env_name}-*
+              - Effect: Allow
+                Action:
+                  - iam:CreateServiceLinkedRole
+                Resource:
+                  - arn:aws:iam::${account_id}:role/aws-service-role/eks-nodegroup.amazonaws.com/AWSServiceRoleForAmazonEKSNodegroup
               - Effect: Allow
                 Action:
                   - iam:CreatePolicy

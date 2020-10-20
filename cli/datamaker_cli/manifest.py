@@ -19,6 +19,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Union, cast
 
 import boto3
+import botocore.config
 import yaml
 from botocore.exceptions import ClientError
 
@@ -52,8 +53,8 @@ class SubnetManifest:
         self.kind = kind
         self.vpc_id = vpc_id
 
-    def _fetch_route_table_id(self) -> None:
-        ec2_client = boto3.client("ec2")
+    def _fetch_route_table_id(self, manifest: "Manifest") -> None:
+        ec2_client = manifest.get_boto3_client(service_name="ec2")
         res: Dict[str, Any] = ec2_client.describe_route_tables(
             Filters=[{"Name": "association.subnet-id", "Values": [self.subnet_id]}]
         )
@@ -64,13 +65,13 @@ class SubnetManifest:
                         self.route_table_id = association["RouteTableId"]
                         return
 
-    def fetch_properties(self) -> None:
-        ec2 = boto3.resource("ec2")
+    def fetch_properties(self, manifest: "Manifest") -> None:
+        ec2 = manifest.get_boto3_session().resource("ec2")
         subnet = ec2.Subnet(self.subnet_id)
         self.cidr_block = str(subnet.cidr_block)
         self.availability_zone = str(subnet.availability_zone)
         self.vpc_id = str(subnet.vpc_id)
-        self._fetch_route_table_id()
+        self._fetch_route_table_id(manifest=manifest)
 
     def repr_full(self) -> Dict[str, str]:
         repr: Dict[str, str] = replace_underscores(vars(self))
@@ -107,10 +108,10 @@ class VpcManifest:
         repr["subnets"] = [s.repr_full() for s in self.subnets]
         return repr
 
-    def _fetch_vpc_id(self) -> None:
+    def _fetch_vpc_id(self, manifest: "Manifest") -> None:
         vpc_ids: Set[str] = set(s.vpc_id for s in self.subnets if s.vpc_id is not None)
         if not vpc_ids:
-            self._fetch_subnets_properties()
+            self._fetch_subnets_properties(manifest=manifest)
             vpc_ids = set(s.vpc_id for s in self.subnets if s.vpc_id is not None)
         _logger.debug("vpc_ids: %s", vpc_ids)
         if len(vpc_ids) != 1:
@@ -120,24 +121,24 @@ class VpcManifest:
             )
         self.vpc_id = vpc_ids.pop()
 
-    def _fetch_vpc_cidr(self) -> None:
-        ec2 = boto3.resource("ec2")
+    def _fetch_vpc_cidr(self, manifest: "Manifest") -> None:
+        ec2 = manifest.get_boto3_session().resource("ec2")
         if self.vpc_id is None:
-            self._fetch_vpc_id()
+            self._fetch_vpc_id(manifest=manifest)
         vpc = ec2.Vpc(self.vpc_id)
         self.cidr_block = str(vpc.cidr_block)
 
-    def _fetch_subnets_properties(self) -> None:
+    def _fetch_subnets_properties(self, manifest: "Manifest") -> None:
         for subnet in self.subnets:
             try:
-                subnet.fetch_properties()
+                subnet.fetch_properties(manifest=manifest)
             except ClientError:
                 _logger.warning("Unable to fetch properties from subnet (%s)", subnet.subnet_id)
 
-    def fetch_vpc_properties(self) -> None:
-        self._fetch_subnets_properties()
-        self._fetch_vpc_id()
-        self._fetch_vpc_cidr()
+    def fetch_vpc_properties(self, manifest: "Manifest") -> None:
+        self._fetch_subnets_properties(manifest=manifest)
+        self._fetch_vpc_id(manifest=manifest)
+        self._fetch_vpc_cidr(manifest=manifest)
         self.availability_zones = sorted(
             list(set(s.availability_zone for s in self.subnets if s.availability_zone is not None))
         )
@@ -175,8 +176,8 @@ class TeamManifest:
         self.jupyter_url = jupyter_url
         self.ssm_parameter_name = f"/datamaker/{self.env_name}/teams/{self.name}/manifest"
 
-    def read_ssm(self) -> None:
-        client = boto3.client(service_name="ssm")
+    def read_ssm(self, manifest: "Manifest") -> None:
+        client = manifest.get_boto3_client(service_name="ssm")
         try:
             json_str: str = client.get_parameter(Name=f"/datamaker/{self.env_name}/teams/{self.name}/manifest")[
                 "Parameter"
@@ -206,8 +207,8 @@ class TeamManifest:
     def repr_full_as_string(self) -> str:
         return str(json.dumps(obj=self.repr_full(), indent=4, sort_keys=False))
 
-    def write_ssm(self) -> None:
-        client = boto3.client(service_name="ssm")
+    def write_ssm(self, manifest: "Manifest") -> None:
+        client = manifest.get_boto3_client(service_name="ssm")
         client.put_parameter(Name=self.ssm_parameter_name, Value=self.repr_full_as_string(), Overwrite=True)
 
 
@@ -274,7 +275,6 @@ class Manifest:
         self.identity_pool_id = identity_pool_id
         self.ssm_parameter_name = f"/datamaker/{self.name}/manifest"
         self.ssm_dockerhub_parameter_name = f"/datamaker/{self.name}/dockerhub"
-        boto3.setup_default_session(region_name=self.region)
         self.toolkit_codebuild_project = f"datamaker-{self.name}"
         self.landing_page_url = landing_page_url
         self._deploy_id: Optional[str] = deploy_id
@@ -294,7 +294,7 @@ class Manifest:
     def fetch_toolkit_info(self) -> None:
         toolkit_stack = f"datamaker-{self.name}-toolkit"
         resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
-        response: resp_type = boto3.client("cloudformation").describe_stacks(StackName=toolkit_stack)
+        response: resp_type = self.get_boto3_client("cloudformation").describe_stacks(StackName=toolkit_stack)
         if len(response["Stacks"]) < 1:
             raise RuntimeError("Toolkit stack not found.")
         if "Outputs" not in response["Stacks"][0]:
@@ -314,6 +314,77 @@ class Manifest:
             raise RuntimeError(
                 f"Stack {toolkit_stack} does not have the expected datamaker-{self.name}-kms-arn output."
             )
+
+    def read_ssm(self) -> None:
+        client = self.get_boto3_client(service_name="ssm")
+        try:
+            json_str: str = client.get_parameter(Name=f"/datamaker/{self.name}/manifest")["Parameter"]["Value"]
+        except client.exceptions.ParameterNotFound:
+            self.available_eks_regions = boto3.Session().get_available_regions("eks")
+            self.vpc.fetch_vpc_properties(manifest=self)
+            self.fetch_toolkit_info()
+        else:
+            raw = cast(Dict[str, Any], json.loads(json_str))
+            subnets_args = [replace_dashes(s) for s in raw["vpc"]["subnets"]]
+            for s in subnets_args:
+                s["kind"] = SubnetKind(value=s["kind"])
+            subnets = [SubnetManifest(**s) for s in subnets_args]
+            self.vpc = VpcManifest(
+                subnets=subnets, **{k.replace("-", "_"): v for k, v in raw["vpc"].items() if k != "subnets"}
+            )
+            self.teams = [TeamManifest(env_name=self.name, **replace_dashes(team)) for team in raw["teams"]]
+            for team in self.teams:
+                team.read_ssm(manifest=self)
+            self.plugins = [PluginManifest(**replace_dashes(plugin)) for plugin in raw["plugins"]]
+            for k, v in replace_dashes(raw).items():
+                if k not in ("vpc", "teams", "plugins", "account_id", "toolkit_s3_bucket", "toolkit_kms_alias"):
+                    setattr(self, k, v)
+
+    def repr_minimal(self) -> MANIFEST_REPR_MINIMAL_TYPE:
+        repr: MANIFEST_REPR_MINIMAL_TYPE = {
+            "name": self.name,
+            "region": self.region,
+            "vpc": self.vpc.repr_minimal(),
+            "teams": [t.repr_minimal() for t in self.teams],
+            "plugins": [p.repr_minimal() for p in self.plugins],
+        }
+        if self.demo:
+            repr["demo"] = True
+        if self.dev:
+            repr["dev"] = True
+        return repr
+
+    def repr_full(self) -> MANIFEST_REPR_FULL_TYPE:
+        repr: MANIFEST_REPR_FULL_TYPE = replace_underscores(vars(self))
+        repr["vpc"] = self.vpc.repr_full()
+        repr["teams"] = [t.repr_minimal() for t in self.teams]
+        repr["plugins"] = [p.repr_full() for p in self.plugins]
+        del repr["filename"]
+        del repr["filename-dir"]
+        return repr
+
+    def repr_full_as_string(self) -> str:
+        return str(json.dumps(obj=self.repr_full(), indent=4, sort_keys=False))
+
+    def write_ssm(self) -> None:
+        client = self.get_boto3_client(service_name="ssm")
+        client.put_parameter(Name=self.ssm_parameter_name, Value=self.repr_full_as_string(), Overwrite=True)
+
+    def write_file(self, filename: str) -> None:
+        _logger.debug("filename: %s", filename)
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        with open(filename, "w") as file:
+            yaml.safe_dump(data=self.repr_minimal(), stream=file, sort_keys=False, indent=4)
+
+    def get_boto3_session(self) -> boto3.Session:
+        return boto3.Session(region_name=self.region)
+
+    @staticmethod
+    def botocore_config() -> botocore.config.Config:
+        return botocore.config.Config(retries={"max_attempts": 5}, connect_timeout=10, max_pool_connections=10)
+
+    def get_boto3_client(self, service_name: str) -> boto3.client:
+        return self.get_boto3_session().client(service_name=service_name, use_ssl=True, config=self.botocore_config())
 
     @property
     def user_pool_id(self) -> Optional[str]:
@@ -362,69 +433,8 @@ class Manifest:
     @property
     def account_id(self) -> str:
         if self._account_id is None:
-            self._account_id = get_account_id()
+            self._account_id = get_account_id(manifest=self)
         return self._account_id
-
-    def read_ssm(self) -> None:
-        client = boto3.client(service_name="ssm")
-        try:
-            json_str: str = client.get_parameter(Name=f"/datamaker/{self.name}/manifest")["Parameter"]["Value"]
-        except client.exceptions.ParameterNotFound:
-            self.available_eks_regions = boto3.Session().get_available_regions("eks")
-            self.vpc.fetch_vpc_properties()
-            self.fetch_toolkit_info()
-        else:
-            raw = cast(Dict[str, Any], json.loads(json_str))
-            subnets_args = [replace_dashes(s) for s in raw["vpc"]["subnets"]]
-            for s in subnets_args:
-                s["kind"] = SubnetKind(value=s["kind"])
-            subnets = [SubnetManifest(**s) for s in subnets_args]
-            self.vpc = VpcManifest(
-                subnets=subnets, **{k.replace("-", "_"): v for k, v in raw["vpc"].items() if k != "subnets"}
-            )
-            self.teams = [TeamManifest(env_name=self.name, **replace_dashes(team)) for team in raw["teams"]]
-            for team in self.teams:
-                team.read_ssm()
-            self.plugins = [PluginManifest(**replace_dashes(plugin)) for plugin in raw["plugins"]]
-            for k, v in replace_dashes(raw).items():
-                if k not in ("vpc", "teams", "plugins", "account_id", "toolkit_s3_bucket", "toolkit_kms_alias"):
-                    setattr(self, k, v)
-
-    def repr_minimal(self) -> MANIFEST_REPR_MINIMAL_TYPE:
-        repr: MANIFEST_REPR_MINIMAL_TYPE = {
-            "name": self.name,
-            "region": self.region,
-            "vpc": self.vpc.repr_minimal(),
-            "teams": [t.repr_minimal() for t in self.teams],
-            "plugins": [p.repr_minimal() for p in self.plugins],
-        }
-        if self.demo:
-            repr["demo"] = True
-        if self.dev:
-            repr["dev"] = True
-        return repr
-
-    def repr_full(self) -> MANIFEST_REPR_FULL_TYPE:
-        repr: MANIFEST_REPR_FULL_TYPE = replace_underscores(vars(self))
-        repr["vpc"] = self.vpc.repr_full()
-        repr["teams"] = [t.repr_minimal() for t in self.teams]
-        repr["plugins"] = [p.repr_full() for p in self.plugins]
-        del repr["filename"]
-        del repr["filename-dir"]
-        return repr
-
-    def repr_full_as_string(self) -> str:
-        return str(json.dumps(obj=self.repr_full(), indent=4, sort_keys=False))
-
-    def write_ssm(self) -> None:
-        client = boto3.client(service_name="ssm")
-        client.put_parameter(Name=self.ssm_parameter_name, Value=self.repr_full_as_string(), Overwrite=True)
-
-    def write_file(self, filename: str) -> None:
-        _logger.debug("filename: %s", filename)
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
-        with open(filename, "w") as file:
-            yaml.safe_dump(data=self.repr_minimal(), stream=file, sort_keys=False, indent=4)
 
 
 def read_manifest_file(filename: str) -> Manifest:

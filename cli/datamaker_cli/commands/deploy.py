@@ -17,7 +17,6 @@ import os
 import uuid
 from typing import Dict, List, Optional, Tuple, cast
 
-import boto3
 import click
 
 from datamaker_cli import bundle, dockerhub, plugins, remote, toolkit
@@ -36,10 +35,10 @@ def _request_dockerhub_credential(ctx: MessagesContext) -> Tuple[str, str]:
     return username, password
 
 
-def refresh_manifest_file_with_demo_attrs(filename: str, manifest: Manifest) -> None:
+def refresh_manifest_file_with_demo_attrs(manifest: Manifest) -> None:
     stack_name = f"datamaker-{manifest.name}-demo"
     resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
-    response: resp_type = boto3.client("cloudformation").describe_stacks(StackName=stack_name)
+    response: resp_type = manifest.get_boto3_client("cloudformation").describe_stacks(StackName=stack_name)
     if len(response["Stacks"]) < 1:
         raise RuntimeError(f"Cloudformation {stack_name} stack not found. Please deploy it.")
     subnets: List[SubnetManifest] = []
@@ -51,7 +50,7 @@ def refresh_manifest_file_with_demo_attrs(filename: str, manifest: Manifest) -> 
             for subnet_id in output["OutputValue"].split(","):
                 subnets.append(SubnetManifest(subnet_id=subnet_id, kind=SubnetKind.public))
     manifest.vpc.subnets = subnets
-    manifest.write_file(filename=filename)
+    manifest.write_file(filename=manifest.filename)
 
 
 def deploy_toolkit(
@@ -59,7 +58,7 @@ def deploy_toolkit(
 ) -> None:
     stack_name: str = f"datamaker-{manifest.name}-toolkit"
     credential_received: bool = username is not None and password is not None
-    stack_exist: bool = cfn.does_stack_exist(stack_name=stack_name)
+    stack_exist: bool = cfn.does_stack_exist(manifest=manifest, stack_name=stack_name)
     if stack_exist:
         credential_exist: bool = dockerhub.does_credential_exist(manifest=manifest)
     else:
@@ -83,7 +82,9 @@ def deploy_toolkit(
     _logger.debug("manifest.deploy_id: %s", manifest.deploy_id)
     if stack_exist is False or manifest.dev:
         template_filename = toolkit.synth(filename=filename, manifest=manifest)
-        cfn.deploy_template(stack_name=stack_name, filename=template_filename, env_tag=f"datamaker-{manifest.name}")
+        cfn.deploy_template(
+            manifest=manifest, stack_name=stack_name, filename=template_filename, env_tag=f"datamaker-{manifest.name}"
+        )
 
     if credential_exist is False:
         dockerhub.store_credential(manifest=manifest, username=cast(str, username), password=cast(str, password))
@@ -93,7 +94,7 @@ def deploy_image(filename: str, dir: str, name: str, script: Optional[str], debu
     with MessagesContext("Deploying Docker Image", debug=debug) as ctx:
         manifest = read_manifest_file(filename=filename)
         ctx.info(f"Manifest loaded: {filename}")
-        if cfn.does_stack_exist(stack_name=f"datamaker-{manifest.name}") is False:
+        if cfn.does_stack_exist(manifest=manifest, stack_name=f"datamaker-{manifest.name}") is False:
             ctx.error("Please, deploy your environment before deploy any addicional docker image")
             return
         bundle_path = bundle.generate_bundle(command_name=f"deploy_image-{name}", manifest=manifest, dirs=[(dir, name)])
@@ -156,8 +157,8 @@ def deploy(filename: str, debug: bool, username: Optional[str] = None, password:
         ctx.info("DataMaker deployed")
         ctx.progress(98)
 
-        if manifest.demo and cfn.does_stack_exist(stack_name=f"datamaker-{manifest.name}-demo"):
-            refresh_manifest_file_with_demo_attrs(filename=filename, manifest=manifest)
+        if manifest.demo and cfn.does_stack_exist(manifest=manifest, stack_name=f"datamaker-{manifest.name}-demo"):
+            refresh_manifest_file_with_demo_attrs(manifest=manifest)
             ctx.info(f"Manifest updated: {filename}")
         ctx.progress(99)
 

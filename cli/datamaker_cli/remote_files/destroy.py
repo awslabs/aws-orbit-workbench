@@ -34,7 +34,7 @@ def destroy_image(filename: str, args: Tuple[str, ...]) -> None:
 
     env.deploy(manifest=manifest, filename=filename, add_images=[], remove_images=[image_name])
     _logger.debug("Env changes deployed")
-    ecr.delete_repo(f"datamaker-{manifest.name}-{image_name}")
+    ecr.delete_repo(manifest=manifest, repo=f"datamaker-{manifest.name}-{image_name}")
     _logger.debug("Docker Image Destroyed from ECR")
 
 

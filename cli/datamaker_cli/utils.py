@@ -17,10 +17,13 @@ import math
 import os
 import random
 import time
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Optional
 
 import boto3
 import botocore.exceptions
+
+if TYPE_CHECKING:
+    from datamaker_cli.manifest import Manifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -39,8 +42,8 @@ def get_region() -> str:
     return str(session.region_name)
 
 
-def get_account_id() -> str:
-    return str(boto3.client(service_name="sts").get_caller_identity().get("Account"))
+def get_account_id(manifest: "Manifest") -> str:
+    return str(manifest.get_boto3_client(service_name="sts").get_caller_identity().get("Account"))
 
 
 def namedtuple_to_dict(obj: Any) -> Any:
@@ -59,8 +62,8 @@ def path_from_filename(filename: str) -> str:
     return os.path.dirname(os.path.realpath(filename))
 
 
-def upsert_subnet_tag(subnet_id: str, key: str, value: str) -> None:
-    ec2: Any = boto3.resource("ec2")
+def upsert_subnet_tag(manifest: "Manifest", subnet_id: str, key: str, value: str) -> None:
+    ec2: Any = manifest.get_boto3_session().resource("ec2")
     ec2.Subnet(subnet_id).create_tags(Tags=[{"Key": key, "Value": value}])
 
 
@@ -84,15 +87,17 @@ def extract_plugin_name(func: Callable[..., None]) -> str:
     return name
 
 
-def extract_images_names(env_name: str) -> List[str]:
+def extract_images_names(manifest: "Manifest") -> List[str]:
     resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
     try:
-        response: resp_type = boto3.client("cloudformation").describe_stacks(StackName=f"datamaker-{env_name}")
+        response: resp_type = manifest.get_boto3_client("cloudformation").describe_stacks(
+            StackName=f"datamaker-{manifest.name}"
+        )
     except botocore.exceptions.ClientError as ex:
         error: Dict[str, Any] = ex.response["Error"]
         if (
             error["Code"] == "ValidationError"
-            and f"Stack with id datamaker-{env_name} does not exist" in error["Message"]
+            and f"Stack with id datamaker-{manifest.name} does not exist" in error["Message"]
         ):
             return []
         raise
@@ -101,10 +106,12 @@ def extract_images_names(env_name: str) -> List[str]:
     if "Outputs" not in response["Stacks"][0]:
         return []
     for output in response["Stacks"][0]["Outputs"]:
-        if output["ExportName"] == f"datamaker-{env_name}-repos":
+        if output["ExportName"] == f"datamaker-{manifest.name}-repos":
             _logger.debug("Export value: %s", output["OutputValue"])
             return output["OutputValue"].split(",")
-    raise RuntimeError(f"Stack datamaker-{env_name} does not have the expected datamaker-{env_name}-repos output.")
+    raise RuntimeError(
+        f"Stack datamaker-{manifest.name} does not have the expected datamaker-{manifest.name}-repos output."
+    )
 
 
 def try_it(f: Callable[..., Any], ex: Any, base: float = 1.0, max_num_tries: int = 3, **kwargs: Any) -> Any:
