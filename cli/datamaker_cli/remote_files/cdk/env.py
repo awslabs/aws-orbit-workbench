@@ -119,9 +119,14 @@ class Env(Stack):
             scope=self,
             id=name,
             role_name=name,
-            assumed_by=cast(iam.IPrincipal, iam.ServicePrincipal(service="eks.amazonaws.com")),
+            assumed_by=iam.CompositePrincipal(
+                iam.ServicePrincipal("eks.amazonaws.com"),
+                iam.ServicePrincipal("eks-fargate-pods.amazonaws.com")
+            ),
             managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSClusterPolicy")
+                iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSClusterPolicy"),
+                iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSServicePolicy"),
+                iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSVPCResourceController")
             ],
             inline_policies={
                 "Extras": iam.PolicyDocument(
@@ -131,6 +136,8 @@ class Env(Stack):
                                 "elasticloadbalancing:*",
                                 "ec2:CreateSecurityGroup",
                                 "ec2:Describe*",
+                                "cloudwatch:PutMetricData",
+                                "iam:ListAttachedRolePolicies"
                             ],
                             resources=["*"],
                         )
