@@ -11,8 +11,9 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+import pkg_resources
 
 __title__: str = "datamaker-cli"
 __description__: str = "Data & ML Unified Development and Production Environment."
-__version__: str = "0.0b0"
+__version__: str = pkg_resources.get_distribution(__title__).version
 __license__: str = "Apache License 2.0"
