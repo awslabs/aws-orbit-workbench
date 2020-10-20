@@ -20,4 +20,4 @@ set -ex
 isort --check --line-length 120 .
 black --check --line-length 120 --target-version py36 .
 mypy --python-version 3.6 --strict --ignore-missing-imports .
-flake8 --max-line-length 120 .
+flake8 --max-line-length 120 --exclude .venv .
