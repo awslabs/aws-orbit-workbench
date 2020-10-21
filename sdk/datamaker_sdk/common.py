@@ -43,9 +43,9 @@ def get_properties() -> Dict[str, str]:
             )
         else:
             prop = dict(
-                AWS_DATAMAKER_ENV=os.environ["AWS_DATAMAKER_ENV"],
-                DATAMAKER_TEAM_SPACE=os.environ["DATAMAKER_TEAM_SPACE"],
-                AWS_DATAMAKER_S3_BUCKET=os.environ["AWS_DATAMAKER_S3_BUCKET"],
+                AWS_DATAMAKER_ENV=os.environ.get("AWS_DATAMAKER_ENV", ""),
+                DATAMAKER_TEAM_SPACE=os.environ.get("DATAMAKER_TEAM_SPACE", ""),
+                AWS_DATAMAKER_S3_BUCKET=os.environ.get("AWS_DATAMAKER_S3_BUCKET", ""),
             )
     else:
         # this path is used by the sagemaker notebooks where we cannot create the env variable in the context of the notebook
@@ -112,7 +112,7 @@ def get_workspace() -> Dict[str, str]:
     ssm = boto3.client("ssm")
     props = get_properties()
 
-    role_key = f"/datamaker/teamspace/{props['AWS_DATAMAKER_ENV']}/{props['DATAMAKER_TEAM_SPACE']}/workspace"
+    role_key = f"/datamaker/{props['AWS_DATAMAKER_ENV']}/teams/{props['DATAMAKER_TEAM_SPACE']}/manifest"
 
     role_config_str = ssm.get_parameter(Name=role_key)["Parameter"]["Value"]
 
