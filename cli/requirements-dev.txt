@@ -20,4 +20,3 @@ aws-cdk.aws-ssm~=1.67.0
 aws-cdk.aws-kms~=1.67.0
 aws_cdk.aws_cognito~=1.67.0
 -e .
--e ../plugins/hello_world/
