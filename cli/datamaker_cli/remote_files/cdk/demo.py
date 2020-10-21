@@ -132,20 +132,9 @@ class VpcStack(Stack):
             service=ec2.InterfaceVpcEndpointAwsService('codeartifact.api')
         )
 
-        code_artifact_repo_endpoint = self.vpc.add_interface_endpoint('code_artifact_endpoint',
+        self.vpc.add_interface_endpoint('code_artifact_endpoint',
             service=ec2.InterfaceVpcEndpointAwsService('codeartifact.repositories'),
             private_dns_enabled=False
-        )
-
-        zone = r53.HostedZone(self, id='CodeArtifactHostedZone',
-            vpcs=[self.vpc],
-            zone_name=f'd.codeartifact.{core.Aws.REGION}.amazonaws.com'
-        )
-
-        r53.ARecord(self, id='CodeArtifactRepoRecord',
-            zone=zone,
-            target=r53.RecordTarget.from_alias(targets.InterfaceVpcEndpointTarget(code_artifact_repo_endpoint)),
-            record_name='*'
         )
 
 class EmptySubnetSelection(ec2.SelectedSubnets):

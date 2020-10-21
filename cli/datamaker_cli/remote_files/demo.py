@@ -118,7 +118,7 @@ def deploy(manifest: Manifest, filename: str) -> None:
         template_filename: str = demo.synth(stack_name=stack_name, filename=filename, env_name=manifest.name)
         _logger.debug("template_filename: %s", template_filename)
         cfn.deploy_template(manifest=manifest, stack_name=stack_name, filename=template_filename, env_tag=manifest.name, toolkit_s3_bucket=manifest.toolkit_s3_bucket)
-        refresh_manifest_file_with_demo_attrs(filename=filename,manifest=manifest)
+        refresh_manifest_file_with_demo_attrs(manifest=manifest)
     for plugin in plugins.PLUGINS_REGISTRY.values():
         if plugin.deploy_demo_hook is not None:
             plugin.deploy_demo_hook(manifest)

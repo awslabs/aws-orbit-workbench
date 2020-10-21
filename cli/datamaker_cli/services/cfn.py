@@ -134,7 +134,7 @@ def deploy_template(manifest: "Manifest", stack_name: str, filename: str, env_ta
             template_str = handle.read()
         changeset_id, changeset_type = _create_changeset(manifest=manifest, stack_name=stack_name, template_str=template_str, env_tag=env_tag)
 
-    has_changes = _wait_for_changeset(changeset_id, stack_name)
+    has_changes = _wait_for_changeset(manifest, changeset_id, stack_name)
     if has_changes:
         _execute_changeset(manifest=manifest, changeset_id=changeset_id, stack_name=stack_name)
         _wait_for_execute(manifest=manifest, stack_name=stack_name, changeset_type=changeset_type)
