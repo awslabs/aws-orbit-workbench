@@ -18,6 +18,10 @@ set -ex
 
 pip install --upgrade --upgrade-strategy eager pip wheel
 pip --use-feature=2020-resolver install --upgrade --upgrade-strategy eager --requirement requirements.txt
+pip --use-feature=2020-resolver install --upgrade --upgrade-strategy eager -e .
+pip --use-feature=2020-resolver install --upgrade --upgrade-strategy eager -e ../images/jupyter-hub/utils/
+pip --use-feature=2020-resolver install --upgrade --upgrade-strategy eager -e ../plugins/hello_world/
+
 # pip --use-feature=2020-resolver install --upgrade --upgrade-strategy eager --requirement images/jupyter-user/requirements.txt
 
 # pushd images/landing-page

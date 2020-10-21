@@ -16,7 +16,7 @@
 #
 set -e
 
-./setup.sh
+# ./setup.sh
 
 code --install-extension DavidAnson.vscode-markdownlint
 code --install-extension Okteto.kubernetes-context

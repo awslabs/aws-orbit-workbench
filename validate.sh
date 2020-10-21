@@ -20,6 +20,10 @@ pushd cli
 ./validate.sh
 popd
 
+pushd sdk
+./validate.sh
+popd
+
 pushd images/jupyter-hub
 ./validate.sh
 popd
