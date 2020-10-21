@@ -134,7 +134,7 @@ def deploy(filename: str, debug: bool, username: Optional[str] = None, password:
 
         if manifest.dev:
             dirs = [
-                (os.path.join(manifest.filename_dir, "images", name), name)
+                (os.path.join(manifest.filename_dir, "..", "images", name), name)
                 for name in ("landing-page", "jupyter-hub", "jupyter-user")
             ]
         else:

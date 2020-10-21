@@ -34,7 +34,7 @@ setup(
     license=about["__license__"],
     packages=find_packages(include=["datamaker_cli", "datamaker_cli.*"]),
     python_requires=">=3.6, <3.9",
-    install_requires=["boto3~=1.12", "botocore~=1.15", "PyYAML~=5.3.0", "click~=7.1.0", "tqdm~=4.50.2"],
+    install_requires=open("requirements.txt").read().strip().split("\n"),
     entry_points={"console_scripts": ["datamaker = datamaker_cli.__main__:main"]},
     classifiers=[
         "Programming Language :: Python :: 3.6",
