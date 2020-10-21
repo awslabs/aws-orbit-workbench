@@ -379,11 +379,9 @@ cdk.out
 cdk.context.json
 cdk.json
 
-# DataMaker
-*.yaml
-!cli/**/*.yaml
-landing-page/public/config.js
-.datamaker.out
-*.zip
+# DataMaker CLI
+cli/*.yaml
+cli/.datamaker.out
+
+# DataMaker Images
 images/landing-page/yarn.lock
-efs-clean-up.py

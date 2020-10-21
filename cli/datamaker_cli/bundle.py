@@ -56,13 +56,11 @@ def _generate_self_dir(bundle_dir: str) -> str:
         _logger.debug("Copying file to %s", new_file)
         shutil.copy(src=file, dst=new_file)
 
-    src_file = os.path.join(DATAMAKER_CLI_ROOT, "..", "setup.py")
-    dst_file = os.path.join(cli_dir, "setup.py")
-    shutil.copy(src=src_file, dst=dst_file)
 
-    src_file = os.path.join(DATAMAKER_CLI_ROOT, "..", "VERSION")
-    dst_file = os.path.join(cli_dir, "VERSION")
-    shutil.copy(src=src_file, dst=dst_file)
+    for filename in ("setup.py", "VERSION", "requirements.txt"):
+        src_file = os.path.join(DATAMAKER_CLI_ROOT, "..", filename)
+        dst_file = os.path.join(cli_dir, filename)
+        shutil.copy(src=src_file, dst=dst_file)
 
     return cli_dir
 

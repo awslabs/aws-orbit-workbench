@@ -56,7 +56,7 @@ def create_manifest(
         dev=dev,
         vpc=vpc,
         teams=teams,
-        plugins=[PluginManifest(name="hello_world", path="plugins/hello_world/")],
+        plugins=[],
     )
     manifest.write_file(filename=filename)
 
