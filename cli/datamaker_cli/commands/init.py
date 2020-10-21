@@ -15,7 +15,7 @@
 import logging
 from typing import Optional
 
-from datamaker_cli.manifest import Manifest, PluginManifest, SubnetKind, SubnetManifest, TeamManifest, VpcManifest
+from datamaker_cli.manifest import Manifest, SubnetKind, SubnetManifest, TeamManifest, VpcManifest
 from datamaker_cli.messages import MessagesContext, stylize
 from datamaker_cli.utils import get_region
 
