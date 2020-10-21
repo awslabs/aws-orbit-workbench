@@ -13,21 +13,10 @@
 #    limitations under the License.
 
 import os
-import json
 import shutil
-from typing import Any, Tuple, Dict, List
-
-import aws_cdk.aws_ec2 as ec2
+from typing import Any, Tuple
+from aws_cdk import aws_ec2 as ec2
 from aws_cdk.core import App, CfnOutput, Construct, Stack, Tags
-
-from aws_cdk import (
-    core,
-    aws_ec2 as ec2,
-    aws_route53 as r53,
-    aws_route53_targets as targets,
-    aws_ssm as ssm,
-)
-
 from datamaker_cli.utils import path_from_filename
 
 
@@ -115,12 +104,16 @@ class VpcStack(Stack):
             "sts_endpoint": ec2.InterfaceVpcEndpointAwsService.STS
         }
 
-        self.public_subnets = self.vpc.select_subnets(subnet_type=ec2.SubnetType.PUBLIC) if self.vpc.public_subnets else EmptySubnetSelection()
-        self.private_subnets = self.vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE) if self.vpc.private_subnets else EmptySubnetSelection()
-        self.isolated_subnets = self.vpc.select_subnets(subnet_type=ec2.SubnetType.ISOLATED) if self.vpc.isolated_subnets else EmptySubnetSelection()
+        self.public_subnets = self.vpc.select_subnets(
+            subnet_type=ec2.SubnetType.PUBLIC) if self.vpc.public_subnets else EmptySubnetSelection()
+        self.private_subnets = self.vpc.select_subnets(
+            subnet_type=ec2.SubnetType.PRIVATE) if self.vpc.private_subnets else EmptySubnetSelection()
+        self.isolated_subnets = self.vpc.select_subnets(
+            subnet_type=ec2.SubnetType.ISOLATED) if self.vpc.isolated_subnets else EmptySubnetSelection()
 
         for name, gateway_vpc_endpoint_service in vpc_gateway_endpoints.items():
-            self.vpc.add_gateway_endpoint(id=name, service=gateway_vpc_endpoint_service, subnets=self.private_subnets.subnets + self.isolated_subnets.subnets)
+            self.vpc.add_gateway_endpoint(id=name, service=gateway_vpc_endpoint_service,
+                                          subnets=self.private_subnets.subnets + self.isolated_subnets.subnets)
 
         for name, interface_service in vpc_interface_endpoints.items():
             self.vpc.add_interface_endpoint(id=name, service=interface_service)
@@ -129,13 +122,14 @@ class VpcStack(Stack):
 
     def _create_ca_endpoints(self) -> None:
         self.vpc.add_interface_endpoint('code_artifact_api_endpoint',
-            service=ec2.InterfaceVpcEndpointAwsService('codeartifact.api')
-        )
+                                        service=ec2.InterfaceVpcEndpointAwsService('codeartifact.api')
+                                        )
 
         self.vpc.add_interface_endpoint('code_artifact_endpoint',
-            service=ec2.InterfaceVpcEndpointAwsService('codeartifact.repositories'),
-            private_dns_enabled=False
-        )
+                                        service=ec2.InterfaceVpcEndpointAwsService('codeartifact.repositories'),
+                                        private_dns_enabled=False
+                                        )
+
 
 class EmptySubnetSelection(ec2.SelectedSubnets):
     def __init__(self) -> None:
