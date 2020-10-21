@@ -5,3 +5,5 @@ mypy
 pyroma
 check-manifest
 pip-tools
+wheel
+twine
