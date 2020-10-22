@@ -90,6 +90,14 @@ Resources:
                   - arn:aws:s3:::datamaker-${env_name}-toolkit-${account_id}-${deploy_id}
               - Effect: Allow
                 Action:
+                  - s3:CreateBucket
+                  - s3:PutLifecycleConfiguration
+                  - s3:DeleteBucket
+                Resource:
+                  - arn:aws:s3:::datamaker-${env_name}-*-scratch-${account_id}-${deploy_id}/*
+                  - arn:aws:s3:::datamaker-${env_name}-*-scratch-${account_id}-${deploy_id}
+              - Effect: Allow
+                Action:
                     - codebuild:CreateReportGroup
                     - codebuild:CreateReport
                     - codebuild:UpdateReport
