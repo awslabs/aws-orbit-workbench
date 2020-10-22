@@ -60,7 +60,7 @@ def run_crawler(crawler: str, target_db: str, target_path: str, wait: Optional[A
     >>> import aws.utils.notebooks.glue as glue
     >>> response = glue.run_crawler(crawler, target_db, target_path, wait=True)
     """
-    role = get_workspace()["role_arn"]
+    role = get_workspace()["eks-nodegroup-role-arn"]
     glue = boto3.client("glue")
     try:
         glue.delete_crawler(Name=crawler)
@@ -130,7 +130,7 @@ def update_teamspace_lakeformation_permissions(db_name: Optional[str] = "*") -> 
         "env_name": workspace["env_name"],
         "team_space": workspace["team_space"],
         "db_name": db_name,
-        "role_arn": get_workspace()["role_arn"],
+        "role_arn": workspace["eks-nodegroup-role-arn"],
     }
     payload = json.dumps(inp)
     response = lambda_client.invoke(
