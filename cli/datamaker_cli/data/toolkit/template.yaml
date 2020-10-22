@@ -291,6 +291,15 @@ Resources:
               - kms:ScheduleKeyDeletion
               - kms:CancelKeyDeletion
             Resource: '*'
+  AdminRoleParam:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: "/datamaker/main/admin_role_name"
+      Type: "String"
+      Value: DataMakerAdmin
+      Tags:
+        "Product": "DataMaker"
+        "SubProduct": "Admin"
 Outputs:
   DeployId:
     Value: ${deploy_id}

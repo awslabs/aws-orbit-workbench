@@ -106,7 +106,9 @@ def _wait_for_execute(manifest: "Manifest", stack_name: str, changeset_type: str
     waiter.wait(StackName=stack_name, WaiterConfig=waiter_config)
 
 
-def deploy_template(manifest: "Manifest", stack_name: str, filename: str, env_tag: str) -> None:
+def deploy_template(
+    manifest: "Manifest", stack_name: str, filename: str, env_tag: str, toolkit_s3_bucket: str = ""
+) -> None:
     _logger.debug("Deploying template %s", filename)
     if not os.path.isfile(filename):
         raise FileNotFoundError(f"CloudFormation template not found at {filename}")
