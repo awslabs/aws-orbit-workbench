@@ -57,6 +57,10 @@ def _network_interface(manifest: Manifest, vpc_id: str) -> None:
                 _logger.warning(
                     f"Ignoring NetWorkInterface {i['NetworkInterfaceId']} because it does not exist anymore."
                 )
+            elif "You are not allowed to manage" in error["Message"]:
+                _logger.warning(
+                    f"Ignoring NetWorkInterface {i['NetworkInterfaceId']} because you are not allowed to manage."
+                )
             else:
                 raise
 
@@ -122,6 +126,8 @@ def deploy(manifest: Manifest, filename: str) -> None:
     for plugin in plugins.PLUGINS_REGISTRY.values():
         if plugin.deploy_demo_hook is not None:
             plugin.deploy_demo_hook(manifest)
+    #TODO
+    # Use sh module call to shell script which does the actual downlaod to a location i.e. bucket - may be demo bucket
 
 
 def destroy(manifest: Manifest) -> None:

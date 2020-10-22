@@ -85,7 +85,6 @@ def _create_changeset(manifest: "Manifest", stack_name: str, template_str: str, 
     elif template_path:
         _logger.info(f"template_path={template_path}")
         kwargs.update({"TemplateURL": template_path})
-    _logger.info(f"kwargs={kwargs}")
     resp = manifest.get_boto3_client("cloudformation").create_change_set(**kwargs)
     return str(resp["Id"]), changeset_type
 
@@ -120,7 +119,7 @@ def deploy_template(manifest: "Manifest", stack_name: str, filename: str, env_ta
         s3_file_name = filename.split("/")[-1]
         key = f"cli/remote/demo/{s3_file_name}"
         s3_template_path = f"https://s3.amazonaws.com/{toolkit_s3_bucket}/{key}"
-        s3.upload_file(src=local_template_path, bucket=toolkit_s3_bucket, key=key)
+        s3.upload_file(manifest=manifest, src=local_template_path, bucket=toolkit_s3_bucket, key=key)
         time.sleep(3)  # Avoiding eventual consistence issues
         changeset_id, changeset_type = _create_changeset(manifest=manifest, stack_name=stack_name, template_str="",
                                                          env_tag=env_tag, template_path=s3_template_path)
