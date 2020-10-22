@@ -159,9 +159,11 @@ class TeamManifest:
         nodes_num_max: int,
         nodes_num_min: int,
         policy: str,
+        scratch_retention_days: int = 30,
         efs_id: Optional[str] = None,
         eks_nodegroup_role_arn: Optional[str] = None,
         jupyter_url: Optional[str] = None,
+        scratch_bucket: Optional[str] = None,
     ) -> None:
         self.name = name
         self.env_name = env_name
@@ -171,9 +173,11 @@ class TeamManifest:
         self.nodes_num_max = nodes_num_max
         self.nodes_num_min = nodes_num_min
         self.policy = policy
+        self.scratch_retention_days = scratch_retention_days
         self.efs_id = efs_id
         self.eks_nodegroup_role_arn = eks_nodegroup_role_arn
         self.jupyter_url = jupyter_url
+        self.scratch_bucket = scratch_bucket
         self.ssm_parameter_name = f"/datamaker/{self.env_name}/teams/{self.name}/manifest"
 
     def read_ssm(self, manifest: "Manifest") -> None:

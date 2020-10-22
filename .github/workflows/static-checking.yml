@@ -9,35 +9,32 @@ on:
       - main
 
 jobs:
-  build:
 
+  CLI:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [3.6]
-
+    defaults:
+      run:
+        working-directory: cli
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Setup Environment
-        run: ./setup.sh
-      - name: mypy check
+      - name: Install Requirements
         run: |
-          mypy --python-version 3.6 --strict --ignore-missing-imports cli
-          mypy --python-version 3.6 --strict --ignore-missing-imports images/jupyter-hub images/jupyter-hub/utils
-          mypy --python-version 3.6 --strict --ignore-missing-imports plugins/hello_world
-      - name: Flake8 Lint
-        run: flake8 --max-line-length 120 cli images/jupyter-hub/utils plugins/hello_world
-      - name: Black style
-        run: black --check --line-length 120 --target-version py36 cli images/jupyter-hub plugins/hello_world
-      - name: Imports order check (isort)
-        run: | 
-          cd cli
-          isort --check-only --line-length 120 .
-          cd ../images/jupyter-hub
-          isort --check-only --line-length 120 .
-          cd ../../plugins/hello_world
-          isort --check-only --line-length 120 .
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Mypy Check
+        run: mypy --python-version 3.6 --strict --ignore-missing-imports setup.py datamaker_cli
+      - name: Flake8 Check
+        run: flake8 --max-line-length 120 setup.py datamaker_cli
+      - name: Black Check
+        run: black --check --line-length 120 --target-version py36 setup.py datamaker_cli
+      - name: Isort Check
+        run: isort --check-only --line-length 120 setup.py datamaker_cli
+      - name: CloudFormation Lint
+        run: cfn-lint -i E1029,E3031 -- datamaker_cli/data/toolkit/template.yaml

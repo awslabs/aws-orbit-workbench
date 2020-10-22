@@ -25,10 +25,10 @@
 
 ## 2 - Project Setting Up
 
-### Cloning the code base locally and checkout the k8s branch
+### Cloning the code base locally and enter the CLI component directory
 
 * `git clone https://github.com/awslabs/aws-eks-data-maker`
-* `cd aws-eks-data-maker`
+* `cd aws-eks-data-maker/cli`
 
 ### Setting up a Python Virtual Environment
 
@@ -37,9 +37,9 @@
 ### Load the Python Virtual Environment
 * `source .venv/bin/activate`
 
-### Setting up the local environment
+### Install all packages required for development
 
-* `./setup.sh`
+* `pip install -r requirements-dev.txt`
 
 ## 3 - Deploying and Destroying
 
@@ -57,23 +57,8 @@
 
 ### Deploying
 
-* `datamaker deploy`
+* `datamaker deploy -f myenv.yaml`
 
 ### Destroying
 
-* `datamaker destroy`
-
-## 4 - Developing with Visual Studio Code [Optional]
-
-### Making vscode available on terminal
-
-* Open vscode GUI
-* `View -> Command Palette -> Search for "Shell command: Install 'code' command in Path"`
-
-### Setting up the local environment with vscode extensions and settings
-
-* `./setup-vscode.sh`
-
-### Reopen vscode
-
-* `code .`
+* `datamaker destroy -f myenv.yaml`

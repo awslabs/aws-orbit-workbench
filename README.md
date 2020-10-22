@@ -20,6 +20,7 @@ DataMaker is built through a composition of several components with specific sco
 | [**JupyterHub**](images/jupyter-hub/) | JupyterHub application (Server/Hub side)| JupyterHub |
 | [**JupyterUser**](images/jupyter-user/) | JupyterHub application (client side) and all Jupyterlab extensions | JupyterLab, React.js |
 | [**LandingPage**](images/landing-page/) | DataMaker Landing Page application | React.js |
+| [**SDK**](sdk/) | Python package to interact with DataMaker programmatically | Python3 |
 
 ## 2 - Contributing
 
