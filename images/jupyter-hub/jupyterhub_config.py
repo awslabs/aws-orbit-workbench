@@ -47,7 +47,7 @@ c.KubeSpawner.environment = {
     "AWS_DATAMAKER_ENV": ENV_NAME,
     "AWS_DEFAULT_REGION": REGION,
     "ACCOUNT_ID": ACCOUNT_ID,
-    "AWS_DATAMAKER_S3_BUCKET", TOOLKIT_S3_BUCKET
+    "AWS_DATAMAKER_S3_BUCKET", TOOLKIT_S3_BUCKET,
 }
 c.KubeSpawner.image = IMAGE
 c.KubeSpawner.image_pull_policy = "Always"
