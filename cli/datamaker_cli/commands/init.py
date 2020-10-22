@@ -34,6 +34,7 @@ def create_manifest(
         SubnetManifest(subnet_id="PRIVATE_SUBNET_ID_PLACEHOLDER_B", kind=SubnetKind.private),
         SubnetManifest(subnet_id="PUBLIC_SUBNET_ID_PLACEHOLDER_A", kind=SubnetKind.public),
         SubnetManifest(subnet_id="PUBLIC_SUBNET_ID_PLACEHOLDER_B", kind=SubnetKind.public),
+        SubnetManifest(subnet_id="ISOLATED_SUBNET_ID_PLACEHOLDER_A", kind=SubnetKind.isolated),
     ]
     vpc = VpcManifest(subnets=subnets)
     teams = [

@@ -56,6 +56,10 @@ def _network_interface(manifest: Manifest, vpc_id: str) -> None:
                 _logger.warning(
                     f"Ignoring NetWorkInterface {i['NetworkInterfaceId']} because it does not exist anymore."
                 )
+            elif "You are not allowed to manage" in error["Message"]:
+                _logger.warning(
+                    f"Ignoring NetWorkInterface {i['NetworkInterfaceId']} because you are not allowed to manage."
+                )
             else:
                 raise
 
@@ -116,11 +120,19 @@ def deploy(manifest: Manifest, filename: str) -> None:
     if manifest.demo and (not cfn.does_stack_exist(manifest=manifest, stack_name=stack_name) or manifest.dev):
         template_filename: str = demo.synth(stack_name=stack_name, filename=filename, env_name=manifest.name)
         _logger.debug("template_filename: %s", template_filename)
-        cfn.deploy_template(manifest=manifest, stack_name=stack_name, filename=template_filename, env_tag=manifest.name)
+        cfn.deploy_template(
+            manifest=manifest,
+            stack_name=stack_name,
+            filename=template_filename,
+            env_tag=manifest.name,
+            toolkit_s3_bucket=manifest.toolkit_s3_bucket,
+        )
         refresh_manifest_file_with_demo_attrs(manifest=manifest)
     for plugin in plugins.PLUGINS_REGISTRY.values():
         if plugin.deploy_demo_hook is not None:
             plugin.deploy_demo_hook(manifest)
+    # TODO
+    # Use sh module call to shell script which does the actual downlaod to a location i.e. bucket - may be demo bucket
 
 
 def destroy(manifest: Manifest) -> None:
