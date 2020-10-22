@@ -322,11 +322,14 @@ class Team(Stack):
         )
 
     def _create_scratch_bucket(self) -> s3.Bucket:
-        bucket_name = f"datamaker-{self.team_manifest.env_name}-{self.team_manifest.name}" \
+        bucket_name = (
+            f"datamaker-{self.team_manifest.env_name}-{self.team_manifest.name}"
             f"-scratch-{self.manifest.account_id}-{self.manifest.deploy_id}"
+        )
         return s3.Bucket(
             scope=self,
             id="scratch_bucket",
+            bucket_name=bucket_name,
             encryption=s3.BucketEncryption.S3_MANAGED,
             lifecycle_rules=[s3.LifecycleRule(expiration=Duration.days(self.team_manifest.scratch_retention_days))],
         )
