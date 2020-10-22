@@ -80,11 +80,10 @@ def deploy_toolkit(
 
     ctx.progress(5)
     _logger.debug("manifest.deploy_id: %s", manifest.deploy_id)
-    if stack_exist is False or manifest.dev:
-        template_filename = toolkit.synth(filename=filename, manifest=manifest)
-        cfn.deploy_template(
-            manifest=manifest, stack_name=stack_name, filename=template_filename, env_tag=f"datamaker-{manifest.name}"
-        )
+    template_filename = toolkit.synth(filename=filename, manifest=manifest)
+    cfn.deploy_template(
+        manifest=manifest, stack_name=stack_name, filename=template_filename, env_tag=f"datamaker-{manifest.name}"
+    )
 
     if credential_exist is False:
         dockerhub.store_credential(manifest=manifest, username=cast(str, username), password=cast(str, password))
