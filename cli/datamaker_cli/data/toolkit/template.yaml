@@ -6,7 +6,7 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: datamaker-${env_name}-toolkit-${account_id}-${deploy_id}
-      Tags: 
+      Tags:
         - Key: Env
           Value: datamaker-${env_name}
       VersioningConfiguration:
@@ -169,14 +169,24 @@ Resources:
                 Resource:
                   - arn:aws:eks:${region}:${account_id}:cluster/datamaker-${env_name}
                   - arn:aws:eks:${region}:${account_id}:nodegroup/datamaker-${env_name}/*
-
-
-
+              - Effect: Allow
+                Action:
+                  - codeartifact:GetAuthorizationToken
+                  - codeartifact:GetRepositoryEndpoint
+                  - codeartifact:ReadFromRepository
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - sts:GetServiceBearerToken
+                Resource: '*'
+                Condition:
+                  StringEquals:
+                    sts:AWSServiceName: codeartifact.amazonaws.com
   CodeBuild:
     Type: AWS::CodeBuild::Project
     Properties:
       Name: datamaker-${env_name}
-      Tags: 
+      Tags:
         - Key: Env
           Value: datamaker-${env_name}
       Description: DataMaker CLI backend.
@@ -201,10 +211,10 @@ Resources:
                 - ls -la
       TimeoutInMinutes: 20
       LogsConfig:
-        CloudWatchLogs: 
+        CloudWatchLogs:
           Status: ENABLED
           GroupName: /aws/codebuild/datamaker-${env_name}
-        S3Logs: 
+        S3Logs:
           Status: DISABLED
   KmsKeyAlias:
     Type: AWS::KMS::Alias

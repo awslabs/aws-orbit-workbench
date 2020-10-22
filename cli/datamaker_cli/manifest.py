@@ -261,6 +261,8 @@ class Manifest:
         deploy_id: Optional[str] = None,
         toolkit_kms_arn: Optional[str] = None,
         landing_page_url: Optional[str] = None,
+        codeartifact_domain: Optional[str] = None,
+        codeartifact_repository: Optional[str] = None,
     ) -> None:
         self.name = name
         self.filename = filename
@@ -281,6 +283,8 @@ class Manifest:
         self.ssm_dockerhub_parameter_name = f"/datamaker/{self.name}/dockerhub"
         self.toolkit_codebuild_project = f"datamaker-{self.name}"
         self.landing_page_url = landing_page_url
+        self.codeartifact_domain = codeartifact_domain
+        self.codeartifact_repository = codeartifact_repository
         self._deploy_id: Optional[str] = deploy_id
         if self._deploy_id is None:
             self._toolkit_s3_bucket: Optional[str] = None
@@ -459,4 +463,6 @@ def read_manifest_file(filename: str) -> Manifest:
             plugins=[PluginManifest(**replace_dashes(plugin)) for plugin in raw["plugins"]],
             demo=raw.get("demo", False),
             dev=raw.get("dev", False),
+            codeartifact_domain=raw.get("codeartifact-domain", None),
+            codeartifact_repository=raw.get("codeartifact-repository", None),
         )
