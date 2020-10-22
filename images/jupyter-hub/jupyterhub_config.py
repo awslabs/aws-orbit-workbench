@@ -15,9 +15,10 @@
 # type: ignore
 
 import os
+from datamaker_cli import manifest
 
 from jupyterhub_utils.authenticator import DataMakerAuthenticator
-from jupyterhub_utils.ssm import ACCOUNT_ID, ENV_NAME, REGION
+from jupyterhub_utils.ssm import ACCOUNT_ID, ENV_NAME, REGION, TOOLKIT_S3_BUCKET
 
 TEAM: str = os.environ["TEAM"]
 IMAGE = f"{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/datamaker-{ENV_NAME}-jupyter-user:latest"
@@ -42,10 +43,11 @@ c.KubeSpawner.namespace = TEAM
 c.KubeSpawner.environment = {
     "USERNAME": lambda spawner: str(spawner.user.name),
     "JUPYTER_ENABLE_LAB": "true",
-    "TEAM": TEAM,
-    "ENV_NAME": ENV_NAME,
+    "DATAMAKER_TEAM_SPACE": TEAM,
+    "AWS_DATAMAKER_ENV": ENV_NAME,
     "AWS_DEFAULT_REGION": REGION,
     "ACCOUNT_ID": ACCOUNT_ID,
+    "AWS_DATAMAKER_S3_BUCKET", TOOLKIT_S3_BUCKET,
 }
 c.KubeSpawner.image = IMAGE
 c.KubeSpawner.image_pull_policy = "Always"

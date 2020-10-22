@@ -32,3 +32,4 @@ MANIFEST: Dict[str, Any] = read_manifest_ssm()
 REGION: str = MANIFEST["region"]
 ACCOUNT_ID: str = MANIFEST["account-id"]
 COGNITO_USER_POOL_ID: str = MANIFEST["user-pool-id"]
+TOOLKIT_S3_BUCKET: str = MANIFEST["toolkit-s3-bucket"]
