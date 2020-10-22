@@ -97,7 +97,8 @@ def generate_bundle(command_name: str, manifest: Manifest, dirs: Optional[List[T
     shutil.copy(src=manifest.filename, dst=bundled_manifest_path)
 
     # DataMaker CLI Source
-    _generate_self_dir(bundle_dir=bundle_dir)
+    if manifest.dev:
+        _generate_self_dir(bundle_dir=bundle_dir)
 
     # Plugins
     for plugin in manifest.plugins:
