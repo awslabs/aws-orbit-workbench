@@ -20,8 +20,9 @@ import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_efs as efs
 import aws_cdk.aws_iam as iam
+import aws_cdk.aws_s3 as s3
 import aws_cdk.aws_ssm as ssm
-from aws_cdk.core import App, Construct, Environment, IConstruct, Stack, Tags
+from aws_cdk.core import App, Construct, Duration, Environment, IConstruct, Stack, Tags
 
 from datamaker_cli.manifest import Manifest, SubnetKind, TeamManifest
 from datamaker_cli.utils import path_from_filename
@@ -48,6 +49,7 @@ class Team(Stack):
         )
         self.i_private_subnets = self._initialize_private_subnets()
         self.policy: str = str(self.team_manifest.policy)
+        self.scratch_bucket: s3.Bucket = self._creeate_scratch_bucket()
         self.role_eks_nodegroup = self._create_role()
         self.sg_efs: ec2.SecurityGroup = self._create_sg_efs()
         self.efs: efs.FileSystem = self._create_efs()
@@ -112,7 +114,11 @@ class Team(Stack):
                     actions=[
                         "s3:*",
                     ],
-                    resources=[f"arn:{partition}:s3:::sagemaker-{region}-{self.account}*"],
+                    resources=[
+                        f"arn:{partition}:s3:::sagemaker-{region}-{self.account}*",
+                        self.scratch_bucket.bucket_arn,
+                        f"{self.scratch_bucket.bucket_arn}/*",
+                    ],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -315,9 +321,18 @@ class Team(Stack):
             description=f"{self.team_manifest.name} users group.",
         )
 
+    def _creeate_scratch_bucket(self) -> s3.Bucket:
+        return s3.Bucket(
+            scope=self,
+            id="scratch_bucket",
+            encryption=s3.BucketEncryption.S3_MANAGED,
+            lifecycle_rules=[s3.LifecycleRule(expiration=Duration.days(self.team_manifest.scratch_retention_days))],
+        )
+
     def _create_manifest_parameter(self) -> ssm.StringParameter:
         self.team_manifest.efs_id = self.efs.file_system_id
         self.team_manifest.eks_nodegroup_role_arn = self.role_eks_nodegroup.role_arn
+        self.team_manifest.scratch_bucket = self.scratch_bucket.bucket_name
 
         parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,
