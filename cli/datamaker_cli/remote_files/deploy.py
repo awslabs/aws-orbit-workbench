@@ -19,7 +19,7 @@ from concurrent.futures import Future
 from typing import Any, List, Optional, Tuple
 
 from datamaker_cli import bundle, docker, plugins, remote, sh
-from datamaker_cli.manifest import Manifest, read_manifest_file
+from datamaker_cli.manifest import Manifest
 from datamaker_cli.remote_files import demo, eksctl, env, kubectl, teams
 from datamaker_cli.services import codebuild
 
@@ -27,7 +27,8 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
-    manifest: Manifest = read_manifest_file(filename=filename)
+    manifest: Manifest = Manifest(filename=filename)
+    manifest.fetch_ssm()
     _logger.debug("manifest.name: %s", manifest.name)
     _logger.debug("args: %s", args)
     if len(args) == 2:
@@ -43,7 +44,11 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
 
     _logger.debug("cdk_deploy: %s", cdk_deploy)
     if cdk_deploy == "cdk=true":
-        env.deploy(manifest=manifest, filename=filename, add_images=[image_name], remove_images=[])
+        env.deploy(
+            manifest=manifest,
+            add_images=[image_name],
+            remove_images=[],
+        )
         _logger.debug("Env changes deployed")
 
     path = os.path.join(manifest.filename_dir, image_name)
@@ -73,12 +78,18 @@ def deploy_images_remotely(manifest: Manifest) -> None:
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             futures: List[Future[Any]] = []
 
-            for name, script in (("jupyter-hub", None), ("jupyter-user", None), ("landing-page", "build.sh")):
+            for name, script in (
+                ("jupyter-hub", None),
+                ("jupyter-user", None),
+                ("landing-page", "build.sh"),
+            ):
                 _logger.debug("name: %s | script: %s", name, script)
                 path = os.path.join(manifest.filename_dir, name)
                 _logger.debug("path: %s", path)
                 bundle_path = bundle.generate_bundle(
-                    command_name=f"deploy_image-{name}", manifest=manifest, dirs=[(path, name)]
+                    command_name=f"deploy_image-{name}",
+                    manifest=manifest,
+                    dirs=[(path, name)],
                 )
                 _logger.debug("bundle_path: %s", bundle_path)
                 script_str = "" if script is None else script
@@ -94,23 +105,24 @@ def deploy_images_remotely(manifest: Manifest) -> None:
 
 
 def deploy(filename: str, args: Tuple[str, ...]) -> None:
-    manifest: Manifest = read_manifest_file(filename=filename)
+    manifest: Manifest = Manifest(filename=filename)
+    manifest.fetch_ssm()
     plugins.load_plugins(manifest=manifest)
     _logger.debug(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
-    demo.deploy(manifest=manifest, filename=filename)
+    demo.deploy(manifest=manifest)
     _logger.debug("Demo Stack deployed")
+    manifest.fetch_network_data()
     env.deploy(
         manifest=manifest,
-        filename=filename,
         add_images=["landing-page", "jupyter-hub", "jupyter-user"],
         remove_images=[],
     )
     _logger.debug("Env Stack deployed")
     deploy_images_remotely(manifest=manifest)
     _logger.debug("Docker Images deployed")
-    teams.deploy(manifest=manifest, filename=filename)
+    teams.deploy(manifest=manifest)
     _logger.debug("Teams Stacks deployed")
-    eksctl.deploy(manifest=manifest, filename=filename)
+    eksctl.deploy(manifest=manifest)
     _logger.debug("EKS Stack deployed")
-    kubectl.deploy(manifest=manifest, filename=filename)
+    kubectl.deploy(manifest=manifest)
     _logger.debug("Kubernetes components deployed")

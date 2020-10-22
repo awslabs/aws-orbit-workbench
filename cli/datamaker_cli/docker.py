@@ -16,7 +16,10 @@ def login(manifest: "Manifest") -> None:
     _logger.debug("DockerHub logged in.")
     username, password = ecr.get_credential(manifest=manifest)
     ecr_address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com"
-    sh.run(f"docker login --username {username} --password {password} {ecr_address}", hide_cmd=True)
+    sh.run(
+        f"docker login --username {username} --password {password} {ecr_address}",
+        hide_cmd=True,
+    )
     _logger.debug("ECR logged in.")
 
 
@@ -29,7 +32,13 @@ def ecr_pull(manifest: "Manifest", name: str, tag: str = "latest") -> None:
     sh.run(f"docker pull {ecr_address}/{name}:{tag}")
 
 
-def build(manifest: "Manifest", dir: str, name: str, tag: str = "latest", use_cache: bool = True) -> None:
+def build(
+    manifest: "Manifest",
+    dir: str,
+    name: str,
+    tag: str = "latest",
+    use_cache: bool = True,
+) -> None:
     ecr_address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com"
     repo_address = f"{ecr_address}/{name}:{tag}"
     if use_cache:
@@ -50,7 +59,13 @@ def push(manifest: "Manifest", name: str, tag: str = "latest") -> None:
     sh.run(f"docker push {repo_address}")
 
 
-def deploy(manifest: "Manifest", dir: str, name: str, tag: str = "latest", use_cache: bool = True) -> None:
+def deploy(
+    manifest: "Manifest",
+    dir: str,
+    name: str,
+    tag: str = "latest",
+    use_cache: bool = True,
+) -> None:
     login(manifest=manifest)
     _logger.debug("Logged in")
     build(manifest=manifest, dir=dir, name=name, tag=tag, use_cache=use_cache)

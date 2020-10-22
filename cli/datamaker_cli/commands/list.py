@@ -3,7 +3,7 @@ from typing import Dict, List
 
 import click
 
-from datamaker_cli.manifest import Manifest, read_manifest_file
+from datamaker_cli.manifest import Manifest
 from datamaker_cli.messages import print_list, stylize
 from datamaker_cli.utils import extract_images_names
 
@@ -13,7 +13,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 def _fetch_repo_uri(names: List[str], manifest: Manifest) -> Dict[str, str]:
     names = [f"datamaker-{manifest.name}-{x}" for x in names]
     ret: Dict[str, str] = {x: "" for x in names}
-    client = manifest.get_boto3_client("ecr")
+    client = manifest.boto3_client("ecr")
     paginator = client.get_paginator("describe_repositories")
     for page in paginator.paginate(repositoryNames=names):
         for repo in page["repositories"]:
@@ -23,7 +23,7 @@ def _fetch_repo_uri(names: List[str], manifest: Manifest) -> Dict[str, str]:
 
 
 def list_images(filename: str) -> None:
-    manifest: Manifest = read_manifest_file(filename=filename)
+    manifest: Manifest = Manifest(filename=filename)
     names = extract_images_names(manifest=manifest)
     _logger.debug("names: %s", names)
     if names:

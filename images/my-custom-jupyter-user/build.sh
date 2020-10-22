@@ -17,8 +17,14 @@
 
 set -ex
 
-isort --check .
-black --check .
-mypy .
-flake8 .
-cfn-lint -i E1029,E3031 -- datamaker_cli/data/toolkit/template.yaml
+LOCAL_NAME=my-custom-jupyter-user
+AWS_REPO_NAME=datamaker-myenv-jupyter-user
+
+REGION=$(aws configure get region)
+ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+ECR_ADDRESS="${ACCOUNT_ID}".dkr.ecr."${REGION}".amazonaws.com
+REPO_ADDRESS="${ECR_ADDRESS}"/"${AWS_REPO_NAME}"
+
+aws ecr get-login-password --region "${REGION}" | docker login --username AWS --password-stdin "${ECR_ADDRESS}"
+docker pull "${REPO_ADDRESS}"
+docker build --tag "${LOCAL_NAME}" .

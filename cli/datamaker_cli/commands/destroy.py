@@ -15,7 +15,7 @@
 import logging
 
 from datamaker_cli import bundle, plugins, remote
-from datamaker_cli.manifest import Manifest, read_manifest_file
+from datamaker_cli.manifest import Manifest
 from datamaker_cli.messages import MessagesContext
 from datamaker_cli.services import cfn, codebuild, s3
 
@@ -23,15 +23,21 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def destroy_toolkit(manifest: Manifest) -> None:
-    stack_name = f"datamaker-{manifest.name}-toolkit"
-    if cfn.does_stack_exist(manifest=manifest, stack_name=stack_name):
-        s3.delete_bucket(manifest=manifest, bucket=manifest.toolkit_s3_bucket)
-        cfn.destroy_stack(manifest=manifest, stack_name=stack_name)
+    if manifest.toolkit_s3_bucket is None:
+        manifest.fetch_toolkit_data()
+        if manifest.toolkit_s3_bucket is None:
+            raise ValueError(f"manifest.toolkit_s3_bucket: {manifest.toolkit_s3_bucket}")
+    if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.toolkit_stack_name):
+        try:
+            s3.delete_bucket(manifest=manifest, bucket=manifest.toolkit_s3_bucket)
+        except Exception as ex:
+            _logger.debug("Skipping Toolkit bucket deletion. Cause: %s", ex)
+        cfn.destroy_stack(manifest=manifest, stack_name=manifest.toolkit_stack_name)
 
 
 def destroy_image(filename: str, name: str, debug: bool) -> None:
     with MessagesContext("Destroying Docker Image", debug=debug) as ctx:
-        manifest = read_manifest_file(filename=filename)
+        manifest = Manifest(filename=filename)
         ctx.info(f"Manifest loaded: {filename}")
         if cfn.does_stack_exist(manifest=manifest, stack_name=f"datamaker-{manifest.name}") is False:
             ctx.error("Please, deploy your environment before deploy/destroy any docker image")
@@ -57,7 +63,8 @@ def destroy_image(filename: str, name: str, debug: bool) -> None:
 
 def destroy(filename: str, debug: bool) -> None:
     with MessagesContext("Destroying", debug=debug) as ctx:
-        manifest = read_manifest_file(filename=filename)
+        manifest = Manifest(filename=filename)
+        manifest.fetch_ssm()
         ctx.info(f"Manifest loaded: {filename}")
         ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
         ctx.progress(2)
@@ -69,7 +76,6 @@ def destroy(filename: str, debug: bool) -> None:
         if cfn.does_stack_exist(
             manifest=manifest, stack_name=f"datamaker-{manifest.name}-demo"
         ) or cfn.does_stack_exist(manifest=manifest, stack_name=f"datamaker-{manifest.name}"):
-            manifest.read_ssm()
             bundle_path = bundle.generate_bundle(command_name="destroy", manifest=manifest)
             ctx.progress(5)
             buildspec = codebuild.generate_spec(

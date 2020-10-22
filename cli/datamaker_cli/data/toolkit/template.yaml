@@ -29,169 +29,7 @@ Resources:
               DaysAfterInitiation: 1
             NoncurrentVersionExpirationInDays: 1
             Prefix: cli/remote/
-  CodeBuildRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: datamaker-toolkit-${env_name}-codebuild
-      AssumeRolePolicyDocument:
-        Statement:
-        - Action: ['sts:AssumeRole']
-          Effect: Allow
-          Principal:
-            Service: [codebuild.amazonaws.com]
-        Version: '2012-10-17'
-      Path: /
-      Policies:
-        - PolicyName: CodeBuildAccess
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - logs:*
-                  - kms:CreateKey
-                  - secretsmanager:GetRandomPassword
-                  - ecr:GetAuthorizationToken
-                  - ecr:DescribeRepositories
-                  - ecr:ListTagsForResource
-                  - cloudformation:ListStacks
-                  - elasticfilesystem:CreateFileSystem
-                  - elasticfilesystem:CreateMountTarget
-                  - elasticfilesystem:DescribeFileSystems
-                  - elasticfilesystem:DeleteMountTarget
-                  - elasticfilesystem:DescribeMountTargets
-                  - elasticfilesystem:DeleteFileSystem
-                  - iam:ListAttachedRolePolicies
-                  - iam:GetPolicy
-                  - iam:ListPolicyVersions
-                  - iam:GetRole
-                  - iam:GetRolePolicy
-                  - iam:ListRoleTags
-                  - iam:GetOpenIDConnectProvider
-                  - cognito-idp:CreateUserPool
-                  - cognito-idp:DeleteUserPool
-                  - cognito-idp:CreateUserPoolClient
-                  - cognito-idp:DeleteUserPoolClient
-                  - cognito-idp:CreateGroup
-                  - cognito-idp:DeleteGroup
-                  - cognito-identity:CreateIdentityPool
-                  - cognito-identity:DeleteIdentityPool
-                  - cognito-identity:UntagResource
-                  - cognito-identity:TagResource
-                  - cognito-identity:SetIdentityPoolRoles
-                  - ec2:*
-                  - elasticloadbalancing:*
-                Resource: '*'
-              - Effect: Allow
-                Action:
-                  - s3:*
-                Resource:
-                  - arn:aws:s3:::datamaker-${env_name}-toolkit-${account_id}-${deploy_id}/*
-                  - arn:aws:s3:::datamaker-${env_name}-toolkit-${account_id}-${deploy_id}
-              - Effect: Allow
-                Action:
-                  - s3:CreateBucket
-                  - s3:PutLifecycleConfiguration
-                  - s3:PutBucketTagging
-                  - s3:DeleteBucket
-                Resource:
-                  - arn:aws:s3:::datamaker-${env_name}-*-scratch-${account_id}-${deploy_id}/*
-                  - arn:aws:s3:::datamaker-${env_name}-*-scratch-${account_id}-${deploy_id}
-              - Effect: Allow
-                Action:
-                    - codebuild:CreateReportGroup
-                    - codebuild:CreateReport
-                    - codebuild:UpdateReport
-                    - codebuild:BatchPutTestCases
-                    - codebuild:BatchPutCodeCoverages
-                Resource:
-                  - arn:aws:codebuild:*
-              - Effect: Allow
-                Action:
-                    - codebuild:StartBuild
-                    - codebuild:BatchGetBuilds
-                Resource:
-                  - arn:aws:codebuild:${region}:${account_id}:project/datamaker-${env_name}
-              - Effect: Allow
-                Action:
-                    - ecr:*
-                Resource:
-                  - arn:aws:ecr:${region}:${account_id}:repository/datamaker-${env_name}-*
-              - Effect: Allow
-                Action:
-                  - cloudformation:*
-                Resource:
-                  - arn:aws:cloudformation:${region}:${account_id}:stack/datamaker-${env_name}*
-                  - arn:aws:cloudformation:${region}:${account_id}:stack/eksctl-datamaker-${env_name}*
-              - Effect: Allow
-                Action:
-                  - iam:CreateRole
-                  - iam:AttachRolePolicy
-                  - iam:PutRolePolicy
-                  - iam:DetachRolePolicy
-                  - iam:DeleteRolePolicy
-                  - iam:DeleteRole
-                  - iam:UntagRole
-                  - iam:TagRole
-                  - iam:PassRole
-                  - iam:ListAttachedRolePolicies
-                  - iam:UpdateAssumeRolePolicy
-                Resource:
-                  - arn:aws:iam::${account_id}:role/datamaker-${env_name}-*
-              - Effect: Allow
-                Action:
-                  - iam:CreateServiceLinkedRole
-                Resource:
-                  - arn:aws:iam::${account_id}:role/aws-service-role/eks-nodegroup.amazonaws.com/AWSServiceRoleForAmazonEKSNodegroup
-              - Effect: Allow
-                Action:
-                  - iam:CreatePolicy
-                  - iam:DeletePolicy
-                Resource:
-                  - arn:aws:iam::${account_id}:policy/datamaker-${env_name}-*
-              - Effect: Allow
-                Action:
-                  - ssm:GetParameters
-                  - ssm:DescribeParameters
-                  - ssm:GetParameter
-                  - ssm:DescribeParameter
-                  - ssm:PutParameter
-                  - ssm:AddTagsToResource
-                  - ssm:DeleteParameter
-                Resource:
-                  - arn:aws:ssm:${region}:${account_id}:parameter/datamaker/${env_name}/manifest
-                  - arn:aws:ssm:${region}:${account_id}:parameter/datamaker/${env_name}/teams/*
-              - Effect: Allow
-                Action:
-                  - kms:*
-                Resource:
-                  - arn:aws:kms:${region}:${account_id}:alias/datamaker-{env_name}*
-                  - arn:aws:kms:${region}:${account_id}:key/*
-              - Effect: Allow
-                Action:
-                  - secretsmanager:*
-                Resource:
-                  - arn:aws:secretsmanager:${region}:${account_id}:secret:datamaker-${env_name}*
-              - Effect: Allow
-                Action:
-                  - eks:*
-                Resource:
-                  - arn:aws:eks:${region}:${account_id}:cluster/datamaker-${env_name}
-                  - arn:aws:eks:${region}:${account_id}:nodegroup/datamaker-${env_name}/*
-              - Effect: Allow
-                Action:
-                  - codeartifact:GetAuthorizationToken
-                  - codeartifact:GetRepositoryEndpoint
-                  - codeartifact:ReadFromRepository
-                Resource: '*'
-              - Effect: Allow
-                Action:
-                  - sts:GetServiceBearerToken
-                Resource: '*'
-                Condition:
-                  StringEquals:
-                    sts:AWSServiceName: codeartifact.amazonaws.com
-  AWSProServeDMV2ManagedPolicy:
+  ManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
       PolicyDocument:
@@ -238,6 +76,20 @@ Resources:
             Resource:
               - arn:aws:s3:::datamaker-${env_name}-toolkit-${account_id}-${deploy_id}/*
               - arn:aws:s3:::datamaker-${env_name}-toolkit-${account_id}-${deploy_id}
+          - Effect: Allow
+            Action:
+              - s3:CreateBucket
+              - s3:PutLifecycleConfiguration
+              - s3:PutBucketTagging
+              - s3:DeleteBucket
+              - s3:PutEncryptionConfiguration
+              - s3:PutBucketPublicAccessBlock
+              - s3:ListBucketVersions
+              - s3:DeleteObject
+              - s3:DeleteObjectVersion
+            Resource:
+              - arn:aws:s3:::datamaker-${env_name}-*-scratch-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::datamaker-${env_name}-*-scratch-${account_id}-${deploy_id}
           - Effect: Allow
             Action:
               - codebuild:CreateReportGroup
@@ -310,283 +162,46 @@ Resources:
               - arn:aws:kms:${region}:${account_id}:key/*
           - Effect: Allow
             Action:
-              - secretsmanager:*
-            Resource:
-              - arn:aws:secretsmanager:${region}:${account_id}:secret:datamaker-${env_name}*
-          - Effect: Allow
-            Action:
               - eks:*
             Resource:
               - arn:aws:eks:${region}:${account_id}:cluster/datamaker-${env_name}
               - arn:aws:eks:${region}:${account_id}:nodegroup/datamaker-${env_name}/*
-        Version: "2012-10-17"
-      Description: ""
-      ManagedPolicyName: !Sub "AWS-ProServe-DM2-Policy-${region}"
+        Version: '2012-10-17'
+      Description: '' 
+      ManagedPolicyName: datamaker-${env_name}-admin
       Path: /
-  AWSProServeIAMBoundary:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      PolicyDocument:
-        Statement:
-          - Action:
-              - iam:CreateInstanceProfile
-              - iam:DeleteInstanceProfile
-              - iam:AddRoleToInstanceProfile
-              - iam:RemoveRoleFromInstanceProfile
-              - iam:CreateServiceLinkedRole
-              - iam:DeleteServiceLinkedRole
-              - iam:DeletePolicyVersion
-              - iam:GenerateServiceLastAccessedDetails
-              - iam:Get*
-              - iam:List*
-              - iam:CreatePolicy
-              - iam:DeletePolicy
-              - iam:DeletePolicyVersion
-              - iam:CreatePolicyVersion
-            Effect: Allow
-            Resource: "*"
-          - Action:
-              - iam:PassRole
-              - iam:DeleteRole
-              - iam:UntagRole
-              - iam:TagRole
-            Effect: Allow
-            Resource:
-              - !Sub "arn:aws:iam::${account_id}:role/datamaker*"
-              - !Sub "arn:aws:iam::${account_id}:role/DataMaker*"
-              - !Sub "arn:aws:iam::${account_id}:role/EMR_EC2_DefaultRole"
-              - !Sub "arn:aws:iam::${account_id}:role/aws-emr-launch-control*"
-          - Action:
-              - iam:AttachRolePolicy
-              - iam:DetachRolePolicy
-              - iam:DeleteRolePolicy
-              - iam:PutRolePolicy
-              - iam:CreateRole
-              - iam:UpdateRole
-              - iam:UpdateRoleDescription
-            Effect: Allow
-            Resource: "*"
-            Condition:
-              StringEquals:
-                iam:PermissionsBoundary:
-                  - !Sub 'arn:aws:iam::${account_id}:policy/AWS-ProServe-Boundary-Admin-${region}'
-                  - !Sub 'arn:aws:iam::${account_id}:policy/AWS-ProServe-Boundary-Admin-Deletion-${region}'
-                  - !Sub 'arn:aws:iam::${account_id}:policy/AWS-ProServe-Boundary-Users-${region}'
-        Version: "2012-10-17"
-      Description: ""
-      ManagedPolicyName: !Sub "AWS-ProServe-IAM-Boundary-${region}"
-      Path: /
-  AWSProServeBoundaryAdmin:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      PolicyDocument:
-        Statement:
-          - Sid: CloudFormation
-            Action:
-              - cloudformation:*
-            Resource:
-              - !Sub 'arn:aws:cloudformation:${region}:${account_id}:stack/SC*'
-              - !Sub 'arn:aws:cloudformation:${region}:${account_id}:stack/datamaker*'
-              - !Sub 'arn:aws:cloudformation:${region}:${account_id}:stack/CDKToolkit/*'
-              - !Sub 'arn:aws:cloudformation:${region}:${account_id}:stack/aws-emr-launch*'
-              - !Sub 'arn:aws:cloudformation:${region}:${account_id}:stack/uv*'
-            Effect: Allow
-          - Sid: DatamakerS3
-            Action:
-              - s3:*
-            Resource:
-              - !Sub arn:aws:s3:::cdktoolkit-stagingbucket-*
-              - !Sub arn:aws:s3:::datamaker-*
-              - !Sub arn:aws:s3:::sc-*
-            Effect: Allow
-          - Sid: DataMaker3
-            Action:
-              - s3:ListAllMyBuckets
-              - iam:Get*
-              - logs:*
-              - sagemaker:*
-              - glue:*
-              - ec2:* # Drop when EC2 is removed
-              - servicecatalog:*
-              - cloud9:CreateEnvironmentEC2
-              - lakeformation:PutDataLakeSettings
-              - lakeformation:GetDataLakeSettings
-              - ssm:*
-            Resource: '*'
-            Effect: Allow
-          - Sid: DataMaker4
-            Action:  # TODO: Fix - dedupe and be more specific if possible
-              - codebuild:*
-              - codecommit:*
-              - codepipeline:*
-              - ecr:*
-              - ecs:*
-              - events:*
-              - lambda:*
-              - redshift:*
-              - secretsmanager:*
-              - sns:*
-              - ssm:*
-              - states:*
-            Resource:
-              - !Sub 'arn:aws:codebuild:${region}:${account_id}:project/*'
-              - !Sub 'arn:aws:codepipeline:${region}:${account_id}:datamaker*'
-              - !Sub 'arn:aws:codecommit:${region}:${account_id}:datamaker*'
-              - !Sub 'arn:aws:codecommit:${region}:${account_id}:DataScienceRepo'
-              - !Sub 'arn:aws:events:${region}:${account_id}:rule/datamaker*'
-              - !Sub 'arn:aws:ecr:${region}:${account_id}:repository/datamaker*'
-              - !Sub 'arn:aws:redshift:${region}:${account_id}:parametergroup:datamaker*'
-              - !Sub 'arn:aws:redshift:${region}:${account_id}:securitygroup:datamaker*'
-              - !Sub 'arn:aws:redshift:${region}:${account_id}:subnetgroup:datamaker*'
-              - !Sub 'arn:aws:redshift:${region}:${account_id}:cluster:datamaker*'
-              - !Sub 'arn:aws:sns:${region}:${account_id}:datamaker*'
-              - !Sub 'arn:aws:ecs:${region}:${account_id}:cluster/datamaker*'
-              - !Sub 'arn:aws:ssm:${region}:${account_id}:parameter/datamaker*'
-              - !Sub 'arn:aws:lambda:${region}:${account_id}:function:datamaker*'
-              - !Sub 'arn:aws:lambda:${region}:${account_id}:function:EMRLaunch*'
-              - !Sub 'arn:aws:lambda:${region}:${account_id}:layer:EMRLaunch*'
-              - !Sub 'arn:aws:ssm:${region}:${account_id}:parameter/datamaker*'
-              - !Sub 'arn:aws:ssm:${region}:${account_id}:parameter/emr_launch*'
-              - !Sub 'arn:aws:ssm:${region}:${account_id}:parameter/uv*'
-              - !Sub 'arn:aws:sns:${region}:${account_id}:datamaker*'
-              - !Sub 'arn:aws:sns:${region}:${account_id}:DataMakerBuildTopic'
-              - !Sub 'arn:aws:sns:${region}:${account_id}:DataMakerBuildTopic'
-              - !Sub 'arn:aws:secretsmanager:${region}:${account_id}:secret:datamaker*'
-              - !Sub 'arn:aws:states:${region}:${account_id}:stateMachine:datamaker*'
-
-            Effect: Allow
-          - Sid: DataMaker5
-            Action:
-              - config:*
-              - ecs:CreateCluster
-              - ecs:RegisterTaskDefinition
-              - ecs:DeregisterTaskDefinition
-              - secretsmanager:GetRandomPassword
-              - ssm:UpdateInstanceInformation
-              - ssm:DescribeInstanceProperties
-              - ssm:DescribeDocumentParameters
-              - ssm:UpdateInstanceInformation
-              - ssmmessages:CreateControlChannel
-              - ssmmessages:CreateDataChannel
-              - ssmmessages:OpenControlChannel
-              - ssmmessages:OpenDataChannel
-              - ecr:GetAuthorizationToken
-              - secretsmanager:CreateSecret
-              - lakeformation:GetDataLakeSettings
-              - lakeformation:PutDataLakeSettings
-              - codecommit:ListRepositories
-              - cloudformation:DescribeStacks
-              - iam:List*
-              - iam:AttachRolePolicy
-              - sns:ListTopics
-              - elasticmapreduce:CreateSecurityConfiguration
-              - elasticmapreduce:DeleteSecurityConfiguration
-              - elasticmapreduce:ListClusters
-              - elasticmapreduce:RunJobFlow
-              - elasticmapreduce:DescribeCluster
-              - elasticmapreduce:ListInstanceGroups
-              - elasticmapreduce:ListInstances
-              - elasticmapreduce:TerminateJobFlows
-              - elasticmapreduce:*
-              - states:CreateStateMachine
-              - states:TagResource
-              - ecs:DescribeTasks
-              - iam:CreateServiceLinkedRole
-              - iam:PutRolePolicy
-              - kms:CreateKey
-              - kms:CreateGrant
-              - kms:Describe*
-              - kms:Get*
-              - kms:TagResource
-              - lakeformation:GrantPermissions
-              - redshift:DescribeClusters
-              - iam:CreateRole
-            Resource: "*"
-            Effect: Allow
-          - Sid: IAM
-            Action:
-              - iam:PassRole
-            Effect: Allow
-            Resource:
-              - !Sub "arn:aws:iam::${account_id}:role/datamaker*"
-              - !Sub "arn:aws:iam::${account_id}:role/DataMaker*"
-              - !Sub "arn:aws:iam::${account_id}:role/EMR_EC2_DefaultRole"
-              - !Sub "arn:aws:iam::${account_id}:role/aws-emr-launch-control*"
-          - Sid: CA
-            Action:
-              - codeartifact:DescribePackageVersion
-              - codeartifact:DescribeRepository
-              - codeartifact:GetPackageVersionReadme
-              - codeartifact:GetRepositoryEndpoint
-              - codeartifact:ListPackages
-              - codeartifact:ListPackageVersions
-              - codeartifact:ListPackageVersionAssets
-              - codeartifact:ListPackageVersionDependencies
-              - codeartifact:ReadFromRepository
-              - codeartifact:GetDomainPermissionsPolicy
-              - codeartifact:ListRepositoriesInDomain
-              - codeartifact:GetAuthorizationToken
-              - codeartifact:DescribeDomain
-              - codeartifact:CreateRepository
-            Effect: Allow
-            Resource: "*"
-          - Sid: ststoken
-            Action:
-              - sts:GetServiceBearerToken
-            Resource: "*"
-            Effect: Allow
-          - Sid: apigatewayserviceaccess
-            Action:
-              - apigateway:*
-            Resource:
-              - 'arn:aws:apigateway:*::/*'
-            Effect: Allow
-          - Sid: DM6
-            Action:
-              - sts:*
-            Resource:
-              - !Sub 'arn:aws:iam::${account_id}:role/DataMaker*'
-              - !Sub 'arn:aws:iam::${account_id}:role/datamaker*'
-              - !Sub 'arn:aws:iam::${account_id}:role/SC*'
-            Effect: Allow
-        Version: "2012-10-17"
-      Description: ""
-      ManagedPolicyName: !Sub "AWS-ProServe-Boundary-Admin-${region}"
-      Path: /
-  DMAdminRole:
+  AdminRole:
     Type: AWS::IAM::Role
     Properties:
       Path: /
       ManagedPolicyArns:
-        - Ref: AWSProServeIAMBoundary
-        - Ref: AWSProServeBoundaryAdmin
-        - Ref: AWSProServeDMV2ManagedPolicy
-        - !Sub arn:aws:iam::aws:policy/AWSServiceCatalogAdminFullAccess
-      RoleName: DataMakerAdmin
+        - Ref: ManagedPolicy
+        - arn:aws:iam::aws:policy/AWSServiceCatalogAdminFullAccess
+      RoleName: datamaker-${env_name}-admin
       MaxSessionDuration: 10000
       AssumeRolePolicyDocument:
-        Version: 2012-10-17
+        Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Principal:
-              Service: 'codepipeline.amazonaws.com'
-            Action: 'sts:AssumeRole'
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
           - Effect: Allow
             Principal:
-              Service: 'codebuild.amazonaws.com'
-            Action: 'sts:AssumeRole'
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
           - Effect: Allow
             Principal:
-              Service: 'ec2.amazonaws.com'
-            Action: 'sts:AssumeRole'
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
           - Effect: Allow
             Principal:
-              Service: 'cloudformation.amazonaws.com'
-            Action: 'sts:AssumeRole'
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
           - Effect: Allow
             Principal:
-              Service: 'sagemaker.amazonaws.com'
-            Action: 'sts:AssumeRole'
+              Service: sagemaker.amazonaws.com
+            Action: sts:AssumeRole
   CodeBuild:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -595,8 +210,7 @@ Resources:
         - Key: Env
           Value: datamaker-${env_name}
       Description: DataMaker CLI backend.
-      #ServiceRole: !Ref CodeBuildRole
-      ServiceRole: !Ref DMAdminRole
+      ServiceRole: !Ref AdminRole
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
@@ -664,15 +278,6 @@ Resources:
               - kms:ScheduleKeyDeletion
               - kms:CancelKeyDeletion
             Resource: '*'
-  AdminRoleParam:
-    Type: "AWS::SSM::Parameter"
-    Properties:
-      Name: "/datamaker/main/admin_role_name"
-      Type: "String"
-      Value: DataMakerAdmin
-      Tags:
-        "Product": "DataMaker"
-        "SubProduct": "Admin"
 Outputs:
   DeployId:
     Value: ${deploy_id}

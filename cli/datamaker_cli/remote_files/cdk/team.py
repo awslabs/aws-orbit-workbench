@@ -22,10 +22,12 @@ import aws_cdk.aws_efs as efs
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_s3 as s3
 import aws_cdk.aws_ssm as ssm
-from aws_cdk.core import App, Construct, Duration, Environment, IConstruct, RemovalPolicy, Stack, Tags
+from aws_cdk import aws_s3
+from aws_cdk.core import App, Construct, Duration, Environment, RemovalPolicy, Stack, Tags
 
-from datamaker_cli.manifest import Manifest, SubnetKind, TeamManifest
-from datamaker_cli.utils import path_from_filename
+from datamaker_cli.manifest import Manifest
+from datamaker_cli.manifest.subnet import SubnetKind
+from datamaker_cli.manifest.team import TeamManifest
 
 
 class Team(Stack):
@@ -135,7 +137,10 @@ class Team(Stack):
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=["redshift:GetClusterCredentials", "redshift:CreateClusterUser"],
+                    actions=[
+                        "redshift:GetClusterCredentials",
+                        "redshift:CreateClusterUser",
+                    ],
                     resources=[
                         f"arn:{partition}:redshift:{region}:{self.account}:dbuser:{env_name}-{team_name}*",
                         f"arn:{partition}:redshift:{region}:{self.account}:dbuser:{env_name}-{team_name}*/master",
@@ -289,8 +294,7 @@ class Team(Stack):
                     connection=ec2.Port.tcp(port=2049),
                     description=f"Allowing internal access from subnet {subnet.subnet_id}.",
                 )
-        Tags.of(scope=cast(IConstruct, sg)).add(key="Name", value=name)
-        Tags.of(scope=cast(IConstruct, sg)).add(key="Env", value=f"datamaker-{self.manifest.name}")
+        Tags.of(scope=sg).add(key="Name", value=name)
         return sg
 
     def _create_efs(self) -> efs.FileSystem:
@@ -307,7 +311,6 @@ class Team(Stack):
             security_group=cast(ec2.ISecurityGroup, self.sg_efs),
             vpc_subnets=ec2.SubnetSelection(subnets=self.i_private_subnets),
         )
-        Tags.of(scope=cast(IConstruct, fs)).add(key="Env", value=f"datamaker-{self.manifest.name}")
         return fs
 
     def _create_user_pool_group(self) -> cognito.CfnUserPoolGroup:
@@ -323,13 +326,14 @@ class Team(Stack):
 
     def _create_scratch_bucket(self) -> s3.Bucket:
         bucket_name = (
-            f"datamaker-{self.team_manifest.env_name}-{self.team_manifest.name}"
+            f"datamaker-{self.team_manifest.manifest.name}-{self.team_manifest.name}"
             f"-scratch-{self.manifest.account_id}-{self.manifest.deploy_id}"
         )
         return s3.Bucket(
             scope=self,
             id="scratch_bucket",
             bucket_name=bucket_name,
+            block_public_access=aws_s3.BlockPublicAccess.BLOCK_ALL,
             removal_policy=RemovalPolicy.RETAIN,
             encryption=s3.BucketEncryption.S3_MANAGED,
             lifecycle_rules=[s3.LifecycleRule(expiration=Duration.days(self.team_manifest.scratch_retention_days))],
@@ -338,29 +342,26 @@ class Team(Stack):
     def _create_manifest_parameter(self) -> ssm.StringParameter:
         self.team_manifest.efs_id = self.efs.file_system_id
         self.team_manifest.eks_nodegroup_role_arn = self.role_eks_nodegroup.role_arn
-        self.team_manifest.scratch_bucket = self.scratch_bucket.bucket_name
 
         parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,
             id=self.team_manifest.ssm_parameter_name,
-            string_value=self.team_manifest.repr_full_as_string(),
+            string_value=self.team_manifest.asjson(),
             type=ssm.ParameterType.STRING,
             description="DataMaker Team Context.",
             parameter_name=self.team_manifest.ssm_parameter_name,
             simple_name=False,
         )
-        Tags.of(scope=cast(IConstruct, parameter)).add(key="Env", value=f"datamaker-{self.manifest.name}")
         return parameter
 
 
-def synth(stack_name: str, filename: str, manifest: Manifest, team_manifest: TeamManifest) -> str:
-    filename_dir = path_from_filename(filename=filename)
-    outdir = os.path.join(filename_dir, ".datamaker.out", manifest.name, "cdk", stack_name)
+def synth(manifest: Manifest, team_manifest: TeamManifest) -> str:
+    outdir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "cdk", team_manifest.stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
-    output_filename = os.path.join(outdir, f"{stack_name}.template.json")
+    output_filename = os.path.join(outdir, f"{team_manifest.stack_name}.template.json")
 
     app = App(outdir=outdir)
-    Team(scope=app, id=stack_name, manifest=manifest, team_manifest=team_manifest)
+    Team(scope=app, id=team_manifest.stack_name, manifest=manifest, team_manifest=team_manifest)
     app.synth(force=True)
     return output_filename

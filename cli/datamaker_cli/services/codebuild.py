@@ -115,7 +115,7 @@ def start(
     buildspec: Dict[str, Any],
     timeout: int,
 ) -> str:
-    client = manifest.get_boto3_client("codebuild")
+    client = manifest.boto3_client("codebuild")
     response: Dict[str, Any] = client.start_build(
         projectName=project_name,
         sourceTypeOverride="S3",
@@ -136,7 +136,7 @@ def start(
 
 
 def fetch_build_info(manifest: Manifest, build_id: str) -> BuildInfo:
-    client = manifest.get_boto3_client("codebuild")
+    client = manifest.boto3_client("codebuild")
     response: Dict[str, List[Dict[str, Any]]] = try_it(
         f=client.batch_get_builds, ex=botocore.exceptions.ClientError, ids=[build_id]
     )
@@ -190,7 +190,12 @@ def wait(manifest: Manifest, build_id: str) -> Iterable[BuildInfo]:
 
     if build.status is not BuildStatus.succeeded:
         raise RuntimeError(f"CodeBuild build ({build_id}) is {build.status.value}")
-    _logger.debug("start: %s | end: %s | elapsed: %s", build.start_time, build.end_time, build.duration_in_seconds)
+    _logger.debug(
+        "start: %s | end: %s | elapsed: %s",
+        build.start_time,
+        build.end_time,
+        build.duration_in_seconds,
+    )
 
 
 SPEC_TYPE = Dict[str, Union[float, Dict[str, Dict[str, Union[List[str], Dict[str, float]]]]]]
@@ -239,7 +244,10 @@ def generate_spec(
     return {
         "version": 0.2,
         "phases": {
-            "install": {"runtime-versions": {"python": 3.7, "nodejs": 12, "docker": 19}, "commands": install},
+            "install": {
+                "runtime-versions": {"python": 3.7, "nodejs": 12, "docker": 19},
+                "commands": install,
+            },
             "pre_build": {"commands": pre},
             "build": {"commands": build},
             "post_build": {"commands": post},

@@ -28,14 +28,19 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def list_keys(manifest: "Manifest", bucket: str) -> List[Dict[str, str]]:
-    client_s3 = manifest.get_boto3_client("s3")
+    client_s3 = manifest.boto3_client("s3")
     paginator = client_s3.get_paginator("list_object_versions")
     response_iterator = paginator.paginate(Bucket=bucket, PaginationConfig={"PageSize": 1000})
     keys: List[Dict[str, str]] = []
     for page in response_iterator:
         if "DeleteMarkers" in page:
             for delete_marker in page["DeleteMarkers"]:
-                keys.append({"Key": delete_marker["Key"], "VersionId": delete_marker["VersionId"]})
+                keys.append(
+                    {
+                        "Key": delete_marker["Key"],
+                        "VersionId": delete_marker["VersionId"],
+                    }
+                )
         if "Versions" in page:
             for version in page["Versions"]:
                 keys.append({"Key": version["Key"], "VersionId": version["VersionId"]})
@@ -43,7 +48,7 @@ def list_keys(manifest: "Manifest", bucket: str) -> List[Dict[str, str]]:
 
 
 def _delete_objects(manifest: "Manifest", bucket: str, chunk: List[Dict[str, str]]) -> None:
-    client_s3 = manifest.get_boto3_client("s3")
+    client_s3 = manifest.boto3_client("s3")
     try:
         client_s3.delete_objects(Bucket=bucket, Delete={"Objects": chunk})
     except client_s3.exceptions.ClientError as ex:
@@ -64,7 +69,7 @@ def delete_objects(manifest: "Manifest", bucket: str, keys: Optional[List[str]] 
 
 
 def delete_bucket(manifest: "Manifest", bucket: str) -> None:
-    client_s3 = manifest.get_boto3_client("s3")
+    client_s3 = manifest.boto3_client("s3")
     _logger.debug("Cleaning up bucket: %s", bucket)
     delete_objects(manifest=manifest, bucket=bucket)
     _logger.debug("Deleting bucket: %s", bucket)
@@ -72,5 +77,5 @@ def delete_bucket(manifest: "Manifest", bucket: str) -> None:
 
 
 def upload_file(manifest: "Manifest", src: str, bucket: str, key: str) -> None:
-    client_s3 = manifest.get_boto3_client("s3")
+    client_s3 = manifest.boto3_client("s3")
     client_s3.upload_file(Filename=src, Bucket=bucket, Key=key)

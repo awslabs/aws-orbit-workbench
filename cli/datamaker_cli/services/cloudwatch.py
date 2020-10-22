@@ -33,9 +33,13 @@ class CloudWatchEvents(NamedTuple):
 
 
 def get_stream_name_by_prefix(manifest: "Manifest", group_name: str, prefix: str) -> Optional[str]:
-    client = manifest.get_boto3_client("logs")
+    client = manifest.boto3_client("logs")
     response: Dict[str, Union[str, List[Dict[str, Union[float, str]]]]] = client.describe_log_streams(
-        logGroupName=group_name, logStreamNamePrefix=prefix, orderBy="LogStreamName", descending=True, limit=1
+        logGroupName=group_name,
+        logStreamNamePrefix=prefix,
+        orderBy="LogStreamName",
+        descending=True,
+        limit=1,
     )
     streams = cast(List[Dict[str, Union[float, str]]], response.get("logStreams", []))
     if streams:
@@ -44,9 +48,12 @@ def get_stream_name_by_prefix(manifest: "Manifest", group_name: str, prefix: str
 
 
 def get_log_events(
-    manifest: "Manifest", group_name: str, stream_name: str, start_time: Optional[datetime]
+    manifest: "Manifest",
+    group_name: str,
+    stream_name: str,
+    start_time: Optional[datetime],
 ) -> CloudWatchEvents:
-    client = manifest.get_boto3_client("logs")
+    client = manifest.boto3_client("logs")
     args = {
         "logGroupName": group_name,
         "logStreamName": stream_name,

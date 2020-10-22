@@ -22,7 +22,7 @@ COLOR_DATAMAKER = "bright_blue"
 COLOR_ERROR = "bright_red"
 COLOR_WARN = "bright_yellow"
 
-PROGRESS_BAR_FORMAT = "{desc} {bar}| {percentage:3.0f}%"
+PROGRESS_BAR_FORMAT = "{desc} |{bar}| {percentage:3.0f}% "
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -102,7 +102,13 @@ class MessagesContext:
         if self.debug:
             self.pbar = None
         else:
-            self.pbar = tqdm.tqdm(total=100, desc=task_name, bar_format=PROGRESS_BAR_FORMAT, ncols=50, colour="green")
+            self.pbar = tqdm.tqdm(
+                total=100,
+                desc=task_name,
+                bar_format=PROGRESS_BAR_FORMAT,
+                ncols=50,
+                colour="green",
+            )
 
     def __enter__(self) -> "MessagesContext":
         if self.pbar is not None:
@@ -115,6 +121,7 @@ class MessagesContext:
         if exc_type is not None:
             self.error(f"{exc_type.__name__}: {exc_value}")
         if self.pbar is not None:
+            self.pbar.write("")
             self.pbar.close()
         if exc_traceback is not None:
             click.echo(f"\n{stylize('Error Traceback', color=COLOR_ERROR)}:")
