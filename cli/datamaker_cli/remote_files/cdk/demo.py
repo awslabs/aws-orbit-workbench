@@ -15,8 +15,10 @@
 import os
 import shutil
 from typing import Any, Tuple
+
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk.core import App, CfnOutput, Construct, Stack, Tags
+
 from datamaker_cli.utils import path_from_filename
 
 
@@ -66,8 +68,7 @@ class VpcStack(Stack):
                 ec2.SubnetConfiguration(name="Isolated", subnet_type=ec2.SubnetType.ISOLATED, cidr_mask=21),
             ],
             flow_logs=ec2.FlowLogOptions(
-                destination=ec2.FlowLogDestination.to_cloud_watch_logs(),
-                traffic_type=ec2.FlowLogTrafficType.ALL
+                destination=ec2.FlowLogDestination.to_cloud_watch_logs(), traffic_type=ec2.FlowLogTrafficType.ALL
             ),
         )
         return vpc
@@ -75,7 +76,7 @@ class VpcStack(Stack):
     def _create_vpc_endpoints(self) -> None:
         vpc_gateway_endpoints = {
             "s3": ec2.GatewayVpcEndpointAwsService.S3,
-            "dynamodb": ec2.GatewayVpcEndpointAwsService.DYNAMODB
+            "dynamodb": ec2.GatewayVpcEndpointAwsService.DYNAMODB,
         }
         vpc_interface_endpoints = {
             "cloudwatch_endpoint": ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH,
@@ -94,26 +95,38 @@ class VpcStack(Stack):
             "kms_endpoint": ec2.InterfaceVpcEndpointAwsService.KMS,
             "sagemaker_endpoint": ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_API,
             "notebook_endpoint": ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_NOTEBOOK,
-            "athena_endpoint": ec2.InterfaceVpcEndpointAwsService('athena'),
-            "glue_endpoint": ec2.InterfaceVpcEndpointAwsService('glue'),
+            "athena_endpoint": ec2.InterfaceVpcEndpointAwsService("athena"),
+            "glue_endpoint": ec2.InterfaceVpcEndpointAwsService("glue"),
             "sqs": ec2.InterfaceVpcEndpointAwsService.SQS,
-            "step_function_endpoint": ec2.InterfaceVpcEndpointAwsService('states'),
+            "step_function_endpoint": ec2.InterfaceVpcEndpointAwsService("states"),
             "sns_endpoint": ec2.InterfaceVpcEndpointAwsService.SNS,
-            "kinesis_firehose_endpoint": ec2.InterfaceVpcEndpointAwsService('kinesis-firehose'),
+            "kinesis_firehose_endpoint": ec2.InterfaceVpcEndpointAwsService("kinesis-firehose"),
             "api_gateway": ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
-            "sts_endpoint": ec2.InterfaceVpcEndpointAwsService.STS
+            "sts_endpoint": ec2.InterfaceVpcEndpointAwsService.STS,
         }
 
-        self.public_subnets = self.vpc.select_subnets(
-            subnet_type=ec2.SubnetType.PUBLIC) if self.vpc.public_subnets else EmptySubnetSelection()
-        self.private_subnets = self.vpc.select_subnets(
-            subnet_type=ec2.SubnetType.PRIVATE) if self.vpc.private_subnets else EmptySubnetSelection()
-        self.isolated_subnets = self.vpc.select_subnets(
-            subnet_type=ec2.SubnetType.ISOLATED) if self.vpc.isolated_subnets else EmptySubnetSelection()
+        self.public_subnets = (
+            self.vpc.select_subnets(subnet_type=ec2.SubnetType.PUBLIC)
+            if self.vpc.public_subnets
+            else EmptySubnetSelection()
+        )
+        self.private_subnets = (
+            self.vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE)
+            if self.vpc.private_subnets
+            else EmptySubnetSelection()
+        )
+        self.isolated_subnets = (
+            self.vpc.select_subnets(subnet_type=ec2.SubnetType.ISOLATED)
+            if self.vpc.isolated_subnets
+            else EmptySubnetSelection()
+        )
 
         for name, gateway_vpc_endpoint_service in vpc_gateway_endpoints.items():
-            self.vpc.add_gateway_endpoint(id=name, service=gateway_vpc_endpoint_service,
-                                          subnets=self.private_subnets.subnets + self.isolated_subnets.subnets)
+            self.vpc.add_gateway_endpoint(
+                id=name,
+                service=gateway_vpc_endpoint_service,
+                subnets=self.private_subnets.subnets + self.isolated_subnets.subnets,
+            )
 
         for name, interface_service in vpc_interface_endpoints.items():
             self.vpc.add_interface_endpoint(id=name, service=interface_service)
@@ -121,21 +134,22 @@ class VpcStack(Stack):
         self._create_ca_endpoints()
 
     def _create_ca_endpoints(self) -> None:
-        self.vpc.add_interface_endpoint('code_artifact_api_endpoint',
-                                        service=ec2.InterfaceVpcEndpointAwsService('codeartifact.api')
-                                        )
+        self.vpc.add_interface_endpoint(
+            "code_artifact_api_endpoint", service=ec2.InterfaceVpcEndpointAwsService("codeartifact.api")
+        )
 
-        self.vpc.add_interface_endpoint('code_artifact_endpoint',
-                                        service=ec2.InterfaceVpcEndpointAwsService('codeartifact.repositories'),
-                                        private_dns_enabled=False
-                                        )
+        self.vpc.add_interface_endpoint(
+            "code_artifact_endpoint",
+            service=ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories"),
+            private_dns_enabled=False,
+        )
 
 
 class EmptySubnetSelection(ec2.SelectedSubnets):
     def __init__(self) -> None:
-        super().__init__(availability_zones=[], has_public=False, internet_connectivity_established=None,
-                         subnet_ids=[],
-                         subnets=[])
+        super().__init__(
+            availability_zones=[], has_public=False, internet_connectivity_established=None, subnet_ids=[], subnets=[]
+        )
 
 
 def synth(stack_name: str, filename: str, env_name: str) -> str:

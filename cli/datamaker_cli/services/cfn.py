@@ -18,11 +18,9 @@ import time
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, Tuple
 
-import boto3
 import botocore.exceptions
 
 from datamaker_cli.services import s3
-from datamaker_cli.utils import path_from_filename
 
 if TYPE_CHECKING:
     from datamaker_cli.manifest import Manifest
@@ -56,9 +54,9 @@ def _wait_for_changeset(manifest: "Manifest", changeset_id: str, stack_name: str
         status = resp["Status"]
         reason = resp["StatusReason"]
         if (
-                status == "FAILED"
-                and "The submitted information didn't contain changes." in reason
-                or "No updates are to be performed" in reason
+            status == "FAILED"
+            and "The submitted information didn't contain changes." in reason
+            or "No updates are to be performed" in reason
         ):
             _logger.debug(f"No changes for {stack_name} CloudFormation stack.")
             return False
@@ -66,8 +64,9 @@ def _wait_for_changeset(manifest: "Manifest", changeset_id: str, stack_name: str
     return True
 
 
-def _create_changeset(manifest: "Manifest", stack_name: str, template_str: str, env_tag: str,
-                      template_path: str = "") -> Tuple[str, str]:
+def _create_changeset(
+    manifest: "Manifest", stack_name: str, template_str: str, env_tag: str, template_path: str = ""
+) -> Tuple[str, str]:
     now = datetime.utcnow().isoformat()
     description = f"Created by AWS DataMaker CLI at {now} UTC"
     changeset_name = CHANGESET_PREFIX + str(int(time.time()))
@@ -107,8 +106,9 @@ def _wait_for_execute(manifest: "Manifest", stack_name: str, changeset_type: str
     waiter.wait(StackName=stack_name, WaiterConfig=waiter_config)
 
 
-def deploy_template(manifest: "Manifest", stack_name: str, filename: str, env_tag: str,
-                    toolkit_s3_bucket: str = "") -> None:
+def deploy_template(
+    manifest: "Manifest", stack_name: str, filename: str, env_tag: str, toolkit_s3_bucket: str = ""
+) -> None:
     _logger.debug("Deploying template %s", filename)
     if not os.path.isfile(filename):
         raise FileNotFoundError(f"CloudFormation template not found at {filename}")
@@ -121,13 +121,15 @@ def deploy_template(manifest: "Manifest", stack_name: str, filename: str, env_ta
         s3_template_path = f"https://s3.amazonaws.com/{toolkit_s3_bucket}/{key}"
         s3.upload_file(manifest=manifest, src=local_template_path, bucket=toolkit_s3_bucket, key=key)
         time.sleep(3)  # Avoiding eventual consistence issues
-        changeset_id, changeset_type = _create_changeset(manifest=manifest, stack_name=stack_name, template_str="",
-                                                         env_tag=env_tag, template_path=s3_template_path)
+        changeset_id, changeset_type = _create_changeset(
+            manifest=manifest, stack_name=stack_name, template_str="", env_tag=env_tag, template_path=s3_template_path
+        )
     else:
         with open(filename, "r") as handle:
             template_str = handle.read()
-        changeset_id, changeset_type = _create_changeset(manifest=manifest, stack_name=stack_name,
-                                                         template_str=template_str, env_tag=env_tag)
+        changeset_id, changeset_type = _create_changeset(
+            manifest=manifest, stack_name=stack_name, template_str=template_str, env_tag=env_tag
+        )
     has_changes = _wait_for_changeset(manifest, changeset_id, stack_name)
     if has_changes:
         _execute_changeset(manifest=manifest, changeset_id=changeset_id, stack_name=stack_name)
