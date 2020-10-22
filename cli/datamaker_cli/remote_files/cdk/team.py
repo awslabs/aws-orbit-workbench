@@ -49,7 +49,7 @@ class Team(Stack):
         )
         self.i_private_subnets = self._initialize_private_subnets()
         self.policy: str = str(self.team_manifest.policy)
-        self.scratch_bucket: s3.Bucket = self._creeate_scratch_bucket()
+        self.scratch_bucket: s3.Bucket = self._create_scratch_bucket()
         self.role_eks_nodegroup = self._create_role()
         self.sg_efs: ec2.SecurityGroup = self._create_sg_efs()
         self.efs: efs.FileSystem = self._create_efs()
@@ -321,7 +321,9 @@ class Team(Stack):
             description=f"{self.team_manifest.name} users group.",
         )
 
-    def _creeate_scratch_bucket(self) -> s3.Bucket:
+    def _create_scratch_bucket(self) -> s3.Bucket:
+        bucket_name = f"datamaker-{self.team_manifest.env_name}-{self.team_manifest.name}" \
+            f"-scratch-{self.manifest.account_id}-{self.manifest.deploy_id}"
         return s3.Bucket(
             scope=self,
             id="scratch_bucket",
