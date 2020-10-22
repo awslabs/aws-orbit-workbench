@@ -22,7 +22,7 @@ import aws_cdk.aws_efs as efs
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_s3 as s3
 import aws_cdk.aws_ssm as ssm
-from aws_cdk.core import App, Construct, Duration, Environment, IConstruct, Stack, Tags
+from aws_cdk.core import App, Construct, Duration, Environment, IConstruct, RemovalPolicy, Stack, Tags
 
 from datamaker_cli.manifest import Manifest, SubnetKind, TeamManifest
 from datamaker_cli.utils import path_from_filename
@@ -330,6 +330,7 @@ class Team(Stack):
             scope=self,
             id="scratch_bucket",
             bucket_name=bucket_name,
+            removal_policy=RemovalPolicy.RETAIN,
             encryption=s3.BucketEncryption.S3_MANAGED,
             lifecycle_rules=[s3.LifecycleRule(expiration=Duration.days(self.team_manifest.scratch_retention_days))],
         )
