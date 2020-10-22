@@ -217,7 +217,16 @@ def generate_spec(
     ]
 
     # DataMaker CLI
-    install.append("pip install -e cli/")
+    if manifest.dev:
+        install.append("pip install -e cli/")
+    else:
+        if manifest.codeartifact_domain and manifest.codeartifact_repository:
+            install.append(
+                "aws codeartifact login --tool pip "
+                f"--domain {manifest.codeartifact_domain} "
+                f"--repository {manifest.codeartifact_repository}"
+            )
+        install.append("pip install datamaker-cli")
 
     # Plugins
     if plugins:
