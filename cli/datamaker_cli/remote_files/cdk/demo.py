@@ -67,11 +67,9 @@ class VpcStack(Stack):
                 ec2.SubnetConfiguration(name="Private", subnet_type=ec2.SubnetType.PRIVATE, cidr_mask=21),
                 ec2.SubnetConfiguration(name="Isolated", subnet_type=ec2.SubnetType.ISOLATED, cidr_mask=21),
             ],
-            flow_logs={
-                "all-traffic": ec2.FlowLogOptions(
-                    destination=ec2.FlowLogDestination.to_cloud_watch_logs(), traffic_type=ec2.FlowLogTrafficType.ALL
-                )
-            },
+            flow_logs=ec2.FlowLogOptions(
+                destination=ec2.FlowLogDestination.to_cloud_watch_logs(), traffic_type=ec2.FlowLogTrafficType.ALL
+            ),
         )
         return vpc
 
@@ -110,17 +108,17 @@ class VpcStack(Stack):
         self.public_subnets = (
             self.vpc.select_subnets(subnet_type=ec2.SubnetType.PUBLIC)
             if self.vpc.public_subnets
-            else self.vpc.select_subnets(subnet_name="")
+            else EmptySubnetSelection()
         )
         self.private_subnets = (
             self.vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE)
             if self.vpc.private_subnets
-            else self.vpc.select_subnets(subnet_name="")
+            else EmptySubnetSelection()
         )
         self.isolated_subnets = (
             self.vpc.select_subnets(subnet_type=ec2.SubnetType.ISOLATED)
             if self.vpc.isolated_subnets
-            else self.vpc.select_subnets(subnet_name="")
+            else EmptySubnetSelection()
         )
 
         for name, gateway_vpc_endpoint_service in vpc_gateway_endpoints.items():
@@ -147,11 +145,11 @@ class VpcStack(Stack):
         )
 
 
-# class EmptySubnetSelection(ec2.SelectedSubnets):
-#     def __init__(self) -> None:
-#         super().__init__(
-#             availability_zones=[], has_public=False, internet_connectivity_established=None, subnet_ids=[], subnets=[]
-#         )
+class EmptySubnetSelection(ec2.SelectedSubnets):
+    def __init__(self) -> None:
+        super().__init__(
+            availability_zones=[], has_public=False, internet_connectivity_established=None, subnet_ids=[], subnets=[]
+        )
 
 
 def synth(stack_name: str, filename: str, env_name: str) -> str:
