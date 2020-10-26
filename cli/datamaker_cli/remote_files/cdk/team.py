@@ -351,6 +351,7 @@ class Team(Stack):
             description="DataMaker Team Context.",
             parameter_name=self.team_manifest.ssm_parameter_name,
             simple_name=False,
+            tier=ssm.ParameterTier.INTELLIGENT_TIERING,
         )
         return parameter
 
