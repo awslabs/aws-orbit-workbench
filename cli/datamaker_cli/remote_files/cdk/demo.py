@@ -147,13 +147,6 @@ class VpcStack(Stack):
         )
 
 
-# class EmptySubnetSelection(ec2.SelectedSubnets):
-#     def __init__(self) -> None:
-#         super().__init__(
-#             availability_zones=[], has_public=False, internet_connectivity_established=None, subnet_ids=[], subnets=[]
-#         )
-
-
 def synth(stack_name: str, filename: str, env_name: str) -> str:
     filename_dir = path_from_filename(filename=filename)
     outdir = os.path.join(filename_dir, ".datamaker.out", env_name, "cdk", stack_name)
