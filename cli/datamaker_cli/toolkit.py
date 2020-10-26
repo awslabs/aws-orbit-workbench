@@ -18,7 +18,6 @@ import shutil
 
 from datamaker_cli import DATAMAKER_CLI_ROOT
 from datamaker_cli.manifest import Manifest
-from datamaker_cli.utils import path_from_filename
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -26,9 +25,8 @@ FILENAME = "template.yaml"
 MODEL_FILENAME = os.path.join(DATAMAKER_CLI_ROOT, "data", "toolkit", FILENAME)
 
 
-def synth(filename: str, manifest: Manifest) -> str:
-    filename_dir = path_from_filename(filename=filename)
-    outdir = os.path.join(filename_dir, ".datamaker.out", manifest.name, "toolkit")
+def synth(manifest: Manifest) -> str:
+    outdir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "toolkit")
     output_filename = os.path.join(outdir, FILENAME)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
@@ -44,7 +42,10 @@ def synth(filename: str, manifest: Manifest) -> str:
         manifest.deploy_id,
     )
     content = content.replace("$", "").format(
-        env_name=manifest.name, account_id=manifest.account_id, region=manifest.region, deploy_id=manifest.deploy_id
+        env_name=manifest.name,
+        account_id=manifest.account_id,
+        region=manifest.region,
+        deploy_id=manifest.deploy_id,
     )
     _logger.debug("Writing %s", output_filename)
     os.makedirs(os.path.dirname(output_filename), exist_ok=True)

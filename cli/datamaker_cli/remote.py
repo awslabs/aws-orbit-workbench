@@ -24,7 +24,8 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _print_codebuild_logs(
-    events: List[cloudwatch.CloudWatchEvent], codebuild_log_callback: Callable[[str], None]
+    events: List[cloudwatch.CloudWatchEvent],
+    codebuild_log_callback: Callable[[str], None],
 ) -> None:
     for event in events:
         msg = event.message[:-1] if event.message.endswith("\n") else event.message
@@ -44,11 +45,16 @@ def _wait_execution(
         if codebuild_log_callback is not None and status.logs.enabled and status.logs.group_name:
             if stream_name is None:
                 stream_name = cloudwatch.get_stream_name_by_prefix(
-                    manifest=manifest, group_name=status.logs.group_name, prefix=f"{stream_name_prefix}/"
+                    manifest=manifest,
+                    group_name=status.logs.group_name,
+                    prefix=f"{stream_name_prefix}/",
                 )
             if stream_name is not None:
                 events = cloudwatch.get_log_events(
-                    manifest=manifest, group_name=status.logs.group_name, stream_name=stream_name, start_time=start_time
+                    manifest=manifest,
+                    group_name=status.logs.group_name,
+                    stream_name=stream_name,
+                    start_time=start_time,
                 )
                 _print_codebuild_logs(events=events.events, codebuild_log_callback=codebuild_log_callback)
                 if events.last_timestamp is not None:
@@ -90,6 +96,10 @@ def run(
     timeout: int,
     codebuild_log_callback: Optional[Callable[[str], None]] = None,
 ) -> None:
+    if manifest.toolkit_s3_bucket is None:
+        if manifest.toolkit_s3_bucket is None:
+            manifest.fetch_toolkit_data()
+        raise ValueError(f"manifest.toolkit_s3_bucket: {manifest.toolkit_s3_bucket}")
     bucket = manifest.toolkit_s3_bucket
     key = f"cli/remote/{command_name}/bundle.zip"
     s3.delete_objects(manifest=manifest, bucket=bucket, keys=[key])

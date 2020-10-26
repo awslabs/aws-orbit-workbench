@@ -17,8 +17,5 @@
 
 set -ex
 
-isort --check .
-black --check .
-mypy .
-flake8 .
-cfn-lint -i E1029,E3031 -- datamaker_cli/data/toolkit/template.yaml
+isort .
+black .

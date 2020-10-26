@@ -16,7 +16,8 @@ import importlib
 import logging
 from typing import Callable, Dict, Optional
 
-from datamaker_cli.manifest import Manifest, TeamManifest
+from datamaker_cli.manifest import Manifest
+from datamaker_cli.manifest.team import TeamManifest
 
 PLUGINS_REGISTRY: Dict[str, "PluginRegistry"] = {}
 

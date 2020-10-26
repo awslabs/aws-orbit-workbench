@@ -15,9 +15,10 @@
 from typing import Any, Dict, Tuple, Union, cast
 
 from jupyterhub.auth import Authenticator
-from jupyterhub_utils.cognito import get_claims
 from tornado.log import app_log
 from tornado.web import RequestHandler
+
+from jupyterhub_utils.cognito import get_claims
 
 
 class DataMakerAuthenticator(Authenticator):  # type: ignore

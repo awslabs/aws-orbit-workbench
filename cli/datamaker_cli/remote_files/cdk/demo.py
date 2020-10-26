@@ -19,7 +19,7 @@ from typing import Any, Tuple
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk.core import App, CfnOutput, Construct, Stack, Tags
 
-from datamaker_cli.utils import path_from_filename
+from datamaker_cli.manifest import Manifest
 
 
 class VpcStack(Stack):
@@ -48,7 +48,7 @@ class VpcStack(Stack):
         CfnOutput(
             scope=self,
             id=f"{id}isolatedsubnetsids",
-            export_name=f"{id}-isolated-subnets-ids",
+            export_name=f"datamaker-{self.env_name}-isolated-subnets-ids",
             value=",".join(self.isolated_subnets_ids),
         )
 
@@ -147,14 +147,13 @@ class VpcStack(Stack):
         )
 
 
-def synth(stack_name: str, filename: str, env_name: str) -> str:
-    filename_dir = path_from_filename(filename=filename)
-    outdir = os.path.join(filename_dir, ".datamaker.out", env_name, "cdk", stack_name)
+def synth(manifest: Manifest) -> str:
+    outdir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "cdk", manifest.demo_stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
-    output_filename = os.path.join(outdir, f"{stack_name}.template.json")
+    output_filename = os.path.join(outdir, f"{manifest.demo_stack_name}.template.json")
 
     app = App(outdir=outdir)
-    VpcStack(scope=app, id=stack_name, env_name=env_name)
+    VpcStack(scope=app, id=manifest.demo_stack_name, env_name=manifest.name)
     app.synth(force=True)
     return output_filename

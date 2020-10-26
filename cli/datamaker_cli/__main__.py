@@ -27,8 +27,8 @@ DEBUG_LOGGING_FORMAT_REMOTE = "[%(filename)-13s:%(lineno)3d] %(message)s"
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def enable_debug(format: str = DEBUG_LOGGING_FORMAT) -> None:
-    logging.basicConfig(level=logging.DEBUG, format=DEBUG_LOGGING_FORMAT)
+def enable_debug(format: str) -> None:
+    logging.basicConfig(level=logging.DEBUG, format=format)
     _logger.setLevel(logging.DEBUG)
     logging.getLogger("boto3").setLevel(logging.ERROR)
     logging.getLogger("botocore").setLevel(logging.ERROR)
@@ -51,7 +51,7 @@ def cli() -> None:
     type=str,
     help="The name of the DataMaker enviroment. MUST be unique per AWS account.",
     required=False,
-    default="myenv",
+    default="my-env",
     show_default=True,
 )
 @click.option(
@@ -63,11 +63,22 @@ def cli() -> None:
     show_default=False,
     required=False,
 )
-@click.option("--demo/--no-demo", default=False, help="Increment the deployment with demostration components.")
 @click.option(
-    "--dev/--no-dev", default=True, help="Enable the development mode (docker images and packages build from source)."
+    "--demo/--no-demo",
+    default=True,
+    help="Increment the deployment with demostration components.",
 )
-@click.option("--debug/--no-debug", default=False, help="Enable detailed logging.", show_default=True)
+@click.option(
+    "--dev/--no-dev",
+    default=True,
+    help="Enable the development mode (docker images and packages build from source).",
+)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
 def init_cli(
     name: str,
     region: Optional[str],
@@ -75,9 +86,9 @@ def init_cli(
     dev: bool,
     debug: bool,
 ) -> None:
-    """Creates the DataMaker manifest file (yaml) where all your deployment settings will rest."""
+    """Creates a DataMaker manifest model file (yaml) where all your deployment settings will rest."""
     if debug:
-        enable_debug()
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
     _logger.debug("name: %s", name)
     _logger.debug("region: %s", region)
     _logger.debug("demo: %s", demo)
@@ -93,13 +104,33 @@ def init_cli(
     type=str,
     help="The target DataMaker manifest file (yaml).",
 )
-@click.option("--username", "-u", type=str, help="Dockerhub username (Required only for the first deploy).")
-@click.option("--password", "-p", type=str, help="Dockerhub password (Required only for the first deploy).")
-@click.option("--debug/--no-debug", default=False, help="Enable detailed logging.", show_default=True)
-def deploy_cli(filename: str, debug: bool, username: Optional[str] = None, password: Optional[str] = None) -> None:
+@click.option(
+    "--username",
+    "-u",
+    type=str,
+    help="Dockerhub username (Required only for the first deploy).",
+)
+@click.option(
+    "--password",
+    "-p",
+    type=str,
+    help="Dockerhub password (Required only for the first deploy).",
+)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def deploy_cli(
+    filename: str,
+    debug: bool,
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+) -> None:
     """Deploy a DataMaker environment based on a manisfest file (yaml)."""
     if debug:
-        enable_debug()
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
     filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
     _logger.debug("username: %s", username)
@@ -113,11 +144,16 @@ def deploy_cli(filename: str, debug: bool, username: Optional[str] = None, passw
     type=str,
     help="The target DataMaker manifest file (yaml).",
 )
-@click.option("--debug/--no-debug", default=False, help="Enable detailed logging.", show_default=True)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
 def destroy_cli(filename: str, debug: bool) -> None:
     """Destroy a DataMaker environment based on a manisfest file (yaml)."""
     if debug:
-        enable_debug()
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
     filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
     destroy(filename=filename, debug=debug)
@@ -125,18 +161,33 @@ def destroy_cli(filename: str, debug: bool) -> None:
 
 @click.command(name="deploy-image")
 @click.option(
-    "--filename", "-f", type=str, help="The target DataMaker manifest file (yaml).", show_default=False, required=True
+    "--filename",
+    "-f",
+    type=str,
+    help="The target DataMaker manifest file (yaml).",
+    show_default=False,
+    required=True,
 )
 @click.option("--dir", "-d", type=str, help="Dockerfile directory.", required=True)
 @click.option("--name", "-n", type=str, help="Image name.", required=True)
 @click.option(
-    "--script", "-s", type=str, default=None, help="Build script to run before the image build.", required=False
+    "--script",
+    "-s",
+    type=str,
+    default=None,
+    help="Build script to run before the image build.",
+    required=False,
 )
-@click.option("--debug/--no-debug", default=False, help="Enable detailed logging.", show_default=True)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
 def deploy_image_cli(filename: str, dir: str, name: str, script: Optional[str], debug: bool) -> None:
     """Build and Deploy a new Docker image into ECR."""
     if debug:
-        enable_debug()
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
     filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
     _logger.debug("dir: %s", dir)
@@ -148,14 +199,24 @@ def deploy_image_cli(filename: str, dir: str, name: str, script: Optional[str], 
 
 @click.command(name="destroy-image")
 @click.option(
-    "--filename", "-f", type=str, help="The target DataMaker manifest file (yaml).", show_default=False, required=True
+    "--filename",
+    "-f",
+    type=str,
+    help="The target DataMaker manifest file (yaml).",
+    show_default=False,
+    required=True,
 )
 @click.option("--name", "-n", type=str, help="Image name.", required=True)
-@click.option("--debug/--no-debug", default=False, help="Enable detailed logging.", show_default=True)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
 def destroy_image_cli(filename: str, name: str, debug: bool) -> None:
     """Destroy a Docker image from ECR."""
     if debug:
-        enable_debug()
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
     filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
     _logger.debug("name: %s", name)
@@ -165,13 +226,23 @@ def destroy_image_cli(filename: str, name: str, debug: bool) -> None:
 
 @click.command(name="list-images")
 @click.option(
-    "--filename", "-f", type=str, help="The target DataMaker manifest file (yaml).", show_default=False, required=True
+    "--filename",
+    "-f",
+    type=str,
+    help="The target DataMaker manifest file (yaml).",
+    show_default=False,
+    required=True,
 )
-@click.option("--debug/--no-debug", default=False, help="Enable detailed logging.", show_default=True)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
 def list_images_cli(filename: str, debug: bool) -> None:
     """List all Docker images available into the target environment."""
     if debug:
-        enable_debug()
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
     filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
     list_images(filename=filename)

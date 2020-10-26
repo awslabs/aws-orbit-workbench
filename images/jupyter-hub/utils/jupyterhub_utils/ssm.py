@@ -13,13 +13,14 @@
 #    limitations under the License.
 
 import os
-from typing import Any, Dict, cast
+from typing import Any, Dict, Optional, cast
 
 import boto3
 import yaml
 
 BOTO3_SESSION: boto3.Session = boto3.Session()
 ENV_NAME: str = os.environ["ENV_NAME"]
+TEAM: str = os.environ["TEAM"]
 
 
 def read_manifest_ssm() -> Dict[str, Any]:
@@ -33,3 +34,8 @@ REGION: str = MANIFEST["region"]
 ACCOUNT_ID: str = MANIFEST["account-id"]
 COGNITO_USER_POOL_ID: str = MANIFEST["user-pool-id"]
 TOOLKIT_S3_BUCKET: str = MANIFEST["toolkit-s3-bucket"]
+IMAGE: Optional[str] = f"{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/datamaker-{ENV_NAME}-jupyter-user:latest"
+
+for team in MANIFEST["teams"]:
+    if team["name"] == TEAM and team["image"] is not None:
+        IMAGE = f"{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/datamaker-{ENV_NAME}-{team['image']}:latest"

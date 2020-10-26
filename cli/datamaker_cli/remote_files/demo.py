@@ -16,25 +16,21 @@ import concurrent.futures
 import logging
 import time
 from itertools import repeat
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List
 
 import botocore.exceptions
 
 from datamaker_cli import plugins
-from datamaker_cli.commands.deploy import refresh_manifest_file_with_demo_attrs
-from datamaker_cli.exceptions import VpcNotFound
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.remote_files.cdk import demo
 from datamaker_cli.services import cfn
-
-STACK_NAME = "datamaker-{env_name}-demo"
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _network_interface(manifest: Manifest, vpc_id: str) -> None:
-    client = manifest.get_boto3_client("ec2")
-    ec2 = manifest.get_boto3_session().resource("ec2")
+    client = manifest.boto3_client("ec2")
+    ec2 = manifest.boto3_resource("ec2")
     for i in client.describe_network_interfaces(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}])["NetworkInterfaces"]:
         try:
             network_interface = ec2.NetworkInterface(i["NetworkInterfaceId"])
@@ -65,7 +61,7 @@ def _network_interface(manifest: Manifest, vpc_id: str) -> None:
 
 
 def delete_sec_group(manifest: Manifest, sec_group: str) -> None:
-    ec2 = manifest.get_boto3_session().resource("ec2")
+    ec2 = manifest.boto3_resource("ec2")
     try:
         sgroup = ec2.SecurityGroup(sec_group)
         if sgroup.ip_permissions:
@@ -90,7 +86,7 @@ def delete_sec_group(manifest: Manifest, sec_group: str) -> None:
 
 
 def _security_group(manifest: Manifest, vpc_id: str) -> None:
-    client = manifest.get_boto3_client("ec2")
+    client = manifest.boto3_client("ec2")
     sec_groups: List[str] = [
         s["GroupId"]
         for s in client.describe_security_groups()["SecurityGroups"]
@@ -103,47 +99,40 @@ def _security_group(manifest: Manifest, vpc_id: str) -> None:
 
 def _cleanup_remaining_dependencies(manifest: Manifest) -> None:
     if manifest.vpc.vpc_id is None:
-        try:
-            manifest.read_ssm()
-        except VpcNotFound:
-            return
-        vpc_id: str = cast(str, manifest.vpc.vpc_id)
-    else:
-        vpc_id = manifest.vpc.vpc_id
+        manifest.fetch_ssm()
+    if manifest.vpc.vpc_id is None:
+        manifest.fetch_network_data()
+    if manifest.vpc.vpc_id is None:
+        raise ValueError(f"manifest.vpc.vpc_id: {manifest.vpc.vpc_id}")
+    vpc_id: str = manifest.vpc.vpc_id
     _network_interface(manifest=manifest, vpc_id=vpc_id)
     _security_group(manifest=manifest, vpc_id=vpc_id)
 
 
-def deploy(manifest: Manifest, filename: str) -> None:
-    stack_name = STACK_NAME.format(env_name=manifest.name)
-    _logger.debug("Stack name: %s", stack_name)
-    if manifest.demo and (not cfn.does_stack_exist(manifest=manifest, stack_name=stack_name) or manifest.dev):
-        template_filename: str = demo.synth(stack_name=stack_name, filename=filename, env_name=manifest.name)
+def deploy(manifest: Manifest) -> None:
+    _logger.debug("Deploying %s DEMO...", manifest.demo_stack_name)
+    if manifest.demo:
+        template_filename: str = demo.synth(manifest=manifest)
         _logger.debug("template_filename: %s", template_filename)
         cfn.deploy_template(
             manifest=manifest,
-            stack_name=stack_name,
+            stack_name=manifest.demo_stack_name,
             filename=template_filename,
             env_tag=manifest.name,
-            toolkit_s3_bucket=manifest.toolkit_s3_bucket,
         )
-        refresh_manifest_file_with_demo_attrs(manifest=manifest)
-    for plugin in plugins.PLUGINS_REGISTRY.values():
-        if plugin.deploy_demo_hook is not None:
-            plugin.deploy_demo_hook(manifest)
-    # TODO
-    # Use sh module call to shell script which does the actual downlaod to a location i.e. bucket - may be demo bucket
+        manifest.fetch_demo_data()
+        for plugin in plugins.PLUGINS_REGISTRY.values():
+            if plugin.deploy_demo_hook is not None:
+                plugin.deploy_demo_hook(manifest)
 
 
 def destroy(manifest: Manifest) -> None:
-    stack_name = STACK_NAME.format(env_name=manifest.name)
     for plugin in plugins.PLUGINS_REGISTRY.values():
         if plugin.destroy_demo_hook is not None:
             plugin.destroy_demo_hook(manifest)
-    _logger.debug("Stack name: %s", stack_name)
-    if manifest.demo and cfn.does_stack_exist(manifest=manifest, stack_name=stack_name):
+    if manifest.demo and cfn.does_stack_exist(manifest=manifest, stack_name=manifest.demo_stack_name):
         waited: bool = False
-        while cfn.does_stack_exist(manifest=manifest, stack_name=f"eksctl-{stack_name}-cluster"):
+        while cfn.does_stack_exist(manifest=manifest, stack_name=manifest.eks_stack_name):
             waited = True
             time.sleep(2)
         else:
@@ -152,4 +141,4 @@ def destroy(manifest: Manifest) -> None:
             _logger.debug("Waiting EKSCTL stack clean up...")
             time.sleep(60)  # Given extra 60 seconds if the EKS stack was just delete
         _cleanup_remaining_dependencies(manifest=manifest)
-        cfn.destroy_stack(manifest=manifest, stack_name=stack_name)
+        cfn.destroy_stack(manifest=manifest, stack_name=manifest.demo_stack_name)

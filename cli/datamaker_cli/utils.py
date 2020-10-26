@@ -43,7 +43,7 @@ def get_region() -> str:
 
 
 def get_account_id(manifest: "Manifest") -> str:
-    return str(manifest.get_boto3_client(service_name="sts").get_caller_identity().get("Account"))
+    return str(manifest.boto3_client(service_name="sts").get_caller_identity().get("Account"))
 
 
 def namedtuple_to_dict(obj: Any) -> Any:
@@ -63,12 +63,8 @@ def path_from_filename(filename: str) -> str:
 
 
 def upsert_subnet_tag(manifest: "Manifest", subnet_id: str, key: str, value: str) -> None:
-    ec2: Any = manifest.get_boto3_session().resource("ec2")
+    ec2: Any = manifest.boto3_resource("ec2")
     ec2.Subnet(subnet_id).create_tags(Tags=[{"Key": key, "Value": value}])
-
-
-def replace_dashes(original: Dict[str, Any]) -> Dict[str, Any]:
-    return {k.replace("-", "_"): v for k, v in original.items()}
 
 
 def replace_underscores(original: Dict[str, Any]) -> Dict[str, Any]:
@@ -90,7 +86,7 @@ def extract_plugin_name(func: Callable[..., None]) -> str:
 def extract_images_names(manifest: "Manifest") -> List[str]:
     resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
     try:
-        response: resp_type = manifest.get_boto3_client("cloudformation").describe_stacks(
+        response: resp_type = manifest.boto3_client("cloudformation").describe_stacks(
             StackName=f"datamaker-{manifest.name}"
         )
     except botocore.exceptions.ClientError as ex:
@@ -114,7 +110,13 @@ def extract_images_names(manifest: "Manifest") -> List[str]:
     )
 
 
-def try_it(f: Callable[..., Any], ex: Any, base: float = 1.0, max_num_tries: int = 3, **kwargs: Any) -> Any:
+def try_it(
+    f: Callable[..., Any],
+    ex: Any,
+    base: float = 1.0,
+    max_num_tries: int = 3,
+    **kwargs: Any,
+) -> Any:
     """Run function with decorrelated Jitter.
 
     Reference: https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
@@ -127,5 +129,11 @@ def try_it(f: Callable[..., Any], ex: Any, base: float = 1.0, max_num_tries: int
             if i == (max_num_tries - 1):
                 raise exception
             delay = random.uniform(base, delay * 3)
-            _logger.error("Retrying %s | Fail number %s/%s | Exception: %s", f, i + 1, max_num_tries, exception)
+            _logger.error(
+                "Retrying %s | Fail number %s/%s | Exception: %s",
+                f,
+                i + 1,
+                max_num_tries,
+                exception,
+            )
             time.sleep(delay)

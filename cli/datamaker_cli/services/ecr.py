@@ -13,7 +13,7 @@ def _chunks(iterable: Iterator[Any], size: int) -> Iterator[Any]:
 
 
 def get_credential(manifest: "Manifest") -> Tuple[str, str]:
-    ecr_client = manifest.get_boto3_client("ecr")
+    ecr_client = manifest.boto3_client("ecr")
     result = ecr_client.get_authorization_token()
     auth = result["authorizationData"][0]
     auth_token = b64decode(auth["authorizationToken"]).decode()
@@ -21,7 +21,7 @@ def get_credential(manifest: "Manifest") -> Tuple[str, str]:
 
 
 def fetch_images(manifest: "Manifest", repo: str) -> Iterator[str]:
-    client = manifest.get_boto3_client("ecr")
+    client = manifest.boto3_client("ecr")
     paginator = client.get_paginator("list_images")
     for page in paginator.paginate(repositoryName=repo):
         for image in page["imageIds"]:
@@ -29,12 +29,12 @@ def fetch_images(manifest: "Manifest", repo: str) -> Iterator[str]:
 
 
 def delete_images(manifest: "Manifest", repo: str) -> None:
-    client = manifest.get_boto3_client("ecr")
+    client = manifest.boto3_client("ecr")
     for chunk in _chunks(iterable=fetch_images(manifest=manifest, repo=repo), size=100):
         client.batch_delete_image(repositoryName=repo, imageIds=[{"imageDigest": i} for i in chunk])
 
 
 def delete_repo(manifest: "Manifest", repo: str) -> None:
-    client = manifest.get_boto3_client("ecr")
+    client = manifest.boto3_client("ecr")
     delete_images(manifest=manifest, repo=repo)
     client.delete_repository(repositoryName=repo, force=True)
