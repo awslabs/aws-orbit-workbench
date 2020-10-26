@@ -166,8 +166,21 @@ Resources:
             Resource:
               - arn:aws:eks:${region}:${account_id}:cluster/datamaker-${env_name}
               - arn:aws:eks:${region}:${account_id}:nodegroup/datamaker-${env_name}/*
+          - Effect: Allow
+            Action:
+              - codeartifact:GetAuthorizationToken
+              - codeartifact:GetRepositoryEndpoint
+              - codeartifact:ReadFromRepository
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - sts:GetServiceBearerToken
+            Resource: '*'
+            Condition:
+              StringEquals:
+                sts:AWSServiceName: codeartifact.amazonaws.com
         Version: '2012-10-17'
-      Description: '' 
+      Description: ''
       ManagedPolicyName: datamaker-${env_name}-admin
       Path: /
   AdminRole:
