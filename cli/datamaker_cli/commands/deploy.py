@@ -92,6 +92,7 @@ def deploy_toolkit(
 def deploy_image(filename: str, dir: str, name: str, script: Optional[str], debug: bool) -> None:
     with MessagesContext("Deploying Docker Image", debug=debug) as ctx:
         manifest = Manifest(filename=filename)
+        manifest.fetch_ssm()
         ctx.info(f"Manifest loaded: {filename}")
         if cfn.does_stack_exist(manifest=manifest, stack_name=f"datamaker-{manifest.name}") is False:
             ctx.error("Please, deploy your environment before deploy any addicional docker image")

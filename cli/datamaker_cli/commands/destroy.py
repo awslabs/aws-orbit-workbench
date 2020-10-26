@@ -14,6 +14,8 @@
 
 import logging
 
+import botocore.exceptions
+
 from datamaker_cli import bundle, plugins, remote
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.messages import MessagesContext
@@ -94,6 +96,12 @@ def destroy(filename: str, debug: bool) -> None:
         ctx.info("Env destroyed")
         ctx.progress(95)
 
-        destroy_toolkit(manifest=manifest)
+        try:
+            destroy_toolkit(manifest=manifest)
+        except botocore.exceptions.ClientError as ex:
+            error = ex.response["Error"]
+            if "does not exist" not in error["Message"]:
+                raise
+            _logger.debug(f"Skipping toolkit destroy: {error['Message']}")
         ctx.info("Toolkit destroyed")
         ctx.progress(100)
