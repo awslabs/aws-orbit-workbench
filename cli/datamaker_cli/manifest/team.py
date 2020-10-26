@@ -98,6 +98,7 @@ class TeamManifest:
                 Name=self.ssm_parameter_name,
                 Value=self.asjson(),
                 Overwrite=True,
+                Tier="Intelligent-Tiering",
             )
 
     def asdict_file(self) -> MANIFEST_FILE_TEAM_TYPE:

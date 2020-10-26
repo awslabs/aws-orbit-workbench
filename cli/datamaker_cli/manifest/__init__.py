@@ -176,6 +176,7 @@ class Manifest:
                 Name=self.ssm_parameter_name,
                 Value=self.asjson(),
                 Overwrite=True,
+                Tier="Intelligent-Tiering",
             )
             for team in self.teams:
                 team.write_manifest_ssm()
