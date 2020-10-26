@@ -22,7 +22,7 @@ import botocore.config
 import botocore.exceptions
 import yaml
 
-from datamaker_cli import k8s, utils
+from datamaker_cli import utils
 from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE, MANIFEST_PLUGIN_TYPE, PluginManifest
 from datamaker_cli.manifest.subnet import MANIFEST_FILE_SUBNET_TYPE, SubnetKind, SubnetManifest
 from datamaker_cli.manifest.team import MANIFEST_FILE_TEAM_TYPE, MANIFEST_TEAM_TYPE, TeamManifest
@@ -284,21 +284,6 @@ class Manifest:
         self.vpc.fetch_properties()
         self.write_manifest_ssm()
         _logger.debug("Network data fetched successfully.")
-
-    def fetch_kubectl_data(self, context: str) -> None:
-        _logger.debug("Fetching Kubectl data...")
-        self.fetch_ssm()
-
-        for team in self.teams:
-            _logger.debug("Fetching team %s URL parameter", team.name)
-            url = k8s.get_service_hostname(name="jupyterhub-public", context=context, namespace=team.name)
-            team.jupyter_url = url
-
-        landing_page_url: str = k8s.get_service_hostname(name="landing-page-public", context=context, namespace="env")
-        self.landing_page_url = f"http://{landing_page_url}"
-
-        self.write_manifest_ssm()
-        _logger.debug("Kubectl data fetched successfully.")
 
     def asdict_file(self) -> MANIFEST_FILE_TYPE:
         obj: MANIFEST_FILE_TYPE = {

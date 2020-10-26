@@ -16,7 +16,7 @@ import logging
 import os
 import shutil
 
-from datamaker_cli import DATAMAKER_CLI_ROOT, exceptions, sh
+from datamaker_cli import DATAMAKER_CLI_ROOT, exceptions, k8s, sh
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.team import TeamManifest
 from datamaker_cli.remote_files.utils import get_k8s_context
@@ -139,6 +139,22 @@ def _generate_manifest(manifest: Manifest) -> str:
     return output_path
 
 
+def fetch_kubectl_data(manifest: Manifest, context: str) -> None:
+    _logger.debug("Fetching Kubectl data...")
+    manifest.fetch_ssm()
+
+    for team in manifest.teams:
+        _logger.debug("Fetching team %s URL parameter", team.name)
+        url = k8s.get_service_hostname(name="jupyterhub-public", context=context, namespace=team.name)
+        team.jupyter_url = url
+
+    landing_page_url: str = k8s.get_service_hostname(name="landing-page-public", context=context, namespace="env")
+    manifest.landing_page_url = f"http://{landing_page_url}"
+
+    manifest.write_manifest_ssm()
+    _logger.debug("Kubectl data fetched successfully.")
+
+
 def deploy(manifest: Manifest) -> None:
     eks_stack_name: str = f"eksctl-datamaker-{manifest.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
@@ -148,7 +164,7 @@ def deploy(manifest: Manifest) -> None:
         output_path = _generate_manifest(manifest=manifest)
         sh.run(f"kubectl apply -k {EFS_DRIVE} --context {context}")
         sh.run(f"kubectl apply -f {output_path} --context {context}")
-        manifest.fetch_kubectl_data(context=context)
+        fetch_kubectl_data(manifest=manifest, context=context)
 
 
 def destroy(manifest: Manifest) -> None:
