@@ -330,7 +330,7 @@ class Env(Stack):
             description="DataMaker Remote Manifest.",
             parameter_name=self.manifest.ssm_parameter_name,
             simple_name=False,
-            tier=ssm.ParameterTier.ADVANCED,
+            tier=ssm.ParameterTier.INTELLIGENT_TIERING,
         )
         return parameter
 
