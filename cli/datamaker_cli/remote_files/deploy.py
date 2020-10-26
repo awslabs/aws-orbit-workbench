@@ -105,6 +105,12 @@ def deploy_images_remotely(manifest: Manifest) -> None:
 
 
 def deploy(filename: str, args: Tuple[str, ...]) -> None:
+    _logger.debug("args: %s", args)
+    if len(args) == 1:
+        skip_images_remote_flag: str = str(args[0])
+    else:
+        raise ValueError("Unexpected number of values in args.")
+
     manifest: Manifest = Manifest(filename=filename)
     manifest.fetch_ssm()
     plugins.load_plugins(manifest=manifest)
@@ -118,8 +124,11 @@ def deploy(filename: str, args: Tuple[str, ...]) -> None:
         remove_images=[],
     )
     _logger.debug("Env Stack deployed")
-    deploy_images_remotely(manifest=manifest)
-    _logger.debug("Docker Images deployed")
+    if skip_images_remote_flag == "skip-images":
+        _logger.debug("Docker images build skipped")
+    else:
+        deploy_images_remotely(manifest=manifest)
+        _logger.debug("Docker Images deployed")
     teams.deploy(manifest=manifest)
     _logger.debug("Teams Stacks deployed")
     eksctl.deploy(manifest=manifest)

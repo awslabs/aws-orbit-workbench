@@ -87,7 +87,6 @@ class SubnetManifest:
             self.availability_zone = str(subnet.availability_zone)
             self.vpc_id = str(subnet.vpc_id)
             self._fetch_route_table_id()
-            _logger.debug(f"boo: {self.availability_zone}")
             _logger.debug("Subnet %s loaded successfully from resources.", self.subnet_id)
         except botocore.exceptions.ClientError:
             _logger.debug("Unable to fetch properties from subnet (%s) right now.", self.subnet_id)
