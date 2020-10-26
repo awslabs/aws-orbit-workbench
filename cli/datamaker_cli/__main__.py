@@ -117,6 +117,12 @@ def init_cli(
     help="Dockerhub password (Required only for the first deploy).",
 )
 @click.option(
+    "--skip-images/--no-skip-images",
+    default=False,
+    help="Skip Docker images build/deploy.",
+    show_default=True,
+)
+@click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
@@ -124,6 +130,7 @@ def init_cli(
 )
 def deploy_cli(
     filename: str,
+    skip_images: bool,
     debug: bool,
     username: Optional[str] = None,
     password: Optional[str] = None,
@@ -134,7 +141,8 @@ def deploy_cli(
     filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
     _logger.debug("username: %s", username)
-    deploy(filename=filename, username=username, password=password, debug=debug)
+    _logger.debug("skip_images: %s", skip_images)
+    deploy(filename=filename, username=username, password=password, skip_images=skip_images, debug=debug)
 
 
 @click.command(name="destroy")
