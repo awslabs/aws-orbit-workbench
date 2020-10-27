@@ -64,6 +64,10 @@ class Manifest:
         self.region: str = cast(str, self.raw_file["region"])
         self.demo: bool = cast(bool, self.raw_file["demo"])
         self.dev: bool = cast(bool, self.raw_file["dev"])
+        self.codeartifact_domain: Optional[str] = cast(Optional[str], self.raw_file.get("codeartifact-domain", None))
+        self.codeartifact_repository: Optional[str] = cast(
+            Optional[str], self.raw_file.get("codeartifact-domain", None)
+        )
         self.env_tag: str = f"datamaker-{self.name}"
         self.ssm_parameter_name: str = f"/datamaker/{self.name}/manifest"
         self.ssm_dockerhub_parameter_name: str = f"/datamaker/{self.name}/dockerhub"
@@ -90,8 +94,6 @@ class Manifest:
         self.eks_env_nodegroup_role_arn: Optional[str] = None  # Env
         self.user_pool_client_id: Optional[str] = None  # Env
         self.identity_pool_id: Optional[str] = None  # Env
-        self.codeartifact_domain: Optional[str] = None  # Env
-        self.codeartifact_repository: Optional[str] = None  # Env
         self.user_pool_id: Optional[str] = None  # Env
         self.cognito_users_urls: Optional[str] = None  # Env
 
@@ -199,8 +201,6 @@ class Manifest:
         if self.raw_ssm is not None:
             raw: MANIFEST_TYPE = self.raw_ssm
             self.landing_page_url = cast(Optional[str], raw.get("landing-page-url"))
-            self.codeartifact_domain = cast(Optional[str], raw.get("codeartifact-domain"))
-            self.codeartifact_repository = cast(Optional[str], raw.get("codeartifact-repository"))
             self.deploy_id = cast(Optional[str], raw.get("deploy-id"))
             self.toolkit_s3_bucket = cast(Optional[str], raw.get("toolkit-s3-bucket"))
             self.toolkit_kms_alias = cast(Optional[str], raw.get("toolkit-kms-alias"))
