@@ -17,16 +17,9 @@
         "E1029",
         "E3031"
     ],
-    "python.formatting.blackArgs": [
-        "--line-length 120",
-        "--target-version py36"
-    ],
     "python.formatting.provider": "black",
     "python.linting.enabled": true,
-    "python.linting.flake8Args": ["--max-line-length 120"],
     "python.linting.flake8Enabled": true,
-    "python.linting.mypyCategorySeverity.error": "Hint",
-    "python.linting.mypyCategorySeverity.note": "Hint",
     "python.linting.mypyEnabled": true,
     "python.linting.pylintEnabled": false
 }
