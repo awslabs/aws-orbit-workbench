@@ -97,6 +97,7 @@ def run(
     codebuild_log_callback: Optional[Callable[[str], None]] = None,
 ) -> None:
     if manifest.toolkit_s3_bucket is None:
+        manifest.fetch_ssm()
         if manifest.toolkit_s3_bucket is None:
             manifest.fetch_toolkit_data()
         raise ValueError(f"manifest.toolkit_s3_bucket: {manifest.toolkit_s3_bucket}")
