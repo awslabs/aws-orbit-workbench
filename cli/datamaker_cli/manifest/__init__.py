@@ -66,7 +66,7 @@ class Manifest:
         self.dev: bool = cast(bool, self.raw_file["dev"])
         self.codeartifact_domain: Optional[str] = cast(Optional[str], self.raw_file.get("codeartifact-domain", None))
         self.codeartifact_repository: Optional[str] = cast(
-            Optional[str], self.raw_file.get("codeartifact-domain", None)
+            Optional[str], self.raw_file.get("codeartifact-repository", None)
         )
         self.env_tag: str = f"datamaker-{self.name}"
         self.ssm_parameter_name: str = f"/datamaker/{self.name}/manifest"
