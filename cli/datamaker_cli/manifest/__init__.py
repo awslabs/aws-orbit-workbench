@@ -62,8 +62,8 @@ class Manifest:
         self.raw_file: MANIFEST_FILE_TYPE = self._read_manifest_file(filename=filename)
         self.name: str = cast(str, self.raw_file["name"])
         self.region: str = cast(str, self.raw_file["region"])
-        self.demo: bool = cast(bool, self.raw_file["demo"])
-        self.dev: bool = cast(bool, self.raw_file["dev"])
+        self.demo: bool = cast(bool, self.raw_file.get("demo", False))
+        self.dev: bool = cast(bool, self.raw_file.get("dev", False))
         self.codeartifact_domain: Optional[str] = cast(Optional[str], self.raw_file.get("codeartifact-domain", None))
         self.codeartifact_repository: Optional[str] = cast(
             Optional[str], self.raw_file.get("codeartifact-repository", None)
@@ -295,6 +295,10 @@ class Manifest:
             obj["demo"] = True
         if self.dev:
             obj["dev"] = True
+        if self.codeartifact_domain is not None:
+            obj["codeartifact-domain"] = self.codeartifact_domain
+        if self.codeartifact_repository is not None:
+            obj["codeartifact-repository"] = self.codeartifact_repository
         obj["plugins"] = [p.asdict_file() for p in self.plugins]
         obj["vpc"] = self.vpc.asdict_file()
         obj["teams"] = [t.asdict_file() for t in self.teams]
