@@ -21,8 +21,7 @@ from typing import Any, Dict, List
 
 import botocore.exceptions
 
-from datamaker_cli import DATAMAKER_CLI_ROOT
-from datamaker_cli import cdk, plugins
+from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, plugins, sh
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.services import cfn, s3
 
@@ -167,8 +166,9 @@ def _prepare_demo_data(manifest: Manifest) -> None:
                 _logger.debug(obj["Key"])
     # Adding CSM schema files
     cms_schema_files = os.path.join(DATAMAKER_CLI_ROOT, "data", "cms", "schema")
-    schema_key_prefix = 'cms/schema/'
-    sh.run(f'aws s3 cp --recursive {cms_schema_files} s3://{bucket_name}/{schema_key_prefix}')
+    schema_key_prefix = "cms/schema/"
+    sh.run(f"aws s3 cp --recursive {cms_schema_files} s3://{bucket_name}/{schema_key_prefix}")
+
 
 def deploy(manifest: Manifest) -> None:
     _logger.debug("Deploying %s DEMO...", manifest.demo_stack_name)
