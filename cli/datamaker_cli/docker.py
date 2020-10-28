@@ -46,10 +46,9 @@ def build(
     if use_cache:
         try:
             ecr_pull(manifest=manifest, name=name, tag=tag)
+            cache_str = f"--cache-from {repo_address}"
         except exceptions.FailedShellCommand:
             _logger.debug(f"Docker cache not found at ECR {name}:{tag}")
-        else:
-            cache_str = f"--cache-from {repo_address}"
 
     sh.run(f"docker build {cache_str} --tag {name} .", cwd=dir)
 
