@@ -80,7 +80,7 @@ def deploy_toolkit(
     cfn.deploy_template(
         manifest=manifest, stack_name=manifest.toolkit_stack_name, filename=template_filename, env_tag=manifest.env_tag
     )
-    sleep(5)  # Avoiding eventual consistency issues
+    sleep(15)  # Avoiding eventual consistency issues
     manifest.fetch_toolkit_data()
 
     if credential_exist is False:
@@ -150,13 +150,10 @@ def deploy(
         ctx.info("Toolkit deployed")
         ctx.progress(10)
 
-        if manifest.dev:
-            dirs = [
-                (os.path.join(manifest.filename_dir, "..", "images", name), name)
-                for name in ("landing-page", "jupyter-hub", "jupyter-user")
-            ]
-        else:
-            dirs = []
+        dirs = [
+            (os.path.join(manifest.filename_dir, "..", "images", name), name)
+            for name in ("landing-page", "jupyter-hub", "jupyter-user")
+        ]
         bundle_path = bundle.generate_bundle(command_name="deploy", manifest=manifest, dirs=dirs)
         ctx.progress(15)
         skip_images_remote_flag: str = "skip-images" if skip_images else "no-skip-images"
