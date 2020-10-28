@@ -150,13 +150,10 @@ def deploy(
         ctx.info("Toolkit deployed")
         ctx.progress(10)
 
-        if manifest.dev:
-            dirs = [
-                (os.path.join(manifest.filename_dir, "..", "images", name), name)
-                for name in ("landing-page", "jupyter-hub", "jupyter-user")
-            ]
-        else:
-            dirs = []
+        dirs = [
+            (os.path.join(manifest.filename_dir, "..", "images", name), name)
+            for name in ("landing-page", "jupyter-hub", "jupyter-user")
+        ]
         bundle_path = bundle.generate_bundle(command_name="deploy", manifest=manifest, dirs=dirs)
         ctx.progress(15)
         skip_images_remote_flag: str = "skip-images" if skip_images else "no-skip-images"

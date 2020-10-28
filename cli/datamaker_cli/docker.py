@@ -41,14 +41,15 @@ def build(
 ) -> None:
     ecr_address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com"
     repo_address = f"{ecr_address}/{name}:{tag}"
+    cache_str: str = ""
     if use_cache:
         try:
             ecr_pull(manifest=manifest, name=name, tag=tag)
         except exceptions.FailedShellCommand:
             _logger.debug(f"Docker cache not found at ECR {name}:{tag}")
-        cache_str = f"--cache-from {repo_address}"
-    else:
-        cache_str = ""
+        else:
+            cache_str = f"--cache-from {repo_address}"
+
     sh.run(f"docker build {cache_str} --tag {name} .", cwd=dir)
 
 
