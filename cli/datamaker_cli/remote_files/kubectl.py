@@ -177,7 +177,10 @@ def destroy(manifest: Manifest) -> None:
         output_path = _generate_manifest(manifest=manifest)
         output_path = f"{manifest.filename_dir}.datamaker.out/{manifest.name}/kubectl/"
         try:
-            sh.run(f"kubectl delete -f {output_path} --grace-period=0 --force --ignore-not-found --context {context}")
+            sh.run(
+                f"kubectl delete -f {output_path} --grace-period=0 --force "
+                f"--ignore-not-found --wait --context {context}"
+            )
         except exceptions.FailedShellCommand as ex:
             _logger.debug("Skipping: %s", ex)
             pass  # Let's leave for eksctl, it will destroy everything anyway...

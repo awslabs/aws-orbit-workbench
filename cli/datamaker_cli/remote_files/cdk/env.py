@@ -15,6 +15,7 @@
 import logging
 import os
 import shutil
+import sys
 from typing import List, cast
 
 import aws_cdk.aws_cognito as cognito
@@ -335,15 +336,21 @@ class Env(Stack):
         return parameter
 
 
-def synth(
-    manifest: Manifest,
-    add_images: List[str],
-    remove_images: List[str],
-) -> str:
+def main() -> None:
+    _logger.debug("sys.argv: %s", sys.argv)
+    if len(sys.argv) == 4:
+        filename: str = sys.argv[1]
+        add_images: List[str] = [] if sys.argv[2] == "null" else sys.argv[2].split(sep=",")
+        remove_images: List[str] = [] if sys.argv[3] == "null" else sys.argv[2].split(sep=",")
+    else:
+        raise ValueError("Unexpected number of values in sys.argv.")
+
+    manifest: Manifest = Manifest(filename=filename)
+    manifest.fillup()
+
     outdir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "cdk", manifest.env_stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
-    output_filename = os.path.join(outdir, f"{manifest.env_stack_name}.template.json")
 
     app = App(outdir=outdir)
     Env(
@@ -354,4 +361,7 @@ def synth(
         remove_images=remove_images,
     )
     app.synth(force=True)
-    return output_filename
+
+
+if __name__ == "__main__":
+    main()

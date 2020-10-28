@@ -14,16 +14,16 @@
 
 import logging
 import time
-from typing import Any, Dict, Iterator, List
+from typing import Any, Dict, Iterator, List, Tuple
 
-from datamaker_cli import plugins
+from datamaker_cli import cdk, plugins
 from datamaker_cli.manifest import Manifest
-from datamaker_cli.remote_files import cdk
 from datamaker_cli.services import cfn, ecr
 
-STACK_NAME = "datamaker-{env_name}"
-
 _logger: logging.Logger = logging.getLogger(__name__)
+
+
+DEFAULT_IMAGES: List[str] = ["landing-page", "jupyter-hub", "jupyter-user"]
 
 
 def _filter_repos(manifest: Manifest, page: Dict[str, Any]) -> Iterator[str]:
@@ -101,20 +101,23 @@ def _cleanup_remaining_resources(manifest: Manifest) -> None:
     _efs(manifest=manifest, fs_ids=_efs_targets(manifest=manifest))
 
 
+def _concat_images_into_args(add_images: List[str], remove_images: List[str]) -> Tuple[str, str]:
+    add_images += DEFAULT_IMAGES
+    add_images_str = ",".join(add_images) if add_images else "null"
+    remove_images_str = ",".join(remove_images) if remove_images else "null"
+    return add_images_str, remove_images_str
+
+
 def deploy(manifest: Manifest, add_images: List[str], remove_images: List[str]) -> None:
     _logger.debug("Stack name: %s", manifest.env_stack_name)
-    template_filename = cdk.env.synth(
-        manifest=manifest,
-        add_images=add_images,
-        remove_images=remove_images,
-    )
-    _logger.debug("template_filename: %s", template_filename)
-    cfn.deploy_template(
+    add_images_str, remove_images_str = _concat_images_into_args(add_images=add_images, remove_images=remove_images)
+    cdk.deploy(
         manifest=manifest,
         stack_name=manifest.env_stack_name,
-        filename=template_filename,
-        env_tag=manifest.env_tag,
+        app_filename="env.py",
+        args=[manifest.filename, add_images_str, remove_images_str],
     )
+
     manifest.fetch_ssm()
     for plugin in plugins.PLUGINS_REGISTRY.values():
         if plugin.deploy_env_hook is not None:
@@ -122,11 +125,16 @@ def deploy(manifest: Manifest, add_images: List[str], remove_images: List[str]) 
 
 
 def destroy(manifest: Manifest) -> None:
-    stack_name = STACK_NAME.format(env_name=manifest.name)
     for plugin in plugins.PLUGINS_REGISTRY.values():
         if plugin.destroy_env_hook is not None:
             plugin.destroy_env_hook(manifest)
-    _logger.debug("Stack name: %s", stack_name)
-    if cfn.does_stack_exist(manifest=manifest, stack_name=stack_name):
+    _logger.debug("Stack name: %s", manifest.env_stack_name)
+    if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.env_stack_name):
         _cleanup_remaining_resources(manifest=manifest)
-        cfn.destroy_stack(manifest=manifest, stack_name=stack_name)
+        add_images_str, remove_images_str = _concat_images_into_args(add_images=[], remove_images=[])
+        cdk.destroy(
+            manifest=manifest,
+            stack_name=manifest.env_stack_name,
+            app_filename="env.py",
+            args=[manifest.filename, add_images_str, remove_images_str],
+        )

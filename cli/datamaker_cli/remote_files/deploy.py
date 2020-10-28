@@ -20,7 +20,7 @@ from typing import Any, List, Optional, Tuple
 
 from datamaker_cli import bundle, docker, plugins, remote, sh
 from datamaker_cli.manifest import Manifest
-from datamaker_cli.remote_files import demo, eksctl, env, kubectl, teams
+from datamaker_cli.remote_files import cdk_toolkit, demo, eksctl, env, kubectl, teams
 from datamaker_cli.services import codebuild
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -112,15 +112,17 @@ def deploy(filename: str, args: Tuple[str, ...]) -> None:
         raise ValueError("Unexpected number of values in args.")
 
     manifest: Manifest = Manifest(filename=filename)
-    manifest.fetch_ssm()
+    manifest.fillup()
     plugins.load_plugins(manifest=manifest)
     _logger.debug(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
+    cdk_toolkit.deploy(manifest=manifest)
+    _logger.debug("CDK Toolkit Stack deployed")
     demo.deploy(manifest=manifest)
     _logger.debug("Demo Stack deployed")
     manifest.fetch_network_data()
     env.deploy(
         manifest=manifest,
-        add_images=["landing-page", "jupyter-hub", "jupyter-user"],
+        add_images=[],
         remove_images=[],
     )
     _logger.debug("Env Stack deployed")

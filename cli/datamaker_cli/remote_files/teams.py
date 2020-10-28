@@ -14,9 +14,8 @@
 
 import logging
 
-from datamaker_cli import plugins
+from datamaker_cli import cdk, plugins
 from datamaker_cli.manifest import Manifest
-from datamaker_cli.remote_files import cdk
 from datamaker_cli.services import cfn, s3
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -24,17 +23,13 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 def deploy(manifest: Manifest) -> None:
     for team_manifest in manifest.teams:
-        template_filename = cdk.team.synth(
-            manifest=manifest,
-            team_manifest=team_manifest,
-        )
-        _logger.debug("template_filename: %s", template_filename)
-        cfn.deploy_template(
+        cdk.deploy(
             manifest=manifest,
             stack_name=team_manifest.stack_name,
-            filename=template_filename,
-            env_tag=manifest.env_tag,
+            app_filename="team.py",
+            args=[manifest.filename, team_manifest.name],
         )
+
         team_manifest.fetch_ssm()
         for plugin in plugins.PLUGINS_REGISTRY.values():
             if plugin.deploy_team_hook is not None:
@@ -49,5 +44,13 @@ def destroy(manifest: Manifest) -> None:
         _logger.debug("Stack name: %s", team_manifest.stack_name)
         if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.toolkit_stack_name):
             if team_manifest.scratch_bucket is not None:
-                s3.delete_bucket(manifest=manifest, bucket=team_manifest.scratch_bucket)
-            cfn.destroy_stack(manifest=manifest, stack_name=team_manifest.stack_name)
+                try:
+                    s3.delete_bucket(manifest=manifest, bucket=team_manifest.scratch_bucket)
+                except Exception as ex:
+                    _logger.debug("Skipping Team scratch bucket deletion. Cause: %s", ex)
+                cdk.destroy(
+                    manifest=manifest,
+                    stack_name=team_manifest.stack_name,
+                    app_filename="team.py",
+                    args=[manifest.filename, team_manifest.name],
+                )

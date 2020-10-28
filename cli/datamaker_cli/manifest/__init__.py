@@ -15,7 +15,7 @@
 import json
 import logging
 import os
-from typing import Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
 import boto3
 import botocore.config
@@ -88,6 +88,8 @@ class Manifest:
         self.toolkit_kms_arn: Optional[str] = None  # toolkit
         self.toolkit_kms_alias: Optional[str] = None  # toolkit
         self.toolkit_s3_bucket: Optional[str] = None  # toolkit
+        self.cdk_toolkit_s3_bucket: Optional[str] = None  # toolkit
+        self.cdk_toolkit_stack_name: Optional[str] = None  # toolkit
 
         self.raw_ssm: Optional[MANIFEST_TYPE] = None  # Env
         self.eks_cluster_role_arn: Optional[str] = None  # Env
@@ -195,7 +197,7 @@ class Manifest:
     def boto3_resource(self, service_name: str) -> boto3.client:
         return self._boto3_session().resource(service_name=service_name, use_ssl=True, config=self._botocore_config())
 
-    def fetch_ssm(self) -> None:
+    def fetch_ssm(self) -> bool:
         _logger.debug("Fetching SSM manifest data...")
         self.raw_ssm = self._read_manifest_ssm()
         if self.raw_ssm is not None:
@@ -205,6 +207,8 @@ class Manifest:
             self.toolkit_s3_bucket = cast(Optional[str], raw.get("toolkit-s3-bucket"))
             self.toolkit_kms_alias = cast(Optional[str], raw.get("toolkit-kms-alias"))
             self.toolkit_kms_arn = cast(Optional[str], raw.get("toolkit-kms-arn"))
+            self.cdk_toolkit_s3_bucket = cast(Optional[str], raw.get("cdk-toolkit-s3-bucket"))
+            self.cdk_toolkit_stack_name = cast(Optional[str], raw.get("cdk-toolkit-stack-name"))
             self.eks_cluster_role_arn = cast(Optional[str], raw.get("eks-cluster-role-arn"))
             self.eks_env_nodegroup_role_arn = cast(Optional[str], raw.get("eks-env-nodegroup-role-arn"))
             self.user_pool_client_id = cast(Optional[str], raw.get("user-pool-client-id"))
@@ -219,16 +223,29 @@ class Manifest:
                 team.fillup_from_ssm()
 
             _logger.debug("Env %s loaded successfully from SSM.", self.name)
+            return True
+        return False
 
     def fetch_toolkit_data(self) -> None:
         _logger.debug("Fetching Toolkit data...")
         self.fetch_ssm()
         resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
-        response: resp_type = self.boto3_client("cloudformation").describe_stacks(StackName=self.toolkit_stack_name)
+
+        try:
+            response: resp_type = self.boto3_client("cloudformation").describe_stacks(StackName=self.toolkit_stack_name)
+        except botocore.exceptions.ClientError as ex:
+            error: Dict[str, Any] = ex.response["Error"]
+            if error["Code"] == "ValidationError" and f"{self.toolkit_stack_name} does not exist" in error["Message"]:
+                logging.debug("Toolkit stack not found.")
+                return
+            raise
         if len(response["Stacks"]) < 1:
-            raise RuntimeError("Toolkit stack not found.")
+            logging.debug("Toolkit stack not found.")
+            return
         if "Outputs" not in response["Stacks"][0]:
-            raise RuntimeError("Toolkit stack with empty outputs")
+            logging.debug("Toolkit stack with empty outputs")
+            return
+
         for output in response["Stacks"][0]["Outputs"]:
             if output["ExportName"] == f"datamaker-{self.name}-deploy-id":
                 _logger.debug("Export value: %s", output["OutputValue"])
@@ -246,6 +263,8 @@ class Manifest:
             )
         self.toolkit_kms_alias = f"datamaker-{self.name}-{self.deploy_id}"
         self.toolkit_s3_bucket = f"datamaker-{self.name}-toolkit-{self.account_id}-{self.deploy_id}"
+        self.cdk_toolkit_s3_bucket = f"datamaker-{self.name}-cdk-toolkit-{self.account_id}-{self.deploy_id}"
+        self.cdk_toolkit_stack_name = f"datamaker-{self.name}-cdk-toolkit"
         for team in self.teams:
             team.scratch_bucket = f"datamaker-{self.name}-{team.name}-scratch-{self.account_id}-{self.deploy_id}"
         self.write_manifest_ssm()
@@ -254,11 +273,22 @@ class Manifest:
     def fetch_demo_data(self) -> None:
         _logger.debug("Fetching DEMO data...")
         resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
-        response: resp_type = self.boto3_client("cloudformation").describe_stacks(StackName=self.demo_stack_name)
+
+        try:
+            response: resp_type = self.boto3_client("cloudformation").describe_stacks(StackName=self.demo_stack_name)
+        except botocore.exceptions.ClientError as ex:
+            error: Dict[str, Any] = ex.response["Error"]
+            if error["Code"] == "ValidationError" and f"{self.demo_stack_name} does not exist" in error["Message"]:
+                logging.debug("DEMO stack not found.")
+                return
+            raise
         if len(response["Stacks"]) < 1:
-            raise RuntimeError("Toolkit stack not found.")
+            logging.debug("DEMO stack not found.")
+            return
         if "Outputs" not in response["Stacks"][0]:
-            raise RuntimeError("Toolkit stack with empty outputs")
+            logging.debug("DEMO stack with empty outputs")
+            return
+
         subnets: List[SubnetManifest] = []
         for output in response["Stacks"][0]["Outputs"]:
             if output["ExportName"] == f"datamaker-{self.name}-private-subnets-ids":
@@ -285,6 +315,12 @@ class Manifest:
         self.vpc.fetch_properties()
         self.write_manifest_ssm()
         _logger.debug("Network data fetched successfully.")
+
+    def fillup(self) -> None:
+        if self.fetch_ssm() is False:
+            self.fetch_toolkit_data()
+            self.fetch_demo_data()
+            self.fetch_network_data()
 
     def asdict_file(self) -> MANIFEST_FILE_TYPE:
         obj: MANIFEST_FILE_TYPE = {
