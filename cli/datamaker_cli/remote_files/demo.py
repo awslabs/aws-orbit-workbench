@@ -20,9 +20,8 @@ from typing import Any, Dict, List
 
 import botocore.exceptions
 
-from datamaker_cli import plugins
+from datamaker_cli import cdk, plugins
 from datamaker_cli.manifest import Manifest
-from datamaker_cli.remote_files.cdk import demo
 from datamaker_cli.services import cfn
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -112,13 +111,11 @@ def _cleanup_remaining_dependencies(manifest: Manifest) -> None:
 def deploy(manifest: Manifest) -> None:
     _logger.debug("Deploying %s DEMO...", manifest.demo_stack_name)
     if manifest.demo:
-        template_filename: str = demo.synth(manifest=manifest)
-        _logger.debug("template_filename: %s", template_filename)
-        cfn.deploy_template(
+        cdk.deploy(
             manifest=manifest,
             stack_name=manifest.demo_stack_name,
-            filename=template_filename,
-            env_tag=manifest.name,
+            app_filename="demo.py",
+            args=[manifest.filename],
         )
         manifest.fetch_demo_data()
         for plugin in plugins.PLUGINS_REGISTRY.values():
@@ -141,4 +138,9 @@ def destroy(manifest: Manifest) -> None:
             _logger.debug("Waiting EKSCTL stack clean up...")
             time.sleep(60)  # Given extra 60 seconds if the EKS stack was just delete
         _cleanup_remaining_dependencies(manifest=manifest)
-        cfn.destroy_stack(manifest=manifest, stack_name=manifest.demo_stack_name)
+        cdk.destroy(
+            manifest=manifest,
+            stack_name=manifest.demo_stack_name,
+            app_filename="demo.py",
+            args=[manifest.filename],
+        )

@@ -92,7 +92,7 @@ def deploy_toolkit(
 def deploy_image(filename: str, dir: str, name: str, script: Optional[str], debug: bool) -> None:
     with MessagesContext("Deploying Docker Image", debug=debug) as ctx:
         manifest = Manifest(filename=filename)
-        manifest.fetch_ssm()
+        manifest.fillup()
         ctx.info(f"Manifest loaded: {filename}")
         if cfn.does_stack_exist(manifest=manifest, stack_name=f"datamaker-{manifest.name}") is False:
             ctx.error("Please, deploy your environment before deploy any addicional docker image")
@@ -130,14 +130,14 @@ def deploy(
         ctx.progress(2)
 
         manifest = Manifest(filename=filename)
-        manifest.fetch_ssm()
+        manifest.fillup()
         ctx.info(f"Manifest loaded: {filename}")
         ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
         ctx.progress(3)
 
         plugins.load_plugins(manifest=manifest)
         ctx.info(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
-        ctx.progress(3)
+        ctx.progress(4)
 
         deploy_toolkit(
             manifest=manifest,
