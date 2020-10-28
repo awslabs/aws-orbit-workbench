@@ -15,6 +15,7 @@
 import logging
 import os
 import uuid
+from time import sleep
 from typing import Optional, Tuple, cast
 
 import click
@@ -79,6 +80,7 @@ def deploy_toolkit(
     cfn.deploy_template(
         manifest=manifest, stack_name=manifest.toolkit_stack_name, filename=template_filename, env_tag=manifest.env_tag
     )
+    sleep(5)  # Avoiding eventual consistency issues
     manifest.fetch_toolkit_data()
 
     if credential_exist is False:

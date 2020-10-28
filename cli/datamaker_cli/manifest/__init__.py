@@ -72,6 +72,7 @@ class Manifest:
         self.ssm_parameter_name: str = f"/datamaker/{self.name}/manifest"
         self.ssm_dockerhub_parameter_name: str = f"/datamaker/{self.name}/dockerhub"
         self.toolkit_stack_name: str = f"datamaker-{self.name}-toolkit"
+        self.cdk_toolkit_stack_name: str = f"datamaker-{self.name}-cdk-toolkit"
         self.demo_stack_name: str = f"datamaker-{self.name}-demo"
         self.env_stack_name: str = f"datamaker-{self.name}"
         self.eks_stack_name: str = f"eksctl-{self.env_stack_name}-cluster"
@@ -89,7 +90,6 @@ class Manifest:
         self.toolkit_kms_alias: Optional[str] = None  # toolkit
         self.toolkit_s3_bucket: Optional[str] = None  # toolkit
         self.cdk_toolkit_s3_bucket: Optional[str] = None  # toolkit
-        self.cdk_toolkit_stack_name: Optional[str] = None  # toolkit
 
         self.raw_ssm: Optional[MANIFEST_TYPE] = None  # Env
         self.eks_cluster_role_arn: Optional[str] = None  # Env
@@ -208,7 +208,6 @@ class Manifest:
             self.toolkit_kms_alias = cast(Optional[str], raw.get("toolkit-kms-alias"))
             self.toolkit_kms_arn = cast(Optional[str], raw.get("toolkit-kms-arn"))
             self.cdk_toolkit_s3_bucket = cast(Optional[str], raw.get("cdk-toolkit-s3-bucket"))
-            self.cdk_toolkit_stack_name = cast(Optional[str], raw.get("cdk-toolkit-stack-name"))
             self.eks_cluster_role_arn = cast(Optional[str], raw.get("eks-cluster-role-arn"))
             self.eks_env_nodegroup_role_arn = cast(Optional[str], raw.get("eks-env-nodegroup-role-arn"))
             self.user_pool_client_id = cast(Optional[str], raw.get("user-pool-client-id"))
@@ -264,7 +263,6 @@ class Manifest:
         self.toolkit_kms_alias = f"datamaker-{self.name}-{self.deploy_id}"
         self.toolkit_s3_bucket = f"datamaker-{self.name}-toolkit-{self.account_id}-{self.deploy_id}"
         self.cdk_toolkit_s3_bucket = f"datamaker-{self.name}-cdk-toolkit-{self.account_id}-{self.deploy_id}"
-        self.cdk_toolkit_stack_name = f"datamaker-{self.name}-cdk-toolkit"
         for team in self.teams:
             team.scratch_bucket = f"datamaker-{self.name}-{team.name}-scratch-{self.account_id}-{self.deploy_id}"
         self.write_manifest_ssm()
