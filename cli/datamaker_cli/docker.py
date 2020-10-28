@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import TYPE_CHECKING
 
 from datamaker_cli import dockerhub, exceptions, sh
@@ -71,3 +72,12 @@ def deploy(
     build(manifest=manifest, dir=dir, name=name, tag=tag, use_cache=use_cache)
     _logger.debug("Docker Image built")
     push(manifest=manifest, name=name, tag=tag)
+
+    version_file_path = os.path.join(dir, "VERSION")
+    _logger.debug(f"Reading VERSION file: {version_file_path}")
+    with open(version_file_path) as version_file:
+        version = version_file.readline().strip()
+        _logger.debug(f"Read Version: {version}")
+
+    _logger.debug("Tagging Docker Image")
+    push(manifest=manifest, name=name, tag=version)
