@@ -12,14 +12,18 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import logging
 import os
 import shutil
+import sys
 from typing import Any, Tuple
 
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk.core import App, CfnOutput, Construct, Stack, Tags
 
 from datamaker_cli.manifest import Manifest
+
+_logger: logging.Logger = logging.getLogger(__name__)
 
 
 class VpcStack(Stack):
@@ -147,13 +151,24 @@ class VpcStack(Stack):
         )
 
 
-def synth(manifest: Manifest) -> str:
+def main() -> None:
+    _logger.debug("sys.argv: %s", sys.argv)
+    if len(sys.argv) == 2:
+        filename: str = sys.argv[1]
+    else:
+        raise ValueError("Unexpected number of values in sys.argv.")
+
+    manifest: Manifest = Manifest(filename=filename)
+    manifest.fillup()
+
     outdir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "cdk", manifest.demo_stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
-    output_filename = os.path.join(outdir, f"{manifest.demo_stack_name}.template.json")
 
     app = App(outdir=outdir)
     VpcStack(scope=app, id=manifest.demo_stack_name, env_name=manifest.name)
     app.synth(force=True)
-    return output_filename
+
+
+if __name__ == "__main__":
+    main()

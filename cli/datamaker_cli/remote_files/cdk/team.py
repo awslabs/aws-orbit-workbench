@@ -12,8 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import logging
 import os
 import shutil
+import sys
 from typing import List, cast
 
 import aws_cdk.aws_cognito as cognito
@@ -28,6 +30,8 @@ from aws_cdk.core import App, Construct, Duration, Environment, RemovalPolicy, S
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.subnet import SubnetKind
 from datamaker_cli.manifest.team import TeamManifest
+
+_logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Team(Stack):
@@ -356,13 +360,32 @@ class Team(Stack):
         return parameter
 
 
-def synth(manifest: Manifest, team_manifest: TeamManifest) -> str:
+def main() -> None:
+    _logger.debug("sys.argv: %s", sys.argv)
+    if len(sys.argv) == 3:
+        filename: str = sys.argv[1]
+        team_name: str = sys.argv[2]
+    else:
+        raise ValueError("Unexpected number of values in sys.argv.")
+
+    manifest: Manifest = Manifest(filename=filename)
+    manifest.fillup()
+
+    for team in manifest.teams:
+        if team.name == team_name:
+            team_manifest: TeamManifest = team
+            break
+    else:
+        raise ValueError(f"Team {team_name} not found in the manifest.")
+
     outdir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "cdk", team_manifest.stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
-    output_filename = os.path.join(outdir, f"{team_manifest.stack_name}.template.json")
 
     app = App(outdir=outdir)
     Team(scope=app, id=team_manifest.stack_name, manifest=manifest, team_manifest=team_manifest)
     app.synth(force=True)
-    return output_filename
+
+
+if __name__ == "__main__":
+    main()

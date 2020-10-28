@@ -1,4 +1,5 @@
 import logging
+import shlex
 import subprocess
 from typing import Iterable, Optional
 
@@ -13,7 +14,7 @@ def _clean_up_stdout_line(line: bytes) -> str:
 
 
 def run_iterating(cmd: str, cwd: Optional[str] = None) -> Iterable[str]:
-    p = subprocess.Popen(cmd.split(), cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    p = subprocess.Popen(shlex.split(cmd), cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     if p.stdout is None:
         return []
     while p.poll() is None:

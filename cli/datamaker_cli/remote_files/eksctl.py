@@ -106,7 +106,7 @@ def deploy(manifest: Manifest) -> None:
         _logger.debug("Synthetizing the EKSCTL manifest")
         output_filename = generate_manifest(manifest=manifest, name=stack_name)
         _logger.debug("Deploying EKSCTL resources")
-        sh.run(f"eksctl create cluster -f {output_filename} --write-kubeconfig")
+        sh.run(f"eksctl create cluster -f {output_filename} --write-kubeconfig --verbose 4")
     else:
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
     _logger.debug("EKSCTL deployed")
@@ -119,5 +119,5 @@ def destroy(manifest: Manifest) -> None:
     if cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name):
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
         output_filename = generate_manifest(manifest=manifest, name=stack_name)
-        sh.run(f"eksctl delete cluster -f {output_filename}")
+        sh.run(f"eksctl delete cluster -f {output_filename} --wait --verbose 4")
         _logger.debug("EKSCTL destroyed")

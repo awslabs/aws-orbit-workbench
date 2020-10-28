@@ -40,6 +40,7 @@ def destroy_toolkit(manifest: Manifest) -> None:
 def destroy_image(filename: str, name: str, debug: bool) -> None:
     with MessagesContext("Destroying Docker Image", debug=debug) as ctx:
         manifest = Manifest(filename=filename)
+        manifest.fillup()
         ctx.info(f"Manifest loaded: {filename}")
         if cfn.does_stack_exist(manifest=manifest, stack_name=f"datamaker-{manifest.name}") is False:
             ctx.error("Please, deploy your environment before deploy/destroy any docker image")
@@ -66,7 +67,7 @@ def destroy_image(filename: str, name: str, debug: bool) -> None:
 def destroy(filename: str, debug: bool) -> None:
     with MessagesContext("Destroying", debug=debug) as ctx:
         manifest = Manifest(filename=filename)
-        manifest.fetch_ssm()
+        manifest.fillup()
         ctx.info(f"Manifest loaded: {filename}")
         ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
         ctx.progress(2)
