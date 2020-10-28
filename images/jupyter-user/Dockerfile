@@ -1,7 +1,5 @@
 FROM jupyterhub/k8s-singleuser-sample:0.9.1
 
-ADD VERSION .
-
 # System Packages
 USER root
 RUN apt-get update -y
@@ -33,3 +31,4 @@ RUN jupyter lab build
 
 # EFS
 ADD link-user-efs-directory.sh /etc/jupyterhub/link-user-efs-directory.sh
+

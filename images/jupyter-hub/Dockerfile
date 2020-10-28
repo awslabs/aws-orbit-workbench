@@ -1,7 +1,5 @@
 FROM jupyterhub/jupyterhub:1.2
 
-ADD VERSION .
-
 # System packages
 RUN apt-get update -y
 
