@@ -74,34 +74,33 @@ def deploy_image_remotely(manifest: Manifest, name: str, bundle_path: str, build
 
 
 def deploy_images_remotely(manifest: Manifest) -> None:
-    if manifest.dev:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-            futures: List[Future[Any]] = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        futures: List[Future[Any]] = []
 
-            for name, script in (
-                ("jupyter-hub", None),
-                ("jupyter-user", None),
-                ("landing-page", "build.sh"),
-            ):
-                _logger.debug("name: %s | script: %s", name, script)
-                path = os.path.join(manifest.filename_dir, name)
-                _logger.debug("path: %s", path)
-                bundle_path = bundle.generate_bundle(
-                    command_name=f"deploy_image-{name}",
-                    manifest=manifest,
-                    dirs=[(path, name)],
-                )
-                _logger.debug("bundle_path: %s", bundle_path)
-                script_str = "" if script is None else script
-                buildspec = codebuild.generate_spec(
-                    manifest=manifest,
-                    plugins=False,
-                    cmds_build=[f"datamaker remote --command deploy_image cdk=false {name} {script_str}"],
-                )
-                futures.append(executor.submit(deploy_image_remotely, manifest, name, bundle_path, buildspec))
+        for name, script in (
+            ("jupyter-hub", None),
+            ("jupyter-user", None),
+            ("landing-page", "build.sh"),
+        ):
+            _logger.debug("name: %s | script: %s", name, script)
+            path = os.path.join(manifest.filename_dir, name)
+            _logger.debug("path: %s", path)
+            bundle_path = bundle.generate_bundle(
+                command_name=f"deploy_image-{name}",
+                manifest=manifest,
+                dirs=[(path, name)],
+            )
+            _logger.debug("bundle_path: %s", bundle_path)
+            script_str = "" if script is None else script
+            buildspec = codebuild.generate_spec(
+                manifest=manifest,
+                plugins=False,
+                cmds_build=[f"datamaker remote --command deploy_image cdk=false {name} {script_str}"],
+            )
+            futures.append(executor.submit(deploy_image_remotely, manifest, name, bundle_path, buildspec))
 
-            for f in futures:
-                f.result()
+        for f in futures:
+            f.result()
 
 
 def deploy(filename: str, args: Tuple[str, ...]) -> None:
