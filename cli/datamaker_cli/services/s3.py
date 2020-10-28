@@ -79,3 +79,9 @@ def delete_bucket(manifest: "Manifest", bucket: str) -> None:
 def upload_file(manifest: "Manifest", src: str, bucket: str, key: str) -> None:
     client_s3 = manifest.boto3_client("s3")
     client_s3.upload_file(Filename=src, Bucket=bucket, Key=key)
+
+
+def list_s3_objects(manifest: "Manifest", bucket: str, key: str) -> Dict[str, str]:
+    client_s3 = manifest.boto3_client("s3")
+    response = client_s3.list_objects_v2(Bucket=bucket, Prefix=key)
+    return response

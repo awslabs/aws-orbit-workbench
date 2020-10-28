@@ -1,0 +1,69 @@
+{
+   "fields":[
+      {
+         "metadata":{
+
+         },
+         "name":"DESYNPUF_ID",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PDE_ID",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"SRVC_DT",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PROD_SRVC_ID",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"QTY_DSPNSD_NUM",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"DAYS_SUPLY_NUM",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PTNT_PAY_AMT",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"TOT_RX_CST_AMT",
+         "nullable":true,
+         "type":"double"
+      }
+   ],
+   "type":"struct"
+}
