@@ -140,6 +140,7 @@ def deploy_template(manifest: "Manifest", stack_name: str, filename: str, env_ta
 
 
 def destroy_stack(manifest: "Manifest", stack_name: str) -> None:
+    _logger.debug("Deploying stack %s", stack_name)
     client = manifest.boto3_client("cloudformation")
     client.delete_stack(StackName=stack_name)
     waiter = client.get_waiter("stack_delete_complete")

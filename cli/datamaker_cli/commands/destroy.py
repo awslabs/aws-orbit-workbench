@@ -26,9 +26,10 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 def destroy_toolkit(manifest: Manifest) -> None:
     if manifest.toolkit_s3_bucket is None:
-        manifest.fetch_toolkit_data()
+        manifest.fillup()
         if manifest.toolkit_s3_bucket is None:
-            raise ValueError(f"manifest.toolkit_s3_bucket: {manifest.toolkit_s3_bucket}")
+            _logger.debug("Skipping Toolkit destroy. Because manifest.toolkit_s3_bucket is None")
+            return
     if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.toolkit_stack_name):
         try:
             s3.delete_bucket(manifest=manifest, bucket=manifest.toolkit_s3_bucket)
@@ -76,9 +77,11 @@ def destroy(filename: str, debug: bool) -> None:
         ctx.info(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
         ctx.progress(3)
 
-        if cfn.does_stack_exist(
-            manifest=manifest, stack_name=f"datamaker-{manifest.name}-demo"
-        ) or cfn.does_stack_exist(manifest=manifest, stack_name=f"datamaker-{manifest.name}"):
+        if (
+            cfn.does_stack_exist(manifest=manifest, stack_name=manifest.demo_stack_name)
+            or cfn.does_stack_exist(manifest=manifest, stack_name=manifest.env_stack_name)
+            or cfn.does_stack_exist(manifest=manifest, stack_name=manifest.cdk_toolkit_stack_name)
+        ):
             bundle_path = bundle.generate_bundle(command_name="destroy", manifest=manifest)
             ctx.progress(5)
             buildspec = codebuild.generate_spec(
