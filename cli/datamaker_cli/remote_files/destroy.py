@@ -41,8 +41,9 @@ def destroy_image(filename: str, args: Tuple[str, ...]) -> None:
 def destroy(filename: str, args: Tuple[str, ...]) -> None:
     manifest: Manifest = Manifest(filename=filename)
     manifest.fillup()
-    plugins.load_plugins(manifest=manifest)
-    _logger.debug(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
+    _logger.debug("Manifest loaded")
+    plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest)
+    _logger.debug("Plugins loaded")
     kubectl.destroy(manifest=manifest)
     _logger.debug("Kubernetes components destroyed")
     eksctl.destroy(manifest=manifest)

@@ -18,7 +18,7 @@ import os
 from concurrent.futures import Future
 from typing import Any, List, Optional, Tuple
 
-from datamaker_cli import bundle, docker, plugins, remote, sh
+from datamaker_cli import bundle, changeset, docker, plugins, remote, sh
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.remote_files import cdk_toolkit, demo, eksctl, env, kubectl, teams
 from datamaker_cli.services import codebuild
@@ -114,8 +114,14 @@ def deploy(filename: str, args: Tuple[str, ...]) -> None:
 
     manifest: Manifest = Manifest(filename=filename)
     manifest.fillup()
-    plugins.load_plugins(manifest=manifest)
-    _logger.debug(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
+    _logger.debug("Manifest loaded")
+    plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest)
+    _logger.debug("Plugins loaded")
+    changes: changeset.Changeset = changeset.read_changeset_file(
+        filename=os.path.join(manifest.filename_dir, "changeset.json")
+    )
+    _logger.debug(f"Changeset: {changes.asdict()}")
+    _logger.debug("Changeset loaded")
     cdk_toolkit.deploy(manifest=manifest)
     _logger.debug("CDK Toolkit Stack deployed")
     demo.deploy(manifest=manifest)
@@ -138,3 +144,5 @@ def deploy(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug("EKS Stack deployed")
     kubectl.deploy(manifest=manifest)
     _logger.debug("Kubernetes components deployed")
+    changes.process_images_changes(manifest=manifest)
+    _logger.debug("Images changeset processed")

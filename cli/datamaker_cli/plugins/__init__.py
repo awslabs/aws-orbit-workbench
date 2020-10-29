@@ -14,14 +14,14 @@
 
 import importlib
 import logging
-from typing import Callable, Dict, Optional
+from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Union
 
+from datamaker_cli import utils
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.team import TeamManifest
 
-PLUGINS_REGISTRY: Dict[str, "PluginRegistry"] = {}
-
-from datamaker_cli.plugins import hooks  # noqa: F401,E402
+if TYPE_CHECKING:
+    from datamaker_cli.messages import MessagesContext
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -30,23 +30,26 @@ class PluginRegistry:
     def __init__(
         self,
         name: str,
+        team_name: str,
         deploy_demo_hook: Optional[Callable[[Manifest], None]] = None,
         destroy_demo_hook: Optional[Callable[[Manifest], None]] = None,
         deploy_env_hook: Optional[Callable[[Manifest], None]] = None,
         destroy_env_hook: Optional[Callable[[Manifest], None]] = None,
         deploy_team_hook: Optional[Callable[[Manifest, TeamManifest], None]] = None,
         destroy_team_hook: Optional[Callable[[Manifest, TeamManifest], None]] = None,
-    ):
+        dockerfile_injection_hook: Optional[Callable[[Manifest, TeamManifest], List[str]]] = None,
+    ) -> None:
         self.name = name
+        self.team_name = team_name
         self._deploy_demo_hook: Optional[Callable[[Manifest], None]] = deploy_demo_hook
         self._destroy_demo_hook: Optional[Callable[[Manifest], None]] = destroy_demo_hook
         self._deploy_env_hook: Optional[Callable[[Manifest], None]] = deploy_env_hook
         self._destroy_env_hook: Optional[Callable[[Manifest], None]] = destroy_env_hook
         self._deploy_team_hook: Optional[Callable[[Manifest, TeamManifest], None]] = deploy_team_hook
         self._destroy_team_hook: Optional[Callable[[Manifest, TeamManifest], None]] = destroy_team_hook
-
-        # Loading
-        PLUGINS_REGISTRY[self.name] = self
+        self._dockerfile_injection_hook: Optional[
+            Callable[[Manifest, TeamManifest], List[str]]
+        ] = dockerfile_injection_hook
 
     """
     DEMO
@@ -132,9 +135,78 @@ class PluginRegistry:
     def destroy_team_hook(self) -> None:
         self._destroy_team_hook = None
 
+    """
+    IMAGE
+    """
 
-def load_plugins(manifest: Manifest) -> None:
-    for plugin in manifest.plugins:
-        _logger.debug(f"Plugin load: {plugin.name}")
-        PluginRegistry(name=plugin.name)
-        importlib.import_module(plugin.name)
+    @property
+    def dockerfile_injection_hook(self) -> Optional[Callable[[Manifest, TeamManifest], List[str]]]:
+        return self._dockerfile_injection_hook
+
+    @dockerfile_injection_hook.setter
+    def dockerfile_injection_hook(self, func: Optional[Callable[[Manifest, TeamManifest], List[str]]]) -> None:
+        self._dockerfile_injection_hook = func
+
+    @dockerfile_injection_hook.deleter
+    def dockerfile_injection_hook(self) -> None:
+        self._dockerfile_injection_hook = None
+
+
+class PluginRegistries:
+    def __init__(self) -> None:
+        self._manifest: Optional[Manifest] = None
+        self._registries: Dict[str, Dict[str, "PluginRegistry"]] = {}
+
+    def load_plugins(self, manifest: Manifest, ctx: Optional["MessagesContext"] = None) -> None:
+        self._manifest = manifest
+        for team_manifest in manifest.teams:
+            for plugin in team_manifest.plugins:
+                _logger.debug(f"{team_manifest.name} Plugin load: {plugin.name}")
+                if ctx is not None:
+                    ctx.info(f"Loading plugin {plugin.name} for the {team_manifest.name} team")
+                if team_manifest.name not in self._registries:
+                    self._registries[team_manifest.name] = {}
+                self._registries[team_manifest.name][plugin.name] = PluginRegistry(
+                    name=plugin.name, team_name=team_manifest.name
+                )
+                importlib.import_module(plugin.name)
+
+    def _hook_call(self, manifest: Manifest, hook_name: str) -> None:
+        self._manifest = manifest
+        for team_manifest in manifest.teams:
+            for plugin in team_manifest.plugins:
+                hook = self._registries[team_manifest.name][plugin.name].__getattribute__(hook_name)
+                if hook is not None:
+                    _logger.debug(f"Running {hook_name} for {team_manifest.name} -> {plugin.name}")
+                    hook(manifest, team_manifest)
+
+    def deploy_demo(self, manifest: Manifest) -> None:
+        self._hook_call(manifest=manifest, hook_name="deploy_demo_hook")
+
+    def deploy_env(self, manifest: Manifest) -> None:
+        self._hook_call(manifest=manifest, hook_name="deploy_env_hook")
+
+    def deploy_teams(self, manifest: Manifest) -> None:
+        self._hook_call(manifest=manifest, hook_name="deploy_team_hook")
+
+    def destroy_demo(self, manifest: Manifest) -> None:
+        self._hook_call(manifest=manifest, hook_name="destroy_demo_hook")
+
+    def destroy_env(self, manifest: Manifest) -> None:
+        self._hook_call(manifest=manifest, hook_name="destroy_env_hook")
+
+    def destroy_teams(self, manifest: Manifest) -> None:
+        self._hook_call(manifest=manifest, hook_name="destroy_team_hook")
+
+    def add_hook(self, hook_name: str, func: Callable[[Manifest, TeamManifest], Union[None, List[str]]]) -> None:
+        if self._manifest is None:
+            raise RuntimeError("Empty PLUGINS_REGISTRIES. Please, run load_plugins() before try to add hooks.")
+        plugin_name: str = utils.extract_plugin_name(func=func)
+        for team_manifest in self._manifest.teams:
+            if team_manifest.get_plugin_by_name(name=plugin_name) is not None:
+                self._registries[team_manifest.name][plugin_name].__setattr__(hook_name, func)
+
+
+PLUGINS_REGISTRIES: PluginRegistries = PluginRegistries()
+
+from datamaker_cli.plugins import hooks  # noqa: F401,E402

@@ -23,7 +23,7 @@ import botocore.exceptions
 import yaml
 
 from datamaker_cli import utils
-from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE, MANIFEST_PLUGIN_TYPE, PluginManifest
+from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE, PluginManifest
 from datamaker_cli.manifest.subnet import MANIFEST_FILE_SUBNET_TYPE, SubnetKind, SubnetManifest
 from datamaker_cli.manifest.team import MANIFEST_FILE_TEAM_TYPE, MANIFEST_TEAM_TYPE, TeamManifest
 from datamaker_cli.manifest.vpc import MANIFEST_FILE_VPC_TYPE, MANIFEST_VPC_TYPE, VpcManifest
@@ -39,7 +39,6 @@ MANIFEST_FILE_TYPE = Dict[
         bool,
         MANIFEST_FILE_VPC_TYPE,
         List[MANIFEST_FILE_TEAM_TYPE],
-        List[MANIFEST_FILE_PLUGIN_TYPE],
         MANIFEST_FILE_IMAGES_TYPE,
     ],
 ]
@@ -51,7 +50,6 @@ MANIFEST_TYPE = Dict[
         bool,
         MANIFEST_VPC_TYPE,
         List[MANIFEST_TEAM_TYPE],
-        List[MANIFEST_PLUGIN_TYPE],
     ],
 ]
 
@@ -104,7 +102,6 @@ class Manifest:
         self.toolkit_codebuild_project: str = f"datamaker-{self.name}"
         self.account_id: str = utils.get_account_id(manifest=self)
         self.available_eks_regions: List[str] = self._boto3_session().get_available_regions("eks")
-        self.plugins: List[PluginManifest] = self._parse_plugins()
         self.teams: List[TeamManifest] = self._parse_teams()
         self.vpc: VpcManifest = self._parse_vpc()
 
@@ -136,10 +133,11 @@ class Manifest:
     def _botocore_config() -> botocore.config.Config:
         return botocore.config.Config(retries={"max_attempts": 5}, connect_timeout=10, max_pool_connections=10)
 
-    def _parse_plugins(self) -> List[PluginManifest]:
+    @staticmethod
+    def _parse_plugins(team: MANIFEST_FILE_TEAM_TYPE) -> List[PluginManifest]:
         return [
             PluginManifest(name=p["name"], path=p["path"])
-            for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], self.raw_file["plugins"])
+            for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team["plugins"])
         ]
 
     def _parse_teams(self) -> List[TeamManifest]:
@@ -153,7 +151,8 @@ class Manifest:
                 nodes_num_max=cast(int, t["nodes-num-max"]),
                 nodes_num_min=cast(int, t["nodes-num-min"]),
                 policy=cast(str, t["policy"]),
-                image=cast(Optional[Dict[str, str]], t.get("image")),
+                image=cast(Optional[str], t.get("image")),
+                plugins=self._parse_plugins(team=t),
             )
             for t in cast(List[MANIFEST_FILE_TEAM_TYPE], self.raw_file["teams"])
         ]
@@ -359,7 +358,6 @@ class Manifest:
         if self.codeartifact_repository is not None:
             obj["codeartifact-repository"] = self.codeartifact_repository
         obj["images"] = self.images
-        obj["plugins"] = [p.asdict_file() for p in self.plugins]
         obj["vpc"] = self.vpc.asdict_file()
         obj["teams"] = [t.asdict_file() for t in self.teams]
         return obj
@@ -368,7 +366,6 @@ class Manifest:
         obj: MANIFEST_TYPE = utils.replace_underscores(vars(self))
         obj["vpc"] = self.vpc.asdict()
         obj["teams"] = [t.asdict() for t in self.teams]
-        obj["plugins"] = [p.asdict() for p in self.plugins]
         del obj["filename"]
         del obj["filename-dir"]
         del obj["raw-ssm"]
@@ -377,3 +374,9 @@ class Manifest:
 
     def asjson(self) -> str:
         return str(json.dumps(obj=self.asdict(), indent=4, sort_keys=True))
+
+    def get_team_by_name(self, name: str) -> Optional[TeamManifest]:
+        for t in self.teams:
+            if t.name == name:
+                return t
+        return None

@@ -19,6 +19,7 @@ import shutil
 from typing import List, Optional, Tuple
 
 from datamaker_cli import DATAMAKER_CLI_ROOT
+from datamaker_cli.changeset import Changeset
 from datamaker_cli.manifest import Manifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -84,7 +85,12 @@ def _generate_dir(bundle_dir: str, dir: str, name: str) -> str:
     return image_dir
 
 
-def generate_bundle(command_name: str, manifest: Manifest, dirs: Optional[List[Tuple[str, str]]] = None) -> str:
+def generate_bundle(
+    command_name: str,
+    manifest: Manifest,
+    dirs: Optional[List[Tuple[str, str]]] = None,
+    changeset: Optional[Changeset] = None,
+) -> str:
     remote_dir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "remote", command_name)
     bundle_dir = os.path.join(remote_dir, "bundle")
     try:
@@ -97,14 +103,21 @@ def generate_bundle(command_name: str, manifest: Manifest, dirs: Optional[List[T
     os.makedirs(bundle_dir, exist_ok=True)
     shutil.copy(src=manifest.filename, dst=bundled_manifest_path)
 
+    # changeset
+    if changeset is not None:
+        bundled_changeset_path = os.path.join(bundle_dir, "changeset.json")
+        changeset.write_changeset_file(filename=bundled_changeset_path)
+
     # DataMaker CLI Source
     if manifest.dev:
         _generate_self_dir(bundle_dir=bundle_dir)
 
     # Plugins
-    for plugin in manifest.plugins:
-        if plugin.path:
-            _generate_dir(bundle_dir=bundle_dir, dir=plugin.path, name=plugin.name)
+    for team_manifest in manifest.teams:
+        for plugin in team_manifest.plugins:
+            if plugin.path:
+                plugin_bundle_dir = os.path.join(bundle_dir, team_manifest.name)
+                _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin.path, name=plugin.name)
 
     # Extra Directories
     if dirs is not None:

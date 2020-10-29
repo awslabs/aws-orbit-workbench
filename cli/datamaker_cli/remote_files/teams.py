@@ -30,17 +30,13 @@ def deploy(manifest: Manifest) -> None:
             args=[manifest.filename, team_manifest.name],
         )
 
-        team_manifest.fetch_ssm()
-        for plugin in plugins.PLUGINS_REGISTRY.values():
-            if plugin.deploy_team_hook is not None:
-                plugin.deploy_team_hook(manifest, team_manifest)
+    manifest.fetch_ssm()
+    plugins.PLUGINS_REGISTRIES.deploy_teams(manifest=manifest)
 
 
 def destroy(manifest: Manifest) -> None:
+    plugins.PLUGINS_REGISTRIES.destroy_teams(manifest=manifest)
     for team_manifest in manifest.teams:
-        for plugin in plugins.PLUGINS_REGISTRY.values():
-            if plugin.destroy_team_hook is not None:
-                plugin.destroy_team_hook(manifest, team_manifest)
         _logger.debug("Stack name: %s", team_manifest.stack_name)
         if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.toolkit_stack_name):
             if team_manifest.scratch_bucket is not None:
