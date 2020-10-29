@@ -70,39 +70,40 @@ class Manifest:
             Optional[str], self.raw_file.get("codeartifact-repository", None)
         )
 
-        self.images: MANIFEST_FILE_IMAGES_TYPE = cast(MANIFEST_FILE_IMAGES_TYPE, {})
-        raw_images: MANIFEST_FILE_IMAGES_TYPE = cast(MANIFEST_FILE_IMAGES_TYPE, self.raw_file.get("images", {}))
+        self.images: MANIFEST_FILE_IMAGES_TYPE = cast(MANIFEST_FILE_IMAGES_TYPE, self.raw_file.get("images", None))
+        # self.images: MANIFEST_FILE_IMAGES_TYPE = cast(MANIFEST_FILE_IMAGES_TYPE, None)
+        # raw_images: MANIFEST_FILE_IMAGES_TYPE = cast(MANIFEST_FILE_IMAGES_TYPE, self.raw_file.get("images", {}))
 
-        self.images[f"datamaker-{self.name}-jupyter-hub"] = cast(
-            Dict[str, str],
-            raw_images.get(
-                "jupyter-hub",
-                {
-                    "repository": "aws-datamaker-jupyter-hub",
-                    "source": "dockerhub",
-                },
-            ),
-        )
-        self.images[f"datamaker-{self.name}-jupyter-user"] = cast(
-            Dict[str, str],
-            raw_images.get(
-                "jupyter-user",
-                {
-                    "repository": "aws-datamaker-jupyter-user",
-                    "source": "dockerhub",
-                },
-            ),
-        )
-        self.images[f"datamaker-{self.name}-landing-page"] = cast(
-            Dict[str, str],
-            raw_images.get(
-                "landing-page",
-                {
-                    "repository": "aws-datamaker-landing-page",
-                    "source": "dockerhub",
-                },
-            ),
-        )
+        # self.images[f"datamaker-{self.name}-jupyter-hub"] = cast(
+        #     Dict[str, str],
+        #     raw_images.get(
+        #         "jupyter-hub",
+        #         {
+        #             "repository": "aws-datamaker-jupyter-hub",
+        #             "source": "dockerhub",
+        #         },
+        #     ),
+        # )
+        # self.images[f"datamaker-{self.name}-jupyter-user"] = cast(
+        #     Dict[str, str],
+        #     raw_images.get(
+        #         "jupyter-user",
+        #         {
+        #             "repository": "aws-datamaker-jupyter-user",
+        #             "source": "dockerhub",
+        #         },
+        #     ),
+        # )
+        # self.images[f"datamaker-{self.name}-landing-page"] = cast(
+        #     Dict[str, str],
+        #     raw_images.get(
+        #         "landing-page",
+        #         {
+        #             "repository": "aws-datamaker-landing-page",
+        #             "source": "dockerhub",
+        #         },
+        #     ),
+        # )
 
         self.env_tag: str = f"datamaker-{self.name}"
         self.ssm_parameter_name: str = f"/datamaker/{self.name}/manifest"
