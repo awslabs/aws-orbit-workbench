@@ -368,6 +368,7 @@ class Manifest:
             obj["codeartifact-domain"] = self.codeartifact_domain
         if self.codeartifact_repository is not None:
             obj["codeartifact-repository"] = self.codeartifact_repository
+        obj["images"] = self.images
         obj["plugins"] = [p.asdict_file() for p in self.plugins]
         obj["vpc"] = self.vpc.asdict_file()
         obj["teams"] = [t.asdict_file() for t in self.teams]
