@@ -68,7 +68,7 @@ class Manifest:
         self.codeartifact_repository: Optional[str] = cast(
             Optional[str], self.raw_file.get("codeartifact-repository", None)
         )
-        self.images_source: str = cast(str, self.raw_file.get("image-source", "dockerhub"))
+        self.images_source: str = cast(str, self.raw_file.get("image-source", "ecr"))
         self.images: Dict[str, str] = cast(Dict[str, str], {})
         raw_images: Dict[str, str] = cast(Dict[str, str], self.raw_file.get("images", {}))
         self.images[f"datamaker-{self.name}-jupyter-hub"] = cast(
