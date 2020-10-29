@@ -32,9 +32,9 @@ def ecr_pull(manifest: "Manifest", name: str, tag: str = "latest") -> None:
     sh.run(f"docker pull {ecr_address}/{name}:{tag}")
 
 
-def tag_image(manifest: "Manifest", remote_name: str, name: str, tag: str = "latest") -> None:
+def tag_image(manifest: "Manifest", remote_name: str, remote_source: str, name: str, tag: str = "latest") -> None:
     ecr_address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com"
-    if manifest.images_source == "ecr":
+    if remote_source == "ecr":
         remote_name = f"{ecr_address}/{remote_name}"
     sh.run(f"docker tag {remote_name}:{tag} {ecr_address}/{name}:{tag}")
 
@@ -74,12 +74,14 @@ def deploy(
     login(manifest=manifest)
     _logger.debug("Logged in")
 
-    if manifest.images_source == "dockerhub":
-        dockerhub_pull(name=manifest.images[name], tag=tag)
+    image_source = manifest.images[name]["source"]
+    image_name = manifest.images[name]["repository"]
+    if image_source == "dockerhub":
+        dockerhub_pull(name=image_name, tag=tag)
         _logger.debug("Pulled DockerHub Image")
     else:
-        ecr_pull(manifest=manifest, name=manifest.images[name], tag=tag)
+        ecr_pull(manifest=manifest, name=image_name, tag=tag)
         _logger.debug("Pulled ECR Image")
 
-    tag_image(manifest=manifest, remote_name=manifest.images[name], name=name, tag=tag)
+    tag_image(manifest=manifest, remote_name=image_name, remote_source=image_source, name=name, tag=tag)
     push(manifest=manifest, name=name, tag=tag)

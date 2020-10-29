@@ -68,18 +68,41 @@ class Manifest:
         self.codeartifact_repository: Optional[str] = cast(
             Optional[str], self.raw_file.get("codeartifact-repository", None)
         )
-        self.images_source: str = cast(str, self.raw_file.get("images-source", "ecr"))
-        self.images: Dict[str, str] = cast(Dict[str, str], {})
-        raw_images: Dict[str, str] = cast(Dict[str, str], self.raw_file.get("images", {}))
+
+        self.images: Dict[str, Dict[str, str]] = cast(Dict[str, Dict[str, str]], {})
+        raw_images: Dict[str, Dict[str, str]] = cast(Dict[str, Dict[str, str]], self.raw_file.get("images", {}))
+
         self.images[f"datamaker-{self.name}-jupyter-hub"] = cast(
-            str, raw_images.get("jupyter-hub", "aws-datamaker-jupyter-hub")
+            Dict[str, str],
+            raw_images.get(
+                "jupyter-hub",
+                {
+                    "repository": "aws-datamaker-jupyter-hub",
+                    "source": "dockerhub",
+                },
+            ),
         )
         self.images[f"datamaker-{self.name}-jupyter-user"] = cast(
-            str, raw_images.get("jupyter-user", "aws-datamaker-jupyter-user")
+            Dict[str, str],
+            raw_images.get(
+                "jupyter-user",
+                {
+                    "repository": "aws-datamaker-jupyter-user",
+                    "source": "dockerhub",
+                },
+            ),
         )
         self.images[f"datamaker-{self.name}-landing-page"] = cast(
-            str, raw_images.get("landing-page", "aws-datamaker-landing-page")
+            Dict[str, str],
+            raw_images.get(
+                "landing-page",
+                {
+                    "repository": "aws-datamaker-landing-page",
+                    "source": "dockerhub",
+                },
+            ),
         )
+
         self.env_tag: str = f"datamaker-{self.name}"
         self.ssm_parameter_name: str = f"/datamaker/{self.name}/manifest"
         self.ssm_dockerhub_parameter_name: str = f"/datamaker/{self.name}/dockerhub"
