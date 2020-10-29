@@ -1,6 +1,4 @@
 import logging
-import os
-import re
 from typing import TYPE_CHECKING
 
 from datamaker_cli import dockerhub, exceptions, sh
@@ -77,7 +75,7 @@ def deploy(
     login(manifest=manifest)
     _logger.debug("Logged in")
 
-    if manifest.image_source == "dockerhub":
+    if manifest.images_source == "dockerhub":
         dockerhub_pull(name=manifest.images[name], tag=tag)
         _logger.debug("Pulled DockerHub Image")
     else:
@@ -86,4 +84,3 @@ def deploy(
 
     tag_image(manifest=manifest, remote_name=manifest.images[name], name=name, tag=tag)
     push(manifest=manifest, name=name, tag=tag)
-

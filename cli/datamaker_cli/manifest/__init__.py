@@ -15,7 +15,7 @@
 import json
 import logging
 import os
-from typing import Dict, List, Mapping, Optional, Union, cast
+from typing import Dict, List, Optional, Union, cast
 
 import boto3
 import botocore.config
@@ -69,10 +69,11 @@ class Manifest:
             Optional[str], self.raw_file.get("codeartifact-repository", None)
         )
         self.images_source: str = cast(str, self.raw_file.get("image-source", "dockerhub"))
-        self.images: Mapping[str, str] = cast(Manifest[str, str], {})
-        self.images["jupyter-hub"] = cast(str, self.raw_file.get("images", {}).get("jupyter-hub", "aws-datamaker-jupyter-hub"))
-        self.images["jupyter-user"] = cast(str, self.raw_file.get("images", {}).get("jupyter-user", "aws-datamaker-jupyter-user"))
-        self.images["landing-page"] = cast(str, self.raw_file.get("images", {}).get("landing-page", "aws-datamaker-landing-page"))
+        self.images: Dict[str, str] = cast(Dict[str, str], {})
+        raw_images: Dict[str, str] = cast(Dict[str, str], self.raw_file.get("images", {}))
+        self.images["jupyter-hub"] = cast(str, raw_images.get("jupyter-hub", "aws-datamaker-jupyter-hub"))
+        self.images["jupyter-user"] = cast(str, raw_images.get("jupyter-user", "aws-datamaker-jupyter-user"))
+        self.images["landing-page"] = cast(str, raw_images.get("landing-page", "aws-datamaker-landing-page"))
         self.env_tag: str = f"datamaker-{self.name}"
         self.ssm_parameter_name: str = f"/datamaker/{self.name}/manifest"
         self.ssm_dockerhub_parameter_name: str = f"/datamaker/{self.name}/dockerhub"
