@@ -16,11 +16,12 @@ import logging
 import os
 import uuid
 from time import sleep
-from typing import Optional, Tuple, cast
+from typing import List, Optional, Tuple, cast
 
 import click
 
 from datamaker_cli import bundle, dockerhub, plugins, remote, toolkit
+from datamaker_cli.changeset import Changeset, extract_changeset
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.messages import MessagesContext, stylize
 from datamaker_cli.services import cfn, codebuild
@@ -137,9 +138,13 @@ def deploy(
         ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
         ctx.progress(3)
 
+        _logger.debug("Inspecting possible manifest changes...")
+        changeset: Changeset = extract_changeset(manifest=manifest, ctx=ctx)
+        ctx.progress(4)
+
         plugins.load_plugins(manifest=manifest)
         ctx.info(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
-        ctx.progress(4)
+        ctx.progress(5)
 
         deploy_toolkit(
             manifest=manifest,
@@ -150,11 +155,14 @@ def deploy(
         ctx.info("Toolkit deployed")
         ctx.progress(10)
 
-        dirs = [
-            (os.path.join(manifest.filename_dir, "..", "images", name), name)
-            for name in ("landing-page", "jupyter-hub", "jupyter-user")
-        ]
-        bundle_path = bundle.generate_bundle(command_name="deploy", manifest=manifest, dirs=dirs)
+        if skip_images:
+            dirs: List[Tuple[str, str]] = []
+        else:
+            dirs = [
+                (os.path.join(manifest.filename_dir, "..", "images", name), name)
+                for name in ("landing-page", "jupyter-hub", "jupyter-user")
+            ]
+        bundle_path = bundle.generate_bundle(command_name="deploy", manifest=manifest, dirs=dirs, changeset=changeset)
         ctx.progress(15)
         skip_images_remote_flag: str = "skip-images" if skip_images else "no-skip-images"
         buildspec = codebuild.generate_spec(

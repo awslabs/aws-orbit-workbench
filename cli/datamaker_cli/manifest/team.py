@@ -76,6 +76,7 @@ class TeamManifest:
         if self.manifest.raw_ssm is not None:
             for team in cast(List[MANIFEST_TEAM_TYPE], self.manifest.raw_ssm.get("teams", [])):
                 if team.get("name") == self.name:
+                    self.raw_ssm = team
                     self.efs_id = cast(Optional[str], team.get("efs-id"))
                     self.eks_nodegroup_role_arn = cast(Optional[str], team.get("eks-nodegroup-role-arn"))
                     self.jupyter_url = cast(Optional[str], team.get("jupyter-url"))

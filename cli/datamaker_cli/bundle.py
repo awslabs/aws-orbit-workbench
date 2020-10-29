@@ -19,6 +19,7 @@ import shutil
 from typing import List, Optional, Tuple
 
 from datamaker_cli import DATAMAKER_CLI_ROOT
+from datamaker_cli.changeset import Changeset
 from datamaker_cli.manifest import Manifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -84,7 +85,12 @@ def _generate_dir(bundle_dir: str, dir: str, name: str) -> str:
     return image_dir
 
 
-def generate_bundle(command_name: str, manifest: Manifest, dirs: Optional[List[Tuple[str, str]]] = None) -> str:
+def generate_bundle(
+    command_name: str,
+    manifest: Manifest,
+    dirs: Optional[List[Tuple[str, str]]] = None,
+    changeset: Optional[Changeset] = None,
+) -> str:
     remote_dir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "remote", command_name)
     bundle_dir = os.path.join(remote_dir, "bundle")
     try:
@@ -96,6 +102,11 @@ def generate_bundle(command_name: str, manifest: Manifest, dirs: Optional[List[T
     bundled_manifest_path = os.path.join(bundle_dir, "manifest.yaml")
     os.makedirs(bundle_dir, exist_ok=True)
     shutil.copy(src=manifest.filename, dst=bundled_manifest_path)
+
+    # changeset
+    if changeset is not None:
+        bundled_changeset_path = os.path.join(bundle_dir, "changeset.json")
+        changeset.write_changeset_file(filename=bundled_changeset_path)
 
     # DataMaker CLI Source
     if manifest.dev:

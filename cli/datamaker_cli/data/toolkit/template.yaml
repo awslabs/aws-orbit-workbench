@@ -148,6 +148,8 @@ Resources:
             Action:
               - iam:CreatePolicy
               - iam:DeletePolicy
+              - iam:CreatePolicyVersion
+              - iam:DeletePolicyVersion
             Resource:
               - arn:aws:iam::${account_id}:policy/datamaker-${env_name}-*
           - Effect: Allow
