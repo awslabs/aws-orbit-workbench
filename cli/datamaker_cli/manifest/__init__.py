@@ -15,7 +15,7 @@
 import json
 import logging
 import os
-from typing import Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
 import boto3
 import botocore.config
