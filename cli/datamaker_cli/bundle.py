@@ -74,8 +74,6 @@ def _generate_dir(bundle_dir: str, dir: str, name: str) -> str:
 
     _logger.debug("Copying files to %s", image_dir)
     files: List[str] = _list_files(path=absolute_dir)
-    # if len(files) < 1:
-    #     raise RuntimeError(f"No files found at {bundle_dir} ({name})")
     for file in files:
         relpath = os.path.relpath(file, absolute_dir)
         new_file = os.path.join(image_dir, relpath)
