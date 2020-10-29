@@ -71,9 +71,13 @@ class Manifest:
         self.images_source: str = cast(str, self.raw_file.get("image-source", "dockerhub"))
         self.images: Dict[str, str] = cast(Dict[str, str], {})
         raw_images: Dict[str, str] = cast(Dict[str, str], self.raw_file.get("images", {}))
-        self.images["jupyter-hub"] = cast(str, raw_images.get("jupyter-hub", "aws-datamaker-jupyter-hub"))
-        self.images["jupyter-user"] = cast(str, raw_images.get("jupyter-user", "aws-datamaker-jupyter-user"))
-        self.images["landing-page"] = cast(str, raw_images.get("landing-page", "aws-datamaker-landing-page"))
+        self.images[f"{self.name}-jupyter-hub"] = cast(str, raw_images.get("jupyter-hub", "aws-datamaker-jupyter-hub"))
+        self.images[f"{self.name}-jupyter-user"] = cast(
+            str, raw_images.get("jupyter-user", "aws-datamaker-jupyter-user")
+        )
+        self.images[f"{self.name}-landing-page"] = cast(
+            str, raw_images.get("landing-page", "aws-datamaker-landing-page")
+        )
         self.env_tag: str = f"datamaker-{self.name}"
         self.ssm_parameter_name: str = f"/datamaker/{self.name}/manifest"
         self.ssm_dockerhub_parameter_name: str = f"/datamaker/{self.name}/dockerhub"
