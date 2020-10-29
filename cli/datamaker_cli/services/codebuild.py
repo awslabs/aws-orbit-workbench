@@ -219,6 +219,9 @@ def generate_spec(
         f"pip install kubernetes~=11.0.0 {' '.join([f'{m}{CDK_VERSION}' for m in CDK_MODULES])}",
         "npm -g install yarn",
         "npm install -g aws-cdk@1.67.0",
+        'curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp',  # noqa
+        "mv /tmp/eksctl /usr/local/bin",
+        "eksctl version",
     ]
 
     # DataMaker CLI
