@@ -40,6 +40,7 @@ MANIFEST_FILE_TYPE = Dict[
         MANIFEST_FILE_VPC_TYPE,
         List[MANIFEST_FILE_TEAM_TYPE],
         List[MANIFEST_FILE_PLUGIN_TYPE],
+        Dict[str, Dict[str, str]],
     ],
 ]
 MANIFEST_TYPE = Dict[
