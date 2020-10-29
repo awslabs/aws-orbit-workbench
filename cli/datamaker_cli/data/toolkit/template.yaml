@@ -42,7 +42,7 @@ Resources:
               - ecr:GetAuthorizationToken
               - ecr:DescribeRepositories
               - ecr:ListTagsForResource
-              - ecr:BatchGetItem
+              - ecr:BatchGetImage
               - cloudformation:ListStacks
               - elasticfilesystem:CreateFileSystem
               - elasticfilesystem:CreateMountTarget
