@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from typing import TYPE_CHECKING
 
 from datamaker_cli import dockerhub, exceptions, sh
@@ -33,6 +34,13 @@ def ecr_pull(manifest: "Manifest", name: str, tag: str = "latest") -> None:
     sh.run(f"docker pull {ecr_address}/{name}:{tag}")
 
 
+def tag_image(manifest: "Manifest", remote_name: str, name: str, tag: str = "latest") -> None:
+    ecr_address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com"
+    if manifest.images_source == "ecr":
+        remote_name = f"{ecr_address}/{remote_name}"
+    sh.run(f"docker tag {remote_name}:{tag} {ecr_address}/{name}:{tag}")
+
+
 def build(
     manifest: "Manifest",
     dir: str,
@@ -55,7 +63,6 @@ def build(
 def push(manifest: "Manifest", name: str, tag: str = "latest") -> None:
     ecr_address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com"
     repo_address = f"{ecr_address}/{name}:{tag}"
-    sh.run(f"docker tag {name}:{tag} {repo_address}")
     sh.run(f"docker push {repo_address}")
 
 
@@ -68,15 +75,14 @@ def deploy(
 ) -> None:
     login(manifest=manifest)
     _logger.debug("Logged in")
-    build(manifest=manifest, dir=dir, name=name, tag=tag, use_cache=use_cache)
-    _logger.debug("Docker Image built")
+
+    if manifest.image_source == "dockerhub":
+        dockerhub_pull(name=manifest.images[name], tag=tag)
+        _logger.debug("Pulled DockerHub Image")
+    else:
+        ecr_pull(manifest=manifest, name=manifest.images[name], tag=tag)
+        _logger.debug("Pulled ECR Image")
+
+    tag_image(manifest=manifest, remote_name=manifest.images[name], name=name, tag=tag)
     push(manifest=manifest, name=name, tag=tag)
 
-    version_file_path = os.path.join(dir, "VERSION")
-    _logger.debug(f"Reading VERSION file: {version_file_path}")
-    with open(version_file_path) as version_file:
-        version = version_file.readline().strip()
-        _logger.debug(f"Read Version: {version}")
-
-    _logger.debug("Tagging Docker Image")
-    push(manifest=manifest, name=name, tag=version)
