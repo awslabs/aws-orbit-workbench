@@ -80,7 +80,7 @@ def deploy_images_remotely(manifest: Manifest) -> None:
         for name, script in (
             ("jupyter-hub", None),
             ("jupyter-user", None),
-            ("landing-page", "build.sh"),
+            ("landing-page", None),
         ):
             _logger.debug("name: %s | script: %s", name, script)
             path = os.path.join(manifest.filename_dir, name)
