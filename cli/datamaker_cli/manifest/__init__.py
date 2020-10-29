@@ -70,7 +70,7 @@ class Manifest:
         )
 
         self.images: Dict[str, Dict[str, str]] = cast(Dict[str, Dict[str, str]], {})
-        raw_images: Dict[str, Dict[str, str]] = cast(Dict[str, Dict[str, str]], self.raw_file.get("images", {}))
+        raw_images: Dict[str, Dict[str, str]] = cast(Dict[str, Dict[str, str]], self.raw_file.get("images", None))
 
         self.images[f"datamaker-{self.name}-jupyter-hub"] = cast(
             Dict[str, str],
