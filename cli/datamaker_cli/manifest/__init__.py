@@ -31,7 +31,7 @@ from datamaker_cli.services import cognito
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
-
+MANIFEST_FILE_IMAGES_TYPE = Dict[str, Dict[str, str]]
 MANIFEST_FILE_TYPE = Dict[
     str,
     Union[
@@ -40,7 +40,7 @@ MANIFEST_FILE_TYPE = Dict[
         MANIFEST_FILE_VPC_TYPE,
         List[MANIFEST_FILE_TEAM_TYPE],
         List[MANIFEST_FILE_PLUGIN_TYPE],
-        Dict[str, Dict[str, str]],
+        MANIFEST_FILE_IMAGES_TYPE,
     ],
 ]
 MANIFEST_TYPE = Dict[
@@ -70,8 +70,8 @@ class Manifest:
             Optional[str], self.raw_file.get("codeartifact-repository", None)
         )
 
-        self.images: Dict[str, Dict[str, str]] = cast(Dict[str, Dict[str, str]], {})
-        raw_images: Dict[str, Dict[str, str]] = cast(Dict[str, Dict[str, str]], self.raw_file.get("images", {}))
+        self.images: MANIFEST_FILE_IMAGES_TYPE = cast(MANIFEST_FILE_IMAGES_TYPE, {})
+        raw_images: MANIFEST_FILE_IMAGES_TYPE = cast(MANIFEST_FILE_IMAGES_TYPE, self.raw_file.get("images", {}))
 
         self.images[f"datamaker-{self.name}-jupyter-hub"] = cast(
             Dict[str, str],
