@@ -73,6 +73,7 @@ def deploy(
 ) -> None:
     login(manifest=manifest)
     _logger.debug("Logged in")
+    _logger.debug(f"Manifest: {vars(manifest)}")
 
     image_source = manifest.images[name]["source"]
     image_name = manifest.images[name]["repository"]
