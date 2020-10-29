@@ -12,4 +12,4 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from datamaker_cli.plugins.hooks import deploy, destroy  # noqa
+from datamaker_cli.plugins.hooks import deploy, destroy, images  # noqa

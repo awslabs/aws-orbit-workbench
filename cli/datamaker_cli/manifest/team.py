@@ -17,6 +17,7 @@ import logging
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, cast
 
 from datamaker_cli import utils
+from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE, MANIFEST_PLUGIN_TYPE, PluginManifest
 
 if TYPE_CHECKING:
     from datamaker_cli.manifest import Manifest
@@ -24,8 +25,8 @@ if TYPE_CHECKING:
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-MANIFEST_FILE_TEAM_TYPE = Dict[str, Union[str, int, Dict[str, str], None]]
-MANIFEST_TEAM_TYPE = Dict[str, Union[str, int, Dict[str, str], None]]
+MANIFEST_FILE_TEAM_TYPE = Dict[str, Union[str, int, None, List[MANIFEST_FILE_PLUGIN_TYPE]]]
+MANIFEST_TEAM_TYPE = Dict[str, Union[str, int, None, List[MANIFEST_PLUGIN_TYPE]]]
 
 
 class TeamManifest:
@@ -39,7 +40,8 @@ class TeamManifest:
         nodes_num_max: int,
         nodes_num_min: int,
         policy: str,
-        image: Optional[Dict[str, str]] = None,
+        plugins: List[PluginManifest],
+        image: Optional[str] = None,
     ) -> None:
         self.manifest: "Manifest" = manifest
         self.name: str = name
@@ -49,7 +51,8 @@ class TeamManifest:
         self.nodes_num_max: int = nodes_num_max
         self.nodes_num_min: int = nodes_num_min
         self.policy: str = policy
-        self.image: Optional[Dict[str, str]] = image
+        self.plugins: List[PluginManifest] = plugins
+        self.image: Optional[str] = image
         self.stack_name: str = f"datamaker-{self.manifest.name}-{self.name}"
         self.ssm_parameter_name: str = f"/datamaker/{self.manifest.name}/teams/{self.name}/manifest"
         self.scratch_bucket: Optional[str] = None
@@ -79,6 +82,7 @@ class TeamManifest:
         if self.manifest.raw_ssm is not None:
             for team in cast(List[MANIFEST_TEAM_TYPE], self.manifest.raw_ssm.get("teams", [])):
                 if team.get("name") == self.name:
+                    self.raw_ssm = team
                     self.efs_id = cast(Optional[str], team.get("efs-id"))
                     self.eks_nodegroup_role_arn = cast(Optional[str], team.get("eks-nodegroup-role-arn"))
                     self.jupyter_url = cast(Optional[str], team.get("jupyter-url"))
@@ -114,10 +118,12 @@ class TeamManifest:
             "nodes-num-min": self.nodes_num_min,
             "policy": self.policy,
             "image": self.image,
+            "plugins": [p.asdict_file() for p in self.plugins],
         }
 
     def asdict(self) -> MANIFEST_FILE_TEAM_TYPE:
         obj: MANIFEST_FILE_TEAM_TYPE = utils.replace_underscores(vars(self))
+        obj["plugins"] = [p.asdict() for p in self.plugins]
         del obj["manifest"]
         del obj["raw-ssm"]
         return obj
@@ -136,6 +142,11 @@ class TeamManifest:
             _logger.debug("Team %s loaded successfully from SSM.", self.name)
 
     def construct_ecr_repository_name(self, env: str) -> str:
-        image = self.image["name"] if self.image else "jupyter-user"
-        tag = self.image["version"] if self.image else "latest"
-        return f"datamaker-{env}-{image}:{tag}"
+        image = self.image if self.image is not None else "jupyter-user:latest"
+        return f"datamaker-{env}-{image}"
+
+    def get_plugin_by_name(self, name: str) -> Optional[PluginManifest]:
+        for p in self.plugins:
+            if p.name == name:
+                return p
+        return None

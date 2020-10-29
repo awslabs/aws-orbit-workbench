@@ -73,8 +73,7 @@ def destroy(filename: str, debug: bool) -> None:
         ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
         ctx.progress(2)
 
-        plugins.load_plugins(manifest=manifest)
-        ctx.info(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
+        plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, ctx=ctx)
         ctx.progress(3)
 
         if (

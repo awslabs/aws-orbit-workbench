@@ -35,6 +35,7 @@
 * `python -m venv .venv`
 
 ### Load the Python Virtual Environment
+
 * `source .venv/bin/activate`
 
 ### Install all packages required for development
@@ -50,7 +51,7 @@
 ### Initiating a DataMaker environment with DEMO and DEV enabled
 
 > The `demo` flag will ensure that a mocked environment will also be deployed.
-> 
+>
 > The `dev` flag will ensure that all artifacts will be built from source (W/o DockerHub and PyPi).
 
 * `datamaker init --demo --dev`
@@ -62,3 +63,25 @@
 ### Destroying
 
 * `datamaker destroy -f myenv.yaml`
+
+## 4 - Assuming Admin Role to Access EKS
+
+* Install [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html)
+* Go to the IAM console
+* Find the Admin Role (`arn:aws:iam::{ACCOUNT_ID}:role/datamaker-{ENV_NAME}-admin`).
+* Add your user or role under the `Trust Relationship` tab.
+
+```json
+{
+    "Effect": "Allow",
+    "Principal": {
+        "AWS": "arn:aws:iam::{ACCOUNT_ID}:user/{USERNAME}"
+    },
+    "Action": "sts:AssumeRole"
+},
+```
+
+* Open the temrinal and user the AWS CLI to configure your kubeconfig
+* `aws eks update-kubeconfig --name datamaker-{ENV_NAME} --role-arn arn:aws:iam::{ACCOUNT_ID}:role/datamaker-{ENV_NAME}-admin`
+* Validate you access
+* `kubectl get pod -A`
