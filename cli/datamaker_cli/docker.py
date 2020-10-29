@@ -55,7 +55,6 @@ def build(
             cache_str = f"--cache-from {repo_address}"
         except exceptions.FailedShellCommand:
             _logger.debug(f"Docker cache not found at ECR {name}:{tag}")
-
     sh.run(f"docker build {cache_str} --tag {name} .", cwd=dir)
 
 
