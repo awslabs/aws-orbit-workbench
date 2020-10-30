@@ -15,7 +15,6 @@
 import logging
 import os
 import shutil
-from build.lib.datamaker_cli import manifest
 
 from datamaker_cli import DATAMAKER_CLI_ROOT, exceptions, k8s, sh
 from datamaker_cli.manifest import Manifest
@@ -51,7 +50,7 @@ def _team(region: str, account_id: str, output_path: str, env_name: str, team: T
         region=region,
         account_id=account_id,
         env_name=env_name,
-        tag=team.manifest.images["jupyter-hub"]["version"]
+        tag=team.manifest.images["jupyter-hub"]["version"],
     )
     with open(output, "w") as file:
         file.write(content)
@@ -138,7 +137,7 @@ def _generate_manifest(manifest: Manifest) -> str:
         user_pool_id=manifest.user_pool_id,
         user_pool_client_id=manifest.user_pool_client_id,
         identity_pool_id=manifest.identity_pool_id,
-        tag=manifest.images["landing-page"]["version"]
+        tag=manifest.images["landing-page"]["version"],
     )
 
     return output_path
