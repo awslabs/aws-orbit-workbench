@@ -17,6 +17,9 @@ import logging
 import os
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, cast
 
+from datamaker_cli import sh
+from datamaker_cli.remote_files.utils import get_k8s_context
+
 if TYPE_CHECKING:
     from datamaker_cli.manifest import Manifest
     from datamaker_cli.messages import MessagesContext
@@ -52,6 +55,20 @@ class Changeset:
         with open(filename, "w") as file:
             json.dump(obj=self.asdict(), fp=file, indent=4, sort_keys=True)
         _logger.debug("Changeset file written: %s", filename)
+
+    def process_images_changes(self, manifest: "Manifest") -> None:
+        context: Optional[str] = None
+        for change in self.image_changesets:
+            _logger.debug(f"Processing change: {change.asdict()}")
+            if change.old_image == change.new_image:
+                _logger.debug("Skipping dummy change")
+            if context is None:
+                context = get_k8s_context(manifest=manifest)
+                _logger.debug("kubectl context: %s", context)
+            _logger.debug(f"warn: Image change detected: Restarting {change.team_name} JupyterHub")
+            sh.run(
+                f"kubectl rollout restart deployment jupyterhub --namespace {change.team_name} --context {context}"
+            )
 
 
 def extract_changeset(manifest: "Manifest", ctx: "MessagesContext") -> Changeset:

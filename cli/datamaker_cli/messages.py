@@ -44,6 +44,9 @@ REMOTE_PROGRESS_LOOKUP: Dict[str, Dict[str, int]] = {
         "Running command npm install -g aws-cdk": 25,
         "Phase complete: INSTALL State: SUCCEEDED": 27,
         "Phase complete: PRE_BUILD State: SUCCEEDED": 30,
+        "Manifest loaded": 32,
+        "Plugins loaded": 33,
+        "Changeset loaded": 34,
         "CDK Toolkit Stack deployed": 40,
         "Demo Stack deployed": 50,
         "Env Stack deployed": 55,
@@ -52,6 +55,7 @@ REMOTE_PROGRESS_LOOKUP: Dict[str, Dict[str, int]] = {
         "Teams Stacks deployed": 70,
         "EKS Stack deployed": 80,
         "Kubernetes components deployed": 95,
+        "Images changeset processed": 96,
         "Phase complete: BUILD State: SUCCEEDED": 97,
     },
     "Destroying": {
@@ -62,6 +66,8 @@ REMOTE_PROGRESS_LOOKUP: Dict[str, Dict[str, int]] = {
         "Running command npm install -g aws-cdk": 25,
         "Phase complete: INSTALL State: SUCCEEDED": 27,
         "Phase complete: PRE_BUILD State: SUCCEEDED": 30,
+        "Manifest loaded": 31,
+        "Plugins loaded": 32,
         "Kubernetes components destroyed": 35,
         "EKS Stack destroyed": 40,
         "Teams Stacks destroyed": 65,
@@ -173,10 +179,23 @@ class MessagesContext:
     def _progress_cli_log(self, msg: str) -> bool:
         msg_begining = "] "
         if msg_begining in msg:
-            n: Optional[int] = REMOTE_PROGRESS_LOOKUP[self.task_name].get(msg.split(sep=msg_begining, maxsplit=1)[-1])
-            if n is not None:
+            msg = msg.split(sep=msg_begining, maxsplit=1)[-1]
+            n: Optional[int] = REMOTE_PROGRESS_LOOKUP[self.task_name].get(msg)
+            if n is None:
+                if msg.startswith("info: "):
+                    self.info(msg=msg[6:])
+                elif msg.startswith("tip: "):
+                    self.tip(msg=msg[5:])
+                elif msg.startswith("warn: "):
+                    _logger.debug("WARN!")
+                    self.warn(msg=msg[6:])
+                elif msg.startswith("error: "):
+                    self.error(msg=msg[7:])
+                else:
+                    return False
+            else:
                 self.progress(n=n)
-                return True
+            return True
         return False
 
     def progress_bar_callback(self, msg: str) -> None:
