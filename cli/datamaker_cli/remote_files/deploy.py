@@ -56,7 +56,9 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     if script is not None:
         sh.run(f"sh {script}", cwd=path)
     _logger.debug("Deploying the %s Docker image", image_name)
-    docker.deploy(manifest=manifest, dir=path, name=f"datamaker-{manifest.name}-{image_name}")
+    docker.deploy(
+        manifest=manifest, dir=path, image_name=image_name, deployed_name=f"datamaker-{manifest.name}-{image_name}"
+    )
     _logger.debug("Docker Image Deployed to ECR")
 
 

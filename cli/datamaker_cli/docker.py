@@ -67,7 +67,8 @@ def push(manifest: "Manifest", name: str, tag: str = "latest") -> None:
 def deploy(
     manifest: "Manifest",
     dir: str,
-    name: str,
+    deployed_name: str,
+    image_name: str,
     tag: str = "latest",
     use_cache: bool = True,
 ) -> None:
@@ -75,15 +76,18 @@ def deploy(
     _logger.debug("Logged in")
     _logger.debug(f"Manifest: {vars(manifest)}")
 
-    short_name = name.replace(f"datamaker-{manifest.name}-", "")
-    image_source = manifest.images[short_name]["source"]
-    image_name = manifest.images[short_name]["repository"]
-    if image_source == "dockerhub":
-        dockerhub_pull(name=image_name, tag=tag)
+    source = manifest.images[image_name]["source"]
+    source_name = manifest.images[image_name]["repository"]
+    if source == "dockerhub":
+        dockerhub_pull(name=source_name, tag=tag)
         _logger.debug("Pulled DockerHub Image")
-    else:
-        ecr_pull(manifest=manifest, name=image_name, tag=tag)
+    elif source == "ecr":
+        ecr_pull(manifest=manifest, name=source_name, tag=tag)
         _logger.debug("Pulled ECR Image")
+    else:
+        e = ValueError(f"Invalid Image Source: {source}. Valid values are: dockerhub, ecr")
+        _logger.error(e)
+        raise e
 
-    tag_image(manifest=manifest, remote_name=image_name, remote_source=image_source, name=name, tag=tag)
-    push(manifest=manifest, name=name, tag=tag)
+    tag_image(manifest=manifest, remote_name=source_name, remote_source=source, name=deployed_name, tag=tag)
+    push(manifest=manifest, name=deployed_name, tag=tag)
