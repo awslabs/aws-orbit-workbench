@@ -1,0 +1,613 @@
+{
+   "fields":[
+      {
+         "metadata":{
+
+         },
+         "name":"DESYNPUF_ID",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"CLM_ID",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"SEGMENT",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"CLM_FROM_DT",
+         "nullable":true,
+         "type":"date"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"CLM_THRU_DT",
+         "nullable":true,
+         "type":"date"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PRVDR_NUM",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"CLM_PMT_AMT",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"NCH_PRMRY_PYR_CLM_PD_AMT",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"AT_PHYSN_NPI",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"OP_PHYSN_NPI",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"OT_PHYSN_NPI",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"NCH_BENE_BLOOD_DDCTBL_LBLTY_AM",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_1",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_2",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_3",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_4",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_5",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_6",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_7",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_8",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_9",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_10",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_PRCDR_CD_1",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_PRCDR_CD_2",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_PRCDR_CD_3",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_PRCDR_CD_4",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_PRCDR_CD_5",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_PRCDR_CD_6",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"NCH_BENE_PTB_DDCTBL_AMT",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"NCH_BENE_PTB_COINSRNC_AMT",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ADMTNG_ICD9_DGNS_CD",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_1",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_2",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_3",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_4",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_5",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_6",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_7",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_8",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_9",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_10",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_11",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_12",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_13",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_14",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_15",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_16",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_17",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_18",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_19",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_20",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_21",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_22",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_23",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_24",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_25",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_26",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_27",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_28",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_29",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_30",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_31",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_32",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_33",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_34",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_35",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_36",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_37",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_38",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_39",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_40",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_41",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_42",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_43",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_44",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_45",
+         "nullable":true,
+         "type":"string"
+      }
+   ],
+   "type":"struct"
+}

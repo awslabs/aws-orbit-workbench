@@ -1,0 +1,261 @@
+{
+   "fields":[
+      {
+         "metadata":{
+
+         },
+         "name":"DESYNPUF_ID",
+         "nullable":false,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"BENE_BIRTH_DT",
+         "nullable":true,
+         "type":"date"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"BENE_DEATH_DT",
+         "nullable":true,
+         "type":"date"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"BENE_SEX_IDENT_CD",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"BENE_RACE_CD",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"BENE_ESRD_IND",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"SP_STATE_CODE",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"BENE_COUNTY_CD",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"BENE_HI_CVRAGE_TOT_MONS",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"BENE_SMI_CVRAGE_TOT_MONS",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"BENE_HMO_CVRAGE_TOT_MONS",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PLAN_CVRG_MOS_NUM",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"SP_ALZHDMTA",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"SP_CHF",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"SP_CHRNKIDN",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"SP_CNCR",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"SP_COPD",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"SP_DEPRESSN",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"SP_DIABETES",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"SP_ISCHMCHT",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"SP_OSTEOPRS",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"SP_RA_OA",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"SP_STRKETIA",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"MEDREIMB_IP",
+         "nullable":true,
+         "type":"float"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"BENRES_IP",
+         "nullable":true,
+         "type":"float"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PPPYMT_IP",
+         "nullable":true,
+         "type":"float"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"MEDREIMB_OP",
+         "nullable":true,
+         "type":"float"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"BENRES_OP",
+         "nullable":true,
+         "type":"float"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PPPYMT_OP",
+         "nullable":true,
+         "type":"float"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"MEDREIMB_CAR",
+         "nullable":true,
+         "type":"float"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"BENRES_CAR",
+         "nullable":true,
+         "type":"float"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PPPYMT_CAR",
+         "nullable":true,
+         "type":"float"
+      }
+   ],
+   "type":"struct"
+}

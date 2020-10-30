@@ -1,0 +1,1141 @@
+{
+   "fields":[
+      {
+         "metadata":{
+
+         },
+         "name":"DESYNPUF_ID",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"CLM_ID",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"CLM_FROM_DT",
+         "nullable":true,
+         "type":"date"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"CLM_THRU_DT",
+         "nullable":true,
+         "type":"date"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_1",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_2",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_3",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_4",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_5",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_6",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_7",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"ICD9_DGNS_CD_8",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PRF_PHYSN_NPI_1",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PRF_PHYSN_NPI_2",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PRF_PHYSN_NPI_3",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PRF_PHYSN_NPI_4",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PRF_PHYSN_NPI_5",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PRF_PHYSN_NPI_6",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PRF_PHYSN_NPI_7",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PRF_PHYSN_NPI_8",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PRF_PHYSN_NPI_9",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PRF_PHYSN_NPI_10",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PRF_PHYSN_NPI_11",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PRF_PHYSN_NPI_12",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"PRF_PHYSN_NPI_13",
+         "nullable":true,
+         "type":"long"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"TAX_NUM_1",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"TAX_NUM_2",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"TAX_NUM_3",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"TAX_NUM_4",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"TAX_NUM_5",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"TAX_NUM_6",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"TAX_NUM_7",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"TAX_NUM_8",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"TAX_NUM_9",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"TAX_NUM_10",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"TAX_NUM_11",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"TAX_NUM_12",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"TAX_NUM_13",
+         "nullable":true,
+         "type":"integer"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_1",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_2",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_3",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_4",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_5",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_6",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_7",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_8",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_9",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_10",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_11",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_12",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"HCPCS_CD_13",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_NCH_PMT_AMT_1",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_NCH_PMT_AMT_2",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_NCH_PMT_AMT_3",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_NCH_PMT_AMT_4",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_NCH_PMT_AMT_5",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_NCH_PMT_AMT_6",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_NCH_PMT_AMT_7",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_NCH_PMT_AMT_8",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_NCH_PMT_AMT_9",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_NCH_PMT_AMT_10",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_NCH_PMT_AMT_11",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_NCH_PMT_AMT_12",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_NCH_PMT_AMT_13",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PTB_DDCTBL_AMT_1",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PTB_DDCTBL_AMT_2",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PTB_DDCTBL_AMT_3",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PTB_DDCTBL_AMT_4",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PTB_DDCTBL_AMT_5",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PTB_DDCTBL_AMT_6",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PTB_DDCTBL_AMT_7",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PTB_DDCTBL_AMT_8",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PTB_DDCTBL_AMT_9",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PTB_DDCTBL_AMT_10",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PTB_DDCTBL_AMT_11",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PTB_DDCTBL_AMT_12",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PTB_DDCTBL_AMT_13",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PRMRY_PYR_PD_AMT_1",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PRMRY_PYR_PD_AMT_2",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PRMRY_PYR_PD_AMT_3",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PRMRY_PYR_PD_AMT_4",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PRMRY_PYR_PD_AMT_5",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PRMRY_PYR_PD_AMT_6",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PRMRY_PYR_PD_AMT_7",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PRMRY_PYR_PD_AMT_8",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PRMRY_PYR_PD_AMT_9",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PRMRY_PYR_PD_AMT_10",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PRMRY_PYR_PD_AMT_11",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PRMRY_PYR_PD_AMT_12",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_BENE_PRMRY_PYR_PD_AMT_13",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_COINSRNC_AMT_1",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_COINSRNC_AMT_2",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_COINSRNC_AMT_3",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_COINSRNC_AMT_4",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_COINSRNC_AMT_5",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_COINSRNC_AMT_6",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_COINSRNC_AMT_7",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_COINSRNC_AMT_8",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_COINSRNC_AMT_9",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_COINSRNC_AMT_10",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_COINSRNC_AMT_11",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_COINSRNC_AMT_12",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_COINSRNC_AMT_13",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ALOWD_CHRG_AMT_1",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ALOWD_CHRG_AMT_2",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ALOWD_CHRG_AMT_3",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ALOWD_CHRG_AMT_4",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ALOWD_CHRG_AMT_5",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ALOWD_CHRG_AMT_6",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ALOWD_CHRG_AMT_7",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ALOWD_CHRG_AMT_8",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ALOWD_CHRG_AMT_9",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ALOWD_CHRG_AMT_10",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ALOWD_CHRG_AMT_11",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ALOWD_CHRG_AMT_12",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ALOWD_CHRG_AMT_13",
+         "nullable":true,
+         "type":"double"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_PRCSG_IND_CD_1",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_PRCSG_IND_CD_2",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_PRCSG_IND_CD_3",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_PRCSG_IND_CD_4",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_PRCSG_IND_CD_5",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_PRCSG_IND_CD_6",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_PRCSG_IND_CD_7",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_PRCSG_IND_CD_8",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_PRCSG_IND_CD_9",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_PRCSG_IND_CD_10",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_PRCSG_IND_CD_11",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_PRCSG_IND_CD_12",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_PRCSG_IND_CD_13",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ICD9_DGNS_CD_1",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ICD9_DGNS_CD_2",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ICD9_DGNS_CD_3",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ICD9_DGNS_CD_4",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ICD9_DGNS_CD_5",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ICD9_DGNS_CD_6",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ICD9_DGNS_CD_7",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ICD9_DGNS_CD_8",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ICD9_DGNS_CD_9",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ICD9_DGNS_CD_10",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ICD9_DGNS_CD_11",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ICD9_DGNS_CD_12",
+         "nullable":true,
+         "type":"string"
+      },
+      {
+         "metadata":{
+
+         },
+         "name":"LINE_ICD9_DGNS_CD_13",
+         "nullable":true,
+         "type":"string"
+      }
+   ],
+   "type":"struct"
+}
