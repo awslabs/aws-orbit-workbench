@@ -61,14 +61,17 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
         "jupyter-hub": {
             "repository": "aws-datamaker-jupyter-hub",
             "source": "dockerhub",
+            "version": "latest",
         },
         "jupyter-user": {
             "repository": "aws-datamaker-jupyter-user",
             "source": "dockerhub",
+            "version": "latest",
         },
         "landing-page": {
             "repository": "aws-datamaker-landing-page",
             "source": "dockerhub",
+            "version": "latest",
         },
     },
 )

@@ -23,17 +23,17 @@ spec:
     spec:
       restartPolicy: Always
       containers:
-        - image: ${account_id}.dkr.ecr.${region}.amazonaws.com/datamaker-${env_name}-landing-page:latest
+        - image: ${account_id}.dkr.ecr.${region}.amazonaws.com/datamaker-${env_name}-landing-page:${tag}
           env:
             - name: AWS_DEFAULT_REGION
               value: ${region}
-            - name: ENV_NAME 
+            - name: ENV_NAME
               value: ${env_name}
-            - name: USER_POOL_ID 
+            - name: USER_POOL_ID
               value: ${user_pool_id}
-            - name: USER_POOL_CLIENT_ID 
+            - name: USER_POOL_CLIENT_ID
               value: ${user_pool_client_id}
-            - name: IDENTITY_POOL_ID 
+            - name: IDENTITY_POOL_ID
               value: ${identity_pool_id}
           imagePullPolicy: Always
           name: container

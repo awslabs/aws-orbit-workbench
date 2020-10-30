@@ -78,16 +78,17 @@ def deploy(
 
     source = manifest.images[image_name]["source"]
     source_name = manifest.images[image_name]["repository"]
+    source_version = manifest.images[image_name]["version"]
     if source == "dockerhub":
-        dockerhub_pull(name=source_name, tag=tag)
+        dockerhub_pull(name=source_name, tag=source_version)
         _logger.debug("Pulled DockerHub Image")
     elif source == "ecr":
-        ecr_pull(manifest=manifest, name=source_name, tag=tag)
+        ecr_pull(manifest=manifest, name=source_name, tag=source_version)
         _logger.debug("Pulled ECR Image")
     else:
         e = ValueError(f"Invalid Image Source: {source}. Valid values are: dockerhub, ecr")
         _logger.error(e)
         raise e
 
-    tag_image(manifest=manifest, remote_name=source_name, remote_source=source, name=deployed_name, tag=tag)
-    push(manifest=manifest, name=deployed_name, tag=tag)
+    tag_image(manifest=manifest, remote_name=source_name, remote_source=source, name=deployed_name, tag=source_version)
+    push(manifest=manifest, name=deployed_name, tag=source_version)
