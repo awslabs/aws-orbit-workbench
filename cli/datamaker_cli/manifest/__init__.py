@@ -55,6 +55,27 @@ MANIFEST_TYPE = Dict[
     ],
 ]
 
+MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
+    MANIFEST_FILE_IMAGES_TYPE,
+    {
+        "jupyter-hub",
+        {
+            "repository": "aws-datamaker-jupyter-hub",
+            "source": "dockerhub",
+        },
+        "jupyter-user",
+        {
+            "repository": "aws-datamaker-jupyter-user",
+            "source": "dockerhub",
+        },
+        "landing-page",
+        {
+            "repository": "aws-datamaker-landing-page",
+            "source": "dockerhub",
+        },
+    },
+)
+
 
 class Manifest:
     def __init__(self, filename: str) -> None:
@@ -69,42 +90,9 @@ class Manifest:
         self.codeartifact_repository: Optional[str] = cast(
             Optional[str], self.raw_file.get("codeartifact-repository", None)
         )
-
-        self.images: MANIFEST_FILE_IMAGES_TYPE = cast(MANIFEST_FILE_IMAGES_TYPE, self.raw_file.get("images", None))
-        # self.images: MANIFEST_FILE_IMAGES_TYPE = cast(MANIFEST_FILE_IMAGES_TYPE, None)
-        # raw_images: MANIFEST_FILE_IMAGES_TYPE = cast(MANIFEST_FILE_IMAGES_TYPE, self.raw_file.get("images", {}))
-
-        # self.images[f"datamaker-{self.name}-jupyter-hub"] = cast(
-        #     Dict[str, str],
-        #     raw_images.get(
-        #         "jupyter-hub",
-        #         {
-        #             "repository": "aws-datamaker-jupyter-hub",
-        #             "source": "dockerhub",
-        #         },
-        #     ),
-        # )
-        # self.images[f"datamaker-{self.name}-jupyter-user"] = cast(
-        #     Dict[str, str],
-        #     raw_images.get(
-        #         "jupyter-user",
-        #         {
-        #             "repository": "aws-datamaker-jupyter-user",
-        #             "source": "dockerhub",
-        #         },
-        #     ),
-        # )
-        # self.images[f"datamaker-{self.name}-landing-page"] = cast(
-        #     Dict[str, str],
-        #     raw_images.get(
-        #         "landing-page",
-        #         {
-        #             "repository": "aws-datamaker-landing-page",
-        #             "source": "dockerhub",
-        #         },
-        #     ),
-        # )
-
+        self.images: MANIFEST_FILE_IMAGES_TYPE = cast(
+            MANIFEST_FILE_IMAGES_TYPE, self.raw_file.get("images", MANIFEST_FILE_IMAGES_DEFAULTS)
+        )
         self.env_tag: str = f"datamaker-{self.name}"
         self.ssm_parameter_name: str = f"/datamaker/{self.name}/manifest"
         self.ssm_dockerhub_parameter_name: str = f"/datamaker/{self.name}/dockerhub"

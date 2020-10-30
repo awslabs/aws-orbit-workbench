@@ -75,8 +75,9 @@ def deploy(
     _logger.debug("Logged in")
     _logger.debug(f"Manifest: {vars(manifest)}")
 
-    image_source = manifest.images[name]["source"]
-    image_name = manifest.images[name]["repository"]
+    short_name = name.replace(f"datamaker-{manifest.name}-", "")
+    image_source = manifest.images[short_name]["source"]
+    image_name = manifest.images[short_name]["repository"]
     if image_source == "dockerhub":
         dockerhub_pull(name=image_name, tag=tag)
         _logger.debug("Pulled DockerHub Image")
