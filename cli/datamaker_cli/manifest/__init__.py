@@ -58,18 +58,15 @@ MANIFEST_TYPE = Dict[
 MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
     MANIFEST_FILE_IMAGES_TYPE,
     {
-        "jupyter-hub",
-        {
+        "jupyter-hub": {
             "repository": "aws-datamaker-jupyter-hub",
             "source": "dockerhub",
         },
-        "jupyter-user",
-        {
+        "jupyter-user": {
             "repository": "aws-datamaker-jupyter-user",
             "source": "dockerhub",
         },
-        "landing-page",
-        {
+        "landing-page": {
             "repository": "aws-datamaker-landing-page",
             "source": "dockerhub",
         },
