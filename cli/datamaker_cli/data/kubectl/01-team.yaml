@@ -154,13 +154,13 @@ spec:
       name: jupyterhub
     spec:
       containers:
-        - image: ${account_id}.dkr.ecr.${region}.amazonaws.com/datamaker-${env_name}-jupyter-hub:latest
+        - image: ${account_id}.dkr.ecr.${region}.amazonaws.com/datamaker-${env_name}-jupyter-hub:${tag}
           env:
             - name: AWS_DEFAULT_REGION
               value: ${region}
-            - name: ENV_NAME 
+            - name: ENV_NAME
               value: ${env_name}
-            - name: TEAM 
+            - name: TEAM
               value: ${team}
           imagePullPolicy: Always
           name: container

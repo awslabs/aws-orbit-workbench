@@ -31,7 +31,7 @@ from datamaker_cli.services import cognito
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
-
+MANIFEST_FILE_IMAGES_TYPE = Dict[str, Dict[str, str]]
 MANIFEST_FILE_TYPE = Dict[
     str,
     Union[
@@ -40,6 +40,7 @@ MANIFEST_FILE_TYPE = Dict[
         MANIFEST_FILE_VPC_TYPE,
         List[MANIFEST_FILE_TEAM_TYPE],
         List[MANIFEST_FILE_PLUGIN_TYPE],
+        MANIFEST_FILE_IMAGES_TYPE,
     ],
 ]
 MANIFEST_TYPE = Dict[
@@ -54,6 +55,27 @@ MANIFEST_TYPE = Dict[
     ],
 ]
 
+MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
+    MANIFEST_FILE_IMAGES_TYPE,
+    {
+        "jupyter-hub": {
+            "repository": "aws-datamaker-jupyter-hub",
+            "source": "dockerhub",
+            "version": "latest",
+        },
+        "jupyter-user": {
+            "repository": "aws-datamaker-jupyter-user",
+            "source": "dockerhub",
+            "version": "latest",
+        },
+        "landing-page": {
+            "repository": "aws-datamaker-landing-page",
+            "source": "dockerhub",
+            "version": "latest",
+        },
+    },
+)
+
 
 class Manifest:
     def __init__(self, filename: str) -> None:
@@ -67,6 +89,9 @@ class Manifest:
         self.codeartifact_domain: Optional[str] = cast(Optional[str], self.raw_file.get("codeartifact-domain", None))
         self.codeartifact_repository: Optional[str] = cast(
             Optional[str], self.raw_file.get("codeartifact-repository", None)
+        )
+        self.images: MANIFEST_FILE_IMAGES_TYPE = cast(
+            MANIFEST_FILE_IMAGES_TYPE, self.raw_file.get("images", MANIFEST_FILE_IMAGES_DEFAULTS)
         )
         self.env_tag: str = f"datamaker-{self.name}"
         self.ssm_parameter_name: str = f"/datamaker/{self.name}/manifest"
@@ -333,6 +358,7 @@ class Manifest:
             obj["codeartifact-domain"] = self.codeartifact_domain
         if self.codeartifact_repository is not None:
             obj["codeartifact-repository"] = self.codeartifact_repository
+        obj["images"] = self.images
         obj["plugins"] = [p.asdict_file() for p in self.plugins]
         obj["vpc"] = self.vpc.asdict_file()
         obj["teams"] = [t.asdict_file() for t in self.teams]

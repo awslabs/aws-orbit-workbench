@@ -218,7 +218,7 @@ def generate_spec(
         "ls -la",
         f"pip install kubernetes~=11.0.0 {' '.join([f'{m}{CDK_VERSION}' for m in CDK_MODULES])}",
         "npm -g install yarn",
-        "npm install -g aws-cdk",
+        "npm install -g aws-cdk@1.67.0",
     ]
 
     # DataMaker CLI
