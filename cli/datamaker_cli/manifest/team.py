@@ -53,6 +53,20 @@ class TeamManifest:
         self.policy: str = policy
         self.plugins: List[PluginManifest] = plugins
         self.image: Optional[str] = image
+        if self.image is None:
+            self.base_image_address: str = (
+                f"{self.manifest.account_id}.dkr.ecr.{self.manifest.region}.amazonaws.com/"
+                f"datamaker-{self.manifest.name}-jupyter-user"
+            )
+        else:
+            self.base_image_address = (
+                f"{self.manifest.account_id}.dkr.ecr.{self.manifest.region}.amazonaws.com/"
+                f"datamaker-{self.manifest.name}-{self.image}"
+            )
+        self.final_image_address: str = (
+            f"{self.manifest.account_id}.dkr.ecr.{self.manifest.region}.amazonaws.com/"
+            f"datamaker-{self.manifest.name}-{self.name}"
+        )
         self.stack_name: str = f"datamaker-{self.manifest.name}-{self.name}"
         self.ssm_parameter_name: str = f"/datamaker/{self.manifest.name}/teams/{self.name}/manifest"
         self.scratch_bucket: Optional[str] = None

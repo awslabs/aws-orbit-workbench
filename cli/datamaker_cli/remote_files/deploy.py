@@ -144,5 +144,3 @@ def deploy(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug("EKS Stack deployed")
     kubectl.deploy(manifest=manifest)
     _logger.debug("Kubernetes components deployed")
-    changes.process_images_changes(manifest=manifest)
-    _logger.debug("Images changeset processed")

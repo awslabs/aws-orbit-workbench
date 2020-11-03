@@ -35,8 +35,4 @@ ACCOUNT_ID: str = MANIFEST["account-id"]
 COGNITO_USER_POOL_ID: str = MANIFEST["user-pool-id"]
 TOOLKIT_S3_BUCKET: str = MANIFEST["toolkit-s3-bucket"]
 TAG: str = MANIFEST["images"]["jupyter-user"]["version"]
-IMAGE: Optional[str] = f"{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/datamaker-{ENV_NAME}-jupyter-user:{TAG}"
-
-for team in MANIFEST["teams"]:
-    if team["name"] == TEAM and team["image"] is not None:
-        IMAGE = f"{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/datamaker-{ENV_NAME}-{team['image']}:latest"
+IMAGE: Optional[str] = f"{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/datamaker-{ENV_NAME}-{TEAM}:latest"
