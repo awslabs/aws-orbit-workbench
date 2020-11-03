@@ -12,4 +12,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import os
+
 from datamaker_cli.remote_files.cdk import demo, env, team  # noqa: F401
+
+LAMBDA_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "./lambda_sources/"))
+
+
+def _lambda_path(path):
+    return os.path.join(LAMBDA_DIR, path)
