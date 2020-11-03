@@ -12,18 +12,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import logging
-from typing import Callable, List
+from setuptools import setup
 
-from datamaker_cli.manifest import Manifest
-from datamaker_cli.manifest.team import TeamManifest
-from datamaker_cli.plugins import PLUGINS_REGISTRIES
-
-_logger: logging.Logger = logging.getLogger(__name__)
-
-
-def dockerfile_injection(
-    func: Callable[[Manifest, TeamManifest], List[str]]
-) -> Callable[[Manifest, TeamManifest], List[str]]:
-    PLUGINS_REGISTRIES.add_hook(hook_name="dockerfile_injection_hook", func=func)
-    return func
+setup(
+    name="datamaker-codecommit",
+    version="0.0b0",
+    description="DataMaker CodeCommit Plugin.",
+    license="Apache License 2.0",
+    packages=["code_commit"],
+    python_requires=">=3.6, <3.9",
+    install_requires=open("requirements.txt").read().strip().split("\n"),
+    include_package_data=True,
+)

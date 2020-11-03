@@ -13,25 +13,25 @@
 #    limitations under the License.
 
 import logging
-from typing import Callable
+from typing import Tuple
 
 from datamaker_cli.manifest import Manifest
-from datamaker_cli.manifest.team import TeamManifest
-from datamaker_cli.plugins import PLUGINS_REGISTRIES
+from datamaker_cli.remote_files import env
+from datamaker_cli.services import ecr
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def demo(func: Callable[[Manifest, TeamManifest], None]) -> Callable[[Manifest, TeamManifest], None]:
-    PLUGINS_REGISTRIES.add_hook(hook_name="deploy_demo_hook", func=func)
-    return func
+def destroy_image(filename: str, args: Tuple[str, ...]) -> None:
+    manifest: Manifest = Manifest(filename=filename)
+    _logger.debug("manifest.name %s", manifest.name)
+    _logger.debug("args %s", args)
+    if len(args) == 1:
+        image_name: str = args[0]
+    else:
+        raise ValueError("Unexpected number of values in args.")
 
-
-def env(func: Callable[[Manifest, TeamManifest], None]) -> Callable[[Manifest, TeamManifest], None]:
-    PLUGINS_REGISTRIES.add_hook(hook_name="deploy_env_hook", func=func)
-    return func
-
-
-def team(func: Callable[[Manifest, TeamManifest], None]) -> Callable[[Manifest, TeamManifest], None]:
-    PLUGINS_REGISTRIES.add_hook(hook_name="deploy_team_hook", func=func)
-    return func
+    env.deploy(manifest=manifest, add_images=[], remove_images=[image_name])
+    _logger.debug("Env changes deployed")
+    ecr.delete_repo(manifest=manifest, repo=f"datamaker-{manifest.name}-{image_name}")
+    _logger.debug("Docker Image Destroyed from ECR")

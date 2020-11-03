@@ -78,7 +78,7 @@ def replace_underscores(original: Dict[str, Any]) -> Dict[str, Any]:
     return ret
 
 
-def extract_plugin_name(func: Callable[..., Union[None, List[str]]]) -> str:
+def extract_plugin_name(func: Callable[..., Union[None, List[str], str]]) -> str:
     name = func.__module__.split(sep=".", maxsplit=1)[0]
     return name
 

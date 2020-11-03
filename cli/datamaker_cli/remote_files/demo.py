@@ -21,7 +21,7 @@ from typing import Any, Dict, List
 
 import botocore.exceptions
 
-from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, plugins, sh
+from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, sh
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.services import cfn, s3
 
@@ -55,6 +55,11 @@ def _network_interface(manifest: Manifest, vpc_id: str) -> None:
             elif "You are not allowed to manage" in error["Message"]:
                 _logger.warning(
                     f"Ignoring NetWorkInterface {i['NetworkInterfaceId']} because you are not allowed to manage."
+                )
+            elif "You do not have permission to access the specified resource" in error["Message"]:
+                _logger.warning(
+                    f"Ignoring NetWorkInterface {i['NetworkInterfaceId']} "
+                    "because you do not have permission to access the specified resource."
                 )
             else:
                 raise
@@ -103,7 +108,8 @@ def _cleanup_remaining_dependencies(manifest: Manifest) -> None:
     if manifest.vpc.vpc_id is None:
         manifest.fetch_network_data()
     if manifest.vpc.vpc_id is None:
-        raise ValueError(f"manifest.vpc.vpc_id: {manifest.vpc.vpc_id}")
+        _logger.debug(f"Skipping _cleanup_remaining_dependencies() because manifest.vpc.vpc_id: {manifest.vpc.vpc_id}")
+        return None
     vpc_id: str = manifest.vpc.vpc_id
     _network_interface(manifest=manifest, vpc_id=vpc_id)
     _security_group(manifest=manifest, vpc_id=vpc_id)
@@ -176,16 +182,14 @@ def deploy(manifest: Manifest) -> None:
         cdk.deploy(
             manifest=manifest,
             stack_name=manifest.demo_stack_name,
-            app_filename="demo.py",
+            app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "demo.py"),
             args=[manifest.filename],
         )
         manifest.fetch_demo_data()
-        plugins.PLUGINS_REGISTRIES.deploy_demo(manifest=manifest)
         _prepare_demo_data(manifest)  # Adding demo data
 
 
 def destroy(manifest: Manifest) -> None:
-    plugins.PLUGINS_REGISTRIES.destroy_demo(manifest=manifest)
     if manifest.demo and cfn.does_stack_exist(manifest=manifest, stack_name=manifest.demo_stack_name):
         waited: bool = False
         while cfn.does_stack_exist(manifest=manifest, stack_name=manifest.eks_stack_name):
@@ -200,6 +204,6 @@ def destroy(manifest: Manifest) -> None:
         cdk.destroy(
             manifest=manifest,
             stack_name=manifest.demo_stack_name,
-            app_filename="demo.py",
+            app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "demo.py"),
             args=[manifest.filename],
         )

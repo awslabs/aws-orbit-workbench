@@ -14,6 +14,7 @@
 
 import logging
 import os
+import pprint
 from typing import Any, Dict
 
 import yaml
@@ -36,6 +37,8 @@ MANIFEST: Dict[str, Any] = {
 
 
 def create_nodegroup_structure(team: TeamManifest, env_name: str) -> Dict[str, Any]:
+    if team.eks_nodegroup_role_arn is None:
+        raise ValueError(f"team.eks_nodegroup_role_arn: {team.eks_nodegroup_role_arn}")
     return {
         "name": team.name,
         "privateNetworking": True,
@@ -89,6 +92,7 @@ def generate_manifest(manifest: Manifest, name: str) -> str:
         }
     )
 
+    _logger.debug("eksctl manifest:\n%s", pprint.pformat(MANIFEST))
     output_filename = f"{manifest.filename_dir}/.datamaker.out/{manifest.name}/eksctl/cluster.yaml"
     os.makedirs(os.path.dirname(output_filename), exist_ok=True)
     with open(output_filename, "w") as file:
