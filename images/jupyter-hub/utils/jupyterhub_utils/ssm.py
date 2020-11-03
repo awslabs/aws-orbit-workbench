@@ -39,4 +39,4 @@ IMAGE: Optional[str] = f"{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/datamaker-{
 
 for team in MANIFEST["teams"]:
     if team["name"] == TEAM and team["image"] is not None:
-        IMAGE = f"{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/datamaker-{ENV_NAME}-{team['image']}:latest"
+        IMAGE = f"{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/datamaker-{ENV_NAME}-{team['image']['name']}:{team['image']['version']}"
