@@ -17,16 +17,5 @@
 
 set -ex
 
-rm -rf /home/jovyan/work
-rm -rf /home/jovyan/tmp
-
-mkdir -p /efs/"$USERNAME"
-mkdir -p /efs/shared/scheduled/notebooks
-mkdir -p /efs/shared/scheduled/outputs
-mkdir -p /home/jovyan/tmp
-
-chown -R jovyan /efs/"$USERNAME"
-chown -R jovyan /efs/shared
-
-ln -s /efs/"$USERNAME"/ /home/jovyan/private
-ln -s /efs/shared/ /home/jovyan/shared
+isort .
+black .

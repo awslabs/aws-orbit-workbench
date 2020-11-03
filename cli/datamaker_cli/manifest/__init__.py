@@ -81,7 +81,10 @@ class Manifest:
         self.filename_dir: str = utils.path_from_filename(filename=filename)
         self.raw_file: MANIFEST_FILE_TYPE = self._read_manifest_file(filename=filename)
         self.name: str = cast(str, self.raw_file["name"])
-        self.region: str = cast(str, self.raw_file["region"])
+        if "region" in self.raw_file:
+            self.region: str = cast(str, self.raw_file["region"])
+        else:
+            self.region = utils.get_region()
         self.demo: bool = cast(bool, self.raw_file.get("demo", False))
         self.dev: bool = cast(bool, self.raw_file.get("dev", False))
         self.codeartifact_domain: Optional[str] = cast(Optional[str], self.raw_file.get("codeartifact-domain", None))
@@ -135,10 +138,12 @@ class Manifest:
 
     @staticmethod
     def _parse_plugins(team: MANIFEST_FILE_TEAM_TYPE) -> List[PluginManifest]:
-        return [
-            PluginManifest(name=p["name"], path=p["path"])
-            for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team["plugins"])
-        ]
+        if "plugins" in team:
+            return [
+                PluginManifest(name=p["name"], path=p["path"])
+                for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team["plugins"])
+            ]
+        return []
 
     def _parse_teams(self) -> List[TeamManifest]:
         return [

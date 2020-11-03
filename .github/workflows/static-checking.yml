@@ -39,7 +39,7 @@ jobs:
       - name: CloudFormation Lint
         run: cfn-lint -i E1029,E3031 -- datamaker_cli/data/toolkit/template.yaml
 
-  JupyterHub:
+  ImageJupyterHub:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -65,3 +65,58 @@ jobs:
         run: black --check .
       - name: Isort Check
         run: isort --check .
+
+  PluginHelloWorld:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6]
+    defaults:
+      run:
+        working-directory: plugins/hello_world
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Mypy Check
+        run: mypy .
+      - name: Flake8 Check
+        run: flake8 .
+      - name: Black Check
+        run: black --check .
+      - name: Isort Check
+        run: isort --check .
+
+  PluginCodeCommit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6]
+    defaults:
+      run:
+        working-directory: plugins/code_commit
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Mypy Check
+        run: mypy .
+      - name: Flake8 Check
+        run: flake8 .
+      - name: Black Check
+        run: black --check .
+      - name: Isort Check
+        run: isort --check .
+

@@ -67,22 +67,22 @@ def _generate_self_dir(bundle_dir: str) -> str:
 
 def _generate_dir(bundle_dir: str, dir: str, name: str) -> str:
     absolute_dir = os.path.realpath(dir)
-    image_dir = os.path.join(bundle_dir, name)
+    final_dir = os.path.join(bundle_dir, name)
     _logger.debug("absolute_dir: %s", absolute_dir)
-    _logger.debug("image_dir: %s", image_dir)
-    os.makedirs(image_dir, exist_ok=True)
-    shutil.rmtree(image_dir)
+    _logger.debug("image_dir: %s", final_dir)
+    os.makedirs(final_dir, exist_ok=True)
+    shutil.rmtree(final_dir)
 
-    _logger.debug("Copying files to %s", image_dir)
+    _logger.debug("Copying files to %s", final_dir)
     files: List[str] = _list_files(path=absolute_dir)
     for file in files:
         relpath = os.path.relpath(file, absolute_dir)
-        new_file = os.path.join(image_dir, relpath)
+        new_file = os.path.join(final_dir, relpath)
         os.makedirs(os.path.dirname(new_file), exist_ok=True)
         _logger.debug("Copying file to %s", new_file)
         shutil.copy(src=file, dst=new_file)
 
-    return image_dir
+    return final_dir
 
 
 def generate_bundle(
@@ -114,10 +114,16 @@ def generate_bundle(
 
     # Plugins
     for team_manifest in manifest.teams:
+        plugin_bundle_dir = os.path.join(bundle_dir, team_manifest.name)
         for plugin in team_manifest.plugins:
             if plugin.path:
-                plugin_bundle_dir = os.path.join(bundle_dir, team_manifest.name)
                 _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin.path, name=plugin.name)
+    if changeset is not None:
+        for plugin_changeset in changeset.plugin_changesets:
+            plugin_bundle_dir = os.path.join(bundle_dir, plugin_changeset.team_name)
+            for plugin_name, plugin_path in plugin_changeset.old_paths.items():
+                if plugin_name not in plugin_changeset.new:
+                    _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin_path, name=plugin_name)
 
     # Extra Directories
     if dirs is not None:

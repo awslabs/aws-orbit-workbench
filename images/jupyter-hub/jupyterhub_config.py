@@ -58,9 +58,7 @@ c.KubeSpawner.image = IMAGE
 c.KubeSpawner.image_pull_policy = "Always"
 c.KubeSpawner.volumes = [{"name": "efs-volume", "persistentVolumeClaim": {"claimName": "jupyterhub"}}]
 c.KubeSpawner.volume_mounts = [{"mountPath": "/efs", "name": "efs-volume"}]
-c.KubeSpawner.lifecycle_hooks = {
-    "postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/link-user-efs-directory.sh"]}}
-}
+c.KubeSpawner.lifecycle_hooks = {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh"]}}}
 c.KubeSpawner.node_selector = {"team": TEAM}
 c.KubeSpawner.service_account = "jupyter-user"
 c.KubeSpawner.profile_list = [
