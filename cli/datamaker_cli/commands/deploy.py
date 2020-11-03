@@ -142,8 +142,7 @@ def deploy(
         changeset: Changeset = extract_changeset(manifest=manifest, ctx=ctx)
         ctx.progress(4)
 
-        plugins.load_plugins(manifest=manifest)
-        ctx.info(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
+        plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, ctx=ctx)
         ctx.progress(5)
 
         deploy_toolkit(

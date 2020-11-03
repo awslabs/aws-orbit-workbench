@@ -180,17 +180,12 @@ def deploy(manifest: Manifest) -> None:
             args=[manifest.filename],
         )
         manifest.fetch_demo_data()
-        for plugin in plugins.PLUGINS_REGISTRY.values():
-            if plugin.deploy_demo_hook is not None:
-                plugin.deploy_demo_hook(manifest)
-        # Adding demo data
-        _prepare_demo_data(manifest)
+        plugins.PLUGINS_REGISTRIES.deploy_demo(manifest=manifest)
+        _prepare_demo_data(manifest)  # Adding demo data
 
 
 def destroy(manifest: Manifest) -> None:
-    for plugin in plugins.PLUGINS_REGISTRY.values():
-        if plugin.destroy_demo_hook is not None:
-            plugin.destroy_demo_hook(manifest)
+    plugins.PLUGINS_REGISTRIES.destroy_demo(manifest=manifest)
     if manifest.demo and cfn.does_stack_exist(manifest=manifest, stack_name=manifest.demo_stack_name):
         waited: bool = False
         while cfn.does_stack_exist(manifest=manifest, stack_name=manifest.eks_stack_name):

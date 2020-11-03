@@ -119,15 +119,11 @@ def deploy(manifest: Manifest, add_images: List[str], remove_images: List[str]) 
     )
 
     manifest.fetch_ssm()
-    for plugin in plugins.PLUGINS_REGISTRY.values():
-        if plugin.deploy_env_hook is not None:
-            plugin.deploy_env_hook(manifest)
+    plugins.PLUGINS_REGISTRIES.deploy_env(manifest=manifest)
 
 
 def destroy(manifest: Manifest) -> None:
-    for plugin in plugins.PLUGINS_REGISTRY.values():
-        if plugin.destroy_env_hook is not None:
-            plugin.destroy_env_hook(manifest)
+    plugins.PLUGINS_REGISTRIES.destroy_env(manifest=manifest)
     _logger.debug("Stack name: %s", manifest.env_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.env_stack_name):
         _cleanup_remaining_resources(manifest=manifest)

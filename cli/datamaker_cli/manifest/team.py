@@ -17,6 +17,7 @@ import logging
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, cast
 
 from datamaker_cli import utils
+from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE, MANIFEST_PLUGIN_TYPE, PluginManifest
 
 if TYPE_CHECKING:
     from datamaker_cli.manifest import Manifest
@@ -24,8 +25,8 @@ if TYPE_CHECKING:
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-MANIFEST_FILE_TEAM_TYPE = Dict[str, Union[str, int, None]]
-MANIFEST_TEAM_TYPE = Dict[str, Union[str, int, None]]
+MANIFEST_FILE_TEAM_TYPE = Dict[str, Union[str, int, None, List[MANIFEST_FILE_PLUGIN_TYPE]]]
+MANIFEST_TEAM_TYPE = Dict[str, Union[str, int, None, List[MANIFEST_PLUGIN_TYPE]]]
 
 
 class TeamManifest:
@@ -39,6 +40,7 @@ class TeamManifest:
         nodes_num_max: int,
         nodes_num_min: int,
         policy: str,
+        plugins: List[PluginManifest],
         image: Optional[str] = None,
     ) -> None:
         self.manifest: "Manifest" = manifest
@@ -49,6 +51,7 @@ class TeamManifest:
         self.nodes_num_max: int = nodes_num_max
         self.nodes_num_min: int = nodes_num_min
         self.policy: str = policy
+        self.plugins: List[PluginManifest] = plugins
         self.image: Optional[str] = image
         self.stack_name: str = f"datamaker-{self.manifest.name}-{self.name}"
         self.ssm_parameter_name: str = f"/datamaker/{self.manifest.name}/teams/{self.name}/manifest"
@@ -112,10 +115,12 @@ class TeamManifest:
             "nodes-num-min": self.nodes_num_min,
             "policy": self.policy,
             "image": self.image,
+            "plugins": [p.asdict_file() for p in self.plugins],
         }
 
     def asdict(self) -> MANIFEST_FILE_TEAM_TYPE:
         obj: MANIFEST_FILE_TEAM_TYPE = utils.replace_underscores(vars(self))
+        obj["plugins"] = [p.asdict() for p in self.plugins]
         del obj["manifest"]
         del obj["raw-ssm"]
         return obj
@@ -132,3 +137,9 @@ class TeamManifest:
             self.eks_nodegroup_role_arn = cast(Optional[str], raw.get("eks-nodegroup-role-arn"))
             self.manifest.write_manifest_ssm()
             _logger.debug("Team %s loaded successfully from SSM.", self.name)
+
+    def get_plugin_by_name(self, name: str) -> Optional[PluginManifest]:
+        for p in self.plugins:
+            if p.name == name:
+                return p
+        return None

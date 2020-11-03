@@ -113,9 +113,11 @@ def generate_bundle(
         _generate_self_dir(bundle_dir=bundle_dir)
 
     # Plugins
-    for plugin in manifest.plugins:
-        if plugin.path:
-            _generate_dir(bundle_dir=bundle_dir, dir=plugin.path, name=plugin.name)
+    for team_manifest in manifest.teams:
+        for plugin in team_manifest.plugins:
+            if plugin.path:
+                plugin_bundle_dir = os.path.join(bundle_dir, team_manifest.name)
+                _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin.path, name=plugin.name)
 
     # Extra Directories
     if dirs is not None:

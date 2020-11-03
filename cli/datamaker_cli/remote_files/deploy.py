@@ -115,8 +115,7 @@ def deploy(filename: str, args: Tuple[str, ...]) -> None:
     manifest: Manifest = Manifest(filename=filename)
     manifest.fillup()
     _logger.debug("Manifest loaded")
-    plugins.load_plugins(manifest=manifest)
-    _logger.debug(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
+    plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest)
     _logger.debug("Plugins loaded")
     changes: changeset.Changeset = changeset.read_changeset_file(
         filename=os.path.join(manifest.filename_dir, "changeset.json")

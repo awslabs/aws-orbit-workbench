@@ -66,9 +66,7 @@ class Changeset:
                 context = get_k8s_context(manifest=manifest)
                 _logger.debug("kubectl context: %s", context)
             _logger.debug(f"warn: Image change detected: Restarting {change.team_name} JupyterHub")
-            sh.run(
-                f"kubectl rollout restart deployment jupyterhub --namespace {change.team_name} --context {context}"
-            )
+            sh.run(f"kubectl rollout restart deployment jupyterhub --namespace {change.team_name} --context {context}")
 
 
 def extract_changeset(manifest: "Manifest", ctx: "MessagesContext") -> Changeset:
