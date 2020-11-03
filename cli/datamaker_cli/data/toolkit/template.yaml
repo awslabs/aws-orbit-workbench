@@ -42,6 +42,12 @@ Resources:
               - ecr:GetAuthorizationToken
               - ecr:DescribeRepositories
               - ecr:ListTagsForResource
+              - ecr:BatchGetImage
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchCheckLayerAvailability
+              - ecr:GetRepositoryPolicy
+              - ecr:ListImages
+              - ecr:DescribeImages
               - cloudformation:ListStacks
               - elasticfilesystem:CreateFileSystem
               - elasticfilesystem:CreateMountTarget

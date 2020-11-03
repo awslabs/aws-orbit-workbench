@@ -50,6 +50,7 @@ def _team(region: str, account_id: str, output_path: str, env_name: str, team: T
         region=region,
         account_id=account_id,
         env_name=env_name,
+        tag=team.manifest.images["jupyter-hub"]["version"],
     )
     with open(output, "w") as file:
         file.write(content)
@@ -73,6 +74,7 @@ def _landing_page(
     user_pool_id: str,
     user_pool_client_id: str,
     identity_pool_id: str,
+    tag: str,
 ) -> None:
     filename = "03-landing-page.yaml"
     input = os.path.join(MODEL_PATH, filename)
@@ -86,6 +88,7 @@ def _landing_page(
         user_pool_id=user_pool_id,
         user_pool_client_id=user_pool_client_id,
         identity_pool_id=identity_pool_id,
+        tag=tag,
     )
     with open(output, "w") as file:
         file.write(content)
@@ -134,6 +137,7 @@ def _generate_manifest(manifest: Manifest) -> str:
         user_pool_id=manifest.user_pool_id,
         user_pool_client_id=manifest.user_pool_client_id,
         identity_pool_id=manifest.identity_pool_id,
+        tag=manifest.images["landing-page"]["version"],
     )
 
     return output_path
