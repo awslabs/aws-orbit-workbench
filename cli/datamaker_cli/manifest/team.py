@@ -24,8 +24,8 @@ if TYPE_CHECKING:
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-MANIFEST_FILE_TEAM_TYPE = Dict[str, Union[str, int, None]]
-MANIFEST_TEAM_TYPE = Dict[str, Union[str, int, None]]
+MANIFEST_FILE_TEAM_TYPE = Dict[str, Union[str, int, Dict[str, str], None]]
+MANIFEST_TEAM_TYPE = Dict[str, Union[str, int, Dict[str, str], None]]
 
 
 class TeamManifest:
@@ -62,6 +62,7 @@ class TeamManifest:
         self.jupyter_url: Optional[str] = None
         self.ecs_cluster_name: Optional[str] = None
         self.ecs_task_definition_arn: Optional[str] = None
+        self.ecs_container_runner_arn: Optional[str] = None
 
     def _read_manifest_ssm(self) -> Optional[MANIFEST_TEAM_TYPE]:
         _logger.debug("Trying to read manifest from SSM parameter.")

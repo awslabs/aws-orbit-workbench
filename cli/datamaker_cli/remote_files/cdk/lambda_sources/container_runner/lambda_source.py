@@ -1,17 +1,15 @@
 import json
 import logging
 import os
-import sys
-import time
+from typing import Any, Dict, List, Optional
 
 import boto3
-from datamaker.common.datamaker_constants import *
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def handler(event, context):
+def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> List[str]:
     ecs = boto3.client("ecs")
     if "compute" in event.keys():
         compute = event["compute"]
@@ -22,12 +20,8 @@ def handler(event, context):
         {"name": "task_type", "value": event["task_type"]},
         {"name": "tasks", "value": "{'tasks': " + str(event["tasks"]) + "}"},
         {"name": "compute", "value": "{'compute': " + str(compute) + "}"},
-        {"name": "repos_url", "value": os.environ["GIT_REPO_URL"]},
-        {"name": "AWS_DATAMAKER_REPO", "value": os.environ["AWS_DATAMAKER_REPO"]},
-        {"name": "AWS_DATAMAKER_S3_BUCKET", "value": os.environ["AWS_DATAMAKER_S3_BUCKET"]},
-        {"name": "s3_output", "value": os.environ["S3_OUTPUT"]},
-        {"name": "DATAMAKER_TEAM_SPACE", "value": os.environ[DATAMAKER_TEAM_SPACE]},
-        {"name": "AWS_DATAMAKER_ENV", "value": os.environ[DATAMAKER_ENV]},
+        {"name": "DATAMAKER_TEAM_SPACE", "value": os.environ["AWS_DATAMAKER_TEAMSPACE"]},
+        {"name": "AWS_DATAMAKER_ENV", "value": os.environ["AWS_DATAMAKER_ENV"]},
     ]
     if "env_vars" in event.keys():
         env_vars = event["env_vars"]
@@ -43,9 +37,7 @@ def handler(event, context):
         launchType="FARGATE",
         networkConfiguration={
             "awsvpcConfiguration": {
-                "subnets": [
-                    os.environ["SUBNET"],
-                ],
+                "subnets": json.loads(os.environ["SUBNETS"]),
                 "securityGroups": [
                     os.environ["SECURITY_GROUP"],
                 ],
@@ -56,7 +48,7 @@ def handler(event, context):
             "containerOverrides": [
                 {
                     "name": "datamaker-runner",
-                    "command": ["python", "/root/notebook_cli.py"],
+                    "command": ["python", "/root/python-utils/notebook_cli.py"],
                     "environment": all_env_vars,
                 }
             ],

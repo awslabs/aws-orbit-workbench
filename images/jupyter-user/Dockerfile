@@ -31,4 +31,4 @@ RUN jupyter lab build
 
 # EFS
 ADD link-user-efs-directory.sh /etc/jupyterhub/link-user-efs-directory.sh
-
+ADD python-utils/ /root/python-utils/
