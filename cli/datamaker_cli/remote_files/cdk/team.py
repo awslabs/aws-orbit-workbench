@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import logging
 import os
 import shutil
@@ -432,16 +433,28 @@ class Team(Stack):
             compatibility=ecs.Compatibility.EC2_AND_FARGATE,
             family=f"datamaker-{self.manifest.name}-{self.team_manifest.name}-task-definition",
             network_mode=ecs.NetworkMode.AWS_VPC,
+            volumes=[
+                ecs.Volume(
+                    name="team_efs_volume",
+                    efs_volume_configuration=ecs.EfsVolumeConfiguration(
+                        file_system_id=self.efs.file_system_id, transit_encryption="ENABLED"
+                    ),
+                )
+            ],
         )
-        task_definition.add_container(
+        container_definition = task_definition.add_container(
             "datamaker-runner",
-            memory_limit_mib="16384",
+            memory_limit_mib=16384,
             image=ecs.ContainerImage.from_ecr_repository(ecr_repository),
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix=f"datamaker-{self.manifest.name}-{self.team_manifest.name}",
                 log_group=ecs_log_group,
             ),
         )
+        container_definition.add_mount_points(
+            ecs.MountPoint(container_path="/efs", source_volume="team_efs_volume", read_only=False)
+        )
+
         return task_definition
 
     def _create_ecs_container_runner(self) -> aws_lambda.Function:
@@ -449,11 +462,19 @@ class Team(Stack):
             self,
             "ecs_container_runner",
             function_name=f"datamaker-{self.manifest.name}-{self.team_manifest.name}-container-runner",
-            code=aws_lambda.Code.asset(_lambda_path("container-runner")),
-            handler="container_runner.lambda_handler",
+            code=aws_lambda.Code.asset(_lambda_path("container_runner")),
+            handler="lambda_source.handler",
             runtime=aws_lambda.Runtime.PYTHON_3_6,
             timeout=Duration.minutes(5),
-            environment={},
+            environment={
+                "ROLE": self.role_eks_nodegroup.role_arn,
+                "SECURITY_GROUP": self.sg_efs.security_group_id,
+                "SUBNETS": json.dumps([s.subnet_id for s in self.i_private_subnets]),
+                "TASK_DEFINITION": self.ecs_task_definition.task_definition_arn,
+                "CLUSTER": self.ecs_cluster.cluster_name,
+                "AWS_DATAMAKER_ENV": self.manifest.name,
+                "AWS_DATAMAKER_TEAMSPACE": self.team_manifest.name,
+            },
             initial_policy=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -466,7 +487,8 @@ class Team(Stack):
                         "ecs:RunTask",
                     ],
                     resources=[
-                        f"arn:{self.partition}:ecs:{self.region}:{self.account}:task-definition/{self.ecs_task_definition.family}:*"
+                        f"arn:{self.partition}:ecs:{self.region}:{self.account}:task-definition/"
+                        f"{self.ecs_task_definition.family}:*"
                     ],
                 ),
                 iam.PolicyStatement(
@@ -484,6 +506,7 @@ class Team(Stack):
         self.team_manifest.eks_nodegroup_role_arn = self.role_eks_nodegroup.role_arn
         self.team_manifest.ecs_cluster_name = self.ecs_cluster.cluster_name
         self.team_manifest.ecs_task_definition_arn = self.ecs_task_definition.task_definition_arn
+        self.team_manifest.ecs_container_runner_arn = self.ecs_container_runner.function_arn
 
         parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,
