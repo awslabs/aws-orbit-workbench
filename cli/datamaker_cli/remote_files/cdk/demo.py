@@ -147,7 +147,6 @@ class VpcStack(Stack):
         self.vpc.add_interface_endpoint(
             "code_artifact_endpoint",
             service=ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories"),
-            private_dns_enabled=False,
         )
 
 
