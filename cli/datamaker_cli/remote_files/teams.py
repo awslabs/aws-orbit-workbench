@@ -15,9 +15,11 @@
 import logging
 import os
 import shutil
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, cast
 
-from datamaker_cli import cdk, docker, plugins
+import boto3
+
+from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, docker, plugins
 from datamaker_cli.services import cfn, s3
 
 if TYPE_CHECKING:
@@ -27,8 +29,10 @@ if TYPE_CHECKING:
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def _create_dockefile(manifest: "Manifest", team_manifest: "TeamManifest") -> Optional[str]:
-    cmds: List[str] = []
+def _create_dockefile(manifest: "Manifest", team_manifest: "TeamManifest") -> str:
+    base_image_cmd: str = f"FROM {team_manifest.base_image_address}"
+    _logger.debug("base_image_cmd: %s", base_image_cmd)
+    cmds: List[str] = [base_image_cmd]
     for plugin in team_manifest.plugins:
         hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
             manifest=manifest,
@@ -37,35 +41,50 @@ def _create_dockefile(manifest: "Manifest", team_manifest: "TeamManifest") -> Op
             hook_name="dockerfile_injection_hook",
         )
         if hook is not None:
-            plugin_cmds = hook(manifest, team_manifest)
+            plugin_cmds = cast(Optional[List[str]], hook(manifest, team_manifest))
             if plugin_cmds is not None:
                 cmds += [f"# Commands for {plugin.name} plugin"] + plugin_cmds
     _logger.debug("cmds: %s", cmds)
-    if cmds:
-        base_image: str = f"FROM {team_manifest.base_image_address}"
-        _logger.debug("base_image: %s", base_image)
-        cmds = [base_image] + cmds
-        outdir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, team_manifest.name, "image")
-        output_filename = os.path.join(outdir, "Dockerfile")
-        os.makedirs(outdir, exist_ok=True)
-        shutil.rmtree(outdir)
-        _logger.debug("Writing %s", output_filename)
-        os.makedirs(outdir, exist_ok=True)
-        content: str = "\n".join(cmds)
-        _logger.debug("content:\n%s", content)
-        with open(output_filename, "w") as file:
-            file.write(content)
-        return outdir
-    return None
+    outdir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, team_manifest.name, "image")
+    output_filename = os.path.join(outdir, "Dockerfile")
+    os.makedirs(outdir, exist_ok=True)
+    shutil.rmtree(outdir)
+    _logger.debug("Writing %s", output_filename)
+    os.makedirs(outdir, exist_ok=True)
+    content: str = "\n".join(cmds)
+    _logger.debug("content:\n%s", content)
+    with open(output_filename, "w") as file:
+        file.write(content)
+    return outdir
 
 
 def _deploy_team_image(manifest: "Manifest", team_manifest: "TeamManifest") -> None:
-    image_dir: Optional[str] = _create_dockefile(manifest=manifest, team_manifest=team_manifest)
-    if image_dir is not None:
-        image_name: str = f"datamaker-{manifest.name}-{team_manifest.name}"
-        _logger.debug("Deploying the %s Docker image", image_name)
-        docker.deploy_dynamic_image(manifest=manifest, dir=image_dir, name=image_name)
-        _logger.debug("Docker Image Deployed to ECR")
+    image_dir: str = _create_dockefile(manifest=manifest, team_manifest=team_manifest)
+    image_name: str = f"datamaker-{manifest.name}-{team_manifest.name}"
+    _logger.debug("Deploying the %s Docker image", image_name)
+    docker.deploy_dynamic_image(manifest=manifest, dir=image_dir, name=image_name)
+    _logger.debug("Docker Image Deployed to ECR")
+
+
+def _deploy_team_bootstrap(manifest: "Manifest", team_manifest: "TeamManifest") -> None:
+    for plugin in team_manifest.plugins:
+        hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
+            manifest=manifest,
+            team_name=team_manifest.name,
+            plugin_name=plugin.name,
+            hook_name="bootstrap_injection_hook",
+        )
+        if hook is not None:
+            script_content: Optional[str] = cast(Optional[str], hook(manifest, team_manifest))
+            if script_content is not None:
+                client = boto3.client("s3")
+                key: str = f"{team_manifest.bootstrap_s3_prefix}{plugin.name}.sh"
+                _logger.debug("Uploading s3://{manifest.toolkit_s3_bucket}/{key}")
+                client.put_object(
+                    Body=script_content.encode("utf-8"),
+                    Bucket=manifest.toolkit_s3_bucket,
+                    Key=key,
+                )
 
 
 def deploy(manifest: "Manifest") -> None:
@@ -73,12 +92,15 @@ def deploy(manifest: "Manifest") -> None:
         cdk.deploy(
             manifest=manifest,
             stack_name=team_manifest.stack_name,
-            app_filename="team.py",
+            app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "team.py"),
             args=[manifest.filename, team_manifest.name],
         )
-        manifest.fetch_ssm()
-        _deploy_team_image(manifest=manifest, team_manifest=team_manifest)
+        team_manifest.fetch_ssm()
+        manifest.write_manifest_ssm()
     plugins.PLUGINS_REGISTRIES.deploy_teams(manifest=manifest)
+    for team_manifest in manifest.teams:
+        _deploy_team_image(manifest=manifest, team_manifest=team_manifest)
+        _deploy_team_bootstrap(manifest=manifest, team_manifest=team_manifest)
 
 
 def destroy(manifest: "Manifest") -> None:
@@ -95,6 +117,6 @@ def destroy(manifest: "Manifest") -> None:
                     cdk.destroy(
                         manifest=manifest,
                         stack_name=team_manifest.stack_name,
-                        app_filename="team.py",
+                        app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "team.py"),
                         args=[manifest.filename, team_manifest.name],
                     )

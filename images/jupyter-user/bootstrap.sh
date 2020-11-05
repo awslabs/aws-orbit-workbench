@@ -17,6 +17,8 @@
 
 set -ex
 
+# EFS
+
 rm -rf /home/jovyan/work
 rm -rf /home/jovyan/tmp
 
@@ -30,3 +32,16 @@ chown -R jovyan /efs/shared
 
 ln -s /efs/"$USERNAME"/ /home/jovyan/private
 ln -s /efs/shared/ /home/jovyan/shared
+
+# Bootstrap
+
+LOCAL_PATH="/home/jovyan/.datamaker/bootstrap/scripts/"
+S3_PATH="s3://${AWS_DATAMAKER_S3_BUCKET}/teams/${DATAMAKER_TEAM_SPACE}/bootstrap/"
+
+mkdir -p $LOCAL_PATH
+aws s3 cp $S3_PATH $LOCAL_PATH --recursive
+for filename in $LOCAL_PATH*
+do
+    echo "Running ${filename}"
+    sh "${filename}"
+done

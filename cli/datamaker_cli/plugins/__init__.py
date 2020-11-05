@@ -23,7 +23,8 @@ if TYPE_CHECKING:
     from datamaker_cli.manifest.team import TeamManifest
     from datamaker_cli.messages import MessagesContext
 
-HOOK_TYPE = Optional[Callable[["Manifest", "TeamManifest"], Union[None, List[str]]]]
+HOOK_FUNC_TYPE = Callable[["Manifest", "TeamManifest"], Union[None, List[str], str]]
+HOOK_TYPE = Optional[HOOK_FUNC_TYPE]
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -40,6 +41,7 @@ class PluginRegistry:
         deploy_team_hook: Optional[Callable[["Manifest", "TeamManifest"], None]] = None,
         destroy_team_hook: Optional[Callable[["Manifest", "TeamManifest"], None]] = None,
         dockerfile_injection_hook: Optional[Callable[["Manifest", "TeamManifest"], List[str]]] = None,
+        bootstrap_injection_hook: Optional[Callable[["Manifest", "TeamManifest"], str]] = None,
     ) -> None:
         self.name = name
         self.team_name = team_name
@@ -52,6 +54,7 @@ class PluginRegistry:
         self._dockerfile_injection_hook: Optional[
             Callable[["Manifest", "TeamManifest"], List[str]]
         ] = dockerfile_injection_hook
+        self._bootstrap_injection_hook: Optional[Callable[["Manifest", "TeamManifest"], str]] = bootstrap_injection_hook
 
     """
     DEMO
@@ -153,6 +156,18 @@ class PluginRegistry:
     def dockerfile_injection_hook(self) -> None:
         self._dockerfile_injection_hook = None
 
+    @property
+    def bootstrap_injection_hook(self) -> Optional[Callable[["Manifest", "TeamManifest"], str]]:
+        return self._bootstrap_injection_hook
+
+    @bootstrap_injection_hook.setter
+    def bootstrap_injection_hook(self, func: Optional[Callable[["Manifest", "TeamManifest"], str]]) -> None:
+        self._bootstrap_injection_hook = func
+
+    @bootstrap_injection_hook.deleter
+    def bootstrap_injection_hook(self) -> None:
+        self._bootstrap_injection_hook = None
+
 
 class PluginRegistries:
     def __init__(self) -> None:
@@ -200,7 +215,7 @@ class PluginRegistries:
     def destroy_teams(self, manifest: "Manifest") -> None:
         self._hook_call(manifest=manifest, hook_name="destroy_team_hook")
 
-    def add_hook(self, hook_name: str, func: Callable[["Manifest", "TeamManifest"], Union[None, List[str]]]) -> None:
+    def add_hook(self, hook_name: str, func: HOOK_FUNC_TYPE) -> None:
         if self._manifest is None:
             raise RuntimeError("Empty PLUGINS_REGISTRIES. Please, run load_plugins() before try to add hooks.")
         plugin_name: str = utils.extract_plugin_name(func=func)

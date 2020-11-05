@@ -84,10 +84,9 @@ REMOTE_PROGRESS_LOOKUP: Dict[str, Dict[str, int]] = {
         "Running command npm install -g aws-cdk": 25,
         "Phase complete: INSTALL State: SUCCEEDED": 27,
         "Phase complete: PRE_BUILD State: SUCCEEDED": 30,
-        "Env changes deployed": 70,
-        "Logged in": 75,
-        "Docker Image built": 85,
-        "Docker Image Deployed to ECR": 97,
+        "Plugins loaded": 50,
+        "Env changes deployed": 60,
+        "Teams Stacks deployed": 75,
         "Phase complete: BUILD State: SUCCEEDED": 99,
     },
     "Destroying Docker Image": {

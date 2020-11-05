@@ -29,6 +29,5 @@ RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyterlab-
 RUN jupyter serverextension enable --py jupyterlab_s3_browser
 RUN jupyter lab build
 
-# EFS
-ADD link-user-efs-directory.sh /etc/jupyterhub/link-user-efs-directory.sh
-
+# Bootstrap
+ADD bootstrap.sh /etc/jupyterhub/bootstrap.sh

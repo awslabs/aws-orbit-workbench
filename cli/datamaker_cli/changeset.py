@@ -17,9 +17,10 @@ import logging
 import os
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, cast
 
+from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE
+
 if TYPE_CHECKING:
     from datamaker_cli.manifest import Manifest
-    from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE
     from datamaker_cli.messages import MessagesContext
 
 _logger: logging.Logger = logging.getLogger(__name__)

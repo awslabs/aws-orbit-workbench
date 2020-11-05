@@ -75,6 +75,7 @@ Resources:
               - cognito-identity:SetIdentityPoolRoles
               - ec2:*
               - elasticloadbalancing:*
+              - codecommit:ListRepositories
             Resource: '*'
           - Effect: Allow
             Action:
@@ -132,8 +133,9 @@ Resources:
               - iam:DetachRolePolicy
               - iam:DeleteRolePolicy
               - iam:DeleteRole
-              - iam:UntagRole
               - iam:TagRole
+              - iam:UntagRole
+              - iam:ListRoleTags
               - iam:PassRole
               - iam:ListAttachedRolePolicies
               - iam:UpdateAssumeRolePolicy
@@ -189,6 +191,11 @@ Resources:
             Condition:
               StringEquals:
                 sts:AWSServiceName: codeartifact.amazonaws.com
+          - Effect: Allow
+            Action:
+              - codecommit:*
+            Resource:
+              - arn:aws:codecommit:${region}:${account_id}:datamaker-${env_name}-*
         Version: '2012-10-17'
       Description: ''
       ManagedPolicyName: datamaker-${env_name}-admin

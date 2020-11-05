@@ -2,16 +2,15 @@ import logging
 import os
 from typing import List
 
-from datamaker_cli import DATAMAKER_CLI_ROOT, sh
+from datamaker_cli import sh
 from datamaker_cli.manifest import Manifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _get_app_argument(app_filename: str, args: List[str]) -> str:
-    path: str = os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", app_filename)
     args_str: str = " ".join(args)
-    return f'--app "python {path} {args_str}"'
+    return f'--app "python {app_filename} {args_str}"'
 
 
 def _get_output_argument(manifest: Manifest, stack_name: str) -> str:

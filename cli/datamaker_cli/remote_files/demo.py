@@ -56,6 +56,11 @@ def _network_interface(manifest: Manifest, vpc_id: str) -> None:
                 _logger.warning(
                     f"Ignoring NetWorkInterface {i['NetworkInterfaceId']} because you are not allowed to manage."
                 )
+            elif "You do not have permission to access the specified resource" in error["Message"]:
+                _logger.warning(
+                    f"Ignoring NetWorkInterface {i['NetworkInterfaceId']} "
+                    "because you do not have permission to access the specified resource."
+                )
             else:
                 raise
 
@@ -103,7 +108,8 @@ def _cleanup_remaining_dependencies(manifest: Manifest) -> None:
     if manifest.vpc.vpc_id is None:
         manifest.fetch_network_data()
     if manifest.vpc.vpc_id is None:
-        raise ValueError(f"manifest.vpc.vpc_id: {manifest.vpc.vpc_id}")
+        _logger.debug(f"Skipping _cleanup_remaining_dependencies() because manifest.vpc.vpc_id: {manifest.vpc.vpc_id}")
+        return None
     vpc_id: str = manifest.vpc.vpc_id
     _network_interface(manifest=manifest, vpc_id=vpc_id)
     _security_group(manifest=manifest, vpc_id=vpc_id)
@@ -176,7 +182,7 @@ def deploy(manifest: Manifest) -> None:
         cdk.deploy(
             manifest=manifest,
             stack_name=manifest.demo_stack_name,
-            app_filename="demo.py",
+            app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "demo.py"),
             args=[manifest.filename],
         )
         manifest.fetch_demo_data()
@@ -200,6 +206,6 @@ def destroy(manifest: Manifest) -> None:
         cdk.destroy(
             manifest=manifest,
             stack_name=manifest.demo_stack_name,
-            app_filename="demo.py",
+            app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "demo.py"),
             args=[manifest.filename],
         )

@@ -69,6 +69,7 @@ class TeamManifest:
         )
         self.stack_name: str = f"datamaker-{self.manifest.name}-{self.name}"
         self.ssm_parameter_name: str = f"/datamaker/{self.manifest.name}/teams/{self.name}/manifest"
+        self.bootstrap_s3_prefix: str = f"teams/{self.name}/bootstrap/"
         self.scratch_bucket: Optional[str] = None
         self.scratch_retention_days: int = 30
 

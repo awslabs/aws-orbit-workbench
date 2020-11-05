@@ -237,10 +237,11 @@ def generate_spec(
         install.append("pip install datamaker-cli")
 
     # Plugins
-    for team_manifest in manifest.teams:
-        for plugin in team_manifest.plugins:
-            if plugin.path:
-                install.append(f"pip install -e {team_manifest.name}/{plugin.name}")
+    if plugins:
+        for team_manifest in manifest.teams:
+            for plugin in team_manifest.plugins:
+                if plugin.path:
+                    install.append(f"pip install -e {team_manifest.name}/{plugin.name}/")
 
     if cmds_install is not None:
         install += cmds_install

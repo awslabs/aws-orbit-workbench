@@ -40,22 +40,19 @@ def tag_image(manifest: "Manifest", remote_name: str, remote_source: str, name: 
 
 
 def build(
-    manifest: "Manifest",
-    dir: str,
-    name: str,
-    tag: str = "latest",
-    use_cache: bool = True,
+    manifest: "Manifest", dir: str, name: str, tag: str = "latest", use_cache: bool = True, pull: bool = False
 ) -> None:
     ecr_address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com"
     repo_address = f"{ecr_address}/{name}:{tag}"
     cache_str: str = ""
+    pull_str: str = "--pull" if pull else ""
     if use_cache:
         try:
             ecr_pull(manifest=manifest, name=name, tag=tag)
             cache_str = f"--cache-from {repo_address}"
         except exceptions.FailedShellCommand:
             _logger.debug(f"Docker cache not found at ECR {name}:{tag}")
-    sh.run(f"docker build {cache_str} --tag {name} .", cwd=dir)
+    sh.run(f"docker build {pull_str} {cache_str} --tag {name} .", cwd=dir)
 
 
 def push(manifest: "Manifest", name: str, tag: str = "latest") -> None:
@@ -73,7 +70,7 @@ def deploy_dynamic_image(
 ) -> None:
     login(manifest=manifest)
     _logger.debug("Logged in")
-    build(manifest=manifest, dir=dir, name=name, tag=tag, use_cache=use_cache)
+    build(manifest=manifest, dir=dir, name=name, tag=tag, use_cache=use_cache, pull=True)
     _logger.debug("Docker Image built")
     tag_image(manifest=manifest, remote_name=name, remote_source="local", name=name, tag=tag)
     _logger.debug("Docker Image tagged")
