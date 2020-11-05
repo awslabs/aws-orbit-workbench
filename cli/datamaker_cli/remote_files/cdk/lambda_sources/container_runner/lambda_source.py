@@ -22,6 +22,7 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> List[st
         {"name": "compute", "value": "{'compute': " + str(compute) + "}"},
         {"name": "DATAMAKER_TEAM_SPACE", "value": os.environ["AWS_DATAMAKER_TEAMSPACE"]},
         {"name": "AWS_DATAMAKER_ENV", "value": os.environ["AWS_DATAMAKER_ENV"]},
+        {"name": "JUPYTERHUB_USER", "value": event.get("JUPYTERHUB_USER", "")},
     ]
     if "env_vars" in event.keys():
         env_vars = event["env_vars"]
@@ -35,6 +36,7 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> List[st
         taskDefinition=os.environ["TASK_DEFINITION"],
         count=1,
         launchType="FARGATE",
+        platformVersion="1.4.0",
         networkConfiguration={
             "awsvpcConfiguration": {
                 "subnets": json.loads(os.environ["SUBNETS"]),
@@ -48,7 +50,7 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> List[st
             "containerOverrides": [
                 {
                     "name": "datamaker-runner",
-                    "command": ["python", "/root/python-utils/notebook_cli.py"],
+                    "command": ["python", "/opt/python-utils/notebook_cli.py"],
                     "environment": all_env_vars,
                 }
             ],

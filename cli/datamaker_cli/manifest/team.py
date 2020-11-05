@@ -135,7 +135,7 @@ class TeamManifest:
             self.manifest.write_manifest_ssm()
             _logger.debug("Team %s loaded successfully from SSM.", self.name)
 
-    def construct_ecr_repository_name(self, account_id: str, region: str, env: str) -> str:
+    def construct_ecr_repository_name(self, env: str) -> str:
         image = self.image["name"] if self.image else "jupyter-user"
         tag = self.image["version"] if self.image else "latest"
-        return f"{account_id}.dkr.ecr.{region}.amazonaws.com/datamaker-{env}-{image}:{tag}"
+        return f"datamaker-{env}-{image}:{tag}"
