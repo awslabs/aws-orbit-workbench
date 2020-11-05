@@ -48,9 +48,10 @@ def destroy(manifest: Manifest) -> None:
                     s3.delete_bucket(manifest=manifest, bucket=team_manifest.scratch_bucket)
                 except Exception as ex:
                     _logger.debug("Skipping Team scratch bucket deletion. Cause: %s", ex)
-                cdk.destroy(
-                    manifest=manifest,
-                    stack_name=team_manifest.stack_name,
-                    app_filename="team.py",
-                    args=[manifest.filename, team_manifest.name],
-                )
+                if cfn.does_stack_exist(manifest=manifest, stack_name=team_manifest.stack_name):
+                    cdk.destroy(
+                        manifest=manifest,
+                        stack_name=team_manifest.stack_name,
+                        app_filename="team.py",
+                        args=[manifest.filename, team_manifest.name],
+                    )
