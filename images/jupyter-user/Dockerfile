@@ -31,4 +31,9 @@ RUN jupyter lab build
 
 # EFS
 ADD link-user-efs-directory.sh /etc/jupyterhub/link-user-efs-directory.sh
-ADD python-utils/ /root/python-utils/
+
+USER root
+ADD python-utils/ /opt/python-utils/
+ADD transformations/ /opt/transformations/
+RUN chmod -R 755 /opt/python-utils/
+RUN chmod -R 755 /opt/transformations/

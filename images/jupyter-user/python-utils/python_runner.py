@@ -1,7 +1,6 @@
 import sys
 import os
 import time
-import git
 import tempfile
 import requests
 import yaml as yaml
@@ -15,27 +14,29 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
 
+# Hack to make YAML loader not auto-convert datetimes
+# https://stackoverflow.com/a/52312810
+NoDatesSafeLoader = yaml.SafeLoader
+NoDatesSafeLoader.yaml_implicit_resolvers = {
+    k: [r for r in v if r[0] != 'tag:yaml.org,2002:timestamp'] for
+    k, v in NoDatesSafeLoader.yaml_implicit_resolvers.items()
+}
+
+
 def run():
-    repo_dir_code = os.environ['AWS_DATAMAKER_REPO']
-
-    outputDirectory = os.environ['s3_output']
-
-    repos_url = os.environ['repos_url']
     tasks = yaml.load(os.environ['tasks'], Loader=NoDatesSafeLoader)
     compute = yaml.load(os.environ['compute'], Loader=NoDatesSafeLoader)
 
-    prepareLocalEnv(repos_url, repo_dir_code, outputDirectory)
-
     errors = []
     try:
-        errors = runTasks(tasks['tasks'],compute)
+        errors = runTasks(tasks['tasks'], compute)
 
     finally:
         if len(errors) > 0:
-            logger.error("Excution had errors : %s", errors)
-            raise Exception("Excution had errors : " + str(errors))
+            logger.error("Execution had errors : %s", errors)
+            raise Exception("Execution had errors : " + str(errors))
 
-    return "done notebook execution"
+    return "done python execution"
 
 
 def runTasks(tasks, compute):
@@ -70,7 +71,7 @@ def runTask(task):
     functionName = task['functionName']
     sourcePaths = task['sourcePaths']
     for p in sourcePaths:
-        sys.path.insert(0, os.path.join("/ws", p))
+        sys.path.insert(0, os.path.abspath(p))
 
     logger.info("import paths: %s" , str(sys.path))
 
@@ -87,30 +88,3 @@ def runTask(task):
 
     logger.info("Completed task execution for %s.%s", module, functionName)
     return errors
-
-
-def prepareLocalEnv(repos_url, repo_dir_code, outputDirectory):
-    if not os.path.exists("/ws"):
-        os.mkdir("/ws")
-    os.chdir("/ws")
-
-    if not os.path.exists(repo_dir_code):
-        logger.info("cloning repositories: %s", repos_url + repo_dir_code)
-        
-        git.Repo.clone_from(repos_url + repo_dir_code, repo_dir_code)
-        if (not outputDirectory.startswith("s3:")):
-            git.Repo.clone_from(repos_url + outputDirectory, outputDirectory)
-    else:
-        logger.info("pulling code changes for code repository: %s", repos_url + repo_dir_code)
-        g = git.cmd.Git(repo_dir_code)
-        g.pull()
-
-# Hack to make YAML loader not auto-convert datetimes
-# https://stackoverflow.com/a/52312810
-NoDatesSafeLoader = yaml.SafeLoader
-NoDatesSafeLoader.yaml_implicit_resolvers = {
-    k: [r for r in v if r[0] != 'tag:yaml.org,2002:timestamp'] for
-    k, v in NoDatesSafeLoader.yaml_implicit_resolvers.items()
-}
-
-

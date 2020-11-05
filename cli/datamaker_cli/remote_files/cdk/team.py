@@ -378,12 +378,11 @@ class Team(Stack):
             removal_policy=RemovalPolicy.DESTROY,
         )
 
+        repository_name, tag = self.team_manifest.construct_ecr_repository_name(self.manifest.name).split(":")
         ecr_repository = ecr.Repository.from_repository_name(
             self,
             "ecr_repository",
-            repository_name=self.team_manifest.construct_ecr_repository_name(
-                self.account, self.region, self.manifest.name
-            ),
+            repository_name=repository_name,
         )
 
         task_definition = ecs.TaskDefinition(
@@ -408,7 +407,7 @@ class Team(Stack):
         container_definition = task_definition.add_container(
             "datamaker-runner",
             memory_limit_mib=16384,
-            image=ecs.ContainerImage.from_ecr_repository(ecr_repository),
+            image=ecs.ContainerImage.from_ecr_repository(ecr_repository, tag),
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix=f"datamaker-{self.manifest.name}-{self.team_manifest.name}",
                 log_group=ecs_log_group,

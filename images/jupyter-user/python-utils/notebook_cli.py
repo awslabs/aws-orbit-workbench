@@ -1,3 +1,4 @@
+from logging import log
 import os
 import notebook_runner  as nr
 import python_runner as pr
@@ -6,10 +7,12 @@ import logging
 import time
 import yaml
 import boto3
+import subprocess
 import sys
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 from os.path import expanduser
+
 # Hack to make YAML loader not auto-convert datetimes
 # https://stackoverflow.com/a/52312810
 NoDatesSafeLoader = yaml.SafeLoader
@@ -28,8 +31,6 @@ def writeDataMakerYaml():
         dict(
             AWS_DATAMAKER_ENV=os.environ['AWS_DATAMAKER_ENV'],
             DATAMAKER_TEAM_SPACE=os.environ['DATAMAKER_TEAM_SPACE'],
-            AWS_DATAMAKER_S3_BUCKET=os.environ['AWS_DATAMAKER_S3_BUCKET'],
-            AWS_DATAMAKER_SRC_REPO=os.path.join("/ws/",os.environ['AWS_DATAMAKER_REPO'])
         )
     )
     home = expanduser("~")
@@ -41,8 +42,8 @@ def writeDataMakerYaml():
 def notifyOnTasksCompletion(subject, msg, compute):
     if 'topic' not in compute['compute'].keys():
         return
-    logger.info(f"sending task notification to {topic_name}...")
     topic_name = compute['compute']['sns.topic.name']
+    logger.info(f"sending task notification to {topic_name}...")
     try:
         sns = boto3.client('sns')
         res = sns.list_topics()['Topics']
@@ -83,8 +84,18 @@ def run_tasks():
                                 str(e) + '\n\n Tasks:\n' + os.environ['tasks'], compute)
 
 
+def symlink_efs():
+    jupyter_user = os.environ.get("JUPYTERHUB_USER", None)
+    if jupyter_user:
+        logger.info(f"Symlinking /efs/{jupyter_user} to /home/jovyan/private")
+        subprocess.check_call(["ln", "-s", f"/efs/{jupyter_user}", "/home/jovyan/private"])
+    logger.info("Symlinking /efs/shared /home/jovyan/shared")
+    subprocess.check_call(["ln", "-s", "/efs/shared", "/home/jovyan/shared"])
+
 
 if __name__ == '__main__':
-    logger.info("Starting Container Main, running tasks...")
+    logger.info("Starting Container Main")
+    symlink_efs()
+    logger.info("Running tasks...")
     run_tasks()
     logger.info("Exiting Container Main()")

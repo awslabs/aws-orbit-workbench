@@ -4,7 +4,6 @@ import os
 import json
 import time
 
-import git
 import tempfile
 import requests
 import papermill as pm
@@ -18,22 +17,31 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
 
+# Hack to make YAML loader not auto-convert datetimes
+# https://stackoverflow.com/a/52312810
+NoDatesSafeLoader = yaml.SafeLoader
+NoDatesSafeLoader.yaml_implicit_resolvers = {
+    k: [r for r in v if r[0] != 'tag:yaml.org,2002:timestamp'] for
+    k, v in NoDatesSafeLoader.yaml_implicit_resolvers.items()
+}
+
+
+def read_yaml_file(path):
+    with open(path, 'r') as f:
+        return yaml.load(f, Loader=NoDatesSafeLoader)
+
+
 def run():
 
-    repo_dir_code = os.environ['AWS_DATAMAKER_REPO']
-    outputDirectory = os.environ['s3_output']
-
-    repos_url = os.environ['repos_url']
+    outputDirectory = os.environ.get('output', 'private/outputs')
 
     notebooks = yaml.load(os.environ['tasks'], Loader=NoDatesSafeLoader)
     compute = yaml.load(os.environ['compute'], Loader=NoDatesSafeLoader)
-  
-    prepareLocalEnv(repos_url, repo_dir_code, outputDirectory)
 
-    notebooksToRun = prepareAndValidateNotebooks(repo_dir_code, outputDirectory, notebooks, compute)
+    notebooksToRun = prepareAndValidateNotebooks(outputDirectory, notebooks)
 
     try:
-        errors = runNotebooks(notebooksToRun, outputDirectory, compute)
+        errors = runNotebooks(notebooksToRun, compute)
 
     finally:
         if len(errors) > 0:
@@ -44,7 +52,7 @@ def run():
 
 
 
-def runNotebooks(reportsToRun, outputDirectory, compute):
+def runNotebooks(reportsToRun, compute):
     errors = []
     if ('container' in compute['compute'].keys() and 'p_concurrent' in compute['compute']['container']):
         workers = int(compute['compute']['container']['p_concurrent'])
@@ -96,51 +104,31 @@ def runNotebook(parameters):
     logger.info("Completed notebook execution: %s", parameters['PAPERMILL_OUTPUT_PATH'])
     return errors
 
-def prepareAndValidateNotebooks(repo_dir_code, outputDirectory, notebooks, compute):
+def prepareAndValidateNotebooks(outputDirectory, notebooks):
     reportsToRun = []
     id = 1
     for notebook in notebooks['tasks']:
         key = "e{}".format(str(id))
         id += 1
-        reportToRun = prepareNotebook(repo_dir_code, outputDirectory, notebook, key, compute)
+        reportToRun = prepareNotebook(outputDirectory, notebook, key)
         reportsToRun.append(reportToRun)
     return reportsToRun
 
 
-def prepareLocalEnv(repos_url, repo_dir_code, outputDirectory):
-    if not os.path.exists("/ws"):
-        os.mkdir("/ws")
-    os.chdir("/ws")
-
-    if not os.path.exists(repo_dir_code):
-        logger.info("cloning repository: %s", repos_url + repo_dir_code)
-        
-        git.Repo.clone_from(repos_url + repo_dir_code, repo_dir_code)
-        if (not outputDirectory.startswith("s3:")):
-            git.Repo.clone_from(repos_url + outputDirectory, outputDirectory)
-    else:
-        logger.info("pulling code changes for code repository: %s", repos_url + repo_dir_code)
-        g = git.cmd.Git(repo_dir_code)
-        g.pull()
-        if (not outputDirectory.startswith("s3:")):
-            g = git.cmd.Git(outputDirectory)
-            g.pull()
-
-
-def prepareNotebook(repo_dir_code, outputDirectory, notebook, key, compute):
+def prepareNotebook(outputDirectory, notebook, key):
     notebookName = notebook['notebookName']
     sourcePath = notebook['sourcePath']
-    targetPath = notebook['targetPath']
-    targetPrefix = notebook['targetPrefix'] if 'targetPrefix' in notebook else key
+    targetPath = notebook.get('targetPath', "")
+    targetPrefix = notebook.get('targetPrefix', key)
 
     timestamp = time.strftime("%Y%m%d-%H:%M")
     outputName = targetPrefix + "@" + timestamp + ".ipynb"
 
     logger.debug(f"Source Path: {sourcePath}")
-    sourcePath = sourcePath.replace("$DATAMAKERE_TRANSFORMATION_NOTEBOOKS_ROOT", "/root/transformations/")
-    workdir = os.path.join(repo_dir_code, sourcePath)
+    sourcePath = sourcePath.replace("$DATAMAKER_TRANSFORMATION_NOTEBOOKS_ROOT", "/opt/transformations/")
+    workdir = os.path.abspath(sourcePath)
 
-    pathToNotebook = os.path.join(repo_dir_code, sourcePath, notebookName)
+    pathToNotebook = os.path.join(sourcePath, notebookName)
 
     pathToNotebookFixed = os.path.join("/tmp", outputName)
     logger.debug("Source Notebook: %s", pathToNotebook)
@@ -180,7 +168,7 @@ def prepareNotebook(repo_dir_code, outputDirectory, notebook, key, compute):
     logger.debug("Target Notebook path: %s", pathToOutputNotebook)
     logger.debug("FOUND notebook: %s", notebook)
     if 'paramPath' in notebook:
-        pathToParamPath = os.path.join(repo_dir_code, notebook['paramPath'])
+        pathToParamPath = os.path.abspath(notebook['paramPath'])
         try:
             parameters = read_yaml_file(pathToParamPath)
         except:
@@ -203,17 +191,3 @@ def prepareNotebook(repo_dir_code, outputDirectory, notebook, key, compute):
     logger.debug("runtime parameters: %s", parameters)
 
     return parameters
-
-
-# Hack to make YAML loader not auto-convert datetimes
-# https://stackoverflow.com/a/52312810
-NoDatesSafeLoader = yaml.SafeLoader
-NoDatesSafeLoader.yaml_implicit_resolvers = {
-    k: [r for r in v if r[0] != 'tag:yaml.org,2002:timestamp'] for
-    k, v in NoDatesSafeLoader.yaml_implicit_resolvers.items()
-}
-
-
-def read_yaml_file(path):
-    with open(path, 'r') as f:
-        return yaml.load(f, Loader=NoDatesSafeLoader)
