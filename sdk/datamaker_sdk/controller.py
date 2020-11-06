@@ -80,7 +80,7 @@ def _get_invoke_function_name() -> Any:
     Function Name.
     """
     props = get_properties()
-    functionName = f"datamaker-{props['AWS_DATAMAKER_ENV']}-{props['DATAMAKER_TEAM_SPACE']}-run-container"
+    functionName = f"datamaker-{props['AWS_DATAMAKER_ENV']}-{props['DATAMAKER_TEAM_SPACE']}-container-runner"
     return functionName
 
 
@@ -231,6 +231,7 @@ def _run_task(taskConfiguration: dict) -> Any:
     Response Payload
     """
     lambda_client = boto3.client("lambda")
+    taskConfiguration["JUPYTERHUB_USER"] = os.environ.get("JUPYTERHUB_USER", None)
     payload = json.dumps(taskConfiguration)
     logger.debug(payload)
     response = lambda_client.invoke(

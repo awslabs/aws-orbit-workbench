@@ -26,7 +26,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 def _list_self_files() -> List[str]:
     path = os.path.join(DATAMAKER_CLI_ROOT, "**")
-    extensions = (".py", ".yaml", ".typed")
+    extensions = (".py", ".yaml", ".typed", ".json")
     return [f for f in glob.iglob(path, recursive=True) if os.path.isfile(f) and f.endswith(extensions)]
 
 

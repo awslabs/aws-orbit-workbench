@@ -23,7 +23,7 @@ notebook_name = "Automated-Data-Transformations.ipynb"
 workspace = get_workspace()
 team_space = workspace["team_space"]
 env_name = workspace["env_name"]
-source_path = "$DATAMAKERE_TRANSFORMATION_NOTEBOOKS_ROOT"
+source_path = "$DATAMAKER_TRANSFORMATION_NOTEBOOKS_ROOT"
 base_path = "datamaker/profiling"
 logger.info(f"Team space: {team_space}, Environment name: {env_name}")
 

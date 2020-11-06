@@ -153,7 +153,7 @@ class Manifest:
                 nodes_num_max=cast(int, t["nodes-num-max"]),
                 nodes_num_min=cast(int, t["nodes-num-min"]),
                 policy=cast(str, t["policy"]),
-                image=cast(Optional[str], t.get("image")),
+                image=cast(Optional[Dict[str, str]], t.get("image")),
             )
             for t in cast(List[MANIFEST_FILE_TEAM_TYPE], self.raw_file["teams"])
         ]
