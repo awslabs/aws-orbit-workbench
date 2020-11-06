@@ -186,7 +186,7 @@ Resources:
             Action:
               - lambda:*
             Resource:
-              - arn:aws:lambda:us-west-2:011316101677:function:datamaker-${env_name}-*
+              - arn:aws:lambda:${region}:${account_id}:function:datamaker-${env_name}-*
           - Effect: Allow
             Action:
               - codeartifact:GetAuthorizationToken
