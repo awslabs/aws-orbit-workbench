@@ -39,7 +39,7 @@ jobs:
       - name: CloudFormation Lint
         run: cfn-lint -i E1029,E3031 -- datamaker_cli/data/toolkit/template.yaml
 
-  Images-JupyterHub:
+  ImagesJupyterHub:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -66,8 +66,7 @@ jobs:
       - name: Isort Check
         run: isort --check .
 
-
-  Plugins-HelloWorld:
+  PluginsHelloWorld:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -94,8 +93,7 @@ jobs:
       - name: Isort Check
         run: isort --check .
 
-
-  Plugins-CodeCommit:
+  PluginsCodeCommit:
     runs-on: ubuntu-latest
     strategy:
       matrix:
