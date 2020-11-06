@@ -114,10 +114,16 @@ def generate_bundle(
 
     # Plugins
     for team_manifest in manifest.teams:
+        plugin_bundle_dir = os.path.join(bundle_dir, team_manifest.name)
         for plugin in team_manifest.plugins:
             if plugin.path:
-                plugin_bundle_dir = os.path.join(bundle_dir, team_manifest.name)
                 _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin.path, name=plugin.name)
+    if changeset is not None:
+        for plugin_changeset in changeset.plugin_changesets:
+            plugin_bundle_dir = os.path.join(bundle_dir, plugin_changeset.team_name)
+            for plugin_name, plugin_path in plugin_changeset.old_paths.items():
+                if plugin_name not in plugin_changeset.new:
+                    _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin_path, name=plugin_name)
 
     # Extra Directories
     if dirs is not None:

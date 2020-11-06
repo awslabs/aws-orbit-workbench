@@ -17,6 +17,7 @@ import logging
 import botocore.exceptions
 
 from datamaker_cli import bundle, plugins, remote
+from datamaker_cli.changeset import Changeset, extract_changeset
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.messages import MessagesContext
 from datamaker_cli.services import cfn, codebuild, s3
@@ -46,8 +47,13 @@ def destroy(filename: str, debug: bool) -> None:
         ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
         ctx.progress(2)
 
-        plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, ctx=ctx)
+        _logger.debug("Inspecting possible manifest changes...")
+        changes: Changeset = extract_changeset(manifest=manifest, ctx=ctx)
+        _logger.debug(f"Changeset: {changes.asdict()}")
         ctx.progress(3)
+
+        plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, ctx=ctx, changes=changes.plugin_changesets)
+        ctx.progress(4)
 
         if (
             cfn.does_stack_exist(manifest=manifest, stack_name=manifest.demo_stack_name)

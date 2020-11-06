@@ -17,7 +17,7 @@ import os
 import time
 from typing import Any, Dict, Iterator, List, Tuple
 
-from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, plugins
+from datamaker_cli import DATAMAKER_CLI_ROOT, cdk
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.services import cfn, ecr
 
@@ -120,11 +120,9 @@ def deploy(manifest: Manifest, add_images: List[str], remove_images: List[str]) 
     )
 
     manifest.fetch_ssm()
-    plugins.PLUGINS_REGISTRIES.deploy_env(manifest=manifest)
 
 
 def destroy(manifest: Manifest) -> None:
-    plugins.PLUGINS_REGISTRIES.destroy_env(manifest=manifest)
     _logger.debug("Stack name: %s", manifest.env_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.env_stack_name):
         _cleanup_remaining_resources(manifest=manifest)

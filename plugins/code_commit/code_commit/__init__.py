@@ -26,8 +26,8 @@ _logger: logging.Logger = logging.getLogger("datamaker_cli")
 DATAMAKER_CODE_COMMIT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
-@hooks.deploy.team
-def deploy_team(manifest: Manifest, team_manifest: TeamManifest) -> None:
+@hooks.deploy
+def deploy(manifest: Manifest, team_manifest: TeamManifest) -> None:
     _logger.debug("Deploying CodeCommit plugin resources for team %s", team_manifest.name)
     cdk.deploy(
         manifest=manifest,
@@ -37,8 +37,8 @@ def deploy_team(manifest: Manifest, team_manifest: TeamManifest) -> None:
     )
 
 
-@hooks.destroy.team
-def destroy_team(manifest: Manifest, team_manifest: TeamManifest) -> None:
+@hooks.destroy
+def destroy(manifest: Manifest, team_manifest: TeamManifest) -> None:
     _logger.debug("Destroying CodeCommit plugin resources for team %s", team_manifest.name)
     cdk.destroy(
         manifest=manifest,
@@ -48,7 +48,7 @@ def destroy_team(manifest: Manifest, team_manifest: TeamManifest) -> None:
     )
 
 
-@hooks.images.dockerfile_injection
+@hooks.dockerfile_injection
 def dockerfile_injection(manifest: Manifest, team_manifest: TeamManifest) -> List[str]:
     _logger.debug("Injecting CodeCommit plugin commands for team %s Image", team_manifest.name)
     return [
@@ -57,7 +57,7 @@ def dockerfile_injection(manifest: Manifest, team_manifest: TeamManifest) -> Lis
     ]
 
 
-@hooks.images.bootstrap_injection
+@hooks.bootstrap_injection
 def bootstrap_injection(manifest: Manifest, team_manifest: TeamManifest) -> str:
     _logger.debug("Injecting CodeCommit plugin commands for team %s Bootstrap", team_manifest.name)
     return """

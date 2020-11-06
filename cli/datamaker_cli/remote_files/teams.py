@@ -23,6 +23,7 @@ from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, docker, plugins
 from datamaker_cli.services import cfn, s3
 
 if TYPE_CHECKING:
+    from datamaker_cli.changeset import PluginChangeset
     from datamaker_cli.manifest import Manifest
     from datamaker_cli.manifest.team import TeamManifest
 
@@ -87,7 +88,7 @@ def _deploy_team_bootstrap(manifest: "Manifest", team_manifest: "TeamManifest") 
                 )
 
 
-def deploy(manifest: "Manifest") -> None:
+def deploy(manifest: "Manifest", changes: List["PluginChangeset"]) -> None:
     for team_manifest in manifest.teams:
         cdk.deploy(
             manifest=manifest,
@@ -97,26 +98,26 @@ def deploy(manifest: "Manifest") -> None:
         )
         team_manifest.fetch_ssm()
         manifest.write_manifest_ssm()
-    plugins.PLUGINS_REGISTRIES.deploy_teams(manifest=manifest)
+        plugins.PLUGINS_REGISTRIES.deploy_team_plugins(manifest=manifest, team_manifest=team_manifest, changes=changes)
     for team_manifest in manifest.teams:
         _deploy_team_image(manifest=manifest, team_manifest=team_manifest)
         _deploy_team_bootstrap(manifest=manifest, team_manifest=team_manifest)
 
 
 def destroy(manifest: "Manifest") -> None:
-    plugins.PLUGINS_REGISTRIES.destroy_teams(manifest=manifest)
     for team_manifest in manifest.teams:
         _logger.debug("Stack name: %s", team_manifest.stack_name)
         if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.toolkit_stack_name):
+            plugins.PLUGINS_REGISTRIES.destroy_team_plugins(manifest=manifest, team_manifest=team_manifest)
             if team_manifest.scratch_bucket is not None:
                 try:
                     s3.delete_bucket(manifest=manifest, bucket=team_manifest.scratch_bucket)
                 except Exception as ex:
                     _logger.debug("Skipping Team scratch bucket deletion. Cause: %s", ex)
-                if cfn.does_stack_exist(manifest=manifest, stack_name=team_manifest.stack_name):
-                    cdk.destroy(
-                        manifest=manifest,
-                        stack_name=team_manifest.stack_name,
-                        app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "team.py"),
-                        args=[manifest.filename, team_manifest.name],
-                    )
+            if cfn.does_stack_exist(manifest=manifest, stack_name=team_manifest.stack_name):
+                cdk.destroy(
+                    manifest=manifest,
+                    stack_name=team_manifest.stack_name,
+                    app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "team.py"),
+                    args=[manifest.filename, team_manifest.name],
+                )

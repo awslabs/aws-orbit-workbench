@@ -32,10 +32,11 @@ CHANGESET_FILE_TYPE = Dict[str, Union[List[CHANGESET_FILE_IMAGE_TYPE], List[CHAN
 
 
 class PluginChangeset:
-    def __init__(self, team_name: str, old: List[str], new: List[str]) -> None:
+    def __init__(self, team_name: str, old: List[str], new: List[str], old_paths: Dict[str, str]) -> None:
         self.team_name: str = team_name
-        self.old_image: List[str] = old
-        self.new_image: List[str] = new
+        self.old: List[str] = old
+        self.new: List[str] = new
+        self.old_paths: Dict[str, str] = old_paths
 
     def asdict(self) -> CHANGESET_FILE_IMAGE_TYPE:
         return vars(self)
@@ -54,11 +55,11 @@ class ImageChangeset:
 class Changeset:
     def __init__(
         self,
-        image_changesets: Optional[List[ImageChangeset]] = None,
-        plugin_changesets: Optional[List[PluginChangeset]] = None,
+        image_changesets: List[ImageChangeset],
+        plugin_changesets: List[PluginChangeset],
     ) -> None:
-        self.image_changesets: List[ImageChangeset] = [] if image_changesets is None else image_changesets
-        self.plugin_changesets: List[PluginChangeset] = [] if plugin_changesets is None else plugin_changesets
+        self.image_changesets: List[ImageChangeset] = image_changesets
+        self.plugin_changesets: List[PluginChangeset] = plugin_changesets
 
     def asdict(self) -> CHANGESET_FILE_TYPE:
         return {
@@ -75,7 +76,7 @@ class Changeset:
 
 def extract_changeset(manifest: "Manifest", ctx: "MessagesContext") -> Changeset:
     if manifest.raw_ssm is None:
-        return Changeset()
+        return Changeset(image_changesets=[], plugin_changesets=[])
 
     # Images check
     image_changesets: List[ImageChangeset] = []
@@ -100,7 +101,10 @@ def extract_changeset(manifest: "Manifest", ctx: "MessagesContext") -> Changeset
         _logger.debug("Inpecting Plugins Change for team %s: %s -> %s", team.name, old, new)
         if old != new:
             ctx.info(f"Plugin change detected for Team {team.name}: {old} -> {new}")
-            plugin_changesets.append(PluginChangeset(team_name=team.name, old=old, new=new))
+            old_paths: Dict[str, str] = {
+                p["name"]: p["path"] for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team.raw_ssm.get("plugins", []))
+            }
+            plugin_changesets.append(PluginChangeset(team_name=team.name, old=old, new=new, old_paths=old_paths))
 
     return Changeset(image_changesets=image_changesets, plugin_changesets=plugin_changesets)
 
@@ -117,5 +121,14 @@ def read_changeset_file(filename: str) -> Changeset:
         image_changesets=[
             ImageChangeset(team_name=cast(str, i["team_name"]), old_image=i["old_image"], new_image=i["new_image"])
             for i in cast(List[CHANGESET_FILE_IMAGE_TYPE], raw.get("image_changesets", []))
-        ]
+        ],
+        plugin_changesets=[
+            PluginChangeset(
+                team_name=cast(str, i["team_name"]),
+                old=cast(List[str], i["old"]),
+                new=cast(List[str], i["new"]),
+                old_paths=cast(Dict[str, str], i["old_paths"]),
+            )
+            for i in cast(List[CHANGESET_FILE_PLUGIN_TYPE], raw.get("plugin_changesets", []))
+        ],
     )

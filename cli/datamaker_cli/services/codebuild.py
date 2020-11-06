@@ -16,13 +16,16 @@ import logging
 import time
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, NamedTuple, Optional, Union
 
 import botocore.exceptions
 import yaml
 
-from datamaker_cli.manifest import Manifest
 from datamaker_cli.utils import try_it
+
+if TYPE_CHECKING:
+    from datamaker_cli.changeset import Changeset
+    from datamaker_cli.manifest import Manifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -108,7 +111,7 @@ class BuildInfo(NamedTuple):
 
 
 def start(
-    manifest: Manifest,
+    manifest: "Manifest",
     project_name: str,
     stream_name: str,
     bundle_location: str,
@@ -135,7 +138,7 @@ def start(
     return str(response["build"]["id"])
 
 
-def fetch_build_info(manifest: Manifest, build_id: str) -> BuildInfo:
+def fetch_build_info(manifest: "Manifest", build_id: str) -> BuildInfo:
     client = manifest.boto3_client("codebuild")
     response: Dict[str, List[Dict[str, Any]]] = try_it(
         f=client.batch_get_builds, ex=botocore.exceptions.ClientError, ids=[build_id]
@@ -174,7 +177,7 @@ def fetch_build_info(manifest: Manifest, build_id: str) -> BuildInfo:
     )
 
 
-def wait(manifest: Manifest, build_id: str) -> Iterable[BuildInfo]:
+def wait(manifest: "Manifest", build_id: str) -> Iterable[BuildInfo]:
     build = fetch_build_info(manifest=manifest, build_id=build_id)
     while build.status is BuildStatus.in_progress:
         time.sleep(_BUILD_WAIT_POLLING_DELAY)
@@ -202,12 +205,13 @@ SPEC_TYPE = Dict[str, Union[float, Dict[str, Dict[str, Union[List[str], Dict[str
 
 
 def generate_spec(
-    manifest: Manifest,
+    manifest: "Manifest",
     plugins: bool = True,
     cmds_install: Optional[List[str]] = None,
     cmds_pre: Optional[List[str]] = None,
     cmds_build: Optional[List[str]] = None,
     cmds_post: Optional[List[str]] = None,
+    changeset: Optional["Changeset"] = None,
 ) -> SPEC_TYPE:
     pre: List[str] = [] if cmds_pre is None else cmds_pre
     build: List[str] = [] if cmds_build is None else cmds_build
@@ -242,6 +246,11 @@ def generate_spec(
             for plugin in team_manifest.plugins:
                 if plugin.path:
                     install.append(f"pip install -e {team_manifest.name}/{plugin.name}/")
+        if changeset is not None:
+            for plugin_changeset in changeset.plugin_changesets:
+                for plugin_name in plugin_changeset.old:
+                    if plugin_name not in plugin_changeset.new:
+                        install.append(f"pip install -e {plugin_changeset.team_name}/{plugin_name}/")
 
     if cmds_install is not None:
         install += cmds_install

@@ -16,7 +16,7 @@ import logging
 import os
 from typing import Optional, Tuple
 
-from datamaker_cli import docker, plugins, sh
+from datamaker_cli import changeset, docker, plugins, sh
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.remote_files import env, teams
 
@@ -25,7 +25,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     manifest: Manifest = Manifest(filename=filename)
-    manifest.fetch_ssm()
+    manifest.fillup()
     _logger.debug("manifest.name: %s", manifest.name)
     _logger.debug("args: %s", args)
     if len(args) == 1:
@@ -37,15 +37,22 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     else:
         raise ValueError("Unexpected number of values in args.")
 
-    plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest)
+    changes: changeset.Changeset = changeset.read_changeset_file(
+        filename=os.path.join(manifest.filename_dir, "changeset.json")
+    )
+    _logger.debug(f"Changeset: {changes.asdict()}")
+    _logger.debug("Changeset loaded")
+
+    plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, changes=changes.plugin_changesets)
     _logger.debug("Plugins loaded")
+
     env.deploy(
         manifest=manifest,
         add_images=[image_name],
         remove_images=[],
     )
     _logger.debug("Env changes deployed")
-    teams.deploy(manifest=manifest)
+    teams.deploy(manifest=manifest, changes=changes.plugin_changesets)
     _logger.debug("Teams Stacks deployed")
 
     path = os.path.join(manifest.filename_dir, image_name)

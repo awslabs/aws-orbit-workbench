@@ -116,10 +116,11 @@ def deploy(
         ctx.progress(3)
 
         _logger.debug("Inspecting possible manifest changes...")
-        changeset: Changeset = extract_changeset(manifest=manifest, ctx=ctx)
+        changes: Changeset = extract_changeset(manifest=manifest, ctx=ctx)
+        _logger.debug(f"Changeset: {changes.asdict()}")
         ctx.progress(4)
 
-        plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, ctx=ctx)
+        plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, ctx=ctx, changes=changes.plugin_changesets)
         ctx.progress(5)
 
         deploy_toolkit(
@@ -135,7 +136,7 @@ def deploy(
             command_name="deploy",
             manifest=manifest,
             dirs=_get_images_dirs(manifest=manifest, skip_images=skip_images),
-            changeset=changeset,
+            changeset=changes,
         )
         ctx.progress(15)
         skip_images_remote_flag: str = "skip-images" if skip_images else "no-skip-images"
@@ -143,6 +144,7 @@ def deploy(
             manifest=manifest,
             plugins=True,
             cmds_build=[f"datamaker remote --command deploy {skip_images_remote_flag}"],
+            changeset=changes,
         )
         remote.run(
             command_name="deploy",

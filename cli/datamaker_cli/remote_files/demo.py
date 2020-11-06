@@ -21,7 +21,7 @@ from typing import Any, Dict, List
 
 import botocore.exceptions
 
-from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, plugins, sh
+from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, sh
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.services import cfn, s3
 
@@ -186,12 +186,10 @@ def deploy(manifest: Manifest) -> None:
             args=[manifest.filename],
         )
         manifest.fetch_demo_data()
-        plugins.PLUGINS_REGISTRIES.deploy_demo(manifest=manifest)
         _prepare_demo_data(manifest)  # Adding demo data
 
 
 def destroy(manifest: Manifest) -> None:
-    plugins.PLUGINS_REGISTRIES.destroy_demo(manifest=manifest)
     if manifest.demo and cfn.does_stack_exist(manifest=manifest, stack_name=manifest.demo_stack_name):
         waited: bool = False
         while cfn.does_stack_exist(manifest=manifest, stack_name=manifest.eks_stack_name):

@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import logging
-from typing import Callable
+from typing import Callable, List
 
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.team import TeamManifest
@@ -22,16 +22,23 @@ from datamaker_cli.plugins import PLUGINS_REGISTRIES
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def demo(func: Callable[[Manifest, TeamManifest], None]) -> Callable[[Manifest, TeamManifest], None]:
-    PLUGINS_REGISTRIES.add_hook(hook_name="destroy_demo_hook", func=func)
+def deploy(func: Callable[[Manifest, TeamManifest], None]) -> Callable[[Manifest, TeamManifest], None]:
+    PLUGINS_REGISTRIES.add_hook(hook_name="deploy_hook", func=func)
     return func
 
 
-def env(func: Callable[[Manifest, TeamManifest], None]) -> Callable[[Manifest, TeamManifest], None]:
-    PLUGINS_REGISTRIES.add_hook(hook_name="destroy_env_hook", func=func)
-    return func
-
-
-def team(func: Callable[[Manifest, TeamManifest], None]) -> Callable[[Manifest, TeamManifest], None]:
+def destroy(func: Callable[[Manifest, TeamManifest], None]) -> Callable[[Manifest, TeamManifest], None]:
     PLUGINS_REGISTRIES.add_hook(hook_name="destroy_team_hook", func=func)
+    return func
+
+
+def dockerfile_injection(
+    func: Callable[[Manifest, TeamManifest], List[str]]
+) -> Callable[[Manifest, TeamManifest], List[str]]:
+    PLUGINS_REGISTRIES.add_hook(hook_name="dockerfile_injection_hook", func=func)
+    return func
+
+
+def bootstrap_injection(func: Callable[[Manifest, TeamManifest], str]) -> Callable[[Manifest, TeamManifest], str]:
+    PLUGINS_REGISTRIES.add_hook(hook_name="bootstrap_injection_hook", func=func)
     return func
