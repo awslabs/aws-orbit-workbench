@@ -26,7 +26,9 @@ _logger: logging.Logger = logging.getLogger("datamaker_cli")
 @hooks.images.dockerfile_injection
 def dockerfile_injection(manifest: Manifest, team_manifest: TeamManifest) -> List[str]:
     _logger.debug("Team Env: %s | Team: %s | Image: %s", manifest.name, team_manifest.name, team_manifest.image)
-    return ["RUN echo 'Hello World!' > /home/jovyan/hello-world-plugin.txt"]
+    return [
+        "RUN echo 'Hello World!' > /home/jovyan/hello-world-plugin.txt"
+    ]
 
 
 @hooks.deploy.demo

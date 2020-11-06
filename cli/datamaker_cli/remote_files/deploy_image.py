@@ -29,11 +29,11 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug("manifest.name: %s", manifest.name)
     _logger.debug("args: %s", args)
     if len(args) == 1:
-        image_name: str = args[1]
+        image_name: str = args[0]
         script: Optional[str] = None
     elif len(args) == 2:
-        image_name = args[1]
-        script = args[2]
+        image_name = args[0]
+        script = args[1]
     else:
         raise ValueError("Unexpected number of values in args.")
 

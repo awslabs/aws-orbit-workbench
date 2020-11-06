@@ -40,8 +40,8 @@ S3_PATH="s3://${AWS_DATAMAKER_S3_BUCKET}/teams/${DATAMAKER_TEAM_SPACE}/bootstrap
 
 mkdir -p $LOCAL_PATH
 aws s3 cp $S3_PATH $LOCAL_PATH --recursive
-for filename in $LOCAL_PATH*
+for filename in $(ls $LOCAL_PATH)
 do
     echo "Running ${filename}"
-    sh "${filename}"
+    sh "${LOCAL_PATH}${filename}"
 done

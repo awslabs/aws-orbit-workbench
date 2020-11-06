@@ -74,11 +74,12 @@ configs='
 
 echo "$configs" > /home/jovyan/.gitconfig
 
-REPO_LOCAL_PATH="/home/jovyan/private/codecommit"
+REPO_LOCAL_PATH="/efs/"${USERNAME}"/codecommit"
 REPO_ADDRESS="https://git-codecommit.${AWS_DEFAULT_REGION}.amazonaws.com/v1/repos/datamaker-${AWS_DATAMAKER_ENV}-${DATAMAKER_TEAM_SPACE}"
 
 if [ ! -d "${REPO_LOCAL_PATH}" ] ; then
     git clone "${REPO_ADDRESS}" "${REPO_LOCAL_PATH}"
 fi
+chown -R jovyan "${REPO_LOCAL_PATH}"
 
 """
