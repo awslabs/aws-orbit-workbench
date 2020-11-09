@@ -12,14 +12,18 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import logging
 import os
 import shutil
+import sys
 from typing import Any, Tuple
 
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk.core import App, CfnOutput, Construct, Stack, Tags
 
-from datamaker_cli.utils import path_from_filename
+from datamaker_cli.manifest import Manifest
+
+_logger: logging.Logger = logging.getLogger(__name__)
 
 
 class VpcStack(Stack):
@@ -48,7 +52,7 @@ class VpcStack(Stack):
         CfnOutput(
             scope=self,
             id=f"{id}isolatedsubnetsids",
-            export_name=f"{id}-isolated-subnets-ids",
+            export_name=f"datamaker-{self.env_name}-isolated-subnets-ids",
             value=",".join(self.isolated_subnets_ids),
         )
 
@@ -67,9 +71,11 @@ class VpcStack(Stack):
                 ec2.SubnetConfiguration(name="Private", subnet_type=ec2.SubnetType.PRIVATE, cidr_mask=21),
                 ec2.SubnetConfiguration(name="Isolated", subnet_type=ec2.SubnetType.ISOLATED, cidr_mask=21),
             ],
-            flow_logs=ec2.FlowLogOptions(
-                destination=ec2.FlowLogDestination.to_cloud_watch_logs(), traffic_type=ec2.FlowLogTrafficType.ALL
-            ),
+            flow_logs={
+                "all-traffic": ec2.FlowLogOptions(
+                    destination=ec2.FlowLogDestination.to_cloud_watch_logs(), traffic_type=ec2.FlowLogTrafficType.ALL
+                )
+            },
         )
         return vpc
 
@@ -108,17 +114,17 @@ class VpcStack(Stack):
         self.public_subnets = (
             self.vpc.select_subnets(subnet_type=ec2.SubnetType.PUBLIC)
             if self.vpc.public_subnets
-            else EmptySubnetSelection()
+            else self.vpc.select_subnets(subnet_name="")
         )
         self.private_subnets = (
             self.vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE)
             if self.vpc.private_subnets
-            else EmptySubnetSelection()
+            else self.vpc.select_subnets(subnet_name="")
         )
         self.isolated_subnets = (
             self.vpc.select_subnets(subnet_type=ec2.SubnetType.ISOLATED)
             if self.vpc.isolated_subnets
-            else EmptySubnetSelection()
+            else self.vpc.select_subnets(subnet_name="")
         )
 
         for name, gateway_vpc_endpoint_service in vpc_gateway_endpoints.items():
@@ -141,25 +147,27 @@ class VpcStack(Stack):
         self.vpc.add_interface_endpoint(
             "code_artifact_endpoint",
             service=ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories"),
-            private_dns_enabled=False,
         )
 
 
-class EmptySubnetSelection(ec2.SelectedSubnets):
-    def __init__(self) -> None:
-        super().__init__(
-            availability_zones=[], has_public=False, internet_connectivity_established=None, subnet_ids=[], subnets=[]
-        )
+def main() -> None:
+    _logger.debug("sys.argv: %s", sys.argv)
+    if len(sys.argv) == 2:
+        filename: str = sys.argv[1]
+    else:
+        raise ValueError("Unexpected number of values in sys.argv.")
 
+    manifest: Manifest = Manifest(filename=filename)
+    manifest.fillup()
 
-def synth(stack_name: str, filename: str, env_name: str) -> str:
-    filename_dir = path_from_filename(filename=filename)
-    outdir = os.path.join(filename_dir, ".datamaker.out", env_name, "cdk", stack_name)
+    outdir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "cdk", manifest.demo_stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
-    output_filename = os.path.join(outdir, f"{stack_name}.template.json")
 
     app = App(outdir=outdir)
-    VpcStack(scope=app, id=stack_name, env_name=env_name)
+    VpcStack(scope=app, id=manifest.demo_stack_name, env_name=manifest.name)
     app.synth(force=True)
-    return output_filename
+
+
+if __name__ == "__main__":
+    main()

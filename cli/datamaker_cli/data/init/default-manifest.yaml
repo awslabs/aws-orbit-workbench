@@ -1,0 +1,17 @@
+name: ${name}
+region: ${region}
+demo: ${demo}
+dev: ${dev}
+plugins: []
+vpc:
+    private-subnets-ids: []
+    public-subnets-ids: []
+    isolated-subnets-ids: []
+teams:
+-   name: my-team
+    instance-type: m5.4xlarge
+    local-storage-size: 128
+    nodes-num-desired: 2
+    nodes-num-max: 3
+    nodes-num-min: 1
+    policy: AdministratorAccess

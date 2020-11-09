@@ -22,7 +22,7 @@ COLOR_DATAMAKER = "bright_blue"
 COLOR_ERROR = "bright_red"
 COLOR_WARN = "bright_yellow"
 
-PROGRESS_BAR_FORMAT = "{desc} {bar}| {percentage:3.0f}%"
+PROGRESS_BAR_FORMAT = "{desc} |{bar}| {percentage:3.0f}% "
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -44,8 +44,11 @@ REMOTE_PROGRESS_LOOKUP: Dict[str, Dict[str, int]] = {
         "Running command npm install -g aws-cdk": 25,
         "Phase complete: INSTALL State: SUCCEEDED": 27,
         "Phase complete: PRE_BUILD State: SUCCEEDED": 30,
+        "CDK Toolkit Stack deployed": 40,
         "Demo Stack deployed": 50,
-        "Env Stack deployed": 60,
+        "Env Stack deployed": 55,
+        "Docker images build skipped": 65,
+        "Docker Images deployed": 65,
         "Teams Stacks deployed": 70,
         "EKS Stack deployed": 80,
         "Kubernetes components deployed": 95,
@@ -64,6 +67,7 @@ REMOTE_PROGRESS_LOOKUP: Dict[str, Dict[str, int]] = {
         "Teams Stacks destroyed": 65,
         "Env Stack destroyed": 75,
         "Demo Stack destroyed": 85,
+        "CDK Toolkit Stack destroyed": 90,
         "Phase complete: BUILD State: SUCCEEDED": 94,
     },
     "Deploying Docker Image": {
@@ -102,7 +106,13 @@ class MessagesContext:
         if self.debug:
             self.pbar = None
         else:
-            self.pbar = tqdm.tqdm(total=100, desc=task_name, bar_format=PROGRESS_BAR_FORMAT, ncols=50, colour="green")
+            self.pbar = tqdm.tqdm(
+                total=100,
+                desc=task_name,
+                bar_format=PROGRESS_BAR_FORMAT,
+                ncols=50,
+                colour="green",
+            )
 
     def __enter__(self) -> "MessagesContext":
         if self.pbar is not None:
@@ -115,6 +125,7 @@ class MessagesContext:
         if exc_type is not None:
             self.error(f"{exc_type.__name__}: {exc_value}")
         if self.pbar is not None:
+            self.pbar.write("")
             self.pbar.close()
         if exc_traceback is not None:
             click.echo(f"\n{stylize('Error Traceback', color=COLOR_ERROR)}:")

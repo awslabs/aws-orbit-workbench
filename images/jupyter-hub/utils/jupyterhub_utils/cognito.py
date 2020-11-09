@@ -19,6 +19,7 @@ import boto3
 import requests
 from jose import jwk, jwt
 from jose.utils import base64url_decode
+
 from jupyterhub_utils.ssm import COGNITO_USER_POOL_ID, REGION
 
 _cognito_keys: Optional[List[Dict[str, str]]] = None

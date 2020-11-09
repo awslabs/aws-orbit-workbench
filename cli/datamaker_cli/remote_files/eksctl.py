@@ -19,7 +19,9 @@ from typing import Any, Dict
 import yaml
 
 from datamaker_cli import sh
-from datamaker_cli.manifest import Manifest, SubnetKind, TeamManifest
+from datamaker_cli.manifest import Manifest
+from datamaker_cli.manifest.subnet import SubnetKind
+from datamaker_cli.manifest.team import TeamManifest
 from datamaker_cli.services import cfn
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -49,7 +51,7 @@ def create_nodegroup_structure(team: TeamManifest, env_name: str) -> Dict[str, A
     }
 
 
-def generate_manifest(manifest: Manifest, filename: str, name: str) -> str:
+def generate_manifest(manifest: Manifest, name: str) -> str:
 
     # Fill cluster wide configs
     MANIFEST["metadata"]["name"] = name
@@ -96,28 +98,26 @@ def generate_manifest(manifest: Manifest, filename: str, name: str) -> str:
     return output_filename
 
 
-def deploy(manifest: Manifest, filename: str) -> None:
-    manifest.read_ssm()
+def deploy(manifest: Manifest) -> None:
     stack_name: str = f"datamaker-{manifest.name}"
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name) is False:
         _logger.debug("Synthetizing the EKSCTL manifest")
-        output_filename = generate_manifest(manifest=manifest, filename=filename, name=stack_name)
+        output_filename = generate_manifest(manifest=manifest, name=stack_name)
         _logger.debug("Deploying EKSCTL resources")
-        sh.run(f"eksctl create cluster -f {output_filename} --write-kubeconfig")
+        sh.run(f"eksctl create cluster -f {output_filename} --write-kubeconfig --verbose 4")
     else:
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
     _logger.debug("EKSCTL deployed")
 
 
-def destroy(manifest: Manifest, filename: str) -> None:
+def destroy(manifest: Manifest) -> None:
     stack_name: str = f"datamaker-{manifest.name}"
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name):
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
-        manifest.read_ssm()
-        output_filename = generate_manifest(manifest=manifest, filename=filename, name=stack_name)
-        sh.run(f"eksctl delete cluster -f {output_filename}")
+        output_filename = generate_manifest(manifest=manifest, name=stack_name)
+        sh.run(f"eksctl delete cluster -f {output_filename} --wait --verbose 4")
         _logger.debug("EKSCTL destroyed")

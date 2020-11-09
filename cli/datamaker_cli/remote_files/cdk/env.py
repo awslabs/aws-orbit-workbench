@@ -15,6 +15,7 @@
 import logging
 import os
 import shutil
+import sys
 from typing import List, cast
 
 import aws_cdk.aws_cognito as cognito
@@ -24,15 +25,21 @@ import aws_cdk.aws_iam as iam
 import aws_cdk.aws_ssm as ssm
 from aws_cdk.core import App, CfnOutput, Construct, Duration, Environment, IConstruct, Stack, Tags
 
-from datamaker_cli.manifest import Manifest, SubnetKind
-from datamaker_cli.utils import extract_images_names, path_from_filename
+from datamaker_cli.manifest import Manifest
+from datamaker_cli.manifest.subnet import SubnetKind
+from datamaker_cli.utils import extract_images_names
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Env(Stack):
     def __init__(
-        self, scope: Construct, id: str, manifest: Manifest, add_images: List[str], remove_images: List[str]
+        self,
+        scope: Construct,
+        id: str,
+        manifest: Manifest,
+        add_images: List[str],
+        remove_images: List[str],
     ) -> None:
         self.scope = scope
         self.id = id
@@ -90,7 +97,9 @@ class Env(Stack):
 
     def create_repo(self, image_name: str) -> ecr.Repository:
         repo = ecr.Repository(
-            scope=self, id=f"repo-{image_name}", repository_name=f"datamaker-{self.manifest.name}-{image_name}"
+            scope=self,
+            id=f"repo-{image_name}",
+            repository_name=f"datamaker-{self.manifest.name}-{image_name}",
         )
         Tags.of(scope=repo).add(key="Env", value=f"datamaker-{self.manifest.name}")
         return repo
@@ -120,7 +129,8 @@ class Env(Stack):
             id=name,
             role_name=name,
             assumed_by=iam.CompositePrincipal(
-                iam.ServicePrincipal("eks.amazonaws.com"), iam.ServicePrincipal("eks-fargate-pods.amazonaws.com")
+                iam.ServicePrincipal("eks.amazonaws.com"),
+                iam.ServicePrincipal("eks-fargate-pods.amazonaws.com"),
             ),
             managed_policies=[
                 iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSClusterPolicy"),
@@ -246,7 +256,11 @@ class Env(Stack):
                 "cognito-default": iam.PolicyDocument(
                     statements=[
                         iam.PolicyStatement(
-                            actions=["mobileanalytics:PutEvents", "cognito-sync:*", "cognito-identity:*"],
+                            actions=[
+                                "mobileanalytics:PutEvents",
+                                "cognito-sync:*",
+                                "cognito-identity:*",
+                            ],
                             resources=["*"],
                         )
                     ]
@@ -295,7 +309,10 @@ class Env(Stack):
             scope=self,
             id=f"{self.id}-role-attachment",
             identity_pool_id=pool.ref,
-            roles={"authenticated": authenticated_role.role_arn, "unauthenticated": unauthenticated_role.role_arn},
+            roles={
+                "authenticated": authenticated_role.role_arn,
+                "unauthenticated": unauthenticated_role.role_arn,
+            },
         )
         return pool
 
@@ -305,27 +322,46 @@ class Env(Stack):
         self.manifest.user_pool_id = self.user_pool.user_pool_id
         self.manifest.user_pool_client_id = self.user_pool_client.user_pool_client_id
         self.manifest.identity_pool_id = self.identity_pool.ref
-
+        manifest_json: str = self.manifest.asjson()
         parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,
             id=self.manifest.ssm_parameter_name,
-            string_value=self.manifest.repr_full_as_string(),
+            string_value=manifest_json,
             type=ssm.ParameterType.STRING,
             description="DataMaker Remote Manifest.",
             parameter_name=self.manifest.ssm_parameter_name,
             simple_name=False,
+            tier=ssm.ParameterTier.INTELLIGENT_TIERING,
         )
         return parameter
 
 
-def synth(stack_name: str, filename: str, manifest: Manifest, add_images: List[str], remove_images: List[str]) -> str:
-    filename_dir = path_from_filename(filename=filename)
-    outdir = os.path.join(filename_dir, ".datamaker.out", manifest.name, "cdk", stack_name)
+def main() -> None:
+    _logger.debug("sys.argv: %s", sys.argv)
+    if len(sys.argv) == 4:
+        filename: str = sys.argv[1]
+        add_images: List[str] = [] if sys.argv[2] == "null" else sys.argv[2].split(sep=",")
+        remove_images: List[str] = [] if sys.argv[3] == "null" else sys.argv[2].split(sep=",")
+    else:
+        raise ValueError("Unexpected number of values in sys.argv.")
+
+    manifest: Manifest = Manifest(filename=filename)
+    manifest.fillup()
+
+    outdir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "cdk", manifest.env_stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
-    output_filename = os.path.join(outdir, f"{stack_name}.template.json")
 
     app = App(outdir=outdir)
-    Env(scope=app, id=stack_name, manifest=manifest, add_images=add_images, remove_images=remove_images)
+    Env(
+        scope=app,
+        id=manifest.env_stack_name,
+        manifest=manifest,
+        add_images=add_images,
+        remove_images=remove_images,
+    )
     app.synth(force=True)
-    return output_filename
+
+
+if __name__ == "__main__":
+    main()

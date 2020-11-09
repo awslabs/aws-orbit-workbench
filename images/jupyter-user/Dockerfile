@@ -4,7 +4,7 @@ FROM jupyterhub/k8s-singleuser-sample:0.9.1
 USER root
 RUN apt-get update -y
 RUN apt-get install sudo -y
-RUN apt-get install apt-utils -y 
+RUN apt-get install apt-utils -y
 RUN apt-get install build-essential -y
 RUN apt-get install curl -y
 USER $NB_UID
@@ -31,3 +31,9 @@ RUN jupyter lab build
 
 # EFS
 ADD link-user-efs-directory.sh /etc/jupyterhub/link-user-efs-directory.sh
+
+USER root
+ADD python-utils/ /opt/python-utils/
+ADD transformations/ /opt/transformations/
+RUN chmod -R 755 /opt/python-utils/
+RUN chmod -R 755 /opt/transformations/

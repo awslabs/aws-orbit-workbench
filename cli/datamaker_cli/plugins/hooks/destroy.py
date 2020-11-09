@@ -15,7 +15,8 @@
 import logging
 from typing import Callable
 
-from datamaker_cli.manifest import Manifest, TeamManifest
+from datamaker_cli.manifest import Manifest
+from datamaker_cli.manifest.team import TeamManifest
 from datamaker_cli.plugins import PLUGINS_REGISTRY
 from datamaker_cli.utils import extract_plugin_name
 
