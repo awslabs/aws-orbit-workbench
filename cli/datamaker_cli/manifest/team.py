@@ -24,8 +24,8 @@ if TYPE_CHECKING:
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-MANIFEST_FILE_TEAM_TYPE = Dict[str, Union[str, int, None]]
-MANIFEST_TEAM_TYPE = Dict[str, Union[str, int, None]]
+MANIFEST_FILE_TEAM_TYPE = Dict[str, Union[str, int, Dict[str, str], None]]
+MANIFEST_TEAM_TYPE = Dict[str, Union[str, int, Dict[str, str], None]]
 
 
 class TeamManifest:
@@ -39,7 +39,7 @@ class TeamManifest:
         nodes_num_max: int,
         nodes_num_min: int,
         policy: str,
-        image: Optional[str] = None,
+        image: Optional[Dict[str, str]] = None,
     ) -> None:
         self.manifest: "Manifest" = manifest
         self.name: str = name
@@ -49,7 +49,7 @@ class TeamManifest:
         self.nodes_num_max: int = nodes_num_max
         self.nodes_num_min: int = nodes_num_min
         self.policy: str = policy
-        self.image: Optional[str] = image
+        self.image: Optional[Dict[str, str]] = image
         self.stack_name: str = f"datamaker-{self.manifest.name}-{self.name}"
         self.ssm_parameter_name: str = f"/datamaker/{self.manifest.name}/teams/{self.name}/manifest"
         self.scratch_bucket: Optional[str] = None
@@ -60,6 +60,9 @@ class TeamManifest:
         self.efs_id: Optional[str] = None
         self.eks_nodegroup_role_arn: Optional[str] = None
         self.jupyter_url: Optional[str] = None
+        self.ecs_cluster_name: Optional[str] = None
+        self.ecs_task_definition_arn: Optional[str] = None
+        self.ecs_container_runner_arn: Optional[str] = None
 
     def _read_manifest_ssm(self) -> Optional[MANIFEST_TEAM_TYPE]:
         _logger.debug("Trying to read manifest from SSM parameter.")
@@ -131,3 +134,8 @@ class TeamManifest:
             self.eks_nodegroup_role_arn = cast(Optional[str], raw.get("eks-nodegroup-role-arn"))
             self.manifest.write_manifest_ssm()
             _logger.debug("Team %s loaded successfully from SSM.", self.name)
+
+    def construct_ecr_repository_name(self, env: str) -> str:
+        image = self.image["name"] if self.image else "jupyter-user"
+        tag = self.image["version"] if self.image else "latest"
+        return f"datamaker-{env}-{image}:{tag}"

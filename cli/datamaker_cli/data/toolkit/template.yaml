@@ -75,6 +75,9 @@ Resources:
               - cognito-identity:SetIdentityPoolRoles
               - ec2:*
               - elasticloadbalancing:*
+              - ecs:CreateCluster
+              - ecs:RegisterTaskDefinition
+              - ecs:DeregisterTaskDefinition
             Resource: '*'
           - Effect: Allow
             Action:
@@ -174,6 +177,16 @@ Resources:
             Resource:
               - arn:aws:eks:${region}:${account_id}:cluster/datamaker-${env_name}
               - arn:aws:eks:${region}:${account_id}:nodegroup/datamaker-${env_name}/*
+          - Effect: Allow
+            Action:
+              - ecs:*
+            Resource:
+              - arn:aws:ecs:${region}:${account_id}:cluster/datamaker-${env_name}-*
+          - Effect: Allow
+            Action:
+              - lambda:*
+            Resource:
+              - arn:aws:lambda:${region}:${account_id}:function:datamaker-${env_name}-*
           - Effect: Allow
             Action:
               - codeartifact:GetAuthorizationToken
