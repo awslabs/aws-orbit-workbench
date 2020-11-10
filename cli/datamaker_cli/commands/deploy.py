@@ -152,7 +152,7 @@ def deploy(
             bundle_path=bundle_path,
             buildspec=buildspec,
             codebuild_log_callback=ctx.progress_bar_callback,
-            timeout=45,
+            timeout=60,
         )
         ctx.info("DataMaker deployed")
         ctx.progress(98)
