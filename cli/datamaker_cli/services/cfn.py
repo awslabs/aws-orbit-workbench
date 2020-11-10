@@ -16,7 +16,7 @@ import logging
 import os
 import time
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
 
 import botocore.exceptions
 
@@ -28,6 +28,35 @@ if TYPE_CHECKING:
 CHANGESET_PREFIX = "aws-datamaker-cli-deploy-"
 
 _logger: logging.Logger = logging.getLogger(__name__)
+
+
+def get_stack_status(manifest: "Manifest", stack_name: str) -> str:
+    client = manifest.boto3_client("cloudformation")
+    try:
+        resp = client.describe_stacks(StackName=stack_name)
+        if len(resp["Stacks"]) < 1:
+            raise ValueError(f"CloudFormation stack {stack_name} not found.")
+    except botocore.exceptions.ClientError:
+        raise
+    return cast(str, resp["Stacks"][0]["StackStatus"])
+
+
+def get_eventual_consistency_event(manifest: "Manifest", stack_name: str) -> Optional[str]:
+    if get_stack_status(manifest=manifest, stack_name=stack_name) not in ("ROLLBACK_COMPLETE", "ROLLBACK_FAILED"):
+        return None
+    client = manifest.boto3_client("cloudformation")
+    paginator = client.get_paginator("describe_stack_events")
+    response_iterator = paginator.paginate(StackName=stack_name)
+    _logger.debug("Scanning %s events for eventual consistency issue", stack_name)
+    for resp in response_iterator:
+        for event in resp["StackEvents"]:
+            if event["ResourceStatus"] == "CREATE_FAILED":
+                logical_id = cast(str, event["LogicalResourceId"])
+                _logger.debug("Resource %s has status CREATE_FAILED", logical_id)
+                if "there is already a conflicting DNS domain" in event["ResourceStatusReason"]:
+                    _logger.warn("Resource %s had a eventual consistency issue!", logical_id)
+                    return logical_id
+    return None
 
 
 def does_stack_exist(manifest: "Manifest", stack_name: str) -> bool:
