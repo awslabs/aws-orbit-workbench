@@ -21,7 +21,7 @@ from typing import Any, Dict, List
 
 import botocore.exceptions
 
-from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, sh
+from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, exceptions, sh
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.services import cfn, s3
 
@@ -177,14 +177,27 @@ def _prepare_demo_data(manifest: Manifest) -> None:
 
 
 def deploy(manifest: Manifest) -> None:
-    _logger.debug("Deploying %s DEMO...", manifest.demo_stack_name)
+    stack_name: str = manifest.demo_stack_name
+    _logger.debug("Deploying %s DEMO...", stack_name)
     if manifest.demo:
-        cdk.deploy(
-            manifest=manifest,
-            stack_name=manifest.demo_stack_name,
-            app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "demo.py"),
-            args=[manifest.filename],
-        )
+        deploy_args: Dict[str, Any] = {
+            "manifest": manifest,
+            "stack_name": stack_name,
+            "app_filename": os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "demo.py"),
+            "args": [manifest.filename],
+        }
+        try:
+            cdk.deploy(**deploy_args)
+        except exceptions.FailedShellCommand:
+            if cfn.get_eventual_consistency_event(manifest=manifest, stack_name=stack_name) is not None:
+                destroy(manifest=manifest)
+                _logger.debug("Sleeping for 5 minutes waiting for DEMO eventual consistency issue...")
+                time.sleep(300)
+                _logger.debug("Retrying DEMO deploy...")
+                cdk.deploy(**deploy_args)
+            else:
+                raise
+
         manifest.fetch_demo_data()
         _prepare_demo_data(manifest)  # Adding demo data
 
@@ -201,6 +214,7 @@ def destroy(manifest: Manifest) -> None:
             _logger.debug("Waiting EKSCTL stack clean up...")
             time.sleep(60)  # Given extra 60 seconds if the EKS stack was just delete
         _cleanup_remaining_dependencies(manifest=manifest)
+        _logger.debug("Destroying DEMO...")
         cdk.destroy(
             manifest=manifest,
             stack_name=manifest.demo_stack_name,
