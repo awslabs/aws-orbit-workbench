@@ -15,9 +15,10 @@
 import concurrent.futures
 import logging
 import os
+import pprint
 import time
 from itertools import repeat
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 import botocore.exceptions
 
@@ -102,15 +103,31 @@ def _security_group(manifest: Manifest, vpc_id: str) -> None:
             list(executor.map(delete_sec_group, repeat(manifest), sec_groups))
 
 
+def _endpoints(manifest: Manifest, vpc_id: str) -> None:
+    client = manifest.boto3_client("ec2")
+    paginator = client.get_paginator("describe_vpc_endpoints")
+    response_iterator = paginator.paginate(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}], MaxResults=25)
+    for resp in response_iterator:
+        endpoint_ids: List[str] = []
+        for endpoint in resp["VpcEndpoints"]:
+            endpoint_id: str = cast(str, endpoint["VpcEndpointId"])
+            _logger.debug("VPC endpoint %s found", endpoint_id)
+            endpoint_ids.append(endpoint_id)
+        _logger.debug("Deleting endpoints: %s", endpoint_ids)
+        resp = client.delete_vpc_endpoints(VpcEndpointIds=endpoint_ids)
+        _logger.debug("resp:\n%s", pprint.pformat(resp))
+
+
 def _cleanup_remaining_dependencies(manifest: Manifest) -> None:
     if manifest.vpc.vpc_id is None:
         manifest.fetch_ssm()
     if manifest.vpc.vpc_id is None:
         manifest.fetch_network_data()
     if manifest.vpc.vpc_id is None:
-        _logger.debug(f"Skipping _cleanup_remaining_dependencies() because manifest.vpc.vpc_id: {manifest.vpc.vpc_id}")
+        _logger.debug("Skipping _cleanup_remaining_dependencies() because manifest.vpc.vpc_id: %s", manifest.vpc.vpc_id)
         return None
     vpc_id: str = manifest.vpc.vpc_id
+    _endpoints(manifest=manifest, vpc_id=vpc_id)
     _network_interface(manifest=manifest, vpc_id=vpc_id)
     _security_group(manifest=manifest, vpc_id=vpc_id)
 

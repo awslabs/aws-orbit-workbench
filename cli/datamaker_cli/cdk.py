@@ -4,6 +4,7 @@ from typing import List
 
 from datamaker_cli import sh
 from datamaker_cli.manifest import Manifest
+from datamaker_cli.services import cfn
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -31,6 +32,9 @@ def deploy(manifest: Manifest, stack_name: str, app_filename: str, args: List[st
 
 
 def destroy(manifest: Manifest, stack_name: str, app_filename: str, args: List[str]) -> None:
+    if cfn.does_stack_exist(manifest=manifest, stack_name=stack_name) is False:
+        _logger.debug("Skipping CDK destroy for %s, because the stack was not found.", stack_name)
+        return
     if manifest.cdk_toolkit_stack_name is None:
         raise ValueError(f"manifest.cdk_toolkit_stack_name: {manifest.cdk_toolkit_stack_name}")
     cmd: str = (
