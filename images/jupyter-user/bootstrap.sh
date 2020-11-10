@@ -17,17 +17,31 @@
 
 set -ex
 
-AWS_ACCESS_KEY_ID=$(aws --profile default configure get aws_access_key_id)
-AWS_SECRET_ACCESS_KEY=$(aws --profile default configure get aws_secret_access_key)
-AWS_DEFAULT_REGION=$(aws configure get region)
+# EFS
 
-docker run \
-    -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-    -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-    -e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} \
-    -e TEAM=data-engineering \
-    -e ENV_NAME=env \
-    -p 8888:8888 \
-    --rm \
-    -it \
-    jupyter-user
+rm -rf /home/jovyan/work
+rm -rf /home/jovyan/tmp
+
+mkdir -p /efs/"$USERNAME"
+mkdir -p /efs/shared/scheduled/notebooks
+mkdir -p /efs/shared/scheduled/outputs
+mkdir -p /home/jovyan/tmp
+
+chown -R jovyan /efs/"$USERNAME"
+chown -R jovyan /efs/shared
+
+ln -s /efs/"$USERNAME"/ /home/jovyan/private
+ln -s /efs/shared/ /home/jovyan/shared
+
+# Bootstrap
+
+LOCAL_PATH="/home/jovyan/.datamaker/bootstrap/scripts/"
+S3_PATH="s3://${AWS_DATAMAKER_S3_BUCKET}/teams/${DATAMAKER_TEAM_SPACE}/bootstrap/"
+
+mkdir -p $LOCAL_PATH
+aws s3 cp $S3_PATH $LOCAL_PATH --recursive
+for filename in $(ls $LOCAL_PATH)
+do
+    echo "Running ${filename}"
+    sh "${LOCAL_PATH}${filename}"
+done

@@ -15,7 +15,7 @@
 from setuptools import setup
 
 setup(
-    name="hello-world",
+    name="hello_world",
     version="0.0b0",
     description="Minimal DataMaker Plugin.",
     license="Apache License 2.0",

@@ -13,14 +13,14 @@
 #    limitations under the License.
 
 import logging
-import os
 import uuid
 from time import sleep
-from typing import Optional, Tuple, cast
+from typing import List, Optional, Tuple, cast
 
 import click
 
 from datamaker_cli import bundle, dockerhub, plugins, remote, toolkit
+from datamaker_cli.changeset import Changeset, extract_changeset
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.messages import MessagesContext, stylize
 from datamaker_cli.services import cfn, codebuild
@@ -40,6 +40,14 @@ def _request_dockerhub_credential(ctx: MessagesContext) -> Tuple[str, str]:
         click.prompt("Please enter the DockerHub password", type=str, hide_input=True),
     )
     return username, password
+
+
+def _get_images_dirs(manifest: Manifest, skip_images: bool) -> List[Tuple[str, str]]:
+    if skip_images:
+        dirs: List[Tuple[str, str]] = []
+    else:
+        dirs = [(attrs["repository"], name) for name, attrs in manifest.images.items() if attrs["source"] == "code"]
+    return dirs
 
 
 def deploy_toolkit(
@@ -91,36 +99,6 @@ def deploy_toolkit(
         )
 
 
-def deploy_image(filename: str, dir: str, name: str, script: Optional[str], debug: bool) -> None:
-    with MessagesContext("Deploying Docker Image", debug=debug) as ctx:
-        manifest = Manifest(filename=filename)
-        manifest.fillup()
-        ctx.info(f"Manifest loaded: {filename}")
-        if cfn.does_stack_exist(manifest=manifest, stack_name=f"datamaker-{manifest.name}") is False:
-            ctx.error("Please, deploy your environment before deploy any addicional docker image")
-            return
-        bundle_path = bundle.generate_bundle(command_name=f"deploy_image-{name}", manifest=manifest, dirs=[(dir, name)])
-        ctx.progress(3)
-        script_str = "" if script is None else script
-        buildspec = codebuild.generate_spec(
-            manifest=manifest,
-            plugins=False,
-            cmds_build=[f"datamaker remote --command deploy_image cdk=true {name} {script_str}"],
-        )
-        remote.run(
-            command_name=f"deploy_image-{name}",
-            manifest=manifest,
-            bundle_path=bundle_path,
-            buildspec=buildspec,
-            codebuild_log_callback=ctx.progress_bar_callback,
-            timeout=10,
-        )
-        ctx.info("Docker Image deploy into ECR")
-        address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/datamaker-{manifest.name}-{name}"
-        ctx.tip(f"ECR Image Address: {stylize(address, underline=True)}")
-        ctx.progress(100)
-
-
 def deploy(
     filename: str,
     skip_images: bool,
@@ -137,9 +115,13 @@ def deploy(
         ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
         ctx.progress(3)
 
-        plugins.load_plugins(manifest=manifest)
-        ctx.info(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
+        _logger.debug("Inspecting possible manifest changes...")
+        changes: Changeset = extract_changeset(manifest=manifest, ctx=ctx)
+        _logger.debug(f"Changeset: {changes.asdict()}")
         ctx.progress(4)
+
+        plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, ctx=ctx, changes=changes.plugin_changesets)
+        ctx.progress(5)
 
         deploy_toolkit(
             manifest=manifest,
@@ -150,17 +132,19 @@ def deploy(
         ctx.info("Toolkit deployed")
         ctx.progress(10)
 
-        dirs = [
-            (os.path.join(manifest.filename_dir, "..", "images", name), name)
-            for name in ("landing-page", "jupyter-hub", "jupyter-user")
-        ]
-        bundle_path = bundle.generate_bundle(command_name="deploy", manifest=manifest, dirs=dirs)
+        bundle_path = bundle.generate_bundle(
+            command_name="deploy",
+            manifest=manifest,
+            dirs=_get_images_dirs(manifest=manifest, skip_images=skip_images),
+            changeset=changes,
+        )
         ctx.progress(15)
         skip_images_remote_flag: str = "skip-images" if skip_images else "no-skip-images"
         buildspec = codebuild.generate_spec(
             manifest=manifest,
             plugins=True,
             cmds_build=[f"datamaker remote --command deploy {skip_images_remote_flag}"],
+            changeset=changes,
         )
         remote.run(
             command_name="deploy",
@@ -168,7 +152,7 @@ def deploy(
             bundle_path=bundle_path,
             buildspec=buildspec,
             codebuild_log_callback=ctx.progress_bar_callback,
-            timeout=45,
+            timeout=60,
         )
         ctx.info("DataMaker deployed")
         ctx.progress(98)
