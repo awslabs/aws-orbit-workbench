@@ -65,7 +65,7 @@ def destroy_image(filename: str, name: str, debug: bool) -> None:
         ctx.progress(100)
 
 
-def destroy(filename: str, debug: bool) -> None:
+def destroy(filename: str, teams_only: bool, debug: bool) -> None:
     with MessagesContext("Destroying", debug=debug) as ctx:
         manifest = Manifest(filename=filename)
         manifest.fillup()
@@ -84,10 +84,11 @@ def destroy(filename: str, debug: bool) -> None:
         ):
             bundle_path = bundle.generate_bundle(command_name="destroy", manifest=manifest)
             ctx.progress(5)
+            teams_only_arg = "teams-only" if teams_only else ""
             buildspec = codebuild.generate_spec(
                 manifest=manifest,
                 plugins=True,
-                cmds_build=["datamaker remote --command destroy"],
+                cmds_build=[f"datamaker remote --command destroy {teams_only_arg}"],
             )
             remote.run(
                 command_name="destroy",

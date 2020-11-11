@@ -40,18 +40,30 @@ def destroy_image(filename: str, args: Tuple[str, ...]) -> None:
 
 def destroy(filename: str, args: Tuple[str, ...]) -> None:
     manifest: Manifest = Manifest(filename=filename)
+    _logger.debug("manifest.name %s", manifest.name)
+    _logger.debug("args %s", args)
+    if len(args) == 0:
+        teams_only = False
+    elif len(args) == 1:
+        teams_only = (args[0] == "teams-only")
+    else:
+        raise ValueError("Unexpected number of values in args.")
+
     manifest.fillup()
     plugins.load_plugins(manifest=manifest)
     _logger.debug(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
     kubectl.destroy(manifest=manifest)
     _logger.debug("Kubernetes components destroyed")
-    eksctl.destroy(manifest=manifest)
+    eksctl.destroy(manifest=manifest, teams_only=teams_only)
     _logger.debug("EKS Stack destroyed")
     teams.destroy(manifest=manifest)
     _logger.debug("Teams Stacks destroyed")
-    env.destroy(manifest=manifest)
-    _logger.debug("Env Stack destroyed")
-    demo.destroy(manifest=manifest)
-    _logger.debug("Demo Stack destroyed")
-    cdk_toolkit.destroy(manifest=manifest)
-    _logger.debug("CDK Toolkit Stack destroyed")
+    if not teams_only:
+        env.destroy(manifest=manifest)
+        _logger.debug("Env Stack destroyed")
+        demo.destroy(manifest=manifest)
+        _logger.debug("Demo Stack destroyed")
+        cdk_toolkit.destroy(manifest=manifest)
+        _logger.debug("CDK Toolkit Stack destroyed")
+    else:
+        _logger.debug("Skipping Env, Demo, and CDK Toolkit Stacks")

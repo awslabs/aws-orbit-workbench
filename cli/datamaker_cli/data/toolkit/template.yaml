@@ -176,6 +176,7 @@ Resources:
               - eks:*
             Resource:
               - arn:aws:eks:${region}:${account_id}:cluster/datamaker-${env_name}
+              - arn:aws:eks:${region}:${account_id}:cluster/datamaker-${env_name}/*
               - arn:aws:eks:${region}:${account_id}:nodegroup/datamaker-${env_name}/*
           - Effect: Allow
             Action:

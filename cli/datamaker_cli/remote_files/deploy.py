@@ -132,9 +132,9 @@ def deploy(filename: str, args: Tuple[str, ...]) -> None:
     else:
         deploy_images_remotely(manifest=manifest)
         _logger.debug("Docker Images deployed")
-    teams.deploy(manifest=manifest)
-    _logger.debug("Teams Stacks deployed")
     eksctl.deploy(manifest=manifest)
     _logger.debug("EKS Stack deployed")
+    teams.deploy(manifest=manifest)
+    _logger.debug("Teams Stacks deployed")
     kubectl.deploy(manifest=manifest)
     _logger.debug("Kubernetes components deployed")

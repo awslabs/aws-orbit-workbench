@@ -68,6 +68,7 @@ REMOTE_PROGRESS_LOOKUP: Dict[str, Dict[str, int]] = {
         "Env Stack destroyed": 75,
         "Demo Stack destroyed": 85,
         "CDK Toolkit Stack destroyed": 90,
+        "Skipping Env, Demo, and CDK Toolkit Stacks": 90,
         "Phase complete: BUILD State: SUCCEEDED": 94,
     },
     "Deploying Docker Image": {
