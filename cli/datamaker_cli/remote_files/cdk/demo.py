@@ -85,6 +85,7 @@ class VpcStack(Stack):
             "dynamodb": ec2.GatewayVpcEndpointAwsService.DYNAMODB,
         }
         vpc_interface_endpoints = {
+            "code_artifact_endpoint": ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories"),
             "cloudwatch_endpoint": ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH,
             "cloudwatch_logs_endpoint": ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,
             "cloudwatch_events": ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_EVENTS,
@@ -109,6 +110,7 @@ class VpcStack(Stack):
             "kinesis_firehose_endpoint": ec2.InterfaceVpcEndpointAwsService("kinesis-firehose"),
             "api_gateway": ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
             "sts_endpoint": ec2.InterfaceVpcEndpointAwsService.STS,
+            "code_artifact_api_endpoint": ec2.InterfaceVpcEndpointAwsService("codeartifact.api"),
         }
 
         self.public_subnets = (
@@ -142,7 +144,6 @@ class VpcStack(Stack):
         vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
         # Adding ingress rule to VPC CIDR
         vpc_security_group.add_ingress_rule(peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block), connection=ec2.Port.all_tcp())
-        # private_subnet_ids = [t.subnet_id for t in self.vpc.private_subnets]
         isolated_subnet_ids = [t.subnet_id for t in self.vpc.isolated_subnets]
 
         ec2.CfnVPCEndpoint(
@@ -162,18 +163,6 @@ class VpcStack(Stack):
             vpc_id=self.vpc.vpc_id,
             security_group_ids=[vpc_security_group.security_group_id],
             subnet_ids=isolated_subnet_ids,
-        )
-        # Adding AWS CodeArtifact Endpoints
-        self._create_ca_endpoints()
-
-    def _create_ca_endpoints(self) -> None:
-        self.vpc.add_interface_endpoint(
-            "code_artifact_api_endpoint", service=ec2.InterfaceVpcEndpointAwsService("codeartifact.api")
-        )
-
-        self.vpc.add_interface_endpoint(
-            "code_artifact_endpoint",
-            service=ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories"),
         )
 
 
