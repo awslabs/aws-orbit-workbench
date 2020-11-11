@@ -103,6 +103,9 @@ class TeamManifest:
                     self.jupyter_url = cast(Optional[str], team.get("jupyter-url"))
                     self.scratch_bucket = cast(str, team.get("scratch-bucket"))
                     self.scratch_retention_days = cast(int, team.get("scratch-retention-days"))
+                    self.ecs_cluster_name = cast(str, team.get("ecs-cluster-name"))
+                    self.ecs_task_definition_arn = cast(str, team.get("ecs-task-definition-arn"))
+                    self.ecs_container_runner_arn = cast(str, team.get("ecs-container-runner-arn"))
                     _logger.debug("Team %s loaded successfully from SSM.", self.name)
                     return
 
