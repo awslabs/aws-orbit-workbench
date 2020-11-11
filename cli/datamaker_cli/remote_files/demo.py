@@ -15,13 +15,14 @@
 import concurrent.futures
 import logging
 import os
+import pprint
 import time
 from itertools import repeat
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 import botocore.exceptions
 
-from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, plugins, sh
+from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, exceptions, sh
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.services import cfn, s3
 
@@ -55,6 +56,11 @@ def _network_interface(manifest: Manifest, vpc_id: str) -> None:
             elif "You are not allowed to manage" in error["Message"]:
                 _logger.warning(
                     f"Ignoring NetWorkInterface {i['NetworkInterfaceId']} because you are not allowed to manage."
+                )
+            elif "You do not have permission to access the specified resource" in error["Message"]:
+                _logger.warning(
+                    f"Ignoring NetWorkInterface {i['NetworkInterfaceId']} "
+                    "because you do not have permission to access the specified resource."
                 )
             else:
                 raise
@@ -97,14 +103,31 @@ def _security_group(manifest: Manifest, vpc_id: str) -> None:
             list(executor.map(delete_sec_group, repeat(manifest), sec_groups))
 
 
+def _endpoints(manifest: Manifest, vpc_id: str) -> None:
+    client = manifest.boto3_client("ec2")
+    paginator = client.get_paginator("describe_vpc_endpoints")
+    response_iterator = paginator.paginate(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}], MaxResults=25)
+    for resp in response_iterator:
+        endpoint_ids: List[str] = []
+        for endpoint in resp["VpcEndpoints"]:
+            endpoint_id: str = cast(str, endpoint["VpcEndpointId"])
+            _logger.debug("VPC endpoint %s found", endpoint_id)
+            endpoint_ids.append(endpoint_id)
+        _logger.debug("Deleting endpoints: %s", endpoint_ids)
+        resp = client.delete_vpc_endpoints(VpcEndpointIds=endpoint_ids)
+        _logger.debug("resp:\n%s", pprint.pformat(resp))
+
+
 def _cleanup_remaining_dependencies(manifest: Manifest) -> None:
     if manifest.vpc.vpc_id is None:
         manifest.fetch_ssm()
     if manifest.vpc.vpc_id is None:
         manifest.fetch_network_data()
     if manifest.vpc.vpc_id is None:
-        raise ValueError(f"manifest.vpc.vpc_id: {manifest.vpc.vpc_id}")
+        _logger.debug("Skipping _cleanup_remaining_dependencies() because manifest.vpc.vpc_id: %s", manifest.vpc.vpc_id)
+        return None
     vpc_id: str = manifest.vpc.vpc_id
+    _endpoints(manifest=manifest, vpc_id=vpc_id)
     _network_interface(manifest=manifest, vpc_id=vpc_id)
     _security_group(manifest=manifest, vpc_id=vpc_id)
 
@@ -171,26 +194,32 @@ def _prepare_demo_data(manifest: Manifest) -> None:
 
 
 def deploy(manifest: Manifest) -> None:
-    _logger.debug("Deploying %s DEMO...", manifest.demo_stack_name)
+    stack_name: str = manifest.demo_stack_name
+    _logger.debug("Deploying %s DEMO...", stack_name)
     if manifest.demo:
-        cdk.deploy(
-            manifest=manifest,
-            stack_name=manifest.demo_stack_name,
-            app_filename="demo.py",
-            args=[manifest.filename],
-        )
+        deploy_args: Dict[str, Any] = {
+            "manifest": manifest,
+            "stack_name": stack_name,
+            "app_filename": os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "demo.py"),
+            "args": [manifest.filename],
+        }
+        try:
+            cdk.deploy(**deploy_args)
+        except exceptions.FailedShellCommand:
+            if cfn.get_eventual_consistency_event(manifest=manifest, stack_name=stack_name) is not None:
+                destroy(manifest=manifest)
+                _logger.debug("Sleeping for 5 minutes waiting for DEMO eventual consistency issue...")
+                time.sleep(300)
+                _logger.debug("Retrying DEMO deploy...")
+                cdk.deploy(**deploy_args)
+            else:
+                raise
+
         manifest.fetch_demo_data()
-        for plugin in plugins.PLUGINS_REGISTRY.values():
-            if plugin.deploy_demo_hook is not None:
-                plugin.deploy_demo_hook(manifest)
-        # Adding demo data
-        _prepare_demo_data(manifest)
+        _prepare_demo_data(manifest)  # Adding demo data
 
 
 def destroy(manifest: Manifest) -> None:
-    for plugin in plugins.PLUGINS_REGISTRY.values():
-        if plugin.destroy_demo_hook is not None:
-            plugin.destroy_demo_hook(manifest)
     if manifest.demo and cfn.does_stack_exist(manifest=manifest, stack_name=manifest.demo_stack_name):
         waited: bool = False
         while cfn.does_stack_exist(manifest=manifest, stack_name=manifest.eks_stack_name):
@@ -202,9 +231,10 @@ def destroy(manifest: Manifest) -> None:
             _logger.debug("Waiting EKSCTL stack clean up...")
             time.sleep(60)  # Given extra 60 seconds if the EKS stack was just delete
         _cleanup_remaining_dependencies(manifest=manifest)
+        _logger.debug("Destroying DEMO...")
         cdk.destroy(
             manifest=manifest,
             stack_name=manifest.demo_stack_name,
-            app_filename="demo.py",
+            app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "demo.py"),
             args=[manifest.filename],
         )

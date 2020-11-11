@@ -78,6 +78,7 @@ Resources:
               - ecs:CreateCluster
               - ecs:RegisterTaskDefinition
               - ecs:DeregisterTaskDefinition
+              - codecommit:ListRepositories
             Resource: '*'
           - Effect: Allow
             Action:
@@ -135,8 +136,9 @@ Resources:
               - iam:DetachRolePolicy
               - iam:DeleteRolePolicy
               - iam:DeleteRole
-              - iam:UntagRole
               - iam:TagRole
+              - iam:UntagRole
+              - iam:ListRoleTags
               - iam:PassRole
               - iam:ListAttachedRolePolicies
               - iam:UpdateAssumeRolePolicy
@@ -151,6 +153,8 @@ Resources:
             Action:
               - iam:CreatePolicy
               - iam:DeletePolicy
+              - iam:CreatePolicyVersion
+              - iam:DeletePolicyVersion
             Resource:
               - arn:aws:iam::${account_id}:policy/datamaker-${env_name}-*
           - Effect: Allow
@@ -200,6 +204,11 @@ Resources:
             Condition:
               StringEquals:
                 sts:AWSServiceName: codeartifact.amazonaws.com
+          - Effect: Allow
+            Action:
+              - codecommit:*
+            Resource:
+              - arn:aws:codecommit:${region}:${account_id}:datamaker-${env_name}-*
         Version: '2012-10-17'
       Description: ''
       ManagedPolicyName: datamaker-${env_name}-admin
