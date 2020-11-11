@@ -139,7 +139,33 @@ class VpcStack(Stack):
         for name, interface_service in vpc_interface_endpoints.items():
             self.vpc.add_interface_endpoint(id=name, service=interface_service)
 
+        # Adding Lambda and Redshift endpoints with CDK low level APIs
+        endpoint_url_template = "com.amazonaws.{}.{}"
+        vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
+        # Adding ingress rule to VPC CIDR
+        vpc_security_group.add_ingress_rule(peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block), connection=ec2.Port.all_tcp())
+        isolated_subnet_ids = [t.subnet_id for t in self.vpc.isolated_subnets]
 
+        ec2.CfnVPCEndpoint(
+            self,
+            "redshift_endpoint",
+            vpc_endpoint_type="Interface",
+            service_name=endpoint_url_template.format(self.region, "redshift"),
+            vpc_id=self.vpc.vpc_id,
+            security_group_ids=[vpc_security_group.security_group_id],
+            subnet_ids=isolated_subnet_ids,
+        )
+        ec2.CfnVPCEndpoint(
+            self,
+            "lambda_endpoint",
+            vpc_endpoint_type="Interface",
+            service_name=endpoint_url_template.format(self.region, "lambda"),
+            vpc_id=self.vpc.vpc_id,
+            security_group_ids=[vpc_security_group.security_group_id],
+            subnet_ids=isolated_subnet_ids,
+        )
+        
+        
 def main() -> None:
     _logger.debug("sys.argv: %s", sys.argv)
     if len(sys.argv) == 2:
