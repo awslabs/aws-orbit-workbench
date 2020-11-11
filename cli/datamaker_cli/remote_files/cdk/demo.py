@@ -165,6 +165,7 @@ class VpcStack(Stack):
             subnet_ids=isolated_subnet_ids,
         )
 
+
 def main() -> None:
     _logger.debug("sys.argv: %s", sys.argv)
     if len(sys.argv) == 2:
