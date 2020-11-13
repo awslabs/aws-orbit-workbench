@@ -40,22 +40,19 @@ def tag_image(manifest: "Manifest", remote_name: str, remote_source: str, name: 
 
 
 def build(
-    manifest: "Manifest",
-    dir: str,
-    name: str,
-    tag: str = "latest",
-    use_cache: bool = True,
+    manifest: "Manifest", dir: str, name: str, tag: str = "latest", use_cache: bool = True, pull: bool = False
 ) -> None:
     ecr_address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com"
     repo_address = f"{ecr_address}/{name}:{tag}"
     cache_str: str = ""
+    pull_str: str = "--pull" if pull else ""
     if use_cache:
         try:
             ecr_pull(manifest=manifest, name=name, tag=tag)
             cache_str = f"--cache-from {repo_address}"
         except exceptions.FailedShellCommand:
             _logger.debug(f"Docker cache not found at ECR {name}:{tag}")
-    sh.run(f"docker build {cache_str} --tag {name} .", cwd=dir)
+    sh.run(f"docker build {pull_str} {cache_str} --tag {name} .", cwd=dir)
 
 
 def push(manifest: "Manifest", name: str, tag: str = "latest") -> None:
@@ -64,12 +61,28 @@ def push(manifest: "Manifest", name: str, tag: str = "latest") -> None:
     sh.run(f"docker push {repo_address}")
 
 
+def deploy_dynamic_image(
+    manifest: "Manifest",
+    dir: str,
+    name: str,
+    tag: str = "latest",
+    use_cache: bool = True,
+) -> None:
+    login(manifest=manifest)
+    _logger.debug("Logged in")
+    build(manifest=manifest, dir=dir, name=name, tag=tag, use_cache=use_cache, pull=True)
+    _logger.debug("Docker Image built")
+    tag_image(manifest=manifest, remote_name=name, remote_source="local", name=name, tag=tag)
+    _logger.debug("Docker Image tagged")
+    push(manifest=manifest, name=name, tag=tag)
+    _logger.debug("Docker Image pushed")
+
+
 def deploy(
     manifest: "Manifest",
     dir: str,
     deployed_name: str,
     image_name: str,
-    tag: str = "latest",
     use_cache: bool = True,
 ) -> None:
     login(manifest=manifest)
@@ -79,6 +92,9 @@ def deploy(
     source = manifest.images[image_name]["source"]
     source_name = manifest.images[image_name]["repository"]
     source_version = manifest.images[image_name]["version"]
+    if source == "source" or manifest.dev is True:
+        build(manifest=manifest, dir=dir, name=deployed_name, tag=source_version, use_cache=use_cache)
+        _logger.debug("Built from Source")
     if source == "dockerhub":
         dockerhub_pull(name=source_name, tag=source_version)
         _logger.debug("Pulled DockerHub Image")

@@ -17,8 +17,10 @@ from typing import Optional, Tuple
 
 import click
 
-from datamaker_cli.commands.deploy import deploy, deploy_image
-from datamaker_cli.commands.destroy import destroy, destroy_image
+from datamaker_cli.commands.deploy import deploy
+from datamaker_cli.commands.deploy_image import deploy_image
+from datamaker_cli.commands.destroy import destroy
+from datamaker_cli.commands.destroy_image import destroy_image
 from datamaker_cli.commands.init import init
 from datamaker_cli.commands.list import list_images
 
@@ -64,14 +66,13 @@ def cli() -> None:
     required=False,
 )
 @click.option(
-    "--demo/--no-demo",
-    default=True,
-    help="Increment the deployment with demostration components.",
+    "--demo/--no-demo", default=True, help="Increment the deployment with demostration components.", show_default=True
 )
 @click.option(
     "--dev/--no-dev",
     default=True,
     help="Enable the development mode (docker images and packages build from source).",
+    show_default=True,
 )
 @click.option(
     "--debug/--no-debug",
@@ -119,7 +120,7 @@ def init_cli(
 @click.option(
     "--skip-images/--no-skip-images",
     default=False,
-    help="Skip Docker images build/deploy.",
+    help="Skip Docker images updates (Usually for development purpose).",
     show_default=True,
 )
 @click.option(

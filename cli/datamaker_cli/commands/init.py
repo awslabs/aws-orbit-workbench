@@ -34,7 +34,14 @@ def create_manifest(
     with open(input, "r") as file:
         content: str = file.read()
     content = content.replace("$", "").format(
-        region=region_str, name=name, demo="true" if demo else False, dev="true" if dev else False
+        region=region_str,
+        name=name,
+        demo="true" if demo else False,
+        dev="true" if dev else False,
+        images_source="code" if dev else "dockerhub",
+        jupyter_hub_repository="../images/jupyter-hub/" if dev else "aws-datamaker-jupyter-hub",
+        jupyter_user_repository="../images/jupyter-user/" if dev else "aws-datamaker-jupyter-user",
+        landing_page_repository="../images/landing-page/" if dev else "aws-datamaker-landing-page",
     )
     output = os.path.join(".", filename)
     with open(output, "w") as file:

@@ -13,10 +13,11 @@
 #    limitations under the License.
 
 import logging
+import os
 import time
 from typing import Any, Dict, Iterator, List, Tuple
 
-from datamaker_cli import cdk, plugins
+from datamaker_cli import DATAMAKER_CLI_ROOT, cdk
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.services import cfn, ecr
 
@@ -114,20 +115,14 @@ def deploy(manifest: Manifest, add_images: List[str], remove_images: List[str]) 
     cdk.deploy(
         manifest=manifest,
         stack_name=manifest.env_stack_name,
-        app_filename="env.py",
+        app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "env.py"),
         args=[manifest.filename, add_images_str, remove_images_str],
     )
 
     manifest.fetch_ssm()
-    for plugin in plugins.PLUGINS_REGISTRY.values():
-        if plugin.deploy_env_hook is not None:
-            plugin.deploy_env_hook(manifest)
 
 
 def destroy(manifest: Manifest) -> None:
-    for plugin in plugins.PLUGINS_REGISTRY.values():
-        if plugin.destroy_env_hook is not None:
-            plugin.destroy_env_hook(manifest)
     _logger.debug("Stack name: %s", manifest.env_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.env_stack_name):
         _cleanup_remaining_resources(manifest=manifest)
@@ -135,6 +130,6 @@ def destroy(manifest: Manifest) -> None:
         cdk.destroy(
             manifest=manifest,
             stack_name=manifest.env_stack_name,
-            app_filename="env.py",
+            app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "env.py"),
             args=[manifest.filename, add_images_str, remove_images_str],
         )

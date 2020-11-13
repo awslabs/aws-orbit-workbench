@@ -12,4 +12,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from datamaker_cli.plugins.hooks import deploy, destroy  # noqa
+from setuptools import setup
+
+setup(
+    name="datamaker-codecommit",
+    version="0.0b0",
+    description="DataMaker CodeCommit Plugin.",
+    license="Apache License 2.0",
+    packages=["code_commit"],
+    python_requires=">=3.6, <3.9",
+    install_requires=open("requirements.txt").read().strip().split("\n"),
+    include_package_data=True,
+)

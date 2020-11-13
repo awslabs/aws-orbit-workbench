@@ -2,7 +2,19 @@ name: ${name}
 region: ${region}
 demo: ${demo}
 dev: ${dev}
-plugins: []
+images:
+    jupyter-hub:
+        repository: ${jupyter_hub_repository}
+        source: ${images_source}
+        version: latest
+    jupyter-user:
+        repository: ${jupyter_user_repository}
+        source: ${images_source}
+        version: latest
+    landing-page:
+        repository: ${landing_page_repository}
+        source: ${images_source}
+        version: latest
 vpc:
     private-subnets-ids: []
     public-subnets-ids: []
@@ -15,3 +27,4 @@ teams:
     nodes-num-max: 3
     nodes-num-min: 1
     policy: AdministratorAccess
+    plugins: []

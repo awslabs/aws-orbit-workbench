@@ -96,13 +96,11 @@ class Env(Stack):
         ]
 
     def create_repo(self, image_name: str) -> ecr.Repository:
-        repo = ecr.Repository(
+        return ecr.Repository(
             scope=self,
             id=f"repo-{image_name}",
             repository_name=f"datamaker-{self.manifest.name}-{image_name}",
         )
-        Tags.of(scope=repo).add(key="Env", value=f"datamaker-{self.manifest.name}")
-        return repo
 
     def _create_ecr_repos(self) -> List[ecr.Repository]:
         current_images_names = extract_images_names(manifest=self.manifest)
