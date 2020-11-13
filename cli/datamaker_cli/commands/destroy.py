@@ -98,15 +98,22 @@ def destroy(filename: str, teams_only: bool, debug: bool) -> None:
                 codebuild_log_callback=ctx.progress_bar_callback,
                 timeout=30,
             )
-        ctx.info("Env destroyed")
+        if teams_only:
+            ctx.info("Env Skipped")
+        else:
+            ctx.info("Env destroyed")
         ctx.progress(95)
 
         try:
-            destroy_toolkit(manifest=manifest)
+            if not teams_only:
+                destroy_toolkit(manifest=manifest)
         except botocore.exceptions.ClientError as ex:
             error = ex.response["Error"]
             if "does not exist" not in error["Message"]:
                 raise
             _logger.debug(f"Skipping toolkit destroy: {error['Message']}")
-        ctx.info("Toolkit destroyed")
+        if teams_only:
+            ctx.info("Toolkit skipped")
+        else:
+            ctx.info("Toolkit destroyed")
         ctx.progress(100)

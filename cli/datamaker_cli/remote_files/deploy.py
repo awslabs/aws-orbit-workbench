@@ -137,9 +137,9 @@ def deploy(filename: str, args: Tuple[str, ...]) -> None:
     kubectl.deploy_env(manifest=manifest)
     _logger.debug("Kubernetes Environment components deployed")
 
-    eksctl.deploy_teams(manifest=manifest)
-    _logger.debug("EKS Team Stacks deployed")
     teams.deploy(manifest=manifest)
     _logger.debug("Team Stacks deployed")
+    eksctl.deploy_teams(manifest=manifest)
+    _logger.debug("EKS Team Stacks deployed")
     kubectl.deploy_teams(manifest=manifest)
     _logger.debug("Kubernetes Team components deployed")

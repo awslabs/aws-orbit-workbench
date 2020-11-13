@@ -52,13 +52,18 @@ def destroy(filename: str, args: Tuple[str, ...]) -> None:
     manifest.fillup()
     plugins.load_plugins(manifest=manifest)
     _logger.debug(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
-    kubectl.destroy(manifest=manifest)
-    _logger.debug("Kubernetes components destroyed")
-    eksctl.destroy(manifest=manifest, teams_only=teams_only)
-    _logger.debug("EKS Stack destroyed")
+    kubectl.destroy_teams(manifest=manifest)
+    _logger.debug("Kubernetes Team components destroyed")
+    eksctl.destroy_teams(manifest=manifest)
+    _logger.debug("EKS Team Stacks destroyed")
     teams.destroy(manifest=manifest)
     _logger.debug("Teams Stacks destroyed")
+
     if not teams_only:
+        kubectl.destroy_env(manifest=manifest)
+        _logger.debug("Kubernetes Environment components destroyed")
+        eksctl.destroy_env(manifest=manifest)
+        _logger.debug("EKS Environment Stacks destroyed")
         env.destroy(manifest=manifest)
         _logger.debug("Env Stack destroyed")
         demo.destroy(manifest=manifest)
@@ -66,4 +71,4 @@ def destroy(filename: str, args: Tuple[str, ...]) -> None:
         cdk_toolkit.destroy(manifest=manifest)
         _logger.debug("CDK Toolkit Stack destroyed")
     else:
-        _logger.debug("Skipping Env, Demo, and CDK Toolkit Stacks")
+        _logger.debug("Skipping Environment, Demo, and CDK Toolkit Stacks")

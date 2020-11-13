@@ -142,6 +142,7 @@ Resources:
               - iam:UpdateAssumeRolePolicy
             Resource:
               - arn:aws:iam::${account_id}:role/datamaker-${env_name}-*
+              - arn:aws:iam::${account_id}:role/eksctl-datamaker-${env_name}-*
           - Effect: Allow
             Action:
               - iam:CreateServiceLinkedRole
