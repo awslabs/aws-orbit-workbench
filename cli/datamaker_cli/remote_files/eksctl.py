@@ -98,19 +98,31 @@ def generate_manifest(manifest: Manifest, name: str, output_teams: bool = True) 
     return output_filename
 
 
-def deploy(manifest: Manifest) -> None:
+def deploy_env(manifest: Manifest) -> None:
     stack_name: str = f"datamaker-{manifest.name}"
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
     _logger.debug("Synthetizing the EKSCTL manifest")
-    output_filename = generate_manifest(manifest=manifest, name=stack_name)
-    if cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name) is False:
+    output_filename = generate_manifest(manifest=manifest, name=stack_name, output_teams=False)
+    if not cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name):
         _logger.debug("Deploying EKSCTL resources")
         sh.run(f"eksctl create cluster -f {output_filename} --write-kubeconfig --verbose 4")
     else:
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
+    _logger.debug("EKSCTL deployed")
+
+
+def deploy_team(manifest: Manifest) -> None:
+    stack_name: str = f"datamaker-{manifest.name}"
+    final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
+    _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
+    _logger.debug("Synthetizing the EKSCTL manifest")
+    output_filename = generate_manifest(manifest=manifest, name=stack_name, output_teams=True)
+    if not cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name):
         _logger.debug("Deploying EKSCTL resources")
-        sh.run(f"eksctl update cluster -f {output_filename} --approve --verbose 4")
+        sh.run(f"eksctl create cluster -f {output_filename} --write-kubeconfig --verbose 4")
+    else:
+        sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
     _logger.debug("EKSCTL deployed")
 
 
