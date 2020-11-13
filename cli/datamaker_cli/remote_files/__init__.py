@@ -16,13 +16,16 @@ from enum import Enum
 from typing import Callable, Tuple
 
 from datamaker_cli.remote_files import deploy as deploy_module
+from datamaker_cli.remote_files import deploy_image as deploy_image_module
 from datamaker_cli.remote_files import destroy as destroy_module
+from datamaker_cli.remote_files import destroy_image as destroy_image_module
 
 REMOTE_FUNC_TYPE = Callable[[str, Tuple[str, ...]], None]
 
 
 class RemoteCommands(Enum):
     deploy: REMOTE_FUNC_TYPE = deploy_module.deploy
+    _deploy_image: REMOTE_FUNC_TYPE = deploy_module._deploy_image
     destroy: REMOTE_FUNC_TYPE = destroy_module.destroy
-    deploy_image: REMOTE_FUNC_TYPE = deploy_module.deploy_image
-    destroy_image: REMOTE_FUNC_TYPE = destroy_module.destroy_image
+    deploy_image: REMOTE_FUNC_TYPE = deploy_image_module.deploy_image
+    destroy_image: REMOTE_FUNC_TYPE = destroy_image_module.destroy_image

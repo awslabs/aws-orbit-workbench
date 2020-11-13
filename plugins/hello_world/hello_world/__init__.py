@@ -13,45 +13,41 @@
 #    limitations under the License.
 
 import logging
+from typing import List
 
 from datamaker_cli import sh
-from datamaker_cli.manifest import Manifest, TeamManifest
+from datamaker_cli.manifest import Manifest
+from datamaker_cli.manifest.team import TeamManifest
 from datamaker_cli.plugins import hooks
 
 _logger: logging.Logger = logging.getLogger("datamaker_cli")
 
 
-@hooks.deploy.demo
-def deploy_demo(manifest: Manifest) -> None:
-    _logger.debug("Env name: %s", manifest.name)
-    sh.run(f"echo 'Env name: {manifest.name}'")
-
-
-@hooks.deploy.env
-def deploy_env(manifest: Manifest) -> None:
-    _logger.debug("Env VPC: %s", manifest.vpc.vpc_id)
-    sh.run(f"echo 'Env VPC: {manifest.vpc.vpc_id}'")
-
-
-@hooks.deploy.team
-def deploy_team(manifest: Manifest, team_manifest: TeamManifest) -> None:
+@hooks.deploy
+def deploy(manifest: Manifest, team_manifest: TeamManifest) -> None:
     _logger.debug("Team Env name: %s | Team name: %s", manifest.name, team_manifest.name)
     sh.run(f"echo 'Team Env name: {manifest.name} | Team name: {team_manifest.name}'")
 
 
-@hooks.destroy.demo
-def destroy_demo(manifest: Manifest) -> None:
-    _logger.debug("Env name: %s", manifest.name)
-    sh.run(f"echo 'Env name: {manifest.name}'")
-
-
-@hooks.destroy.env
-def destroy_env(manifest: Manifest) -> None:
-    _logger.debug("Env VPC: %s", manifest.vpc.vpc_id)
-    sh.run(f"echo 'Env VPC: {manifest.vpc.vpc_id}'")
-
-
-@hooks.destroy.team
-def destroy_team(manifest: Manifest, team_manifest: TeamManifest) -> None:
+@hooks.destroy
+def destroy(manifest: Manifest, team_manifest: TeamManifest) -> None:
     _logger.debug("Team Env name: %s | Team name: %s", manifest.name, team_manifest.name)
     sh.run(f"echo 'Team Env name: {manifest.name} | Team name: {team_manifest.name}'")
+
+
+@hooks.dockerfile_injection
+def dockerfile_injection(manifest: Manifest, team_manifest: TeamManifest) -> List[str]:
+    _logger.debug("Team Env: %s | Team: %s | Image: %s", manifest.name, team_manifest.name, team_manifest.image)
+    return ["RUN echo 'Hello World!' > /home/jovyan/hello-world-plugin.txt"]
+
+
+@hooks.bootstrap_injection
+def bootstrap_injection(manifest: Manifest, team_manifest: TeamManifest) -> str:
+    _logger.debug("Injecting CodeCommit plugin commands for team %s Bootstrap", team_manifest.name)
+    return """
+#!/usr/bin/env bash
+set -ex
+
+echo 'Hello World 2!' > /home/jovyan/hello-world-plugin-2.txt
+
+"""

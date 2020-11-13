@@ -48,7 +48,7 @@ def synth(manifest: Manifest) -> str:
         deploy_id=manifest.deploy_id,
     )
     _logger.debug("Writing %s", output_filename)
-    os.makedirs(os.path.dirname(output_filename), exist_ok=True)
+    os.makedirs(outdir, exist_ok=True)
     with open(output_filename, "w") as file:
         file.write(content)
 

@@ -13,9 +13,10 @@
 #    limitations under the License.
 
 import logging
+import os
 from typing import Tuple
 
-from datamaker_cli import plugins
+from datamaker_cli import changeset, plugins
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.remote_files import cdk_toolkit, demo, eksctl, env, kubectl, teams
 from datamaker_cli.services import ecr
@@ -48,8 +49,14 @@ def destroy(filename: str, args: Tuple[str, ...]) -> None:
         raise ValueError("Unexpected number of values in args.")
 
     manifest.fillup()
-    plugins.load_plugins(manifest=manifest)
-    _logger.debug(f"Plugins: {','.join([p.name for p in manifest.plugins])}")
+    _logger.debug("Manifest loaded")
+    changes: changeset.Changeset = changeset.read_changeset_file(
+        filename=os.path.join(manifest.filename_dir, "changeset.json")
+    )
+    _logger.debug(f"Changeset: {changes.asdict()}")
+    _logger.debug("Changeset loaded")
+    plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, changes=changes.plugin_changesets)
+    _logger.debug("Plugins loaded")
     kubectl.destroy_teams(manifest=manifest)
     _logger.debug("Kubernetes Team components destroyed")
     eksctl.destroy_teams(manifest=manifest)

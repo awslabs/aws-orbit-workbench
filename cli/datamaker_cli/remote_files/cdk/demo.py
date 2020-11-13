@@ -85,6 +85,7 @@ class VpcStack(Stack):
             "dynamodb": ec2.GatewayVpcEndpointAwsService.DYNAMODB,
         }
         vpc_interface_endpoints = {
+            "code_artifact_endpoint": ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories"),
             "cloudwatch_endpoint": ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH,
             "cloudwatch_logs_endpoint": ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,
             "cloudwatch_events": ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_EVENTS,
@@ -109,6 +110,7 @@ class VpcStack(Stack):
             "kinesis_firehose_endpoint": ec2.InterfaceVpcEndpointAwsService("kinesis-firehose"),
             "api_gateway": ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
             "sts_endpoint": ec2.InterfaceVpcEndpointAwsService.STS,
+            "code_artifact_api_endpoint": ec2.InterfaceVpcEndpointAwsService("codeartifact.api"),
         }
 
         self.public_subnets = (
@@ -137,16 +139,30 @@ class VpcStack(Stack):
         # for name, interface_service in vpc_interface_endpoints.items():
         #     self.vpc.add_interface_endpoint(id=name, service=interface_service)
 
-        self._create_ca_endpoints()
+        # Adding Lambda and Redshift endpoints with CDK low level APIs
+        endpoint_url_template = "com.amazonaws.{}.{}"
+        vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
+        # Adding ingress rule to VPC CIDR
+        vpc_security_group.add_ingress_rule(peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block), connection=ec2.Port.all_tcp())
+        isolated_subnet_ids = [t.subnet_id for t in self.vpc.isolated_subnets]
 
-    def _create_ca_endpoints(self) -> None:
-        self.vpc.add_interface_endpoint(
-            "code_artifact_api_endpoint", service=ec2.InterfaceVpcEndpointAwsService("codeartifact.api")
+        ec2.CfnVPCEndpoint(
+            self,
+            "redshift_endpoint",
+            vpc_endpoint_type="Interface",
+            service_name=endpoint_url_template.format(self.region, "redshift"),
+            vpc_id=self.vpc.vpc_id,
+            security_group_ids=[vpc_security_group.security_group_id],
+            subnet_ids=isolated_subnet_ids,
         )
-
-        self.vpc.add_interface_endpoint(
-            "code_artifact_endpoint",
-            service=ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories"),
+        ec2.CfnVPCEndpoint(
+            self,
+            "lambda_endpoint",
+            vpc_endpoint_type="Interface",
+            service_name=endpoint_url_template.format(self.region, "lambda"),
+            vpc_id=self.vpc.vpc_id,
+            security_group_ids=[vpc_security_group.security_group_id],
+            subnet_ids=isolated_subnet_ids,
         )
 
 

@@ -59,6 +59,7 @@ class Team(Stack):
             availability_zones=self.manifest.vpc.availability_zones,
         )
         self.i_private_subnets = self._initialize_private_subnets()
+        self.ecr_repo: ecr.Repository = self._create_repo()
         self.policy: str = str(self.team_manifest.policy)
         self.scratch_bucket: s3.Bucket = self._create_scratch_bucket()
         self.role_eks_nodegroup = self._create_role()
@@ -83,6 +84,13 @@ class Team(Stack):
             for s in self.manifest.vpc.subnets
             if s.kind == SubnetKind.private
         ]
+
+    def _create_repo(self) -> ecr.Repository:
+        return ecr.Repository(
+            scope=self,
+            id="repo",
+            repository_name=f"datamaker-{self.manifest.name}-{self.team_manifest.name}",
+        )
 
     def _create_role(self) -> iam.Role:
         env_name = self.manifest.name
