@@ -84,11 +84,11 @@ def destroy(filename: str, teams_only: bool, debug: bool) -> None:
         ):
             bundle_path = bundle.generate_bundle(command_name="destroy", manifest=manifest)
             ctx.progress(5)
-            teams_only_arg = "teams-only" if teams_only else ""
+            teams_only_flag = "teams-stacks" if teams_only else "all-stacks"
             buildspec = codebuild.generate_spec(
                 manifest=manifest,
                 plugins=True,
-                cmds_build=[f"datamaker remote --command destroy {teams_only_arg}"],
+                cmds_build=[f"datamaker remote --command destroy {teams_only_flag}"],
             )
             remote.run(
                 command_name="destroy",

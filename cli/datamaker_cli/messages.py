@@ -54,6 +54,7 @@ REMOTE_PROGRESS_LOOKUP: Dict[str, Dict[str, int]] = {
         "Teams Stacks deployed": 80,
         "EKS Team Stacks deployed": 90,
         "Kubernetes Team components deployed": 95,
+        "Skipping Team Stacks": 95,
         "Phase complete: BUILD State: SUCCEEDED": 97,
     },
     "Destroying": {

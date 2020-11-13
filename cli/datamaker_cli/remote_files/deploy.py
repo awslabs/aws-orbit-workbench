@@ -107,8 +107,9 @@ def deploy_images_remotely(manifest: Manifest) -> None:
 
 def deploy(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug("args: %s", args)
-    if len(args) == 1:
+    if len(args) == 2:
         skip_images_remote_flag: str = str(args[0])
+        env_only: bool = (args[1] == "env-stacks")
     else:
         raise ValueError("Unexpected number of values in args.")
 
@@ -137,9 +138,12 @@ def deploy(filename: str, args: Tuple[str, ...]) -> None:
     kubectl.deploy_env(manifest=manifest)
     _logger.debug("Kubernetes Environment components deployed")
 
-    teams.deploy(manifest=manifest)
-    _logger.debug("Team Stacks deployed")
-    eksctl.deploy_teams(manifest=manifest)
-    _logger.debug("EKS Team Stacks deployed")
-    kubectl.deploy_teams(manifest=manifest)
-    _logger.debug("Kubernetes Team components deployed")
+    if not env_only:
+        teams.deploy(manifest=manifest)
+        _logger.debug("Team Stacks deployed")
+        eksctl.deploy_teams(manifest=manifest)
+        _logger.debug("EKS Team Stacks deployed")
+        kubectl.deploy_teams(manifest=manifest)
+        _logger.debug("Kubernetes Team components deployed")
+    else:
+        _logger.debug("Skipping Team Stacks")

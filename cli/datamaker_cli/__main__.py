@@ -123,6 +123,12 @@ def init_cli(
     show_default=True,
 )
 @click.option(
+    "--env-stacks/--all-stacks",
+    default=False,
+    help="Deploy Environment Stacks only",
+    show_default=True
+)
+@click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
@@ -131,6 +137,7 @@ def init_cli(
 def deploy_cli(
     filename: str,
     skip_images: bool,
+    env_stacks: bool,
     debug: bool,
     username: Optional[str] = None,
     password: Optional[str] = None,
@@ -142,7 +149,7 @@ def deploy_cli(
     _logger.debug("filename: %s", filename)
     _logger.debug("username: %s", username)
     _logger.debug("skip_images: %s", skip_images)
-    deploy(filename=filename, username=username, password=password, skip_images=skip_images, debug=debug)
+    deploy(filename=filename, username=username, password=password, skip_images=skip_images, env_only=env_stacks, debug=debug)
 
 
 @click.command(name="destroy")

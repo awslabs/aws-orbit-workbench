@@ -124,6 +124,7 @@ def deploy_image(filename: str, dir: str, name: str, script: Optional[str], debu
 def deploy(
     filename: str,
     skip_images: bool,
+    env_only: bool,
     debug: bool,
     username: Optional[str] = None,
     password: Optional[str] = None,
@@ -157,10 +158,11 @@ def deploy(
         bundle_path = bundle.generate_bundle(command_name="deploy", manifest=manifest, dirs=dirs)
         ctx.progress(15)
         skip_images_remote_flag: str = "skip-images" if skip_images else "no-skip-images"
+        env_only_flag: str = "env-stacks" if env_only else "all-stacks"
         buildspec = codebuild.generate_spec(
             manifest=manifest,
             plugins=True,
-            cmds_build=[f"datamaker remote --command deploy {skip_images_remote_flag}"],
+            cmds_build=[f"datamaker remote --command deploy {skip_images_remote_flag} {env_only_flag}"],
         )
         remote.run(
             command_name="deploy",
