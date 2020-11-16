@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Iterator, List, Optional, cast
 import boto3
 
 from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, docker, plugins
+from datamaker_cli.manifest import Manifest
 from datamaker_cli.services import cfn, ecr, s3
 
 if TYPE_CHECKING:
