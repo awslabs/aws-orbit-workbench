@@ -39,9 +39,7 @@ MANIFEST: Dict[str, Any] = {
 def create_nodegroup_structure(team: TeamManifest, env_name: str) -> Dict[str, Any]:
     if team.eks_nodegroup_role_arn is None:
         _logger.debug(f"ValueError: team.eks_nodegroup_role_arn: {team.eks_nodegroup_role_arn}")
-        return{
-            "name": team.name
-        }
+        return {"name": team.name}
     return {
         "name": team.name,
         "privateNetworking": True,

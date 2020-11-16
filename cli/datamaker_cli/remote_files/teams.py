@@ -15,22 +15,39 @@
 import logging
 import os
 import shutil
-from typing import TYPE_CHECKING, List, Optional, cast
+from typing import TYPE_CHECKING, Iterator, List, Optional, cast
 
 import boto3
 
 from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, docker, plugins
-from datamaker_cli.services import cfn, s3
+from datamaker_cli.services import cfn, ecr, s3
 
 if TYPE_CHECKING:
     from datamaker_cli.changeset import PluginChangeset
-    from datamaker_cli.manifest import Manifest
     from datamaker_cli.manifest.team import TeamManifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def _create_dockefile(manifest: "Manifest", team_manifest: "TeamManifest") -> str:
+def _fetch_targets(manifest: Manifest, fs_id: str) -> Iterator[str]:
+    client = manifest.boto3_client("efs")
+    paginator = client.get_paginator("describe_mount_targets")
+    for page in paginator.paginate(FileSystemId=fs_id):
+        for target in page["MountTargets"]:
+            yield target["MountTargetId"]
+
+
+def _delete_targets(manifest: Manifest, fs_id: str) -> None:
+    client = manifest.boto3_client("efs")
+    for target in _fetch_targets(manifest=manifest, fs_id=fs_id):
+        try:
+            _logger.debug(f"Deleting MountTargetId: {target}")
+            client.delete_mount_target(MountTargetId=target)
+        except client.exceptions.MountTargetNotFound:
+            _logger.warning(f"Ignoring MountTargetId {target} deletion cause it does not exist anymore.")
+
+
+def _create_dockefiler(manifest: "Manifest", team_manifest: "TeamManifest") -> str:
     base_image_cmd: str = f"FROM {team_manifest.base_image_address}"
     _logger.debug("base_image_cmd: %s", base_image_cmd)
     cmds: List[str] = [base_image_cmd]
@@ -60,7 +77,7 @@ def _create_dockefile(manifest: "Manifest", team_manifest: "TeamManifest") -> st
 
 
 def _deploy_team_image(manifest: "Manifest", team_manifest: "TeamManifest") -> None:
-    image_dir: str = _create_dockefile(manifest=manifest, team_manifest=team_manifest)
+    image_dir: str = _create_dockefiler(manifest=manifest, team_manifest=team_manifest)
     image_name: str = f"datamaker-{manifest.name}-{team_manifest.name}"
     _logger.debug("Deploying the %s Docker image", image_name)
     docker.deploy_dynamic_image(manifest=manifest, dir=image_dir, name=image_name)
@@ -111,9 +128,19 @@ def destroy(manifest: "Manifest") -> None:
             plugins.PLUGINS_REGISTRIES.destroy_team_plugins(manifest=manifest, team_manifest=team_manifest)
             if team_manifest.scratch_bucket is not None:
                 try:
+
                     s3.delete_bucket(manifest=manifest, bucket=team_manifest.scratch_bucket)
                 except Exception as ex:
-                    _logger.debug("Skipping Team scratch bucket deletion. Cause: %s", ex)
+                    _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
+            if team_manifest.efs_id is not None:
+                try:
+                    _delete_targets(manifest=manifest, fs_id=team_manifest.efs_id)
+                except Exception as ex:
+                    _logger.debug("Skipping Team EFS Target deletion. Cause: %s", ex)
+            try:
+                ecr.delete_repo(manifest=manifest, repo=f"datamaker-{manifest.name}-{team_manifest.name}")
+            except Exception as ex:
+                _logger.debug("Skipping Team ECR Repository deletion. Cause: %s", ex)
             if cfn.does_stack_exist(manifest=manifest, stack_name=team_manifest.stack_name):
                 cdk.destroy(
                     manifest=manifest,

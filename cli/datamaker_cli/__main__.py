@@ -123,12 +123,7 @@ def init_cli(
     help="Skip Docker images updates (Usually for development purpose).",
     show_default=True,
 )
-@click.option(
-    "--env-stacks/--all-stacks",
-    default=False,
-    help="Deploy Environment Stacks only",
-    show_default=True
-)
+@click.option("--env-stacks/--all-stacks", default=False, help="Deploy Environment Stacks only", show_default=True)
 @click.option(
     "--debug/--no-debug",
     default=False,
@@ -150,7 +145,14 @@ def deploy_cli(
     _logger.debug("filename: %s", filename)
     _logger.debug("username: %s", username)
     _logger.debug("skip_images: %s", skip_images)
-    deploy(filename=filename, username=username, password=password, skip_images=skip_images, env_only=env_stacks, debug=debug)
+    deploy(
+        filename=filename,
+        username=username,
+        password=password,
+        skip_images=skip_images,
+        env_only=env_stacks,
+        debug=debug,
+    )
 
 
 @click.command(name="destroy")
@@ -161,10 +163,7 @@ def deploy_cli(
     help="The target DataMaker manifest file (yaml).",
 )
 @click.option(
-    "--team-stacks/--all-stacks",
-    default=False,
-    help="Destroy Team Stacks only or All Stacks",
-    show_default=True
+    "--team-stacks/--all-stacks", default=False, help="Destroy Team Stacks only or All Stacks", show_default=True
 )
 @click.option(
     "--debug/--no-debug",

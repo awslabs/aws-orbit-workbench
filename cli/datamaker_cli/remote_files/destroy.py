@@ -44,7 +44,7 @@ def destroy(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug("manifest.name %s", manifest.name)
     _logger.debug("args %s", args)
     if len(args) == 1:
-        teams_only: bool = (args[0] == "teams-stacks")
+        teams_only: bool = args[0] == "teams-stacks"
     else:
         raise ValueError("Unexpected number of values in args.")
 

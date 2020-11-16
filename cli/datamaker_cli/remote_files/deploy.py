@@ -101,9 +101,9 @@ def deploy(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug("args: %s", args)
     if len(args) == 2:
         skip_images_remote_flag: str = str(args[0])
-        env_only: bool = (args[1] == "env-stacks")
+        env_only: bool = args[1] == "env-stacks"
     else:
-        raise ValueError("Unexpected number of values in args.")
+        raise ValueError("Unexpected number of values in args")
 
     manifest: Manifest = Manifest(filename=filename)
     manifest.fillup()

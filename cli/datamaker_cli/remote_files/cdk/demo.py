@@ -136,8 +136,8 @@ class VpcStack(Stack):
                 subnets=self.private_subnets.subnets + self.isolated_subnets.subnets,
             )
 
-        # for name, interface_service in vpc_interface_endpoints.items():
-        #     self.vpc.add_interface_endpoint(id=name, service=interface_service)
+        for name, interface_service in vpc_interface_endpoints.items():
+            self.vpc.add_interface_endpoint(id=name, service=interface_service)
 
         # Adding Lambda and Redshift endpoints with CDK low level APIs
         endpoint_url_template = "com.amazonaws.{}.{}"
