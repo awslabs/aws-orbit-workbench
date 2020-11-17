@@ -1,9 +1,12 @@
 import itertools
+import logging
 from base64 import b64decode
 from typing import TYPE_CHECKING, Any, Iterator, Tuple, cast
 
 if TYPE_CHECKING:
     from datamaker_cli.manifest import Manifest
+
+_logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _chunks(iterable: Iterator[Any], size: int) -> Iterator[Any]:
@@ -36,5 +39,7 @@ def delete_images(manifest: "Manifest", repo: str) -> None:
 
 def delete_repo(manifest: "Manifest", repo: str) -> None:
     client = manifest.boto3_client("ecr")
+    _logger.debug(f"Deleting Repository Images: {repo}")
     delete_images(manifest=manifest, repo=repo)
+    _logger.debug(f"Deleting Repository: {repo}")
     client.delete_repository(repositoryName=repo, force=True)

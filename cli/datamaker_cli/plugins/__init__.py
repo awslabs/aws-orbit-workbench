@@ -261,5 +261,3 @@ class PluginRegistries:
 
 
 PLUGINS_REGISTRIES: PluginRegistries = PluginRegistries()
-
-from datamaker_cli.plugins import hooks  # noqa: F401,E402
