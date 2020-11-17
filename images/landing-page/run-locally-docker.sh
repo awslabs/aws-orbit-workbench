@@ -25,10 +25,14 @@ docker run \
     -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
     -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
     -e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} \
-    -e ENV_NAME=env \
-    -e USER_POOL_ID=us-east-1_ILHCWP974 \
-    -e USER_POOL_CLIENT_ID=6orcm1n6lqvhb02ubog5jebid7 \
-    -e IDENTITY_POOL_ID=us-east-1:c84fb456-75d8-482e-a5ed-6ece7c03d6ae \
+    -e ENV_NAME=my-env \
+    -e USER_POOL_ID=us-east-1_VCCZGajYC \
+    -e USER_POOL_CLIENT_ID=7abt81ecm5mdhgq0qetuoojpp4 \
+    -e IDENTITY_POOL_ID=us-east-1:f4fbf02d-cb85-4f00-80bc-7272835624ce \
+    -e COGNITO_EXTERNAL_PROVIDER=okta \
+    -e COGNITO_EXTERNAL_PROVIDER_LABEL=OKTA \
+    -e COGNITO_EXTERNAL_PROVIDER_DOMAIN=my-env.auth.us-east-1.amazoncognito.com \
+    -e COGNITO_EXTERNAL_PROVIDER_REDIRECT=http://localhost:8080/ \
     -p 8080:80 \
     --rm \
     -it \
