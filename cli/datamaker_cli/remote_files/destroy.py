@@ -41,6 +41,13 @@ def destroy_image(filename: str, args: Tuple[str, ...]) -> None:
 
 def destroy(filename: str, args: Tuple[str, ...]) -> None:
     manifest: Manifest = Manifest(filename=filename)
+    _logger.debug("manifest.name %s", manifest.name)
+    _logger.debug("args %s", args)
+    if len(args) == 1:
+        teams_only: bool = args[0] == "teams-stacks"
+    else:
+        raise ValueError("Unexpected number of values in args.")
+
     manifest.fillup()
     _logger.debug("Manifest loaded")
     changes: changeset.Changeset = changeset.read_changeset_file(
@@ -50,15 +57,23 @@ def destroy(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug("Changeset loaded")
     plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, changes=changes.plugin_changesets)
     _logger.debug("Plugins loaded")
-    kubectl.destroy(manifest=manifest)
-    _logger.debug("Kubernetes components destroyed")
-    eksctl.destroy(manifest=manifest)
-    _logger.debug("EKS Stack destroyed")
+    kubectl.destroy_teams(manifest=manifest)
+    _logger.debug("Kubernetes Team components destroyed")
+    eksctl.destroy_teams(manifest=manifest)
+    _logger.debug("EKS Team Stacks destroyed")
     teams.destroy(manifest=manifest)
     _logger.debug("Teams Stacks destroyed")
-    env.destroy(manifest=manifest)
-    _logger.debug("Env Stack destroyed")
-    demo.destroy(manifest=manifest)
-    _logger.debug("Demo Stack destroyed")
-    cdk_toolkit.destroy(manifest=manifest)
-    _logger.debug("CDK Toolkit Stack destroyed")
+
+    if not teams_only:
+        kubectl.destroy_env(manifest=manifest)
+        _logger.debug("Kubernetes Environment components destroyed")
+        eksctl.destroy_env(manifest=manifest)
+        _logger.debug("EKS Environment Stacks destroyed")
+        env.destroy(manifest=manifest)
+        _logger.debug("Env Stack destroyed")
+        demo.destroy(manifest=manifest)
+        _logger.debug("Demo Stack destroyed")
+        cdk_toolkit.destroy(manifest=manifest)
+        _logger.debug("CDK Toolkit Stack destroyed")
+    else:
+        _logger.debug("Skipping Environment, Demo, and CDK Toolkit Stacks")

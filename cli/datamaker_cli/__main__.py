@@ -123,6 +123,7 @@ def init_cli(
     help="Skip Docker images updates (Usually for development purpose).",
     show_default=True,
 )
+@click.option("--env-stacks/--all-stacks", default=False, help="Deploy Environment Stacks only", show_default=True)
 @click.option(
     "--debug/--no-debug",
     default=False,
@@ -132,6 +133,7 @@ def init_cli(
 def deploy_cli(
     filename: str,
     skip_images: bool,
+    env_stacks: bool,
     debug: bool,
     username: Optional[str] = None,
     password: Optional[str] = None,
@@ -143,7 +145,14 @@ def deploy_cli(
     _logger.debug("filename: %s", filename)
     _logger.debug("username: %s", username)
     _logger.debug("skip_images: %s", skip_images)
-    deploy(filename=filename, username=username, password=password, skip_images=skip_images, debug=debug)
+    deploy(
+        filename=filename,
+        username=username,
+        password=password,
+        skip_images=skip_images,
+        env_only=env_stacks,
+        debug=debug,
+    )
 
 
 @click.command(name="destroy")
@@ -154,18 +163,22 @@ def deploy_cli(
     help="The target DataMaker manifest file (yaml).",
 )
 @click.option(
+    "--team-stacks/--all-stacks", default=False, help="Destroy Team Stacks only or All Stacks", show_default=True
+)
+@click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
     show_default=True,
 )
-def destroy_cli(filename: str, debug: bool) -> None:
+def destroy_cli(filename: str, team_stacks: bool, debug: bool) -> None:
     """Destroy a DataMaker environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
-    destroy(filename=filename, debug=debug)
+    _logger.debug("teams only: %s", str(team_stacks))
+    destroy(filename=filename, teams_only=team_stacks, debug=debug)
 
 
 @click.command(name="deploy-image")

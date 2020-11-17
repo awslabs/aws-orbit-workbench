@@ -39,7 +39,7 @@ def destroy_toolkit(manifest: Manifest) -> None:
         cfn.destroy_stack(manifest=manifest, stack_name=manifest.toolkit_stack_name)
 
 
-def destroy(filename: str, debug: bool) -> None:
+def destroy(filename: str, teams_only: bool, debug: bool) -> None:
     with MessagesContext("Destroying", debug=debug) as ctx:
         manifest = Manifest(filename=filename)
         manifest.fillup()
@@ -62,10 +62,11 @@ def destroy(filename: str, debug: bool) -> None:
         ):
             bundle_path = bundle.generate_bundle(command_name="destroy", manifest=manifest, changeset=changes)
             ctx.progress(5)
+            teams_only_flag = "teams-stacks" if teams_only else "all-stacks"
             buildspec = codebuild.generate_spec(
                 manifest=manifest,
                 plugins=True,
-                cmds_build=["datamaker remote --command destroy"],
+                cmds_build=[f"datamaker remote --command destroy {teams_only_flag}"],
                 changeset=changes,
             )
             remote.run(
@@ -76,15 +77,22 @@ def destroy(filename: str, debug: bool) -> None:
                 codebuild_log_callback=ctx.progress_bar_callback,
                 timeout=30,
             )
-        ctx.info("Env destroyed")
+        if teams_only:
+            ctx.info("Env Skipped")
+        else:
+            ctx.info("Env destroyed")
         ctx.progress(95)
 
         try:
-            destroy_toolkit(manifest=manifest)
+            if not teams_only:
+                destroy_toolkit(manifest=manifest)
         except botocore.exceptions.ClientError as ex:
             error = ex.response["Error"]
             if "does not exist" not in error["Message"]:
                 raise
             _logger.debug(f"Skipping toolkit destroy: {error['Message']}")
-        ctx.info("Toolkit destroyed")
+        if teams_only:
+            ctx.info("Toolkit skipped")
+        else:
+            ctx.info("Toolkit destroyed")
         ctx.progress(100)

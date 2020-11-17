@@ -101,23 +101,15 @@ def _cleanup_output(output_path: str) -> None:
             os.remove(os.path.join(output_path, file))
 
 
-def _generate_manifest(manifest: Manifest) -> str:
+def _generate_env_manifest(manifest: Manifest, clean_up: bool = True) -> str:
     output_path = f"{manifest.filename_dir}.datamaker.out/{manifest.name}/kubectl/"
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    _cleanup_output(output_path=output_path)
+    if clean_up:
+        _cleanup_output(output_path=output_path)
     _commons(output_path=output_path)
 
     if manifest.account_id is None:
         raise RuntimeError("manifest.account_id is None!")
-
-    for team in manifest.teams:
-        _team(
-            region=manifest.region,
-            account_id=manifest.account_id,
-            env_name=manifest.name,
-            output_path=output_path,
-            team=team,
-        )
 
     if manifest.user_pool_id is None:
         _logger.warning("manifest.user_pool_id is None, skipping LandingPage Manifest generation.")
@@ -143,14 +135,34 @@ def _generate_manifest(manifest: Manifest) -> str:
     return output_path
 
 
-def fetch_kubectl_data(manifest: Manifest, context: str) -> None:
+def _generate_teams_manifest(manifest: Manifest) -> str:
+    output_path = f"{manifest.filename_dir}.datamaker.out/{manifest.name}/kubectl/"
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    _cleanup_output(output_path=output_path)
+    if manifest.account_id is None:
+        raise RuntimeError("manifest.account_id is None!")
+
+    for team in manifest.teams:
+        _team(
+            region=manifest.region,
+            account_id=manifest.account_id,
+            env_name=manifest.name,
+            output_path=output_path,
+            team=team,
+        )
+
+    return output_path
+
+
+def fetch_kubectl_data(manifest: Manifest, context: str, include_teams: bool) -> None:
     _logger.debug("Fetching Kubectl data...")
     manifest.fetch_ssm()
 
-    for team in manifest.teams:
-        _logger.debug("Fetching team %s URL parameter", team.name)
-        url = k8s.get_service_hostname(name="jupyterhub-public", context=context, namespace=team.name)
-        team.jupyter_url = url
+    if include_teams:
+        for team in manifest.teams:
+            _logger.debug("Fetching team %s URL parameter", team.name)
+            url = k8s.get_service_hostname(name="jupyterhub-public", context=context, namespace=team.name)
+            team.jupyter_url = url
 
     landing_page_url: str = k8s.get_service_hostname(name="landing-page-public", context=context, namespace="env")
     manifest.landing_page_url = f"http://{landing_page_url}"
@@ -159,26 +171,57 @@ def fetch_kubectl_data(manifest: Manifest, context: str) -> None:
     _logger.debug("Kubectl data fetched successfully.")
 
 
-def deploy(manifest: Manifest) -> None:
+def deploy_env(manifest: Manifest) -> None:
     eks_stack_name: str = f"eksctl-datamaker-{manifest.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
         context = get_k8s_context(manifest=manifest)
         _logger.debug("kubectl context: %s", context)
-        output_path = _generate_manifest(manifest=manifest)
+        output_path = _generate_env_manifest(manifest=manifest)
         sh.run(f"kubectl apply -k {EFS_DRIVE} --context {context}")
         sh.run(f"kubectl apply -f {output_path} --context {context}")
-        fetch_kubectl_data(manifest=manifest, context=context)
+        fetch_kubectl_data(manifest=manifest, context=context, include_teams=False)
 
 
-def destroy(manifest: Manifest) -> None:
+def deploy_teams(manifest: Manifest) -> None:
+    eks_stack_name: str = f"eksctl-datamaker-{manifest.name}-cluster"
+    _logger.debug("EKSCTL stack name: %s", eks_stack_name)
+    if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
+        context = get_k8s_context(manifest=manifest)
+        _logger.debug("kubectl context: %s", context)
+        output_path = _generate_teams_manifest(manifest=manifest)
+        output_path = _generate_env_manifest(manifest=manifest, clean_up=False)
+        sh.run(f"kubectl apply -f {output_path} --context {context}")
+        fetch_kubectl_data(manifest=manifest, context=context, include_teams=True)
+
+
+def destroy_env(manifest: Manifest) -> None:
     eks_stack_name: str = f"eksctl-datamaker-{manifest.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
         context = get_k8s_context(manifest=manifest)
         _logger.debug("kubectl context: %s", context)
-        output_path = _generate_manifest(manifest=manifest)
+        output_path = _generate_env_manifest(manifest=manifest)
+        output_path = f"{manifest.filename_dir}.datamaker.out/{manifest.name}/kubectl/"
+        try:
+            sh.run(
+                f"kubectl delete -f {output_path} --grace-period=0 --force "
+                f"--ignore-not-found --wait --context {context}"
+            )
+        except exceptions.FailedShellCommand as ex:
+            _logger.debug("Skipping: %s", ex)
+            pass  # Let's leave for eksctl, it will destroy everything anyway...
+
+
+def destroy_teams(manifest: Manifest) -> None:
+    eks_stack_name: str = f"eksctl-datamaker-{manifest.name}-cluster"
+    _logger.debug("EKSCTL stack name: %s", eks_stack_name)
+    if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
+        sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
+        context = get_k8s_context(manifest=manifest)
+        _logger.debug("kubectl context: %s", context)
+        output_path = _generate_teams_manifest(manifest=manifest)
         output_path = f"{manifest.filename_dir}.datamaker.out/{manifest.name}/kubectl/"
         try:
             sh.run(
