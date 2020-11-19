@@ -15,21 +15,21 @@
  */
 
 import React from "react";
-import { Space } from "antd";
-import DataMakerLogoImage from "./datamaker.png";
+import { AmplifySignIn, AmplifyButton } from "@aws-amplify/ui-react";
+import { Auth } from "aws-amplify";
+import { Divider } from "antd";
 
-const PageSkeleton = (Content, forwardProps) => (
-  <div className="app-container">
-    <Space className="app-container-space" direction="vertical" align="center" size="large">
-      <div className="app-container-header" />
-      <div className="datamaker-logo">
-        <img className="datamaker-logo" src={DataMakerLogoImage} alt="DataMakerLogo" />
-      </div>
-      <div className="datamaker-content">
-        <Content {...forwardProps} />
-      </div>
-    </Space>
-  </div>
+export const SignIn = () => (
+  <AmplifySignIn headerText="Welcome" slot="sign-in" hideSignUp={true} usernameAlias="username" />
 );
 
-export default PageSkeleton;
+export const SignInExternal = () => (
+  <>
+    <Divider />
+    <div className="sign-in-external">
+      <AmplifyButton onClick={() => Auth.federatedSignIn({ provider: window.REACT_APP_EXTERNAL_IDP })}>
+        SIGN IN WITH {window.REACT_APP_EXTERNAL_IDP_LABEL}
+      </AmplifyButton>
+    </div>
+  </>
+);

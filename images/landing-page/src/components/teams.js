@@ -18,16 +18,15 @@ import React from "react";
 import { Space, List, Tooltip, Typography } from "antd";
 import Icon, { LoadingOutlined } from "@ant-design/icons";
 import { AmplifySignOut } from "@aws-amplify/ui-react";
-import { ReactComponent as JupyterLogo } from "./jupyter.svg";
-import useUrls from "./use-urls";
+import { ReactComponent as JupyterLogo } from "../images/jupyter.svg";
+import useUrls from "../hooks/use-urls";
 
 const { Title } = Typography;
 
-const TeamSpaces = (props) => {
-  const [urls, isLoading] = useUrls(props.groups, props.jwt);
+const TeamSpaces = ({ userInfo }) => {
+  const [urls, isLoading] = useUrls(userInfo.groups, userInfo.jwt);
 
   const JupyterIcon = (props) => <Icon component={JupyterLogo} {...props} />;
-  const username = props.username.charAt(0).toUpperCase() + props.username.slice(1);
   return (
     <div className="teamspaces-container">
       <div className="teamspaces">
@@ -37,7 +36,7 @@ const TeamSpaces = (props) => {
           dataSource={urls}
           header={
             <Title level={5} style={{ textAlign: "center" }}>
-              {username}'s teams
+              {userInfo.email}
             </Title>
           }
           renderItem={(item) => (
@@ -63,15 +62,13 @@ const TeamSpaces = (props) => {
   );
 };
 
-const AuthenticatedContent = (props) => (
-  <div className="authenticated-content">
-    <Space className="app-container-space" direction="vertical" align="center" size="large">
-      <TeamSpaces {...props} />
-      <div className="sign-out">
-        <AmplifySignOut />
-      </div>
-    </Space>
-  </div>
+const Teams = ({ userInfo }) => (
+  <Space direction="vertical" align="center" size="large">
+    <TeamSpaces userInfo={userInfo} />
+    <div className="sign-out">
+      <AmplifySignOut />
+    </div>
+  </Space>
 );
 
-export default AuthenticatedContent;
+export default Teams;

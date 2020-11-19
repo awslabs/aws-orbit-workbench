@@ -108,6 +108,11 @@ class Manifest:
         self.teams: List[TeamManifest] = self._parse_teams()
         self.vpc: VpcManifest = self._parse_vpc()
 
+        self.cognito_external_provider: Optional[str] = cast(Optional[str], self.raw_file.get("external-idp", None))
+        self.cognito_external_provider_label: Optional[str] = cast(
+            Optional[str], self.raw_file.get("external-idp-label", None)
+        )
+
         # Need to fill up
 
         self.deploy_id: Optional[str] = None  # toolkit
@@ -125,6 +130,9 @@ class Manifest:
         self.cognito_users_urls: Optional[str] = None  # Env
 
         self.landing_page_url: Optional[str] = None  # Kubectl
+
+        self.cognito_external_provider_domain: Optional[str] = None  # Cognito
+        self.cognito_external_provider_redirect: Optional[str] = None  # Cognito
 
     @staticmethod
     def _read_manifest_file(filename: str) -> MANIFEST_FILE_TYPE:
@@ -241,6 +249,8 @@ class Manifest:
             self.eks_env_nodegroup_role_arn = cast(Optional[str], raw.get("eks-env-nodegroup-role-arn"))
             self.user_pool_client_id = cast(Optional[str], raw.get("user-pool-client-id"))
             self.identity_pool_id = cast(Optional[str], raw.get("identity-pool-id"))
+            self.cognito_external_provider_domain = cast(Optional[str], raw.get("cognito-external-provider-domain"))
+            self.cognito_external_provider_redirect = cast(Optional[str], raw.get("cognito-external-provider-redirect"))
 
             self.user_pool_id = cast(Optional[str], raw.get("user-pool-id"))
             if self.user_pool_id is not None:
@@ -343,11 +353,27 @@ class Manifest:
         self.write_manifest_ssm()
         _logger.debug("Network data fetched successfully.")
 
+    def fetch_cognito_external_idp_data(self) -> None:
+        if self.cognito_external_provider is not None and self.user_pool_id is not None:
+            _logger.debug("Fetching Cognito External IdP data...")
+            self.fetch_ssm()
+            client = self.boto3_client(service_name="cognito-idp")
+            response: Dict[str, Any] = client.describe_user_pool(UserPoolId=self.user_pool_id)
+            domain: str = response["UserPool"]["Domain"]
+            self.cognito_external_provider_domain = f"{domain}.auth.{self.region}.amazoncognito.com"
+            _logger.debug("cognito_external_provider_domain: %s", self.cognito_external_provider_domain)
+            response = client.describe_user_pool_client(UserPoolId=self.user_pool_id, ClientId=self.user_pool_client_id)
+            self.cognito_external_provider_redirect = response["UserPoolClient"]["CallbackURLs"][0]
+            _logger.debug("cognito_external_provider_redirect: %s", self.cognito_external_provider_redirect)
+            self.write_manifest_ssm()
+            _logger.debug("Cognito External IdP data fetched successfully.")
+
     def fillup(self) -> None:
         if self.fetch_ssm() is False:
             self.fetch_toolkit_data()
             self.fetch_demo_data()
             self.fetch_network_data()
+            self.fetch_cognito_external_idp_data()
 
     def asdict_file(self) -> MANIFEST_FILE_TYPE:
         obj: MANIFEST_FILE_TYPE = {
@@ -362,6 +388,11 @@ class Manifest:
             obj["codeartifact-domain"] = self.codeartifact_domain
         if self.codeartifact_repository is not None:
             obj["codeartifact-repository"] = self.codeartifact_repository
+        if self.cognito_external_provider is not None:
+            obj["external-idp"] = self.cognito_external_provider
+        if self.cognito_external_provider_label is not None:
+            obj["external-idp-label"] = self.cognito_external_provider_label
+
         obj["images"] = self.images
         obj["vpc"] = self.vpc.asdict_file()
         obj["teams"] = [t.asdict_file() for t in self.teams]
