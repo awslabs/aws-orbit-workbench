@@ -14,6 +14,7 @@ RUN apt-get install less -y
 RUN apt-get install jq -y
 USER $NB_UID
 
+
 # General Python packages
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install --upgrade wheel
@@ -22,8 +23,6 @@ RUN python3 -m pip install --upgrade notebook
 RUN python3 -m pip install --upgrade jupyterlab
 RUN python3 -m pip install --upgrade kubernetes~=11.0.0
 RUN python3 -m pip install --upgrade papermill~=2.1.3
-
-RUN python3 -m pip install --upgrade datamaker-sdk
 
 ADD requirements.txt /etc/jupyterhub/requirements.txt
 RUN python3 -m pip install --use-feature=2020-resolver --requirement /etc/jupyterhub/requirements.txt
@@ -45,3 +44,8 @@ RUN chmod -R 755 /opt/transformations/
 
 # Bootstrap
 ADD bootstrap.sh /etc/jupyterhub/bootstrap.sh
+
+# Necessary to install packages from CodeArtifact
+ADD pip.conf /etc/pip.conf
+RUN python3 -m pip install --upgrade datamaker-sdk
+RUN rm /etc/pip.conf
