@@ -441,7 +441,7 @@ def get_active_tasks(user_filter: Optional[Any]) -> Union[dict, List[Dict[str, A
     if len(tasks) == 0:
         return {}
     task_descs = ecs.describe_tasks(
-        cluster=f"datamaker-{props['AWS_DATAMAKER_ENV']}-{props['DATAMAKER_TEAM_SPACE']}-Cluster", tasks=tasks
+        cluster=f"datamaker-{props['AWS_DATAMAKER_ENV']}-{props['DATAMAKER_TEAM_SPACE']}-cluster", tasks=tasks
     )["tasks"]
     for t in task_descs:
         task_definition = {}
@@ -548,12 +548,12 @@ def wait_for_tasks_to_complete(
         waiter = ecs.get_waiter("tasks_stopped")
         waiter.wait(cluster=clusterName, tasks=tasks, WaiterConfig={"Delay": delay, "MaxAttempts": maxAttempts})
     else:
-        logGroupName = f"/datamaker/tasks/{props['AWS_DATAMAKER_ENV']}/{props['DATAMAKER_TEAM_SPACE']}"
+        logGroupName = f"/datamaker/tasks/{props['AWS_DATAMAKER_ENV']}/{props['DATAMAKER_TEAM_SPACE']}/containers"
         logger.info("start logging from %s", logGroupName)
         logStreams = []
         for t in tasks:
-            id = t.split("/")[1]
-            logStreams.append("ecs/datamaker-runner/" + id)
+            id = t.split("/")[2]
+            logStreams.append(f"datamaker-{props['AWS_DATAMAKER_ENV']}-{props['DATAMAKER_TEAM_SPACE']}/datamaker-runner/{id}")
 
         logger.info("waiting until tasks start running")
 
@@ -585,7 +585,8 @@ def wait_for_tasks_to_complete(
                 throttle = 10
                 time.sleep(throttle)
                 remainingDelay -= throttle
-        except:
+        except ex as Exception:
+            logger.error(ex)
             logger.error("Error logging from %s.%s", logGroupName, ",".join(logStreams))
 
 
@@ -618,7 +619,7 @@ def logEvents(paginator: Any, logGroupName: Any, logStreams: Any, fromTime: Any)
     while True:
         for page in response_iterator:
             for e in page["events"]:
-                t = datetime.datetime.fromtimestamp(e["timestamp"] / 1000).strftime("%Y-%m-%d %H:%M:%S")
+                t = datetime.fromtimestamp(e["timestamp"] / 1000).strftime("%Y-%m-%d %H:%M:%S")
                 m = e["message"]
                 print(t, m)
                 lastTime = e["timestamp"]
