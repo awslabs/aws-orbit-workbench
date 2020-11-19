@@ -17,4 +17,5 @@
 
 set -ex
 
-yarn lint
+./build.sh
+docker build -t datamaker-landing-page .

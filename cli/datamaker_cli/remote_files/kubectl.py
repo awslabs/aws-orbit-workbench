@@ -15,6 +15,7 @@
 import logging
 import os
 import shutil
+from typing import Optional
 
 from datamaker_cli import DATAMAKER_CLI_ROOT, exceptions, k8s, sh
 from datamaker_cli.manifest import Manifest
@@ -66,29 +67,35 @@ def _team(region: str, account_id: str, output_path: str, env_name: str, team: T
         file.write(content)
 
 
-def _landing_page(
-    region: str,
-    account_id: str,
-    output_path: str,
-    env_name: str,
-    user_pool_id: str,
-    user_pool_client_id: str,
-    identity_pool_id: str,
-    tag: str,
-) -> None:
+def _landing_page(output_path: str, manifest: Manifest) -> None:
     filename = "03-landing-page.yaml"
     input = os.path.join(MODEL_PATH, filename)
     output = output_path + filename
     with open(input, "r") as file:
         content: str = file.read()
+    label: Optional[str] = (
+        manifest.cognito_external_provider
+        if manifest.cognito_external_provider_label is None
+        else manifest.cognito_external_provider_label
+    )
+    domain: str = (
+        "null" if manifest.cognito_external_provider_domain is None else manifest.cognito_external_provider_domain
+    )
+    redirect: str = (
+        "null" if manifest.cognito_external_provider_redirect is None else manifest.cognito_external_provider_redirect
+    )
     content = content.replace("$", "").format(
-        region=region,
-        account_id=account_id,
-        env_name=env_name,
-        user_pool_id=user_pool_id,
-        user_pool_client_id=user_pool_client_id,
-        identity_pool_id=identity_pool_id,
-        tag=tag,
+        region=manifest.region,
+        account_id=manifest.account_id,
+        env_name=manifest.name,
+        user_pool_id=manifest.user_pool_id,
+        user_pool_client_id=manifest.user_pool_client_id,
+        identity_pool_id=manifest.identity_pool_id,
+        tag=manifest.images["landing-page"]["version"],
+        cognito_external_provider=manifest.cognito_external_provider,
+        cognito_external_provider_label=label,
+        cognito_external_provider_domain=domain,
+        cognito_external_provider_redirect=redirect,
     )
     with open(output, "w") as file:
         file.write(content)
@@ -121,16 +128,7 @@ def _generate_env_manifest(manifest: Manifest, clean_up: bool = True) -> str:
         _logger.warning("manifest.identity_pool_id is None, skipping LandingPage Manifest generation.")
         return output_path
 
-    _landing_page(
-        region=manifest.region,
-        account_id=manifest.account_id,
-        output_path=output_path,
-        env_name=manifest.name,
-        user_pool_id=manifest.user_pool_id,
-        user_pool_client_id=manifest.user_pool_client_id,
-        identity_pool_id=manifest.identity_pool_id,
-        tag=manifest.images["landing-page"]["version"],
-    )
+    _landing_page(output_path=output_path, manifest=manifest)
 
     return output_path
 

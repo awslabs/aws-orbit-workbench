@@ -79,6 +79,8 @@ Resources:
               - ecs:RegisterTaskDefinition
               - ecs:DeregisterTaskDefinition
               - codecommit:ListRepositories
+              - cognito-idp:DescribeUserPool
+              - cognito-idp:DescribeUserPoolClient
             Resource: '*'
           - Effect: Allow
             Action:

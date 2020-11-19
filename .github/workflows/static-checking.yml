@@ -66,6 +66,25 @@ jobs:
       - name: Isort Check
         run: isort --check .
 
+  ImageLandingPage:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14]
+    defaults:
+      run:
+        working-directory: images/landing-page
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up None ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies
+        run: yarn install
+      - name: Lint
+        run: yarn lint
+
   PluginHelloWorld:
     runs-on: ubuntu-latest
     strategy:
