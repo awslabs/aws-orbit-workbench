@@ -18,13 +18,13 @@
 set -ex
 
 export ENV_NAME=my-env
-export USER_POOL_ID=us-east-1_VCCZGajYC
-export USER_POOL_CLIENT_ID=7abt81ecm5mdhgq0qetuoojpp4
-export IDENTITY_POOL_ID=us-east-1:f4fbf02d-cb85-4f00-80bc-7272835624ce
+export USER_POOL_ID=PLACEHOLDER
+export USER_POOL_CLIENT_ID=PLACEHOLDER
+export IDENTITY_POOL_ID=PLACEHOLDER
 export REGION=$(aws configure get region)
 export COGNITO_EXTERNAL_PROVIDER=okta
 export COGNITO_EXTERNAL_PROVIDER_LABEL=OKTA
-export COGNITO_EXTERNAL_PROVIDER_DOMAIN=my-env.auth.us-east-1.amazoncognito.com
+export COGNITO_EXTERNAL_PROVIDER_DOMAIN=PLACEHOLDER
 export COGNITO_EXTERNAL_PROVIDER_REDIRECT=http://localhost:3000/
 
 content="
