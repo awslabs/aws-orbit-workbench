@@ -7,6 +7,8 @@ RUN apt-get install sudo -y
 RUN apt-get install apt-utils -y
 RUN apt-get install build-essential -y
 RUN apt-get install curl -y
+RUN apt-get install zip -y
+RUN apt-get install unzip -y
 USER $NB_UID
 
 # General Python packages
