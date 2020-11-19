@@ -118,8 +118,8 @@ def deploy(manifest: Manifest, add_images: List[str], remove_images: List[str]) 
         app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "env.py"),
         args=[manifest.filename, add_images_str, remove_images_str],
     )
-
     manifest.fetch_ssm()
+    manifest.fetch_cognito_external_idp_data()
 
 
 def destroy(manifest: Manifest) -> None:

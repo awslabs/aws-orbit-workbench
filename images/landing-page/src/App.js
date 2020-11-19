@@ -14,14 +14,13 @@
  *   limitations under the License.
  */
 
+import Amplify from "aws-amplify";
 import "./App.css";
 import "antd/dist/antd.css";
-import Amplify from "aws-amplify";
-import { AuthState } from "@aws-amplify/ui-components";
-import useAuth from "./use-auth";
-import PageSkeleton from "./page-skeleton";
-import SignIn from "./signin";
-import AuthenticatedContent from "./authenticated-content";
+import Frame from "./components/frame";
+import Teams from "./components/teams";
+import { SignIn, SignInExternal } from "./components/signin";
+import { useAuth } from "./hooks/use-auth";
 
 Amplify.configure({
   Auth: {
@@ -29,27 +28,51 @@ Amplify.configure({
     userPoolId: window.REACT_APP_USER_POOL_ID,
     userPoolWebClientId: window.REACT_APP_USER_POOL_CLIENT_ID,
     mandatorySignIn: true,
+    oauth:
+      window.REACT_APP_EXTERNAL_IDP !== "None"
+        ? {
+            domain: window.REACT_APP_EXTERNAL_DOMAIN,
+            scope: ["email", "openid", "profile"],
+            redirectSignIn: window.REACT_APP_EXTERNAL_REDIRECT,
+            redirectSignOut: window.REACT_APP_EXTERNAL_REDIRECT,
+            responseType: "code",
+          }
+        : {},
   },
 });
 
-const getUserInfo = (userState) => {
-  console.log(userState);
-  return {
-    email: userState.signInUserSession.idToken.payload["email"],
-    username: userState.signInUserSession.idToken.payload["cognito:username"],
-    groups: userState.signInUserSession.idToken.payload["cognito:groups"],
-    jwt: userState.signInUserSession.idToken.jwtToken,
+const getUserInfo = (userSession) => {
+  const payload = userSession.idToken.payload;
+  let groups = [];
+  if ("custom:teams" in payload) {
+    groups = payload["custom:teams"].slice(1, -1).split(", ");
+  } else if ("cognito:groups" in payload) {
+    groups = payload["cognito:groups"];
+  }
+  const userInfo = {
+    email: payload["email"],
+    username: payload["cognito:username"],
+    groups: groups,
+    jwt: userSession.idToken.jwtToken,
   };
+  console.log("userInfo", userInfo);
+  return userInfo;
 };
 
-function App() {
-  const [authState, userState] = useAuth();
-
-  if (authState === AuthState.SignedIn && userState) {
-    return PageSkeleton(AuthenticatedContent, getUserInfo(userState));
+const contentRouter = (userSession) => {
+  console.log("userSession", userSession);
+  if (userSession != null) {
+    return <Teams userInfo={getUserInfo(userSession)} />;
+  } else if (window.REACT_APP_EXTERNAL_IDP !== "None") {
+    return <SignInExternal />;
   } else {
-    return PageSkeleton(SignIn, {});
+    return <SignIn />;
   }
-}
+};
+
+const App = () => {
+  const userSession = useAuth();
+  return <Frame content={contentRouter(userSession)} />;
+};
 
 export default App;

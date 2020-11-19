@@ -50,7 +50,7 @@ const fetchParameters = async (groups, jwt) => {
       url: `http://${JSON.parse(x.Value)["jupyter-url"]}/hub/login?next=%2Fhub%2Fhome&token=${jwt}`,
     }));
   }
-  console.log(urls);
+  console.log("urls", urls);
   return urls;
 };
 
