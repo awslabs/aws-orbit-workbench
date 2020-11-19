@@ -24,5 +24,3 @@ to ensure the following steps have been taken:
 - [ ] Have you ensured that the full suite of tests is executed?
 - [ ] Have you written or updated unit tests to verify your changes?
 - [ ] If adding new dependencies to the code, are these dependencies licensed in a way that is compatible for inclusion under Apache License 2.0? 
-- [ ] If applicable, have you updated the LICENSE file?
-- [ ] If applicable, have you added the LICENSE header to new files?
