@@ -23,6 +23,8 @@ RUN python3 -m pip install --upgrade jupyterlab
 RUN python3 -m pip install --upgrade kubernetes~=11.0.0
 RUN python3 -m pip install --upgrade papermill~=2.1.3
 
+RUN python3 -m pip install --upgrade datamaker-sdk
+
 ADD requirements.txt /etc/jupyterhub/requirements.txt
 RUN python3 -m pip install --use-feature=2020-resolver --requirement /etc/jupyterhub/requirements.txt
 
