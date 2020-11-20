@@ -70,9 +70,6 @@ const contentRouter = (userSession) => {
   }
 };
 
-const App = () => {
-  const userSession = useAuth();
-  return <Frame content={contentRouter(userSession)} />;
-};
+const App = () => <Frame content={contentRouter(useAuth())} />;
 
 export default App;
