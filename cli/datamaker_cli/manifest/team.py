@@ -159,6 +159,9 @@ class TeamManifest:
             raw: MANIFEST_TEAM_TYPE = self.raw_ssm
             self.efs_id = cast(Optional[str], raw.get("efs-id"))
             self.eks_nodegroup_role_arn = cast(Optional[str], raw.get("eks-nodegroup-role-arn"))
+            self.ecs_cluster_name = cast(str, raw.get("ecs-cluster-name"))
+            self.ecs_task_definition_arn = cast(str, raw.get("ecs-task-definition-arn"))
+            self.ecs_container_runner_arn = cast(str, raw.get("ecs-container-runner-arn"))
             self.manifest.write_manifest_ssm()
             _logger.debug("Team %s loaded successfully from SSM.", self.name)
 
