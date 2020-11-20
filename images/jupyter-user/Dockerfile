@@ -9,6 +9,9 @@ RUN apt-get install build-essential -y
 RUN apt-get install curl -y
 RUN apt-get install zip -y
 RUN apt-get install unzip -y
+RUN apt-get install vim -y
+RUN apt-get install less -y
+RUN apt-get install jq -y
 USER $NB_UID
 
 # General Python packages
