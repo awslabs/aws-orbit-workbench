@@ -150,7 +150,7 @@ class TeamManifest:
         return obj
 
     def asjson(self) -> str:
-        return str(json.dumps(obj=self.asdict(), indent=4, sort_keys=True))
+        return str(json.dumps(obj=self.asdict(), sort_keys=True))
 
     def fetch_ssm(self) -> None:
         _logger.debug("Fetching SSM manifest data (Team %s)...", self.name)
