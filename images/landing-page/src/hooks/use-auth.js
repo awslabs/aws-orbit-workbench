@@ -16,6 +16,7 @@
 
 import { useEffect, useState } from "react";
 import { Auth, Hub } from "aws-amplify";
+import { onAuthUIStateChange } from "@aws-amplify/ui-components";
 
 const getUserSession = async () => {
   try {
@@ -29,6 +30,18 @@ export const useAuth = () => {
   const [userSession, setUser] = useState(null);
 
   useEffect(() => {
+    if (window.REACT_APP_EXTERNAL_IDP === "None") {
+      return onAuthUIStateChange((nextAuthState, authData) => {
+        console.log("nextAuthState", nextAuthState);
+        console.log("authData", authData);
+        if (authData) {
+          setUser(authData.signInUserSession);
+        } else {
+          setUser(null);
+        }
+      });
+    }
+
     Hub.listen("auth", async ({ payload: { event, data } }) => {
       console.log("event", event);
       console.log("data", data);
