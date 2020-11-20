@@ -15,12 +15,14 @@
  */
 
 import React from "react";
-import { AmplifySignIn, AmplifyButton } from "@aws-amplify/ui-react";
+import { AmplifyAuthenticator, AmplifySignIn, AmplifyButton } from "@aws-amplify/ui-react";
 import { Auth } from "aws-amplify";
 import { Divider } from "antd";
 
 export const SignIn = () => (
-  <AmplifySignIn headerText="Welcome" slot="sign-in" hideSignUp={true} usernameAlias="username" />
+  <AmplifyAuthenticator>
+    <AmplifySignIn headerText="Welcome" slot="sign-in" hideSignUp={true} usernameAlias="username" />
+  </AmplifyAuthenticator>
 );
 
 export const SignInExternal = () => (
