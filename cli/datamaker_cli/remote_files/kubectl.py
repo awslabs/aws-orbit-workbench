@@ -52,6 +52,7 @@ def _team(region: str, account_id: str, output_path: str, env_name: str, team: T
         account_id=account_id,
         env_name=env_name,
         tag=team.manifest.images["jupyter-hub"]["version"],
+        grant_sudo='"yes"' if team.grant_sudo else '"no"',
     )
     with open(output, "w") as file:
         file.write(content)
