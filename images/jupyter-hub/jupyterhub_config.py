@@ -19,7 +19,7 @@ import os
 from tornado.log import app_log
 
 from jupyterhub_utils.authenticator import DataMakerAuthenticator
-from jupyterhub_utils.ssm import ACCOUNT_ID, ENV_NAME, IMAGE, REGION, TEAM, TOOLKIT_S3_BUCKET
+from jupyterhub_utils.ssm import ACCOUNT_ID, ENV_NAME, GRANT_SUDO, IMAGE, REGION, TEAM, TOOLKIT_S3_BUCKET
 
 app_log.info("ACCOUNT_ID: %s", ACCOUNT_ID)
 app_log.info("ENV_NAME: %s", ENV_NAME)
@@ -27,6 +27,7 @@ app_log.info("IMAGE: %s", IMAGE)
 app_log.info("REGION: %s", REGION)
 app_log.info("TEAM: %s", TEAM)
 app_log.info("TOOLKIT_S3_BUCKET: %s", TOOLKIT_S3_BUCKET)
+app_log.info("GRANT_SUDO: %s", GRANT_SUDO)
 
 """
 CONNECTIVITY
@@ -53,6 +54,7 @@ c.KubeSpawner.environment = {
     "AWS_DEFAULT_REGION": REGION,
     "ACCOUNT_ID": ACCOUNT_ID,
     "AWS_DATAMAKER_S3_BUCKET": TOOLKIT_S3_BUCKET,
+    "GRANT_SUDO": GRANT_SUDO,
 }
 c.KubeSpawner.image = IMAGE
 c.KubeSpawner.image_pull_policy = "Always"
