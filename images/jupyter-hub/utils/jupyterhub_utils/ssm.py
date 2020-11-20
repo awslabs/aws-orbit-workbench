@@ -21,6 +21,7 @@ import yaml
 BOTO3_SESSION: boto3.Session = boto3.Session()
 ENV_NAME: str = os.environ["ENV_NAME"]
 TEAM: str = os.environ["TEAM"]
+GRANT_SUDO: str = os.environ["GRANT_SUDO"]
 
 
 def read_manifest_ssm() -> Dict[str, Any]:

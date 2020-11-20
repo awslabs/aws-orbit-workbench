@@ -164,6 +164,7 @@ class Manifest:
                 nodes_num_max=cast(int, t["nodes-num-max"]),
                 nodes_num_min=cast(int, t["nodes-num-min"]),
                 policy=cast(str, t["policy"]),
+                grant_sudo=cast(bool, t["grant-sudo"]),
                 image=cast(Optional[str], t.get("image")),
                 plugins=self._parse_plugins(team=t),
             )

@@ -26,5 +26,6 @@ teams:
     nodes-num-desired: 2
     nodes-num-max: 3
     nodes-num-min: 1
+    grant-sudo: false
     policy: AdministratorAccess
     plugins: []

@@ -41,6 +41,7 @@ class TeamManifest:
         nodes_num_min: int,
         policy: str,
         plugins: List[PluginManifest],
+        grant_sudo: bool,
         image: Optional[str] = None,
     ) -> None:
         self.manifest: "Manifest" = manifest
@@ -51,6 +52,7 @@ class TeamManifest:
         self.nodes_num_max: int = nodes_num_max
         self.nodes_num_min: int = nodes_num_min
         self.policy: str = policy
+        self.grant_sudo: bool = grant_sudo
         self.plugins: List[PluginManifest] = plugins
         self.image: Optional[str] = image
         if self.image is None:
@@ -135,6 +137,7 @@ class TeamManifest:
             "nodes-num-max": self.nodes_num_max,
             "nodes-num-min": self.nodes_num_min,
             "policy": self.policy,
+            "grant-sudo": self.grant_sudo,
             "image": self.image,
             "plugins": [p.asdict_file() for p in self.plugins],
         }
