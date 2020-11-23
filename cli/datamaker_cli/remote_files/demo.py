@@ -29,6 +29,13 @@ from datamaker_cli.services import cfn, s3
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
+def _detach_network_interface(nid: int, network_interface: Any) -> None:
+    _logger.debug(f"Detaching NetworkInterface: {nid}.")
+    network_interface.detach()
+    _logger.debug(f"Reloading NetworkInterface: {nid}.")
+    network_interface.reload()
+
+
 def _network_interface(manifest: Manifest, vpc_id: str) -> None:
     client = manifest.boto3_client("ec2")
     ec2 = manifest.boto3_resource("ec2")
@@ -38,13 +45,19 @@ def _network_interface(manifest: Manifest, vpc_id: str) -> None:
             if "Interface for NAT Gateway" not in network_interface.description:
                 _logger.debug(f"Forgotten NetworkInterface: {i['NetworkInterfaceId']}.")
                 if network_interface.attachment is not None and network_interface.attachment["Status"] == "attached":
-                    network_interface.detach()
-                    network_interface.reload()
+                    attempts: int = 0
                     while network_interface.attachment is None or network_interface.attachment["Status"] != "detached":
-                        time.sleep(1)
-                        network_interface.reload()
-                network_interface.delete()
-                _logger.debug(f"NetWorkInterface {i['NetworkInterfaceId']} deleted.")
+                        if attempts >= 10:
+                            _logger.debug(
+                                f"Ignoring NetworkInterface: {i['NetworkInterfaceId']} after 10 detach attempts."
+                            )
+                            break
+                        _detach_network_interface(i["NetworkInterfaceId"], network_interface)
+                        attempts += 1
+                        time.sleep(3)
+                    else:
+                        network_interface.delete()
+                        _logger.debug(f"NetWorkInterface {i['NetworkInterfaceId']} deleted.")
         except botocore.exceptions.ClientError as ex:
             error: Dict[str, Any] = ex.response["Error"]
             if "is currently in use" in error["Message"]:
