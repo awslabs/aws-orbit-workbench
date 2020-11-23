@@ -33,12 +33,12 @@ def read_yaml_file(path):
 
 def run():
 
-    outputDirectory = os.environ.get('output', 'private/outputs')
+    default_output_directory = os.environ.get('output', 'private/outputs')
 
     notebooks = yaml.load(os.environ['tasks'], Loader=NoDatesSafeLoader)
     compute = yaml.load(os.environ['compute'], Loader=NoDatesSafeLoader)
 
-    notebooksToRun = prepareAndValidateNotebooks(outputDirectory, notebooks)
+    notebooksToRun = prepareAndValidateNotebooks(default_output_directory, notebooks)
 
     try:
         errors = runNotebooks(notebooksToRun, compute)
@@ -104,21 +104,21 @@ def runNotebook(parameters):
     logger.info("Completed notebook execution: %s", parameters['PAPERMILL_OUTPUT_PATH'])
     return errors
 
-def prepareAndValidateNotebooks(outputDirectory, notebooks):
+def prepareAndValidateNotebooks(default_output_directory, notebooks):
     reportsToRun = []
     id = 1
     for notebook in notebooks['tasks']:
         key = "e{}".format(str(id))
         id += 1
-        reportToRun = prepareNotebook(outputDirectory, notebook, key)
+        reportToRun = prepareNotebook(default_output_directory, notebook, key)
         reportsToRun.append(reportToRun)
     return reportsToRun
 
 
-def prepareNotebook(outputDirectory, notebook, key):
+def prepareNotebook(default_output_directory, notebook, key):
     notebookName = notebook['notebookName']
     sourcePath = notebook['sourcePath']
-    targetPath = notebook.get('targetPath', "")
+    targetPath = notebook.get('targetPath', default_output_directory)
     targetPrefix = notebook.get('targetPrefix', key)
 
     timestamp = time.strftime("%Y%m%d-%H:%M")
@@ -150,16 +150,16 @@ def prepareNotebook(outputDirectory, notebook, key):
 
     logger.debug("fixed language in notebook: %s", pathToNotebook)
 
-    pathToOutputDir = os.path.join(outputDirectory, targetPath)
+    pathToOutputDir = targetPath # os.path.join(outputDirectory, targetPath)
 
-    if not outputDirectory.startswith("s3:") and not os.path.exists(pathToOutputDir):
+    if not targetPath.startswith("s3:") and not os.path.exists(pathToOutputDir):
         pathToOutputDir = os.path.abspath(pathToOutputDir)
         os.mkdir(pathToOutputDir)
 
     notebookNameWithoutSufix = notebookName.split('.')[0]
     pathToOutputNotebookDir = os.path.join(pathToOutputDir, notebookNameWithoutSufix)
 
-    if not outputDirectory.startswith("s3:") and not os.path.exists(pathToOutputNotebookDir):
+    if not targetPath.startswith("s3:") and not os.path.exists(pathToOutputNotebookDir):
         pathToOutputNotebookDir = os.path.abspath(pathToOutputNotebookDir)
         os.mkdir(pathToOutputNotebookDir)
 
