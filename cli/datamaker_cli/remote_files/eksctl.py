@@ -38,7 +38,8 @@ MANIFEST: Dict[str, Any] = {
 
 def create_nodegroup_structure(team: TeamManifest, env_name: str) -> Dict[str, Any]:
     if team.eks_nodegroup_role_arn is None:
-        raise ValueError(f"team.eks_nodegroup_role_arn: {team.eks_nodegroup_role_arn}")
+        _logger.debug(f"ValueError: team.eks_nodegroup_role_arn: {team.eks_nodegroup_role_arn}")
+        return {"name": team.name}
     return {
         "name": team.name,
         "privateNetworking": True,
@@ -54,7 +55,7 @@ def create_nodegroup_structure(team: TeamManifest, env_name: str) -> Dict[str, A
     }
 
 
-def generate_manifest(manifest: Manifest, name: str) -> str:
+def generate_manifest(manifest: Manifest, name: str, output_teams: bool = True) -> str:
 
     # Fill cluster wide configs
     MANIFEST["metadata"]["name"] = name
@@ -68,10 +69,10 @@ def generate_manifest(manifest: Manifest, name: str) -> str:
             if s.kind is kind
         }
     MANIFEST["iam"]["serviceRoleARN"] = manifest.eks_cluster_role_arn
+    MANIFEST["managedNodeGroups"] = []
 
     # Fill nodegroups configs
-    if manifest.teams:
-        MANIFEST["managedNodeGroups"] = []
+    if manifest.teams and output_teams:
         for team in manifest.teams:
             MANIFEST["managedNodeGroups"].append(create_nodegroup_structure(team=team, env_name=manifest.name))
 
@@ -102,21 +103,35 @@ def generate_manifest(manifest: Manifest, name: str) -> str:
     return output_filename
 
 
-def deploy(manifest: Manifest) -> None:
+def deploy_env(manifest: Manifest) -> None:
     stack_name: str = f"datamaker-{manifest.name}"
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
-    if cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name) is False:
-        _logger.debug("Synthetizing the EKSCTL manifest")
-        output_filename = generate_manifest(manifest=manifest, name=stack_name)
-        _logger.debug("Deploying EKSCTL resources")
+    _logger.debug("Synthetizing the EKSCTL Environment manifest")
+    output_filename = generate_manifest(manifest=manifest, name=stack_name, output_teams=False)
+    if not cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name):
+        _logger.debug("Deploying EKSCTL Environment resources")
         sh.run(f"eksctl create cluster -f {output_filename} --write-kubeconfig --verbose 4")
     else:
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
     _logger.debug("EKSCTL deployed")
 
 
-def destroy(manifest: Manifest) -> None:
+def deploy_teams(manifest: Manifest) -> None:
+    stack_name: str = f"datamaker-{manifest.name}"
+    final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
+    _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
+    _logger.debug("Synthetizing the EKSCTL Teams manifest")
+    output_filename = generate_manifest(manifest=manifest, name=stack_name, output_teams=True)
+    if cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name) and manifest.teams:
+        teams = ",".join([t.name for t in manifest.teams])
+        _logger.debug("Deploying EKSCTL Teams resources")
+        sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
+        sh.run(f"eksctl create nodegroup -f {output_filename} --include={teams} --verbose 4")
+    _logger.debug("EKSCTL deployed")
+
+
+def destroy_env(manifest: Manifest) -> None:
     stack_name: str = f"datamaker-{manifest.name}"
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
@@ -124,4 +139,16 @@ def destroy(manifest: Manifest) -> None:
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
         output_filename = generate_manifest(manifest=manifest, name=stack_name)
         sh.run(f"eksctl delete cluster -f {output_filename} --wait --verbose 4")
-        _logger.debug("EKSCTL destroyed")
+        _logger.debug("EKSCTL Envrionment destroyed")
+
+
+def destroy_teams(manifest: Manifest) -> None:
+    stack_name: str = f"datamaker-{manifest.name}"
+    final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
+    _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
+    if cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name) and manifest.teams:
+        teams = ",".join([t.name for t in manifest.teams])
+        sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
+        output_filename = generate_manifest(manifest=manifest, name=stack_name)
+        sh.run(f"eksctl delete nodegroup -f {output_filename} --include={teams} --approve --wait --verbose 4")
+        _logger.debug("EKSCTL Teams destroyed")

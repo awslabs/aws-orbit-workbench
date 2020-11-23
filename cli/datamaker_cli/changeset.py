@@ -28,7 +28,13 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 CHANGESET_FILE_PLUGIN_TYPE = Dict[str, Union[str, List[str]]]
 CHANGESET_FILE_IMAGE_TYPE = Dict[str, Union[str, None]]
-CHANGESET_FILE_TYPE = Dict[str, Union[List[CHANGESET_FILE_IMAGE_TYPE], List[CHANGESET_FILE_PLUGIN_TYPE]]]
+CHANGESET_FILE_EXTERNAL_IDP_TYPE = Dict[str, Union[str, None]]
+CHANGESET_FILE_TYPE = Dict[
+    str,
+    Union[
+        List[CHANGESET_FILE_IMAGE_TYPE], List[CHANGESET_FILE_PLUGIN_TYPE], Optional[CHANGESET_FILE_EXTERNAL_IDP_TYPE]
+    ],
+]
 
 
 class PluginChangeset:
@@ -52,19 +58,41 @@ class ImageChangeset:
         return vars(self)
 
 
+class ExternalIDPChangeset:
+    def __init__(
+        self,
+        old_provider: Optional[str],
+        new_provider: Optional[str],
+        old_label: Optional[str],
+        new_label: Optional[str],
+    ) -> None:
+        self.old_provider: Optional[str] = old_provider
+        self.new_provider: Optional[str] = new_provider
+        self.old_label: Optional[str] = old_label
+        self.new_label: Optional[str] = new_label
+
+    def asdict(self) -> CHANGESET_FILE_EXTERNAL_IDP_TYPE:
+        return vars(self)
+
+
 class Changeset:
     def __init__(
         self,
         image_changesets: List[ImageChangeset],
         plugin_changesets: List[PluginChangeset],
+        external_idp_changeset: Optional[ExternalIDPChangeset],
     ) -> None:
         self.image_changesets: List[ImageChangeset] = image_changesets
         self.plugin_changesets: List[PluginChangeset] = plugin_changesets
+        self.external_idp_changeset: Optional[ExternalIDPChangeset] = external_idp_changeset
 
     def asdict(self) -> CHANGESET_FILE_TYPE:
         return {
             "image_changesets": [i.asdict() for i in self.image_changesets],
             "plugin_changesets": [p.asdict() for p in self.plugin_changesets],
+            "external_idp_changeset": None
+            if self.external_idp_changeset is None
+            else self.external_idp_changeset.asdict(),
         }
 
     def write_changeset_file(self, filename: str) -> None:
@@ -76,7 +104,7 @@ class Changeset:
 
 def extract_changeset(manifest: "Manifest", ctx: "MessagesContext") -> Changeset:
     if manifest.raw_ssm is None:
-        return Changeset(image_changesets=[], plugin_changesets=[])
+        return Changeset(image_changesets=[], plugin_changesets=[], external_idp_changeset=None)
 
     # Images check
     image_changesets: List[ImageChangeset] = []
@@ -106,7 +134,27 @@ def extract_changeset(manifest: "Manifest", ctx: "MessagesContext") -> Changeset
             }
             plugin_changesets.append(PluginChangeset(team_name=team.name, old=old, new=new, old_paths=old_paths))
 
-    return Changeset(image_changesets=image_changesets, plugin_changesets=plugin_changesets)
+    # External IDP
+    _logger.debug("Inpecting External IDP Change...")
+    old_provider: Optional[str] = cast(Optional[str], manifest.raw_ssm.get("cognito-external-provider", None))
+    new_provider: Optional[str] = manifest.cognito_external_provider
+    _logger.debug("Provider: %s -> %s", old_provider, new_provider)
+    old_label: Optional[str] = cast(Optional[str], manifest.raw_ssm.get("cognito-external-provider-label", None))
+    new_label: Optional[str] = manifest.cognito_external_provider_label
+    _logger.debug("Label: %s -> %s", old_label, new_label)
+    if old_provider != new_provider or old_label != new_label:
+        external_idp_changeset: Optional[ExternalIDPChangeset] = ExternalIDPChangeset(
+            old_provider=old_provider, new_provider=new_provider, old_label=old_label, new_label=new_label
+        )
+        ctx.info(f"External IDP change detected: {old_provider} ({old_label}) -> {new_provider} ({new_label})")
+    else:
+        external_idp_changeset = None
+
+    return Changeset(
+        image_changesets=image_changesets,
+        plugin_changesets=plugin_changesets,
+        external_idp_changeset=external_idp_changeset,
+    )
 
 
 def _read_changeset_file(filename: str) -> CHANGESET_FILE_TYPE:
@@ -117,6 +165,18 @@ def _read_changeset_file(filename: str) -> CHANGESET_FILE_TYPE:
 
 def read_changeset_file(filename: str) -> Changeset:
     raw: CHANGESET_FILE_TYPE = _read_changeset_file(filename=filename)
+    raw_external_idp_changeset: Optional[CHANGESET_FILE_EXTERNAL_IDP_TYPE] = cast(
+        Optional[CHANGESET_FILE_EXTERNAL_IDP_TYPE], raw.get("external_idp_changeset", None)
+    )
+    if raw_external_idp_changeset is None:
+        external_idp_changeset: Optional[ExternalIDPChangeset] = None
+    else:
+        external_idp_changeset = ExternalIDPChangeset(
+            old_provider=raw_external_idp_changeset["old_provider"],
+            new_provider=raw_external_idp_changeset["new_provider"],
+            old_label=raw_external_idp_changeset["old_label"],
+            new_label=raw_external_idp_changeset["new_label"],
+        )
     return Changeset(
         image_changesets=[
             ImageChangeset(team_name=cast(str, i["team_name"]), old_image=i["old_image"], new_image=i["new_image"])
@@ -131,4 +191,5 @@ def read_changeset_file(filename: str) -> Changeset:
             )
             for i in cast(List[CHANGESET_FILE_PLUGIN_TYPE], raw.get("plugin_changesets", []))
         ],
+        external_idp_changeset=external_idp_changeset,
     )

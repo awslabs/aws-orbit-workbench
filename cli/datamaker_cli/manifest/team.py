@@ -41,6 +41,7 @@ class TeamManifest:
         nodes_num_min: int,
         policy: str,
         plugins: List[PluginManifest],
+        grant_sudo: bool,
         image: Optional[str] = None,
     ) -> None:
         self.manifest: "Manifest" = manifest
@@ -51,6 +52,7 @@ class TeamManifest:
         self.nodes_num_max: int = nodes_num_max
         self.nodes_num_min: int = nodes_num_min
         self.policy: str = policy
+        self.grant_sudo: bool = grant_sudo
         self.plugins: List[PluginManifest] = plugins
         self.image: Optional[str] = image
         if self.image is None:
@@ -103,6 +105,9 @@ class TeamManifest:
                     self.jupyter_url = cast(Optional[str], team.get("jupyter-url"))
                     self.scratch_bucket = cast(str, team.get("scratch-bucket"))
                     self.scratch_retention_days = cast(int, team.get("scratch-retention-days"))
+                    self.ecs_cluster_name = cast(str, team.get("ecs-cluster-name"))
+                    self.ecs_task_definition_arn = cast(str, team.get("ecs-task-definition-arn"))
+                    self.ecs_container_runner_arn = cast(str, team.get("ecs-container-runner-arn"))
                     _logger.debug("Team %s loaded successfully from SSM.", self.name)
                     return
 
@@ -132,6 +137,7 @@ class TeamManifest:
             "nodes-num-max": self.nodes_num_max,
             "nodes-num-min": self.nodes_num_min,
             "policy": self.policy,
+            "grant-sudo": self.grant_sudo,
             "image": self.image,
             "plugins": [p.asdict_file() for p in self.plugins],
         }
@@ -144,7 +150,7 @@ class TeamManifest:
         return obj
 
     def asjson(self) -> str:
-        return str(json.dumps(obj=self.asdict(), indent=4, sort_keys=True))
+        return str(json.dumps(obj=self.asdict(), sort_keys=True))
 
     def fetch_ssm(self) -> None:
         _logger.debug("Fetching SSM manifest data (Team %s)...", self.name)
@@ -153,6 +159,9 @@ class TeamManifest:
             raw: MANIFEST_TEAM_TYPE = self.raw_ssm
             self.efs_id = cast(Optional[str], raw.get("efs-id"))
             self.eks_nodegroup_role_arn = cast(Optional[str], raw.get("eks-nodegroup-role-arn"))
+            self.ecs_cluster_name = cast(str, raw.get("ecs-cluster-name"))
+            self.ecs_task_definition_arn = cast(str, raw.get("ecs-task-definition-arn"))
+            self.ecs_container_runner_arn = cast(str, raw.get("ecs-container-runner-arn"))
             self.manifest.write_manifest_ssm()
             _logger.debug("Team %s loaded successfully from SSM.", self.name)
 

@@ -14,13 +14,22 @@
  *   limitations under the License.
  */
 
-import React from "react";
-import { AmplifyAuthenticator, AmplifySignIn } from "@aws-amplify/ui-react";
+import DataMakerLogoImage from "../images/datamaker.png";
+import "../App.css";
+import { Space, Row } from "antd";
 
-const SignIn = () => (
-  <AmplifyAuthenticator>
-    <AmplifySignIn headerText="Welcome" slot="sign-in" hideSignUp={true} usernameAlias="username" />
-  </AmplifyAuthenticator>
+const Frame = ({ content }) => (
+  <div className="app-container">
+    <Space direction="vertical" size="large" align="center">
+      <Row />
+      <Row>
+        <img className="datamaker-logo" src={DataMakerLogoImage} alt="DataMakerLogo" />
+      </Row>
+      <Row>
+        <div className="datamaker-content"> {content} </div>
+      </Row>
+    </Space>
+  </div>
 );
 
-export default SignIn;
+export default Frame;

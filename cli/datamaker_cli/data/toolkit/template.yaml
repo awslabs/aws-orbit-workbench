@@ -79,6 +79,8 @@ Resources:
               - ecs:RegisterTaskDefinition
               - ecs:DeregisterTaskDefinition
               - codecommit:ListRepositories
+              - cognito-idp:DescribeUserPool
+              - cognito-idp:DescribeUserPoolClient
             Resource: '*'
           - Effect: Allow
             Action:
@@ -144,6 +146,7 @@ Resources:
               - iam:UpdateAssumeRolePolicy
             Resource:
               - arn:aws:iam::${account_id}:role/datamaker-${env_name}-*
+              - arn:aws:iam::${account_id}:role/eksctl-datamaker-${env_name}-*
           - Effect: Allow
             Action:
               - iam:CreateServiceLinkedRole
@@ -180,6 +183,7 @@ Resources:
               - eks:*
             Resource:
               - arn:aws:eks:${region}:${account_id}:cluster/datamaker-${env_name}
+              - arn:aws:eks:${region}:${account_id}:cluster/datamaker-${env_name}/*
               - arn:aws:eks:${region}:${account_id}:nodegroup/datamaker-${env_name}/*
           - Effect: Allow
             Action:

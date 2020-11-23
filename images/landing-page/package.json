@@ -3,31 +3,57 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@aws-amplify/ui-components": "^0.8.0",
-    "@aws-amplify/ui-react": "^0.2.17",
-    "@testing-library/jest-dom": "^4.2.4",
-    "@testing-library/react": "^9.3.2",
-    "@testing-library/user-event": "^7.1.2",
-    "@typescript-eslint/eslint-plugin": "2.x",
-    "@typescript-eslint/parser": "2.x",
-    "antd": "^4.6.2",
-    "aws-amplify": "^3.1.0",
-    "aws-amplify-react": "^4.2.1",
-    "react": "^16.13.1",
-    "react-dom": "^16.13.1",
-    "react-scripts": "3.4.3",
-    "aws-sdk": "^2.761.0"
+    "@aws-amplify/ui-components": "^0.9.3",
+    "@aws-amplify/ui-react": "^0.2.28",
+    "antd": "^4.8.4",
+    "aws-amplify": "^3.3.8",
+    "aws-sdk": "^2.792.0",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "web-vitals": "^0.2.4"
+  },
+  "devDependencies": {
+    "eslint-config-prettier": "^6.15.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "prettier": "^2.1.2",
+    "eslint-plugin-react": "^7.21.5",
+    "@testing-library/jest-dom": "^5.11.4",
+    "@testing-library/react": "^11.1.0",
+    "@testing-library/user-event": "^12.1.10",
+    "react-scripts": "4.0.0"
   },
   "scripts": {
-    "lint": "eslint src",
-    "style": "prettier --write --print-width 120 src",
-    "start": "react-scripts start",
+    "start": "BROWSER=firefox react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint './src/**/*.{js,jsx}'",
+    "fix": "eslint --fix './src/**/*.{js,jsx}'",
+    "lint:fix": "eslint --fix './src/**/*.{js,jsx}'",
+    "format": "prettier --write \"src/**/*.+(js|jsx|json|css|md)\""
+  },
+  "prettier": {
+    "printWidth": 120
   },
   "eslintConfig": {
-    "extends": "react-app"
+    "extends": [
+      "react-app",
+      "react-app/jest",
+      "prettier"
+    ],
+    "plugins": [
+      "prettier"
+    ],
+    "rules": {
+      "prettier/prettier": "error",
+      "no-console": 0,
+      "max-len": [
+        "error",
+        {
+          "code": 120
+        }
+      ]
+    }
   },
   "browserslist": {
     "production": [
@@ -40,16 +66,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "prettier": "^2.1.1",
-    "babel-eslint": "10.x",
-    "eslint": "6.x",
-    "eslint-config-react-app": "^5.2.1",
-    "eslint-plugin-flowtype": "4.x",
-    "eslint-plugin-import": "2.x",
-    "eslint-plugin-jsx-a11y": "6.x",
-    "eslint-plugin-react": "7.x",
-    "eslint-plugin-react-hooks": "2.x"
   }
 }

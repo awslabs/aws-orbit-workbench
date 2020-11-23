@@ -17,5 +17,6 @@
 
 set -ex
 
-yarn install --production
+yarn
+rm -rf build
 yarn build

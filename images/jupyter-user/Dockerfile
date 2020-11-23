@@ -9,6 +9,7 @@ RUN apt-get install build-essential -y
 RUN apt-get install curl -y
 USER $NB_UID
 
+
 # General Python packages
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install --upgrade wheel
@@ -38,3 +39,8 @@ RUN chmod -R 755 /opt/transformations/
 
 # Bootstrap
 ADD bootstrap.sh /etc/jupyterhub/bootstrap.sh
+
+# Necessary to install packages from CodeArtifact
+ADD pip.conf /etc/pip.conf
+RUN python3 -m pip install --upgrade datamaker-sdk
+RUN rm /etc/pip.conf

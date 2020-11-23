@@ -147,6 +147,11 @@ spec:
   selector:
     matchLabels:
       app: datamaker-jupyterhub
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -162,6 +167,8 @@ spec:
               value: ${env_name}
             - name: TEAM
               value: ${team}
+            - name: GRANT_SUDO
+              value: ${grant_sudo}
           imagePullPolicy: Always
           name: container
           ports:
