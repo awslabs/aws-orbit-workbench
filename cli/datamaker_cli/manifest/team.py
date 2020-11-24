@@ -95,21 +95,21 @@ class TeamManifest:
         _logger.debug("Team %s Manifest SSM parameter found.", self.name)
         return cast(MANIFEST_TEAM_TYPE, json.loads(json_str))
 
-    def fillup_from_ssm(self) -> None:
-        if self.manifest.raw_ssm is not None:
-            for team in cast(List[str], self.manifest.raw_ssm.get("teams", [])):
-                if team.get("name") == self.name:
-                    self.raw_ssm = team
-                    self.efs_id = cast(Optional[str], team.get("efs-id"))
-                    self.eks_nodegroup_role_arn = cast(Optional[str], team.get("eks-nodegroup-role-arn"))
-                    self.jupyter_url = cast(Optional[str], team.get("jupyter-url"))
-                    self.scratch_bucket = cast(str, team.get("scratch-bucket"))
-                    self.scratch_retention_days = cast(int, team.get("scratch-retention-days"))
-                    self.ecs_cluster_name = cast(str, team.get("ecs-cluster-name"))
-                    self.ecs_task_definition_arn = cast(str, team.get("ecs-task-definition-arn"))
-                    self.ecs_container_runner_arn = cast(str, team.get("ecs-container-runner-arn"))
-                    _logger.debug("Team %s loaded successfully from SSM.", self.name)
-                    return
+    # def fillup_from_ssm(self) -> None:
+    #     if self.manifest.raw_ssm is not None:
+    #         for team in cast(List[str], self.manifest.raw_ssm.get("teams", [])):
+    #             if team.get("name") == self.name:
+    #                 self.raw_ssm = team
+    #                 self.efs_id = cast(Optional[str], team.get("efs-id"))
+    #                 self.eks_nodegroup_role_arn = cast(Optional[str], team.get("eks-nodegroup-role-arn"))
+    #                 self.jupyter_url = cast(Optional[str], team.get("jupyter-url"))
+    #                 self.scratch_bucket = cast(str, team.get("scratch-bucket"))
+    #                 self.scratch_retention_days = cast(int, team.get("scratch-retention-days"))
+    #                 self.ecs_cluster_name = cast(str, team.get("ecs-cluster-name"))
+    #                 self.ecs_task_definition_arn = cast(str, team.get("ecs-task-definition-arn"))
+    #                 self.ecs_container_runner_arn = cast(str, team.get("ecs-container-runner-arn"))
+    #                 _logger.debug("Team %s loaded successfully from SSM.", self.name)
+    #                 return
 
     def write_manifest_ssm(self) -> None:
         client = self.manifest.boto3_client("ssm")
