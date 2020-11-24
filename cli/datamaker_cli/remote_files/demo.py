@@ -24,7 +24,7 @@ import botocore.exceptions
 
 from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, exceptions, sh
 from datamaker_cli.manifest import Manifest
-from datamaker_cli.services import cfn, s3
+from datamaker_cli.services import cfn, s3, ssm, vpc
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -205,6 +205,18 @@ def _prepare_demo_data(manifest: Manifest) -> None:
     schema_key_prefix = "cms/schema/"
     sh.run(f"aws s3 cp --recursive {cms_schema_files} s3://{bucket_name}/{schema_key_prefix}")
 
+def _store_ep_private_ips(manifest:Manifest, service_names):
+    if service_names:
+        for service_name in service_names:
+            # service_name="codeartifact"
+            ssm_parameter_name = f"/datamaker/{manifest.name}/demo/ep/{service_name}"
+            ep_private_ips = vpc.list_ep_private_ip(manifest=manifest, service_name='codeartifact')
+            if ep_private_ips:
+                service_ep_private_ip_dict = {
+                    service_name: ep_private_ips
+                }
+            ssm.write_ssm(manifest=manifest, ssm_parameter_name=ssm_parameter_name, ssm_payload=service_ep_private_ip_dict)
+
 
 def deploy(manifest: Manifest) -> None:
     stack_name: str = manifest.demo_stack_name
@@ -231,6 +243,18 @@ def deploy(manifest: Manifest) -> None:
         manifest.fetch_demo_data()
         _prepare_demo_data(manifest)  # Adding demo data
 
+        vpc.modify_vpc_endpoint(manifest=manifest, service_name='codeartifact', private_dns_enabled=True)
+        time.sleep(120)
+        # service_names = ["codeartifact"]
+        # for service_name in service_names:
+        #     #service_name="codeartifact"
+        #     ssm_parameter_name=f"/datamaker/{manifest.name}/demo/ep/{service_name}"
+        #     ep_private_ips=vpc.list_ep_private_ip(manifest=manifest,service_name='codeartifact')
+        #     if ep_private_ips:
+        #         service_ep_private_ip_dict= {
+        #             service_name:ep_private_ips
+        #         }
+        #     ssm.write_ssm(manifest=manifest,ssm_parameter_name=ssm_parameter_name, ssm_payload=service_ep_private_ip_dict)
 
 def destroy(manifest: Manifest) -> None:
     if manifest.demo and cfn.does_stack_exist(manifest=manifest, stack_name=manifest.demo_stack_name):

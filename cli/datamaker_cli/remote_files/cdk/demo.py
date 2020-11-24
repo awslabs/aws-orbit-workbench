@@ -82,35 +82,35 @@ class VpcStack(Stack):
     def _create_vpc_endpoints(self) -> None:
         vpc_gateway_endpoints = {
             "s3": ec2.GatewayVpcEndpointAwsService.S3,
-            "dynamodb": ec2.GatewayVpcEndpointAwsService.DYNAMODB,
+            #"dynamodb": ec2.GatewayVpcEndpointAwsService.DYNAMODB,
         }
         vpc_interface_endpoints = {
-            "code_artifact_endpoint": ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories"),
+            #"code_artifact_endpoint": ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories"),
             "cloudwatch_endpoint": ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH,
-            "cloudwatch_logs_endpoint": ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,
-            "cloudwatch_events": ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_EVENTS,
-            "ecr_docker_endpoint": ec2.InterfaceVpcEndpointAwsService.ECR_DOCKER,
-            "ecr_endpoint": ec2.InterfaceVpcEndpointAwsService.ECR,
-            "ec2_endpoint": ec2.InterfaceVpcEndpointAwsService.EC2,
-            "ecs": ec2.InterfaceVpcEndpointAwsService.ECS,
-            "ecs_agent": ec2.InterfaceVpcEndpointAwsService.ECS_AGENT,
-            "ecs_telemetry": ec2.InterfaceVpcEndpointAwsService.ECS_TELEMETRY,
-            "git_endpoint": ec2.InterfaceVpcEndpointAwsService.CODECOMMIT_GIT,
-            "ssm_endpoint": ec2.InterfaceVpcEndpointAwsService.SSM,
-            "ssm_messages_endpoint": ec2.InterfaceVpcEndpointAwsService.SSM_MESSAGES,
-            "secrets_endpoint": ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
-            "kms_endpoint": ec2.InterfaceVpcEndpointAwsService.KMS,
-            "sagemaker_endpoint": ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_API,
-            "notebook_endpoint": ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_NOTEBOOK,
-            "athena_endpoint": ec2.InterfaceVpcEndpointAwsService("athena"),
-            "glue_endpoint": ec2.InterfaceVpcEndpointAwsService("glue"),
-            "sqs": ec2.InterfaceVpcEndpointAwsService.SQS,
-            "step_function_endpoint": ec2.InterfaceVpcEndpointAwsService("states"),
-            "sns_endpoint": ec2.InterfaceVpcEndpointAwsService.SNS,
-            "kinesis_firehose_endpoint": ec2.InterfaceVpcEndpointAwsService("kinesis-firehose"),
-            "api_gateway": ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
-            "sts_endpoint": ec2.InterfaceVpcEndpointAwsService.STS,
-            "code_artifact_api_endpoint": ec2.InterfaceVpcEndpointAwsService("codeartifact.api"),
+            # "cloudwatch_logs_endpoint": ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,
+            # "cloudwatch_events": ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_EVENTS,
+            # "ecr_docker_endpoint": ec2.InterfaceVpcEndpointAwsService.ECR_DOCKER,
+            # "ecr_endpoint": ec2.InterfaceVpcEndpointAwsService.ECR,
+            # "ec2_endpoint": ec2.InterfaceVpcEndpointAwsService.EC2,
+            # "ecs": ec2.InterfaceVpcEndpointAwsService.ECS,
+            # "ecs_agent": ec2.InterfaceVpcEndpointAwsService.ECS_AGENT,
+            # "ecs_telemetry": ec2.InterfaceVpcEndpointAwsService.ECS_TELEMETRY,
+            # "git_endpoint": ec2.InterfaceVpcEndpointAwsService.CODECOMMIT_GIT,
+            # "ssm_endpoint": ec2.InterfaceVpcEndpointAwsService.SSM,
+            # "ssm_messages_endpoint": ec2.InterfaceVpcEndpointAwsService.SSM_MESSAGES,
+            # "secrets_endpoint": ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
+            # "kms_endpoint": ec2.InterfaceVpcEndpointAwsService.KMS,
+            # "sagemaker_endpoint": ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_API,
+            # "notebook_endpoint": ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_NOTEBOOK,
+            # "athena_endpoint": ec2.InterfaceVpcEndpointAwsService("athena"),
+            # "glue_endpoint": ec2.InterfaceVpcEndpointAwsService("glue"),
+            # "sqs": ec2.InterfaceVpcEndpointAwsService.SQS,
+            # "step_function_endpoint": ec2.InterfaceVpcEndpointAwsService("states"),
+            # "sns_endpoint": ec2.InterfaceVpcEndpointAwsService.SNS,
+            # "kinesis_firehose_endpoint": ec2.InterfaceVpcEndpointAwsService("kinesis-firehose"),
+            # "api_gateway": ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
+            # "sts_endpoint": ec2.InterfaceVpcEndpointAwsService.STS,
+            #"code_artifact_api_endpoint": ec2.InterfaceVpcEndpointAwsService("codeartifact.api"),
         }
 
         self.public_subnets = (
@@ -139,31 +139,39 @@ class VpcStack(Stack):
         for name, interface_service in vpc_interface_endpoints.items():
             self.vpc.add_interface_endpoint(id=name, service=interface_service)
 
-        # Adding Lambda and Redshift endpoints with CDK low level APIs
-        endpoint_url_template = "com.amazonaws.{}.{}"
-        vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
-        # Adding ingress rule to VPC CIDR
-        vpc_security_group.add_ingress_rule(peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block), connection=ec2.Port.all_tcp())
-        isolated_subnet_ids = [t.subnet_id for t in self.vpc.isolated_subnets]
 
-        ec2.CfnVPCEndpoint(
-            self,
-            "redshift_endpoint",
-            vpc_endpoint_type="Interface",
-            service_name=endpoint_url_template.format(self.region, "redshift"),
-            vpc_id=self.vpc.vpc_id,
-            security_group_ids=[vpc_security_group.security_group_id],
-            subnet_ids=isolated_subnet_ids,
-        )
-        ec2.CfnVPCEndpoint(
-            self,
-            "lambda_endpoint",
-            vpc_endpoint_type="Interface",
-            service_name=endpoint_url_template.format(self.region, "lambda"),
-            vpc_id=self.vpc.vpc_id,
-            security_group_ids=[vpc_security_group.security_group_id],
-            subnet_ids=isolated_subnet_ids,
-        )
+        #TODO - CodeArtifact VPC endpoint
+        self.vpc.add_interface_endpoint(id='code_artifact_endpoint',
+                                        service=ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories"),
+                                        private_dns_enabled=False
+                                        )
+
+
+        # Adding Lambda and Redshift endpoints with CDK low level APIs
+        # endpoint_url_template = "com.amazonaws.{}.{}"
+        # vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
+        # # Adding ingress rule to VPC CIDR
+        # vpc_security_group.add_ingress_rule(peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block), connection=ec2.Port.all_tcp())
+        # isolated_subnet_ids = [t.subnet_id for t in self.vpc.isolated_subnets]
+
+        # ec2.CfnVPCEndpoint(
+        #     self,
+        #     "redshift_endpoint",
+        #     vpc_endpoint_type="Interface",
+        #     service_name=endpoint_url_template.format(self.region, "redshift"),
+        #     vpc_id=self.vpc.vpc_id,
+        #     security_group_ids=[vpc_security_group.security_group_id],
+        #     subnet_ids=isolated_subnet_ids,
+        # )
+        # ec2.CfnVPCEndpoint(
+        #     self,
+        #     "lambda_endpoint",
+        #     vpc_endpoint_type="Interface",
+        #     service_name=endpoint_url_template.format(self.region, "lambda"),
+        #     vpc_id=self.vpc.vpc_id,
+        #     security_group_ids=[vpc_security_group.security_group_id],
+        #     subnet_ids=isolated_subnet_ids,
+        # )
 
 
 def main() -> None:
