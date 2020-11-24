@@ -110,6 +110,9 @@ class VpcStack(Stack):
             "kinesis_firehose_endpoint": ec2.InterfaceVpcEndpointAwsService("kinesis-firehose"),
             "api_gateway": ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
             "sts_endpoint": ec2.InterfaceVpcEndpointAwsService.STS,
+            "efs": ec2.InterfaceVpcEndpointAwsService.ELASTIC_FILESYSTEM,
+            "elb": ec2.InterfaceVpcEndpointAwsService.ELASTIC_LOAD_BALANCING,
+            "autoscaling": ec2.InterfaceVpcEndpointAwsService("autoscaling"),
             "code_artifact_api_endpoint": ec2.InterfaceVpcEndpointAwsService("codeartifact.api"),
         }
 
@@ -133,11 +136,13 @@ class VpcStack(Stack):
             self.vpc.add_gateway_endpoint(
                 id=name,
                 service=gateway_vpc_endpoint_service,
-                subnets=self.private_subnets.subnets + self.isolated_subnets.subnets,
+                subnets=[ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED)],
             )
 
         for name, interface_service in vpc_interface_endpoints.items():
-            self.vpc.add_interface_endpoint(id=name, service=interface_service)
+            self.vpc.add_interface_endpoint(
+                id=name, service=interface_service, subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED)
+            )
 
         # Adding Lambda and Redshift endpoints with CDK low level APIs
         endpoint_url_template = "com.amazonaws.{}.{}"
