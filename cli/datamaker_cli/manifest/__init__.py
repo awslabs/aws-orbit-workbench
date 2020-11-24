@@ -25,7 +25,7 @@ import yaml
 from datamaker_cli import utils
 from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE, PluginManifest
 from datamaker_cli.manifest.subnet import MANIFEST_FILE_SUBNET_TYPE, SubnetKind, SubnetManifest
-from datamaker_cli.manifest.team import MANIFEST_FILE_TEAM_TYPE, MANIFEST_TEAM_TYPE, TeamManifest
+from datamaker_cli.manifest.team import MANIFEST_FILE_TEAM_TYPE, TeamManifest
 from datamaker_cli.manifest.vpc import MANIFEST_FILE_VPC_TYPE, MANIFEST_VPC_TYPE, VpcManifest
 from datamaker_cli.services import cognito
 
@@ -49,7 +49,7 @@ MANIFEST_TYPE = Dict[
         str,
         bool,
         MANIFEST_VPC_TYPE,
-        List[MANIFEST_TEAM_TYPE],
+        List[str],
     ],
 ]
 
@@ -402,7 +402,7 @@ class Manifest:
     def asdict(self) -> MANIFEST_TYPE:
         obj: MANIFEST_TYPE = utils.replace_underscores(vars(self))
         obj["vpc"] = self.vpc.asdict()
-        obj["teams"] = [t.asdict() for t in self.teams]
+        obj["teams"] = [t.name for t in self.teams]
         del obj["filename"]
         del obj["filename-dir"]
         del obj["raw-ssm"]
