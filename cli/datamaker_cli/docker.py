@@ -92,17 +92,17 @@ def deploy(
     source = manifest.images[image_name]["source"]
     source_name = manifest.images[image_name]["repository"]
     source_version = manifest.images[image_name]["version"]
-    if source == "source" or manifest.dev is True:
+    if source == "code" or manifest.dev is True:
         build(manifest=manifest, dir=dir, name=deployed_name, tag=source_version, use_cache=use_cache)
         _logger.debug("Built from Source")
-    if source == "dockerhub":
+    elif source == "dockerhub":
         dockerhub_pull(name=source_name, tag=source_version)
         _logger.debug("Pulled DockerHub Image")
     elif source == "ecr":
         ecr_pull(manifest=manifest, name=source_name, tag=source_version)
         _logger.debug("Pulled ECR Image")
     else:
-        e = ValueError(f"Invalid Image Source: {source}. Valid values are: dockerhub, ecr")
+        e = ValueError(f"Invalid Image Source: {source}. Valid values are: code, dockerhub, ecr")
         _logger.error(e)
         raise e
 
