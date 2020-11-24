@@ -260,6 +260,7 @@ class Manifest:
             self.vpc.fillup_from_ssm()
             for team in self.teams:
                 team.fetch_ssm()
+            self.teams = [t for t in self.teams if t.raw_ssm is not None]
 
             _logger.debug("Env %s loaded successfully from SSM.", self.name)
             return True
