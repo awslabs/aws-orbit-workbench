@@ -90,7 +90,7 @@ class TeamManifest:
         try:
             json_str: str = client.get_parameter(Name=self.ssm_parameter_name)["Parameter"]["Value"]
         except client.exceptions.ParameterNotFound:
-            _logger.debug("Team %s Manifest SSM parameter not found.", self.name)
+            _logger.debug("Team %s Manifest SSM parameter not found: %s", self.name, self.ssm_parameter_name)
             return None
         _logger.debug("Team %s Manifest SSM parameter found.", self.name)
         return cast(MANIFEST_TEAM_TYPE, json.loads(json_str))
