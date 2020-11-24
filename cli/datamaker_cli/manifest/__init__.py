@@ -259,7 +259,7 @@ class Manifest:
 
             self.vpc.fillup_from_ssm()
             for team in self.teams:
-                team.fillup_from_ssm()
+                team.fetch_ssm()
 
             _logger.debug("Env %s loaded successfully from SSM.", self.name)
             return True
