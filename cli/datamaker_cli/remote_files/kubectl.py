@@ -162,6 +162,7 @@ def fetch_kubectl_data(manifest: Manifest, context: str, include_teams: bool) ->
             _logger.debug("Fetching team %s URL parameter", team.name)
             url = k8s.get_service_hostname(name="jupyterhub-public", context=context, namespace=team.name)
             team.jupyter_url = url
+            team.write_manifest_ssm()
 
     landing_page_url: str = k8s.get_service_hostname(name="landing-page-public", context=context, namespace="env")
     manifest.landing_page_url = f"http://{landing_page_url}"
