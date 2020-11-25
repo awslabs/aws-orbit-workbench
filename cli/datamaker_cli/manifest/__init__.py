@@ -301,8 +301,6 @@ class Manifest:
         self.toolkit_kms_alias = f"datamaker-{self.name}-{self.deploy_id}"
         self.toolkit_s3_bucket = f"datamaker-{self.name}-toolkit-{self.account_id}-{self.deploy_id}"
         self.cdk_toolkit_s3_bucket = f"datamaker-{self.name}-cdk-toolkit-{self.account_id}-{self.deploy_id}"
-        for team in self.teams:
-            team.scratch_bucket = f"datamaker-{self.name}-{team.name}-scratch-{self.account_id}-{self.deploy_id}"
         self.write_manifest_ssm()
         _logger.debug("Toolkit data fetched successfully.")
 

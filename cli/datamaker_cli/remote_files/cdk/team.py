@@ -511,6 +511,7 @@ class Team(Stack):
     def _create_manifest_parameter(self) -> ssm.StringParameter:
         self.team_manifest.efs_id = self.efs.file_system_id
         self.team_manifest.eks_nodegroup_role_arn = self.role_eks_nodegroup.role_arn
+        self.team_manifest.scratch_bucket = self.scratch_bucket.bucket_name
         self.team_manifest.ecs_cluster_name = self.ecs_cluster.cluster_name
         self.team_manifest.ecs_task_definition_arn = self.ecs_task_definition.task_definition_arn
         self.team_manifest.ecs_container_runner_arn = self.ecs_container_runner.function_arn
