@@ -115,7 +115,6 @@ def deploy(manifest: "Manifest", changes: List["PluginChangeset"]) -> None:
             args=[manifest.filename, team_manifest.name],
         )
         team_manifest.fetch_ssm()
-        manifest.write_manifest_ssm()
         plugins.PLUGINS_REGISTRIES.deploy_team_plugins(manifest=manifest, team_manifest=team_manifest, changes=changes)
     for team_manifest in manifest.teams:
         _deploy_team_image(manifest=manifest, team_manifest=team_manifest)

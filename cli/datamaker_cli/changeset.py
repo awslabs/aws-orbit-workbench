@@ -110,7 +110,7 @@ def extract_changeset(manifest: "Manifest", ctx: "MessagesContext") -> Changeset
     image_changesets: List[ImageChangeset] = []
     for team in manifest.teams:
         if team.raw_ssm is None:
-            raise RuntimeError(f"Team {team.name} manifest raw_ssm attribute not filled.")
+            continue
         old_image: Optional[str] = cast(Optional[str], team.raw_ssm.get("image"))
         _logger.debug("Inpecting Image Change for team %s: %s -> %s", team.name, old_image, team.image)
         if team.image != team.raw_ssm.get("image"):
@@ -121,7 +121,7 @@ def extract_changeset(manifest: "Manifest", ctx: "MessagesContext") -> Changeset
     plugin_changesets: List[PluginChangeset] = []
     for team in manifest.teams:
         if team.raw_ssm is None:
-            raise RuntimeError(f"Team {team.name} manifest raw_ssm attribute not filled.")
+            continue
         old: List[str] = [p["name"] for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team.raw_ssm.get("plugins", []))]
         new: List[str] = [p.name for p in team.plugins]
         old.sort()

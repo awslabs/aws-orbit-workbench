@@ -25,7 +25,7 @@ import yaml
 from datamaker_cli import utils
 from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE, PluginManifest
 from datamaker_cli.manifest.subnet import MANIFEST_FILE_SUBNET_TYPE, SubnetKind, SubnetManifest
-from datamaker_cli.manifest.team import MANIFEST_FILE_TEAM_TYPE, MANIFEST_TEAM_TYPE, TeamManifest
+from datamaker_cli.manifest.team import MANIFEST_FILE_TEAM_TYPE, TeamManifest
 from datamaker_cli.manifest.vpc import MANIFEST_FILE_VPC_TYPE, MANIFEST_VPC_TYPE, VpcManifest
 from datamaker_cli.services import cognito
 
@@ -49,7 +49,7 @@ MANIFEST_TYPE = Dict[
         str,
         bool,
         MANIFEST_VPC_TYPE,
-        List[MANIFEST_TEAM_TYPE],
+        List[str],
     ],
 ]
 
@@ -220,8 +220,6 @@ class Manifest:
                 Overwrite=True,
                 Tier="Intelligent-Tiering",
             )
-            for team in self.teams:
-                team.write_manifest_ssm()
 
     def _write_manifest_file(self) -> None:
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
@@ -259,7 +257,7 @@ class Manifest:
 
             self.vpc.fillup_from_ssm()
             for team in self.teams:
-                team.fillup_from_ssm()
+                team.fetch_ssm()
 
             _logger.debug("Env %s loaded successfully from SSM.", self.name)
             return True
@@ -303,8 +301,6 @@ class Manifest:
         self.toolkit_kms_alias = f"datamaker-{self.name}-{self.deploy_id}"
         self.toolkit_s3_bucket = f"datamaker-{self.name}-toolkit-{self.account_id}-{self.deploy_id}"
         self.cdk_toolkit_s3_bucket = f"datamaker-{self.name}-cdk-toolkit-{self.account_id}-{self.deploy_id}"
-        for team in self.teams:
-            team.scratch_bucket = f"datamaker-{self.name}-{team.name}-scratch-{self.account_id}-{self.deploy_id}"
         self.write_manifest_ssm()
         _logger.debug("Toolkit data fetched successfully.")
 
@@ -402,7 +398,7 @@ class Manifest:
     def asdict(self) -> MANIFEST_TYPE:
         obj: MANIFEST_TYPE = utils.replace_underscores(vars(self))
         obj["vpc"] = self.vpc.asdict()
-        obj["teams"] = [t.asdict() for t in self.teams]
+        obj["teams"] = [t.name for t in self.teams]
         del obj["filename"]
         del obj["filename-dir"]
         del obj["raw-ssm"]
