@@ -220,8 +220,6 @@ class Manifest:
                 Overwrite=True,
                 Tier="Intelligent-Tiering",
             )
-            for team in self.teams:
-                team.write_manifest_ssm()
 
     def _write_manifest_file(self) -> None:
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
