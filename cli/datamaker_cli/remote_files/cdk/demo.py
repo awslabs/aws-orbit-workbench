@@ -141,7 +141,10 @@ class VpcStack(Stack):
 
         for name, interface_service in vpc_interface_endpoints.items():
             self.vpc.add_interface_endpoint(
-                id=name, service=interface_service, subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED)
+                id=name,
+                service=interface_service,
+                subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED),
+                private_dns_enabled=True,
             )
 
         # Adding Lambda and Redshift endpoints with CDK low level APIs
@@ -159,6 +162,7 @@ class VpcStack(Stack):
             vpc_id=self.vpc.vpc_id,
             security_group_ids=[vpc_security_group.security_group_id],
             subnet_ids=isolated_subnet_ids,
+            private_dns_enabled=True,
         )
         ec2.CfnVPCEndpoint(
             self,
@@ -168,6 +172,7 @@ class VpcStack(Stack):
             vpc_id=self.vpc.vpc_id,
             security_group_ids=[vpc_security_group.security_group_id],
             subnet_ids=isolated_subnet_ids,
+            private_dns_enabled=True,
         )
 
 

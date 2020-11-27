@@ -46,7 +46,8 @@ def _get_images_dirs(manifest: Manifest, skip_images: bool) -> List[Tuple[str, s
     if skip_images:
         dirs: List[Tuple[str, str]] = []
     else:
-        dirs = [(attrs["repository"], name) for name, attrs in manifest.images.items() if attrs["source"] == "code"]
+        dirs = [(attrs["path"], name) for name, attrs in manifest.images.items() if attrs["source"] == "code"]
+        _logger.debug("dirs: %s", dirs)
     return dirs
 
 

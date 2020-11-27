@@ -12,13 +12,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 from typing import Any, Dict, Tuple, Union, cast
 
+import boto3
 from jupyterhub.auth import Authenticator
 from tornado.log import app_log
 from tornado.web import RequestHandler
 
-from jupyterhub_utils.cognito import get_claims
+from jupyterhub_utils.ssm import ENV_NAME
 
 
 class DataMakerAuthenticator(Authenticator):  # type: ignore
@@ -27,8 +29,17 @@ class DataMakerAuthenticator(Authenticator):  # type: ignore
         if handler.request.uri is None:
             raise RuntimeError("Empty URI.")
         token: str = self._get_token(url=handler.request.uri)
-        claims: Dict[str, Union[str, int]] = get_claims(token=token)
+        response: Dict[str, Any] = boto3.client("lambda").invoke(
+            FunctionName=f"datamaker-{ENV_NAME}-token-validation",
+            InvocationType="RequestResponse",
+            Payload=json.dumps({"token": token}).encode("utf-8"),
+        )
+        if response.get("StatusCode") != 200 or response.get("Payload") is None:
+            raise RuntimeError(f"Invalid Lambda response:\n{response}")
+        claims: Dict[str, Union[str, int]] = json.loads(response["Payload"].read().decode("utf-8"))
         app_log.info("claims: %s", claims)
+        if "cognito:username" not in claims or claims.get("cognito:username") is None:
+            raise RuntimeError(f"Invalid claims:\n{claims}")
         return cast(str, claims["cognito:username"])
 
     @staticmethod
