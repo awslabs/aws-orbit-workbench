@@ -43,6 +43,8 @@ CDK_MODULES = [
     "aws-cdk.aws-ssm",
     "aws-cdk.aws-kms",
     "aws_cdk.aws_cognito",
+    "aws_cdk.aws_lambda",
+    "aws_cdk.aws_lambda_python",
 ]
 
 
@@ -141,7 +143,7 @@ def start(
 def fetch_build_info(manifest: "Manifest", build_id: str) -> BuildInfo:
     client = manifest.boto3_client("codebuild")
     response: Dict[str, List[Dict[str, Any]]] = try_it(
-        f=client.batch_get_builds, ex=botocore.exceptions.ClientError, ids=[build_id]
+        f=client.batch_get_builds, ex=botocore.exceptions.ClientError, ids=[build_id], max_num_tries=5
     )
     if not response["builds"]:
         raise RuntimeError(f"CodeBuild build {build_id} not found.")

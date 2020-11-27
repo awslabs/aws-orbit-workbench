@@ -32,7 +32,7 @@ def _list_self_files() -> List[str]:
 
 
 def _is_valid_image_file(file_path: str) -> bool:
-    for word in ("/node_modules/", "/build/", "/.mypy_cache/", "yarn.lock"):
+    for word in ("/node_modules/", "/build/", "/.mypy_cache/", "yarn.lock", ".egg-info", "__pycache__"):
         if word in file_path:
             return False
     return True
@@ -69,12 +69,14 @@ def _generate_dir(bundle_dir: str, dir: str, name: str) -> str:
     absolute_dir = os.path.realpath(dir)
     final_dir = os.path.join(bundle_dir, name)
     _logger.debug("absolute_dir: %s", absolute_dir)
-    _logger.debug("image_dir: %s", final_dir)
+    _logger.debug("final_dir: %s", final_dir)
     os.makedirs(final_dir, exist_ok=True)
     shutil.rmtree(final_dir)
 
     _logger.debug("Copying files to %s", final_dir)
     files: List[str] = _list_files(path=absolute_dir)
+    if len(files) == 0:
+        raise ValueError(f"{name} ({absolute_dir}) is empty!")
     for file in files:
         relpath = os.path.relpath(file, absolute_dir)
         new_file = os.path.join(final_dir, relpath)
@@ -90,6 +92,7 @@ def generate_bundle(
     manifest: Manifest,
     dirs: Optional[List[Tuple[str, str]]] = None,
     changeset: Optional[Changeset] = None,
+    plugins: bool = True,
 ) -> str:
     remote_dir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "remote", command_name)
     bundle_dir = os.path.join(remote_dir, "bundle")
@@ -113,17 +116,21 @@ def generate_bundle(
         _generate_self_dir(bundle_dir=bundle_dir)
 
     # Plugins
-    for team_manifest in manifest.teams:
-        plugin_bundle_dir = os.path.join(bundle_dir, team_manifest.name)
-        for plugin in team_manifest.plugins:
-            if plugin.path:
-                _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin.path, name=plugin.name)
-    if changeset is not None:
-        for plugin_changeset in changeset.plugin_changesets:
-            plugin_bundle_dir = os.path.join(bundle_dir, plugin_changeset.team_name)
-            for plugin_name, plugin_path in plugin_changeset.old_paths.items():
-                if plugin_name not in plugin_changeset.new:
-                    _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin_path, name=plugin_name)
+    if plugins:
+        for team_manifest in manifest.teams:
+            plugin_bundle_dir = os.path.join(bundle_dir, team_manifest.name)
+            _logger.debug("plugin_bundle_dir: %s", plugin_bundle_dir)
+            for plugin in team_manifest.plugins:
+                if plugin.path:
+                    _logger.debug("Bundling plugin %s (%s)...", plugin.name, plugin.path)
+                    _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin.path, name=plugin.name)
+        if changeset is not None:
+            for plugin_changeset in changeset.plugin_changesets:
+                plugin_bundle_dir = os.path.join(bundle_dir, plugin_changeset.team_name)
+                for plugin_name, plugin_path in plugin_changeset.old_paths.items():
+                    if plugin_name not in plugin_changeset.new:
+                        _logger.debug("Changest - Bundling plugin %s (%s)...", plugin_name, plugin_path)
+                        _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin_path, name=plugin_name)
 
     # Extra Directories
     if dirs is not None:

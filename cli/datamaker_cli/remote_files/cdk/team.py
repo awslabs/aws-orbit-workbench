@@ -58,6 +58,7 @@ class Team(Stack):
             vpc_id=self.manifest.vpc.vpc_id,
             availability_zones=self.manifest.vpc.availability_zones,
         )
+        self.i_isolated_subnets = self._initialize_isolated_subnets()
         self.i_private_subnets = self._initialize_private_subnets()
         self.ecr_repo: ecr.Repository = self._create_repo()
         self.policy: str = str(self.team_manifest.policy)
@@ -71,6 +72,19 @@ class Team(Stack):
         self.ecs_task_definition = self._create_ecs_task_definition()
         self.ecs_container_runner = self._create_ecs_container_runner()
         self.manifest_parameter = self._create_manifest_parameter()
+
+    def _initialize_isolated_subnets(self) -> List[ec2.ISubnet]:
+        return [
+            ec2.PrivateSubnet.from_subnet_attributes(
+                scope=self,
+                id=s.subnet_id,
+                subnet_id=s.subnet_id,
+                availability_zone=s.availability_zone,
+                route_table_id=s.route_table_id,
+            )
+            for s in self.manifest.vpc.subnets
+            if s.kind == SubnetKind.isolated
+        ]
 
     def _initialize_private_subnets(self) -> List[ec2.ISubnet]:
         return [
@@ -345,8 +359,9 @@ class Team(Stack):
             vpc=self.i_vpc,
             allow_all_outbound=True,
         )
+        subnet_kind: SubnetKind = SubnetKind.isolated if self.manifest.isolated_networking else SubnetKind.private
         for subnet in self.manifest.vpc.subnets:
-            if subnet.kind is SubnetKind.private:
+            if subnet.kind is subnet_kind:
                 sg.add_ingress_rule(
                     peer=ec2.Peer.ipv4(subnet.cidr_block),
                     connection=ec2.Port.tcp(port=2049),
@@ -357,6 +372,9 @@ class Team(Stack):
 
     def _create_efs(self) -> efs.FileSystem:
         name: str = f"datamaker-{self.manifest.name}-{self.team_manifest.name}-fs"
+        subnets: List[ec2.ISubnet] = (
+            self.i_isolated_subnets if self.manifest.isolated_networking else self.i_private_subnets
+        )
         fs = efs.FileSystem(
             scope=self,
             id=name,
@@ -367,7 +385,7 @@ class Team(Stack):
             performance_mode=efs.PerformanceMode.GENERAL_PURPOSE,
             throughput_mode=efs.ThroughputMode.BURSTING,
             security_group=cast(ec2.ISecurityGroup, self.sg_efs),
-            vpc_subnets=ec2.SubnetSelection(subnets=self.i_private_subnets),
+            vpc_subnets=ec2.SubnetSelection(subnets=subnets),
         )
         return fs
 
@@ -465,6 +483,9 @@ class Team(Stack):
         return task_definition
 
     def _create_ecs_container_runner(self) -> aws_lambda.Function:
+        subnets: List[ec2.ISubnet] = (
+            self.i_isolated_subnets if self.manifest.isolated_networking else self.i_private_subnets
+        )
         return aws_lambda.Function(
             self,
             "ecs_container_runner",
@@ -476,7 +497,7 @@ class Team(Stack):
             environment={
                 "ROLE": self.role_eks_nodegroup.role_arn,
                 "SECURITY_GROUP": self.sg_efs.security_group_id,
-                "SUBNETS": json.dumps([s.subnet_id for s in self.i_private_subnets]),
+                "SUBNETS": json.dumps([s.subnet_id for s in subnets]),
                 "TASK_DEFINITION": self.ecs_task_definition.task_definition_arn,
                 "CLUSTER": self.ecs_cluster.cluster_name,
                 "AWS_DATAMAKER_ENV": self.manifest.name,

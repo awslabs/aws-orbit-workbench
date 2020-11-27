@@ -12,57 +12,23 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import logging
+import os
 import time
 from typing import Any, Dict, List, Optional, Union, cast
 
-import boto3
 import requests
 from jose import jwk, jwt
 from jose.utils import base64url_decode
 
-from jupyterhub_utils.ssm import COGNITO_USER_POOL_ID, REGION
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+COGNITO_USER_POOL_ID: str = os.environ["COGNITO_USER_POOL_ID"]
+COGNITO_USER_POOL_CLIENT_ID: str = os.environ["COGNITO_USER_POOL_CLIENT_ID"]
+REGION: str = os.environ["REGION"]
 
 _cognito_keys: Optional[List[Dict[str, str]]] = None
-_cognito_domain: Optional[str] = None
-_cognito_app_client_id: Optional[str] = None
-_cognito_app_secret: Optional[str] = None
-
-
-def _get_domain() -> str:
-    global _cognito_domain
-    if _cognito_domain is None:
-        print("Fetching domain...")
-        resp: Dict[str, Any] = boto3.client(service_name="cognito-idp", region_name=REGION).describe_user_pool(
-            UserPoolId=COGNITO_USER_POOL_ID
-        )
-        _cognito_domain = cast(str, resp["UserPool"]["Domain"])
-        print("_cognito_domain: %s", _cognito_domain)
-    return _cognito_domain
-
-
-def _get_app_client_id() -> str:
-    global _cognito_app_client_id
-    if _cognito_app_client_id is None:
-        print("Fetching app client ID...")
-        resp: Dict[str, Any] = boto3.client(service_name="cognito-idp", region_name=REGION).list_user_pool_clients(
-            UserPoolId=COGNITO_USER_POOL_ID
-        )
-        num_clients: int = len(resp["UserPoolClients"])
-        if num_clients != 1:
-            print(f"Invalid number of app clients in this pool ({num_clients}).")
-        _cognito_app_client_id = cast(str, resp["UserPoolClients"][0]["ClientId"])
-    return _cognito_app_client_id
-
-
-def _get_app_secret() -> str:
-    global _cognito_app_secret
-    if _cognito_app_secret is None:
-        print("Fetching app secret...")
-        resp: Dict[str, Any] = boto3.client(service_name="cognito-idp", region_name=REGION).describe_user_pool_client(
-            UserPoolId=COGNITO_USER_POOL_ID, ClientId=_get_app_client_id()
-        )
-        _cognito_app_secret = cast(str, resp["UserPoolClient"]["ClientSecret"])
-    return _cognito_app_secret
 
 
 def _get_keys() -> List[Dict[str, str]]:
@@ -102,7 +68,13 @@ def get_claims(token: str) -> Dict[str, Union[str, int]]:
         raise ValueError("Token expired.")
     print("Token not expired.")
     # and the Audience (use claims['client_id'] if verifying an access token)
-    if claims["aud"] != _get_app_client_id():
+    if claims["aud"] != COGNITO_USER_POOL_CLIENT_ID:
         raise ValueError("Token was not issued for this audience.")
     # now we can use the claims
+    return claims
+
+
+def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Dict[str, Union[str, int]]:
+    claims: Dict[str, Union[str, int]] = get_claims(token=event["token"])
+    logger.info("claims: %s", claims)
     return claims
