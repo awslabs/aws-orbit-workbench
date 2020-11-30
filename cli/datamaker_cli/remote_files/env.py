@@ -17,7 +17,7 @@ import os
 import time
 from typing import Any, Dict, Iterator, List, Tuple
 
-from datamaker_cli import DATAMAKER_CLI_ROOT, cdk
+from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, docker
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.services import cfn, ecr
 
@@ -130,6 +130,8 @@ def deploy(manifest: Manifest, add_images: List[str], remove_images: List[str]) 
 def destroy(manifest: Manifest) -> None:
     _logger.debug("Stack name: %s", manifest.env_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.env_stack_name):
+        docker.login(manifest=manifest)
+        _logger.debug("DockerHub and ECR Logged in")
         _cleanup_remaining_resources(manifest=manifest)
         add_images_str, remove_images_str = _concat_images_into_args(manifest=manifest, add_images=[], remove_images=[])
         cdk.destroy(
