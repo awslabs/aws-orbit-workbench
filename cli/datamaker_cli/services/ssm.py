@@ -16,24 +16,24 @@ import logging
 import json
 from typing import TYPE_CHECKING, Dict
 
-if TYPE_CHECKING:
-    from datamaker_cli.manifest import Manifest
-
-_logger: logging.Logger = logging.getLogger(__name__)
-
-def write_ssm(manifest:Manifest,ssm_parameter_name:str,ssm_payload:Dict) -> None:
-    client = manifest.boto3_client("ssm")
-    _logger.debug("Writing manifest to SSM parameter.")
-    try:
-        client.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
-        exists: bool = True
-    except client.exceptions.ParameterNotFound:
-        exists = False
-    _logger.debug("Does Manifest SSM parameter exist? %s", exists)
-    if exists:
-        client.put_parameter(
-            Name=ssm_parameter_name,
-            Value=str(json.dumps(obj=ssm_payload, sort_keys=True)),
-            Overwrite=True,
-            Tier="Intelligent-Tiering",
-        )
+# if TYPE_CHECKING:
+#     from datamaker_cli.manifest import Manifest
+#
+# _logger: logging.Logger = logging.getLogger(__name__)
+#
+# def write_ssm(manifest:Manifest,ssm_parameter_name:str,ssm_payload:Dict) -> None:
+#     client = manifest.boto3_client("ssm")
+#     _logger.debug("Writing manifest to SSM parameter.")
+#     try:
+#         client.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
+#         exists: bool = True
+#     except client.exceptions.ParameterNotFound:
+#         exists = False
+#     _logger.debug("Does Manifest SSM parameter exist? %s", exists)
+#     if exists:
+#         client.put_parameter(
+#             Name=ssm_parameter_name,
+#             Value=str(json.dumps(obj=ssm_payload, sort_keys=True)),
+#             Overwrite=True,
+#             Tier="Intelligent-Tiering",
+#         )
