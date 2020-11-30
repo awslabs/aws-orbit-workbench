@@ -126,22 +126,22 @@ def deploy(filename: str, args: Tuple[str, ...]) -> None:
         remove_images=[],
     )
     _logger.debug("Env Stack deployed")
-    # if skip_images_remote_flag == "skip-images":
-    #     _logger.debug("Docker images build skipped")
-    # else:
-    #     deploy_images_remotely(manifest=manifest)
-    #     _logger.debug("Docker Images deployed")
-    # eksctl.deploy_env(manifest=manifest)
-    # _logger.debug("EKS Environment Stack deployed")
-    # kubectl.deploy_env(manifest=manifest)
-    # _logger.debug("Kubernetes Environment components deployed")
-    #
-    # if not env_only:
-    #     teams.deploy(manifest=manifest, changes=changes.plugin_changesets)
-    #     _logger.debug("Team Stacks deployed")
-    #     eksctl.deploy_teams(manifest=manifest)
-    #     _logger.debug("EKS Team Stacks deployed")
-    #     kubectl.deploy_teams(manifest=manifest)
-    #     _logger.debug("Kubernetes Team components deployed")
-    # else:
-    #     _logger.debug("Skipping Team Stacks")
+    if skip_images_remote_flag == "skip-images":
+        _logger.debug("Docker images build skipped")
+    else:
+        deploy_images_remotely(manifest=manifest)
+        _logger.debug("Docker Images deployed")
+    eksctl.deploy_env(manifest=manifest)
+    _logger.debug("EKS Environment Stack deployed")
+    kubectl.deploy_env(manifest=manifest)
+    _logger.debug("Kubernetes Environment components deployed")
+
+    if not env_only:
+        teams.deploy(manifest=manifest, changes=changes.plugin_changesets)
+        _logger.debug("Team Stacks deployed")
+        eksctl.deploy_teams(manifest=manifest)
+        _logger.debug("EKS Team Stacks deployed")
+        kubectl.deploy_teams(manifest=manifest)
+        _logger.debug("Kubernetes Team components deployed")
+    else:
+        _logger.debug("Skipping Team Stacks")

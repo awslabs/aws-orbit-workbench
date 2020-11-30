@@ -139,13 +139,11 @@ def try_it(
             time.sleep(delay)
 
 
-
-def get_private_ip(vpc_id:str, service_name:str, ssm_name:str):
-    pass
-    import boto3
-    import botocore.config
-    import botocore.exceptions
-    region=get_region()
-    botocore_config=botocore.config.Config(retries={"max_attempts": 5}, connect_timeout=10, max_pool_connections=10)
-    boto3.Session(region_name=region).client(service_name=service_name, use_ssl=True, config=botocore_config)
-
+# def get_private_ip(vpc_id: str, service_name: str, ssm_name: str):
+#     import boto3
+#     import botocore.config
+#     import botocore.exceptions
+#
+#     region = get_region()
+#     botocore_config = botocore.config.Config(retries={"max_attempts": 5}, connect_timeout=10, max_pool_connections=10)
+#     boto3.Session(region_name=region).client(service_name=service_name, use_ssl=True, config=botocore_config)
