@@ -45,6 +45,8 @@ CDK_MODULES = [
     "aws_cdk.aws_cognito",
     "aws_cdk.aws_lambda",
     "aws_cdk.aws_lambda_python",
+    "aws-cdk.aws-stepfunctions",
+    "aws-cdk.aws-stepfunctions-tasks",
 ]
 
 
