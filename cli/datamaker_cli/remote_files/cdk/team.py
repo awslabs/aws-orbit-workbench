@@ -52,6 +52,7 @@ class Team(Stack):
             env=Environment(account=self.manifest.account_id, region=self.manifest.region),
         )
         Tags.of(scope=self).add(key="Env", value=f"datamaker-{self.manifest.name}")
+        Tags.of(scope=self).add(key="TeamSpace", value=self.team_manifest.name)
         self.i_vpc = ec2.Vpc.from_vpc_attributes(
             scope=self,
             id="vpc",
