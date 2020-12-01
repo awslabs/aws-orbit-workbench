@@ -42,9 +42,9 @@ CDK_MODULES = [
     "aws-cdk.aws-ecs",
     "aws-cdk.aws-ssm",
     "aws-cdk.aws-kms",
-    "aws_cdk.aws_cognito",
-    "aws_cdk.aws_lambda",
-    "aws_cdk.aws_lambda_python",
+    "aws-cdk.aws-cognito",
+    "aws-cdk.aws-lambda",
+    "aws-cdk.aws-lambda-python",
 ]
 
 
