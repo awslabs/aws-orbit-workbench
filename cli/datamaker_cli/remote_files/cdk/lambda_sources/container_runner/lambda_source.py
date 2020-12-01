@@ -25,15 +25,12 @@ logger.setLevel(logging.INFO)
 
 def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> List[str]:
     ecs = boto3.client("ecs")
-    if "compute" in event.keys():
-        compute = event["compute"]
-    else:
-        compute = {}
+    compute = event.get("compute", {})
 
     all_env_vars = [
         {"name": "task_type", "value": event["task_type"]},
-        {"name": "tasks", "value": "{'tasks': " + str(event["tasks"]) + "}"},
-        {"name": "compute", "value": "{'compute': " + str(compute) + "}"},
+        {"name": "tasks", "value": json.dumps({"tasks": event["tasks"]})},
+        {"name": "compute", "value": json.dumps({"compute": compute})},
         {"name": "DATAMAKER_TEAM_SPACE", "value": os.environ["AWS_DATAMAKER_TEAMSPACE"]},
         {"name": "AWS_DATAMAKER_ENV", "value": os.environ["AWS_DATAMAKER_ENV"]},
         {"name": "JUPYTERHUB_USER", "value": event.get("JUPYTERHUB_USER", "")},
