@@ -16,7 +16,6 @@ import logging
 import os
 import shutil
 import sys
-from typing import List, cast
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2
@@ -30,8 +29,10 @@ from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.subnet import SubnetKind
 from datamaker_cli.manifest.team import TeamManifest
 from datamaker_cli.remote_files.cdk.team_builders._lambda import LambdaBuilder
+from datamaker_cli.remote_files.cdk.team_builders.cognito import CognitoBuilder
 from datamaker_cli.remote_files.cdk.team_builders.ec2 import Ec2Builder
 from datamaker_cli.remote_files.cdk.team_builders.ecs import EcsBuilder
+from datamaker_cli.remote_files.cdk.team_builders.efs import EfsBuilder
 from datamaker_cli.remote_files.cdk.team_builders.iam import IamBuilder
 from datamaker_cli.remote_files.cdk.team_builders.s3 import S3Builder
 
@@ -52,6 +53,7 @@ class Team(Stack):
         )
         Tags.of(scope=self).add(key="Env", value=f"datamaker-{self.manifest.name}")
         Tags.of(scope=self).add(key="TeamSpace", value=self.team_manifest.name)
+
         self.i_vpc = ec2.Vpc.from_vpc_attributes(
             scope=self,
             id="vpc",
@@ -64,11 +66,19 @@ class Team(Stack):
         self.i_private_subnets = Ec2Builder.build_subnets_from_kind(
             scope=self, subnet_manifests=manifest.vpc.subnets, subnet_kind=SubnetKind.private
         )
-        self.ecr_repo: ecr.Repository = self._create_repo()
+
+        self.ecr_repo: ecr.Repository = ecr.Repository(
+            scope=self,
+            id="repo",
+            repository_name=f"datamaker-{self.manifest.name}-{self.team_manifest.name}",
+        )
+
         self.policy: str = str(self.team_manifest.policy)
+
         self.scratch_bucket: s3.Bucket = S3Builder.build_scratch_bucket(
             scope=self, manifest=manifest, team_manifest=team_manifest
         )
+
         self.role_eks_nodegroup = IamBuilder.build_team_role(
             scope=self,
             manifest=self.manifest,
@@ -76,11 +86,27 @@ class Team(Stack):
             policy_name=self.policy,
             scratch_bucket=self.scratch_bucket,
         )
+
         self.sg_efs: ec2.SecurityGroup = Ec2Builder.build_efs_security_group(
-            scope=self, manifest=manifest, team_manifest=team_manifest, vpc=self.i_vpc
+            scope=self,
+            manifest=manifest,
+            team_manifest=team_manifest,
+            vpc=self.i_vpc,
+            subnet_kind=SubnetKind.isolated if manifest.isolated_networking else SubnetKind.private,
         )
-        self.efs: efs.FileSystem = self._create_efs()
-        self.user_pool_group: cognito.CfnUserPoolGroup = self._create_user_pool_group()
+        self.efs: efs.FileSystem = EfsBuilder.build_file_system(
+            scope=self,
+            manifest=manifest,
+            team_manifest=team_manifest,
+            vpc=self.i_vpc,
+            efs_security_group=self.sg_efs,
+            subnets=self.i_isolated_subnets if self.manifest.isolated_networking else self.i_private_subnets,
+        )
+
+        self.user_pool_group: cognito.CfnUserPoolGroup = CognitoBuilder.build_user_pool_group(
+            scope=self, manifest=manifest, team_manifest=team_manifest
+        )
+
         self.ecs_cluster = EcsBuilder.build_cluster(
             scope=self, manifest=manifest, team_manifest=team_manifest, vpc=self.i_vpc
         )
@@ -104,46 +130,7 @@ class Team(Stack):
             efs_security_group=self.sg_efs,
             subnets=self.i_isolated_subnets if self.manifest.isolated_networking else self.i_private_subnets,
         )
-        self.manifest_parameter = self._create_manifest_parameter()
 
-    def _create_repo(self) -> ecr.Repository:
-        return ecr.Repository(
-            scope=self,
-            id="repo",
-            repository_name=f"datamaker-{self.manifest.name}-{self.team_manifest.name}",
-        )
-
-    def _create_efs(self) -> efs.FileSystem:
-        name: str = f"datamaker-{self.manifest.name}-{self.team_manifest.name}-fs"
-        subnets: List[ec2.ISubnet] = (
-            self.i_isolated_subnets if self.manifest.isolated_networking else self.i_private_subnets
-        )
-        fs = efs.FileSystem(
-            scope=self,
-            id=name,
-            file_system_name=name,
-            vpc=self.i_vpc,
-            encrypted=False,
-            lifecycle_policy=None,
-            performance_mode=efs.PerformanceMode.GENERAL_PURPOSE,
-            throughput_mode=efs.ThroughputMode.BURSTING,
-            security_group=cast(ec2.ISecurityGroup, self.sg_efs),
-            vpc_subnets=ec2.SubnetSelection(subnets=subnets),
-        )
-        return fs
-
-    def _create_user_pool_group(self) -> cognito.CfnUserPoolGroup:
-        if self.manifest.user_pool_id is None:
-            raise RuntimeError("Empty manifest.user_pool_id")
-        return cognito.CfnUserPoolGroup(
-            scope=self,
-            id=f"{self.team_manifest.name}_group",
-            user_pool_id=self.manifest.user_pool_id,
-            group_name=self.team_manifest.name,
-            description=f"{self.team_manifest.name} users group.",
-        )
-
-    def _create_manifest_parameter(self) -> ssm.StringParameter:
         self.team_manifest.efs_id = self.efs.file_system_id
         self.team_manifest.eks_nodegroup_role_arn = self.role_eks_nodegroup.role_arn
         self.team_manifest.scratch_bucket = self.scratch_bucket.bucket_name
@@ -151,7 +138,7 @@ class Team(Stack):
         self.team_manifest.ecs_task_definition_arn = self.ecs_task_definition.task_definition_arn
         self.team_manifest.ecs_container_runner_arn = self.ecs_container_runner.function_arn
 
-        parameter: ssm.StringParameter = ssm.StringParameter(
+        self.manifest_parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,
             id=self.team_manifest.ssm_parameter_name,
             string_value=self.team_manifest.asjson(),
@@ -161,7 +148,6 @@ class Team(Stack):
             simple_name=False,
             tier=ssm.ParameterTier.INTELLIGENT_TIERING,
         )
-        return parameter
 
 
 def main() -> None:
