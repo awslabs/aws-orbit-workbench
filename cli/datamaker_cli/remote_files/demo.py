@@ -245,6 +245,9 @@ def deploy(manifest: Manifest) -> None:
 
         manifest.fetch_demo_data()
         _prepare_demo_data(manifest)  # Adding demo data
+
+        if manifest.vpc.vpc_id is None:
+            manifest.fetch_network_data()
         _logger.debug(f"VPC ID={manifest.vpc.vpc_id}")
         # vpc.modify_vpc_endpoint(manifest=manifest, service_name="codeartifact", private_dns_enabled=True)
         vpc_id = manifest.vpc.vpc_id
