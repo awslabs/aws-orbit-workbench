@@ -141,8 +141,13 @@ class VpcStack(Stack):
 
         # TODO - CodeArtifact VPC endpoint
         self.vpc.add_interface_endpoint(
-            id="code_artifact_endpoint",
+            id="code_artifact_repo_endpoint",
             service=ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories"),
+            private_dns_enabled=False,
+        )
+        self.vpc.add_interface_endpoint(
+            id="code_artifact_api_endpoint",
+            service=ec2.InterfaceVpcEndpointAwsService("codeartifact.api"),
             private_dns_enabled=False,
         )
 

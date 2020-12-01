@@ -39,6 +39,8 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def modify_vpc_endpoint(manifest: "Manifest", service_name: str, private_dns_enabled: bool) -> None:
+    if manifest.vpc.vpc_id is None:
+        manifest.fetch_network_data()
     vpc_id = manifest.vpc.vpc_id
     ec2_client = manifest.boto3_client("ec2")
     paginator = ec2_client.get_paginator("describe_vpc_endpoints")

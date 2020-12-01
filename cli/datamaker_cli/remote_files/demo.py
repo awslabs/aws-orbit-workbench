@@ -24,7 +24,7 @@ import botocore.exceptions
 
 from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, exceptions, sh
 from datamaker_cli.manifest import Manifest
-from datamaker_cli.services import cfn, s3
+from datamaker_cli.services import cfn, s3, vpc
 
 # from datamaker_cli.services import cfn, s3, ssm, vpc
 
@@ -244,24 +244,11 @@ def deploy(manifest: Manifest) -> None:
                 raise
 
         manifest.fetch_demo_data()
-        _prepare_demo_data(manifest)  # Adding demo data
-
-        if manifest.vpc.vpc_id is None:
-            manifest.fetch_network_data()
-        _logger.debug(f"VPC ID={manifest.vpc.vpc_id}")
-        # vpc.modify_vpc_endpoint(manifest=manifest, service_name="codeartifact", private_dns_enabled=True)
-        vpc_id = manifest.vpc.vpc_id
-        service_name = "codeartifact"
-        private_dns_enabled = True
-        ec2_client = manifest.boto3_client("ec2")
-        paginator = ec2_client.get_paginator("describe_vpc_endpoints")
-        response_iterator = paginator.paginate(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}], MaxResults=25)
-        for response in response_iterator:
-            for ep in response["VpcEndpoints"]:
-                if service_name in ep["ServiceName"]:
-                    ec2_client.modify_vpc_endpoint(
-                        VpcEndpointId=ep["VpcEndpointId"], PrivateDnsEnabled=private_dns_enabled
-                    )
+        # Adding demo data
+        _prepare_demo_data(manifest)
+        # Enabling private dns for codeartifact vpc endpoint
+        vpc.modify_vpc_endpoint(manifest=manifest, service_name="codeartifact.repositories", private_dns_enabled=True)
+        vpc.modify_vpc_endpoint(manifest=manifest, service_name="codeartifact.api", private_dns_enabled=True)
 
         _logger.debug("Sleeping 60 seconds")
         time.sleep(60)
