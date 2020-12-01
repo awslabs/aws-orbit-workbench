@@ -51,7 +51,7 @@ def create_nodegroup_structure(team: TeamManifest, env_name: str) -> Dict[str, A
         "volumeSize": team.local_storage_size,
         "ssh": {"allow": False},
         "labels": {"team": team.name},
-        "tags": {"Env": f"datamaker-{env_name}"},
+        "tags": {"Env": f"datamaker-{env_name}", "TeamSpace": team.name},
         "iam": {"instanceRoleARN": team.eks_nodegroup_role_arn},
     }
 
