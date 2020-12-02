@@ -129,8 +129,9 @@ def _endpoints(manifest: Manifest, vpc_id: str) -> None:
             _logger.debug("VPC endpoint %s found", endpoint_id)
             endpoint_ids.append(endpoint_id)
         _logger.debug("Deleting endpoints: %s", endpoint_ids)
-        resp = client.delete_vpc_endpoints(VpcEndpointIds=endpoint_ids)
-        _logger.debug("resp:\n%s", pprint.pformat(resp))
+        if endpoint_ids:
+            resp = client.delete_vpc_endpoints(VpcEndpointIds=endpoint_ids)
+            _logger.debug("resp:\n%s", pprint.pformat(resp))
 
 
 def _cleanup_remaining_dependencies(manifest: Manifest) -> None:

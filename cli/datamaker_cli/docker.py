@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 from datamaker_cli import dockerhub, exceptions, sh
 from datamaker_cli.services import ecr
@@ -23,6 +23,20 @@ def login(manifest: "Manifest") -> None:
     _logger.debug("ECR logged in.")
 
 
+def login_ecr_only(manifest: "Manifest", account_id: Optional[str] = None, region: Optional[str] = None) -> None:
+    if account_id is None:
+        account_id = manifest.account_id
+    if region is None:
+        region = manifest.region
+    username, password = ecr.get_credential(manifest=manifest, region=region)
+    ecr_address = f"{account_id}.dkr.ecr.{region}.amazonaws.com"
+    sh.run(
+        f"docker login --username {username} --password {password} {ecr_address}",
+        hide_cmd=True,
+    )
+    _logger.debug("ECR logged in (%s / %s).", account_id, region)
+
+
 def dockerhub_pull(name: str, tag: str = "latest") -> None:
     sh.run(f"docker pull {name}:{tag}")
 
@@ -30,6 +44,16 @@ def dockerhub_pull(name: str, tag: str = "latest") -> None:
 def ecr_pull(manifest: "Manifest", name: str, tag: str = "latest") -> None:
     ecr_address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com"
     sh.run(f"docker pull {ecr_address}/{name}:{tag}")
+
+
+def ecr_pull_external(manifest: "Manifest", repository: str, tag: str = "latest") -> None:
+    parts: List[str] = repository.split(".")
+    if len(parts) < 6:
+        raise ValueError(f"Invalid External ECR Repository: {repository}")
+    external_account_id: str = parts[0]
+    external_region: str = parts[3]
+    login_ecr_only(manifest=manifest, account_id=external_account_id, region=external_region)
+    sh.run(f"docker pull {repository}:{tag}")
 
 
 def tag_image(manifest: "Manifest", remote_name: str, remote_source: str, name: str, tag: str = "latest") -> None:
@@ -61,15 +85,13 @@ def push(manifest: "Manifest", name: str, tag: str = "latest") -> None:
     sh.run(f"docker push {repo_address}")
 
 
-def deploy_dynamic_image(
+def deploy_image_from_source(
     manifest: "Manifest",
     dir: str,
     name: str,
     tag: str = "latest",
     use_cache: bool = True,
 ) -> None:
-    login(manifest=manifest)
-    _logger.debug("Logged in")
     build(manifest=manifest, dir=dir, name=name, tag=tag, use_cache=use_cache, pull=True)
     _logger.debug("Docker Image built")
     tag_image(manifest=manifest, remote_name=name, remote_source="local", name=name, tag=tag)
@@ -78,33 +100,32 @@ def deploy_dynamic_image(
     _logger.debug("Docker Image pushed")
 
 
-def deploy(
+def replicate_image(
     manifest: "Manifest",
-    dir: str,
     deployed_name: str,
     image_name: str,
-    use_cache: bool = True,
 ) -> None:
-    login(manifest=manifest)
     _logger.debug("Logged in")
     _logger.debug(f"Manifest: {vars(manifest)}")
 
     source = manifest.images[image_name]["source"]
-    source_name = manifest.images[image_name]["repository"]
+    source_repository = manifest.images[image_name]["repository"]
     source_version = manifest.images[image_name]["version"]
-    if source == "source" or manifest.dev is True:
-        build(manifest=manifest, dir=dir, name=deployed_name, tag=source_version, use_cache=use_cache)
-        _logger.debug("Built from Source")
     if source == "dockerhub":
-        dockerhub_pull(name=source_name, tag=source_version)
+        dockerhub_pull(name=source_repository, tag=source_version)
         _logger.debug("Pulled DockerHub Image")
     elif source == "ecr":
-        ecr_pull(manifest=manifest, name=source_name, tag=source_version)
+        ecr_pull(manifest=manifest, name=source_repository, tag=source_version)
         _logger.debug("Pulled ECR Image")
+    elif source == "ecr-external":
+        ecr_pull_external(manifest=manifest, repository=source_repository, tag=source_version)
+        _logger.debug("Pulled external ECR Image")
     else:
-        e = ValueError(f"Invalid Image Source: {source}. Valid values are: dockerhub, ecr")
+        e = ValueError(f"Invalid Image Source: {source}. Valid values are: code, dockerhub, ecr")
         _logger.error(e)
         raise e
 
-    tag_image(manifest=manifest, remote_name=source_name, remote_source=source, name=deployed_name, tag=source_version)
+    tag_image(
+        manifest=manifest, remote_name=source_repository, remote_source=source, name=deployed_name, tag=source_version
+    )
     push(manifest=manifest, name=deployed_name, tag=source_version)

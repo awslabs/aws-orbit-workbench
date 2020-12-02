@@ -33,6 +33,7 @@ MANIFEST: Dict[str, Any] = {
     "metadata": {"name": None, "region": None},
     "vpc": {"id": None, "cidr": None, "subnets": {"private": None, "public": None}},
     "iam": {"serviceRoleARN": None},
+    "cloudWatch": {"clusterLogging": {"enableTypes": ["*"]}},
 }
 
 
@@ -50,7 +51,7 @@ def create_nodegroup_structure(team: TeamManifest, env_name: str) -> Dict[str, A
         "volumeSize": team.local_storage_size,
         "ssh": {"allow": False},
         "labels": {"team": team.name},
-        "tags": {"Env": f"datamaker-{env_name}"},
+        "tags": {"Env": f"datamaker-{env_name}", "TeamSpace": team.name},
         "iam": {"instanceRoleARN": team.eks_nodegroup_role_arn},
     }
 
@@ -60,10 +61,13 @@ def generate_manifest(manifest: Manifest, name: str, output_teams: bool = True) 
     # Fill cluster wide configs
     MANIFEST["metadata"]["name"] = name
     MANIFEST["metadata"]["region"] = manifest.region
+    MANIFEST["vpc"]["clusterEndpoints"] = {"publicAccess": True, "privateAccess": manifest.isolated_networking}
     MANIFEST["vpc"]["id"] = manifest.vpc.vpc_id
     MANIFEST["vpc"]["cidr"] = manifest.vpc.cidr_block
-    for kind in (SubnetKind.private, SubnetKind.public):
-        MANIFEST["vpc"]["subnets"][kind.value] = {
+    private_kind: SubnetKind = SubnetKind.isolated if manifest.isolated_networking else SubnetKind.private
+    for kind in (private_kind, SubnetKind.public):
+        eksctl_kind: str = "private" if kind is private_kind else kind.value
+        MANIFEST["vpc"]["subnets"][eksctl_kind] = {
             s.availability_zone: {"id": s.subnet_id, "cidr": s.cidr_block}
             for s in manifest.vpc.subnets
             if s.kind is kind

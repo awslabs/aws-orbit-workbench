@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import TYPE_CHECKING, Dict, Tuple
 
 import botocore
@@ -7,6 +8,8 @@ from datamaker_cli.services import s3
 
 if TYPE_CHECKING:
     from datamaker_cli.manifest import Manifest
+
+_logger: logging.Logger = logging.getLogger(__name__)
 
 
 def get_credential(manifest: "Manifest") -> Tuple[str, str]:
@@ -24,6 +27,7 @@ def store_credential(manifest: "Manifest", username: str, password: str) -> None
         bucket=manifest.toolkit_s3_bucket,
         keys=["cli/dockerhub.json"],
     )
+    _logger.debug("manifest.toolkit_s3_bucket: %s", manifest.toolkit_s3_bucket)
     client_s3 = manifest.boto3_client(service_name="s3")
     client_s3.put_object(
         Body=json.dumps({"username": username, "password": password}).encode("utf-8"),

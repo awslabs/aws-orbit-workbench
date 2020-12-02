@@ -37,6 +37,9 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     else:
         raise ValueError("Unexpected number of values in args.")
 
+    docker.login(manifest=manifest)
+    _logger.debug("DockerHub and ECR Logged in")
+
     changes: changeset.Changeset = changeset.read_changeset_file(
         filename=os.path.join(manifest.filename_dir, "changeset.json")
     )
@@ -54,16 +57,15 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug("Env changes deployed")
     teams.deploy(manifest=manifest, changes=changes.plugin_changesets)
     _logger.debug("Teams Stacks deployed")
-
-    path = os.path.join(manifest.filename_dir, image_name)
-    _logger.debug("path: %s", path)
     _logger.debug("Deploying the %s Docker image", image_name)
     if manifest.images.get(image_name, {"source": "code"}).get("source") == "code":
+        path = os.path.join(manifest.filename_dir, image_name)
+        _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
-        docker.deploy_dynamic_image(manifest=manifest, dir=path, name=f"datamaker-{manifest.name}-{image_name}")
+        docker.deploy_image_from_source(manifest=manifest, dir=path, name=f"datamaker-{manifest.name}-{image_name}")
     else:
-        docker.deploy(
-            manifest=manifest, dir=path, image_name=image_name, deployed_name=f"datamaker-{manifest.name}-{image_name}"
+        docker.replicate_image(
+            manifest=manifest, image_name=image_name, deployed_name=f"datamaker-{manifest.name}-{image_name}"
         )
     _logger.debug("Docker Image Deployed to ECR")

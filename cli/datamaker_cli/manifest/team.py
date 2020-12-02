@@ -90,26 +90,10 @@ class TeamManifest:
         try:
             json_str: str = client.get_parameter(Name=self.ssm_parameter_name)["Parameter"]["Value"]
         except client.exceptions.ParameterNotFound:
-            _logger.debug("Team %s Manifest SSM parameter not found.", self.name)
+            _logger.debug("Team %s Manifest SSM parameter not found: %s", self.name, self.ssm_parameter_name)
             return None
         _logger.debug("Team %s Manifest SSM parameter found.", self.name)
         return cast(MANIFEST_TEAM_TYPE, json.loads(json_str))
-
-    def fillup_from_ssm(self) -> None:
-        if self.manifest.raw_ssm is not None:
-            for team in cast(List[MANIFEST_TEAM_TYPE], self.manifest.raw_ssm.get("teams", [])):
-                if team.get("name") == self.name:
-                    self.raw_ssm = team
-                    self.efs_id = cast(Optional[str], team.get("efs-id"))
-                    self.eks_nodegroup_role_arn = cast(Optional[str], team.get("eks-nodegroup-role-arn"))
-                    self.jupyter_url = cast(Optional[str], team.get("jupyter-url"))
-                    self.scratch_bucket = cast(str, team.get("scratch-bucket"))
-                    self.scratch_retention_days = cast(int, team.get("scratch-retention-days"))
-                    self.ecs_cluster_name = cast(str, team.get("ecs-cluster-name"))
-                    self.ecs_task_definition_arn = cast(str, team.get("ecs-task-definition-arn"))
-                    self.ecs_container_runner_arn = cast(str, team.get("ecs-container-runner-arn"))
-                    _logger.debug("Team %s loaded successfully from SSM.", self.name)
-                    return
 
     def write_manifest_ssm(self) -> None:
         client = self.manifest.boto3_client("ssm")
@@ -159,10 +143,12 @@ class TeamManifest:
             raw: MANIFEST_TEAM_TYPE = self.raw_ssm
             self.efs_id = cast(Optional[str], raw.get("efs-id"))
             self.eks_nodegroup_role_arn = cast(Optional[str], raw.get("eks-nodegroup-role-arn"))
+            self.jupyter_url = cast(Optional[str], raw.get("jupyter-url"))
+            self.scratch_bucket = cast(str, raw.get("scratch-bucket"))
+            self.scratch_retention_days = cast(int, raw.get("scratch-retention-days"))
             self.ecs_cluster_name = cast(str, raw.get("ecs-cluster-name"))
             self.ecs_task_definition_arn = cast(str, raw.get("ecs-task-definition-arn"))
             self.ecs_container_runner_arn = cast(str, raw.get("ecs-container-runner-arn"))
-            self.manifest.write_manifest_ssm()
             _logger.debug("Team %s loaded successfully from SSM.", self.name)
 
     def construct_ecr_repository_name(self, env: str) -> str:

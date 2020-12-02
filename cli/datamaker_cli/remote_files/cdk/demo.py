@@ -110,6 +110,9 @@ class VpcStack(Stack):
             "kinesis_firehose_endpoint": ec2.InterfaceVpcEndpointAwsService("kinesis-firehose"),
             "api_gateway": ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
             "sts_endpoint": ec2.InterfaceVpcEndpointAwsService.STS,
+            "efs": ec2.InterfaceVpcEndpointAwsService.ELASTIC_FILESYSTEM,
+            "elb": ec2.InterfaceVpcEndpointAwsService.ELASTIC_LOAD_BALANCING,
+            "autoscaling": ec2.InterfaceVpcEndpointAwsService("autoscaling"),
             # "code_artifact_api_endpoint": ec2.InterfaceVpcEndpointAwsService("codeartifact.api"),
         }
 
@@ -133,13 +136,17 @@ class VpcStack(Stack):
             self.vpc.add_gateway_endpoint(
                 id=name,
                 service=gateway_vpc_endpoint_service,
-                subnets=self.private_subnets.subnets + self.isolated_subnets.subnets,
+                subnets=[ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED)],
             )
 
         for name, interface_service in vpc_interface_endpoints.items():
-            self.vpc.add_interface_endpoint(id=name, service=interface_service)
+            self.vpc.add_interface_endpoint(
+                id=name,
+                service=interface_service,
+                subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED),
+                private_dns_enabled=True,
+            )
 
-        # TODO - CodeArtifact VPC endpoint
         self.vpc.add_interface_endpoint(
             id="code_artifact_repo_endpoint",
             service=ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories"),
@@ -152,31 +159,32 @@ class VpcStack(Stack):
         )
 
         # Adding Lambda and Redshift endpoints with CDK low level APIs
-        # endpoint_url_template = "com.amazonaws.{}.{}"
-        # vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
-        # # Adding ingress rule to VPC CIDR
-        # vpc_security_group.add_ingress_rule(peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block),
-        # connection=ec2.Port.all_tcp())
-        # isolated_subnet_ids = [t.subnet_id for t in self.vpc.isolated_subnets]
+        endpoint_url_template = "com.amazonaws.{}.{}"
+        vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
+        # Adding ingress rule to VPC CIDR
+        vpc_security_group.add_ingress_rule(peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block), connection=ec2.Port.all_tcp())
+        isolated_subnet_ids = [t.subnet_id for t in self.vpc.isolated_subnets]
 
-        # ec2.CfnVPCEndpoint(
-        #     self,
-        #     "redshift_endpoint",
-        #     vpc_endpoint_type="Interface",
-        #     service_name=endpoint_url_template.format(self.region, "redshift"),
-        #     vpc_id=self.vpc.vpc_id,
-        #     security_group_ids=[vpc_security_group.security_group_id],
-        #     subnet_ids=isolated_subnet_ids,
-        # )
-        # ec2.CfnVPCEndpoint(
-        #     self,
-        #     "lambda_endpoint",
-        #     vpc_endpoint_type="Interface",
-        #     service_name=endpoint_url_template.format(self.region, "lambda"),
-        #     vpc_id=self.vpc.vpc_id,
-        #     security_group_ids=[vpc_security_group.security_group_id],
-        #     subnet_ids=isolated_subnet_ids,
-        # )
+        ec2.CfnVPCEndpoint(
+            self,
+            "redshift_endpoint",
+            vpc_endpoint_type="Interface",
+            service_name=endpoint_url_template.format(self.region, "redshift"),
+            vpc_id=self.vpc.vpc_id,
+            security_group_ids=[vpc_security_group.security_group_id],
+            subnet_ids=isolated_subnet_ids,
+            private_dns_enabled=True,
+        )
+        ec2.CfnVPCEndpoint(
+            self,
+            "lambda_endpoint",
+            vpc_endpoint_type="Interface",
+            service_name=endpoint_url_template.format(self.region, "lambda"),
+            vpc_id=self.vpc.vpc_id,
+            security_group_ids=[vpc_security_group.security_group_id],
+            subnet_ids=isolated_subnet_ids,
+            private_dns_enabled=True,
+        )
 
 
 def main() -> None:
