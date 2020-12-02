@@ -15,10 +15,12 @@ images:
         repository: ${landing_page_repository}
         source: ${images_source}
         version: latest
-vpc:
-    private-subnets-ids: []
-    public-subnets-ids: []
-    isolated-subnets-ids: []
+networking:
+  data:
+    internet-accessible: true
+    nodes-subnets: []
+  frontend:
+    load-balancers-subnets: []
 teams:
 -   name: my-team
     instance-type: m5.4xlarge

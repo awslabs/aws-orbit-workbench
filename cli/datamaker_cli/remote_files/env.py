@@ -105,7 +105,7 @@ def _cleanup_remaining_resources(manifest: Manifest) -> None:
 
 def _concat_images_into_args(manifest: Manifest, add_images: List[str], remove_images: List[str]) -> Tuple[str, str]:
     add_images += DEFAULT_IMAGES
-    if manifest.isolated_networking is True:
+    if manifest.internet_accessible is False:
         add_images += DEFAULT_ISOLATED_IMAGES
     add_images_str = ",".join(add_images) if add_images else "null"
     remove_images_str = ",".join(remove_images) if remove_images else "null"
