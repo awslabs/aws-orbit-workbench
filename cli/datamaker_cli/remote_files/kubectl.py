@@ -15,7 +15,7 @@
 import logging
 import os
 import shutil
-from typing import Optional
+from typing import List, Optional
 
 from datamaker_cli import DATAMAKER_CLI_ROOT, exceptions, k8s, sh
 from datamaker_cli.manifest import Manifest
@@ -37,7 +37,9 @@ def _commons(output_path: str) -> None:
     shutil.copyfile(src=input, dst=output)
 
 
-def _team(region: str, account_id: str, output_path: str, env_name: str, team: TeamManifest) -> None:
+def _team(
+    region: str, account_id: str, output_path: str, env_name: str, team: TeamManifest, load_balancers_subnets: List[str]
+) -> None:
     input = os.path.join(MODELS_PATH, "apps", "01-team.yaml")
     output = os.path.join(output_path, f"01-{team.name}-team.yaml")
 
@@ -53,6 +55,7 @@ def _team(region: str, account_id: str, output_path: str, env_name: str, team: T
         env_name=env_name,
         tag=team.manifest.images["jupyter-hub"]["version"],
         grant_sudo='"yes"' if team.grant_sudo else '"no"',
+        internal_load_balancer="false" if load_balancers_subnets else "true",
     )
     with open(output, "w") as file:
         file.write(content)
@@ -98,6 +101,7 @@ def _landing_page(output_path: str, manifest: Manifest) -> None:
         cognito_external_provider_label=label,
         cognito_external_provider_domain=domain,
         cognito_external_provider_redirect=redirect,
+        internal_load_balancer="false" if manifest.load_balancers_subnets else "true",
     )
     with open(output, "w") as file:
         file.write(content)
@@ -149,6 +153,7 @@ def _generate_teams_manifest(manifest: Manifest) -> str:
             env_name=manifest.name,
             output_path=output_path,
             team=team,
+            load_balancers_subnets=manifest.load_balancers_subnets,
         )
 
     return output_path
@@ -217,7 +222,7 @@ def deploy_env(manifest: Manifest) -> None:
     if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
         context = get_k8s_context(manifest=manifest)
         _logger.debug("kubectl context: %s", context)
-        if manifest.isolated_networking is True:
+        if manifest.internet_accessible is False:
             output_path = _generate_efs_driver_manifest(manifest=manifest)
             sh.run(f"kubectl apply -k {output_path} --context {context}")
         else:
