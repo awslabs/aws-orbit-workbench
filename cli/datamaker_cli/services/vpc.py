@@ -46,6 +46,7 @@ def modify_vpc_endpoint(manifest: "Manifest", service_name: str, private_dns_ena
     paginator = ec2_client.get_paginator("describe_vpc_endpoints")
     response_iterator = paginator.paginate(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}], MaxResults=25)
     for response in response_iterator:
+        _logger.debug(response)
         for ep in response["VpcEndpoints"]:
             ep_s_name = ep["ServiceName"]
             _logger.debug(f"ep_s_name={ep_s_name}")
