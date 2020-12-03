@@ -12,18 +12,19 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from datamaker_cli import utils
 
-MANIFEST_FILE_PLUGIN_TYPE = Dict[str, str]
-MANIFEST_PLUGIN_TYPE = Dict[str, str]
+MANIFEST_FILE_PLUGIN_TYPE = Dict[str, Union[str, Dict[str, Any]]]
+MANIFEST_PLUGIN_TYPE = Dict[str, Union[str, Dict[str, Any]]]
 
 
 class PluginManifest:
-    def __init__(self, name: str, path: Optional[str] = None) -> None:
+    def __init__(self, name: str, parameters: Dict[str, Any], path: Optional[str] = None) -> None:
         self._name = name
         self._path = path
+        self._parameters = parameters
 
     def asdict_file(self) -> MANIFEST_FILE_PLUGIN_TYPE:
         return self.asdict()
@@ -38,3 +39,7 @@ class PluginManifest:
     @property
     def path(self) -> Optional[str]:
         return self._path
+
+    @property
+    def parameters(self) -> Dict[str, Any]:
+        return self._parameters

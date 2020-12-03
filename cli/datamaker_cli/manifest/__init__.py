@@ -187,7 +187,11 @@ class Manifest:
     def _parse_plugins(team: MANIFEST_FILE_TEAM_TYPE) -> List[PluginManifest]:
         if "plugins" in team:
             return [
-                PluginManifest(name=p["name"], path=p["path"])
+                PluginManifest(
+                    name=cast(str, p["name"]),
+                    path=cast(str, p["path"]),
+                    parameters=cast(Dict[str, Any], p.get("parameters", {})),
+                )
                 for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team["plugins"])
             ]
         return []
