@@ -245,14 +245,12 @@ def deploy(manifest: Manifest) -> None:
                 raise
 
         manifest.fetch_demo_data()
-        # Adding demo data
+        _logger.debug("Adding demo data")
         _prepare_demo_data(manifest)
-        # Enabling private dns for codeartifact vpc endpoint
+        _logger.debug("Enabling private dns for codeartifact vpc endpoint")
         vpc.modify_vpc_endpoint(manifest=manifest, service_name="codeartifact.repositories", private_dns_enabled=True)
         vpc.modify_vpc_endpoint(manifest=manifest, service_name="codeartifact.api", private_dns_enabled=True)
-
-        _logger.debug("Sleeping 60 seconds")
-        time.sleep(60)
+        _logger.debug("End of VPC Endpoints")
         # service_names = ["codeartifact"]
         # for service_name in service_names:
         #     #service_name="codeartifact"

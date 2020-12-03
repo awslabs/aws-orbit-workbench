@@ -47,5 +47,7 @@ def modify_vpc_endpoint(manifest: "Manifest", service_name: str, private_dns_ena
     response_iterator = paginator.paginate(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}], MaxResults=25)
     for response in response_iterator:
         for ep in response["VpcEndpoints"]:
+            ep_s_name = ep["ServiceName"]
+            _logger.debug(f"ep_s_name={ep_s_name}")
             if service_name in ep["ServiceName"]:
                 ec2_client.modify_vpc_endpoint(VpcEndpointId=ep["VpcEndpointId"], PrivateDnsEnabled=private_dns_enabled)
