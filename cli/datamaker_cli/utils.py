@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import ipaddress
 import logging
 import math
 import os
@@ -137,3 +138,30 @@ def try_it(
                 exception,
             )
             time.sleep(delay)
+
+
+def get_dns_ip(manifest: "Manifest") -> str:
+    """
+    Reserved by AWS. The IP address of the DNS server is the base of the VPC network range plus two.
+    For VPCs with multiple CIDR blocks, the IP address of the DNS server is located in the primary CIDR.
+    We also reserve the base of each subnet range plus two for all CIDR blocks in the VPC.
+    """
+    if manifest.vpc.cidr_block is None:
+        manifest.vpc.fillup_from_ssm()
+    if manifest.vpc.cidr_block is None:
+        manifest.vpc.fetch_properties()
+    if manifest.vpc.cidr_block is None:
+        raise ValueError("Impossible to localize the VPC CIDR Block!")
+    base: str = manifest.vpc.cidr_block[:-3]
+    return str(ipaddress.ip_address(base) + 2)
+
+
+def get_dns_ip_cidr(manifest: "Manifest") -> str:
+    """
+    Reserved by AWS. The IP address of the DNS server is the base of the VPC network range plus two.
+    For VPCs with multiple CIDR blocks, the IP address of the DNS server is located in the primary CIDR.
+    We also reserve the base of each subnet range plus two for all CIDR blocks in the VPC.
+    """
+    cidr: str = f"{get_dns_ip(manifest)}/32"
+    _logger.debug("DNS CIDR: %s", cidr)
+    return cidr
