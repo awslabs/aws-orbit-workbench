@@ -121,17 +121,6 @@ class Team(Stack):
             file_system=self.efs,
             image=self.ecr_image,
         )
-        # self.ecs_container_runner = LambdaBuilder.build_ecs_container_runner(
-        #     scope=self,
-        #     manifest=manifest,
-        #     team_manifest=team_manifest,
-        #     ecs_execution_role=self.ecs_execution_role,
-        #     ecs_task_role=self.role_eks_nodegroup,
-        #     ecs_cluster=self.ecs_cluster,
-        #     ecs_task_definition=self.ecs_task_definition,
-        #     efs_security_group=self.sg_efs,
-        #     subnets=self.i_isolated_subnets if self.manifest.isolated_networking else self.i_private_subnets,
-        # )
         self.ecs_container_runner = StateMachineBuilder.build_ecs_run_container_state_machine(
             scope=self,
             manifest=manifest,
@@ -142,7 +131,7 @@ class Team(Stack):
             subnets=self.i_private_subnets if self.manifest.internet_accessible else self.i_isolated_subnets,
             role=self.role_eks_nodegroup,
         )
-        self.eks_run_container = StateMachineBuilder.build_eks_run_container_state_machine(
+        self.eks_container_runner = StateMachineBuilder.build_eks_run_container_state_machine(
             scope=self,
             manifest=manifest,
             team_manifest=team_manifest,
@@ -155,7 +144,8 @@ class Team(Stack):
         self.team_manifest.scratch_bucket = self.scratch_bucket.bucket_name
         self.team_manifest.ecs_cluster_name = self.ecs_cluster.cluster_name
         self.team_manifest.ecs_task_definition_arn = self.ecs_task_definition.task_definition_arn
-        # self.team_manifest.ecs_container_runner_arn = self.ecs_container_runner.function_arn
+        self.team_manifest.ecs_container_runner_arn = self.ecs_container_runner.state_machine_arn
+        self.team_manifest.eks_container_runner_arn = self.eks_container_runner.state_machine_arn
 
         self.manifest_parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,
