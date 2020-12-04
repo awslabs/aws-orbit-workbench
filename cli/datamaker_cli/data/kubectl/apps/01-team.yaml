@@ -136,6 +136,7 @@ spec:
   selector:
     app: datamaker-jupyterhub
   type: LoadBalancer
+  loadBalancerSourceRanges: ${jupyterhub_inbound_ranges}
 ---
 apiVersion: apps/v1
 kind: Deployment
