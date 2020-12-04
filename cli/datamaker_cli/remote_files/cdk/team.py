@@ -20,7 +20,6 @@ import sys
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecr as ecr
-import aws_cdk.aws_ecs as ecs
 import aws_cdk.aws_efs as efs
 import aws_cdk.aws_s3 as s3
 import aws_cdk.aws_ssm as ssm
@@ -29,7 +28,6 @@ from aws_cdk.core import App, Construct, Environment, Stack, Tags
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.subnet import SubnetKind
 from datamaker_cli.manifest.team import TeamManifest
-from datamaker_cli.remote_files.cdk.team_builders._lambda import LambdaBuilder
 from datamaker_cli.remote_files.cdk.team_builders.cognito import CognitoBuilder
 from datamaker_cli.remote_files.cdk.team_builders.ec2 import Ec2Builder
 from datamaker_cli.remote_files.cdk.team_builders.ecs import EcsBuilder
@@ -112,9 +110,7 @@ class Team(Stack):
         self.ecs_cluster = EcsBuilder.build_cluster(
             scope=self, manifest=manifest, team_manifest=team_manifest, vpc=self.i_vpc
         )
-        self.ecr_image = EcsBuilder.build_ecr_image(
-            scope=self, manifest=manifest, team_manifest=team_manifest
-        )
+        self.ecr_image = EcsBuilder.build_ecr_image(scope=self, manifest=manifest, team_manifest=team_manifest)
         self.ecs_execution_role = IamBuilder.build_ecs_role(scope=self)
         self.ecs_task_definition = EcsBuilder.build_task_definition(
             scope=self,
@@ -123,7 +119,7 @@ class Team(Stack):
             ecs_execution_role=self.ecs_execution_role,
             ecs_task_role=self.role_eks_nodegroup,
             file_system=self.efs,
-            image=self.ecr_image
+            image=self.ecr_image,
         )
         # self.ecs_container_runner = LambdaBuilder.build_ecs_container_runner(
         #     scope=self,

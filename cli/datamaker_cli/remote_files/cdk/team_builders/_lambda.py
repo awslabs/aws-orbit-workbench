@@ -18,10 +18,8 @@ from typing import List
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecs as ecs
 import aws_cdk.aws_iam as iam
-from aws_cdk.aws_lambda import Function
 import aws_cdk.core as core
 from aws_cdk import aws_lambda
-from aws_cdk.core import Construct
 
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.team import TeamManifest
@@ -104,5 +102,5 @@ class LambdaBuilder:
                     actions=["eks:DescribeCluster"],
                     resources=["*"],
                 )
-            ]
+            ],
         )

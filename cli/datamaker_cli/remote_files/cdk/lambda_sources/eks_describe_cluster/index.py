@@ -12,24 +12,25 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import boto3
 import json
 import logging
 from datetime import date, datetime
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
+
+import boto3
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def json_serial(obj):
+def json_serial(obj: Any) -> str:
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
     raise TypeError("Type %s not serializable" % type(obj))
 
 
-def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Dict[str, Union[str, int]]:
-    logger.info(f'Lambda metadata: {json.dumps(event)} (type = {type(event)})')
+def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
+    logger.info(f"Lambda metadata: {json.dumps(event)} (type = {type(event)})")
 
     name = event.get("name", None)
     if name is None:
