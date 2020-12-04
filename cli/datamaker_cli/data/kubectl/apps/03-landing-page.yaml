@@ -69,6 +69,8 @@ metadata:
     app: datamaker-landing-page
   name: landing-page-public
   namespace: env
+  annotations:
+      service.beta.kubernetes.io/aws-load-balancer-internal: ${internal_load_balancer}
 spec:
   ports:
     - port: 80

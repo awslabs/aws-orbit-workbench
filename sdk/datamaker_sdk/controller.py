@@ -1,9 +1,24 @@
+#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License").
+#    You may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
 import json
 import logging
 import os
 import time
 import urllib
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import boto3
@@ -11,7 +26,6 @@ import pandas as pd
 
 from datamaker_sdk.common import get_properties
 
-logger = logging.getLogger()
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
 
@@ -30,16 +44,37 @@ def get_execution_history(notebookDir: str, notebookName: str) -> pd.DataFrame:
      Returns
      -------
      df: pd.DataFrame
-         Notebook execution history from s3.
+         Notebook execution history.
 
      Example
      --------
-    >>> import aws.utils.notebooks.controller as controller
+    >>> from datamaker_sdk import controller
     >>> controller.get_execution_history(notebookDir="notebook-directory", notebookName='mynotebook')
     """
     props = get_properties()
+    return _get_execution_history_from_local(notebookDir, notebookName, props)
 
-    return _get_execution_history_from_s3(notebookDir, notebookName, props)
+
+def _get_execution_history_from_local(notebook_basedir: str, src_notebook: str, props: dict) -> pd.DataFrame:
+    """
+    Get Notebook Execution History from EFS
+    """
+
+    home = str(Path.home())
+    nb_name = Path(src_notebook).stem
+    notebook_dir = os.path.join(home, notebook_basedir, nb_name)
+
+    executions = []
+    for nb in Path(notebook_dir).glob("*.ipynb"):
+        if not nb.is_file():
+            continue
+        executions.append((str(nb), datetime.fromtimestamp(nb.stat().st_mtime), notebook_dir))
+
+    if not executions:
+        print(f"No output notebooks founds at: {notebook_dir}")
+
+    df = pd.DataFrame(executions, columns=["relativePath", "timestamp", "path"])
+    return df
 
 
 def _get_execution_history_from_s3(notebookBaseDir: str, srcNotebook: str, props: str) -> pd.DataFrame:
@@ -119,7 +154,7 @@ def run_python(taskConfiguration: dict) -> Any:
 
     Example
     --------
-    >>> import aws.utils.notebooks.controller as controller
+    >>> import datamaker_sdk.controller as controller
     >>> response = controller.run_python(
     ...     taskConfiguration = {
     ...         "tasks":  [
@@ -185,7 +220,7 @@ def run_notebooks(taskConfiguration: dict) -> Any:
 
     Example
     --------
-    >>> import aws.utils.notebooks.controller as controller
+    >>> import datamaker_sdk.controller as controller
     >>> response = controller.run_notebooks(
     ...     taskConfiguration = {
     ...         "notebooks":  [ {
@@ -401,7 +436,7 @@ def delete_task_schedule(triggerName: str) -> None:
 
     Example
     --------
-    >>> import aws.utils.notebooks.controller as controller
+    >>> import datamaker_sdk.controller as controller
     >>> controller.delete_scheduled_task(triggerName = 'arn:aws:events:...')
     """
     events_client = boto3.client("events")
@@ -426,7 +461,7 @@ def get_active_tasks(user_filter: Optional[Any]) -> Union[dict, List[Dict[str, A
 
     Example
     --------
-    >>> import aws.utils.notebooks.controller as controller
+    >>> import datamaker_sdk.controller as controller
     >>> controller.get_active_tasks()
     """
     ecs = boto3.client("ecs")
@@ -533,7 +568,7 @@ def wait_for_tasks_to_complete(
 
     Example
     --------
-    >>> from aws.utils.notebooks.controller import wait_for_tasks_to_complete
+    >>> from datamaker_sdk.controller import wait_for_tasks_to_complete
 
 
     """

@@ -25,7 +25,6 @@ if TYPE_CHECKING:
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-MANIFEST_FILE_SUBNET_TYPE = str
 MANIFEST_SUBNET_TYPE = Dict[str, Optional[str]]
 
 
@@ -91,7 +90,7 @@ class SubnetManifest:
         except botocore.exceptions.ClientError:
             _logger.debug("Unable to fetch properties from subnet (%s) right now.", self.subnet_id)
 
-    def asdict_file(self) -> MANIFEST_FILE_SUBNET_TYPE:
+    def asdict_file(self) -> str:
         return self.subnet_id
 
     def asdict(self) -> MANIFEST_SUBNET_TYPE:

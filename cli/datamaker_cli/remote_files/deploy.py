@@ -83,7 +83,7 @@ def deploy_images_remotely(manifest: Manifest) -> None:
             ("landing-page", "build.sh"),
         ]
 
-        if manifest.isolated_networking is True:
+        if manifest.internet_accessible is False:
             images += [
                 ("aws-efs-csi-driver", None),
                 ("livenessprobe", None),

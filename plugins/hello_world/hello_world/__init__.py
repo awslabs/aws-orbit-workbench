@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import logging
-from typing import List
+from typing import Any, Dict, List
 
 from datamaker_cli import sh
 from datamaker_cli.manifest import Manifest
@@ -24,25 +24,29 @@ _logger: logging.Logger = logging.getLogger("datamaker_cli")
 
 
 @hooks.deploy
-def deploy(manifest: Manifest, team_manifest: TeamManifest) -> None:
-    _logger.debug("Team Env name: %s | Team name: %s", manifest.name, team_manifest.name)
-    sh.run(f"echo 'Team Env name: {manifest.name} | Team name: {team_manifest.name}'")
+def deploy(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
+    _logger.debug("Running hello_world deploy!")
+    sh.run(f"echo 'Team Env name: {manifest.name}'")
+    sh.run(f"echo 'Team name: {team_manifest.name}'")
+    sh.run(f"echo 'Parameters keys: {list(parameters.keys())}'")
 
 
 @hooks.destroy
-def destroy(manifest: Manifest, team_manifest: TeamManifest) -> None:
-    _logger.debug("Team Env name: %s | Team name: %s", manifest.name, team_manifest.name)
-    sh.run(f"echo 'Team Env name: {manifest.name} | Team name: {team_manifest.name}'")
+def destroy(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
+    _logger.debug("Running hello_world destroy!")
+    sh.run(f"echo 'Team Env name: {manifest.name}'")
+    sh.run(f"echo 'Team name: {team_manifest.name}'")
+    sh.run(f"echo 'Parameters keys: {list(parameters.keys())}'")
 
 
 @hooks.dockerfile_injection
-def dockerfile_injection(manifest: Manifest, team_manifest: TeamManifest) -> List[str]:
+def dockerfile_injection(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> List[str]:
     _logger.debug("Team Env: %s | Team: %s | Image: %s", manifest.name, team_manifest.name, team_manifest.image)
     return ["RUN echo 'Hello World!' > /home/jovyan/hello-world-plugin.txt"]
 
 
 @hooks.bootstrap_injection
-def bootstrap_injection(manifest: Manifest, team_manifest: TeamManifest) -> str:
+def bootstrap_injection(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> str:
     _logger.debug("Injecting CodeCommit plugin commands for team %s Bootstrap", team_manifest.name)
     return """
 #!/usr/bin/env bash

@@ -60,7 +60,7 @@ def _create_dockerfile(manifest: "Manifest", team_manifest: "TeamManifest") -> s
             hook_name="dockerfile_injection_hook",
         )
         if hook is not None:
-            plugin_cmds = cast(Optional[List[str]], hook(manifest, team_manifest))
+            plugin_cmds = cast(Optional[List[str]], hook(manifest, team_manifest, plugin.parameters))
             if plugin_cmds is not None:
                 cmds += [f"# Commands for {plugin.name} plugin"] + plugin_cmds
     _logger.debug("cmds: %s", cmds)
@@ -94,7 +94,7 @@ def _deploy_team_bootstrap(manifest: "Manifest", team_manifest: "TeamManifest") 
             hook_name="bootstrap_injection_hook",
         )
         if hook is not None:
-            script_content: Optional[str] = cast(Optional[str], hook(manifest, team_manifest))
+            script_content: Optional[str] = cast(Optional[str], hook(manifest, team_manifest, plugin.parameters))
             if script_content is not None:
                 client = boto3.client("s3")
                 key: str = f"{team_manifest.bootstrap_s3_prefix}{plugin.name}.sh"

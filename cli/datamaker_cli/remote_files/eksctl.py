@@ -61,10 +61,10 @@ def generate_manifest(manifest: Manifest, name: str, output_teams: bool = True) 
     # Fill cluster wide configs
     MANIFEST["metadata"]["name"] = name
     MANIFEST["metadata"]["region"] = manifest.region
-    MANIFEST["vpc"]["clusterEndpoints"] = {"publicAccess": True, "privateAccess": manifest.isolated_networking}
+    MANIFEST["vpc"]["clusterEndpoints"] = {"publicAccess": True, "privateAccess": not manifest.internet_accessible}
     MANIFEST["vpc"]["id"] = manifest.vpc.vpc_id
     MANIFEST["vpc"]["cidr"] = manifest.vpc.cidr_block
-    private_kind: SubnetKind = SubnetKind.isolated if manifest.isolated_networking else SubnetKind.private
+    private_kind: SubnetKind = SubnetKind.private if manifest.internet_accessible else SubnetKind.isolated
     for kind in (private_kind, SubnetKind.public):
         eksctl_kind: str = "private" if kind is private_kind else kind.value
         MANIFEST["vpc"]["subnets"][eksctl_kind] = {

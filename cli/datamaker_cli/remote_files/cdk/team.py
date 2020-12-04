@@ -94,7 +94,7 @@ class Team(Stack):
             manifest=manifest,
             team_manifest=team_manifest,
             vpc=self.i_vpc,
-            subnet_kind=SubnetKind.isolated if manifest.isolated_networking else SubnetKind.private,
+            subnet_kind=SubnetKind.private if manifest.internet_accessible else SubnetKind.isolated,
         )
         self.efs: efs.FileSystem = EfsBuilder.build_file_system(
             scope=self,
@@ -102,7 +102,7 @@ class Team(Stack):
             team_manifest=team_manifest,
             vpc=self.i_vpc,
             efs_security_group=self.sg_efs,
-            subnets=self.i_isolated_subnets if self.manifest.isolated_networking else self.i_private_subnets,
+            subnets=self.i_private_subnets if self.manifest.internet_accessible else self.i_isolated_subnets,
         )
 
         self.user_pool_group: cognito.CfnUserPoolGroup = CognitoBuilder.build_user_pool_group(
@@ -143,7 +143,7 @@ class Team(Stack):
             cluster=self.ecs_cluster,
             task_definition=self.ecs_task_definition,
             efs_security_group=self.sg_efs,
-            subnets=self.i_isolated_subnets if self.manifest.isolated_networking else self.i_private_subnets,
+            subnets=self.i_private_subnets if self.manifest.internet_accessible else self.i_isolated_subnets,
             role=self.role_eks_nodegroup,
         )
         self.eks_run_container = StateMachineBuilder.build_eks_run_container_state_machine(
