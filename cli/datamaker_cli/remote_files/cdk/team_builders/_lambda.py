@@ -18,8 +18,10 @@ from typing import List
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecs as ecs
 import aws_cdk.aws_iam as iam
+from aws_cdk.aws_lambda import Function
 import aws_cdk.core as core
 from aws_cdk import aws_lambda
+from aws_cdk.core import Construct
 
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.team import TeamManifest
@@ -40,8 +42,8 @@ class LambdaBuilder:
         subnets: List[ec2.ISubnet],
     ) -> aws_lambda.Function:
         return aws_lambda.Function(
-            scope,
-            "ecs_container_runner",
+            scope=scope,
+            id="ecs_container_runner",
             function_name=f"datamaker-{manifest.name}-{team_manifest.name}-container-runner",
             code=aws_lambda.Code.asset(_lambda_path("container_runner")),
             handler="lambda_source.handler",
@@ -80,4 +82,27 @@ class LambdaBuilder:
                     resources=[ecs_task_role.role_arn, ecs_execution_role.role_arn],
                 ),
             ],
+        )
+
+    @staticmethod
+    def build_eks_describe_cluster(
+        scope: core.Construct,
+        manifest: Manifest,
+        team_manifest: TeamManifest,
+    ) -> aws_lambda.Function:
+        return aws_lambda.Function(
+            scope=scope,
+            id="eks_describe_cluster",
+            function_name=f"datamaker-{manifest.name}-{team_manifest.name}-eks-describe-cluster",
+            code=aws_lambda.Code.asset(_lambda_path("eks_describe_cluster")),
+            handler="index.handler",
+            runtime=aws_lambda.Runtime.PYTHON_3_6,
+            timeout=core.Duration.seconds(30),
+            initial_policy=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["eks:DescribeCluster"],
+                    resources=["*"],
+                )
+            ]
         )
