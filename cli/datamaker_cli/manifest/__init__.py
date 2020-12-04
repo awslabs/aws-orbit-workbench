@@ -144,8 +144,8 @@ class Manifest:
         self.toolkit_codebuild_project: str = f"datamaker-{self.name}"
         self.account_id: str = utils.get_account_id(manifest=self)
         self.available_eks_regions: List[str] = self._boto3_session().get_available_regions("eks")
-        self.teams: List[TeamManifest] = self._parse_teams()
         self.vpc: VpcManifest = self._parse_vpc()
+        self.teams: List[TeamManifest] = self._parse_teams()
 
         self.cognito_external_provider: Optional[str] = cast(Optional[str], self.raw_file.get("external-idp", None))
         self.cognito_external_provider_label: Optional[str] = cast(
@@ -208,6 +208,7 @@ class Manifest:
                 nodes_num_min=cast(int, t["nodes-num-min"]),
                 policy=cast(str, t["policy"]),
                 grant_sudo=cast(bool, t.get("grant-sudo", False)),
+                jupyterhub_inbound_ranges=cast(List[str], t.get("jupyterhub-inbound-ranges", [])),
                 image=cast(Optional[str], t.get("image")),
                 plugins=self._parse_plugins(team=t),
             )

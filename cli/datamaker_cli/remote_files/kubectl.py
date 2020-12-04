@@ -17,7 +17,7 @@ import os
 import shutil
 from typing import List, Optional
 
-from datamaker_cli import DATAMAKER_CLI_ROOT, exceptions, k8s, sh
+from datamaker_cli import DATAMAKER_CLI_ROOT, exceptions, k8s, sh, utils
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.team import TeamManifest
 from datamaker_cli.remote_files.utils import get_k8s_context
@@ -37,36 +37,41 @@ def _commons(output_path: str) -> None:
     shutil.copyfile(src=input, dst=output)
 
 
-def _team(
-    region: str, account_id: str, output_path: str, env_name: str, team: TeamManifest, load_balancers_subnets: List[str]
-) -> None:
+def _team(manifest: Manifest, team_manifest: TeamManifest, output_path: str) -> None:
     input = os.path.join(MODELS_PATH, "apps", "01-team.yaml")
-    output = os.path.join(output_path, f"01-{team.name}-team.yaml")
+    output = os.path.join(output_path, f"01-{team_manifest.name}-team.yaml")
 
     with open(input, "r") as file:
         content: str = file.read()
 
-    _logger.debug("team.efs_id: %s", team.efs_id)
-    content = content.replace("$", "").format(
-        team=team.name,
-        efsid=team.efs_id,
-        region=region,
-        account_id=account_id,
-        env_name=env_name,
-        tag=team.manifest.images["jupyter-hub"]["version"],
-        grant_sudo='"yes"' if team.grant_sudo else '"no"',
-        internal_load_balancer="false" if load_balancers_subnets else "true",
+    _logger.debug("team.efs_id: %s", team_manifest.efs_id)
+    inbound_ranges: List[str] = (
+        team_manifest.jupyterhub_inbound_ranges
+        if team_manifest.jupyterhub_inbound_ranges
+        else [utils.get_dns_ip_cidr(manifest=manifest)]
     )
+    content = content.replace("$", "").format(
+        team=team_manifest.name,
+        efsid=team_manifest.efs_id,
+        region=manifest.region,
+        account_id=manifest.account_id,
+        env_name=manifest.name,
+        tag=team_manifest.manifest.images["jupyter-hub"]["version"],
+        grant_sudo='"yes"' if team_manifest.grant_sudo else '"no"',
+        internal_load_balancer="false" if manifest.load_balancers_subnets else "true",
+        jupyterhub_inbound_ranges=inbound_ranges,
+    )
+    _logger.debug("Kubectl Team %s manifest:\n%s", team_manifest.name, content)
     with open(output, "w") as file:
         file.write(content)
 
     # user service account
     input = os.path.join(MODELS_PATH, "apps", "02-user-service-account.yaml")
-    output = os.path.join(output_path, f"02-{team.name}-user-service-account.yaml")
+    output = os.path.join(output_path, f"02-{team_manifest.name}-user-service-account.yaml")
 
     with open(input, "r") as file:
         content = file.read()
-    content = content.replace("$", "").format(team=team.name)
+    content = content.replace("$", "").format(team=team_manifest.name)
     with open(output, "w") as file:
         file.write(content)
 
@@ -146,15 +151,8 @@ def _generate_teams_manifest(manifest: Manifest) -> str:
     if manifest.account_id is None:
         raise RuntimeError("manifest.account_id is None!")
 
-    for team in manifest.teams:
-        _team(
-            region=manifest.region,
-            account_id=manifest.account_id,
-            env_name=manifest.name,
-            output_path=output_path,
-            team=team,
-            load_balancers_subnets=manifest.load_balancers_subnets,
-        )
+    for team_manifest in manifest.teams:
+        _team(manifest=manifest, team_manifest=team_manifest, output_path=output_path)
 
     return output_path
 
