@@ -17,7 +17,7 @@ import os
 import time
 from typing import Any, Dict, Iterator, List, Tuple
 
-from datamaker_cli import DATAMAKER_CLI_ROOT, cdk
+from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, docker
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.services import cfn, ecr
 
@@ -25,6 +25,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 DEFAULT_IMAGES: List[str] = ["landing-page", "jupyter-hub", "jupyter-user"]
+DEFAULT_ISOLATED_IMAGES: List[str] = ["aws-efs-csi-driver", "livenessprobe", "csi-node-driver-registrar"]
 
 
 def _filter_repos(manifest: Manifest, page: Dict[str, Any]) -> Iterator[str]:
@@ -102,8 +103,10 @@ def _cleanup_remaining_resources(manifest: Manifest) -> None:
     _efs(manifest=manifest, fs_ids=_efs_targets(manifest=manifest))
 
 
-def _concat_images_into_args(add_images: List[str], remove_images: List[str]) -> Tuple[str, str]:
+def _concat_images_into_args(manifest: Manifest, add_images: List[str], remove_images: List[str]) -> Tuple[str, str]:
     add_images += DEFAULT_IMAGES
+    if manifest.internet_accessible is False:
+        add_images += DEFAULT_ISOLATED_IMAGES
     add_images_str = ",".join(add_images) if add_images else "null"
     remove_images_str = ",".join(remove_images) if remove_images else "null"
     return add_images_str, remove_images_str
@@ -111,7 +114,9 @@ def _concat_images_into_args(add_images: List[str], remove_images: List[str]) ->
 
 def deploy(manifest: Manifest, add_images: List[str], remove_images: List[str]) -> None:
     _logger.debug("Stack name: %s", manifest.env_stack_name)
-    add_images_str, remove_images_str = _concat_images_into_args(add_images=add_images, remove_images=remove_images)
+    add_images_str, remove_images_str = _concat_images_into_args(
+        manifest=manifest, add_images=add_images, remove_images=remove_images
+    )
     cdk.deploy(
         manifest=manifest,
         stack_name=manifest.env_stack_name,
@@ -125,8 +130,10 @@ def deploy(manifest: Manifest, add_images: List[str], remove_images: List[str]) 
 def destroy(manifest: Manifest) -> None:
     _logger.debug("Stack name: %s", manifest.env_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.env_stack_name):
+        docker.login(manifest=manifest)
+        _logger.debug("DockerHub and ECR Logged in")
         _cleanup_remaining_resources(manifest=manifest)
-        add_images_str, remove_images_str = _concat_images_into_args(add_images=[], remove_images=[])
+        add_images_str, remove_images_str = _concat_images_into_args(manifest=manifest, add_images=[], remove_images=[])
         cdk.destroy(
             manifest=manifest,
             stack_name=manifest.env_stack_name,

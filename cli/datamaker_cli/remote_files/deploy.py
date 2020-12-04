@@ -40,17 +40,23 @@ def _deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     else:
         raise ValueError("Unexpected number of values in args.")
 
-    path = os.path.join(manifest.filename_dir, image_name)
-    _logger.debug("path: %s", path)
+    docker.login(manifest=manifest)
+    _logger.debug("DockerHub and ECR Logged in")
     _logger.debug("Deploying the %s Docker image", image_name)
+
     if manifest.images.get(image_name, {"source": "code"}).get("source") == "code":
+        _logger.debug("Building and deploy docker image from source...")
+        path = os.path.join(manifest.filename_dir, image_name)
+        _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
-        docker.deploy_dynamic_image(manifest=manifest, dir=path, name=f"datamaker-{manifest.name}-{image_name}")
+        docker.deploy_image_from_source(manifest=manifest, dir=path, name=f"datamaker-{manifest.name}-{image_name}")
     else:
-        docker.deploy(
-            manifest=manifest, dir=path, image_name=image_name, deployed_name=f"datamaker-{manifest.name}-{image_name}"
+        _logger.debug("Replicating docker iamge to ECR...")
+        docker.replicate_image(
+            manifest=manifest, image_name=image_name, deployed_name=f"datamaker-{manifest.name}-{image_name}"
         )
+
     _logger.debug("Docker Image Deployed to ECR")
 
 
@@ -68,21 +74,37 @@ def deploy_image_remotely(manifest: Manifest, name: str, bundle_path: str, build
 
 
 def deploy_images_remotely(manifest: Manifest) -> None:
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
         futures: List[Future[Any]] = []
 
-        for name, script in (
+        images: List[Tuple[str, Optional[str]]] = [
             ("jupyter-hub", None),
             ("jupyter-user", None),
             ("landing-page", "build.sh"),
-        ):
+        ]
+
+        if manifest.internet_accessible is False:
+            images += [
+                ("aws-efs-csi-driver", None),
+                ("livenessprobe", None),
+                ("csi-node-driver-registrar", None),
+            ]
+
+        _logger.debug("images:\n%s", images)
+
+        for name, script in images:
             _logger.debug("name: %s | script: %s", name, script)
+
             path = os.path.join(manifest.filename_dir, name)
             _logger.debug("path: %s", path)
+
+            if manifest.images.get(name, {"source": "code"}).get("source") == "code":
+                dirs: List[Tuple[str, str]] = [(path, name)]
+            else:
+                dirs = []
+
             bundle_path = bundle.generate_bundle(
-                command_name=f"deploy_image-{name}",
-                manifest=manifest,
-                dirs=[(path, name)],
+                command_name=f"deploy_image-{name}", manifest=manifest, dirs=dirs, plugins=False
             )
             _logger.debug("bundle_path: %s", bundle_path)
             script_str = "" if script is None else script
@@ -108,6 +130,8 @@ def deploy(filename: str, args: Tuple[str, ...]) -> None:
     manifest: Manifest = Manifest(filename=filename)
     manifest.fillup()
     _logger.debug("Manifest loaded")
+    docker.login(manifest=manifest)
+    _logger.debug("DockerHub and ECR Logged in")
     changes: changeset.Changeset = changeset.read_changeset_file(
         filename=os.path.join(manifest.filename_dir, "changeset.json")
     )

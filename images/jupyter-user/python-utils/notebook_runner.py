@@ -1,3 +1,17 @@
+#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License").
+#    You may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
 import json
 import sys
 import os
@@ -78,11 +92,14 @@ def runNotebooks(reportsToRun, compute):
 
 def runNotebook(parameters):
     errors = []
+    output_path = parameters.get('PAPERMILL_OUTPUT_PATH')
+    os_user = parameters.get('JUPYTER_USER_NAME', 'jovyan')
+    os_group = parameters.get('JUPYTER_USER_GROUP', 'users')
     try:
-        logger.info("Starting notebook execution for %s", parameters['PAPERMILL_OUTPUT_PATH'])
+        logger.info("Starting notebook execution for %s", output_path)
         pm.execute_notebook(
             input_path=parameters['PAPERMILL_INPUT_PATH'],
-            output_path=parameters['PAPERMILL_OUTPUT_PATH'],
+            output_path=output_path,
             parameters=parameters,
             cwd=parameters['PAPERMILL_WORK_DIR'],
             log_output=True
@@ -92,16 +109,21 @@ def runNotebook(parameters):
         pathToOutputNotebookError = os.path.join(parameters['PAPERMILL_OUTPUT_DIR_PATH'],
                                                  "error@" + parameters['PAPERMILL_WORKBOOK_NAME'])
 
-        logger.error("tagging error notebook with error %s->%s", parameters['PAPERMILL_OUTPUT_PATH'], pathToOutputNotebookError)
+        logger.error("tagging error notebook with error %s->%s", output_path, pathToOutputNotebookError)
         errors.append(e)
-        if parameters['PAPERMILL_OUTPUT_PATH'].startswith("s3:"):
-            c = "aws s3 mv {} {}".format(parameters['PAPERMILL_OUTPUT_PATH'], pathToOutputNotebookError)
+        if output_path.startswith("s3:"):
+            c = "aws s3 mv {} {}".format(output_path, pathToOutputNotebookError)
             print (c)
             os.system(c)
         else:
-            shutil.move(parameters['PAPERMILL_OUTPUT_PATH'], pathToOutputNotebookError)
+            shutil.move(output_path, pathToOutputNotebookError)
+            output_path = pathToOutputNotebookError
 
-    logger.info("Completed notebook execution: %s", parameters['PAPERMILL_OUTPUT_PATH'])
+    if not output_path.startswith("s3:"):
+        logger.info(f"Changing ownership of output file: chown {os_user}:{os_group} {output_path}")
+        shutil.chown(output_path, os_user, os_group)
+
+    logger.info("Completed notebook execution: %s", output_path)
     return errors
 
 def prepareAndValidateNotebooks(default_output_directory, notebooks):

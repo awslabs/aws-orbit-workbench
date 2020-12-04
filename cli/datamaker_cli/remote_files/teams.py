@@ -48,7 +48,7 @@ def _delete_targets(manifest: Manifest, fs_id: str) -> None:
             _logger.warning(f"Ignoring MountTargetId {target} deletion cause it does not exist anymore.")
 
 
-def _create_dockefiler(manifest: "Manifest", team_manifest: "TeamManifest") -> str:
+def _create_dockerfile(manifest: "Manifest", team_manifest: "TeamManifest") -> str:
     base_image_cmd: str = f"FROM {team_manifest.base_image_address}"
     _logger.debug("base_image_cmd: %s", base_image_cmd)
     cmds: List[str] = [base_image_cmd]
@@ -60,7 +60,7 @@ def _create_dockefiler(manifest: "Manifest", team_manifest: "TeamManifest") -> s
             hook_name="dockerfile_injection_hook",
         )
         if hook is not None:
-            plugin_cmds = cast(Optional[List[str]], hook(manifest, team_manifest))
+            plugin_cmds = cast(Optional[List[str]], hook(manifest, team_manifest, plugin.parameters))
             if plugin_cmds is not None:
                 cmds += [f"# Commands for {plugin.name} plugin"] + plugin_cmds
     _logger.debug("cmds: %s", cmds)
@@ -78,10 +78,10 @@ def _create_dockefiler(manifest: "Manifest", team_manifest: "TeamManifest") -> s
 
 
 def _deploy_team_image(manifest: "Manifest", team_manifest: "TeamManifest") -> None:
-    image_dir: str = _create_dockefiler(manifest=manifest, team_manifest=team_manifest)
+    image_dir: str = _create_dockerfile(manifest=manifest, team_manifest=team_manifest)
     image_name: str = f"datamaker-{manifest.name}-{team_manifest.name}"
     _logger.debug("Deploying the %s Docker image", image_name)
-    docker.deploy_dynamic_image(manifest=manifest, dir=image_dir, name=image_name)
+    docker.deploy_image_from_source(manifest=manifest, dir=image_dir, name=image_name)
     _logger.debug("Docker Image Deployed to ECR")
 
 
@@ -94,7 +94,7 @@ def _deploy_team_bootstrap(manifest: "Manifest", team_manifest: "TeamManifest") 
             hook_name="bootstrap_injection_hook",
         )
         if hook is not None:
-            script_content: Optional[str] = cast(Optional[str], hook(manifest, team_manifest))
+            script_content: Optional[str] = cast(Optional[str], hook(manifest, team_manifest, plugin.parameters))
             if script_content is not None:
                 client = boto3.client("s3")
                 key: str = f"{team_manifest.bootstrap_s3_prefix}{plugin.name}.sh"
@@ -115,7 +115,6 @@ def deploy(manifest: "Manifest", changes: List["PluginChangeset"]) -> None:
             args=[manifest.filename, team_manifest.name],
         )
         team_manifest.fetch_ssm()
-        manifest.write_manifest_ssm()
         plugins.PLUGINS_REGISTRIES.deploy_team_plugins(manifest=manifest, team_manifest=team_manifest, changes=changes)
     for team_manifest in manifest.teams:
         _deploy_team_image(manifest=manifest, team_manifest=team_manifest)
@@ -129,7 +128,6 @@ def destroy(manifest: "Manifest") -> None:
             plugins.PLUGINS_REGISTRIES.destroy_team_plugins(manifest=manifest, team_manifest=team_manifest)
             if team_manifest.scratch_bucket is not None:
                 try:
-
                     s3.delete_bucket(manifest=manifest, bucket=team_manifest.scratch_bucket)
                 except Exception as ex:
                     _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)

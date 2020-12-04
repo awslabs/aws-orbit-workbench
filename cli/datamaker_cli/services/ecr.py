@@ -1,7 +1,9 @@
 import itertools
 import logging
 from base64 import b64decode
-from typing import TYPE_CHECKING, Any, Iterator, Tuple, cast
+from typing import TYPE_CHECKING, Any, Iterator, Optional, Tuple, cast
+
+import boto3
 
 if TYPE_CHECKING:
     from datamaker_cli.manifest import Manifest
@@ -15,8 +17,12 @@ def _chunks(iterable: Iterator[Any], size: int) -> Iterator[Any]:
         yield itertools.chain([first], itertools.islice(iterator, size - 1))
 
 
-def get_credential(manifest: "Manifest") -> Tuple[str, str]:
-    ecr_client = manifest.boto3_client("ecr")
+def get_credential(manifest: "Manifest", region: Optional[str] = None) -> Tuple[str, str]:
+    if region is None:
+        ecr_client = manifest.boto3_client("ecr")
+    else:
+        _logger.debug("Creating custom boto3 session for region %s", region)
+        ecr_client = boto3.Session(region_name=region).client("ecr")
     result = ecr_client.get_authorization_token()
     auth = result["authorizationData"][0]
     auth_token = b64decode(auth["authorizationToken"]).decode()

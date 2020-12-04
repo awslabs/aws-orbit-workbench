@@ -15,7 +15,7 @@
 import importlib
 import logging
 import pprint
-from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Set, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set, Union, cast
 
 from datamaker_cli import utils
 from datamaker_cli.services import s3
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from datamaker_cli.manifest.team import TeamManifest
     from datamaker_cli.messages import MessagesContext
 
-HOOK_FUNC_TYPE = Callable[["Manifest", "TeamManifest"], Union[None, List[str], str]]
+HOOK_FUNC_TYPE = Callable[["Manifest", "TeamManifest", Dict[str, Any]], Union[None, List[str], str]]
 HOOK_TYPE = Optional[HOOK_FUNC_TYPE]
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -37,19 +37,19 @@ class PluginRegistry:
         self,
         name: str,
         team_name: str,
-        deploy_hook: Optional[Callable[["Manifest", "TeamManifest"], None]] = None,
-        destroy_hook: Optional[Callable[["Manifest", "TeamManifest"], None]] = None,
-        dockerfile_injection_hook: Optional[Callable[["Manifest", "TeamManifest"], List[str]]] = None,
-        bootstrap_injection_hook: Optional[Callable[["Manifest", "TeamManifest"], str]] = None,
+        parameters: Dict[str, Any],
+        deploy_hook: HOOK_TYPE = None,
+        destroy_hook: HOOK_TYPE = None,
+        dockerfile_injection_hook: HOOK_TYPE = None,
+        bootstrap_injection_hook: HOOK_TYPE = None,
     ) -> None:
-        self.name = name
-        self.team_name = team_name
-        self._deploy_hook: Optional[Callable[["Manifest", "TeamManifest"], None]] = deploy_hook
-        self._destroy_hook: Optional[Callable[["Manifest", "TeamManifest"], None]] = destroy_hook
-        self._dockerfile_injection_hook: Optional[
-            Callable[["Manifest", "TeamManifest"], List[str]]
-        ] = dockerfile_injection_hook
-        self._bootstrap_injection_hook: Optional[Callable[["Manifest", "TeamManifest"], str]] = bootstrap_injection_hook
+        self.name: str = name
+        self.team_name: str = team_name
+        self.parameters: Dict[str, Any] = parameters
+        self._deploy_hook: HOOK_TYPE = deploy_hook
+        self._destroy_hook: HOOK_TYPE = destroy_hook
+        self._dockerfile_injection_hook: HOOK_TYPE = dockerfile_injection_hook
+        self._bootstrap_injection_hook: HOOK_TYPE = bootstrap_injection_hook
 
     def destroy(self, manifest: "Manifest", team_manifest: "TeamManifest") -> None:
         if self.bootstrap_injection_hook is not None:
@@ -74,18 +74,18 @@ class PluginRegistry:
             )
             return None
         _logger.debug(f"Destroying plugin {self.name} for team {team_manifest.name}")
-        self.destroy_hook(manifest, team_manifest)
+        self.destroy_hook(manifest, team_manifest, self.parameters)
 
     """
     Deploy / Destroy
     """
 
     @property
-    def deploy_hook(self) -> Optional[Callable[["Manifest", "TeamManifest"], None]]:
+    def deploy_hook(self) -> HOOK_TYPE:
         return self._deploy_hook
 
     @deploy_hook.setter
-    def deploy_hook(self, func: Optional[Callable[["Manifest", "TeamManifest"], None]]) -> None:
+    def deploy_hook(self, func: HOOK_TYPE) -> None:
         self._deploy_hook = func
 
     @deploy_hook.deleter
@@ -93,11 +93,11 @@ class PluginRegistry:
         self._deploy_hook = None
 
     @property
-    def destroy_hook(self) -> Optional[Callable[["Manifest", "TeamManifest"], None]]:
+    def destroy_hook(self) -> HOOK_TYPE:
         return self._destroy_hook
 
     @destroy_hook.setter
-    def destroy_hook(self, func: Optional[Callable[["Manifest", "TeamManifest"], None]]) -> None:
+    def destroy_hook(self, func: HOOK_TYPE) -> None:
         self._destroy_hook = func
 
     @destroy_hook.deleter
@@ -109,11 +109,11 @@ class PluginRegistry:
     """
 
     @property
-    def dockerfile_injection_hook(self) -> Optional[Callable[["Manifest", "TeamManifest"], List[str]]]:
+    def dockerfile_injection_hook(self) -> HOOK_TYPE:
         return self._dockerfile_injection_hook
 
     @dockerfile_injection_hook.setter
-    def dockerfile_injection_hook(self, func: Optional[Callable[["Manifest", "TeamManifest"], List[str]]]) -> None:
+    def dockerfile_injection_hook(self, func: HOOK_TYPE) -> None:
         self._dockerfile_injection_hook = func
 
     @dockerfile_injection_hook.deleter
@@ -121,11 +121,11 @@ class PluginRegistry:
         self._dockerfile_injection_hook = None
 
     @property
-    def bootstrap_injection_hook(self) -> Optional[Callable[["Manifest", "TeamManifest"], str]]:
+    def bootstrap_injection_hook(self) -> HOOK_TYPE:
         return self._bootstrap_injection_hook
 
     @bootstrap_injection_hook.setter
-    def bootstrap_injection_hook(self, func: Optional[Callable[["Manifest", "TeamManifest"], str]]) -> None:
+    def bootstrap_injection_hook(self, func: HOOK_TYPE) -> None:
         self._bootstrap_injection_hook = func
 
     @bootstrap_injection_hook.deleter
@@ -142,28 +142,30 @@ class PluginRegistries:
         self, manifest: "Manifest", changes: List["PluginChangeset"], ctx: Optional["MessagesContext"] = None
     ) -> None:
         self._manifest = manifest
-        candidates: Dict[str, Set[str]] = {}
+        candidates: Dict[str, Dict[str, Dict[str, Dict[str, Any]]]] = {}
         for team_manifest in manifest.teams:
             if team_manifest.name not in candidates:
-                candidates[team_manifest.name] = set()
+                candidates[team_manifest.name] = {}
             for plugin in team_manifest.plugins:
-                candidates[team_manifest.name].add(plugin.name)
+                candidates[team_manifest.name][plugin.name] = plugin.parameters
         for change in changes:
             if change.team_name not in candidates:
-                candidates[change.team_name] = set()
+                candidates[change.team_name] = {}
             for plugin_name in change.old:
-                candidates[change.team_name].add(plugin_name)
+                candidates[change.team_name][plugin_name] = change.old_parameters[plugin_name]
         _logger.debug("Plugins load candidates:\n%s", pprint.pformat(candidates))
 
         imports_names: Set[str] = set()
-        for team_name, plugins_names in candidates.items():
-            for plugin_name in plugins_names:
+        for team_name, plugins in candidates.items():
+            for plugin_name, parameters in plugins.items():
                 _logger.debug("%s Plugin load: %s", team_name, plugin_name)
                 if ctx is not None:
                     ctx.info(f"Loading plugin {plugin_name} for the {team_name} team")
                 if team_name not in self._registries:
                     self._registries[team_name] = {}
-                self._registries[team_name][plugin_name] = PluginRegistry(name=plugin_name, team_name=team_name)
+                self._registries[team_name][plugin_name] = PluginRegistry(
+                    name=plugin_name, team_name=team_name, parameters=parameters
+                )
                 imports_names.add(plugin_name)
 
         _logger.debug("imports_names: %s", imports_names)
@@ -218,6 +220,7 @@ class PluginRegistries:
                 )
                 return None
             hook: HOOK_TYPE = self._registries[team_manifest.name][plugin_name].deploy_hook
+            parameters: Dict[str, Any] = self._registries[team_manifest.name][plugin_name].parameters
             if hook is None:
                 _logger.debug(
                     (
@@ -227,7 +230,7 @@ class PluginRegistries:
                 )
                 return None
             _logger.debug(f"Deploying {plugin_name} for team {team_manifest.name}.")
-            hook(manifest, team_manifest)
+            hook(manifest, team_manifest, parameters)
         else:
             _logger.debug(
                 "Skipping deploy_plugin for %s/%s because there is no plugins registered.",

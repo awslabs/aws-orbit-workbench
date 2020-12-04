@@ -24,7 +24,7 @@ import botocore.exceptions
 
 from datamaker_cli import DATAMAKER_CLI_ROOT, cdk, exceptions, sh
 from datamaker_cli.manifest import Manifest
-from datamaker_cli.services import cfn, s3
+from datamaker_cli.services import cfn, s3, vpc
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -127,8 +127,9 @@ def _endpoints(manifest: Manifest, vpc_id: str) -> None:
             _logger.debug("VPC endpoint %s found", endpoint_id)
             endpoint_ids.append(endpoint_id)
         _logger.debug("Deleting endpoints: %s", endpoint_ids)
-        resp = client.delete_vpc_endpoints(VpcEndpointIds=endpoint_ids)
-        _logger.debug("resp:\n%s", pprint.pformat(resp))
+        if endpoint_ids:
+            resp = client.delete_vpc_endpoints(VpcEndpointIds=endpoint_ids)
+            _logger.debug("resp:\n%s", pprint.pformat(resp))
 
 
 def _cleanup_remaining_dependencies(manifest: Manifest) -> None:
@@ -227,9 +228,12 @@ def deploy(manifest: Manifest) -> None:
                 cdk.deploy(**deploy_args)
             else:
                 raise
-
         manifest.fetch_demo_data()
-        _prepare_demo_data(manifest)  # Adding demo data
+        _logger.debug("Adding demo data")
+        _prepare_demo_data(manifest)
+        _logger.debug("Enabling private dns for codeartifact vpc endpoints")
+        vpc.modify_vpc_endpoint(manifest=manifest, service_name="codeartifact.repositories", private_dns_enabled=True)
+        vpc.modify_vpc_endpoint(manifest=manifest, service_name="codeartifact.api", private_dns_enabled=True)
 
 
 def destroy(manifest: Manifest) -> None:

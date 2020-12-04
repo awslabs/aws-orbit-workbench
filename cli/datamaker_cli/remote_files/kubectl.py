@@ -15,9 +15,9 @@
 import logging
 import os
 import shutil
-from typing import Optional
+from typing import List, Optional
 
-from datamaker_cli import DATAMAKER_CLI_ROOT, exceptions, k8s, sh
+from datamaker_cli import DATAMAKER_CLI_ROOT, exceptions, k8s, sh, utils
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.team import TeamManifest
 from datamaker_cli.remote_files.utils import get_k8s_context
@@ -27,51 +27,60 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 EFS_DRIVE = "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/ecr/?ref=release-1.0"
-MODEL_PATH = os.path.join(DATAMAKER_CLI_ROOT, "data", "kubectl")
+MODELS_PATH = os.path.join(DATAMAKER_CLI_ROOT, "data", "kubectl")
 
 
 def _commons(output_path: str) -> None:
     filename = "00-commons.yaml"
-    input = os.path.join(MODEL_PATH, filename)
-    output = output_path + filename
+    input = os.path.join(MODELS_PATH, "apps", filename)
+    output = os.path.join(output_path, filename)
     shutil.copyfile(src=input, dst=output)
 
 
-def _team(region: str, account_id: str, output_path: str, env_name: str, team: TeamManifest) -> None:
-    input = os.path.join(MODEL_PATH, "01-team.yaml")
-    output = output_path + f"01-{team.name}-team.yaml"
+def _team(manifest: Manifest, team_manifest: TeamManifest, output_path: str) -> None:
+    input = os.path.join(MODELS_PATH, "apps", "01-team.yaml")
+    output = os.path.join(output_path, f"01-{team_manifest.name}-team.yaml")
 
     with open(input, "r") as file:
         content: str = file.read()
 
-    _logger.debug("team.efs_id: %s", team.efs_id)
-    content = content.replace("$", "").format(
-        team=team.name,
-        efsid=team.efs_id,
-        region=region,
-        account_id=account_id,
-        env_name=env_name,
-        tag=team.manifest.images["jupyter-hub"]["version"],
-        grant_sudo='"yes"' if team.grant_sudo else '"no"',
+    _logger.debug("team.efs_id: %s", team_manifest.efs_id)
+    inbound_ranges: List[str] = (
+        team_manifest.jupyterhub_inbound_ranges
+        if team_manifest.jupyterhub_inbound_ranges
+        else [utils.get_dns_ip_cidr(manifest=manifest)]
     )
+    content = content.replace("$", "").format(
+        team=team_manifest.name,
+        efsid=team_manifest.efs_id,
+        region=manifest.region,
+        account_id=manifest.account_id,
+        env_name=manifest.name,
+        tag=team_manifest.manifest.images["jupyter-hub"]["version"],
+        grant_sudo='"yes"' if team_manifest.grant_sudo else '"no"',
+        internal_load_balancer="false" if manifest.load_balancers_subnets else "true",
+        jupyterhub_inbound_ranges=inbound_ranges,
+    )
+    _logger.debug("Kubectl Team %s manifest:\n%s", team_manifest.name, content)
     with open(output, "w") as file:
         file.write(content)
 
     # user service account
-    input = os.path.join(MODEL_PATH, "02-user-service-account.yaml")
-    output = output_path + f"02-{team.name}-user-service-account.yaml"
+    input = os.path.join(MODELS_PATH, "apps", "02-user-service-account.yaml")
+    output = os.path.join(output_path, f"02-{team_manifest.name}-user-service-account.yaml")
 
     with open(input, "r") as file:
         content = file.read()
-    content = content.replace("$", "").format(team=team.name)
+    content = content.replace("$", "").format(team=team_manifest.name)
     with open(output, "w") as file:
         file.write(content)
 
 
 def _landing_page(output_path: str, manifest: Manifest) -> None:
     filename = "03-landing-page.yaml"
-    input = os.path.join(MODEL_PATH, filename)
-    output = output_path + filename
+    input = os.path.join(MODELS_PATH, "apps", filename)
+    output = os.path.join(output_path, filename)
+
     with open(input, "r") as file:
         content: str = file.read()
     label: Optional[str] = (
@@ -97,6 +106,7 @@ def _landing_page(output_path: str, manifest: Manifest) -> None:
         cognito_external_provider_label=label,
         cognito_external_provider_domain=domain,
         cognito_external_provider_redirect=redirect,
+        internal_load_balancer="false" if manifest.load_balancers_subnets else "true",
     )
     with open(output, "w") as file:
         file.write(content)
@@ -110,8 +120,8 @@ def _cleanup_output(output_path: str) -> None:
 
 
 def _generate_env_manifest(manifest: Manifest, clean_up: bool = True) -> str:
-    output_path = f"{manifest.filename_dir}.datamaker.out/{manifest.name}/kubectl/"
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    output_path = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "kubectl", "apps")
+    os.makedirs(output_path, exist_ok=True)
     if clean_up:
         _cleanup_output(output_path=output_path)
     _commons(output_path=output_path)
@@ -135,20 +145,14 @@ def _generate_env_manifest(manifest: Manifest, clean_up: bool = True) -> str:
 
 
 def _generate_teams_manifest(manifest: Manifest) -> str:
-    output_path = f"{manifest.filename_dir}.datamaker.out/{manifest.name}/kubectl/"
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    output_path = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "kubectl", "apps")
+    os.makedirs(output_path, exist_ok=True)
     _cleanup_output(output_path=output_path)
     if manifest.account_id is None:
         raise RuntimeError("manifest.account_id is None!")
 
-    for team in manifest.teams:
-        _team(
-            region=manifest.region,
-            account_id=manifest.account_id,
-            env_name=manifest.name,
-            output_path=output_path,
-            team=team,
-        )
+    for team_manifest in manifest.teams:
+        _team(manifest=manifest, team_manifest=team_manifest, output_path=output_path)
 
     return output_path
 
@@ -162,6 +166,7 @@ def fetch_kubectl_data(manifest: Manifest, context: str, include_teams: bool) ->
             _logger.debug("Fetching team %s URL parameter", team.name)
             url = k8s.get_service_hostname(name="jupyterhub-public", context=context, namespace=team.name)
             team.jupyter_url = url
+            team.write_manifest_ssm()
 
     landing_page_url: str = k8s.get_service_hostname(name="landing-page-public", context=context, namespace="env")
     manifest.landing_page_url = f"http://{landing_page_url}"
@@ -170,14 +175,57 @@ def fetch_kubectl_data(manifest: Manifest, context: str, include_teams: bool) ->
     _logger.debug("Kubectl data fetched successfully.")
 
 
+def _efs_driver_base(output_path: str) -> None:
+    os.makedirs(os.path.join(output_path, "base"), exist_ok=True)
+    filenames = ("csidriver.yaml", "kustomization.yaml", "node.yaml")
+    for filename in filenames:
+        input = os.path.join(MODELS_PATH, "efs_driver", "base", filename)
+        output = os.path.join(output_path, "base", filename)
+        _logger.debug("Copying efs driver base file: %s -> %s", input, output)
+        shutil.copyfile(src=input, dst=output)
+
+
+def _efs_driver_overlays(output_path: str, manifest: Manifest) -> None:
+    filename = "kustomization.yaml"
+    input = os.path.join(MODELS_PATH, "efs_driver", "overlays", filename)
+    os.makedirs(os.path.join(output_path, "overlays"), exist_ok=True)
+    output = os.path.join(output_path, "overlays", filename)
+    with open(input, "r") as file:
+        content: str = file.read()
+    content = content.replace("$", "").format(
+        region=manifest.region,
+        account_id=manifest.account_id,
+        env_name=manifest.name,
+    )
+    with open(output, "w") as file:
+        file.write(content)
+
+
+def _generate_efs_driver_manifest(manifest: Manifest) -> str:
+    output_path = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "kubectl", "efs_driver")
+    os.makedirs(output_path, exist_ok=True)
+    _cleanup_output(output_path=output_path)
+    if manifest.account_id is None:
+        raise RuntimeError("manifest.account_id is None!")
+    if manifest.region is None:
+        raise RuntimeError("manifest.region is None!")
+    _efs_driver_base(output_path=output_path)
+    _efs_driver_overlays(output_path=output_path, manifest=manifest)
+    return os.path.join(output_path, "overlays")
+
+
 def deploy_env(manifest: Manifest) -> None:
     eks_stack_name: str = f"eksctl-datamaker-{manifest.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
         context = get_k8s_context(manifest=manifest)
         _logger.debug("kubectl context: %s", context)
+        if manifest.internet_accessible is False:
+            output_path = _generate_efs_driver_manifest(manifest=manifest)
+            sh.run(f"kubectl apply -k {output_path} --context {context}")
+        else:
+            sh.run(f"kubectl apply -k {EFS_DRIVE} --context {context}")
         output_path = _generate_env_manifest(manifest=manifest)
-        sh.run(f"kubectl apply -k {EFS_DRIVE} --context {context}")
         sh.run(f"kubectl apply -f {output_path} --context {context}")
         fetch_kubectl_data(manifest=manifest, context=context, include_teams=False)
 
@@ -202,7 +250,6 @@ def destroy_env(manifest: Manifest) -> None:
         context = get_k8s_context(manifest=manifest)
         _logger.debug("kubectl context: %s", context)
         output_path = _generate_env_manifest(manifest=manifest)
-        output_path = f"{manifest.filename_dir}.datamaker.out/{manifest.name}/kubectl/"
         try:
             sh.run(
                 f"kubectl delete -f {output_path} --grace-period=0 --force "
@@ -221,7 +268,6 @@ def destroy_teams(manifest: Manifest) -> None:
         context = get_k8s_context(manifest=manifest)
         _logger.debug("kubectl context: %s", context)
         output_path = _generate_teams_manifest(manifest=manifest)
-        output_path = f"{manifest.filename_dir}.datamaker.out/{manifest.name}/kubectl/"
         try:
             sh.run(
                 f"kubectl delete -f {output_path} --grace-period=0 --force "

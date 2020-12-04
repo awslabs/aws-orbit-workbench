@@ -22,11 +22,13 @@ import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecr as ecr
 import aws_cdk.aws_iam as iam
+import aws_cdk.aws_lambda_python as lambda_python
 import aws_cdk.aws_ssm as ssm
+from aws_cdk import aws_lambda
 from aws_cdk.core import App, CfnOutput, Construct, Duration, Environment, IConstruct, Stack, Tags
 
 from datamaker_cli.manifest import Manifest
-from datamaker_cli.manifest.subnet import SubnetKind
+from datamaker_cli.remote_files.cdk import _lambda_path
 from datamaker_cli.utils import extract_images_names
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -59,41 +61,14 @@ class Env(Stack):
             vpc_id=self.manifest.vpc.vpc_id,
             availability_zones=self.manifest.vpc.availability_zones,
         )
-        self.i_private_subnets = self._initialize_private_subnets()
-        self.i_public_subnets = self._initialize_public_subnets()
         self.repos = self._create_ecr_repos()
         self.role_eks_cluster = self._create_role_cluster()
         self.role_eks_env_nodegroup = self._create_env_nodegroup_role()
         self.user_pool = self._create_user_pool()
         self.user_pool_client = self._create_user_pool_client()
         self.identity_pool = self._create_identity_pool()
+        self.token_validation_lambda = self._create_token_validation_lambda()
         self.manifest_parameter = self._create_manifest_parameter()
-
-    def _initialize_private_subnets(self) -> List[ec2.ISubnet]:
-        return [
-            ec2.PrivateSubnet.from_subnet_attributes(
-                scope=self,
-                id=s.subnet_id,
-                subnet_id=s.subnet_id,
-                availability_zone=s.availability_zone,
-                route_table_id=s.route_table_id,
-            )
-            for s in self.manifest.vpc.subnets
-            if s.kind == SubnetKind.private
-        ]
-
-    def _initialize_public_subnets(self) -> List[ec2.ISubnet]:
-        return [
-            ec2.PublicSubnet.from_subnet_attributes(
-                scope=self,
-                id=s.subnet_id,
-                subnet_id=s.subnet_id,
-                availability_zone=s.availability_zone,
-                route_table_id=s.route_table_id,
-            )
-            for s in self.manifest.vpc.subnets
-            if s.kind == SubnetKind.public
-        ]
 
     def create_repo(self, image_name: str) -> ecr.Repository:
         return ecr.Repository(
@@ -313,6 +288,30 @@ class Env(Stack):
             },
         )
         return pool
+
+    def _create_token_validation_lambda(self) -> aws_lambda.Function:
+        return lambda_python.PythonFunction(
+            scope=self,
+            id="token_validation_lambda",
+            function_name=f"datamaker-{self.manifest.name}-token-validation",
+            entry=_lambda_path("token_validation"),
+            index="index.py",
+            handler="handler",
+            runtime=aws_lambda.Runtime.PYTHON_3_6,
+            timeout=Duration.seconds(5),
+            environment={
+                "COGNITO_USER_POOL_ID": self.user_pool.user_pool_id,
+                "REGION": self.manifest.region,
+                "COGNITO_USER_POOL_CLIENT_ID": self.user_pool_client.user_pool_client_id,
+            },
+            initial_policy=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["ec2:Describe*", "logs:Create*", "logs:PutLogEvents", "logs:Describe*"],
+                    resources=["*"],
+                )
+            ],
+        )
 
     def _create_manifest_parameter(self) -> ssm.StringParameter:
         self.manifest.eks_cluster_role_arn = self.role_eks_cluster.role_arn

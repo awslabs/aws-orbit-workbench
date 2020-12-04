@@ -85,7 +85,6 @@ class VpcStack(Stack):
             "dynamodb": ec2.GatewayVpcEndpointAwsService.DYNAMODB,
         }
         vpc_interface_endpoints = {
-            "code_artifact_endpoint": ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories"),
             "cloudwatch_endpoint": ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH,
             "cloudwatch_logs_endpoint": ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,
             "cloudwatch_events": ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_EVENTS,
@@ -110,7 +109,9 @@ class VpcStack(Stack):
             "kinesis_firehose_endpoint": ec2.InterfaceVpcEndpointAwsService("kinesis-firehose"),
             "api_gateway": ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
             "sts_endpoint": ec2.InterfaceVpcEndpointAwsService.STS,
-            "code_artifact_api_endpoint": ec2.InterfaceVpcEndpointAwsService("codeartifact.api"),
+            "efs": ec2.InterfaceVpcEndpointAwsService.ELASTIC_FILESYSTEM,
+            "elb": ec2.InterfaceVpcEndpointAwsService.ELASTIC_LOAD_BALANCING,
+            "autoscaling": ec2.InterfaceVpcEndpointAwsService("autoscaling"),
         }
 
         self.public_subnets = (
@@ -133,11 +134,27 @@ class VpcStack(Stack):
             self.vpc.add_gateway_endpoint(
                 id=name,
                 service=gateway_vpc_endpoint_service,
-                subnets=self.private_subnets.subnets + self.isolated_subnets.subnets,
+                subnets=[ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED)],
             )
 
         for name, interface_service in vpc_interface_endpoints.items():
-            self.vpc.add_interface_endpoint(id=name, service=interface_service)
+            self.vpc.add_interface_endpoint(
+                id=name,
+                service=interface_service,
+                subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED),
+                private_dns_enabled=True,
+            )
+        # Adding CodeArtifact VPC endpoints
+        self.vpc.add_interface_endpoint(
+            id="code_artifact_repo_endpoint",
+            service=ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories"),
+            private_dns_enabled=False,
+        )
+        self.vpc.add_interface_endpoint(
+            id="code_artifact_api_endpoint",
+            service=ec2.InterfaceVpcEndpointAwsService("codeartifact.api"),
+            private_dns_enabled=False,
+        )
 
         # Adding Lambda and Redshift endpoints with CDK low level APIs
         endpoint_url_template = "com.amazonaws.{}.{}"
@@ -154,6 +171,7 @@ class VpcStack(Stack):
             vpc_id=self.vpc.vpc_id,
             security_group_ids=[vpc_security_group.security_group_id],
             subnet_ids=isolated_subnet_ids,
+            private_dns_enabled=True,
         )
         ec2.CfnVPCEndpoint(
             self,
@@ -163,6 +181,7 @@ class VpcStack(Stack):
             vpc_id=self.vpc.vpc_id,
             security_group_ids=[vpc_security_group.security_group_id],
             subnet_ids=isolated_subnet_ids,
+            private_dns_enabled=True,
         )
 
 

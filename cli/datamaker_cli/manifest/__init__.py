@@ -24,14 +24,15 @@ import yaml
 
 from datamaker_cli import utils
 from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE, PluginManifest
-from datamaker_cli.manifest.subnet import MANIFEST_FILE_SUBNET_TYPE, SubnetKind, SubnetManifest
-from datamaker_cli.manifest.team import MANIFEST_FILE_TEAM_TYPE, MANIFEST_TEAM_TYPE, TeamManifest
+from datamaker_cli.manifest.subnet import SubnetKind, SubnetManifest
+from datamaker_cli.manifest.team import MANIFEST_FILE_TEAM_TYPE, TeamManifest
 from datamaker_cli.manifest.vpc import MANIFEST_FILE_VPC_TYPE, MANIFEST_VPC_TYPE, VpcManifest
 from datamaker_cli.services import cognito
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 MANIFEST_FILE_IMAGES_TYPE = Dict[str, Dict[str, str]]
+MANIFEST_FILE_NETWORKING_TYPE = Dict[str, Dict[str, Union[bool, List[str]]]]
 MANIFEST_FILE_TYPE = Dict[
     str,
     Union[
@@ -40,6 +41,7 @@ MANIFEST_FILE_TYPE = Dict[
         MANIFEST_FILE_VPC_TYPE,
         List[MANIFEST_FILE_TEAM_TYPE],
         MANIFEST_FILE_IMAGES_TYPE,
+        MANIFEST_FILE_NETWORKING_TYPE,
     ],
 ]
 MANIFEST_TYPE = Dict[
@@ -49,7 +51,7 @@ MANIFEST_TYPE = Dict[
         str,
         bool,
         MANIFEST_VPC_TYPE,
-        List[MANIFEST_TEAM_TYPE],
+        List[str],
     ],
 ]
 
@@ -71,6 +73,21 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
             "source": "dockerhub",
             "version": "latest",
         },
+        "aws-efs-csi-driver": {
+            "repository": "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/aws-efs-csi-driver",
+            "source": "ecr-external",
+            "version": "v1.0.0",
+        },
+        "livenessprobe": {
+            "repository": "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/livenessprobe",
+            "source": "ecr-external",
+            "version": "v2.0.0",
+        },
+        "csi-node-driver-registrar": {
+            "repository": "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/csi-node-driver-registrar",
+            "source": "ecr-external",
+            "version": "v1.3.0",
+        },
     },
 )
 
@@ -87,13 +104,35 @@ class Manifest:
             self.region = utils.get_region()
         self.demo: bool = cast(bool, self.raw_file.get("demo", False))
         self.dev: bool = cast(bool, self.raw_file.get("dev", False))
+
+        # Networking
+        if "networking" not in self.raw_file:
+            raise RuntimeError("Invalid manifest: Missing the 'networking' attribute.")
+        self.networking: Dict[str, Any] = cast(Dict[str, Any], self.raw_file["networking"])
+        if "data" not in self.networking:
+            raise RuntimeError("Invalid manifest: Missing the 'data' attribute under 'networking'.")
+        if "frontend" not in self.networking:
+            raise RuntimeError("Invalid manifest: Missing the 'frontend' attribute under 'networking'.")
+        self.internet_accessible: bool = cast(bool, self.networking["data"].get("internet-accessible", True))
+        self.nodes_subnets: List[str] = cast(List[str], self.networking["data"].get("nodes-subnets", []))
+        self.load_balancers_subnets: List[str] = cast(
+            List[str], self.networking["frontend"].get("load-balancers-subnets", [])
+        )
+
         self.codeartifact_domain: Optional[str] = cast(Optional[str], self.raw_file.get("codeartifact-domain", None))
         self.codeartifact_repository: Optional[str] = cast(
             Optional[str], self.raw_file.get("codeartifact-repository", None)
         )
-        self.images: MANIFEST_FILE_IMAGES_TYPE = cast(
-            MANIFEST_FILE_IMAGES_TYPE, self.raw_file.get("images", MANIFEST_FILE_IMAGES_DEFAULTS)
-        )
+
+        # Images
+        if self.raw_file.get("images") is None:
+            self.images: MANIFEST_FILE_IMAGES_TYPE = MANIFEST_FILE_IMAGES_DEFAULTS
+        else:
+            self.images = cast(MANIFEST_FILE_IMAGES_TYPE, self.raw_file["images"])
+            for k, v in MANIFEST_FILE_IMAGES_DEFAULTS.items():  # Filling missing images
+                if k not in self.images:
+                    self.images[k] = v
+
         self.env_tag: str = f"datamaker-{self.name}"
         self.ssm_parameter_name: str = f"/datamaker/{self.name}/manifest"
         self.ssm_dockerhub_parameter_name: str = f"/datamaker/{self.name}/dockerhub"
@@ -105,8 +144,8 @@ class Manifest:
         self.toolkit_codebuild_project: str = f"datamaker-{self.name}"
         self.account_id: str = utils.get_account_id(manifest=self)
         self.available_eks_regions: List[str] = self._boto3_session().get_available_regions("eks")
-        self.teams: List[TeamManifest] = self._parse_teams()
         self.vpc: VpcManifest = self._parse_vpc()
+        self.teams: List[TeamManifest] = self._parse_teams()
 
         self.cognito_external_provider: Optional[str] = cast(Optional[str], self.raw_file.get("external-idp", None))
         self.cognito_external_provider_label: Optional[str] = cast(
@@ -148,7 +187,11 @@ class Manifest:
     def _parse_plugins(team: MANIFEST_FILE_TEAM_TYPE) -> List[PluginManifest]:
         if "plugins" in team:
             return [
-                PluginManifest(name=p["name"], path=p["path"])
+                PluginManifest(
+                    name=cast(str, p["name"]),
+                    path=cast(str, p["path"]),
+                    parameters=cast(Dict[str, Any], p.get("parameters", {})),
+                )
                 for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team["plugins"])
             ]
         return []
@@ -164,7 +207,8 @@ class Manifest:
                 nodes_num_max=cast(int, t["nodes-num-max"]),
                 nodes_num_min=cast(int, t["nodes-num-min"]),
                 policy=cast(str, t["policy"]),
-                grant_sudo=cast(bool, t["grant-sudo"]),
+                grant_sudo=cast(bool, t.get("grant-sudo", False)),
+                jupyterhub_inbound_ranges=cast(List[str], t.get("jupyterhub-inbound-ranges", [])),
                 image=cast(Optional[str], t.get("image")),
                 plugins=self._parse_plugins(team=t),
             )
@@ -172,23 +216,25 @@ class Manifest:
         ]
 
     def _parse_vpc(self) -> VpcManifest:
-        raw_vpc = cast(Optional[MANIFEST_FILE_VPC_TYPE], self.raw_file.get("vpc", None))
-        if raw_vpc is not None:
-            subnets: List[SubnetManifest] = []
-            if raw_vpc.get("private-subnets-ids"):
-                for s in cast(List[MANIFEST_FILE_SUBNET_TYPE], raw_vpc.get("private-subnets-ids")):
-                    subnets.append(SubnetManifest(manifest=self, subnet_id=s, kind=SubnetKind.private))
-            if raw_vpc.get("public-subnets-ids"):
-                for s in cast(List[MANIFEST_FILE_SUBNET_TYPE], raw_vpc.get("public-subnets-ids")):
-                    subnets.append(SubnetManifest(manifest=self, subnet_id=s, kind=SubnetKind.public))
-            if raw_vpc.get("isolated-subnets-ids"):
-                for s in cast(List[MANIFEST_FILE_SUBNET_TYPE], raw_vpc.get("isolated-subnets-ids")):
-                    subnets.append(SubnetManifest(manifest=self, subnet_id=s, kind=SubnetKind.isolated))
-            return VpcManifest(
-                manifest=self,
-                subnets=subnets,
-            )
-        return VpcManifest(manifest=self, subnets=[])
+        subnets: List[SubnetManifest] = []
+
+        if self.internet_accessible:
+            for s in self.nodes_subnets:
+                _logger.debug("Adding private subnet %s in the manifest.", s)
+                subnets.append(SubnetManifest(manifest=self, subnet_id=s, kind=SubnetKind.private))
+        else:
+            for s in self.nodes_subnets:
+                _logger.debug("Adding isolated subnet %s in the manifest.", s)
+                subnets.append(SubnetManifest(manifest=self, subnet_id=s, kind=SubnetKind.isolated))
+
+        for s in self.load_balancers_subnets:
+            _logger.debug("Adding public subnet %s in the manifest.", s)
+            subnets.append(SubnetManifest(manifest=self, subnet_id=s, kind=SubnetKind.public))
+
+        return VpcManifest(
+            manifest=self,
+            subnets=subnets,
+        )
 
     def _boto3_session(self) -> boto3.Session:
         return boto3.Session(region_name=self.region)
@@ -220,8 +266,6 @@ class Manifest:
                 Overwrite=True,
                 Tier="Intelligent-Tiering",
             )
-            for team in self.teams:
-                team.write_manifest_ssm()
 
     def _write_manifest_file(self) -> None:
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
@@ -259,7 +303,7 @@ class Manifest:
 
             self.vpc.fillup_from_ssm()
             for team in self.teams:
-                team.fillup_from_ssm()
+                team.fetch_ssm()
 
             _logger.debug("Env %s loaded successfully from SSM.", self.name)
             return True
@@ -303,8 +347,6 @@ class Manifest:
         self.toolkit_kms_alias = f"datamaker-{self.name}-{self.deploy_id}"
         self.toolkit_s3_bucket = f"datamaker-{self.name}-toolkit-{self.account_id}-{self.deploy_id}"
         self.cdk_toolkit_s3_bucket = f"datamaker-{self.name}-cdk-toolkit-{self.account_id}-{self.deploy_id}"
-        for team in self.teams:
-            team.scratch_bucket = f"datamaker-{self.name}-{team.name}-scratch-{self.account_id}-{self.deploy_id}"
         self.write_manifest_ssm()
         _logger.debug("Toolkit data fetched successfully.")
 
@@ -327,21 +369,16 @@ class Manifest:
             logging.debug("DEMO stack with empty outputs")
             return
 
-        subnets: List[SubnetManifest] = []
         for output in response["Stacks"][0]["Outputs"]:
-            if output["ExportName"] == f"datamaker-{self.name}-private-subnets-ids":
-                for subnet_id in output["OutputValue"].split(","):
-                    _logger.debug("Adding private subnet %s in the manifest.", subnet_id)
-                    subnets.append(SubnetManifest(manifest=self, subnet_id=subnet_id, kind=SubnetKind.private))
+            if self.internet_accessible and output["ExportName"] == f"datamaker-{self.name}-private-subnets-ids":
+                self.nodes_subnets = output["OutputValue"].split(",")
+            elif not self.internet_accessible and output["ExportName"] == f"datamaker-{self.name}-isolated-subnets-ids":
+                self.nodes_subnets = output["OutputValue"].split(",")
             elif output["ExportName"] == f"datamaker-{self.name}-public-subnets-ids":
-                for subnet_id in output["OutputValue"].split(","):
-                    _logger.debug("Adding public subnet %s in the manifest.", subnet_id)
-                    subnets.append(SubnetManifest(manifest=self, subnet_id=subnet_id, kind=SubnetKind.public))
-            elif output["ExportName"] == f"datamaker-{self.name}-isolated-subnets-ids":
-                for subnet_id in output["OutputValue"].split(","):
-                    _logger.debug("Adding isolated subnet %s in the manifest.", subnet_id)
-                    subnets.append(SubnetManifest(manifest=self, subnet_id=subnet_id, kind=SubnetKind.isolated))
-        self.vpc.subnets = subnets
+                self.load_balancers_subnets = output["OutputValue"].split(",")
+
+        self.vpc = self._parse_vpc()
+
         self.fetch_ssm()
         self.write_manifest_ssm()
         self._write_manifest_file()
@@ -380,6 +417,15 @@ class Manifest:
         obj: MANIFEST_FILE_TYPE = {
             "name": self.name,
             "region": self.region,
+            "networking": {
+                "data": cast(
+                    Dict[str, Union[bool, List[str]]],
+                    {"internet-accessible": self.internet_accessible, "nodes-subnets": self.nodes_subnets},
+                ),
+                "frontend": cast(
+                    Dict[str, Union[bool, List[str]]], {"load-balancers-subnets": self.load_balancers_subnets}
+                ),
+            },
         }
         if self.demo:
             obj["demo"] = True
@@ -395,18 +441,18 @@ class Manifest:
             obj["external-idp-label"] = self.cognito_external_provider_label
 
         obj["images"] = self.images
-        obj["vpc"] = self.vpc.asdict_file()
         obj["teams"] = [t.asdict_file() for t in self.teams]
         return obj
 
     def asdict(self) -> MANIFEST_TYPE:
         obj: MANIFEST_TYPE = utils.replace_underscores(vars(self))
         obj["vpc"] = self.vpc.asdict()
-        obj["teams"] = [t.asdict() for t in self.teams]
+        obj["teams"] = [t.name for t in self.teams]
         del obj["filename"]
         del obj["filename-dir"]
         del obj["raw-ssm"]
         del obj["raw-file"]
+        del obj["networking"]
         return obj
 
     def asjson(self) -> str:

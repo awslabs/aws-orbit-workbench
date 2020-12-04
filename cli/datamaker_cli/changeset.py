@@ -15,7 +15,7 @@
 import json
 import logging
 import os
-from typing import TYPE_CHECKING, Dict, List, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
 
 from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE
 
@@ -38,11 +38,19 @@ CHANGESET_FILE_TYPE = Dict[
 
 
 class PluginChangeset:
-    def __init__(self, team_name: str, old: List[str], new: List[str], old_paths: Dict[str, str]) -> None:
+    def __init__(
+        self,
+        team_name: str,
+        old: List[str],
+        new: List[str],
+        old_paths: Dict[str, str],
+        old_parameters: Dict[str, Dict[str, Any]],
+    ) -> None:
         self.team_name: str = team_name
         self.old: List[str] = old
         self.new: List[str] = new
         self.old_paths: Dict[str, str] = old_paths
+        self.old_parameters: Dict[str, Dict[str, Any]] = old_parameters
 
     def asdict(self) -> CHANGESET_FILE_IMAGE_TYPE:
         return vars(self)
@@ -110,7 +118,7 @@ def extract_changeset(manifest: "Manifest", ctx: "MessagesContext") -> Changeset
     image_changesets: List[ImageChangeset] = []
     for team in manifest.teams:
         if team.raw_ssm is None:
-            raise RuntimeError(f"Team {team.name} manifest raw_ssm attribute not filled.")
+            continue
         old_image: Optional[str] = cast(Optional[str], team.raw_ssm.get("image"))
         _logger.debug("Inpecting Image Change for team %s: %s -> %s", team.name, old_image, team.image)
         if team.image != team.raw_ssm.get("image"):
@@ -121,8 +129,10 @@ def extract_changeset(manifest: "Manifest", ctx: "MessagesContext") -> Changeset
     plugin_changesets: List[PluginChangeset] = []
     for team in manifest.teams:
         if team.raw_ssm is None:
-            raise RuntimeError(f"Team {team.name} manifest raw_ssm attribute not filled.")
-        old: List[str] = [p["name"] for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team.raw_ssm.get("plugins", []))]
+            continue
+        old: List[str] = [
+            cast(str, p["name"]) for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team.raw_ssm.get("plugins", []))
+        ]
         new: List[str] = [p.name for p in team.plugins]
         old.sort()
         new.sort()
@@ -130,9 +140,18 @@ def extract_changeset(manifest: "Manifest", ctx: "MessagesContext") -> Changeset
         if old != new:
             ctx.info(f"Plugin change detected for Team {team.name}: {old} -> {new}")
             old_paths: Dict[str, str] = {
-                p["name"]: p["path"] for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team.raw_ssm.get("plugins", []))
+                cast(str, p["name"]): cast(str, p["path"])
+                for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team.raw_ssm.get("plugins", []))
             }
-            plugin_changesets.append(PluginChangeset(team_name=team.name, old=old, new=new, old_paths=old_paths))
+            old_parameters: Dict[str, Dict[str, Any]] = {
+                cast(str, p["name"]): cast(Dict[str, Any], p.get("parameters", {}))
+                for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team.raw_ssm.get("plugins", []))
+            }
+            plugin_changesets.append(
+                PluginChangeset(
+                    team_name=team.name, old=old, new=new, old_paths=old_paths, old_parameters=old_parameters
+                )
+            )
 
     # External IDP
     _logger.debug("Inpecting External IDP Change...")
@@ -188,6 +207,7 @@ def read_changeset_file(filename: str) -> Changeset:
                 old=cast(List[str], i["old"]),
                 new=cast(List[str], i["new"]),
                 old_paths=cast(Dict[str, str], i["old_paths"]),
+                old_parameters=cast(Dict[str, Dict[str, Any]], i["old_parameters"]),
             )
             for i in cast(List[CHANGESET_FILE_PLUGIN_TYPE], raw.get("plugin_changesets", []))
         ],
