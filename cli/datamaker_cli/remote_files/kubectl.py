@@ -15,10 +15,9 @@
 import logging
 import os
 import shutil
-import yaml
 from typing import List, Optional
 
-from yaml.loader import Loader
+import yaml
 
 from datamaker_cli import DATAMAKER_CLI_ROOT, exceptions, k8s, sh, utils
 from datamaker_cli.manifest import Manifest
@@ -175,11 +174,13 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
 
     if with_teams:
         for username in team_usernames:
-            map_roles.append({
-                "groups": ["system:masters"],
-                "rolearn": f"arn:aws:iam::{manifest.account_id}:role/{username}-role",
-                "username": username
-            })
+            map_roles.append(
+                {
+                    "groups": ["system:masters"],
+                    "rolearn": f"arn:aws:iam::{manifest.account_id}:role/{username}-role",
+                    "username": username,
+                }
+            )
 
     config_map["data"]["mapRoles"] = yaml.dump(map_roles)
     config_map_file = os.path.join(output_path, "config_map.yaml")
@@ -189,6 +190,7 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
         yaml_file.write(yaml.dump(config_map))
 
     return config_map_file
+
 
 def fetch_kubectl_data(manifest: Manifest, context: str, include_teams: bool) -> None:
     _logger.debug("Fetching Kubectl data...")
