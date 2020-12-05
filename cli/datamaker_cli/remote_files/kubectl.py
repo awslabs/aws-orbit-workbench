@@ -169,7 +169,7 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
         Loader=yaml.SafeLoader,
     )
     map_roles = yaml.load(config_map["data"]["mapRoles"], Loader=yaml.SafeLoader)
-    team_usernames = (f"datamaker-{manifest.name}-{t.name}" for t in manifest.teams)
+    team_usernames = {f"datamaker-{manifest.name}-{t.name}" for t in manifest.teams}
 
     map_roles = [role for role in map_roles if role["username"] not in team_usernames]
 
@@ -183,6 +183,8 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
 
     config_map["data"]["mapRoles"] = yaml.dump(map_roles)
     config_map_file = os.path.join(output_path, "config_map.yaml")
+    _logger.debug(f"config_map: {config_map}")
+    _logger.debug(f"config_map_yaml: {config_map_file}")
     with open(config_map_file, "w") as yaml_file:
         yaml_file.write(yaml.dump(config_map))
 
