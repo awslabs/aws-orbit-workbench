@@ -28,13 +28,13 @@ from aws_cdk.core import App, Construct, Environment, Stack, Tags
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.subnet import SubnetKind
 from datamaker_cli.manifest.team import TeamManifest
-from datamaker_cli.remote_files.cdk.team_builders._lambda import LambdaBuilder
 from datamaker_cli.remote_files.cdk.team_builders.cognito import CognitoBuilder
 from datamaker_cli.remote_files.cdk.team_builders.ec2 import Ec2Builder
 from datamaker_cli.remote_files.cdk.team_builders.ecs import EcsBuilder
 from datamaker_cli.remote_files.cdk.team_builders.efs import EfsBuilder
 from datamaker_cli.remote_files.cdk.team_builders.iam import IamBuilder
 from datamaker_cli.remote_files.cdk.team_builders.s3 import S3Builder
+from datamaker_cli.remote_files.cdk.team_builders.stepfunctions import StateMachineBuilder
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -110,6 +110,7 @@ class Team(Stack):
         self.ecs_cluster = EcsBuilder.build_cluster(
             scope=self, manifest=manifest, team_manifest=team_manifest, vpc=self.i_vpc
         )
+        self.ecr_image = EcsBuilder.build_ecr_image(scope=self, manifest=manifest, team_manifest=team_manifest)
         self.ecs_execution_role = IamBuilder.build_ecs_role(scope=self)
         self.ecs_task_definition = EcsBuilder.build_task_definition(
             scope=self,
@@ -118,17 +119,24 @@ class Team(Stack):
             ecs_execution_role=self.ecs_execution_role,
             ecs_task_role=self.role_eks_nodegroup,
             file_system=self.efs,
+            image=self.ecr_image,
         )
-        self.ecs_container_runner = LambdaBuilder.build_ecs_container_runner(
+        self.ecs_container_runner = StateMachineBuilder.build_ecs_run_container_state_machine(
             scope=self,
             manifest=manifest,
             team_manifest=team_manifest,
-            ecs_execution_role=self.ecs_execution_role,
-            ecs_task_role=self.role_eks_nodegroup,
-            ecs_cluster=self.ecs_cluster,
-            ecs_task_definition=self.ecs_task_definition,
+            cluster=self.ecs_cluster,
+            task_definition=self.ecs_task_definition,
             efs_security_group=self.sg_efs,
             subnets=self.i_private_subnets if self.manifest.internet_accessible else self.i_isolated_subnets,
+            role=self.role_eks_nodegroup,
+        )
+        self.eks_container_runner = StateMachineBuilder.build_eks_run_container_state_machine(
+            scope=self,
+            manifest=manifest,
+            team_manifest=team_manifest,
+            image=self.ecr_image,
+            role=self.role_eks_nodegroup,
         )
 
         self.team_manifest.efs_id = self.efs.file_system_id
@@ -136,7 +144,8 @@ class Team(Stack):
         self.team_manifest.scratch_bucket = self.scratch_bucket.bucket_name
         self.team_manifest.ecs_cluster_name = self.ecs_cluster.cluster_name
         self.team_manifest.ecs_task_definition_arn = self.ecs_task_definition.task_definition_arn
-        self.team_manifest.ecs_container_runner_arn = self.ecs_container_runner.function_arn
+        self.team_manifest.ecs_container_runner_arn = self.ecs_container_runner.state_machine_arn
+        self.team_manifest.eks_container_runner_arn = self.eks_container_runner.state_machine_arn
 
         self.manifest_parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,

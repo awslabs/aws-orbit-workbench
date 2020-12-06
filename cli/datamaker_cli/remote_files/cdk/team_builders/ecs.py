@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from typing import cast
+
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecr as ecr
 import aws_cdk.aws_ecs as ecs
@@ -37,6 +39,16 @@ class EcsBuilder:
         )
 
     @staticmethod
+    def build_ecr_image(scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest) -> ecs.EcrImage:
+        repository_name, tag = team_manifest.construct_ecr_repository_name(manifest.name).split(":")
+        repository = ecr.Repository.from_repository_name(
+            scope,
+            "ecr_repository",
+            repository_name=repository_name,
+        )
+        return cast(ecs.EcrImage, ecs.ContainerImage.from_ecr_repository(repository=repository, tag=tag))
+
+    @staticmethod
     def build_task_definition(
         scope: core.Construct,
         manifest: Manifest,
@@ -44,19 +56,13 @@ class EcsBuilder:
         ecs_execution_role: iam.Role,
         ecs_task_role: iam.Role,
         file_system: efs.FileSystem,
+        image: ecs.EcrImage,
     ) -> ecs.TaskDefinition:
         ecs_log_group = logs.LogGroup(
             scope,
             "ecs_log_group",
             log_group_name=f"/datamaker/tasks/{manifest.name}/{team_manifest.name}/containers",
             removal_policy=core.RemovalPolicy.DESTROY,
-        )
-
-        repository_name, tag = team_manifest.construct_ecr_repository_name(manifest.name).split(":")
-        ecr_repository = ecr.Repository.from_repository_name(
-            scope,
-            "ecr_repository",
-            repository_name=repository_name,
         )
 
         task_definition = ecs.TaskDefinition(
@@ -81,7 +87,7 @@ class EcsBuilder:
         container_definition = task_definition.add_container(
             "datamaker-runner",
             memory_limit_mib=16384,
-            image=ecs.ContainerImage.from_ecr_repository(ecr_repository, tag),
+            image=image,
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix=f"datamaker-{manifest.name}-{team_manifest.name}",
                 log_group=ecs_log_group,

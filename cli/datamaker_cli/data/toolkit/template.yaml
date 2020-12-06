@@ -126,6 +126,11 @@ Resources:
               - arn:aws:ecr:${region}:${account_id}:repository/datamaker-${env_name}-*
           - Effect: Allow
             Action:
+              - states:*
+            Resource:
+              - arn:aws:states:${region}:${account_id}:stateMachine:datamaker-${env_name}-*
+          - Effect: Allow
+            Action:
               - cloudformation:*
             Resource:
               - arn:aws:cloudformation:${region}:${account_id}:stack/datamaker-${env_name}*

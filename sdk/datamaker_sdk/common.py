@@ -58,6 +58,7 @@ def get_properties() -> Dict[str, str]:
         prop["AWS_DATAMAKER_SRC_REPO"] = os.path.join("/ws/", os.environ["AWS_DATAMAKER_REPO"])
 
     prop["ecs_cluster"] = f"datamaker-{prop['AWS_DATAMAKER_ENV']}-{prop['DATAMAKER_TEAM_SPACE']}-cluster"
+    prop["eks_cluster"] = f"datamaker-{prop['AWS_DATAMAKER_ENV']}"
     return prop
 
 
