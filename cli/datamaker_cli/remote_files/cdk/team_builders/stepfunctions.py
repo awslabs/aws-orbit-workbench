@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import Any, Dict, List, Mapping, Optional, Union, cast
+from typing import Dict, List, Union, cast
 
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecs as ecs
@@ -25,7 +25,13 @@ from aws_cdk import aws_lambda
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.team import TeamManifest
 from datamaker_cli.remote_files.cdk.team_builders._lambda import LambdaBuilder
-from datamaker_cli.remote_files.cdk.team_builders.stepfunctions_tasks import EcsRunTask, EksCall, EksRunJob, LambdaInvoke, LogOptions
+from datamaker_cli.remote_files.cdk.team_builders.stepfunctions_tasks import (
+    EcsRunTask,
+    EksCall,
+    EksRunJob,
+    LambdaInvoke,
+    LogOptions,
+)
 
 COMMAND = ["python", "/opt/python-utils/notebook_cli.py"]
 
@@ -36,7 +42,7 @@ class StateMachineBuilder:
         scope: core.Construct,
         lambda_function: aws_lambda.Function,
         cluster_name_path: str = "$.ClusterName",
-        result_path: str = "$.DescribeResult"
+        result_path: str = "$.DescribeResult",
     ) -> sfn_tasks.LambdaInvoke:
         return LambdaInvoke(
             scope=scope,
@@ -58,7 +64,7 @@ class StateMachineBuilder:
         team_manifest: TeamManifest,
         url: str,
         args: Dict[str, Union[str, sfn.JsonPath]],
-        result_path: str = "$.UrlResult"
+        result_path: str = "$.UrlResult",
     ) -> sfn_tasks.LambdaInvoke:
         return LambdaInvoke(
             scope=scope,
@@ -67,10 +73,7 @@ class StateMachineBuilder:
                 scope=scope, manifest=manifest, team_manifest=team_manifest
             ),
             payload_response_only=True,
-            payload=sfn.TaskInput.from_object({
-                "url": url,
-                "args": args
-            }),
+            payload=sfn.TaskInput.from_object({"url": url, "args": args}),
             result_path=result_path,
         )
 
@@ -143,8 +146,9 @@ class StateMachineBuilder:
         # We use a nested Construct to avoid collisions with Lambda and Task ids
         construct = core.Construct(scope, "eks_run_container_nested_construct")
 
-        eks_describe_cluster = StateMachineBuilder._build_eks_describe_cluster_task(
-            scope=construct, lambda_function=eks_describe_cluster,
+        eks_describe_cluster_task = StateMachineBuilder._build_eks_describe_cluster_task(
+            scope=construct,
+            lambda_function=eks_describe_cluster,
         )
 
         job = {
@@ -195,15 +199,13 @@ class StateMachineBuilder:
             endpoint=sfn.JsonPath.string_at("$.DescribeResult.Endpoint"),
             namespace=team_manifest.name,
             job=job,
-            log_options=LogOptions(retrieve_logs=True, log_parameters={
-                "tailLines": [ "20" ]
-            }),
+            log_options=LogOptions(retrieve_logs=True, log_parameters={"tailLines": ["20"]}),
             timeout_path="$.Timeout",
         )
         run_job.add_catch(sfn.Fail(scope=construct, id="Failed"))
 
         definition = (
-            sfn.Chain.start(eks_describe_cluster).next(run_job).next(sfn.Succeed(scope=construct, id="Succeeded"))
+            sfn.Chain.start(eks_describe_cluster_task).next(run_job).next(sfn.Succeed(scope=construct, id="Succeeded"))
         )
 
         return sfn.StateMachine(
@@ -225,8 +227,9 @@ class StateMachineBuilder:
         # We use a nested Construct to avoid collisions with Lambda and Task ids
         construct = core.Construct(scope, "eks_get_pod_logs_nested_construct")
 
-        eks_describe_cluster = StateMachineBuilder._build_eks_describe_cluster_task(
-            scope=construct, lambda_function=eks_describe_cluster,
+        eks_describe_cluster_task = StateMachineBuilder._build_eks_describe_cluster_task(
+            scope=construct,
+            lambda_function=eks_describe_cluster,
         )
 
         construct_url = StateMachineBuilder._build_construct_url_task(
@@ -237,7 +240,7 @@ class StateMachineBuilder:
             args={
                 "namespace": team_manifest.name,
                 "pod": sfn.JsonPath.string_at("$.Pod"),
-            }
+            },
         )
 
         eks_call = EksCall(
@@ -249,12 +252,15 @@ class StateMachineBuilder:
             endpoint=sfn.JsonPath.string_at("$.DescribeResult.Endpoint"),
             method="GET",
             path=sfn.JsonPath.string_at("$.UrlResult"),
-            query_parameters={
-                "tailLines": ["20"]
-            },
+            query_parameters={"tailLines": ["20"]},
         )
 
-        definition = sfn.Chain.start(eks_describe_cluster).next(construct_url).next(eks_call).next(sfn.Succeed(scope=construct, id="Succeeded"))
+        definition = (
+            sfn.Chain.start(eks_describe_cluster_task)
+            .next(construct_url)
+            .next(eks_call)
+            .next(sfn.Succeed(scope=construct, id="Succeeded"))
+        )
 
         return sfn.StateMachine(
             scope=construct,

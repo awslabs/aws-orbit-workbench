@@ -13,13 +13,11 @@
 #    limitations under the License.
 
 import logging
-from logging import RootLogger
 import os
 import shutil
 import sys
 
 import aws_cdk.aws_cognito as cognito
-from aws_cdk.aws_dynamodb import SecondaryIndexProps
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecr as ecr
 import aws_cdk.aws_efs as efs
@@ -30,12 +28,12 @@ from aws_cdk.core import App, Construct, Environment, Stack, Tags
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.subnet import SubnetKind
 from datamaker_cli.manifest.team import TeamManifest
+from datamaker_cli.remote_files.cdk.team_builders._lambda import LambdaBuilder
 from datamaker_cli.remote_files.cdk.team_builders.cognito import CognitoBuilder
 from datamaker_cli.remote_files.cdk.team_builders.ec2 import Ec2Builder
 from datamaker_cli.remote_files.cdk.team_builders.ecs import EcsBuilder
 from datamaker_cli.remote_files.cdk.team_builders.efs import EfsBuilder
 from datamaker_cli.remote_files.cdk.team_builders.iam import IamBuilder
-from datamaker_cli.remote_files.cdk.team_builders._lambda import LambdaBuilder
 from datamaker_cli.remote_files.cdk.team_builders.s3 import S3Builder
 from datamaker_cli.remote_files.cdk.team_builders.stepfunctions import StateMachineBuilder
 
