@@ -195,7 +195,9 @@ class StateMachineBuilder:
             endpoint=sfn.JsonPath.string_at("$.DescribeResult.Endpoint"),
             namespace=team_manifest.name,
             job=job,
-            log_options=LogOptions(retrieve_logs=True),
+            log_options=LogOptions(retrieve_logs=True, log_parameters={
+                "tailLines": [ "20" ]
+            }),
             timeout_path="$.Timeout",
         )
         run_job.add_catch(sfn.Fail(scope=construct, id="Failed"))

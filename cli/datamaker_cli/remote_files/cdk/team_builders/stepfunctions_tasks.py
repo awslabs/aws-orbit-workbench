@@ -25,7 +25,7 @@ from aws_cdk import aws_lambda
 
 class LogOptions:
     def __init__(
-        self, *, retrieve_logs: bool = False, raw_logs: bool = False, log_parameters: Optional[Dict[str, str]] = None
+        self, *, retrieve_logs: bool = False, raw_logs: bool = False, log_parameters: Optional[Dict[str, Any]] = None
     ) -> None:
         self.retrieve_logs = retrieve_logs
         self.raw_logs = raw_logs
