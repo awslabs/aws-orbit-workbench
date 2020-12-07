@@ -12,15 +12,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import Any, Dict, List, Mapping, Optional, Union, cast
+import abc
+import functools
+from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
 
-import aws_cdk.aws_ec2 as ec2
-import aws_cdk.aws_ecs as ecs
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_stepfunctions as sfn
 import aws_cdk.aws_stepfunctions_tasks as sfn_tasks
 import aws_cdk.core as core
-from aws_cdk import aws_lambda
 
 
 class LogOptions:
@@ -290,53 +289,20 @@ class EksCall(BaseTask):
         return task
 
 
-class EcsRunTask(sfn_tasks.EcsRunTask):
+class IExtendedTaskStateBase:
+    @abc.abstractmethod
     def __init__(
         self,
-        scope: core.Construct,
-        id: str,
-        *,
-        cluster: ecs.ICluster,
-        launch_target: sfn_tasks.IEcsLaunchTarget,
-        task_definition: ecs.TaskDefinition,
-        assign_public_ip: Optional[bool] = None,
-        container_overrides: Optional[List[sfn_tasks.ContainerOverride]] = None,
-        security_groups: Optional[List[ec2.ISecurityGroup]] = None,
-        subnets: Optional[ec2.SubnetSelection] = None,
-        comment: Optional[str] = None,
-        heartbeat: Optional[core.Duration] = None,
-        heartbeah_path: Optional[str] = None,
-        input_path: Optional[str] = None,
-        integration_pattern: Optional[sfn.IntegrationPattern] = None,
-        output_path: Optional[str] = None,
-        result_path: Optional[str] = None,
+        *args: Any,
+        heartbeat_path: Optional[str] = None,
         result_selector: Optional[Dict[str, str]] = None,
-        timeout: Optional[core.Duration] = None,
         timeout_path: Optional[str] = None,
+        **kwargs: Any,
     ) -> None:
-        super().__init__(
-            scope=scope,
-            id=id,
-            cluster=cluster,
-            launch_target=launch_target,
-            task_definition=task_definition,
-            assign_public_ip=assign_public_ip,
-            container_overrides=container_overrides,
-            security_groups=security_groups,
-            subnets=subnets,
-            comment=comment,
-            heartbeat=heartbeat,
-            input_path=input_path,
-            integration_pattern=integration_pattern,
-            output_path=output_path,
-            result_path=result_path,
-            timeout=timeout,
-        )
-        self._heartbeat_path = heartbeah_path
-        self._result_selector = result_selector
-        self._timeout_path = timeout_path
+        pass
 
-    @staticmethod
+
+def extended_task(_class: Any) -> Callable[[Any, Any], IExtendedTaskStateBase]:
     def render_json_path(json_path: str) -> Optional[str]:
         if json_path is None:
             return None
@@ -348,8 +314,8 @@ class EcsRunTask(sfn_tasks.EcsRunTask):
 
         return json_path
 
-    def to_state_json(self) -> Any:
-        task = super().to_state_json()
+    def to_state_json(self: Any) -> Any:
+        task = self._to_state_json()
         if self._heartbeat_path:
             task["HeartbeatSecondsPath"] = self.render_json_path(self._heartbeat_path)
         if self._result_selector:
@@ -358,71 +324,49 @@ class EcsRunTask(sfn_tasks.EcsRunTask):
             task["TimeoutSecondsPath"] = self.render_json_path(self._timeout_path)
         return task
 
+    @functools.wraps(_class)
+    def wrapper_extended_task(*args: Any, **kwargs: Any) -> IExtendedTaskStateBase:
+        if "_have_extended_task" not in dir(_class):
+            _class._have_extended_task = True
+            _class.render_json_path = staticmethod(render_json_path)
 
-class LambdaInvoke(sfn_tasks.LambdaInvoke):
+            _class._to_state_json = _class.to_state_json
+            _class.to_state_json = to_state_json
+
+        heartbeat_path = kwargs.pop("heartbeat_path") if "heartbeat_path" in kwargs else None
+        result_selector = kwargs.pop("result_selector") if "result_selector" in kwargs else None
+        timeout_path = kwargs.pop("timeout_path") if "timeout_path" in kwargs else None
+
+        inst = _class(*args, **kwargs)
+        inst._heartbeat_path = heartbeat_path
+        inst._result_selector = result_selector
+        inst._timeout_path = timeout_path
+        return cast(IExtendedTaskStateBase, inst)
+
+    return wrapper_extended_task
+
+
+@extended_task
+class EcsRunTask(sfn_tasks.EcsRunTask, IExtendedTaskStateBase):
     def __init__(
         self,
-        scope: core.Construct,
-        id: str,
-        *,
-        lambda_function: aws_lambda.IFunction,
-        client_context: Optional[str] = None,
-        invocation_type: Optional[sfn_tasks.LambdaInvocationType] = None,
-        payload: Optional[sfn.TaskInput] = None,
-        payload_response_only: Optional[bool] = None,
-        qualifier: Optional[str] = None,
-        retry_on_service_exceptions: Optional[bool] = None,
-        comment: Optional[str] = None,
-        heartbeat: Optional[core.Duration] = None,
-        heartbeah_path: Optional[str] = None,
-        input_path: Optional[str] = None,
-        integration_pattern: Optional[sfn.IntegrationPattern] = None,
-        output_path: Optional[str] = None,
-        result_path: Optional[str] = None,
+        *args: Any,
+        heartbeat_path: Optional[str] = None,
         result_selector: Optional[Dict[str, str]] = None,
-        timeout: Optional[core.Duration] = None,
         timeout_path: Optional[str] = None,
+        **kwargs: Any,
     ) -> None:
-        super().__init__(
-            scope=scope,
-            id=id,
-            lambda_function=lambda_function,
-            client_context=client_context,
-            invocation_type=invocation_type,
-            payload=payload,
-            payload_response_only=payload_response_only,
-            qualifier=qualifier,
-            retry_on_service_exceptions=retry_on_service_exceptions,
-            comment=comment,
-            heartbeat=heartbeat,
-            input_path=input_path,
-            integration_pattern=integration_pattern,
-            output_path=output_path,
-            result_path=result_path,
-            timeout=timeout,
-        )
-        self._heartbeat_path = heartbeah_path
-        self._result_selector = result_selector
-        self._timeout_path = timeout_path
+        super().__init__(*args, **kwargs)
 
-    @staticmethod
-    def render_json_path(json_path: str) -> Optional[str]:
-        if json_path is None:
-            return None
-        elif json_path == sfn.JsonPath.DISCARD:
-            return None
 
-        if not json_path.startswith("$"):
-            raise ValueError(f"Expected JSON path to start with '$', got: {json_path}")
-
-        return json_path
-
-    def to_state_json(self) -> Any:
-        task = super().to_state_json()
-        if self._heartbeat_path:
-            task["HeartbeatSecondsPath"] = self.render_json_path(self._heartbeat_path)
-        if self._result_selector:
-            task["ResultSelector"] = self._result_selector
-        if self._timeout_path:
-            task["TimeoutSecondsPath"] = self.render_json_path(self._timeout_path)
-        return task
+@extended_task
+class LambdaInvoke(sfn_tasks.LambdaInvoke, IExtendedTaskStateBase):
+    def __init__(
+        self,
+        *args: Any,
+        heartbeat_path: Optional[str] = None,
+        result_selector: Optional[Dict[str, str]] = None,
+        timeout_path: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
