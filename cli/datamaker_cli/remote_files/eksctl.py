@@ -154,5 +154,5 @@ def destroy_teams(manifest: Manifest) -> None:
         teams = ",".join([t.name for t in manifest.teams])
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
         output_filename = generate_manifest(manifest=manifest, name=stack_name)
-        sh.run(f"eksctl delete nodegroup -f {output_filename} --include={teams} --approve --wait --verbose 4")
+        sh.run(f"eksctl delete nodegroup -f {output_filename} --include={teams} --approve --wait --drain=false --verbose 4")
         _logger.debug("EKSCTL Teams destroyed")
