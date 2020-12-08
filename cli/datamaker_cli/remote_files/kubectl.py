@@ -313,7 +313,7 @@ def destroy_teams(manifest: Manifest) -> None:
         try:
             sh.run(
                 f"kubectl delete -f {output_path} --grace-period=0 --force "
-                f"--ignore-not-found --wait --context {context}"
+                f"--ignore-not-found --wait=false --context {context}"
             )
         except exceptions.FailedShellCommand as ex:
             _logger.debug("Skipping: %s", ex)
