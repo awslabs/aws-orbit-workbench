@@ -19,6 +19,8 @@ import sys
 from typing import Any, Tuple
 
 from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_s3 as s3
 from aws_cdk.core import App, CfnOutput, Construct, Stack, Tags
 
 from datamaker_cli.manifest import Manifest
@@ -182,6 +184,64 @@ class VpcStack(Stack):
             security_group_ids=[vpc_security_group.security_group_id],
             subnet_ids=isolated_subnet_ids,
             private_dns_enabled=True,
+        )
+
+
+class S3Stack(Stack):
+    def __init__(self, scope: Construct, id: str, env_name: str, **kwargs: Any) -> None:
+        self.env_name = env_name
+        lake_bucket = s3.Bucket(
+            scope=scope,
+            id="lake_bucket",
+            bucket_name=f"datamaker-{self.env_name}-lake-bucket",
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            encryption=s3.BucketEncryption.S3_MANAGED,
+        )
+
+        lake_bucket_full_access = iam.ManagedPolicy(
+            self,
+            "LakeBucketFullAccess",
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "s3:*",
+                    ],
+                    resources=[lake_bucket.arn_for_objects("*"), lake_bucket.bucket_arn],
+                )
+            ],
+        )
+        lake_bucket_read_only_access = iam.ManagedPolicy(
+            self,
+            "LakeBucketReadOnlyAccess",
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["s3:Get*", "s3:List*"],
+                    resources=[lake_bucket.arn_for_objects("*"), lake_bucket.bucket_arn],
+                ),
+            ],
+        )
+
+        CfnOutput(
+            scope=self,
+            id="lake_bucket",
+            export_name="lake-bucket-name",
+            value=lake_bucket.bucket_name,
+        )
+
+        CfnOutput(
+            scope=self,
+            id="lakebucketfullaccesspolicy",
+            export_name="lake-bucket-full-access-policy",
+            value=lake_bucket_full_access.managed_policy_name,
+        )
+
+        CfnOutput(
+            scope=self,
+            id="lakebucketreadonlypoloicy",
+            export_name="lake-bucket-read-only-policy",
+            value=lake_bucket_read_only_access.managed_policy_name,
         )
 
 
