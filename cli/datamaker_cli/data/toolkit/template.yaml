@@ -276,7 +276,7 @@ Resources:
             build:
               commands:
                 - ls -la
-      TimeoutInMinutes: 20
+      TimeoutInMinutes: 120
       LogsConfig:
         CloudWatchLogs:
           Status: ENABLED
