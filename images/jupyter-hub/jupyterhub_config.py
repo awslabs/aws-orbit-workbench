@@ -87,6 +87,18 @@ c.KubeSpawner.profile_list = [
         },
         "default": True,
     },
+    {
+        "display_name": "ML",
+        "slug": "ml",
+        "description": "8 CPU + 40G MEM",
+        "kubespawner_override": {
+            "cpu_guarantee": 8,
+            "cpu_limit": 8,
+            "mem_guarantee": "40G",
+            "mem_limit": "40G",
+        },
+        "default": True,
+    },
 ]
 
 """
