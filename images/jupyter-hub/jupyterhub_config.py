@@ -96,8 +96,7 @@ c.KubeSpawner.profile_list = [
             "cpu_limit": 8,
             "mem_guarantee": "40G",
             "mem_limit": "40G",
-        },
-        "default": True,
+        }
     },
 ]
 
