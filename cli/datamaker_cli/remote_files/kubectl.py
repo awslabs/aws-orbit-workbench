@@ -23,7 +23,7 @@ from datamaker_cli import DATAMAKER_CLI_ROOT, exceptions, k8s, sh, utils
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.team import TeamManifest
 from datamaker_cli.remote_files.utils import get_k8s_context
-from datamaker_cli.services import cfn
+from datamaker_cli.services import cfn, elb
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -205,6 +205,7 @@ def fetch_kubectl_data(manifest: Manifest, context: str, include_teams: bool) ->
 
     landing_page_url: str = k8s.get_service_hostname(name="landing-page-public", context=context, namespace="env")
     manifest.landing_page_url = f"http://{landing_page_url}"
+    manifest.elbs = elb.get_elbs_by_service(manifest=manifest)
 
     manifest.write_manifest_ssm()
     _logger.debug("Kubectl data fetched successfully.")

@@ -169,6 +169,7 @@ class Manifest:
         self.cognito_users_urls: Optional[str] = None  # Env
 
         self.landing_page_url: Optional[str] = None  # Kubectl
+        self.elbs: Optional[Dict[str, Dict[str, Any]]] = None  # Kubectl
 
         self.cognito_external_provider_domain: Optional[str] = None  # Cognito
         self.cognito_external_provider_redirect: Optional[str] = None  # Cognito
@@ -285,6 +286,7 @@ class Manifest:
         if self.raw_ssm is not None:
             raw: MANIFEST_TYPE = self.raw_ssm
             self.landing_page_url = cast(Optional[str], raw.get("landing-page-url"))
+            self.elbs = cast(Optional[Dict[str, Dict[str, Any]]], raw.get("elbs"))
             self.deploy_id = cast(Optional[str], raw.get("deploy-id"))
             self.toolkit_s3_bucket = cast(Optional[str], raw.get("toolkit-s3-bucket"))
             self.toolkit_kms_alias = cast(Optional[str], raw.get("toolkit-kms-alias"))
