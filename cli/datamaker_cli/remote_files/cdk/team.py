@@ -28,6 +28,7 @@ from aws_cdk.core import App, Construct, Environment, Stack, Tags
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.subnet import SubnetKind
 from datamaker_cli.manifest.team import TeamManifest
+from datamaker_cli.remote_files.cdk.team_builders._lambda import LambdaBuilder
 from datamaker_cli.remote_files.cdk.team_builders.cognito import CognitoBuilder
 from datamaker_cli.remote_files.cdk.team_builders.ec2 import Ec2Builder
 from datamaker_cli.remote_files.cdk.team_builders.ecs import EcsBuilder
@@ -131,11 +132,24 @@ class Team(Stack):
             subnets=self.i_private_subnets if self.manifest.internet_accessible else self.i_isolated_subnets,
             role=self.role_eks_nodegroup,
         )
+        self.eks_describe_cluster = LambdaBuilder.build_eks_describe_cluster(
+            scope=self,
+            manifest=manifest,
+            team_manifest=team_manifest,
+        )
         self.eks_container_runner = StateMachineBuilder.build_eks_run_container_state_machine(
             scope=self,
             manifest=manifest,
             team_manifest=team_manifest,
             image=self.ecr_image,
+            eks_describe_cluster=self.eks_describe_cluster,
+            role=self.role_eks_nodegroup,
+        )
+        self.eks_get_pod_logs = StateMachineBuilder.build_eks_get_pod_logs_state_machine(
+            scope=self,
+            manifest=manifest,
+            team_manifest=team_manifest,
+            eks_describe_cluster=self.eks_describe_cluster,
             role=self.role_eks_nodegroup,
         )
 

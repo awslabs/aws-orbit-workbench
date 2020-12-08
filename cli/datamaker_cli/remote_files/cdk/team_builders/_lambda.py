@@ -104,3 +104,19 @@ class LambdaBuilder:
                 )
             ],
         )
+
+    @staticmethod
+    def build_construct_url(
+        scope: core.Construct,
+        manifest: Manifest,
+        team_manifest: TeamManifest,
+    ) -> aws_lambda.Function:
+        return aws_lambda.Function(
+            scope=scope,
+            id="construct_rul",
+            function_name=f"datamaker-{manifest.name}-{team_manifest.name}-construct-url",
+            code=aws_lambda.Code.asset(_lambda_path("construct_url")),
+            handler="index.handler",
+            runtime=aws_lambda.Runtime.PYTHON_3_6,
+            timeout=core.Duration.seconds(10),
+        )
