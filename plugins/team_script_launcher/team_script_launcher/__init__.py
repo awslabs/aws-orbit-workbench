@@ -21,7 +21,6 @@ from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.team import TeamManifest
 from datamaker_cli.plugins import hooks
 
-
 _logger: logging.Logger = logging.getLogger("datamaker_cli")
 PLUGIN_ID = "team-script-launcher"
 CONFIGMAP_SCRIPT_NAME = f"{PLUGIN_ID}-script"
@@ -33,7 +32,7 @@ def deploy(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str
     _logger.debug("Team Env name: %s | Team name: %s", manifest.name, team_manifest.name)
 
     # add imports here since it will be dynamically imported and the runtime dependencies will already be there.
-    from datamaker_cli.remote_files.utils import get_k8s_context
+    from datamaker_cli.remote_files.utils import get_k8s_context  # noqa
 
     sh.run(f"echo 'Team Env name: {manifest.name} | Team name: {team_manifest.name}'")
     # Run the following command to authorize calls to kubectl for the current client
@@ -98,7 +97,7 @@ def destroy(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[st
     _logger.debug("Delete Plugin %s of Team Env name: %s | Team name: %s", PLUGIN_ID, manifest.name, team_manifest.name)
 
     # add imports here since it will be dynamically imported and the runtime dependencies will already be there.
-    from datamaker_cli.remote_files.utils import get_k8s_context
+    from datamaker_cli.remote_files.utils import get_k8s_context  # noqa
 
     sh.run(f"echo 'Team Env name: {manifest.name} | Team name: {team_manifest.name}'")
     sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
