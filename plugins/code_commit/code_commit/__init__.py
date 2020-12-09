@@ -36,6 +36,7 @@ def deploy(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str
         args=[manifest.filename, team_manifest.name],
     )
 
+
 @hooks.destroy
 def destroy(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
     _logger.debug("Destroying CodeCommit plugin resources for team %s", team_manifest.name)
