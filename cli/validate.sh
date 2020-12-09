@@ -18,7 +18,7 @@
 set -ex
 
 isort --check .
-black --check . --exclude "(\.direnv|\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|\.env|\.svn|_build|buck-out|build|dist)/"
+black --check .
 mypy .
 flake8 .
 cfn-lint -i E1029,E3031 -- datamaker_cli/data/toolkit/template.yaml

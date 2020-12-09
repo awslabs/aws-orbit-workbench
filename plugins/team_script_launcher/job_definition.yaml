@@ -5,15 +5,12 @@ metadata:
 spec:
   template:
     spec:
-#      nodeSelector:
-#        team: lake-creator
       containers:
       - name: kubectl-aws
         securityContext:
           runAsUser: 1000
         imagePullPolicy: Always
         image: ${account_id}.dkr.ecr.${region}.amazonaws.com/datamaker-${env_name}-jupyter-user:${tag}
-#        image: 495869084367.dkr.ecr.us-west-2.amazonaws.com/datamaker-dev-env-jupyter-user
         env:
           - name: AWS_DEFAULT_REGION
             value: ${region}
@@ -42,4 +39,4 @@ spec:
           configMap:
             name: ${plugin_id}-script
             defaultMode: 0744
-      restartPolicy: ${restartPolicy}
+      restartPolicy: ${restart_policy}

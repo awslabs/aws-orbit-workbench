@@ -36,13 +36,13 @@ def deploy(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str
     sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
 
     if "script" in parameters:
-        scriptBody = parameters["script"]
+        script_body = parameters["script"]
     else:
         raise Exception(f"Plugin {PLUGIN_ID} must define parameter 'script'")
-    scriptFile = os.path.join(os.path.dirname(POD_FILENAME), f"{PLUGIN_ID}-script.sh")
+    script_file = os.path.join(os.path.dirname(POD_FILENAME), f"{PLUGIN_ID}-script.sh")
 
-    with open(scriptFile, "w") as file:
-        file.write(scriptBody)
+    with open(script_file, "w") as file:
+        file.write(script_body)
 
     # Cleanup of previous installation if needed
     sh.run(f"kubectl delete jobs/team-script-{PLUGIN_ID} --namespace {team_manifest.name} --ignore-not-found")
@@ -50,7 +50,7 @@ def deploy(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str
 
     # Create the configmap with the script
     sh.run(
-        f"kubectl create configmap {CONFIGMAP_SCRIPT_NAME} --from-file={scriptFile} --namespace {team_manifest.name}"
+        f"kubectl create configmap {CONFIGMAP_SCRIPT_NAME} --from-file={script_file} --namespace {team_manifest.name}"
     )
     _logger.debug(f"Create config map: {CONFIGMAP_SCRIPT_NAME} at namespace {team_manifest.name}")
 
@@ -68,14 +68,14 @@ def deploy(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str
     with open(input, "r") as file:
         content: str = file.read()
 
-    restartPolicy = parameters["restartPolicy"] if "restartPolicy" in parameters else "Never"
+    restart_policy = parameters["restartPolicy"] if "restartPolicy" in parameters else "Never"
     content = content.replace("$", "").format(
         team=team_manifest.name,
         region=manifest.region,
         account_id=manifest.account_id,
         env_name=manifest.name,
         tag=team_manifest.manifest.images["jupyter-hub"]["version"],
-        restartPolicy=restartPolicy,
+        restart_policy=restart_policy,
         plugin_id=PLUGIN_ID,
     )
 
