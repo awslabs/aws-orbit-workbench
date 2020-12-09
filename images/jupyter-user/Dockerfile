@@ -44,3 +44,6 @@ ADD bootstrap.sh /etc/jupyterhub/bootstrap.sh
 ADD pip.conf /etc/pip.conf
 RUN python3 -m pip install --upgrade datamaker-sdk
 RUN rm /etc/pip.conf
+
+# should always be the last line of code:
+USER $NB_UID
