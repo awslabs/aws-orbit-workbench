@@ -16,6 +16,7 @@ import logging
 import os
 import shutil
 import sys
+from typing import List
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2
@@ -73,7 +74,8 @@ class Team(Stack):
             repository_name=f"datamaker-{self.manifest.name}-{self.team_manifest.name}",
         )
 
-        self.policy: str = str(self.team_manifest.policy)
+        # self.policy: str = str(self.team_manifest.policy) #TODO - 2 - Change to list
+        self.policies: List[str] = self.team_manifest.policies
 
         self.scratch_bucket: s3.Bucket = S3Builder.build_scratch_bucket(
             scope=self, manifest=manifest, team_manifest=team_manifest
@@ -83,7 +85,8 @@ class Team(Stack):
             scope=self,
             manifest=self.manifest,
             team_manifest=self.team_manifest,
-            policy_name=self.policy,
+            # policy_name=self.policy, #TODO - 2.1 - Change to list
+            policy_names=self.policies,
             scratch_bucket=self.scratch_bucket,
         )
 

@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from typing import List
+
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_s3 as s3
 import aws_cdk.core as core
@@ -26,7 +28,8 @@ class IamBuilder:
         scope: core.Construct,
         manifest: Manifest,
         team_manifest: TeamManifest,
-        policy_name: str,
+        # policy_name: str, # TODO - 2.1 - Change List[str]
+        policy_names: List[str],
         scratch_bucket: s3.Bucket,
     ) -> iam.Role:
         env_name = manifest.name
@@ -251,7 +254,12 @@ class IamBuilder:
             ssm_manage_policy,
         ] + eks_policies
 
-        user_policies = [iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name=policy_name)]
+        # user_policies = [iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name=policy_name)]
+        # #TODO - Parse list to IAM policies
+        user_policies = [
+            iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name=policy_name)
+            for policy_name in policy_names
+        ]
 
         managed_policies = managed_policies + user_policies
 

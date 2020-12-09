@@ -206,7 +206,8 @@ class Manifest:
                 nodes_num_desired=cast(int, t["nodes-num-desired"]),
                 nodes_num_max=cast(int, t["nodes-num-max"]),
                 nodes_num_min=cast(int, t["nodes-num-min"]),
-                policy=cast(str, t["policy"]),
+                # policy=cast(str, t["policy"]), # TODO - 1 - Cast to List[str]-
+                policies=cast(List[str], t.get("policies", [])),
                 grant_sudo=cast(bool, t.get("grant-sudo", False)),
                 jupyterhub_inbound_ranges=cast(List[str], t.get("jupyterhub-inbound-ranges", [])),
                 image=cast(Optional[str], t.get("image")),

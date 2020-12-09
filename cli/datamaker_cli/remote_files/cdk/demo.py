@@ -102,6 +102,7 @@ class VpcStack(Stack):
             "secrets_endpoint": ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
             "kms_endpoint": ec2.InterfaceVpcEndpointAwsService.KMS,
             "sagemaker_endpoint": ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_API,
+            "sagemaker_runtime": ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_RUNTIME,
             "notebook_endpoint": ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_NOTEBOOK,
             "athena_endpoint": ec2.InterfaceVpcEndpointAwsService("athena"),
             "glue_endpoint": ec2.InterfaceVpcEndpointAwsService("glue"),
