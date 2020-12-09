@@ -267,6 +267,7 @@ class IamBuilder:
                 iam.ServicePrincipal("redshift.amazonaws.com"),
                 iam.ServicePrincipal("codepipeline.amazonaws.com"),
                 iam.ServicePrincipal("personalize.amazonaws.com"),
+                iam.ServicePrincipal("states.amazonaws.com"),
             ),
             managed_policies=managed_policies,
         )

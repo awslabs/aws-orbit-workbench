@@ -17,11 +17,13 @@ import os
 import shutil
 from typing import List, Optional
 
+import yaml
+
 from datamaker_cli import DATAMAKER_CLI_ROOT, exceptions, k8s, sh, utils
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.team import TeamManifest
 from datamaker_cli.remote_files.utils import get_k8s_context
-from datamaker_cli.services import cfn
+from datamaker_cli.services import cfn, elb
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -157,6 +159,39 @@ def _generate_teams_manifest(manifest: Manifest) -> str:
     return output_path
 
 
+def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: bool) -> str:
+    output_path = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "kubectl", "aws_auth_config_map")
+    os.makedirs(output_path, exist_ok=True)
+    _cleanup_output(output_path=output_path)
+    config_map = yaml.load(
+        "\n".join(sh.run_iterating(f"kubectl get configmap --context {context} -o yaml -n kube-system aws-auth")),
+        Loader=yaml.SafeLoader,
+    )
+    map_roles = yaml.load(config_map["data"]["mapRoles"], Loader=yaml.SafeLoader)
+    team_usernames = {f"datamaker-{manifest.name}-{t.name}" for t in manifest.teams}
+
+    map_roles = [role for role in map_roles if role["username"] not in team_usernames]
+
+    if with_teams:
+        for username in team_usernames:
+            map_roles.append(
+                {
+                    "groups": ["system:masters"],
+                    "rolearn": f"arn:aws:iam::{manifest.account_id}:role/{username}-role",
+                    "username": username,
+                }
+            )
+
+    config_map["data"]["mapRoles"] = yaml.dump(map_roles)
+    config_map_file = os.path.join(output_path, "config_map.yaml")
+    _logger.debug(f"config_map: {config_map}")
+    _logger.debug(f"config_map_yaml: {config_map_file}")
+    with open(config_map_file, "w") as yaml_file:
+        yaml_file.write(yaml.dump(config_map))
+
+    return config_map_file
+
+
 def fetch_kubectl_data(manifest: Manifest, context: str, include_teams: bool) -> None:
     _logger.debug("Fetching Kubectl data...")
     manifest.fetch_ssm()
@@ -170,6 +205,7 @@ def fetch_kubectl_data(manifest: Manifest, context: str, include_teams: bool) ->
 
     landing_page_url: str = k8s.get_service_hostname(name="landing-page-public", context=context, namespace="env")
     manifest.landing_page_url = f"http://{landing_page_url}"
+    manifest.elbs = elb.get_elbs_by_service(manifest=manifest)
 
     manifest.write_manifest_ssm()
     _logger.debug("Kubectl data fetched successfully.")
@@ -239,6 +275,9 @@ def deploy_teams(manifest: Manifest) -> None:
         output_path = _generate_teams_manifest(manifest=manifest)
         output_path = _generate_env_manifest(manifest=manifest, clean_up=False)
         sh.run(f"kubectl apply -f {output_path} --context {context}")
+        output_path = _generate_aws_auth_config_map(manifest=manifest, context=context, with_teams=True)
+        _logger.debug("Updating aws-auth configMap")
+        sh.run(f"kubectl apply -f {output_path} --context {context}")
         fetch_kubectl_data(manifest=manifest, context=context, include_teams=True)
 
 
@@ -267,11 +306,15 @@ def destroy_teams(manifest: Manifest) -> None:
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
         context = get_k8s_context(manifest=manifest)
         _logger.debug("kubectl context: %s", context)
+        output_path = _generate_aws_auth_config_map(manifest=manifest, context=context, with_teams=False)
+        _logger.debug("Updating aws-auth configMap")
+        sh.run(f"kubectl apply -f {output_path} --context {context}")
+        _logger.debug("Attempting kubectl delete")
         output_path = _generate_teams_manifest(manifest=manifest)
         try:
             sh.run(
                 f"kubectl delete -f {output_path} --grace-period=0 --force "
-                f"--ignore-not-found --wait --context {context}"
+                f"--ignore-not-found --wait=false --context {context}"
             )
         except exceptions.FailedShellCommand as ex:
             _logger.debug("Skipping: %s", ex)

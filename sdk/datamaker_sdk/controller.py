@@ -476,7 +476,7 @@ def get_active_tasks(user_filter: Optional[Any]) -> Union[dict, List[Dict[str, A
     if len(tasks) == 0:
         return {}
     task_descs = ecs.describe_tasks(
-        cluster=f"datamaker-{props['AWS_DATAMAKER_ENV']}-{props['DATAMAKER_TEAM_SPACE']}-cluster", tasks=tasks
+        cluster=clusterName, tasks=tasks
     )["tasks"]
     for t in task_descs:
         task_definition = {}
