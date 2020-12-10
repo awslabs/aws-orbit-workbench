@@ -201,7 +201,7 @@ class S3Stack(Stack):
 
         CfnOutput(
             scope=self,
-            id="lake_bucket",
+            id="lake_bucket_name",
             export_name="lake-bucket-name",
             value=lake_bucket.bucket_name,
         )
@@ -215,7 +215,7 @@ class S3Stack(Stack):
 
         CfnOutput(
             scope=self,
-            id="lakebucketreadonlypoloicy",
+            id="lakebucketreadonlypolicy",
             export_name="lake-bucket-read-only-policy",
             value=lake_bucket_read_only_access.managed_policy_name,
         )
