@@ -1,0 +1,18 @@
+{
+    "fargateProfileName": "datamaker-dev-env-lake-creator",
+    "clusterName": "datamaker-dev-env",
+    "podExecutionRoleArn": "arn:aws:iam::011316101677:role/datamaker-dev-env-lake-creator-role",
+    "subnets": [
+        "subnet-0fb4e12df5036cacc",
+        "subnet-0cd1170e120879dab"
+    ],
+    "selectors": [
+        {
+            "namespace": "lake-creator",
+            "labels": {
+                "team": "lake-creator",
+                "deployment": "fargate"
+            }
+        }
+    ]
+}

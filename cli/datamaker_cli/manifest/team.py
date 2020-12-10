@@ -76,6 +76,10 @@ class TeamManifest:
         self.bootstrap_s3_prefix: str = f"teams/{self.name}/bootstrap/"
         self.scratch_bucket: Optional[str] = None
         self.scratch_retention_days: int = 30
+        self.container_defaults = {
+            "cpu": 1,
+            "memory": 2048
+        }
 
         # Need to fill up
         self.raw_ssm: Optional[MANIFEST_TEAM_TYPE] = None

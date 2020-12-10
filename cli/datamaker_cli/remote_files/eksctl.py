@@ -97,6 +97,17 @@ def generate_manifest(manifest: Manifest, name: str, output_teams: bool = True) 
         }
     )
 
+    MANIFEST["fargateProfiles"] = [
+        {
+            "name": "fargate-default",
+            "selectors": [
+                {"namespace": "default"},
+                {"namespace": "kube-system"},
+            ]
+        }
+    ]
+
+
     _logger.debug("eksctl manifest:\n%s", pprint.pformat(MANIFEST))
     output_filename = f"{manifest.filename_dir}/.datamaker.out/{manifest.name}/eksctl/cluster.yaml"
     os.makedirs(os.path.dirname(output_filename), exist_ok=True)
