@@ -190,39 +190,14 @@ class VpcStack(Stack):
 
 class S3Stack(Stack):
     def __init__(self, scope: Construct, id: str, env_name: str, **kwargs: Any) -> None:
-        self.env_name = env_name
-        lake_bucket = s3.Bucket(
-            scope=scope,
-            id="lake_bucket",
-            bucket_name=f"datamaker-{self.env_name}-lake-bucket",
-            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            encryption=s3.BucketEncryption.S3_MANAGED,
-        )
 
-        lake_bucket_full_access = iam.ManagedPolicy(
-            self,
-            "LakeBucketFullAccess",
-            statements=[
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        "s3:*",
-                    ],
-                    resources=[lake_bucket.arn_for_objects("*"), lake_bucket.bucket_arn],
-                )
-            ],
-        )
-        lake_bucket_read_only_access = iam.ManagedPolicy(
-            self,
-            "LakeBucketReadOnlyAccess",
-            statements=[
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=["s3:Get*", "s3:List*"],
-                    resources=[lake_bucket.arn_for_objects("*"), lake_bucket.bucket_arn],
-                ),
-            ],
-        )
+        self.env_name = env_name
+        super().__init__(scope, id, **kwargs)
+        Tags.of(scope=self).add(key="Env", value=f"datamaker-{env_name}")
+
+        lake_bucket = self._create_lake_bucket()
+        lake_bucket_full_access = self._create_fullaccess_managed_policies(bucket=lake_bucket)
+        lake_bucket_read_only_access = self._create_readonlyaccess_managed_policies(bucket=lake_bucket)
 
         CfnOutput(
             scope=self,
@@ -244,6 +219,46 @@ class S3Stack(Stack):
             export_name="lake-bucket-read-only-policy",
             value=lake_bucket_read_only_access.managed_policy_name,
         )
+
+    def _create_lake_bucket(self) -> s3.Bucket:
+        lake_bucket = s3.Bucket(
+            scope=self,
+            id="lake_bucket",
+            bucket_name=f"datamaker-{self.env_name}-lake-bucket",
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            encryption=s3.BucketEncryption.S3_MANAGED,
+        )
+        return lake_bucket
+
+    def _create_fullaccess_managed_policies(self, bucket: s3.Bucket) -> iam.ManagedPolicy:
+        lake_bucket_full_access = iam.ManagedPolicy(
+            self,
+            "LakeBucketFullAccess",
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "s3:*",
+                    ],
+                    resources=[bucket.arn_for_objects("*"), bucket.bucket_arn],
+                )
+            ],
+        )
+        return lake_bucket_full_access
+
+    def _create_readonlyaccess_managed_policies(self, bucket: s3.Bucket) -> iam.ManagedPolicy:
+        lake_bucket_read_only_access = iam.ManagedPolicy(
+            self,
+            "LakeBucketReadOnlyAccess",
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["s3:Get*", "s3:List*"],
+                    resources=[bucket.arn_for_objects("*"), bucket.bucket_arn],
+                ),
+            ],
+        )
+        return lake_bucket_read_only_access
 
 
 def main() -> None:
