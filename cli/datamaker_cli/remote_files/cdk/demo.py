@@ -31,10 +31,11 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 class DemoStack(Stack):
-    def __init__(self, scope: Construct, id: str, env_name: str, **kwargs: Any) -> None:
-        self.env_name = env_name
+    def __init__(self, scope: Construct, id: str, manifest: Manifest, **kwargs: Any) -> None:
+        self.env_name = manifest.name
+        self.manifest = manifest
         super().__init__(scope, id, **kwargs)
-        Tags.of(scope=self).add(key="Env", value=f"datamaker-{env_name}")
+        Tags.of(scope=self).add(key="Env", value=f"datamaker-{self.env_name}")
         self.vpc: ec2.Vpc = self._create_vpc()
         self.public_subnets_ids: Tuple[str, ...] = tuple(x.subnet_id for x in self.vpc.public_subnets)
         self.private_subnets_ids: Tuple[str, ...] = tuple(x.subnet_id for x in self.vpc.private_subnets)
@@ -237,7 +238,7 @@ class DemoStack(Stack):
         lake_bucket = s3.Bucket(
             scope=self,
             id="lake_bucket",
-            bucket_name=f"datamaker-{self.env_name}-lake-bucket",
+            bucket_name=f"datamaker-{self.env_name}-demo-lake-{self.manifest.account_id}-{self.manifest.deploy_id}",
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             encryption=s3.BucketEncryption.S3_MANAGED,
         )
@@ -256,6 +257,7 @@ class DemoStack(Stack):
                     resources=[bucket.arn_for_objects("*"), bucket.bucket_arn],
                 )
             ],
+            managed_policy_name=f"datamaker-{self.env_name}-lake-bucket-fullaccess",
         )
         return lake_bucket_full_access
 
@@ -270,6 +272,7 @@ class DemoStack(Stack):
                     resources=[bucket.arn_for_objects("*"), bucket.bucket_arn],
                 ),
             ],
+            managed_policy_name=f"datamaker-{self.env_name}-lake-bucket-readonlyaccess",
         )
         return lake_bucket_read_only_access
 
@@ -289,7 +292,7 @@ def main() -> None:
     shutil.rmtree(outdir)
 
     app = App(outdir=outdir)
-    DemoStack(scope=app, id=manifest.demo_stack_name, env_name=manifest.name)
+    DemoStack(scope=app, id=manifest.demo_stack_name, manifest=manifest)
     app.synth(force=True)
 
 
