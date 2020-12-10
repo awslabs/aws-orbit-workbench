@@ -256,12 +256,19 @@ class IamBuilder:
 
         # user_policies = [iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name=policy_name)]
         # #TODO - Parse list to IAM policies
-        user_policies = [
+        aws_managed_user_policies = [
             iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name=policy_name)
             for policy_name in policy_names
+            if "datamaker" not in policy_name
         ]
 
-        managed_policies = managed_policies + user_policies
+        datamaker_custom_policies = [
+            iam.ManagedPolicy.from_managed_policy_name(managed_policy_name=policy_name)
+            for policy_name in policy_names
+            if "datamaker" in policy_name
+        ]
+
+        managed_policies = managed_policies + aws_managed_user_policies + datamaker_custom_policies
 
         return iam.Role(
             scope=scope,
