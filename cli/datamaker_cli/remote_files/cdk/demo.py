@@ -60,7 +60,7 @@ class DemoStack(Stack):
             ),
             type=ssm.ParameterType.STRING,
             description="DataMaker Demo resources.",
-            parameter_name="/datamaker/demo",
+            parameter_name="/datamaker/{self.env_name}/demo",
             simple_name=False,
             tier=ssm.ParameterTier.INTELLIGENT_TIERING,
         )

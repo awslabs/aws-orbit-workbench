@@ -179,6 +179,7 @@ Resources:
             Resource:
               - arn:aws:ssm:${region}:${account_id}:parameter/datamaker/${env_name}/manifest
               - arn:aws:ssm:${region}:${account_id}:parameter/datamaker/${env_name}/teams/*
+              - arn:aws:ssm:${region}:${account_id}:parameter/datamaker/${env_name}/demo
           - Effect: Allow
             Action:
               - kms:*
