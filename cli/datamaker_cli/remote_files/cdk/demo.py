@@ -262,6 +262,7 @@ def main() -> None:
 
     app = App(outdir=outdir)
     VpcStack(scope=app, id=manifest.demo_stack_name, env_name=manifest.name)
+    S3Stack(scope=app, id=manifest.demo_stack_name, env_name=manifest.name)
     app.synth(force=True)
 
 
