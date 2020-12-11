@@ -249,7 +249,10 @@ class IamBuilder:
                     actions=[
                         "lambda:InvokeFunction",
                     ],
-                    resources=[f"arn:aws:lambda:{region}:{account}:function:datamaker-{env_name}*"],
+                    resources=[
+                        f"arn:{partition}:lambda:{region}:{account}:function:datamaker-{env_name}-{team_name}-*",
+                        f"arn:{partition}:lambda:{region}:{account}:function:datamaker-{env_name}-token-validation"
+                    ],
                 ),
             ],
         )
