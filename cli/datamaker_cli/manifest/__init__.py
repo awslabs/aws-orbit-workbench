@@ -21,13 +21,14 @@ import boto3
 import botocore.config
 import botocore.exceptions
 import yaml
-
+import pprint
 from datamaker_cli import utils
 from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE, PluginManifest
 from datamaker_cli.manifest.subnet import SubnetKind, SubnetManifest
 from datamaker_cli.manifest.team import MANIFEST_FILE_TEAM_TYPE, TeamManifest
 from datamaker_cli.manifest.vpc import MANIFEST_FILE_VPC_TYPE, MANIFEST_VPC_TYPE, VpcManifest
 from datamaker_cli.services import cognito
+from yamlinclude import YamlIncludeConstructor
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -177,7 +178,20 @@ class Manifest:
     @staticmethod
     def _read_manifest_file(filename: str) -> MANIFEST_FILE_TYPE:
         _logger.debug("reading manifest file (%s)", filename)
-        with open(filename, "r") as f:
+        filename = os.path.abspath(filename)
+        if 'bundle' in filename:
+            # When the manifest is in the bundle, it will be in the 'conf' folder with all the files from its original folder
+            # and the manifest will always be named manifest.yaml (renamed from its original name)
+            conf_dir = os.path.join(os.path.dirname(filename),"conf")
+        else:
+            conf_dir = os.path.dirname(filename)
+
+        manifest_path = os.path.join(conf_dir, os.path.basename(filename))
+
+        _logger.debug("manifest : %s", manifest_path)
+        _logger.debug("conf directory: %s", conf_dir)
+        YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.SafeLoader, base_dir=conf_dir)
+        with open(manifest_path, "r") as f:
             return cast(MANIFEST_FILE_TYPE, yaml.safe_load(f))
 
     @staticmethod
@@ -198,6 +212,7 @@ class Manifest:
         return []
 
     def _parse_teams(self) -> List[TeamManifest]:
+
         return [
             TeamManifest(
                 manifest=self,
@@ -212,6 +227,7 @@ class Manifest:
                 jupyterhub_inbound_ranges=cast(List[str], t.get("jupyterhub-inbound-ranges", [])),
                 image=cast(Optional[str], t.get("image")),
                 plugins=self._parse_plugins(team=t),
+                profiles=t.get("profiles")
             )
             for t in cast(List[MANIFEST_FILE_TEAM_TYPE], self.raw_file["teams"])
         ]

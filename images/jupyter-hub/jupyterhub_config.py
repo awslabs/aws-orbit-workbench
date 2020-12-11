@@ -63,9 +63,9 @@ c.KubeSpawner.volume_mounts = [{"mountPath": "/efs", "name": "efs-volume"}]
 c.KubeSpawner.lifecycle_hooks = {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh"]}}}
 c.KubeSpawner.node_selector = {"team": TEAM}
 c.KubeSpawner.service_account = "jupyter-user"
-c.KubeSpawner.profile_list = [
+profile_list_default = [
     {
-        "display_name": "Nano",
+        "display_name": "Nano1",
         "slug": "nano",
         "description": "1 CPU + 1G MEM",
         "kubespawner_override": {
@@ -76,7 +76,7 @@ c.KubeSpawner.profile_list = [
         },
     },
     {
-        "display_name": "Micro",
+        "display_name": "Micro2",
         "slug": "micro",
         "description": "2 CPU + 2G MEM",
         "kubespawner_override": {
@@ -88,6 +88,15 @@ c.KubeSpawner.profile_list = [
         "default": True,
     },
 ]
+
+def per_user_profiles(spawner):
+    print(f"USER PROFILE CALLED: {spawner.__class__} {spawner.__dict__}")
+    return profile_list_default
+
+c.KubeSpawner.profile_list = per_user_profiles
+
+
+
 
 """
 AUTH
