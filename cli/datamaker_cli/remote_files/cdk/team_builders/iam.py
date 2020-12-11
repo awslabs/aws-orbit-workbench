@@ -263,7 +263,7 @@ class IamBuilder:
         ]
 
         datamaker_custom_policies = [
-            iam.ManagedPolicy.from_managed_policy_name(managed_policy_name=policy_name)
+            iam.ManagedPolicy.from_managed_policy_name(scope=scope, id=policy_name, managed_policy_name=policy_name)
             for policy_name in policy_names
             if "datamaker" in policy_name
         ]
