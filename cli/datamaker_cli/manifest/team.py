@@ -84,9 +84,7 @@ class TeamManifest:
         self.eks_nodegroup_role_arn: Optional[str] = None
         self.jupyter_url: Optional[str] = None
         self.ecs_cluster_name: Optional[str] = None
-        self.ecs_task_definition_arn: Optional[str] = None
-        self.ecs_container_runner_arn: Optional[str] = None
-        self.eks_container_runner_arn: Optional[str] = None
+        self.container_runner_arn: Optional[str] = None
 
     def _read_manifest_ssm(self) -> Optional[MANIFEST_TEAM_TYPE]:
         _logger.debug("Trying to read manifest from SSM parameter.")
@@ -152,9 +150,7 @@ class TeamManifest:
             self.scratch_bucket = cast(str, raw.get("scratch-bucket"))
             self.scratch_retention_days = cast(int, raw.get("scratch-retention-days"))
             self.ecs_cluster_name = cast(str, raw.get("ecs-cluster-name"))
-            self.ecs_task_definition_arn = cast(str, raw.get("ecs-task-definition-arn"))
-            self.ecs_container_runner_arn = cast(str, raw.get("ecs-container-runner-arn"))
-            self.eks_container_runner_arn = cast(str, raw.get("eks-container-runner-arn"))
+            self.container_runner_arn = cast(str, raw.get("container-runner-arn"))
             _logger.debug("Team %s loaded successfully from SSM.", self.name)
 
     def construct_ecr_repository_name(self, env: str) -> str:

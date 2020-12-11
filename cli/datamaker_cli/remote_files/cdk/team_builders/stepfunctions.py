@@ -69,7 +69,7 @@ class StateMachineBuilder:
         return LambdaInvoke(
             scope=scope,
             id="ConstructUrl",
-            lambda_function=LambdaBuilder.build_construct_url(
+            lambda_function=LambdaBuilder.get_or_build_construct_url(
                 scope=scope, manifest=manifest, team_manifest=team_manifest
             ),
             payload_response_only=True,
@@ -140,12 +140,14 @@ class StateMachineBuilder:
         manifest: Manifest,
         team_manifest: TeamManifest,
         image: ecs.EcrImage,
-        eks_describe_cluster: aws_lambda.Function,
         role: iam.IRole,
     ) -> sfn.StateMachine:
         # We use a nested Construct to avoid collisions with Lambda and Task ids
         construct = core.Construct(scope, "eks_run_container_nested_construct")
 
+        eks_describe_cluster = LambdaBuilder.get_or_build_eks_describe_cluster(
+            scope=construct, manifest=manifest, team_manifest=team_manifest
+        )
         eks_describe_cluster_task = StateMachineBuilder._build_eks_describe_cluster_task(
             scope=construct,
             lambda_function=eks_describe_cluster,
@@ -231,12 +233,14 @@ class StateMachineBuilder:
         scope: core.Construct,
         manifest: Manifest,
         team_manifest: TeamManifest,
-        eks_describe_cluster: aws_lambda.Function,
         role: iam.IRole,
     ) -> sfn.StateMachine:
         # We use a nested Construct to avoid collisions with Lambda and Task ids
         construct = core.Construct(scope, "eks_get_pod_logs_nested_construct")
 
+        eks_describe_cluster = LambdaBuilder.get_or_build_eks_describe_cluster(
+            scope=construct, manifest=manifest, team_manifest=team_manifest
+        )
         eks_describe_cluster_task = StateMachineBuilder._build_eks_describe_cluster_task(
             scope=construct,
             lambda_function=eks_describe_cluster,
