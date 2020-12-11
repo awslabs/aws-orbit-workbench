@@ -68,8 +68,8 @@ class EcsBuilder:
         task_definition = ecs.TaskDefinition(
             scope,
             "ecs_task_definition",
-            memory_mib="16384",
-            cpu="4096",
+            memory_mib=f"{team_manifest.container_defaults['memory']}",
+            cpu=f"{team_manifest.container_defaults['cpu'] * 1024}",
             execution_role=ecs_execution_role,
             task_role=ecs_task_role,
             compatibility=ecs.Compatibility.EC2_AND_FARGATE,
@@ -86,7 +86,7 @@ class EcsBuilder:
         )
         container_definition = task_definition.add_container(
             "datamaker-runner",
-            memory_limit_mib=16384,
+            memory_limit_mib=team_manifest.container_defaults["memory"],
             image=image,
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix=f"datamaker-{manifest.name}-{team_manifest.name}",

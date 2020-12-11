@@ -122,7 +122,7 @@ class Team(Stack):
             file_system=self.efs,
             image=self.ecr_image,
         )
-        self.ecs_container_runner = StateMachineBuilder.build_ecs_run_container_state_machine(
+        self.ecs_fargate_runner = StateMachineBuilder.build_ecs_run_container_state_machine(
             scope=self,
             manifest=manifest,
             team_manifest=team_manifest,
@@ -131,35 +131,34 @@ class Team(Stack):
             efs_security_group=self.sg_efs,
             subnets=self.i_private_subnets if self.manifest.internet_accessible else self.i_isolated_subnets,
             role=self.role_eks_nodegroup,
+            scratch_bucket=self.scratch_bucket,
         )
-        self.eks_describe_cluster = LambdaBuilder.build_eks_describe_cluster(
-            scope=self,
-            manifest=manifest,
-            team_manifest=team_manifest,
-        )
-        self.eks_container_runner = StateMachineBuilder.build_eks_run_container_state_machine(
+        self.eks_fargate_runner = StateMachineBuilder.build_eks_run_container_state_machine(
             scope=self,
             manifest=manifest,
             team_manifest=team_manifest,
             image=self.ecr_image,
-            eks_describe_cluster=self.eks_describe_cluster,
             role=self.role_eks_nodegroup,
         )
         self.eks_get_pod_logs = StateMachineBuilder.build_eks_get_pod_logs_state_machine(
             scope=self,
             manifest=manifest,
             team_manifest=team_manifest,
-            eks_describe_cluster=self.eks_describe_cluster,
             role=self.role_eks_nodegroup,
+        )
+
+        self.container_runner = LambdaBuilder.build_container_runner(
+            scope=self,
+            manifest=manifest,
+            team_manifest=team_manifest,
+            ecs_fargate_runner=self.ecs_fargate_runner,
         )
 
         self.team_manifest.efs_id = self.efs.file_system_id
         self.team_manifest.eks_nodegroup_role_arn = self.role_eks_nodegroup.role_arn
         self.team_manifest.scratch_bucket = self.scratch_bucket.bucket_name
         self.team_manifest.ecs_cluster_name = self.ecs_cluster.cluster_name
-        self.team_manifest.ecs_task_definition_arn = self.ecs_task_definition.task_definition_arn
-        self.team_manifest.ecs_container_runner_arn = self.ecs_container_runner.state_machine_arn
-        self.team_manifest.eks_container_runner_arn = self.eks_container_runner.state_machine_arn
+        self.team_manifest.container_runner_arn = self.container_runner.function_arn
 
         self.manifest_parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,
