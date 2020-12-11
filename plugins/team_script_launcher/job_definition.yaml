@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: team-script-${plugin_id}
+spec:
+  template:
+    spec:
+      nodeSelector:
+        team: ${team}
+      containers:
+      - name: kubectl-aws
+        securityContext:
+          runAsUser: 1000
+        imagePullPolicy: Always
+        image: ${account_id}.dkr.ecr.${region}.amazonaws.com/datamaker-${env_name}-jupyter-user:${tag}
+        env:
+          - name: AWS_DEFAULT_REGION
+            value: ${region}
+          - name: ENV_NAME
+            value: ${env_name}
+          - name: TEAM
+            value: ${team}
+
+        command: ["/bin/bash"]
+        args:
+          - -c
+          - >-
+            ln -s /efs/shared /home/jovyan/shared &&
+            source /scripts/{plugin_id}-script.sh &&
+            echo "DONE EXECUTING SCRIPT"
+        volumeMounts:
+          - mountPath: /efs
+            name: efs-volume
+          - name: scripts
+            mountPath: /scripts
+      volumes:
+        - name: efs-volume
+          persistentVolumeClaim:
+            claimName: jupyterhub
+        - name: scripts
+          configMap:
+            name: ${plugin_id}-script
+            defaultMode: 0744
+      restartPolicy: ${restart_policy}
