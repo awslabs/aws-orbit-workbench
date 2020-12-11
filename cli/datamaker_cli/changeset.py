@@ -45,12 +45,14 @@ class PluginChangeset:
         new: List[str],
         old_paths: Dict[str, str],
         old_parameters: Dict[str, Dict[str, Any]],
+        old_module_names: Dict[str, str],
     ) -> None:
         self.team_name: str = team_name
         self.old: List[str] = old
         self.new: List[str] = new
         self.old_paths: Dict[str, str] = old_paths
         self.old_parameters: Dict[str, Dict[str, Any]] = old_parameters
+        self.old_module_names: Dict[str, str] = old_module_names
 
     def asdict(self) -> CHANGESET_FILE_IMAGE_TYPE:
         return vars(self)
@@ -147,9 +149,18 @@ def extract_changeset(manifest: "Manifest", ctx: "MessagesContext") -> Changeset
                 cast(str, p["name"]): cast(Dict[str, Any], p.get("parameters", {}))
                 for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team.raw_ssm.get("plugins", []))
             }
+            old_module_names: Dict[str, str] = {
+                cast(str, p["name"]): cast(str, p.get("module-name", None))
+                for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team.raw_ssm.get("plugins", []))
+            }
             plugin_changesets.append(
                 PluginChangeset(
-                    team_name=team.name, old=old, new=new, old_paths=old_paths, old_parameters=old_parameters
+                    team_name=team.name,
+                    old=old,
+                    new=new,
+                    old_paths=old_paths,
+                    old_parameters=old_parameters,
+                    old_module_names=old_module_names,
                 )
             )
 
@@ -208,6 +219,7 @@ def read_changeset_file(filename: str) -> Changeset:
                 new=cast(List[str], i["new"]),
                 old_paths=cast(Dict[str, str], i["old_paths"]),
                 old_parameters=cast(Dict[str, Dict[str, Any]], i["old_parameters"]),
+                old_module_names=cast(Dict[str, str], i["old_module_names"]),
             )
             for i in cast(List[CHANGESET_FILE_PLUGIN_TYPE], raw.get("plugin_changesets", []))
         ],

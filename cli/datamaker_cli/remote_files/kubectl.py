@@ -15,15 +15,18 @@
 import logging
 import os
 import shutil
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 import yaml
 
-from datamaker_cli import DATAMAKER_CLI_ROOT, exceptions, k8s, sh, utils
+from datamaker_cli import DATAMAKER_CLI_ROOT, exceptions, k8s, plugins, sh, utils
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.team import TeamManifest
 from datamaker_cli.remote_files.utils import get_k8s_context
 from datamaker_cli.services import cfn, elb
+
+if TYPE_CHECKING:
+    from datamaker_cli.changeset import PluginChangeset
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -266,7 +269,7 @@ def deploy_env(manifest: Manifest) -> None:
         fetch_kubectl_data(manifest=manifest, context=context, include_teams=False)
 
 
-def deploy_teams(manifest: Manifest) -> None:
+def deploy_teams(manifest: Manifest, changes: List["PluginChangeset"]) -> None:
     eks_stack_name: str = f"eksctl-datamaker-{manifest.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
@@ -279,6 +282,10 @@ def deploy_teams(manifest: Manifest) -> None:
         _logger.debug("Updating aws-auth configMap")
         sh.run(f"kubectl apply -f {output_path} --context {context}")
         fetch_kubectl_data(manifest=manifest, context=context, include_teams=True)
+        for team_manifest in manifest.teams:
+            plugins.PLUGINS_REGISTRIES.deploy_team_plugins(
+                manifest=manifest, team_manifest=team_manifest, changes=changes
+            )
 
 
 def destroy_env(manifest: Manifest) -> None:
@@ -304,6 +311,8 @@ def destroy_teams(manifest: Manifest) -> None:
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
+        for team_manifest in manifest.teams:
+            plugins.PLUGINS_REGISTRIES.destroy_team_plugins(manifest=manifest, team_manifest=team_manifest)
         context = get_k8s_context(manifest=manifest)
         _logger.debug("kubectl context: %s", context)
         output_path = _generate_aws_auth_config_map(manifest=manifest, context=context, with_teams=False)

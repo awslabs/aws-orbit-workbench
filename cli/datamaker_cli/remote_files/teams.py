@@ -24,7 +24,6 @@ from datamaker_cli.manifest import Manifest
 from datamaker_cli.services import cfn, ecr, s3
 
 if TYPE_CHECKING:
-    from datamaker_cli.changeset import PluginChangeset
     from datamaker_cli.manifest.team import TeamManifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -106,7 +105,7 @@ def _deploy_team_bootstrap(manifest: "Manifest", team_manifest: "TeamManifest") 
                 )
 
 
-def deploy(manifest: "Manifest", changes: List["PluginChangeset"]) -> None:
+def deploy(manifest: "Manifest") -> None:
     for team_manifest in manifest.teams:
         cdk.deploy(
             manifest=manifest,
@@ -115,7 +114,6 @@ def deploy(manifest: "Manifest", changes: List["PluginChangeset"]) -> None:
             args=[manifest.filename, team_manifest.name],
         )
         team_manifest.fetch_ssm()
-        plugins.PLUGINS_REGISTRIES.deploy_team_plugins(manifest=manifest, team_manifest=team_manifest, changes=changes)
     for team_manifest in manifest.teams:
         _deploy_team_image(manifest=manifest, team_manifest=team_manifest)
         _deploy_team_bootstrap(manifest=manifest, team_manifest=team_manifest)
