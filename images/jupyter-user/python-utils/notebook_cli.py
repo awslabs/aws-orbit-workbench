@@ -79,7 +79,7 @@ def run_tasks():
         logger.info("Done task execution")
         notifyOnTasksCompletion("finished executing tasks", 'Tasks:\n' + os.environ['tasks'], compute)
     except Exception as e:
-        logger.error(f"Done task execution with errors, {str(e)}")
+        logger.exception(f"Done task execution with errors, {str(e)}")
         notifyOnTasksCompletion("Error while executing tasks. Errors: \n",
                                 str(e) + '\n\n Tasks:\n' + os.environ['tasks'], compute)
 

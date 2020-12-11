@@ -59,8 +59,8 @@ def run():
 
     finally:
         if len(errors) > 0:
-            logger.error("Excution had errors : %s", errors)
-            raise Exception("Excution had errors : " + str(errors))
+            logger.error("Execution had errors : %s", errors)
+            raise Exception("Execution had errors : " + str(errors))
         else:
             return "done notebook execution"
 

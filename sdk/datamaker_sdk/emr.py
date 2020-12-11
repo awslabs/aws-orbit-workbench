@@ -526,7 +526,7 @@ def spark_submit(job: Dict[str, Any]) -> Dict[str, Any]:
     else:
         waitApp = "false"
 
-    workspaceDir = props["AWS_DATAMAKER_SRC_REPO"]
+    workspaceDir = "workspace"
 
     notebookInstanceName = socket.gethostname()
 

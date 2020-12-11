@@ -17,6 +17,7 @@ from typing import Dict, List, Union, cast
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecs as ecs
 import aws_cdk.aws_iam as iam
+import aws_cdk.aws_s3 as s3
 import aws_cdk.aws_stepfunctions as sfn
 import aws_cdk.aws_stepfunctions_tasks as sfn_tasks
 import aws_cdk.core as core
@@ -86,6 +87,7 @@ class StateMachineBuilder:
         task_definition: ecs.TaskDefinition,
         efs_security_group: ec2.SecurityGroup,
         subnets: List[ec2.ISubnet],
+        scratch_bucket: s3.Bucket,
         role: iam.IRole,
     ) -> sfn.StateMachine:
         # We use a nested Construct to avoid collisions with Lambda and Task ids
@@ -115,6 +117,9 @@ class StateMachineBuilder:
                         sfn_tasks.TaskEnvironmentVariable(name="compute", value=sfn.JsonPath.string_at("$.Compute")),
                         sfn_tasks.TaskEnvironmentVariable(name="DATAMAKER_TEAM_SPACE", value=team_manifest.name),
                         sfn_tasks.TaskEnvironmentVariable(name="AWS_DATAMAKER_ENV", value=manifest.name),
+                        sfn_tasks.TaskEnvironmentVariable(
+                            name="AWS_DATAMAKER_S3_BUCKET", value=scratch_bucket.bucket_name
+                        ),
                         sfn_tasks.TaskEnvironmentVariable(
                             name="JUPYTERHUB_USER", value=sfn.JsonPath.string_at("$.JupyterHubUser")
                         ),

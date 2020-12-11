@@ -131,6 +131,7 @@ class Team(Stack):
             efs_security_group=self.sg_efs,
             subnets=self.i_private_subnets if self.manifest.internet_accessible else self.i_isolated_subnets,
             role=self.role_eks_nodegroup,
+            scratch_bucket=self.scratch_bucket,
         )
         self.eks_fargate_runner = StateMachineBuilder.build_eks_run_container_state_machine(
             scope=self,
@@ -150,7 +151,6 @@ class Team(Stack):
             scope=self,
             manifest=manifest,
             team_manifest=team_manifest,
-            toolkit_bucket=self.scratch_bucket,
             ecs_fargate_runner=self.ecs_fargate_runner,
         )
 

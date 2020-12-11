@@ -42,7 +42,7 @@ def get_properties() -> Dict[str, str]:
         ):
             raise Exception(
                 "if AWS_DATAMAKER_ENV then DATAMAKER_TEAM_SPACE, AWS_DATAMAKER_S3_BUCKET and "
-                "AWS_DATAMAKER_SRC_REPO must be set"
+                "must be set"
             )
         else:
             prop = dict(
@@ -56,11 +56,6 @@ def get_properties() -> Dict[str, str]:
         propFilePath = f"{home}/datamaker.yaml"
         with open(propFilePath, "r") as f:
             prop = safe_load(f)["properties"]
-
-    if "AWS_DATAMAKER_SRC_REPO" in os.environ:
-        prop["AWS_DATAMAKER_SRC_REPO"] = os.path.join(
-            "/ws/", os.environ["AWS_DATAMAKER_REPO"]
-        )
 
     prop[
         "ecs_cluster"

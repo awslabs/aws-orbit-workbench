@@ -16,7 +16,7 @@ import json
 import logging
 import os
 from time import sleep
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import boto3
 
