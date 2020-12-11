@@ -21,8 +21,9 @@ MANIFEST_PLUGIN_TYPE = Dict[str, Union[str, Dict[str, Any]]]
 
 
 class PluginManifest:
-    def __init__(self, name: str, parameters: Dict[str, Any], path: Optional[str] = None) -> None:
+    def __init__(self, name: str, module_name: str, parameters: Dict[str, Any], path: Optional[str] = None) -> None:
         self._name = name
+        self._module_name = module_name
         self._path = path
         self._parameters = parameters
 
@@ -35,6 +36,10 @@ class PluginManifest:
     @property
     def name(self) -> str:
         return self._name
+
+    @property
+    def module_name(self) -> str:
+        return self._module_name
 
     @property
     def path(self) -> Optional[str]:

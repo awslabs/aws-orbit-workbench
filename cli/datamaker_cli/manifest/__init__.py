@@ -190,6 +190,7 @@ class Manifest:
             return [
                 PluginManifest(
                     name=cast(str, p["name"]),
+                    module_name=cast(str, p.get("module-name", None)),
                     path=cast(str, p["path"]),
                     parameters=cast(Dict[str, Any], p.get("parameters", {})),
                 )
