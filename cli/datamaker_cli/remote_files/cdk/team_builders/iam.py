@@ -239,6 +239,21 @@ class IamBuilder:
             ],
         )
 
+        lambda_access_policy = iam.ManagedPolicy(
+            scope=scope,
+            id="lambda_policy",
+            managed_policy_name=f"datamaker-{env_name}-{team_name}-lambda-policy",
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "lambda:InvokeFunction",
+                    ],
+                    resources=[f"arn:aws:lambda:{region}:{account}:function:datamaker-{env_name}*"],
+                ),
+            ],
+        )
+
         glue_policy = iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSGlueServiceRole")
         ssm_manage_policy = iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMManagedInstanceCore")
         eks_policies = [
@@ -249,6 +264,7 @@ class IamBuilder:
 
         managed_policies = [
             lake_operational_policy,
+            lambda_access_policy,
             code_artifact_user_policy,
             glue_policy,
             ssm_manage_policy,
