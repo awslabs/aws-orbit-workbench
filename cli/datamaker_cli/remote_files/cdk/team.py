@@ -147,7 +147,11 @@ class Team(Stack):
         )
 
         self.container_runner = LambdaBuilder.build_container_runner(
-            scope=scope, manifest=manifest, team_manifest=team_manifest, ecs_fargate_runner=self.ecs_fargate_runner
+            scope=self,
+            manifest=manifest,
+            team_manifest=team_manifest,
+            toolkit_bucket=self.scratch_bucket,
+            ecs_fargate_runner=self.ecs_fargate_runner,
         )
 
         self.team_manifest.efs_id = self.efs.file_system_id

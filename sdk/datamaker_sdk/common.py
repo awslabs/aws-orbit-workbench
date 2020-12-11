@@ -36,7 +36,10 @@ def get_properties() -> Dict[str, str]:
     >>> props = get_properties()
     """
     if "AWS_DATAMAKER_ENV" in os.environ.keys():
-        if "DATAMAKER_TEAM_SPACE" not in os.environ.keys() or "AWS_DATAMAKER_S3_BUCKET" not in os.environ.keys():
+        if (
+            "DATAMAKER_TEAM_SPACE" not in os.environ.keys()
+            or "AWS_DATAMAKER_S3_BUCKET" not in os.environ.keys()
+        ):
             raise Exception(
                 "if AWS_DATAMAKER_ENV then DATAMAKER_TEAM_SPACE, AWS_DATAMAKER_S3_BUCKET and "
                 "AWS_DATAMAKER_SRC_REPO must be set"
@@ -55,9 +58,13 @@ def get_properties() -> Dict[str, str]:
             prop = safe_load(f)["properties"]
 
     if "AWS_DATAMAKER_SRC_REPO" in os.environ:
-        prop["AWS_DATAMAKER_SRC_REPO"] = os.path.join("/ws/", os.environ["AWS_DATAMAKER_REPO"])
+        prop["AWS_DATAMAKER_SRC_REPO"] = os.path.join(
+            "/ws/", os.environ["AWS_DATAMAKER_REPO"]
+        )
 
-    prop["ecs_cluster"] = f"datamaker-{prop['AWS_DATAMAKER_ENV']}-{prop['DATAMAKER_TEAM_SPACE']}-cluster"
+    prop[
+        "ecs_cluster"
+    ] = f"datamaker-{prop['AWS_DATAMAKER_ENV']}-{prop['DATAMAKER_TEAM_SPACE']}-cluster"
     prop["eks_cluster"] = f"datamaker-{prop['AWS_DATAMAKER_ENV']}"
     return prop
 
@@ -149,7 +156,11 @@ def get_scratch_database() -> str:
     glue = boto3.client("glue")
     response = glue.get_databases()
     workspace = get_workspace()
-    scratch_db_name = f"scratch_db_{workspace['env_name']}_{workspace['team_space']}".lower().replace("-", "_")
+    scratch_db_name = (
+        f"scratch_db_{workspace['env_name']}_{workspace['team_space']}".lower().replace(
+            "-", "_"
+        )
+    )
     new_location = f"s3://{workspace['scratch_bucket']}/{workspace['team_space']}/{scratch_db_name}"
     for db in response["DatabaseList"]:
         if db["Name"].lower() == scratch_db_name:

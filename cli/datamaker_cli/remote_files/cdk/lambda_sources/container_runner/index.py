@@ -33,16 +33,21 @@ def _get_event_output(execution_arn: str, event_type: str, event_id: int, detail
     evnet_details_key = event_type[0].lower() + event_type[1:] + "EventDetails"
     return_val = None
     attempts = 0
+    sleep_time = 1
+    backoff_factor = 1.6
 
-    response = sfn.get_execution_history(
-        executionArn=execution_arn,
-        reverseOrder=True,
-        maxResults=1000,
-    )
     while return_val is None:
-        attempts += 1
-        max_event_id = 0
+        sleep(sleep_time)
+        response = sfn.get_execution_history(
+            executionArn=execution_arn,
+            reverseOrder=True,
+            maxResults=1000,
+        )
         events = response["events"]
+
+        attempts += 1
+        sleep_time = round(sleep_time * backoff_factor)
+        max_event_id = 0
 
         for event in events:
             id = event["id"]
@@ -60,13 +65,7 @@ def _get_event_output(execution_arn: str, event_type: str, event_id: int, detail
             raise Exception(
                 f"Event not found. The event_type ({event_type}) and event_id ({event_id}) combination was not found."
             )
-        else:
-            sleep(3)
-            response = sfn.get_execution_history(
-                executionArn=execution_arn,
-                reverseOrder=True,
-                maxResults=1000,
-            )
+
     return return_val
 
 
@@ -84,7 +83,7 @@ def _start_ecs_fargate(event: Dict[str, Any], execution_vars: Dict[str, Any]) ->
         _get_event_output(execution_arn=execution_arn, event_type="TaskSubmitted", event_id=5, details_key="output")
     )
 
-    return {"ExecutionType": "ECS", "ExecutionArn": execution_arn, "JobArn": output["Tasks"][0]["TaskArn"]}
+    return {"ExecutionType": "ecs", "ExecutionArn": execution_arn, "JobArn": output["Tasks"][0]["TaskArn"]}
 
 
 def _start_ecs_ec2(event: Dict[str, Any], execution_vars: Dict[str, Any]) -> Dict[str, str]:
@@ -102,7 +101,7 @@ def _start_eks_ec2(event: Dict[str, Any], execution_vars: Dict[str, Any]) -> Dic
     raise NotImplementedError("EKS/EC2 Execution not yet implemented")
 
 
-def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> List[Dict[str, str]]:
+def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Dict[str, str]:
     logger.info(f"Lambda metadata: {json.dumps(event)} (type = {type(event)})")
 
     task_type = event.get("task_type", None)
@@ -129,12 +128,12 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> List[Di
     node_type = compute.get("node_type", "").lower()
 
     if compute_type == "ecs" and node_type == "fargate":
-        return [_start_ecs_fargate(event, execution_vars)]
+        return _start_ecs_fargate(event, execution_vars)
     elif compute_type == "ecs" and node_type == "ec2":
-        return [_start_ecs_ec2(event, execution_vars)]
+        return _start_ecs_ec2(event, execution_vars)
     elif compute_type == "eks" and node_type == "fargate":
-        return [_start_eks_fargate(event, execution_vars)]
+        return _start_eks_fargate(event, execution_vars)
     elif compute_type == "eks" and node_type == "ec2":
-        return [_start_eks_ec2(event, execution_vars)]
+        return _start_eks_ec2(event, execution_vars)
     else:
         raise ValueError(f"Invalid compute_type: '{compute_type}' or node_type: '{node_type}'")

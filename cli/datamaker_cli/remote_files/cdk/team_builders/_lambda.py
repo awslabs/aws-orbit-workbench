@@ -15,6 +15,7 @@
 from typing import cast
 
 import aws_cdk.aws_iam as iam
+import aws_cdk.aws_s3 as s3
 import aws_cdk.aws_stepfunctions as sfn
 import aws_cdk.core as core
 from aws_cdk import aws_lambda
@@ -30,6 +31,7 @@ class LambdaBuilder:
         scope: core.Construct,
         manifest: Manifest,
         team_manifest: TeamManifest,
+        toolkit_bucket: s3.Bucket,
         ecs_fargate_runner: sfn.StateMachine,
     ) -> aws_lambda.Function:
         return aws_lambda.Function(
@@ -40,7 +42,10 @@ class LambdaBuilder:
             handler="index.handler",
             runtime=aws_lambda.Runtime.PYTHON_3_6,
             timeout=core.Duration.minutes(5),
-            environment={"ECS_FARGATE_STATE_MACHINE_ARN": ecs_fargate_runner.state_machine_arn},
+            environment={
+                "AWS_DATAMAKER_S3_BUCKET": toolkit_bucket.bucket_name,
+                "ECS_FARGATE_STATE_MACHINE_ARN": ecs_fargate_runner.state_machine_arn,
+            },
             initial_policy=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
