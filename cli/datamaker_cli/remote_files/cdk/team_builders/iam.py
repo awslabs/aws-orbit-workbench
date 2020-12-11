@@ -251,7 +251,7 @@ class IamBuilder:
                     ],
                     resources=[
                         f"arn:{partition}:lambda:{region}:{account}:function:datamaker-{env_name}-{team_name}-*",
-                        f"arn:{partition}:lambda:{region}:{account}:function:datamaker-{env_name}-token-validation"
+                        f"arn:{partition}:lambda:{region}:{account}:function:datamaker-{env_name}-token-validation",
                     ],
                 ),
             ],
