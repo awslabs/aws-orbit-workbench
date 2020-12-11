@@ -172,6 +172,16 @@ class StateMachineBuilder:
                                 "name": "datamaker-runner",
                                 "image": image.image_name,
                                 "command": COMMAND,
+                                "resources": {
+                                    "limits": {
+                                        "cpu": f"{team_manifest.container_defaults['cpu']}",
+                                        "memory": f"{team_manifest.container_defaults['memory']}M",
+                                    },
+                                    "requests": {
+                                        "cpu": f"{team_manifest.container_defaults['cpu']}",
+                                        "memory": f"{team_manifest.container_defaults['memory']}M",
+                                    },
+                                },
                                 "env": [
                                     {"name": "task_type", "value": sfn.JsonPath.string_at("$.TaskType")},
                                     {"name": "tasks", "value": sfn.JsonPath.string_at("$.Tasks")},
@@ -266,6 +276,7 @@ class StateMachineBuilder:
             scope=construct,
             id="eks_get_pod_logs_state_machine",
             state_machine_name=f"datamaker-{manifest.name}-{team_manifest.name}-get-pod-logs",
+            state_machine_type=sfn.StateMachineType.EXPRESS,
             definition=definition,
             role=role,
         )
