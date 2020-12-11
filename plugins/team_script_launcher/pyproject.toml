@@ -9,7 +9,6 @@ exclude = '''
   | \.mypy_cache
   | \.tox
   | \.venv
-  | \.env
   | _build
   | buck-out
   | build
@@ -25,6 +24,6 @@ force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 120
-src_paths = ["setup.py", "datamaker_cli"]
+src_paths = ["setup.py", "hello_world"]
 py_version = 36
 skip_gitignore = true

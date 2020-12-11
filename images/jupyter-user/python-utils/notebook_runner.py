@@ -120,8 +120,9 @@ def runNotebook(parameters):
             output_path = pathToOutputNotebookError
 
     if not output_path.startswith("s3:"):
-        logger.info(f"Changing ownership of output file: chown {os_user}:{os_group} {output_path}")
+        logger.info(f"Changing ownership of output file:  `chown {os_user}:{os_group} {output_path}`")
         shutil.chown(output_path, os_user, os_group)
+        os.chmod(output_path, 0o664)
 
     logger.info("Completed notebook execution: %s", output_path)
     return errors

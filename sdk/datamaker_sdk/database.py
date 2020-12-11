@@ -984,7 +984,7 @@ class AthenaUtils(DatabaseCommon):
             region_name = workspace["region"]
 
         if S3QueryResultsLocation == None:
-            S3QueryResultsLocation = f"s3://{workspace['scratch_bucket']}/athena"
+            S3QueryResultsLocation = f"s3://{workspace['scratch-bucket']}/athena"
 
         template_con_str = (
             "awsathena+rest://athena.{region_name}.amazonaws.com:443/"
