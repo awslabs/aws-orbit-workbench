@@ -284,11 +284,11 @@ class Manifest:
                 Tier="Intelligent-Tiering",
             )
 
-    def _write_manifest_file(self) -> None:
+    def write_manifest_file(self) -> None:
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
         with open(self.filename, "w") as file:
             yaml.safe_dump(data=self.asdict_file(), stream=file, sort_keys=False, indent=4)
-        _logger.debug("Manifest file updated: %s", self.filename)
+        _logger.debug("Manifest file updated: %s", os.path.abspath(self.filename))
 
     def boto3_client(self, service_name: str) -> boto3.client:
         return self._boto3_session().client(service_name=service_name, use_ssl=True, config=self._botocore_config())
@@ -399,7 +399,6 @@ class Manifest:
 
         self.fetch_ssm()
         self.write_manifest_ssm()
-        self._write_manifest_file()
         _logger.debug("DEMO data fetched successfully.")
 
     def fetch_network_data(self) -> None:

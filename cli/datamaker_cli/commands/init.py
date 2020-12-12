@@ -18,7 +18,7 @@ from typing import Optional
 
 from datamaker_cli import DATAMAKER_CLI_ROOT, utils
 from datamaker_cli.messages import MessagesContext, stylize
-
+import shutil
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
@@ -43,15 +43,20 @@ def create_manifest(
         jupyter_user_repository="../images/jupyter-user/" if dev else "aws-datamaker-jupyter-user",
         landing_page_repository="../images/landing-page/" if dev else "aws-datamaker-landing-page",
     )
-    output = os.path.join(".", filename)
-    with open(output, "w") as file:
+
+    with open(filename, "w") as file:
         file.write(content)
 
-
 def init(name: str, region: Optional[str], demo: bool, dev: bool, debug: bool) -> None:
+    conf_dir = "conf"
     with MessagesContext("Initializing", debug=debug) as ctx:
+        conf_dir_src = os.path.join(DATAMAKER_CLI_ROOT, "data", "init")
+        if os.path.exists(conf_dir):
+            shutil.rmtree(conf_dir)
+        shutil.copytree(src=conf_dir_src, dst=conf_dir, ignore=shutil.ignore_patterns("default-manifest.yaml"))
+        ctx.progress(50)
         name = name.lower()
-        filename: str = f"{name}.yaml"
+        filename: str = os.path.join(conf_dir, f"{name}.yaml")
         create_manifest(name=name, filename=filename, demo=demo, dev=dev, region=region)
         ctx.info(f"Manifest generated as {filename}")
         ctx.progress(100)
