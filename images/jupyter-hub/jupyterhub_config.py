@@ -15,7 +15,8 @@
 # type: ignore
 
 import os
-
+import boto3
+import json
 from tornado.log import app_log
 
 from jupyterhub_utils.authenticator import DataMakerAuthenticator
@@ -65,7 +66,7 @@ c.KubeSpawner.node_selector = {"team": TEAM}
 c.KubeSpawner.service_account = "jupyter-user"
 profile_list_default = [
     {
-        "display_name": "Nano1",
+        "display_name": "Nano",
         "slug": "nano",
         "description": "1 CPU + 1G MEM",
         "kubespawner_override": {
@@ -76,7 +77,7 @@ profile_list_default = [
         },
     },
     {
-        "display_name": "Micro2",
+        "display_name": "Micro",
         "slug": "micro",
         "description": "2 CPU + 2G MEM",
         "kubespawner_override": {
@@ -90,8 +91,19 @@ profile_list_default = [
 ]
 
 def per_user_profiles(spawner):
-    print(f"USER PROFILE CALLED: {spawner.__class__} {spawner.__dict__}")
-    return profile_list_default
+    team = spawner.environment['DATAMAKER_TEAM_SPACE']
+    env  = spawner.environment['AWS_DATAMAKER_ENV']
+    region = spawner.environment['AWS_DEFAULT_REGION']
+    ssm = boto3.client('ssm')
+
+    ssm_parameter_name: str = f"/datamaker/{env}/teams/{team}/manifest"
+    json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
+
+    team_manifest_dic = json.loads(json_str)
+    if 'profiles' in team_manifest_dic:
+        return team_manifest_dic['profiles']
+    else:
+       return profile_list_default
 
 c.KubeSpawner.profile_list = per_user_profiles
 
