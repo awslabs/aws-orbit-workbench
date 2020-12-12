@@ -107,9 +107,9 @@ def generate_bundle(
     bundled_manifest_path_conf = os.path.join(bundle_dir, "conf")
     os.makedirs(bundle_dir, exist_ok=True)
 
-    _logger.debug(f'copy conf_dir={conf_dir} to {bundled_manifest_path_conf}')
+    _logger.debug(f"copy conf_dir={conf_dir} to {bundled_manifest_path_conf}")
     shutil.copytree(src=conf_dir, dst=bundled_manifest_path_conf)
-    _logger.debug(f'copy manifest file={manifest.filename} to {bundled_manifest_path_conf}')
+    _logger.debug(f"copy manifest file={manifest.filename} to {bundled_manifest_path_conf}")
     shutil.copy(src=manifest.filename, dst=bundled_manifest_path)
 
     # changeset

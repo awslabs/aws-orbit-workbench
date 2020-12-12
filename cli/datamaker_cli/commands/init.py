@@ -14,11 +14,12 @@
 
 import logging
 import os
+import shutil
 from typing import Optional
 
 from datamaker_cli import DATAMAKER_CLI_ROOT, utils
 from datamaker_cli.messages import MessagesContext, stylize
-import shutil
+
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
@@ -46,6 +47,7 @@ def create_manifest(
 
     with open(filename, "w") as file:
         file.write(content)
+
 
 def init(name: str, region: Optional[str], demo: bool, dev: bool, debug: bool) -> None:
     conf_dir = "conf"

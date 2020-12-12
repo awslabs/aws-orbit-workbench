@@ -15,23 +15,24 @@
 import json
 import logging
 import os
+import pprint
 from typing import Any, Dict, List, Optional, Union, cast
 
 import boto3
 import botocore.config
 import botocore.exceptions
 import yaml
-import pprint
+from yamlinclude import YamlIncludeConstructor
+
 from datamaker_cli import utils
 from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE, PluginManifest
 from datamaker_cli.manifest.subnet import SubnetKind, SubnetManifest
 from datamaker_cli.manifest.team import MANIFEST_FILE_TEAM_TYPE, TeamManifest
 from datamaker_cli.manifest.vpc import MANIFEST_FILE_VPC_TYPE, MANIFEST_VPC_TYPE, VpcManifest
 from datamaker_cli.services import cognito
-from yamlinclude import YamlIncludeConstructor
 
 _logger: logging.Logger = logging.getLogger(__name__)
-
+MANIFEST_PROPERTY_MAP_TYPE = Dict[str, Union[str, Dict[str, Any]]]
 MANIFEST_FILE_IMAGES_TYPE = Dict[str, Dict[str, str]]
 MANIFEST_FILE_NETWORKING_TYPE = Dict[str, Dict[str, Union[bool, List[str]]]]
 MANIFEST_FILE_TYPE = Dict[
@@ -179,10 +180,10 @@ class Manifest:
     def _read_manifest_file(filename: str) -> MANIFEST_FILE_TYPE:
         _logger.debug("reading manifest file (%s)", filename)
         filename = os.path.abspath(filename)
-        if 'bundle' in filename:
+        if "bundle" in filename:
             # When the manifest is in the bundle, it will be in the 'conf' folder with all the files from its original folder
             # and the manifest will always be named manifest.yaml (renamed from its original name)
-            conf_dir = os.path.join(os.path.dirname(filename),"conf")
+            conf_dir = os.path.join(os.path.dirname(filename), "conf")
         else:
             conf_dir = os.path.dirname(filename)
 
@@ -227,7 +228,7 @@ class Manifest:
                 jupyterhub_inbound_ranges=cast(List[str], t.get("jupyterhub-inbound-ranges", [])),
                 image=cast(Optional[str], t.get("image")),
                 plugins=self._parse_plugins(team=t),
-                profiles=t.get("profiles")
+                profiles=cast(List[MANIFEST_PROPERTY_MAP_TYPE], t.get("profiles")),
             )
             for t in cast(List[MANIFEST_FILE_TEAM_TYPE], self.raw_file["teams"])
         ]
