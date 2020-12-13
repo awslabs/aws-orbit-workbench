@@ -1,0 +1,20 @@
+-   name: code_commit
+    path: ../plugins/code_commit/
+-   name: hello_world
+    path: ../plugins/hello_world/
+    parameters:
+        foo: boo
+        xoo: 123
+-   name: team_script_launcher
+    path: ../plugins/team_script_launcher/
+    parameters:
+        script: |
+            echo "START LOOP"
+            i=0
+            while [ $i -lt 1 ];
+            do
+              aws s3 sync s3://datamaker-dev-env-cdk-toolkit-495869084367-758871/assets/ /home/jovyan/shared/test1
+              sleep 60
+            done
+            echo "DONE LOOP"
+        restartPolicy: OnFailure

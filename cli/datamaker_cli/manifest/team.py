@@ -45,6 +45,7 @@ class TeamManifest:
         jupyterhub_inbound_ranges: List[str],
         image: Optional[str] = None,
         profiles: List[MANIFEST_PROPERTY_MAP_TYPE] = [],
+        efs_life_cycle: str = None,
     ) -> None:
         self.manifest: "Manifest" = manifest
         self.name: str = name
@@ -79,7 +80,7 @@ class TeamManifest:
         self.scratch_bucket: Optional[str] = None
         self.scratch_retention_days: int = 30
         self.container_defaults = {"cpu": 4, "memory": 16384}
-
+        self.efs_life_cycle = None
         # Need to fill up
         self.raw_ssm: Optional[MANIFEST_TEAM_TYPE] = None
         self.efs_id: Optional[str] = None
@@ -129,6 +130,7 @@ class TeamManifest:
             "image": self.image,
             "jupyterhub-inbound-ranges": self.jupyterhub_inbound_ranges,
             "profiles": self.profiles,
+            "efs-life-cycle": self.efs_life_cycle,
             "plugins": [p.asdict_file() for p in self.plugins],
         }
 
