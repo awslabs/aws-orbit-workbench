@@ -12,12 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import json
-from typing import List
+from typing import cast
 
-import aws_cdk.aws_ec2 as ec2
-import aws_cdk.aws_ecs as ecs
 import aws_cdk.aws_iam as iam
+import aws_cdk.aws_stepfunctions as sfn
 import aws_cdk.core as core
 from aws_cdk import aws_lambda
 
@@ -28,33 +26,22 @@ from datamaker_cli.remote_files.cdk import _lambda_path
 
 class LambdaBuilder:
     @staticmethod
-    def build_ecs_container_runner(
+    def build_container_runner(
         scope: core.Construct,
         manifest: Manifest,
         team_manifest: TeamManifest,
-        ecs_execution_role: iam.Role,
-        ecs_task_role: iam.Role,
-        ecs_cluster: ecs.Cluster,
-        ecs_task_definition: ecs.TaskDefinition,
-        efs_security_group: ec2.SecurityGroup,
-        subnets: List[ec2.ISubnet],
+        ecs_fargate_runner: sfn.StateMachine,
     ) -> aws_lambda.Function:
         return aws_lambda.Function(
             scope=scope,
-            id="ecs_container_runner",
+            id="container_runner",
             function_name=f"datamaker-{manifest.name}-{team_manifest.name}-container-runner",
             code=aws_lambda.Code.asset(_lambda_path("container_runner")),
-            handler="lambda_source.handler",
+            handler="index.handler",
             runtime=aws_lambda.Runtime.PYTHON_3_6,
             timeout=core.Duration.minutes(5),
             environment={
-                "ROLE": ecs_task_role.role_arn,
-                "SECURITY_GROUP": efs_security_group.security_group_id,
-                "SUBNETS": json.dumps([s.subnet_id for s in subnets]),
-                "TASK_DEFINITION": ecs_task_definition.task_definition_arn,
-                "CLUSTER": ecs_cluster.cluster_name,
-                "AWS_DATAMAKER_ENV": manifest.name,
-                "AWS_DATAMAKER_TEAMSPACE": team_manifest.name,
+                "ECS_FARGATE_STATE_MACHINE_ARN": ecs_fargate_runner.state_machine_arn,
             },
             initial_policy=[
                 iam.PolicyStatement(
@@ -65,58 +52,66 @@ class LambdaBuilder:
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
-                        "ecs:RunTask",
+                        "states:StartExecution",
                     ],
-                    resources=[
-                        f"arn:{core.Aws.PARTITION}:ecs:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:task-definition/"
-                        f"{ecs_task_definition.family}:*"
-                    ],
+                    resources=[ecs_fargate_runner.state_machine_arn],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
-                        "iam:PassRole",
+                        "states:GetExecutionHistory",
                     ],
-                    resources=[ecs_task_role.role_arn, ecs_execution_role.role_arn],
+                    resources=[
+                        f"arn:{core.Aws.PARTITION}:states:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:"
+                        f"execution:{ecs_fargate_runner.state_machine_name}*"
+                    ],
                 ),
             ],
         )
 
     @staticmethod
-    def build_eks_describe_cluster(
+    def get_or_build_eks_describe_cluster(
         scope: core.Construct,
         manifest: Manifest,
         team_manifest: TeamManifest,
     ) -> aws_lambda.Function:
-        return aws_lambda.Function(
-            scope=scope,
-            id="eks_describe_cluster",
-            function_name=f"datamaker-{manifest.name}-{team_manifest.name}-eks-describe-cluster",
-            code=aws_lambda.Code.asset(_lambda_path("eks_describe_cluster")),
-            handler="index.handler",
-            runtime=aws_lambda.Runtime.PYTHON_3_6,
-            timeout=core.Duration.seconds(30),
-            initial_policy=[
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=["eks:DescribeCluster"],
-                    resources=["*"],
-                )
-            ],
-        )
+        stack = core.Stack.of(scope)
+        lambda_function = cast(aws_lambda.Function, stack.node.try_find_child("eks_describe_cluster"))
+        if lambda_function is None:
+            lambda_function = aws_lambda.Function(
+                scope=stack,
+                id="eks_describe_cluster",
+                function_name=f"datamaker-{manifest.name}-{team_manifest.name}-eks-describe-cluster",
+                code=aws_lambda.Code.asset(_lambda_path("eks_describe_cluster")),
+                handler="index.handler",
+                runtime=aws_lambda.Runtime.PYTHON_3_6,
+                timeout=core.Duration.seconds(30),
+                initial_policy=[
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW,
+                        actions=["eks:DescribeCluster"],
+                        resources=["*"],
+                    )
+                ],
+            )
+        return lambda_function
 
     @staticmethod
-    def build_construct_url(
+    def get_or_build_construct_url(
         scope: core.Construct,
         manifest: Manifest,
         team_manifest: TeamManifest,
     ) -> aws_lambda.Function:
-        return aws_lambda.Function(
-            scope=scope,
-            id="construct_rul",
-            function_name=f"datamaker-{manifest.name}-{team_manifest.name}-construct-url",
-            code=aws_lambda.Code.asset(_lambda_path("construct_url")),
-            handler="index.handler",
-            runtime=aws_lambda.Runtime.PYTHON_3_6,
-            timeout=core.Duration.seconds(10),
-        )
+        stack = core.Stack.of(scope)
+        lambda_function = cast(aws_lambda.Function, stack.node.try_find_child("construct_url"))
+        if lambda_function is None:
+            lambda_function = aws_lambda.Function(
+                scope=stack,
+                id="construct_url",
+                function_name=f"datamaker-{manifest.name}-{team_manifest.name}-construct-url",
+                code=aws_lambda.Code.asset(_lambda_path("construct_url")),
+                handler="index.handler",
+                runtime=aws_lambda.Runtime.PYTHON_3_6,
+                timeout=core.Duration.seconds(10),
+            )
+        return lambda_function

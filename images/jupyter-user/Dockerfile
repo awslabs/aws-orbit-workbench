@@ -7,6 +7,11 @@ RUN apt-get install sudo -y
 RUN apt-get install apt-utils -y
 RUN apt-get install build-essential -y
 RUN apt-get install curl -y
+RUN apt-get install zip unzip -y
+RUN apt-get install vim -y
+RUN apt-get install less -y
+RUN apt-get install jq -y
+
 USER $NB_UID
 
 

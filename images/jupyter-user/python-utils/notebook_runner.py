@@ -59,8 +59,8 @@ def run():
 
     finally:
         if len(errors) > 0:
-            logger.error("Excution had errors : %s", errors)
-            raise Exception("Excution had errors : " + str(errors))
+            logger.error("Execution had errors : %s", errors)
+            raise Exception("Execution had errors : " + str(errors))
         else:
             return "done notebook execution"
 
@@ -120,8 +120,9 @@ def runNotebook(parameters):
             output_path = pathToOutputNotebookError
 
     if not output_path.startswith("s3:"):
-        logger.info(f"Changing ownership of output file: chown {os_user}:{os_group} {output_path}")
+        logger.info(f"Changing ownership of output file:  `chown {os_user}:{os_group} {output_path}`")
         shutil.chown(output_path, os_user, os_group)
+        os.chmod(output_path, 0o664)
 
     logger.info("Completed notebook execution: %s", output_path)
     return errors

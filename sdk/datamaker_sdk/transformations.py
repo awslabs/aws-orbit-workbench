@@ -11,7 +11,11 @@ import datamaker_sdk.emr as sparkConnection
 from datamaker_sdk.common import get_workspace
 
 # Initialize parameters
-logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
+logging.basicConfig(
+    format="%(asctime)s %(levelname)-8s %(message)s",
+    level=logging.INFO,
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 logger = logging.getLogger()
 glue = boto3.client("glue")
@@ -72,7 +76,11 @@ def create_tasks(
             "sourcePath": source_path,
             "targetPath": f"{base_path}/{target_folder}",
             "targetPrefix": "p{}".format(i),
-            "params": {"database_name": database, "table_to_profile": table["Name"], "samplingRatio": samplingRatio},
+            "params": {
+                "database_name": database,
+                "table_to_profile": table["Name"],
+                "samplingRatio": samplingRatio,
+            },
         }
         tasks.append(task)
     logger.debug(f"Tasks: {json.dumps(tasks, indent=4, sort_keys=True, default=str)}")
@@ -166,16 +174,27 @@ def data_profile(parameters: Dict[str, str]) -> Dict[str, Any]:
         startCluster=parameters["start_cluster"],
         clusterArgs={"CoreInstanceCount": parameters["core_instance_count"]},
     )
-    logger.info(f"Cluster is ready:{livy_url} livy_url:{cluster_id} cluster_id: started:{started}")
+    logger.info(
+        f"Cluster is ready:{livy_url} livy_url:{cluster_id} cluster_id: started:{started}"
+    )
 
     # Get profiling data and print pretty json
-    response = glue.get_tables(DatabaseName=parameters["database"], Expression=parameters["table_filter"])
-    logger.debug(f"Glue response: {json.dumps(response, indent=4, sort_keys=True, default=str)}")
+    response = glue.get_tables(
+        DatabaseName=parameters["database"], Expression=parameters["table_filter"]
+    )
+    logger.debug(
+        f"Glue response: {json.dumps(response, indent=4, sort_keys=True, default=str)}"
+    )
 
     if len(response["TableList"]) == 0:
         assert False
 
-    tasks = create_tasks(response, parameters["target_folder"], parameters["database"], parameters["samplingRatio"])
+    tasks = create_tasks(
+        response,
+        parameters["target_folder"],
+        parameters["database"],
+        parameters["samplingRatio"],
+    )
 
     # Running the tasks
     logger.info(f"Starting to run spark tasks")
@@ -200,8 +219,12 @@ def data_profile(parameters: Dict[str, str]) -> Dict[str, Any]:
 
     if "trigger_name" in parameters:
         if "frequency" not in parameters:
-            raise Exception("Missing frequency parameter while a trigger_name was given")
-        container = controller.schedule_notebooks(parameters["trigger_name"], parameters["frequency"], notebooks_to_run)
+            raise Exception(
+                "Missing frequency parameter while a trigger_name was given"
+            )
+        container = controller.schedule_notebooks(
+            parameters["trigger_name"], parameters["frequency"], notebooks_to_run
+        )
     else:
         container = controller.run_notebooks(notebooks_to_run)
 
@@ -217,7 +240,10 @@ def data_profile(parameters: Dict[str, str]) -> Dict[str, Any]:
 
     logger.debug(f"Starting time: {datetime.datetime.now()}")
     controller.wait_for_tasks_to_complete(
-        containers, 120, int(parameters["total_runtime"] / 120), parameters["show_container_log"]
+        containers,
+        120,
+        int(parameters["total_runtime"] / 120),
+        parameters["show_container_log"],
     )
     logger.debug(f"Ending time: {datetime.datetime.now()}")
 
@@ -232,6 +258,9 @@ def data_profile(parameters: Dict[str, str]) -> Dict[str, Any]:
     tables = []
     for table in response["TableList"]:
         tables.append(table["Name"])
-    res = {"tables": tables, "result_path": f"{base_path}/{parameters['target_folder']}"}
+    res = {
+        "tables": tables,
+        "result_path": f"{base_path}/{parameters['target_folder']}",
+    }
 
     return res
