@@ -19,9 +19,9 @@ import shutil
 import sys
 from typing import Any, Tuple
 
+import aws_cdk.core as core
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
-from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_ssm as ssm
 from aws_cdk.core import App, CfnOutput, Construct, Stack, Tags
 
@@ -41,9 +41,14 @@ class DemoStack(Stack):
         self.private_subnets_ids: Tuple[str, ...] = tuple(x.subnet_id for x in self.vpc.private_subnets)
         self.isolated_subnets_ids: Tuple[str, ...] = tuple(x.subnet_id for x in self.vpc.isolated_subnets)
         self._create_vpc_endpoints()
-        self.lake_bucket = self._create_lake_bucket()
-        self.lake_bucket_full_access = self._create_fullaccess_managed_policies(bucket=self.lake_bucket)
-        self.lake_bucket_read_only_access = self._create_readonlyaccess_managed_policies(bucket=self.lake_bucket)
+        # self.lake_bucket = self._create_lake_bucket()
+        self.lake_bucket_name = (
+            f"datamaker-{self.env_name}-demo-lake-{self.manifest.account_id}-{self.manifest.deploy_id}"
+        )
+        self.lake_bucket_full_access = self._create_fullaccess_managed_policies(bucket_name=self.lake_bucket_name)
+        self.lake_bucket_read_only_access = self._create_readonlyaccess_managed_policies(
+            bucket_name=self.lake_bucket_name
+        )
 
         self._ssm_parameter = ssm.StringParameter(
             self,
@@ -53,7 +58,7 @@ class DemoStack(Stack):
                     "vpc_id": self.vpc.vpc_id,
                     "public_subnet": self.public_subnets_ids,
                     "private_subnet": self.private_subnets_ids,
-                    "lake_bucket": self.lake_bucket.bucket_name,
+                    "lake_bucket": self.lake_bucket_name,
                     "creator_access_policy": self.lake_bucket_full_access.managed_policy_name,
                     "user_access_policy": self.lake_bucket_read_only_access.managed_policy_name,
                 }
@@ -88,7 +93,7 @@ class DemoStack(Stack):
             scope=self,
             id=f"{id}lakebucketname",
             export_name="lake-bucket-name",
-            value=self.lake_bucket.bucket_name,
+            value=self.lake_bucket_name,
         )
 
         CfnOutput(
@@ -234,17 +239,17 @@ class DemoStack(Stack):
             private_dns_enabled=True,
         )
 
-    def _create_lake_bucket(self) -> s3.Bucket:
-        lake_bucket = s3.Bucket(
-            scope=self,
-            id="lake_bucket",
-            bucket_name=f"datamaker-{self.env_name}-demo-lake-{self.manifest.account_id}-{self.manifest.deploy_id}",
-            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            encryption=s3.BucketEncryption.S3_MANAGED,
-        )
-        return lake_bucket
+    # def _create_lake_bucket(self) -> s3.Bucket:
+    #     lake_bucket = s3.Bucket(
+    #         scope=self,
+    #         id="lake_bucket",
+    #         bucket_name=f"datamaker-{self.env_name}-demo-lake-{self.manifest.account_id}-{self.manifest.deploy_id}",
+    #         block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+    #         encryption=s3.BucketEncryption.S3_MANAGED,
+    #     )
+    #     return lake_bucket
 
-    def _create_fullaccess_managed_policies(self, bucket: s3.Bucket) -> iam.ManagedPolicy:
+    def _create_fullaccess_managed_policies(self, bucket_name: str) -> iam.ManagedPolicy:
         lake_bucket_full_access = iam.ManagedPolicy(
             self,
             "LakeBucketFullAccess",
@@ -254,14 +259,17 @@ class DemoStack(Stack):
                     actions=[
                         "s3:*",
                     ],
-                    resources=[bucket.arn_for_objects("*"), bucket.bucket_arn],
+                    resources=[
+                        f"arn:{core.Aws.PARTITION}:s3:::{bucket_name}",
+                        f"arn:{core.Aws.PARTITION}:s3:::{bucket_name}/*",
+                    ],
                 )
             ],
             managed_policy_name=f"datamaker-{self.env_name}-lake-bucket-fullaccess",
         )
         return lake_bucket_full_access
 
-    def _create_readonlyaccess_managed_policies(self, bucket: s3.Bucket) -> iam.ManagedPolicy:
+    def _create_readonlyaccess_managed_policies(self, bucket_name: str) -> iam.ManagedPolicy:
         lake_bucket_read_only_access = iam.ManagedPolicy(
             self,
             "LakeBucketReadOnlyAccess",
@@ -269,7 +277,12 @@ class DemoStack(Stack):
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=["s3:Get*", "s3:List*"],
-                    resources=[bucket.arn_for_objects("*"), bucket.bucket_arn],
+                    resources=[
+                        f"arn:{core.Aws.PARTITION}:s3:::{bucket_name}",
+                        f"arn:{core.Aws.PARTITION}:s3:::{bucket_name}/*"
+                        # bucket.arn_for_objects("*"),
+                        # bucket.bucket_arn
+                    ],
                 ),
             ],
             managed_policy_name=f"datamaker-{self.env_name}-lake-bucket-readonlyaccess",
