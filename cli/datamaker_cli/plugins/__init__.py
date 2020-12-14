@@ -14,7 +14,6 @@
 
 import importlib
 import logging
-import pprint
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set, Union, cast
 
 from datamaker_cli import utils
@@ -36,6 +35,7 @@ class PluginRegistry:
     def __init__(
         self,
         name: str,
+        module_name: str,
         team_name: str,
         parameters: Dict[str, Any],
         deploy_hook: HOOK_TYPE = None,
@@ -45,6 +45,7 @@ class PluginRegistry:
     ) -> None:
         self.name: str = name
         self.team_name: str = team_name
+        self.module_name: str = module_name
         self.parameters: Dict[str, Any] = parameters
         self._deploy_hook: HOOK_TYPE = deploy_hook
         self._destroy_hook: HOOK_TYPE = destroy_hook
@@ -142,49 +143,65 @@ class PluginRegistries:
         self, manifest: "Manifest", changes: List["PluginChangeset"], ctx: Optional["MessagesContext"] = None
     ) -> None:
         self._manifest = manifest
-        candidates: Dict[str, Dict[str, Dict[str, Dict[str, Any]]]] = {}
-        for team_manifest in manifest.teams:
-            if team_manifest.name not in candidates:
-                candidates[team_manifest.name] = {}
-            for plugin in team_manifest.plugins:
-                candidates[team_manifest.name][plugin.name] = plugin.parameters
-        for change in changes:
-            if change.team_name not in candidates:
-                candidates[change.team_name] = {}
-            for plugin_name in change.old:
-                candidates[change.team_name][plugin_name] = change.old_parameters[plugin_name]
-        _logger.debug("Plugins load candidates:\n%s", pprint.pformat(candidates))
+        imports_names: Set[Optional[str]] = set()
 
-        imports_names: Set[str] = set()
-        for team_name, plugins in candidates.items():
-            for plugin_name, parameters in plugins.items():
-                _logger.debug("%s Plugin load: %s", team_name, plugin_name)
+        for team_manifest in manifest.teams:
+            if team_manifest.name not in self._registries:
+                self._registries[team_manifest.name] = {}
+            for plugin in team_manifest.plugins:
                 if ctx is not None:
-                    ctx.info(f"Loading plugin {plugin_name} for the {team_name} team")
-                if team_name not in self._registries:
-                    self._registries[team_name] = {}
-                self._registries[team_name][plugin_name] = PluginRegistry(
-                    name=plugin_name, team_name=team_name, parameters=parameters
+                    ctx.info(f"Loading plugin {plugin.name} for the {team_manifest.name} team")
+                self._registries[team_manifest.name][plugin.name] = PluginRegistry(
+                    name=plugin.name,
+                    team_name=team_manifest.name,
+                    parameters=plugin.parameters,
+                    module_name=plugin.module_name,
                 )
-                imports_names.add(plugin_name)
+                imports_names.add(plugin.module_name)
+        for change in changes:
+            if change.team_name not in self._registries:
+                self._registries[change.team_name] = {}
+            for plugin_name in change.old:
+                if ctx is not None:
+                    ctx.info(f"Loading plugin {plugin_name} for the {change.team_name} team (changeset)")
+                self._registries[change.team_name][plugin_name] = PluginRegistry(
+                    name=plugin_name,
+                    team_name=change.team_name,
+                    parameters=change.old_parameters[plugin_name],
+                    module_name=change.old_module_names[plugin_name],
+                )
+                imports_names.add(change.old_module_names[plugin_name])
 
         _logger.debug("imports_names: %s", imports_names)
         for name in imports_names:
-            _logger.debug("Importing %s", name)
-            importlib.import_module(name)
+            if name is not None:
+                _logger.debug("Importing %s", name)
+                importlib.import_module(name)
 
     def add_hook(self, hook_name: str, func: HOOK_FUNC_TYPE) -> None:
         if self._manifest is None:
             raise RuntimeError("Empty PLUGINS_REGISTRIES. Please, run load_plugins() before try to add hooks.")
-        plugin_name: str = utils.extract_plugin_name(func=func)
+        plugin_module_name: str = utils.extract_plugin_module_name(func=func)
         for team_manifest in self._manifest.teams:
-            if team_manifest.name in self._registries and plugin_name in self._registries[team_manifest.name]:
-                self._registries[team_manifest.name][plugin_name].__setattr__(hook_name, func)
-                _logger.debug("Team %s / Plugin %s: %s registered.", team_manifest.name, plugin_name, hook_name)
-            else:
-                _logger.debug(
-                    "Team %s / Plugin %s: %s skipping registration.", team_manifest.name, plugin_name, hook_name
-                )
+
+            for plugin_name, registry in self._registries[team_manifest.name].items():
+                if registry.module_name == plugin_module_name:
+                    self._registries[team_manifest.name][plugin_name].__setattr__(hook_name, func)
+                    _logger.debug(
+                        "Team %s / Plugin %s (%s): %s registered.",
+                        team_manifest.name,
+                        plugin_name,
+                        plugin_module_name,
+                        hook_name,
+                    )
+                else:
+                    _logger.debug(
+                        "Team %s / Plugin %s (%s): %s skipping registration.",
+                        team_manifest.name,
+                        plugin_name,
+                        plugin_module_name,
+                        hook_name,
+                    )
 
     def get_hook(self, manifest: "Manifest", team_name: str, plugin_name: str, hook_name: str) -> HOOK_TYPE:
         self._manifest = manifest

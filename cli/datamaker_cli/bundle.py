@@ -127,16 +127,17 @@ def generate_bundle(
             plugin_bundle_dir = os.path.join(bundle_dir, team_manifest.name)
             _logger.debug("plugin_bundle_dir: %s", plugin_bundle_dir)
             for plugin in team_manifest.plugins:
-                if plugin.path:
+                if plugin.path is not None and plugin.module_name is not None:
                     _logger.debug("Bundling plugin %s (%s)...", plugin.name, plugin.path)
-                    _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin.path, name=plugin.name)
+                    _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin.path, name=plugin.module_name)
         if changeset is not None:
             for plugin_changeset in changeset.plugin_changesets:
                 plugin_bundle_dir = os.path.join(bundle_dir, plugin_changeset.team_name)
                 for plugin_name, plugin_path in plugin_changeset.old_paths.items():
-                    if plugin_name not in plugin_changeset.new:
+                    module_name: str = plugin_changeset.old_module_names[plugin_name]
+                    if plugin_name not in plugin_changeset.new and module_name is not None:
                         _logger.debug("Changest - Bundling plugin %s (%s)...", plugin_name, plugin_path)
-                        _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin_path, name=plugin_name)
+                        _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin_path, name=module_name)
 
     # Extra Directories
     if dirs is not None:

@@ -55,7 +55,7 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
         remove_images=[],
     )
     _logger.debug("Env changes deployed")
-    teams.deploy(manifest=manifest, changes=changes.plugin_changesets)
+    teams.deploy(manifest=manifest)
     _logger.debug("Teams Stacks deployed")
     _logger.debug("Deploying the %s Docker image", image_name)
     if manifest.images.get(image_name, {"source": "code"}).get("source") == "code":
