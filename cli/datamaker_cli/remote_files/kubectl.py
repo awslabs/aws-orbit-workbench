@@ -170,10 +170,14 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
         "\n".join(sh.run_iterating(f"kubectl get configmap --context {context} -o yaml -n kube-system aws-auth")),
         Loader=yaml.SafeLoader,
     )
-    map_roles = yaml.load(config_map["data"]["mapRoles"], Loader=yaml.SafeLoader)
+
     team_usernames = {f"datamaker-{manifest.name}-{t.name}" for t in manifest.teams}
 
-    map_roles = [role for role in map_roles if role["username"] not in team_usernames]
+    if "data" in config_map:
+        map_roles = yaml.load(config_map["data"]["mapRoles"], Loader=yaml.SafeLoader)
+        map_roles = [role for role in map_roles if role["username"] not in team_usernames]
+    else:
+        map_roles = []
 
     if with_teams:
         for username in team_usernames:
@@ -273,6 +277,9 @@ def deploy_teams(manifest: Manifest, changes: List["PluginChangeset"]) -> None:
     eks_stack_name: str = f"eksctl-datamaker-{manifest.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
+        sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
+        for team_manifest in manifest.teams:
+            plugins.PLUGINS_REGISTRIES.destroy_team_plugins(manifest=manifest, team_manifest=team_manifest)
         context = get_k8s_context(manifest=manifest)
         _logger.debug("kubectl context: %s", context)
         output_path = _generate_teams_manifest(manifest=manifest)

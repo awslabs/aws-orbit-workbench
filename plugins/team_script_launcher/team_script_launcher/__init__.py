@@ -22,33 +22,32 @@ from datamaker_cli.manifest.team import TeamManifest
 from datamaker_cli.plugins import hooks
 
 _logger: logging.Logger = logging.getLogger("datamaker_cli")
-PLUGIN_ID = "team-script-launcher"
-CONFIGMAP_SCRIPT_NAME = f"{PLUGIN_ID}-script"
 POD_FILENAME = os.path.join(os.path.dirname(__file__), "job_definition.yaml")
 
 
 @hooks.deploy
-def deploy(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
+def deploy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
     _logger.debug("Team Env name: %s | Team name: %s", manifest.name, team_manifest.name)
+    configmap_script_name = f"{plugin_id}-script"
 
     if "script" in parameters:
         script_body = parameters["script"]
     else:
-        raise Exception(f"Plugin {PLUGIN_ID} must define parameter 'script'")
-    script_file = os.path.join(os.path.dirname(POD_FILENAME), f"{PLUGIN_ID}-script.sh")
+        raise Exception(f"Plugin {plugin_id} must define parameter 'script'")
+    script_file = os.path.join(os.path.dirname(POD_FILENAME), f"{plugin_id}-script.sh")
 
     with open(script_file, "w") as file:
         file.write(script_body)
 
     # Cleanup of previous installation if needed
-    sh.run(f"kubectl delete jobs/team-script-{PLUGIN_ID} --namespace {team_manifest.name} --ignore-not-found")
-    sh.run(f"kubectl delete configmap {CONFIGMAP_SCRIPT_NAME} --namespace {team_manifest.name} --ignore-not-found")
+    sh.run(f"kubectl delete jobs/team-script-{plugin_id} --namespace {team_manifest.name} --ignore-not-found")
+    sh.run(f"kubectl delete configmap {configmap_script_name} --namespace {team_manifest.name} --ignore-not-found")
 
     # Create the configmap with the script
     sh.run(
-        f"kubectl create configmap {CONFIGMAP_SCRIPT_NAME} --from-file={script_file} --namespace {team_manifest.name}"
+        f"kubectl create configmap {configmap_script_name} --from-file={script_file} --namespace {team_manifest.name}"
     )
-    _logger.debug(f"Create config map: {CONFIGMAP_SCRIPT_NAME} at namespace {team_manifest.name}")
+    _logger.debug(f"Create config map: {configmap_script_name} at namespace {team_manifest.name}")
 
     _logger.debug(
         "Using S3 Sync Pod at %s for Env name: %s | Team name: %s",
@@ -57,7 +56,7 @@ def deploy(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str
         team_manifest.name,
     )
     input = POD_FILENAME
-    output = os.path.join(os.path.dirname(POD_FILENAME), f"{PLUGIN_ID}-team.yaml")
+    output = os.path.join(os.path.dirname(POD_FILENAME), f"{plugin_id}-team.yaml")
 
     with open(input, "r") as file:
         content: str = file.read()
@@ -70,7 +69,7 @@ def deploy(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str
         env_name=manifest.name,
         tag=team_manifest.manifest.images["jupyter-hub"]["version"],
         restart_policy=restart_policy,
-        plugin_id=PLUGIN_ID,
+        plugin_id=plugin_id,
     )
 
     _logger.debug("Kubectl Team %s manifest:\n%s", team_manifest.name, content)
@@ -84,7 +83,7 @@ def deploy(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str
 
 
 @hooks.destroy
-def destroy(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
-    _logger.debug("Delete Plugin %s of Team Env name: %s | Team name: %s", PLUGIN_ID, manifest.name, team_manifest.name)
-    sh.run(f"kubectl delete jobs/team-script-{PLUGIN_ID} --namespace {team_manifest.name} --ignore-not-found")
-    sh.run(f"kubectl delete configmap {CONFIGMAP_SCRIPT_NAME} --namespace {team_manifest.name} --ignore-not-found")
+def destroy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
+    _logger.debug("Delete Plugin %s of Team Env name: %s | Team name: %s", plugin_id, manifest.name, team_manifest.name)
+    sh.run(f"kubectl delete jobs/team-script-{plugin_id} --namespace {team_manifest.name} --ignore-not-found")
+    sh.run(f"kubectl delete configmap {plugin_id}-script --namespace {team_manifest.name} --ignore-not-found")
