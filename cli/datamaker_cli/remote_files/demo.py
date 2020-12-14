@@ -166,6 +166,8 @@ def _prepare_demo_data(manifest: Manifest) -> None:
         "http://downloads.cms.gov/files/DE1_0_2008_to_2010_Prescription_Drug_Events_Sample_1.zip",
         "https://www.cms.gov/Research-Statistics-Data-and-Systems/Downloadable-Public-Use-Files/SynPUFs/Downloads/DE1_0_2009_Beneficiary_Summary_File_Sample_1.zip",  # noqa
         "https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/SynPUFs/Downloads/DE1_0_2010_Beneficiary_Summary_File_Sample_20.zip",  # noqa
+        "https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data",
+        "http://deeplearning.net/data/mnist/mnist.pkl.gz",
     ]
     cms_file_names = [fname.split("/")[-1] for fname in cms_files]
     # Find list of objects in S3 CMS path

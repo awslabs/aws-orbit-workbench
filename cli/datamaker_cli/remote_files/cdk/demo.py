@@ -17,7 +17,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import Any, Tuple
+from typing import Any, Dict, Tuple
 
 import aws_cdk.core as core
 from aws_cdk import aws_ec2 as ec2
@@ -41,14 +41,24 @@ class DemoStack(Stack):
         self.private_subnets_ids: Tuple[str, ...] = tuple(x.subnet_id for x in self.vpc.private_subnets)
         self.isolated_subnets_ids: Tuple[str, ...] = tuple(x.subnet_id for x in self.vpc.isolated_subnets)
         self._create_vpc_endpoints()
+
+        if manifest.toolkit_s3_bucket is None:
+            manifest.fetch_ssm()
+            if manifest.toolkit_s3_bucket is None:
+                manifest.fetch_toolkit_data()
+            else:
+                raise ValueError(f"manifest.toolkit_s3_bucket: {manifest.toolkit_s3_bucket}")
+        if manifest.toolkit_s3_bucket is None:
+            raise ValueError(f"manifest.toolkit_s3_bucket: {manifest.toolkit_s3_bucket}")
+        toolkit_s3_bucket_name: str = manifest.toolkit_s3_bucket
+
         # self.lake_bucket = self._create_lake_bucket()
-        self.lake_bucket_name = (
-            f"datamaker-{self.env_name}-demo-lake-{self.manifest.account_id}-{self.manifest.deploy_id}"
-        )
-        self.lake_bucket_full_access = self._create_fullaccess_managed_policies(bucket_name=self.lake_bucket_name)
-        self.lake_bucket_read_only_access = self._create_readonlyaccess_managed_policies(
-            bucket_name=self.lake_bucket_name
-        )
+        self.bucket_names: Dict[str, Any] = {
+            "lake-bucket": f"datamaker-{self.env_name}-demo-lake-{self.manifest.account_id}-{self.manifest.deploy_id}",
+            "toolkit-bucket": toolkit_s3_bucket_name,
+        }
+        self.lake_bucket_full_access = self._create_fullaccess_managed_policies()
+        self.lake_bucket_read_only_access = self._create_readonlyaccess_managed_policies()
 
         self._ssm_parameter = ssm.StringParameter(
             self,
@@ -58,7 +68,7 @@ class DemoStack(Stack):
                     "vpc_id": self.vpc.vpc_id,
                     "public_subnet": self.public_subnets_ids,
                     "private_subnet": self.private_subnets_ids,
-                    "lake_bucket": self.lake_bucket_name,
+                    "lake_bucket": self.bucket_names["lake-bucket"],
                     "creator_access_policy": self.lake_bucket_full_access.managed_policy_name,
                     "user_access_policy": self.lake_bucket_read_only_access.managed_policy_name,
                 }
@@ -93,7 +103,7 @@ class DemoStack(Stack):
             scope=self,
             id=f"{id}lakebucketname",
             export_name="lake-bucket-name",
-            value=self.lake_bucket_name,
+            value=self.bucket_names["lake-bucket"],
         )
 
         CfnOutput(
@@ -249,7 +259,7 @@ class DemoStack(Stack):
     #     )
     #     return lake_bucket
 
-    def _create_fullaccess_managed_policies(self, bucket_name: str) -> iam.ManagedPolicy:
+    def _create_fullaccess_managed_policies(self) -> iam.ManagedPolicy:
         lake_bucket_full_access = iam.ManagedPolicy(
             self,
             "LakeBucketFullAccess",
@@ -260,8 +270,10 @@ class DemoStack(Stack):
                         "s3:*",
                     ],
                     resources=[
-                        f"arn:{core.Aws.PARTITION}:s3:::{bucket_name}",
-                        f"arn:{core.Aws.PARTITION}:s3:::{bucket_name}/*",
+                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}",
+                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}/*",
+                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}",
+                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}/*",
                     ],
                 )
             ],
@@ -269,7 +281,7 @@ class DemoStack(Stack):
         )
         return lake_bucket_full_access
 
-    def _create_readonlyaccess_managed_policies(self, bucket_name: str) -> iam.ManagedPolicy:
+    def _create_readonlyaccess_managed_policies(self) -> iam.ManagedPolicy:
         lake_bucket_read_only_access = iam.ManagedPolicy(
             self,
             "LakeBucketReadOnlyAccess",
@@ -278,8 +290,10 @@ class DemoStack(Stack):
                     effect=iam.Effect.ALLOW,
                     actions=["s3:Get*", "s3:List*"],
                     resources=[
-                        f"arn:{core.Aws.PARTITION}:s3:::{bucket_name}",
-                        f"arn:{core.Aws.PARTITION}:s3:::{bucket_name}/*"
+                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}",
+                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}/*",
+                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}",
+                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}/*",
                         # bucket.arn_for_objects("*"),
                         # bucket.bucket_arn
                     ],
