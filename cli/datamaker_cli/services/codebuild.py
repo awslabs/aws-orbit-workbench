@@ -36,6 +36,7 @@ CDK_VERSION = "~=1.67.0"
 CDK_MODULES = [
     "aws_cdk.core",
     "aws-cdk.aws-ec2",
+    "aws-cdk.aws-s3",
     "aws-cdk.aws-iam",
     "aws-cdk.aws-efs",
     "aws-cdk.aws-ecr",
@@ -248,15 +249,16 @@ def generate_spec(
     if plugins:
         for team_manifest in manifest.teams:
             for plugin in team_manifest.plugins:
-                if plugin.path:
-                    install.append(f"ls -la ./{team_manifest.name}/{plugin.name}/")
-                    install.append(f"pip install -e ./{team_manifest.name}/{plugin.name}/")
+                if plugin.path is not None and plugin.module_name is not None:
+                    install.append(f"ls -la ./{team_manifest.name}/{plugin.module_name}/")
+                    install.append(f"pip install -e ./{team_manifest.name}/{plugin.module_name}/")
         if changeset is not None:
             for plugin_changeset in changeset.plugin_changesets:
                 for plugin_name in plugin_changeset.old:
-                    if plugin_name not in plugin_changeset.new:
-                        install.append(f"ls -la ./{plugin_changeset.team_name}/{plugin_name}/")
-                        install.append(f"pip install -e ./{plugin_changeset.team_name}/{plugin_name}/")
+                    module_name: str = plugin_changeset.old_module_names[plugin_name]
+                    if plugin_name not in plugin_changeset.new and module_name is not None:
+                        install.append(f"ls -la ./{plugin_changeset.team_name}/{module_name}/")
+                        install.append(f"pip install -e ./{plugin_changeset.team_name}/{module_name}/")
 
     if cmds_install is not None:
         install += cmds_install

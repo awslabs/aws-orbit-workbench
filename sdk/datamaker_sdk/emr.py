@@ -10,7 +10,11 @@ import requests
 
 from datamaker_sdk.common import *
 
-logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
+logging.basicConfig(
+    format="%(asctime)s %(levelname)-8s %(message)s",
+    level=logging.INFO,
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 logger = logging.getLogger()
 
 SSM_PARAMETER_PREFIX = "/emr_launch/emr_launch_functions"
@@ -114,7 +118,9 @@ def connect_to_spark(
             if not startCluster:
                 raise Exception("cannot find running EMR cluster: " + cluster_name)
             else:
-                (master_ip, cluster_id) = _start_and_wait_for_emr(emr, cluster_name, props, clusterArgs)
+                (master_ip, cluster_id) = _start_and_wait_for_emr(
+                    emr, cluster_name, props, clusterArgs
+                )
                 started = True
         else:
             cluster_id = clusters[0]["Id"]
@@ -126,7 +132,9 @@ def connect_to_spark(
         if not startCluster:
             raise Exception("If reuseCluster is False , then startCluster must be True")
         else:
-            (master_ip, cluster_id) = _start_and_wait_for_emr(emr, cluster_name, props, clusterArgs)
+            (master_ip, cluster_id) = _start_and_wait_for_emr(
+                emr, cluster_name, props, clusterArgs
+            )
             started = True
 
     if waitWhenResizing:
@@ -183,7 +191,11 @@ def _get_cluster_id(emr: boto3.client("emr"), clusterName: str) -> str:
     clusters = emr.list_clusters()["Clusters"]
 
     # choose the correct cluster
-    clusters = [c for c in clusters if c["Name"] == clusterName and c["Status"]["State"] in ["WAITING", "RUNNING"]]
+    clusters = [
+        c
+        for c in clusters
+        if c["Name"] == clusterName and c["Status"]["State"] in ["WAITING", "RUNNING"]
+    ]
     if not clusters:
         logger.info("No valid clusters")
         raise Exception("cannot find running cluster: " + clusterName)
@@ -191,7 +203,9 @@ def _get_cluster_id(emr: boto3.client("emr"), clusterName: str) -> str:
     return clusters[0]["Id"]
 
 
-def _get_cluster_ip(emr: boto3.client("emr"), cluster_id: str, wait_ready: Optional[bool] = True) -> str:
+def _get_cluster_ip(
+    emr: boto3.client("emr"), cluster_id: str, wait_ready: Optional[bool] = True
+) -> str:
     """
     Waits for instances to be running and then returns the private ip address from the cluster master node.
     """
@@ -235,7 +249,11 @@ def get_emr_step_function_error(execution_arn: str) -> None:
         executionArn=execution_arn,
     )
     try:
-        state = json.loads(response["events"][len(response["events"]) - 2]["stateEnteredEventDetails"]["input"])
+        state = json.loads(
+            response["events"][len(response["events"]) - 2]["stateEnteredEventDetails"][
+                "input"
+            ]
+        )
         error = json.loads(state["Error"]["Cause"])
         logger.error(error["errorMessage"])
         raise Exception(error["errorMessage"])
@@ -271,7 +289,9 @@ def _start_and_wait_for_emr(
     emr_input = {"ClusterConfigOverrides": clusterArgs}
     logger.info("Started EMR with {emr_function} and parameters: %s", emr_input)
 
-    response = sfn.start_execution(stateMachineArn=emr_function["StateMachine"], input=json.dumps(emr_input))
+    response = sfn.start_execution(
+        stateMachineArn=emr_function["StateMachine"], input=json.dumps(emr_input)
+    )
     logger.debug(f"Started EMR step function {response}")
 
     while True:
@@ -301,7 +321,9 @@ def _start_and_wait_for_emr(
     return (master_ip, cluster_id)
 
 
-def _get_functions(namespace: Optional[str] = "default", next_token: Optional[str] = None) -> Mapping[str, Any]:
+def _get_functions(
+    namespace: Optional[str] = "default", next_token: Optional[str] = None
+) -> Mapping[str, Any]:
     """
     Returns an EMR Launch Function with its parameters and a next token if more functions exist for a given namespace.
     """
@@ -310,7 +332,9 @@ def _get_functions(namespace: Optional[str] = "default", next_token: Optional[st
         params["NextToken"] = next_token
     result = boto3.client("ssm").get_parameters_by_path(**params)
 
-    functions = {"EMRLaunchFunctions": [json.loads(p["Value"]) for p in result["Parameters"]]}
+    functions = {
+        "EMRLaunchFunctions": [json.loads(p["Value"]) for p in result["Parameters"]]
+    }
     if "NextToken" in result:
         functions["NextToken"] = result["NextToken"]
     return functions
@@ -396,8 +420,15 @@ def _wait_for_cluster_groups(emr: boto3.client("emr"), cluster_id: str) -> None:
         response = emr.list_instance_groups(ClusterId=cluster_id)
         wait = False
         for g in response["InstanceGroups"]:
-            if g["Status"]["State"] in ("PROVISIONING", "BOOTSTRAPPING", "RECONFIGURING", "RESIZING"):
-                logger.info("waiting for cluster group: %s(%s)", g["Name"], g["Status"]["State"])
+            if g["Status"]["State"] in (
+                "PROVISIONING",
+                "BOOTSTRAPPING",
+                "RECONFIGURING",
+                "RESIZING",
+            ):
+                logger.info(
+                    "waiting for cluster group: %s(%s)", g["Name"], g["Status"]["State"]
+                )
                 wait = True
         if wait:
             time.sleep(30)
@@ -426,7 +457,9 @@ def get_cluster_info(cluster_id: str) -> Dict[str, Dict[str, str]]:
     """
     emr = boto3.client("emr")
     info = {}
-    info["MASTER"] = emr.list_instances(ClusterId=cluster_id, InstanceGroupTypes=["MASTER"])
+    info["MASTER"] = emr.list_instances(
+        ClusterId=cluster_id, InstanceGroupTypes=["MASTER"]
+    )
     info["CORE"] = emr.list_instances(ClusterId=cluster_id, InstanceGroupTypes=["CORE"])
     info["TASK"] = emr.list_instances(ClusterId=cluster_id, InstanceGroupTypes=["TASK"])
 
@@ -482,7 +515,9 @@ def spark_submit(job: Dict[str, Any]) -> Dict[str, Any]:
     if module == None:
         raise Exception("module must be provided")
 
-    waitAppCompletion = job["wait_app_completion"] if "wait_app_completion" in job.keys() else False
+    waitAppCompletion = (
+        job["wait_app_completion"] if "wait_app_completion" in job.keys() else False
+    )
     appargs = job["app_args"] if "app_args" in job.keys() else []
     sparkargs = job["spark_args"] if "spark_args" in job.keys() else []
     props = get_properties()
@@ -491,14 +526,18 @@ def spark_submit(job: Dict[str, Any]) -> Dict[str, Any]:
     else:
         waitApp = "false"
 
-    workspaceDir = props["AWS_DATAMAKER_SRC_REPO"]
+    workspaceDir = "workspace"
 
     notebookInstanceName = socket.gethostname()
 
     s3WorkspaceDir = "s3://{}/{}/workspaces/{}".format(
-        props["AWS_DATAMAKER_S3_BUCKET"], props["DATAMAKER_TEAM_SPACE"], notebookInstanceName
+        props["AWS_DATAMAKER_S3_BUCKET"],
+        props["DATAMAKER_TEAM_SPACE"],
+        notebookInstanceName,
     )
-    cmd = 'aws s3 sync --delete --exclude "*.git/*" {} {}'.format(workspaceDir, s3WorkspaceDir)
+    cmd = 'aws s3 sync --delete --exclude "*.git/*" {} {}'.format(
+        workspaceDir, s3WorkspaceDir
+    )
     logout = os.popen(cmd).read()
     logger.info("s3 workspace directory is %s", s3WorkspaceDir)
     logger.debug(logout)
@@ -562,7 +601,9 @@ def get_team_clusters(cluster_id: Optional[str] = None) -> Dict[str, Dict[str, s
     emr = boto3.client("emr")
     props = get_properties()
     if cluster_id == None:
-        clusters = emr.list_clusters(ClusterStates=["STARTING", "BOOTSTRAPPING", "RUNNING", "WAITING"])
+        clusters = emr.list_clusters(
+            ClusterStates=["STARTING", "BOOTSTRAPPING", "RUNNING", "WAITING"]
+        )
         if "Clusters" not in clusters:
             raise Exception("Error calling list_clusters()")
         if len(clusters["Clusters"]) == 0:
@@ -584,7 +625,10 @@ def get_team_clusters(cluster_id: Optional[str] = None) -> Dict[str, Dict[str, s
         for tag in tag_list:
             tags[tag["Key"]] = tag["Value"]
 
-        if DATAMAKER_PRODUCT_KEY not in tags or tags[DATAMAKER_PRODUCT_KEY] != DATAMAKER_PRODUCT_NAME:
+        if (
+            DATAMAKER_PRODUCT_KEY not in tags
+            or tags[DATAMAKER_PRODUCT_KEY] != DATAMAKER_PRODUCT_NAME
+        ):
             continue
 
         if (
