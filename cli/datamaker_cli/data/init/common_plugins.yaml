@@ -1,2 +1,3 @@
--   name: code_commit
+-   id: code_commit
+    module: code_commit
     path: ../plugins/code_commit/
