@@ -39,7 +39,6 @@ class TeamManifest:
         nodes_num_desired: int,
         nodes_num_max: int,
         nodes_num_min: int,
-        # policy: List[str], # TODO - 0 - Change to List[str]-
         policies: List[str],
         plugins: List[PluginManifest],
         grant_sudo: bool,
@@ -53,7 +52,6 @@ class TeamManifest:
         self.nodes_num_desired: int = nodes_num_desired
         self.nodes_num_max: int = nodes_num_max
         self.nodes_num_min: int = nodes_num_min
-        # self.policy: str = policy # TODO - 0.0 - Change to List[str]-
         self.policies: List[str] = policies
         self.grant_sudo: bool = grant_sudo
         self.jupyterhub_inbound_ranges: List[str] = jupyterhub_inbound_ranges
@@ -124,7 +122,6 @@ class TeamManifest:
             "nodes-num-desired": self.nodes_num_desired,
             "nodes-num-max": self.nodes_num_max,
             "nodes-num-min": self.nodes_num_min,
-            # "policy": self.policy, # TODO - 0.1 - Change to List[str] -
             "policies": self.policies,
             "grant-sudo": self.grant_sudo,
             "image": self.image,

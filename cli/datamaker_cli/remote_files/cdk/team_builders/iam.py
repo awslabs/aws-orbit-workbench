@@ -28,7 +28,6 @@ class IamBuilder:
         scope: core.Construct,
         manifest: Manifest,
         team_manifest: TeamManifest,
-        # policy_name: str, # TODO - 2.1 - Change List[str]
         policy_names: List[str],
         scratch_bucket: s3.Bucket,
     ) -> iam.Role:
@@ -273,8 +272,7 @@ class IamBuilder:
             ssm_manage_policy,
         ] + eks_policies
 
-        # user_policies = [iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name=policy_name)]
-        # #TODO - Parse list to IAM policies
+        # Parse list to IAM policies
         aws_managed_user_policies = [
             iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name=policy_name)
             for policy_name in policy_names
