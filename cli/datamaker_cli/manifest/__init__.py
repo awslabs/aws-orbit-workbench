@@ -15,7 +15,6 @@
 import json
 import logging
 import os
-import pprint
 from typing import Any, Dict, List, Optional, Union, cast
 
 import boto3
@@ -181,8 +180,8 @@ class Manifest:
         _logger.debug("reading manifest file (%s)", filename)
         filename = os.path.abspath(filename)
         if "bundle" in filename:
-            # When the manifest is in the bundle, it will be in the 'conf' folder with all the files from its original folder
-            # and the manifest will always be named manifest.yaml (renamed from its original name)
+            # When the manifest is in the bundle, it will be in the 'conf' folder with all the files from its original
+            # folder and the manifest will always be named manifest.yaml (renamed from its original name)
             conf_dir = os.path.join(os.path.dirname(filename), "conf")
         else:
             conf_dir = os.path.dirname(filename)

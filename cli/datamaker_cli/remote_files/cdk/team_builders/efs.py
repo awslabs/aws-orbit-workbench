@@ -40,7 +40,7 @@ class EfsBuilder:
             vpc=vpc,
             encrypted=False,
             lifecycle_policy=efs.LifecyclePolicy[team_manifest.efs_life_cycle]
-            if team_manifest.efs_life_cycle != None
+            if team_manifest.efs_life_cycle
             else None,
             performance_mode=efs.PerformanceMode.GENERAL_PURPOSE,
             throughput_mode=efs.ThroughputMode.BURSTING,
