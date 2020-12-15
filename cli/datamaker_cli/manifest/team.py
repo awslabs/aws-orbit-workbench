@@ -40,12 +40,12 @@ class TeamManifest:
         nodes_num_max: int,
         nodes_num_min: int,
         policy: str,
+        efs_life_cycle: str,
         plugins: List[PluginManifest],
         grant_sudo: bool,
         jupyterhub_inbound_ranges: List[str],
         image: Optional[str] = None,
         profiles: List[MANIFEST_PROPERTY_MAP_TYPE] = [],
-        efs_life_cycle: str = None,
     ) -> None:
         self.manifest: "Manifest" = manifest
         self.name: str = name

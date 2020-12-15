@@ -39,7 +39,9 @@ class EfsBuilder:
             file_system_name=name,
             vpc=vpc,
             encrypted=False,
-            lifecycle_policy= efs.LifecyclePolicy[team_manifest.efs_life_cycle] if team_manifest.efs_life_cycle != None else None,
+            lifecycle_policy=efs.LifecyclePolicy[team_manifest.efs_life_cycle]
+            if team_manifest.efs_life_cycle != None
+            else None,
             performance_mode=efs.PerformanceMode.GENERAL_PURPOSE,
             throughput_mode=efs.ThroughputMode.BURSTING,
             security_group=efs_security_group,
