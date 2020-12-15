@@ -229,6 +229,7 @@ def deploy(manifest: Manifest) -> None:
             else:
                 raise
         manifest.fetch_demo_data()
+        manifest.write_manifest_file()
         _logger.debug("Adding demo data")
         _prepare_demo_data(manifest)
         _logger.debug("Enabling private dns for codeartifact vpc endpoints")

@@ -30,4 +30,5 @@ teams:
     nodes-num-min: 1
     grant-sudo: false
     policy: AdministratorAccess
-    plugins: []
+    plugins: !include common_plugins.yaml
+    profiles: !include profiles.yaml

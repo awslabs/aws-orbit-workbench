@@ -55,6 +55,8 @@ Resources:
               - elasticfilesystem:DeleteMountTarget
               - elasticfilesystem:DescribeMountTargets
               - elasticfilesystem:DeleteFileSystem
+              - elasticfilesystem:PutLifecycleConfiguration
+              - elasticfilesystem:ListTagsForResource
               - iam:ListAttachedRolePolicies
               - iam:GetPolicy
               - iam:ListPolicyVersions

@@ -21,6 +21,7 @@ import boto3
 import botocore.config
 import botocore.exceptions
 import yaml
+from yamlinclude import YamlIncludeConstructor
 
 from datamaker_cli import utils
 from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE, PluginManifest, plugins_manifest_checks
@@ -30,7 +31,7 @@ from datamaker_cli.manifest.vpc import MANIFEST_FILE_VPC_TYPE, MANIFEST_VPC_TYPE
 from datamaker_cli.services import cognito
 
 _logger: logging.Logger = logging.getLogger(__name__)
-
+MANIFEST_PROPERTY_MAP_TYPE = Dict[str, Union[str, Dict[str, Any]]]
 MANIFEST_FILE_IMAGES_TYPE = Dict[str, Dict[str, str]]
 MANIFEST_FILE_NETWORKING_TYPE = Dict[str, Dict[str, Union[bool, List[str]]]]
 MANIFEST_FILE_TYPE = Dict[
@@ -177,7 +178,20 @@ class Manifest:
     @staticmethod
     def _read_manifest_file(filename: str) -> MANIFEST_FILE_TYPE:
         _logger.debug("reading manifest file (%s)", filename)
-        with open(filename, "r") as f:
+        filename = os.path.abspath(filename)
+        if "bundle" in filename:
+            # When the manifest is in the bundle, it will be in the 'conf' folder with all the files from its original
+            # folder and the manifest will always be named manifest.yaml (renamed from its original name)
+            conf_dir = os.path.join(os.path.dirname(filename), "conf")
+        else:
+            conf_dir = os.path.dirname(filename)
+
+        manifest_path = os.path.join(conf_dir, os.path.basename(filename))
+
+        _logger.debug("manifest : %s", manifest_path)
+        _logger.debug("conf directory: %s", conf_dir)
+        YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.SafeLoader, base_dir=conf_dir)
+        with open(manifest_path, "r") as f:
             return cast(MANIFEST_FILE_TYPE, yaml.safe_load(f))
 
     @staticmethod
@@ -201,6 +215,7 @@ class Manifest:
         return []
 
     def _parse_teams(self) -> List[TeamManifest]:
+
         return [
             TeamManifest(
                 manifest=self,
@@ -210,11 +225,13 @@ class Manifest:
                 nodes_num_desired=cast(int, t["nodes-num-desired"]),
                 nodes_num_max=cast(int, t["nodes-num-max"]),
                 nodes_num_min=cast(int, t["nodes-num-min"]),
+                efs_life_cycle=cast(str, t["efs-life-cycle"]),
                 policy=cast(str, t["policy"]),
                 grant_sudo=cast(bool, t.get("grant-sudo", False)),
                 jupyterhub_inbound_ranges=cast(List[str], t.get("jupyterhub-inbound-ranges", [])),
                 image=cast(Optional[str], t.get("image")),
                 plugins=self._parse_plugins(team=t),
+                profiles=cast(List[MANIFEST_PROPERTY_MAP_TYPE], t.get("profiles")),
             )
             for t in cast(List[MANIFEST_FILE_TEAM_TYPE], self.raw_file["teams"])
         ]
@@ -271,11 +288,11 @@ class Manifest:
                 Tier="Intelligent-Tiering",
             )
 
-    def _write_manifest_file(self) -> None:
+    def write_manifest_file(self) -> None:
         os.makedirs(os.path.dirname(self.filename), exist_ok=True)
         with open(self.filename, "w") as file:
             yaml.safe_dump(data=self.asdict_file(), stream=file, sort_keys=False, indent=4)
-        _logger.debug("Manifest file updated: %s", self.filename)
+        _logger.debug("Manifest file updated: %s", os.path.abspath(self.filename))
 
     def boto3_client(self, service_name: str) -> boto3.client:
         return self._boto3_session().client(service_name=service_name, use_ssl=True, config=self._botocore_config())
@@ -386,7 +403,6 @@ class Manifest:
 
         self.fetch_ssm()
         self.write_manifest_ssm()
-        self._write_manifest_file()
         _logger.debug("DEMO data fetched successfully.")
 
     def fetch_network_data(self) -> None:

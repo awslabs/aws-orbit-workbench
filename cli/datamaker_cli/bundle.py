@@ -94,7 +94,8 @@ def generate_bundle(
     changeset: Optional[Changeset] = None,
     plugins: bool = True,
 ) -> str:
-    remote_dir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "remote", command_name)
+    conf_dir = os.path.dirname(os.path.abspath(manifest.filename))
+    remote_dir = os.path.join(os.path.dirname(conf_dir), ".datamaker.out", manifest.name, "remote", command_name)
     bundle_dir = os.path.join(remote_dir, "bundle")
     try:
         shutil.rmtree(bundle_dir)
@@ -102,8 +103,13 @@ def generate_bundle(
         pass
 
     # manifest
-    bundled_manifest_path = os.path.join(bundle_dir, "manifest.yaml")
+    bundled_manifest_path = os.path.join(bundle_dir, "conf", "manifest.yaml")
+    bundled_manifest_path_conf = os.path.join(bundle_dir, "conf")
     os.makedirs(bundle_dir, exist_ok=True)
+
+    _logger.debug(f"copy conf_dir={conf_dir} to {bundled_manifest_path_conf}")
+    shutil.copytree(src=conf_dir, dst=bundled_manifest_path_conf)
+    _logger.debug(f"copy manifest file={manifest.filename} to {bundled_manifest_path_conf}")
     shutil.copy(src=manifest.filename, dst=bundled_manifest_path)
 
     # changeset
