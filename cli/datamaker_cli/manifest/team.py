@@ -80,7 +80,7 @@ class TeamManifest:
         self.scratch_bucket: Optional[str] = None
         self.scratch_retention_days: int = 30
         self.container_defaults = {"cpu": 4, "memory": 16384}
-        self.efs_life_cycle = None
+        self.efs_life_cycle = efs_life_cycle
         # Need to fill up
         self.raw_ssm: Optional[MANIFEST_TEAM_TYPE] = None
         self.efs_id: Optional[str] = None
