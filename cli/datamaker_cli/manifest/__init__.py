@@ -25,7 +25,7 @@ import yaml
 from yamlinclude import YamlIncludeConstructor
 
 from datamaker_cli import utils
-from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE, PluginManifest
+from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE, PluginManifest, plugins_manifest_checks
 from datamaker_cli.manifest.subnet import SubnetKind, SubnetManifest
 from datamaker_cli.manifest.team import MANIFEST_FILE_TEAM_TYPE, TeamManifest
 from datamaker_cli.manifest.vpc import MANIFEST_FILE_VPC_TYPE, MANIFEST_VPC_TYPE, VpcManifest
@@ -202,14 +202,16 @@ class Manifest:
     @staticmethod
     def _parse_plugins(team: MANIFEST_FILE_TEAM_TYPE) -> List[PluginManifest]:
         if "plugins" in team:
+            raw: List[MANIFEST_FILE_PLUGIN_TYPE] = cast(List[MANIFEST_FILE_PLUGIN_TYPE], team["plugins"])
+            plugins_manifest_checks(team_name=cast(str, team["name"]), plugins=raw)
             return [
                 PluginManifest(
-                    name=cast(str, p["name"]),
-                    module_name=cast(str, p.get("module-name", None)),
+                    plugin_id=cast(str, p["id"]),
+                    module=cast(str, p.get("module", None)),
                     path=cast(str, p["path"]),
                     parameters=cast(Dict[str, Any], p.get("parameters", {})),
                 )
-                for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team["plugins"])
+                for p in raw
             ]
         return []
 

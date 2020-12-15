@@ -164,8 +164,8 @@ class TeamManifest:
             image += ":latest"
         return f"datamaker-{env}-{image}"
 
-    def get_plugin_by_name(self, name: str) -> Optional[PluginManifest]:
+    def get_plugin_by_id(self, plugin_id: str) -> Optional[PluginManifest]:
         for p in self.plugins:
-            if p.name == name:
+            if p.plugin_id == plugin_id:
                 return p
         return None

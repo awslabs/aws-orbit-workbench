@@ -249,16 +249,16 @@ def generate_spec(
     if plugins:
         for team_manifest in manifest.teams:
             for plugin in team_manifest.plugins:
-                if plugin.path is not None and plugin.module_name is not None:
-                    install.append(f"ls -la ./{team_manifest.name}/{plugin.module_name}/")
-                    install.append(f"pip install -e ./{team_manifest.name}/{plugin.module_name}/")
+                if plugin.path is not None and plugin.module is not None:
+                    install.append(f"ls -la ./{team_manifest.name}/{plugin.module}/")
+                    install.append(f"pip install -e ./{team_manifest.name}/{plugin.module}/")
         if changeset is not None:
             for plugin_changeset in changeset.plugin_changesets:
                 for plugin_name in plugin_changeset.old:
-                    module_name: str = plugin_changeset.old_module_names[plugin_name]
-                    if plugin_name not in plugin_changeset.new and module_name is not None:
-                        install.append(f"ls -la ./{plugin_changeset.team_name}/{module_name}/")
-                        install.append(f"pip install -e ./{plugin_changeset.team_name}/{module_name}/")
+                    module: str = plugin_changeset.old_modules[plugin_name]
+                    if plugin_name not in plugin_changeset.new and module is not None:
+                        install.append(f"ls -la ./{plugin_changeset.team_name}/{module}/")
+                        install.append(f"pip install -e ./{plugin_changeset.team_name}/{module}/")
 
     if cmds_install is not None:
         install += cmds_install
