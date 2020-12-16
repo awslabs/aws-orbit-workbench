@@ -233,6 +233,19 @@ class IamBuilder:
                     ],
                     resources=["*"],
                 ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["sts:AssumeRoleWithWebIdentity"],
+                    principals=[
+                        iam.FederatedPrincipal(
+                            federated=f"arn:{partition}:iam::{account}:oidc-provider/{manifest.eks_oidc_provider}",
+                            conditions={
+                                "StringLike": {
+                                    f"{manifest.eks_oidc_provider}:sub": f"system:serviceaccount:{team_manifest.name}:*"
+                                }
+                            })
+                    ]
+                )
             ],
         )
 
@@ -242,7 +255,6 @@ class IamBuilder:
             iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSWorkerNodePolicy"),
             iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKS_CNI_Policy"),
             iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEC2ContainerRegistryReadOnly"),
-            iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSFargatePodExecutionRolePolicy"),
         ]
 
         managed_policies = [
@@ -268,9 +280,6 @@ class IamBuilder:
                 iam.ServicePrincipal("redshift.amazonaws.com"),
                 iam.ServicePrincipal("codepipeline.amazonaws.com"),
                 iam.ServicePrincipal("personalize.amazonaws.com"),
-                iam.ServicePrincipal("states.amazonaws.com"),
-                iam.ServicePrincipal("eks.amazonaws.com"),
-                iam.ServicePrincipal("eks-fargate-pods.amazonaws.com"),
             ),
             managed_policies=managed_policies,
         )

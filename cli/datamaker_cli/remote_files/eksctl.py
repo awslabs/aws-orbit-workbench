@@ -123,6 +123,15 @@ def generate_manifest(manifest: Manifest, name: str, output_teams: bool = True) 
     return output_filename
 
 
+def fetch_cluster_data(manifest: Manifest, cluster_name: str) -> None:
+    _logger.debug("Fetching Cluster data...")
+    manifest.fetch_ssm()
+    cluster_data = eks.describe_cluster(manifest=manifest, cluster_name=cluster_name)
+
+    manifest.eks_oidc_provider = cluster_data["cluster"]["identity"]["oidc"]["issuer"]
+    manifest.write_manifest_ssm()
+    _logger.debug("Cluster data fetched successfully.")
+
 def deploy_env(manifest: Manifest) -> None:
     stack_name: str = f"datamaker-{manifest.name}"
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
@@ -132,6 +141,19 @@ def deploy_env(manifest: Manifest) -> None:
     if not cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name):
         _logger.debug("Deploying EKSCTL Environment resources")
         sh.run(f"eksctl create cluster -f {output_filename} --write-kubeconfig --verbose 4")
+        subnet_kind = SubnetKind.private if manifest.internet_accessible else SubnetKind.isolated
+        subnets = [s.subnet_id for s in manifest.vpc.subnets if s.kind == subnet_kind]
+        selectors = [{"namespace": t.name, "labels": {"datamaker/compute-type": "fargate"}} for t in manifest.teams]
+        cluster_name = f"datamaker-{manifest.name}"
+        eks.create_fargate_profile(
+            manifest=manifest,
+            profile_name=f"{cluster_name}-teams",
+            cluster_name=cluster_name,
+            role_arn=manifest.eks_fargate_profile_role_arn,
+            subnets=subnets,
+            selectors=selectors,
+        )
+        fetch_cluster_data(manifest=manifest, cluster_name=cluster_name)
     else:
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
     _logger.debug("EKSCTL deployed")
@@ -144,22 +166,6 @@ def deploy_teams(manifest: Manifest) -> None:
     _logger.debug("Synthetizing the EKSCTL Teams manifest")
     output_filename = generate_manifest(manifest=manifest, name=stack_name, output_teams=True)
     if cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name) and manifest.teams:
-        subnet_kind = SubnetKind.private if manifest.internet_accessible else SubnetKind.isolated
-        subnets = [s.subnet_id for s in manifest.vpc.subnets if s.kind == subnet_kind]
-        for team in manifest.teams:
-            eks.create_fargate_profile(
-                manifest=manifest,
-                profile_name=f"datamaker-{manifest.name}-{team.name}",
-                cluster_name=f"datamaker-{manifest.name}",
-                role_arn=f"arn:aws:iam::{manifest.account_id}:role/datamaker-{manifest.name}-{team.name}-role",
-                subnets=subnets,
-                namespace=team.name,
-                selector_labels={
-                    "team": team.name,
-                    "datamaker/compute-type": "fargate"
-                },
-            )
-
         teams = ",".join([t.name for t in manifest.teams])
         _logger.debug("Deploying EKSCTL Teams resources")
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
@@ -184,13 +190,6 @@ def destroy_teams(manifest: Manifest) -> None:
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name) and manifest.teams:
-        for team in manifest.teams:
-            eks.delete_fargate_profile(
-                manifest=manifest,
-                profile_name=f"datamaker-{manifest.name}-{team.name}",
-                cluster_name=f"datamaker-{manifest.name}",
-            )
-
         teams = ",".join([t.name for t in manifest.teams])
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
         output_filename = generate_manifest(manifest=manifest, name=stack_name)

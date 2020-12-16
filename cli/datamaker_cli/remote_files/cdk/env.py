@@ -64,6 +64,7 @@ class Env(Stack):
         self.repos = self._create_ecr_repos()
         self.role_eks_cluster = self._create_role_cluster()
         self.role_eks_env_nodegroup = self._create_env_nodegroup_role()
+        self.role_fargate_profile = self._create_role_fargate_profile()
         self.user_pool = self._create_user_pool()
         self.user_pool_client = self._create_user_pool_client()
         self.identity_pool = self._create_identity_pool()
@@ -127,8 +128,23 @@ class Env(Stack):
                 )
             },
         )
-        Tags.of(scope=role).add(key="Env", value=f"datamaker-{self.manifest.name}")
         return role
+
+    def _create_role_fargate_profile(self) -> iam.Role:
+        name: str = f"datamaker-{self.manifest.name}-eks-fargate-profile-role"
+        return iam.Role(
+            scope=self,
+            id=name,
+            role_name=name,
+            assumed_by=iam.CompositePrincipal(
+                iam.ServicePrincipal("eks.amazonaws.com"),
+                iam.ServicePrincipal("eks-fargate-pods.amazonaws.com"),
+            ),
+            managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEC2ContainerRegistryReadOnly"),
+                iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSFargatePodExecutionRolePolicy"),
+            ]
+        )
 
     def _create_env_nodegroup_role(self) -> iam.Role:
         name: str = f"datamaker-{self.manifest.name}-eks-nodegroup-role"
@@ -145,7 +161,6 @@ class Env(Stack):
                 ),
             ],
         )
-        Tags.of(scope=role).add(key="Env", value=f"datamaker-{self.manifest.name}")
         return role
 
     def _create_user_pool(self) -> cognito.UserPool:
@@ -184,7 +199,6 @@ class Env(Stack):
             ),
             user_pool_name=self.id,
         )
-        Tags.of(scope=cast(IConstruct, pool)).add(key="Env", value=f"datamaker-{self.manifest.name}")
         return pool
 
     def _create_user_pool_client(self) -> cognito.UserPoolClient:
@@ -315,6 +329,7 @@ class Env(Stack):
 
     def _create_manifest_parameter(self) -> ssm.StringParameter:
         self.manifest.eks_cluster_role_arn = self.role_eks_cluster.role_arn
+        self.manifest.eks_fargate_profile_role_arn = self.role_fargate_profile.role_arn
         self.manifest.eks_env_nodegroup_role_arn = self.role_eks_env_nodegroup.role_arn
         self.manifest.user_pool_id = self.user_pool.user_pool_id
         self.manifest.user_pool_client_id = self.user_pool_client.user_pool_client_id

@@ -24,6 +24,7 @@ import aws_cdk.core as core
 from aws_cdk import aws_lambda
 
 from datamaker_cli.manifest import Manifest
+from datamaker_cli.manifest import team
 from datamaker_cli.manifest.team import TeamManifest
 from datamaker_cli.remote_files.cdk.team_builders._lambda import LambdaBuilder
 from datamaker_cli.remote_files.cdk.team_builders.stepfunctions_tasks import (
@@ -219,6 +220,8 @@ class StateMachineBuilder:
         if node_type == "ec2":
             job["spec"]["template"]["spec"]["nodeSelector"] = {"team": team_manifest.name, "datamaker/compute-type": "ec2"}
         elif node_type == "fargate":
+            job["spec"]["template"]["spec"]["serviceAccountName"] = team_manifest.name
+            job["spec"]["template"]["spec"]["securityContext"] ={"fsGroup": 1000}
             job["spec"]["template"]["metadata"]["labels"]["datamaker/compute-type"] = "fargate"
 
         run_job = EksRunJob(

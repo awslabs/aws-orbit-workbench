@@ -177,7 +177,6 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
     )
     map_roles = yaml.load(config_map["data"]["mapRoles"], Loader=yaml.SafeLoader)
     team_usernames = {f"datamaker-{manifest.name}-{t.name}-runner" for t in manifest.teams}
-    team_roles = {f"arn:aws:iam::{manifest.account_id}:role/datamaker-{manifest.name}-{t.name}-role" for t in manifest.teams}
     admin_usernames = {f"datamaker-{manifest.name}-admin",}
 
     map_roles = [role for role in map_roles if role["username"] not in team_usernames and role["username"] not in admin_usernames]
@@ -191,9 +190,6 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
         )
 
     if with_teams:
-        for role in map_roles:
-            if role["rolearn"] in team_roles and role["username"] == "system:node:{{SessionName}}" and "system:masters" not in role["groups"]:
-                role["groups"].append("system:masters")
         for username in team_usernames:
             map_roles.append(
                 {

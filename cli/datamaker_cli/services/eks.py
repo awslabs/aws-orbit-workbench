@@ -81,7 +81,7 @@ WAITER_CONFIG = {
 }
 
 
-def create_fargate_profile(manifest: Manifest, profile_name: str, cluster_name: str, role_arn: str, subnets: List[str], namespace: str, selector_labels: Dict[str, str]) -> None:
+def create_fargate_profile(manifest: Manifest, profile_name: str, cluster_name: str, role_arn: str, subnets: List[str], selectors: List[Dict[str, Any]]) -> None:
     _logger.debug(f"Creating EKS Fargate Profile: {profile_name}")
     eks_client = manifest.boto3_client("eks")
 
@@ -90,12 +90,7 @@ def create_fargate_profile(manifest: Manifest, profile_name: str, cluster_name: 
         clusterName=cluster_name,
         podExecutionRoleArn=role_arn,
         subnets=subnets,
-        selectors=[
-            {
-                "namespace": namespace,
-                "labels": selector_labels,
-            },
-        ]
+        selectors=selectors
     )
 
     waiter_model = WaiterModel(WAITER_CONFIG)
@@ -125,3 +120,8 @@ def delete_fargate_profile(manifest: Manifest, profile_name: str, cluster_name: 
     _logger.debug(f"Deleted EKS Fargate Profile: {profile_name}")
 
 
+def describe_cluster(manifest: Manifest, cluster_name: str) -> Dict[str, Any]:
+    _logger.debug(f"Describing Cluster: {cluster_name}")
+    eks_client = manifest.boto3_client("eks")
+
+    return eks_client.describe_cluster(name=cluster_name)

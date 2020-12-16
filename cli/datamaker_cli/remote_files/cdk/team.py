@@ -88,6 +88,14 @@ class Team(Stack):
             scratch_bucket=self.scratch_bucket,
         )
 
+        self.role_fargate = IamBuilder.build_fargate_role(
+            scope=self,
+            manifest=self.manifest,
+            team_manifest=self.team_manifest,
+            policy_name=self.policy,
+            scratch_bucket=self.scratch_bucket,
+        )
+
         self.sg_efs: ec2.SecurityGroup = Ec2Builder.build_efs_security_group(
             scope=self,
             manifest=manifest,
