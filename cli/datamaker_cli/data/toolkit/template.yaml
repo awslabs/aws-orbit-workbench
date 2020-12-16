@@ -49,6 +49,7 @@ Resources:
               - ecr:ListImages
               - ecr:DescribeImages
               - cloudformation:ListStacks
+              - elasticfilesystem:DescribeFileSystemPolicy
               - elasticfilesystem:CreateFileSystem
               - elasticfilesystem:CreateMountTarget
               - elasticfilesystem:DescribeFileSystems
@@ -57,7 +58,6 @@ Resources:
               - elasticfilesystem:DeleteFileSystem
               - elasticfilesystem:PutLifecycleConfiguration
               - elasticfilesystem:ListTagsForResource
-              - elasticfilesystem:DescribeFileSystemPolicy
               - iam:ListAttachedRolePolicies
               - iam:GetPolicy
               - iam:ListPolicyVersions
