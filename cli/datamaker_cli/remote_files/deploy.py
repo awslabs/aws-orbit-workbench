@@ -46,7 +46,7 @@ def _deploy_image(filename: str, args: Tuple[str, ...]) -> None:
 
     if manifest.images.get(image_name, {"source": "code"}).get("source") == "code":
         _logger.debug("Building and deploy docker image from source...")
-        path = os.path.join(manifest.filename_dir, image_name)
+        path = os.path.join(os.path.dirname(manifest.filename_dir), image_name)
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)

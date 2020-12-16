@@ -278,8 +278,6 @@ def deploy_teams(manifest: Manifest, changes: List["PluginChangeset"]) -> None:
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
-        for team_manifest in manifest.teams:
-            plugins.PLUGINS_REGISTRIES.destroy_team_plugins(manifest=manifest, team_manifest=team_manifest)
         context = get_k8s_context(manifest=manifest)
         _logger.debug("kubectl context: %s", context)
         output_path = _generate_teams_manifest(manifest=manifest)

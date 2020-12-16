@@ -28,6 +28,8 @@ POD_FILENAME = os.path.join(os.path.dirname(__file__), "job_definition.yaml")
 @hooks.deploy
 def deploy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
     _logger.debug("Team Env name: %s | Team name: %s", manifest.name, team_manifest.name)
+    plugin_id = plugin_id.replace('_', '-')
+    _logger.debug("plugin_id: %s", plugin_id)
     configmap_script_name = f"{plugin_id}-script"
 
     if "script" in parameters:

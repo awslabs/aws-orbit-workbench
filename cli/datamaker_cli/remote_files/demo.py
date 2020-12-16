@@ -181,7 +181,7 @@ def _prepare_demo_data(manifest: Manifest) -> None:
     files_to_download = set(cms_file_names) - set(s3_data_files)
     if files_to_download:
         downloaded_files = []
-        remote_dir = os.path.join(manifest.filename_dir, "data")
+        remote_dir = os.path.join(os.path.dirname(manifest.filename_dir), "data")
         # Download specific files and upload to S3 bucket path
         for fp in cms_files:
             file_name = fp.split("/")[-1]

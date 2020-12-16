@@ -179,16 +179,9 @@ class Manifest:
     def _read_manifest_file(filename: str) -> MANIFEST_FILE_TYPE:
         _logger.debug("reading manifest file (%s)", filename)
         filename = os.path.abspath(filename)
-        if "bundle" in filename:
-            # When the manifest is in the bundle, it will be in the 'conf' folder with all the files from its original
-            # folder and the manifest will always be named manifest.yaml (renamed from its original name)
-            conf_dir = os.path.join(os.path.dirname(filename), "conf")
-        else:
-            conf_dir = os.path.dirname(filename)
-
+        conf_dir = os.path.dirname(filename)
         manifest_path = os.path.join(conf_dir, os.path.basename(filename))
-
-        _logger.debug("manifest : %s", manifest_path)
+        _logger.debug("manifest: %s", manifest_path)
         _logger.debug("conf directory: %s", conf_dir)
         YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.SafeLoader, base_dir=conf_dir)
         with open(manifest_path, "r") as f:
@@ -215,7 +208,6 @@ class Manifest:
         return []
 
     def _parse_teams(self) -> List[TeamManifest]:
-
         return [
             TeamManifest(
                 manifest=self,
