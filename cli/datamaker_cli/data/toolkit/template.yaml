@@ -49,6 +49,7 @@ Resources:
               - ecr:ListImages
               - ecr:DescribeImages
               - cloudformation:ListStacks
+              - elasticfilesystem:DescribeFileSystemPolicy
               - elasticfilesystem:CreateFileSystem
               - elasticfilesystem:CreateMountTarget
               - elasticfilesystem:DescribeFileSystems
