@@ -88,7 +88,7 @@ profile_list_default = [
             "mem_limit": "2G",
         },
         "default": True,
-    }
+    },
 ]
 
 
