@@ -274,7 +274,7 @@ def list_images_cli(filename: str, debug: bool) -> None:
 @click.option(
     "--filename",
     "-f",
-    default="./manifest.yaml",
+    default="./conf/manifest.yaml",
     type=str,
 )
 @click.option("--command", "-c", type=str, required=True)

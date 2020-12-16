@@ -273,6 +273,7 @@ class PluginRegistries:
                 if self._is_plugin_removed(changes=changes, plugin_id=plugin_id, team_name=team_manifest.name):
                     self.destroy_plugin(manifest=manifest, team_manifest=team_manifest, plugin_id=plugin_id)
                 else:
+                    _logger.debug("Deploying plugin %s for team %s", plugin_id, team_manifest.name)
                     self.deploy_plugin(manifest=manifest, team_manifest=team_manifest, plugin_id=plugin_id)
         else:
             _logger.debug(

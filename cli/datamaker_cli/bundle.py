@@ -16,6 +16,7 @@ import glob
 import logging
 import os
 import shutil
+from pprint import pformat
 from typing import List, Optional, Tuple
 
 from datamaker_cli import DATAMAKER_CLI_ROOT
@@ -109,12 +110,12 @@ def generate_bundle(
 
     _logger.debug(f"copy conf_dir={conf_dir} to {bundled_manifest_path_conf}")
     shutil.copytree(src=conf_dir, dst=bundled_manifest_path_conf)
-    _logger.debug(f"copy manifest file={manifest.filename} to {bundled_manifest_path_conf}")
+    _logger.debug(f"copy manifest file={manifest.filename} to {bundled_manifest_path}")
     shutil.copy(src=manifest.filename, dst=bundled_manifest_path)
 
     # changeset
     if changeset is not None:
-        bundled_changeset_path = os.path.join(bundle_dir, "changeset.json")
+        bundled_changeset_path = os.path.join(bundle_dir, "conf", "changeset.json")
         changeset.write_changeset_file(filename=bundled_changeset_path)
 
     # DataMaker CLI Source
@@ -145,5 +146,9 @@ def generate_bundle(
             _generate_dir(bundle_dir=bundle_dir, dir=dir, name=name)
 
     _logger.debug("bundle_dir: %s", bundle_dir)
+
+    files = glob.glob(bundle_dir + "/**", recursive=True)
+    _logger.debug("files:\n%s", pformat(files))
+
     shutil.make_archive(base_name=bundle_dir, format="zip", root_dir=remote_dir, base_dir="bundle")
     return bundle_dir + ".zip"
