@@ -128,6 +128,36 @@ def get_workspace() -> Dict[str, str]:
 
     return config
 
+def get_demo() -> Dict[str, str]:
+    """
+    Returns demo configuration for your given role for your Team Space in a dictionary object.
+
+    Parameters
+    ----------
+    None
+        None.
+
+    Returns
+    -------
+    config : dict
+        Dictionary object containing demo details about lake_bucket, lake bucket read only and full access policies  scratch_bucket, notebook_bucket, role_arn,
+        and vpc_id, private and public sunets.
+
+    Example
+    -------
+    >>> from aws.utils.notebooks.common import get_demo
+    >>> demo = get_demo()
+    """
+    ssm = boto3.client("ssm")
+    props = get_properties()
+    demo_key = f"/datamaker/{props['AWS_DATAMAKER_ENV']}/demo"
+    demo_config_str = ssm.get_parameter(Name=demo_key)["Parameter"]["Value"]
+    config = json.loads(demo_config_str)
+    my_session = boto3.session.Session()
+    my_region = my_session.region_name
+    config["region"] = my_region
+    config["env_name"] = props["AWS_DATAMAKER_ENV"]
+    return config
 
 def get_scratch_database() -> str:
     """
