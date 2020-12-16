@@ -259,15 +259,12 @@ class DemoStack(Stack):
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=[
-                        "s3:Get*",
-                        "s3:List*"
-                    ],
+                    actions=["s3:Get*", "s3:List*"],
                     resources=[
                         f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}",
                         f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}/*",
                     ],
-                )
+                ),
             ],
             managed_policy_name=f"datamaker-{self.env_name}-demo-lake-bucket-fullaccess",
         )
