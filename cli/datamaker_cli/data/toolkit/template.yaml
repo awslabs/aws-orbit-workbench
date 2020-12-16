@@ -107,8 +107,6 @@ Resources:
               - arn:aws:s3:::datamaker-${env_name}-toolkit-${account_id}-${deploy_id}
               - arn:aws:s3:::datamaker-${env_name}-cdk-toolkit-${account_id}-${deploy_id}/*
               - arn:aws:s3:::datamaker-${env_name}-cdk-toolkit-${account_id}-${deploy_id}
-              - arn:aws:s3:::datamaker-${env_name}-demo-*-${account_id}-${deploy_id}
-              - arn:aws:s3:::datamaker-${env_name}-demo-*-${account_id}-${deploy_id}/*
           - Effect: Allow
             Action:
               - codebuild:CreateReportGroup
