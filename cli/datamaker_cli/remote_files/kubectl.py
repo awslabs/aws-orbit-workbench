@@ -32,11 +32,19 @@ EFS_DRIVE = "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/ove
 MODELS_PATH = os.path.join(DATAMAKER_CLI_ROOT, "data", "kubectl")
 
 
-def _commons(output_path: str) -> None:
+def _commons(manifest: Manifest, output_path: str) -> None:
     filename = "00-commons.yaml"
     input = os.path.join(MODELS_PATH, "apps", filename)
     output = os.path.join(output_path, filename)
-    shutil.copyfile(src=input, dst=output)
+
+    with open(input, "r") as file:
+        content: str = file.read()
+    content = content.replace("$", "").format(
+        region=manifest.region,
+        env_name=manifest.name,
+    )
+    with open(output, "w") as file:
+        file.write(content)
 
 
 def _team(manifest: Manifest, team_manifest: TeamManifest, output_path: str) -> None:
@@ -126,7 +134,7 @@ def _generate_env_manifest(manifest: Manifest, clean_up: bool = True) -> str:
     os.makedirs(output_path, exist_ok=True)
     if clean_up:
         _cleanup_output(output_path=output_path)
-    _commons(output_path=output_path)
+    _commons(manifest=manifest, output_path=output_path)
 
     if manifest.account_id is None:
         raise RuntimeError("manifest.account_id is None!")
@@ -168,7 +176,8 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
         Loader=yaml.SafeLoader,
     )
     map_roles = yaml.load(config_map["data"]["mapRoles"], Loader=yaml.SafeLoader)
-    team_usernames = {f"datamaker-{manifest.name}-{t.name}" for t in manifest.teams}
+    team_usernames = {f"datamaker-{manifest.name}-{t.name}-runner" for t in manifest.teams}
+    team_roles = {f"arn:aws:iam::{manifest.account_id}:role/datamaker-{manifest.name}-{t.name}-role" for t in manifest.teams}
     admin_usernames = {f"datamaker-{manifest.name}-admin",}
 
     map_roles = [role for role in map_roles if role["username"] not in team_usernames and role["username"] not in admin_usernames]
@@ -182,11 +191,14 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
         )
 
     if with_teams:
+        for role in map_roles:
+            if role["rolearn"] in team_roles and role["username"] == "system:node:{{SessionName}}" and "system:masters" not in role["groups"]:
+                role["groups"].append("system:masters")
         for username in team_usernames:
             map_roles.append(
                 {
                     "groups": ["system:masters"],
-                    "rolearn": f"arn:aws:iam::{manifest.account_id}:role/{username}-role",
+                    "rolearn": f"arn:aws:iam::{manifest.account_id}:role/{username}",
                     "username": username,
                 }
             )

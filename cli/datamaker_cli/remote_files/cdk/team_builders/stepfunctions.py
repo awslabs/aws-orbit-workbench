@@ -146,9 +146,13 @@ class StateMachineBuilder:
         team_manifest: TeamManifest,
         image: ecs.EcrImage,
         role: iam.IRole,
+        node_type: str
     ) -> sfn.StateMachine:
+        if node_type not in {"ec2", "fargate"}:
+            raise ValueError(f"Invalid node_type: {node_type}")
+
         # We use a nested Construct to avoid collisions with Lambda and Task ids
-        construct = core.Construct(scope, "eks_run_container_nested_construct")
+        construct = core.Construct(scope, f"eks_run_{node_type}_container_nested_construct")
 
         eks_describe_cluster = LambdaBuilder.get_or_build_eks_describe_cluster(
             scope=construct, manifest=manifest, team_manifest=team_manifest
@@ -162,15 +166,17 @@ class StateMachineBuilder:
             "apiVersion": "batch/v1",
             "kind": "Job",
             "metadata": {
-                "labels": {"app": "datamaker-jupyterhub"},
-                "generateName": "datamaker-runner-",
+                "labels": {"app": f"datamaker-{team_manifest.name}-runner"},
+                "generateName": f"datamaker-{team_manifest.name}-runner-",
                 "namespace": team_manifest.name,
             },
             "spec": {
                 "backoffLimit": 0,
+                "activeDeadlineSeconds": sfn.JsonPath.number_at("$.Timeout"),
+                "ttlSecondsAfterFinished": 120,
                 "template": {
                     "metadata": {
-                        "labels": {"app": "datamaker-jupyterhub"},
+                        "labels": {"app": f"datamaker-{team_manifest.name}-runner", "team": team_manifest.name},
                         "namespace": team_manifest.name,
                     },
                     "spec": {
@@ -179,6 +185,9 @@ class StateMachineBuilder:
                                 "name": "datamaker-runner",
                                 "image": image.image_name,
                                 "command": COMMAND,
+                                "securityContext": {
+                                    "runAsUser": 1000,
+                                },
                                 "resources": {
                                     "limits": {
                                         "cpu": f"{team_manifest.container_defaults['cpu']}",
@@ -201,12 +210,16 @@ class StateMachineBuilder:
                             }
                         ],
                         "restartPolicy": "Never",
-                        "nodeSelector": {"team": team_manifest.name},
                         "volumes": [{"name": "efs-volume", "persistentVolumeClaim": {"claimName": "jupyterhub"}}],
                     },
                 },
             },
         }
+
+        if node_type == "ec2":
+            job["spec"]["template"]["spec"]["nodeSelector"] = {"team": team_manifest.name, "datamaker/compute-type": "ec2"}
+        elif node_type == "fargate":
+            job["spec"]["template"]["metadata"]["labels"]["datamaker/compute-type"] = "fargate"
 
         run_job = EksRunJob(
             scope=construct,
@@ -228,7 +241,7 @@ class StateMachineBuilder:
         return sfn.StateMachine(
             scope=construct,
             id="eks_run_container_state_machine",
-            state_machine_name=f"datamaker-{manifest.name}-{team_manifest.name}-eks-container-runner",
+            state_machine_name=f"datamaker-{manifest.name}-{team_manifest.name}-eks-{node_type}-container-runner",
             definition=definition,
             role=role,
         )

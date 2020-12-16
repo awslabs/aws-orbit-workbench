@@ -16,7 +16,7 @@ spec:
     spec:
       nodeSelector:
         kubernetes.io/os: linux
-        nodeType: ec2
+        datamaker/compute-type: ec2
       hostNetwork: true
       priorityClassName: system-node-critical
       tolerations:

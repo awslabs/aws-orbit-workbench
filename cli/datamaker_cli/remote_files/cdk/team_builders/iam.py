@@ -278,10 +278,19 @@ class IamBuilder:
     @staticmethod
     def build_ecs_role(scope: core.Construct) -> iam.Role:
         return iam.Role(
-            scope,
-            "ecs_execution_role",
+            scope=scope,
+            id="ecs_execution_role",
             assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
             managed_policies=[
                 iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AmazonECSTaskExecutionRolePolicy")
             ],
+        )
+
+    @staticmethod
+    def build_container_runner_role(scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest) -> iam.Role:
+        return iam.Role(
+            scope=scope,
+            id="container_runner_role",
+            role_name=f"datamaker-{manifest.name}-{team_manifest.name}-runner",
+            assumed_by=iam.ServicePrincipal("states.amazonaws.com"),
         )

@@ -23,7 +23,7 @@ from datamaker_cli import sh
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.subnet import SubnetKind
 from datamaker_cli.manifest.team import TeamManifest
-from datamaker_cli.services import cfn
+from datamaker_cli.services import cfn, eks
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ def create_nodegroup_structure(team: TeamManifest, env_name: str) -> Dict[str, A
         "maxSize": team.nodes_num_max,
         "volumeSize": team.local_storage_size,
         "ssh": {"allow": False},
-        "labels": {"team": team.name, "nodeType": "ec2"},
+        "labels": {"team": team.name, "datamaker/compute-type": "ec2"},
         "tags": {"Env": f"datamaker-{env_name}", "TeamSpace": team.name},
         "iam": {"instanceRoleARN": team.eks_nodegroup_role_arn},
     }
@@ -107,6 +107,11 @@ def generate_manifest(manifest: Manifest, name: str, output_teams: bool = True) 
         }
     ]
 
+    MANIFEST["cloudWatch"] = {
+        "clusterLogging": {
+            "enableTypes": ["*"]
+        }
+    }
 
     _logger.debug("eksctl manifest:\n%s", pprint.pformat(MANIFEST))
     output_filename = f"{manifest.filename_dir}/.datamaker.out/{manifest.name}/eksctl/cluster.yaml"
@@ -139,10 +144,27 @@ def deploy_teams(manifest: Manifest) -> None:
     _logger.debug("Synthetizing the EKSCTL Teams manifest")
     output_filename = generate_manifest(manifest=manifest, name=stack_name, output_teams=True)
     if cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name) and manifest.teams:
+        subnet_kind = SubnetKind.private if manifest.internet_accessible else SubnetKind.isolated
+        subnets = [s.subnet_id for s in manifest.vpc.subnets if s.kind == subnet_kind]
+        for team in manifest.teams:
+            eks.create_fargate_profile(
+                manifest=manifest,
+                profile_name=f"datamaker-{manifest.name}-{team.name}",
+                cluster_name=f"datamaker-{manifest.name}",
+                role_arn=f"arn:aws:iam::{manifest.account_id}:role/datamaker-{manifest.name}-{team.name}-role",
+                subnets=subnets,
+                namespace=team.name,
+                selector_labels={
+                    "team": team.name,
+                    "datamaker/compute-type": "fargate"
+                },
+            )
+
         teams = ",".join([t.name for t in manifest.teams])
         _logger.debug("Deploying EKSCTL Teams resources")
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
         sh.run(f"eksctl create nodegroup -f {output_filename} --include={teams} --verbose 4")
+
     _logger.debug("EKSCTL deployed")
 
 
@@ -162,6 +184,13 @@ def destroy_teams(manifest: Manifest) -> None:
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name) and manifest.teams:
+        for team in manifest.teams:
+            eks.delete_fargate_profile(
+                manifest=manifest,
+                profile_name=f"datamaker-{manifest.name}-{team.name}",
+                cluster_name=f"datamaker-{manifest.name}",
+            )
+
         teams = ",".join([t.name for t in manifest.teams])
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
         output_filename = generate_manifest(manifest=manifest, name=stack_name)

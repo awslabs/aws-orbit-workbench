@@ -122,6 +122,7 @@ class Team(Stack):
             file_system=self.efs,
             image=self.ecr_image,
         )
+        self.container_runner_role = IamBuilder.build_container_runner_role(scope=self, manifest=manifest, team_manifest=team_manifest)
         self.ecs_fargate_runner = StateMachineBuilder.build_ecs_run_container_state_machine(
             scope=self,
             manifest=manifest,
@@ -130,7 +131,7 @@ class Team(Stack):
             task_definition=self.ecs_task_definition,
             efs_security_group=self.sg_efs,
             subnets=self.i_private_subnets if self.manifest.internet_accessible else self.i_isolated_subnets,
-            role=self.role_eks_nodegroup,
+            role=self.container_runner_role,
             scratch_bucket=self.scratch_bucket,
         )
         self.eks_fargate_runner = StateMachineBuilder.build_eks_run_container_state_machine(
@@ -138,13 +139,22 @@ class Team(Stack):
             manifest=manifest,
             team_manifest=team_manifest,
             image=self.ecr_image,
-            role=self.role_eks_nodegroup,
+            role=self.container_runner_role,
+            node_type="fargate",
+        )
+        self.eks_ec2_runner = StateMachineBuilder.build_eks_run_container_state_machine(
+            scope=self,
+            manifest=manifest,
+            team_manifest=team_manifest,
+            image=self.ecr_image,
+            role=self.container_runner_role,
+            node_type="ec2",
         )
         self.eks_get_pod_logs = StateMachineBuilder.build_eks_get_pod_logs_state_machine(
             scope=self,
             manifest=manifest,
             team_manifest=team_manifest,
-            role=self.role_eks_nodegroup,
+            role=self.container_runner_role,
         )
 
         self.container_runner = LambdaBuilder.build_container_runner(
@@ -152,6 +162,8 @@ class Team(Stack):
             manifest=manifest,
             team_manifest=team_manifest,
             ecs_fargate_runner=self.ecs_fargate_runner,
+            eks_fargate_runner= self.eks_fargate_runner,
+            eks_ec2_runner=self.eks_ec2_runner,
         )
 
         self.team_manifest.efs_id = self.efs.file_system_id
