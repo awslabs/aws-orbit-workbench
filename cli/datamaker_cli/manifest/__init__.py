@@ -226,7 +226,7 @@ class Manifest:
                 nodes_num_max=cast(int, t["nodes-num-max"]),
                 nodes_num_min=cast(int, t["nodes-num-min"]),
                 efs_life_cycle=cast(str, t["efs-life-cycle"]) if "efs-life-cycle" in t else "",
-                policy=cast(str, t["policy"]),
+                policies=cast(List[str], t.get("policies", [])),
                 grant_sudo=cast(bool, t.get("grant-sudo", False)),
                 jupyterhub_inbound_ranges=cast(List[str], t.get("jupyterhub-inbound-ranges", [])),
                 image=cast(Optional[str], t.get("image")),
