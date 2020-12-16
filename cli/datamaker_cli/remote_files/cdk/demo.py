@@ -12,13 +12,17 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import logging
 import os
 import shutil
 import sys
-from typing import Any, Tuple
+from typing import Any, Dict, Tuple
 
+import aws_cdk.core as core
 from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_iam as iam
+from aws_cdk import aws_ssm as ssm
 from aws_cdk.core import App, CfnOutput, Construct, Stack, Tags
 
 from datamaker_cli.manifest import Manifest
@@ -26,16 +30,55 @@ from datamaker_cli.manifest import Manifest
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-class VpcStack(Stack):
-    def __init__(self, scope: Construct, id: str, env_name: str, **kwargs: Any) -> None:
-        self.env_name = env_name
+class DemoStack(Stack):
+    def __init__(self, scope: Construct, id: str, manifest: Manifest, **kwargs: Any) -> None:
+        self.env_name = manifest.name
+        self.manifest = manifest
         super().__init__(scope, id, **kwargs)
-        Tags.of(scope=self).add(key="Env", value=f"datamaker-{env_name}")
+        Tags.of(scope=self).add(key="Env", value=f"datamaker-{self.env_name}")
         self.vpc: ec2.Vpc = self._create_vpc()
         self.public_subnets_ids: Tuple[str, ...] = tuple(x.subnet_id for x in self.vpc.public_subnets)
         self.private_subnets_ids: Tuple[str, ...] = tuple(x.subnet_id for x in self.vpc.private_subnets)
         self.isolated_subnets_ids: Tuple[str, ...] = tuple(x.subnet_id for x in self.vpc.isolated_subnets)
         self._create_vpc_endpoints()
+
+        if manifest.toolkit_s3_bucket is None:
+            manifest.fetch_ssm()
+            if manifest.toolkit_s3_bucket is None:
+                manifest.fetch_toolkit_data()
+            else:
+                raise ValueError(f"manifest.toolkit_s3_bucket: {manifest.toolkit_s3_bucket}")
+        if manifest.toolkit_s3_bucket is None:
+            raise ValueError(f"manifest.toolkit_s3_bucket: {manifest.toolkit_s3_bucket}")
+        toolkit_s3_bucket_name: str = manifest.toolkit_s3_bucket
+
+        # self.lake_bucket = self._create_lake_bucket()
+        self.bucket_names: Dict[str, Any] = {
+            "lake-bucket": f"datamaker-{self.env_name}-demo-lake-{self.manifest.account_id}-{self.manifest.deploy_id}",
+            "toolkit-bucket": toolkit_s3_bucket_name,
+        }
+        self.lake_bucket_full_access = self._create_fullaccess_managed_policies()
+        self.lake_bucket_read_only_access = self._create_readonlyaccess_managed_policies()
+
+        self._ssm_parameter = ssm.StringParameter(
+            self,
+            id="/datamaker/DemoParams",
+            string_value=json.dumps(
+                {
+                    "vpc_id": self.vpc.vpc_id,
+                    "public_subnet": self.public_subnets_ids,
+                    "private_subnet": self.private_subnets_ids,
+                    "lake_bucket": self.bucket_names["lake-bucket"],
+                    "creator_access_policy": self.lake_bucket_full_access.managed_policy_name,
+                    "user_access_policy": self.lake_bucket_read_only_access.managed_policy_name,
+                }
+            ),
+            type=ssm.ParameterType.STRING,
+            description="DataMaker Demo resources.",
+            parameter_name=f"/datamaker/{self.env_name}/demo",
+            simple_name=False,
+            tier=ssm.ParameterTier.INTELLIGENT_TIERING,
+        )
 
         CfnOutput(
             scope=self,
@@ -54,6 +97,27 @@ class VpcStack(Stack):
             id=f"{id}isolatedsubnetsids",
             export_name=f"datamaker-{self.env_name}-isolated-subnets-ids",
             value=",".join(self.isolated_subnets_ids),
+        )
+
+        CfnOutput(
+            scope=self,
+            id=f"{id}lakebucketname",
+            export_name="lake-bucket-name",
+            value=self.bucket_names["lake-bucket"],
+        )
+
+        CfnOutput(
+            scope=self,
+            id=f"{id}lakebucketfullaccesspolicy",
+            export_name="lake-bucket-full-access-policy",
+            value=self.lake_bucket_full_access.managed_policy_name,
+        )
+
+        CfnOutput(
+            scope=self,
+            id=f"{id}lakebucketreadonlypolicy",
+            export_name="lake-bucket-read-only-policy",
+            value=self.lake_bucket_read_only_access.managed_policy_name,
         )
 
     def _create_vpc(self) -> ec2.Vpc:
@@ -100,6 +164,7 @@ class VpcStack(Stack):
             "secrets_endpoint": ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
             "kms_endpoint": ec2.InterfaceVpcEndpointAwsService.KMS,
             "sagemaker_endpoint": ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_API,
+            "sagemaker_runtime": ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_RUNTIME,
             "notebook_endpoint": ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_NOTEBOOK,
             "athena_endpoint": ec2.InterfaceVpcEndpointAwsService("athena"),
             "glue_endpoint": ec2.InterfaceVpcEndpointAwsService("glue"),
@@ -184,6 +249,60 @@ class VpcStack(Stack):
             private_dns_enabled=True,
         )
 
+    # def _create_lake_bucket(self) -> s3.Bucket:
+    #     lake_bucket = s3.Bucket(
+    #         scope=self,
+    #         id="lake_bucket",
+    #         bucket_name=f"datamaker-{self.env_name}-demo-lake-{self.manifest.account_id}-{self.manifest.deploy_id}",
+    #         block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+    #         encryption=s3.BucketEncryption.S3_MANAGED,
+    #     )
+    #     return lake_bucket
+
+    def _create_fullaccess_managed_policies(self) -> iam.ManagedPolicy:
+        lake_bucket_full_access = iam.ManagedPolicy(
+            self,
+            "LakeBucketFullAccess",
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "s3:*",
+                    ],
+                    resources=[
+                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}",
+                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}/*",
+                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}",
+                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}/*",
+                    ],
+                )
+            ],
+            managed_policy_name=f"datamaker-{self.env_name}-lake-bucket-fullaccess",
+        )
+        return lake_bucket_full_access
+
+    def _create_readonlyaccess_managed_policies(self) -> iam.ManagedPolicy:
+        lake_bucket_read_only_access = iam.ManagedPolicy(
+            self,
+            "LakeBucketReadOnlyAccess",
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["s3:Get*", "s3:List*"],
+                    resources=[
+                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}",
+                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}/*",
+                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}",
+                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}/*",
+                        # bucket.arn_for_objects("*"),
+                        # bucket.bucket_arn
+                    ],
+                ),
+            ],
+            managed_policy_name=f"datamaker-{self.env_name}-lake-bucket-readonlyaccess",
+        )
+        return lake_bucket_read_only_access
+
 
 def main() -> None:
     _logger.debug("sys.argv: %s", sys.argv)
@@ -200,7 +319,7 @@ def main() -> None:
     shutil.rmtree(outdir)
 
     app = App(outdir=outdir)
-    VpcStack(scope=app, id=manifest.demo_stack_name, env_name=manifest.name)
+    DemoStack(scope=app, id=manifest.demo_stack_name, manifest=manifest)
     app.synth(force=True)
 
 
