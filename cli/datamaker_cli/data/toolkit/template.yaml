@@ -57,6 +57,7 @@ Resources:
               - elasticfilesystem:DeleteFileSystem
               - elasticfilesystem:PutLifecycleConfiguration
               - elasticfilesystem:ListTagsForResource
+              - elasticfilesystem:DescribeFileSystemPolicy
               - iam:ListAttachedRolePolicies
               - iam:GetPolicy
               - iam:ListPolicyVersions
