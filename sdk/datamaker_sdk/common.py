@@ -128,7 +128,6 @@ def get_workspace() -> Dict[str, str]:
 
     return config
 
-
 def get_scratch_database() -> str:
     """
     Creates a new scratch database for the TeamSpace located in the scratch s3 bucket.
