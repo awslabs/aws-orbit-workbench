@@ -43,13 +43,13 @@ class DemoStack(Stack):
         self._create_vpc_endpoints()
 
         if manifest.toolkit_s3_bucket is None:
+            _logger.info("manifest.toolkit_s3_bucket is none, fetching from ssm")
             manifest.fetch_ssm()
-            if manifest.toolkit_s3_bucket is None:
-                manifest.fetch_toolkit_data()
-            else:
-                raise ValueError(f"manifest.toolkit_s3_bucket: {manifest.toolkit_s3_bucket}")
         if manifest.toolkit_s3_bucket is None:
-            raise ValueError(f"manifest.toolkit_s3_bucket: {manifest.toolkit_s3_bucket}")
+            _logger.info("manifest.toolkit_s3_bucket is none, fetching from toolkit data")
+            manifest.fetch_toolkit_data()
+        if manifest.toolkit_s3_bucket is None:
+            raise ValueError("manifest.toolkit_s3_bucket is not defined")
         toolkit_s3_bucket_name: str = manifest.toolkit_s3_bucket
 
         # self.lake_bucket = self._create_lake_bucket()
@@ -62,15 +62,15 @@ class DemoStack(Stack):
 
         self._ssm_parameter = ssm.StringParameter(
             self,
-            id="/datamaker/DemoParams",
+            id="/datamaker/demo",
             string_value=json.dumps(
                 {
-                    "vpc_id": self.vpc.vpc_id,
-                    "public_subnet": self.public_subnets_ids,
-                    "private_subnet": self.private_subnets_ids,
-                    "lake_bucket": self.bucket_names["lake-bucket"],
-                    "creator_access_policy": self.lake_bucket_full_access.managed_policy_name,
-                    "user_access_policy": self.lake_bucket_read_only_access.managed_policy_name,
+                    "VpcId": self.vpc.vpc_id,
+                    "PublicSubnet": self.public_subnets_ids,
+                    "PrivateSubnet": self.private_subnets_ids,
+                    "LakeBucket": self.bucket_names["lake-bucket"],
+                    "CreatorAaccessPolicy": self.lake_bucket_full_access.managed_policy_name,
+                    "UserAccessPolicy": self.lake_bucket_read_only_access.managed_policy_name,
                 }
             ),
             type=ssm.ParameterType.STRING,
@@ -97,13 +97,6 @@ class DemoStack(Stack):
             id=f"{id}isolatedsubnetsids",
             export_name=f"datamaker-{self.env_name}-isolated-subnets-ids",
             value=",".join(self.isolated_subnets_ids),
-        )
-
-        CfnOutput(
-            scope=self,
-            id=f"{id}lakebucketname",
-            export_name="lake-bucket-name",
-            value=self.bucket_names["lake-bucket"],
         )
 
         CfnOutput(
@@ -249,16 +242,6 @@ class DemoStack(Stack):
             private_dns_enabled=True,
         )
 
-    # def _create_lake_bucket(self) -> s3.Bucket:
-    #     lake_bucket = s3.Bucket(
-    #         scope=self,
-    #         id="lake_bucket",
-    #         bucket_name=f"datamaker-{self.env_name}-demo-lake-{self.manifest.account_id}-{self.manifest.deploy_id}",
-    #         block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-    #         encryption=s3.BucketEncryption.S3_MANAGED,
-    #     )
-    #     return lake_bucket
-
     def _create_fullaccess_managed_policies(self) -> iam.ManagedPolicy:
         lake_bucket_full_access = iam.ManagedPolicy(
             self,
@@ -272,12 +255,21 @@ class DemoStack(Stack):
                     resources=[
                         f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}",
                         f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}/*",
+                    ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "s3:Get*",
+                        "s3:List*"
+                    ],
+                    resources=[
                         f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}",
                         f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}/*",
                     ],
                 )
             ],
-            managed_policy_name=f"datamaker-{self.env_name}-lake-bucket-fullaccess",
+            managed_policy_name=f"datamaker-{self.env_name}-demo-lake-bucket-fullaccess",
         )
         return lake_bucket_full_access
 
@@ -294,12 +286,10 @@ class DemoStack(Stack):
                         f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}/*",
                         f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}",
                         f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}/*",
-                        # bucket.arn_for_objects("*"),
-                        # bucket.bucket_arn
                     ],
                 ),
             ],
-            managed_policy_name=f"datamaker-{self.env_name}-lake-bucket-readonlyaccess",
+            managed_policy_name=f"datamaker-{self.env_name}-demo-lake-bucket-readonlyaccess",
         )
         return lake_bucket_read_only_access
 

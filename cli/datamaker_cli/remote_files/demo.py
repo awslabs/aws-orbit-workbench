@@ -190,13 +190,13 @@ def _download_demo_data(
 def _prepare_demo_data(manifest: Manifest) -> None:
     # Check toolkit bucket details
     if manifest.toolkit_s3_bucket is None:
+        _logger.info("manifest.toolkit_s3_bucket is none, fetching from ssm")
         manifest.fetch_ssm()
-        if manifest.toolkit_s3_bucket is None:
-            manifest.fetch_toolkit_data()
-        else:
-            raise ValueError(f"manifest.toolkit_s3_bucket: {manifest.toolkit_s3_bucket}")
     if manifest.toolkit_s3_bucket is None:
-        raise ValueError(f"manifest.toolkit_s3_bucket: {manifest.toolkit_s3_bucket}")
+        _logger.info("manifest.toolkit_s3_bucket is none, fetching from toolkit data")
+        manifest.fetch_toolkit_data()
+    if manifest.toolkit_s3_bucket is None:
+        raise ValueError("manifest.toolkit_s3_bucket is not defined")
     bucket_name: str = manifest.toolkit_s3_bucket
     _logger.debug("Adding CMS data sets")
     cms_files: List[str] = [
