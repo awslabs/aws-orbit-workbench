@@ -46,7 +46,7 @@ def _deploy_image(filename: str, args: Tuple[str, ...]) -> None:
 
     if manifest.images.get(image_name, {"source": "code"}).get("source") == "code":
         _logger.debug("Building and deploy docker image from source...")
-        path = os.path.join(manifest.filename_dir, image_name)
+        path = os.path.join(os.path.dirname(manifest.filename_dir), image_name)
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
@@ -161,11 +161,11 @@ def deploy(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug("Kubernetes Environment components deployed")
 
     if not env_only:
-        teams.deploy(manifest=manifest, changes=changes.plugin_changesets)
+        teams.deploy(manifest=manifest)
         _logger.debug("Team Stacks deployed")
         eksctl.deploy_teams(manifest=manifest)
         _logger.debug("EKS Team Stacks deployed")
-        kubectl.deploy_teams(manifest=manifest)
+        kubectl.deploy_teams(manifest=manifest, changes=changes.plugin_changesets)
         _logger.debug("Kubernetes Team components deployed")
     else:
         _logger.debug("Skipping Team Stacks")

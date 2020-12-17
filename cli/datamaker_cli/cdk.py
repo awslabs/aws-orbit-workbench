@@ -9,12 +9,12 @@ from datamaker_cli.services import cfn
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def _get_app_argument(app_filename: str, args: List[str]) -> str:
+def get_app_argument(app_filename: str, args: List[str]) -> str:
     args_str: str = " ".join(args)
     return f'--app "python {app_filename} {args_str}"'
 
 
-def _get_output_argument(manifest: Manifest, stack_name: str) -> str:
+def get_output_argument(manifest: Manifest, stack_name: str) -> str:
     path: str = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "cdk", stack_name)
     return f"--output {path}"
 
@@ -25,8 +25,8 @@ def deploy(manifest: Manifest, stack_name: str, app_filename: str, args: List[st
     cmd: str = (
         "cdk deploy --require-approval never --progress events "
         f"--toolkit-stack-name {manifest.cdk_toolkit_stack_name} "
-        f"{_get_app_argument(app_filename, args)} "
-        f"{_get_output_argument(manifest, stack_name)}"
+        f"{get_app_argument(app_filename, args)} "
+        f"{get_output_argument(manifest, stack_name)}"
     )
     sh.run(cmd=cmd)
 
@@ -40,8 +40,8 @@ def destroy(manifest: Manifest, stack_name: str, app_filename: str, args: List[s
     cmd: str = (
         "cdk destroy --force "
         f"--toolkit-stack-name {manifest.cdk_toolkit_stack_name} "
-        f"{_get_app_argument(app_filename, args)} "
-        f"{_get_output_argument(manifest, stack_name)}"
+        f"{get_app_argument(app_filename, args)} "
+        f"{get_output_argument(manifest, stack_name)}"
     )
     sh.run(cmd=cmd)
 
@@ -52,7 +52,7 @@ def deploy_toolkit(manifest: Manifest) -> None:
     cmd: str = (
         f"cdk bootstrap --toolkit-bucket-name {manifest.cdk_toolkit_s3_bucket} "
         f"--toolkit-stack-name {manifest.cdk_toolkit_stack_name} "
-        f"{_get_output_argument(manifest, manifest.cdk_toolkit_stack_name)} "
+        f"{get_output_argument(manifest, manifest.cdk_toolkit_stack_name)} "
         f"aws://{manifest.account_id}/{manifest.region}"
     )
     sh.run(cmd=cmd)

@@ -14,8 +14,10 @@
 
 # type: ignore
 
+import json
 import os
 
+import boto3
 from tornado.log import app_log
 
 from jupyterhub_utils.authenticator import DataMakerAuthenticator
@@ -63,7 +65,7 @@ c.KubeSpawner.volume_mounts = [{"mountPath": "/efs", "name": "efs-volume"}]
 c.KubeSpawner.lifecycle_hooks = {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh"]}}}
 c.KubeSpawner.node_selector = {"team": TEAM}
 c.KubeSpawner.service_account = "jupyter-user"
-c.KubeSpawner.profile_list = [
+profile_list_default = [
     {
         "display_name": "Nano",
         "slug": "nano",
@@ -88,6 +90,26 @@ c.KubeSpawner.profile_list = [
         "default": True,
     },
 ]
+
+
+def per_user_profiles(spawner):
+    team = spawner.environment["DATAMAKER_TEAM_SPACE"]
+    env = spawner.environment["AWS_DATAMAKER_ENV"]
+    region = spawner.environment["AWS_DEFAULT_REGION"]
+    ssm = boto3.client("ssm")
+
+    ssm_parameter_name: str = f"/datamaker/{env}/teams/{team}/manifest"
+    json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
+
+    team_manifest_dic = json.loads(json_str)
+    if "profiles" in team_manifest_dic and len(team_manifest_dic["profiles"]) > 0:
+        return team_manifest_dic["profiles"]
+    else:
+        return profile_list_default
+
+
+c.KubeSpawner.profile_list = per_user_profiles
+
 
 """
 AUTH

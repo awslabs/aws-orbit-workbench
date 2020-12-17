@@ -16,10 +16,10 @@ import logging
 import os
 from typing import Any, Dict, List
 
-from datamaker_cli import cdk
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.manifest.team import TeamManifest
 from datamaker_cli.plugins import hooks
+from datamaker_cli.plugins.helpers import cdk_deploy, cdk_destroy
 
 _logger: logging.Logger = logging.getLogger("datamaker_cli")
 
@@ -27,29 +27,33 @@ DATAMAKER_CODE_COMMIT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 @hooks.deploy
-def deploy(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
+def deploy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
     _logger.debug("Deploying CodeCommit plugin resources for team %s", team_manifest.name)
-    cdk.deploy(
-        manifest=manifest,
+    cdk_deploy(
         stack_name=f"datamaker-{manifest.name}-{team_manifest.name}-codecommit",
         app_filename=os.path.join(DATAMAKER_CODE_COMMIT_ROOT, "cdk.py"),
-        args=[manifest.filename, team_manifest.name],
+        manifest=manifest,
+        team_manifest=team_manifest,
+        parameters=parameters,
     )
 
 
 @hooks.destroy
-def destroy(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
+def destroy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
     _logger.debug("Destroying CodeCommit plugin resources for team %s", team_manifest.name)
-    cdk.destroy(
-        manifest=manifest,
+    cdk_destroy(
         stack_name=f"datamaker-{manifest.name}-{team_manifest.name}-codecommit",
         app_filename=os.path.join(DATAMAKER_CODE_COMMIT_ROOT, "cdk.py"),
-        args=[manifest.filename, team_manifest.name],
+        manifest=manifest,
+        team_manifest=team_manifest,
+        parameters=parameters,
     )
 
 
 @hooks.dockerfile_injection
-def dockerfile_injection(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> List[str]:
+def dockerfile_injection(
+    plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]
+) -> List[str]:
     _logger.debug("Injecting CodeCommit plugin commands for team %s Image", team_manifest.name)
     return [
         "RUN pip install --upgrade jupyterlab-git",
@@ -58,7 +62,9 @@ def dockerfile_injection(manifest: Manifest, team_manifest: TeamManifest, parame
 
 
 @hooks.bootstrap_injection
-def bootstrap_injection(manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> str:
+def bootstrap_injection(
+    plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]
+) -> str:
     _logger.debug("Injecting CodeCommit plugin commands for team %s Bootstrap", team_manifest.name)
     return """
 #!/usr/bin/env bash

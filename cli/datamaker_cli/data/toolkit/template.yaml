@@ -49,12 +49,15 @@ Resources:
               - ecr:ListImages
               - ecr:DescribeImages
               - cloudformation:ListStacks
+              - elasticfilesystem:DescribeFileSystemPolicy
               - elasticfilesystem:CreateFileSystem
               - elasticfilesystem:CreateMountTarget
               - elasticfilesystem:DescribeFileSystems
               - elasticfilesystem:DeleteMountTarget
               - elasticfilesystem:DescribeMountTargets
               - elasticfilesystem:DeleteFileSystem
+              - elasticfilesystem:PutLifecycleConfiguration
+              - elasticfilesystem:ListTagsForResource
               - iam:ListAttachedRolePolicies
               - iam:GetPolicy
               - iam:ListPolicyVersions
@@ -281,7 +284,7 @@ Resources:
             build:
               commands:
                 - ls -la
-      TimeoutInMinutes: 20
+      TimeoutInMinutes: 120
       LogsConfig:
         CloudWatchLogs:
           Status: ENABLED

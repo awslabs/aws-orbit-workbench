@@ -14,18 +14,18 @@
 
 import json
 import logging
-from typing import TYPE_CHECKING, Dict, List, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
 
 from datamaker_cli import utils
-from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE, MANIFEST_PLUGIN_TYPE, PluginManifest
+from datamaker_cli.manifest.plugin import MANIFEST_PLUGIN_TYPE, PluginManifest
 
 if TYPE_CHECKING:
     from datamaker_cli.manifest import Manifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
-
-MANIFEST_FILE_TEAM_TYPE = Dict[str, Union[str, int, None, List[MANIFEST_FILE_PLUGIN_TYPE], List[str]]]
+MANIFEST_PROPERTY_MAP_TYPE = Dict[str, Union[str, Dict[str, Any]]]
+MANIFEST_FILE_TEAM_TYPE = Dict[str, Union[str, int, None, List[MANIFEST_PROPERTY_MAP_TYPE], List[str]]]
 MANIFEST_TEAM_TYPE = Dict[str, Union[str, int, None, List[MANIFEST_PLUGIN_TYPE]]]
 
 
@@ -40,10 +40,12 @@ class TeamManifest:
         nodes_num_max: int,
         nodes_num_min: int,
         policy: str,
+        efs_life_cycle: str,
         plugins: List[PluginManifest],
         grant_sudo: bool,
         jupyterhub_inbound_ranges: List[str],
         image: Optional[str] = None,
+        profiles: List[MANIFEST_PROPERTY_MAP_TYPE] = [],
     ) -> None:
         self.manifest: "Manifest" = manifest
         self.name: str = name
@@ -57,6 +59,7 @@ class TeamManifest:
         self.jupyterhub_inbound_ranges: List[str] = jupyterhub_inbound_ranges
         self.plugins: List[PluginManifest] = plugins
         self.image: Optional[str] = image
+        self.profiles: List[MANIFEST_PROPERTY_MAP_TYPE] = profiles
         if self.image is None:
             self.base_image_address: str = (
                 f"{self.manifest.account_id}.dkr.ecr.{self.manifest.region}.amazonaws.com/"
@@ -76,16 +79,15 @@ class TeamManifest:
         self.bootstrap_s3_prefix: str = f"teams/{self.name}/bootstrap/"
         self.scratch_bucket: Optional[str] = None
         self.scratch_retention_days: int = 30
-
+        self.container_defaults = {"cpu": 4, "memory": 16384}
+        self.efs_life_cycle = efs_life_cycle
         # Need to fill up
         self.raw_ssm: Optional[MANIFEST_TEAM_TYPE] = None
         self.efs_id: Optional[str] = None
         self.eks_nodegroup_role_arn: Optional[str] = None
         self.jupyter_url: Optional[str] = None
         self.ecs_cluster_name: Optional[str] = None
-        self.ecs_task_definition_arn: Optional[str] = None
-        self.ecs_container_runner_arn: Optional[str] = None
-        self.eks_container_runner_arn: Optional[str] = None
+        self.container_runner_arn: Optional[str] = None
 
     def _read_manifest_ssm(self) -> Optional[MANIFEST_TEAM_TYPE]:
         _logger.debug("Trying to read manifest from SSM parameter.")
@@ -127,6 +129,8 @@ class TeamManifest:
             "grant-sudo": self.grant_sudo,
             "image": self.image,
             "jupyterhub-inbound-ranges": self.jupyterhub_inbound_ranges,
+            "profiles": self.profiles,
+            "efs-life-cycle": self.efs_life_cycle,
             "plugins": [p.asdict_file() for p in self.plugins],
         }
 
@@ -151,9 +155,7 @@ class TeamManifest:
             self.scratch_bucket = cast(str, raw.get("scratch-bucket"))
             self.scratch_retention_days = cast(int, raw.get("scratch-retention-days"))
             self.ecs_cluster_name = cast(str, raw.get("ecs-cluster-name"))
-            self.ecs_task_definition_arn = cast(str, raw.get("ecs-task-definition-arn"))
-            self.ecs_container_runner_arn = cast(str, raw.get("ecs-container-runner-arn"))
-            self.eks_container_runner_arn = cast(str, raw.get("eks-container-runner-arn"))
+            self.container_runner_arn = cast(str, raw.get("container-runner-arn"))
             _logger.debug("Team %s loaded successfully from SSM.", self.name)
 
     def construct_ecr_repository_name(self, env: str) -> str:
@@ -162,8 +164,8 @@ class TeamManifest:
             image += ":latest"
         return f"datamaker-{env}-{image}"
 
-    def get_plugin_by_name(self, name: str) -> Optional[PluginManifest]:
+    def get_plugin_by_id(self, plugin_id: str) -> Optional[PluginManifest]:
         for p in self.plugins:
-            if p.name == name:
+            if p.plugin_id == plugin_id:
                 return p
         return None

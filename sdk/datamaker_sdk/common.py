@@ -32,14 +32,17 @@ def get_properties() -> Dict[str, str]:
 
     Example
     -------
-    >>> from aws.utils.notebooks.common import get_properties
+    >>> from datamaker_sdk.common import get_properties
     >>> props = get_properties()
     """
     if "AWS_DATAMAKER_ENV" in os.environ.keys():
-        if "DATAMAKER_TEAM_SPACE" not in os.environ.keys() or "AWS_DATAMAKER_S3_BUCKET" not in os.environ.keys():
+        if (
+            "DATAMAKER_TEAM_SPACE" not in os.environ.keys()
+            or "AWS_DATAMAKER_S3_BUCKET" not in os.environ.keys()
+        ):
             raise Exception(
                 "if AWS_DATAMAKER_ENV then DATAMAKER_TEAM_SPACE, AWS_DATAMAKER_S3_BUCKET and "
-                "AWS_DATAMAKER_SRC_REPO must be set"
+                "must be set"
             )
         else:
             prop = dict(
@@ -54,10 +57,9 @@ def get_properties() -> Dict[str, str]:
         with open(propFilePath, "r") as f:
             prop = safe_load(f)["properties"]
 
-    if "AWS_DATAMAKER_SRC_REPO" in os.environ:
-        prop["AWS_DATAMAKER_SRC_REPO"] = os.path.join("/ws/", os.environ["AWS_DATAMAKER_REPO"])
-
-    prop["ecs_cluster"] = f"datamaker-{prop['AWS_DATAMAKER_ENV']}-{prop['DATAMAKER_TEAM_SPACE']}-cluster"
+    prop[
+        "ecs_cluster"
+    ] = f"datamaker-{prop['AWS_DATAMAKER_ENV']}-{prop['DATAMAKER_TEAM_SPACE']}-cluster"
     prop["eks_cluster"] = f"datamaker-{prop['AWS_DATAMAKER_ENV']}"
     return prop
 
@@ -80,7 +82,7 @@ def split_s3_path(s3_path: str) -> Tuple[str, str]:
 
     Example
     -------
-    >>> from aws.utils.notebooks.common import split_s3_path
+    >>> from datamaker_sdk.common import split_s3_path
     >>> bucket, key = split_s3_path("s3://my-bucket/prefix/myobject.csv")
     """
 
@@ -102,12 +104,12 @@ def get_workspace() -> Dict[str, str]:
     Returns
     -------
     config : dict
-        Dictionary object containing workspace config. on scratch_bucket, notebook_bucket, role_arn,
+        Dictionary object containing workspace config. on scratch-bucket, notebook_bucket, role_arn,
         instance_profile_arn, instance_profile_name, region, env_name, and team-space.
 
     Example
     -------
-    >>> from aws.utils.notebooks.common import get_workspace
+    >>> from datamaker_sdk.common import get_workspace
     >>> workspace = get_workspace()
     """
     ssm = boto3.client("ssm")
@@ -143,14 +145,14 @@ def get_scratch_database() -> str:
 
     Example
     -------
-    >>> from aws.utils.notebooks.common import get_scratch_database
+    >>> from datamaker_sdk.common import get_scratch_database
     >>> scratch_database = get_scratch_database()
     """
     glue = boto3.client("glue")
     response = glue.get_databases()
     workspace = get_workspace()
     scratch_db_name = f"scratch_db_{workspace['env_name']}_{workspace['team_space']}".lower().replace("-", "_")
-    new_location = f"s3://{workspace['scratch_bucket']}/{workspace['team_space']}/{scratch_db_name}"
+    new_location = f"s3://{workspace['scratch-bucket']}/{workspace['team_space']}/{scratch_db_name}"
     for db in response["DatabaseList"]:
         if db["Name"].lower() == scratch_db_name:
             if new_location == db["LocationUri"]:
