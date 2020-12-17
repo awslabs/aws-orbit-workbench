@@ -157,13 +157,13 @@ class Env(Stack):
                                 "logs:CreateLogStream",
                                 "logs:CreateLogGroup",
                                 "logs:DescribeLogStreams",
-                                "logs:PutLogEvents"
+                                "logs:PutLogEvents",
                             ],
-                            resources=["*"]
+                            resources=["*"],
                         )
                     ]
                 )
-            }
+            },
         )
 
     def _create_env_nodegroup_role(self) -> iam.Role:

@@ -15,7 +15,6 @@
 import logging
 from typing import Any, Dict, Optional, cast
 
-
 from datamaker_cli.manifest import Manifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
