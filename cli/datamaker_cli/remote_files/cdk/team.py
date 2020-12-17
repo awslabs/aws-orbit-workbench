@@ -88,14 +88,6 @@ class Team(Stack):
             scratch_bucket=self.scratch_bucket,
         )
 
-        self.role_fargate = IamBuilder.build_fargate_role(
-            scope=self,
-            manifest=self.manifest,
-            team_manifest=self.team_manifest,
-            policy_name=self.policy,
-            scratch_bucket=self.scratch_bucket,
-        )
-
         self.sg_efs: ec2.SecurityGroup = Ec2Builder.build_efs_security_group(
             scope=self,
             manifest=manifest,
@@ -130,7 +122,9 @@ class Team(Stack):
             file_system=self.efs,
             image=self.ecr_image,
         )
-        self.container_runner_role = IamBuilder.build_container_runner_role(scope=self, manifest=manifest, team_manifest=team_manifest)
+        self.container_runner_role = IamBuilder.build_container_runner_role(
+            scope=self, manifest=manifest, team_manifest=team_manifest
+        )
         self.ecs_fargate_runner = StateMachineBuilder.build_ecs_run_container_state_machine(
             scope=self,
             manifest=manifest,
@@ -170,7 +164,7 @@ class Team(Stack):
             manifest=manifest,
             team_manifest=team_manifest,
             ecs_fargate_runner=self.ecs_fargate_runner,
-            eks_fargate_runner= self.eks_fargate_runner,
+            eks_fargate_runner=self.eks_fargate_runner,
             eks_ec2_runner=self.eks_ec2_runner,
         )
 

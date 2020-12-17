@@ -233,19 +233,6 @@ class IamBuilder:
                     ],
                     resources=["*"],
                 ),
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=["sts:AssumeRoleWithWebIdentity"],
-                    principals=[
-                        iam.FederatedPrincipal(
-                            federated=f"arn:{partition}:iam::{account}:oidc-provider/{manifest.eks_oidc_provider}",
-                            conditions={
-                                "StringLike": {
-                                    f"{manifest.eks_oidc_provider}:sub": f"system:serviceaccount:{team_manifest.name}:*"
-                                }
-                            })
-                    ]
-                )
             ],
         )
 
@@ -268,7 +255,7 @@ class IamBuilder:
 
         managed_policies = managed_policies + user_policies
 
-        return iam.Role(
+        role = iam.Role(
             scope=scope,
             id=lake_role_name,
             role_name=lake_role_name,
@@ -283,6 +270,23 @@ class IamBuilder:
             ),
             managed_policies=managed_policies,
         )
+        role.assume_role_policy.add_statements(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["sts:AssumeRoleWithWebIdentity"],
+                principals=[
+                    iam.FederatedPrincipal(
+                        federated=f"arn:{partition}:iam::{account}:oidc-provider/{manifest.eks_oidc_provider}",
+                        conditions={
+                            "StringLike": {
+                                f"{manifest.eks_oidc_provider}:sub": f"system:serviceaccount:{team_manifest.name}:*"
+                            }
+                        },
+                    )
+                ],
+            ),
+        )
+        return role
 
     @staticmethod
     def build_ecs_role(scope: core.Construct) -> iam.Role:

@@ -166,7 +166,7 @@ Resources:
               - iam:ListOpenIDConnectProviders
               - iam:UpdateOpenIDConnectProviderThumbprint
             Resource:
-              - arn:aws:iam::${account_id}:oidc-provider/oidc.eks.${region}.amazonaws.com/id/*
+              - arn:aws:iam::${account_id}:oidc-provider/oidc.eks.${region}.amazonaws.com*
           - Effect: Allow
             Action:
               - iam:CreatePolicy

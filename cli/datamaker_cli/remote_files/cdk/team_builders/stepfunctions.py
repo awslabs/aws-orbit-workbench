@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import Dict, List, Union, cast
+from typing import Any, Dict, List, Union, cast
 
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecs as ecs
@@ -24,7 +24,6 @@ import aws_cdk.core as core
 from aws_cdk import aws_lambda
 
 from datamaker_cli.manifest import Manifest
-from datamaker_cli.manifest import team
 from datamaker_cli.manifest.team import TeamManifest
 from datamaker_cli.remote_files.cdk.team_builders._lambda import LambdaBuilder
 from datamaker_cli.remote_files.cdk.team_builders.stepfunctions_tasks import (
@@ -147,7 +146,7 @@ class StateMachineBuilder:
         team_manifest: TeamManifest,
         image: ecs.EcrImage,
         role: iam.IRole,
-        node_type: str
+        node_type: str,
     ) -> sfn.StateMachine:
         if node_type not in {"ec2", "fargate"}:
             raise ValueError(f"Invalid node_type: {node_type}")
@@ -163,7 +162,7 @@ class StateMachineBuilder:
             lambda_function=eks_describe_cluster,
         )
 
-        job = {
+        job: Dict[str, Any] = {
             "apiVersion": "batch/v1",
             "kind": "Job",
             "metadata": {
@@ -192,12 +191,12 @@ class StateMachineBuilder:
                                 "resources": {
                                     "limits": {
                                         "cpu": f"{team_manifest.container_defaults['cpu']}",
-                                        "memory": f"{team_manifest.container_defaults['memory']}M"
+                                        "memory": f"{team_manifest.container_defaults['memory']}M",
                                     },
                                     "requests": {
                                         "cpu": f"{team_manifest.container_defaults['cpu']}",
-                                        "memory": f"{team_manifest.container_defaults['memory']}M"
-                                    }
+                                        "memory": f"{team_manifest.container_defaults['memory']}M",
+                                    },
                                 },
                                 "env": [
                                     {"name": "task_type", "value": sfn.JsonPath.string_at("$.TaskType")},
@@ -218,10 +217,13 @@ class StateMachineBuilder:
         }
 
         if node_type == "ec2":
-            job["spec"]["template"]["spec"]["nodeSelector"] = {"team": team_manifest.name, "datamaker/compute-type": "ec2"}
+            job["spec"]["template"]["spec"]["nodeSelector"] = {
+                "team": team_manifest.name,
+                "datamaker/compute-type": "ec2",
+            }
         elif node_type == "fargate":
             job["spec"]["template"]["spec"]["serviceAccountName"] = team_manifest.name
-            job["spec"]["template"]["spec"]["securityContext"] ={"fsGroup": 1000}
+            job["spec"]["template"]["spec"]["securityContext"] = {"fsGroup": 1000}
             job["spec"]["template"]["metadata"]["labels"]["datamaker/compute-type"] = "fargate"
 
         run_job = EksRunJob(

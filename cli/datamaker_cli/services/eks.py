@@ -13,10 +13,9 @@
 #    limitations under the License.
 
 import logging
+from typing import Any, Dict, List, Optional, cast
 
-from botocore.exceptions import WaiterError
 from botocore.waiter import WaiterModel, create_waiter_with_client
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
 from datamaker_cli.manifest import Manifest
 
@@ -33,79 +32,106 @@ WAITER_CONFIG = {
             "delay": DELAY,
             "maxAttempts": MAX_ATTEMPTS,
             "acceptors": [
-                {
-                    "matcher": "path",
-                    "expected": "ACTIVE",
-                    "argument": "fargateProfile.status",
-                    "state": "success"
-                },
-                {
-                    "matcher": "path",
-                    "expected": "CREATING",
-                    "argument": "fargateProfile.status",
-                    "state": "retry"
-                },
+                {"matcher": "path", "expected": "ACTIVE", "argument": "fargateProfile.status", "state": "success"},
+                {"matcher": "path", "expected": "CREATING", "argument": "fargateProfile.status", "state": "retry"},
                 {
                     "matcher": "path",
                     "expected": "CREATE_FAILED",
                     "argument": "fargateProfile.status",
-                    "state": "failure"
+                    "state": "failure",
                 },
-            ]
+            ],
         },
         "FargateProfileDeleted": {
             "operation": "DescribeFargateProfile",
             "delay": DELAY,
             "maxAttempts": MAX_ATTEMPTS,
             "acceptors": [
-                {
-                    "expected": "ResourceNotFoundException",
-                    "matcher": "error",
-                    "state": "success"
-                },
-                {
-                    "matcher": "path",
-                    "expected": "DELETING",
-                    "argument": "fargateProfile.status",
-                    "state": "retry"
-                },
+                {"expected": "ResourceNotFoundException", "matcher": "error", "state": "success"},
+                {"matcher": "path", "expected": "DELETING", "argument": "fargateProfile.status", "state": "retry"},
                 {
                     "matcher": "path",
                     "expected": "DELETE_FAILED",
                     "argument": "fargateProfile.status",
-                    "state": "failure"
+                    "state": "failure",
                 },
-            ]
+            ],
         },
-    }
+    },
 }
 
 
-def create_fargate_profile(manifest: Manifest, profile_name: str, cluster_name: str, role_arn: str, subnets: List[str], selectors: List[Dict[str, Any]]) -> None:
-    _logger.debug(f"Creating EKS Fargate Profile: {profile_name}")
+def describe_fargate_profile(manifest: Manifest, profile_name: str, cluster_name: str) -> Optional[Dict[str, Any]]:
+    _logger.debug(f"Describing Fargate Profile: {cluster_name} - {profile_name}")
     eks_client = manifest.boto3_client("eks")
 
+    try:
+        return cast(
+            Dict[str, Any],
+            eks_client.describe_fargate_profile(
+                fargateProfileName=profile_name,
+                clusterName=cluster_name,
+            ),
+        )
+    except eks_client.exceptions.ResourceNotFoundException:
+        return None
+
+
+def describe_cluster(
+    manifest: Manifest,
+    cluster_name: str,
+) -> Optional[Dict[str, Any]]:
+    _logger.debug(f"Describing Cluster: {cluster_name}")
+    eks_client = manifest.boto3_client("eks")
+
+    try:
+        return cast(Dict[str, Any], eks_client.describe_cluster(name=cluster_name))
+    except eks_client.exceptions.ResourceNotFoundException:
+        return None
+
+
+def create_fargate_profile(
+    manifest: Manifest,
+    profile_name: str,
+    cluster_name: str,
+    role_arn: str,
+    subnets: List[str],
+    namespace: str,
+    selector_labels: Optional[Dict[str, Any]] = None,
+) -> None:
+    _logger.debug(f"Creating EKS Fargate Profile: {profile_name}")
+
+    if describe_fargate_profile(manifest=manifest, profile_name=profile_name, cluster_name=cluster_name) is not None:
+        _logger.debug(f"EKS Fargate Profile already exists: {profile_name}")
+        return
+
+    eks_client = manifest.boto3_client("eks")
     eks_client.create_fargate_profile(
         fargateProfileName=profile_name,
         clusterName=cluster_name,
         podExecutionRoleArn=role_arn,
         subnets=subnets,
-        selectors=selectors
+        selectors=[{"namespace": namespace, "labels": selector_labels}],
     )
 
     waiter_model = WaiterModel(WAITER_CONFIG)
     waiter = create_waiter_with_client("FargateProfileCreated", waiter_model, eks_client)
-    waiter.wait(
-        fargateProfileName=profile_name,
-        clusterName=cluster_name
-    )
+    waiter.wait(fargateProfileName=profile_name, clusterName=cluster_name)
     _logger.debug(f"Created EKS Fargate Profile: {profile_name}")
 
 
-def delete_fargate_profile(manifest: Manifest, profile_name: str, cluster_name: str,) -> None:
+def delete_fargate_profile(
+    manifest: Manifest,
+    profile_name: str,
+    cluster_name: str,
+) -> None:
     _logger.debug(f"Deleting EKS Fargate Profile: {profile_name}")
-    eks_client = manifest.boto3_client("eks")
 
+    if describe_fargate_profile(manifest=manifest, profile_name=profile_name, cluster_name=cluster_name) is None:
+        _logger.debug(f"EKS Fargate Profile not found: {profile_name}")
+        return
+
+    eks_client = manifest.boto3_client("eks")
     eks_client.delete_fargate_profile(
         fargateProfileName=profile_name,
         clusterName=cluster_name,
@@ -113,15 +139,5 @@ def delete_fargate_profile(manifest: Manifest, profile_name: str, cluster_name: 
 
     waiter_model = WaiterModel(WAITER_CONFIG)
     waiter = create_waiter_with_client("FargateProfileDeleted", waiter_model, eks_client)
-    waiter.wait(
-        fargateProfileName=profile_name,
-        clusterName=cluster_name
-    )
+    waiter.wait(fargateProfileName=profile_name, clusterName=cluster_name)
     _logger.debug(f"Deleted EKS Fargate Profile: {profile_name}")
-
-
-def describe_cluster(manifest: Manifest, cluster_name: str) -> Dict[str, Any]:
-    _logger.debug(f"Describing Cluster: {cluster_name}")
-    eks_client = manifest.boto3_client("eks")
-
-    return eks_client.describe_cluster(name=cluster_name)

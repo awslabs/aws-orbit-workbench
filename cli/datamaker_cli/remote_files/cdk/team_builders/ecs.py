@@ -23,7 +23,6 @@ import aws_cdk.aws_logs as logs
 import aws_cdk.core as core
 
 from datamaker_cli.manifest import Manifest
-from datamaker_cli.manifest import team
 from datamaker_cli.manifest.team import TeamManifest
 
 
@@ -87,7 +86,7 @@ class EcsBuilder:
         )
         container_definition = task_definition.add_container(
             "datamaker-runner",
-            memory_limit_mib=team_manifest.container_defaults['memory'],
+            memory_limit_mib=team_manifest.container_defaults["memory"],
             image=image,
             logging=ecs.LogDriver.aws_logs(
                 stream_prefix=f"datamaker-{manifest.name}-{team_manifest.name}",

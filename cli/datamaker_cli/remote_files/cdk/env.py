@@ -25,7 +25,7 @@ import aws_cdk.aws_iam as iam
 import aws_cdk.aws_lambda_python as lambda_python
 import aws_cdk.aws_ssm as ssm
 from aws_cdk import aws_lambda
-from aws_cdk.core import App, CfnOutput, Construct, Duration, Environment, IConstruct, Stack, Tags
+from aws_cdk.core import App, CfnOutput, Construct, Duration, Environment, Stack, Tags
 
 from datamaker_cli.manifest import Manifest
 from datamaker_cli.remote_files.cdk import _lambda_path
@@ -141,9 +141,29 @@ class Env(Stack):
                 iam.ServicePrincipal("eks-fargate-pods.amazonaws.com"),
             ),
             managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEC2ContainerRegistryReadOnly"),
-                iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSFargatePodExecutionRolePolicy"),
-            ]
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    managed_policy_name="AmazonEC2ContainerRegistryReadOnly"
+                ),
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    managed_policy_name="AmazonEKSFargatePodExecutionRolePolicy"
+                ),
+            ],
+            inline_policies={
+                "Logging": iam.PolicyDocument(
+                    statements=[
+                        iam.PolicyStatement(
+                            effect=iam.Effect.ALLOW,
+                            actions=[
+                                "logs:CreateLogStream",
+                                "logs:CreateLogGroup",
+                                "logs:DescribeLogStreams",
+                                "logs:PutLogEvents"
+                            ],
+                            resources=["*"]
+                        )
+                    ]
+                )
+            }
         )
 
     def _create_env_nodegroup_role(self) -> iam.Role:

@@ -162,9 +162,9 @@ class Manifest:
 
         self.raw_ssm: Optional[MANIFEST_TYPE] = None  # Env
         self.eks_cluster_role_arn: Optional[str] = None  # Env
-        self.eks_fargate_profile_role_arn: Optional[str] = None # Env
+        self.eks_fargate_profile_role_arn: Optional[str] = None  # Env
         self.eks_env_nodegroup_role_arn: Optional[str] = None  # Env
-        self.eks_oidc_provider: Optional[str] = None # Env
+        self.eks_oidc_provider: Optional[str] = None  # Env
         self.user_pool_client_id: Optional[str] = None  # Env
         self.identity_pool_id: Optional[str] = None  # Env
         self.user_pool_id: Optional[str] = None  # Env
