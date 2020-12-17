@@ -102,7 +102,7 @@ def per_user_profiles(spawner):
     json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
 
     team_manifest_dic = json.loads(json_str)
-    if "profiles" in team_manifest_dic and len(team_manifest_dic["profiles"]) > 0:
+    if team_manifest_dic.get("profiles"):
         return team_manifest_dic["profiles"]
     else:
         return profile_list_default
