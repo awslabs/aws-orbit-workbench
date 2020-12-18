@@ -38,7 +38,7 @@ class EfsBuilder:
             id=name,
             file_system_name=name,
             vpc=vpc,
-            encrypted=False,
+            encrypted=True,
             lifecycle_policy=efs.LifecyclePolicy[team_manifest.efs_life_cycle]
             if team_manifest.efs_life_cycle
             else None,
