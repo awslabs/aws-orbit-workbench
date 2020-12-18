@@ -26,6 +26,9 @@ _logger: logging.Logger = logging.getLogger(__name__)
 def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     manifest: Manifest = Manifest(filename=filename)
     manifest.fillup()
+    if manifest.demo:
+        manifest.fetch_demo_data()
+        manifest.fetch_network_data()
     _logger.debug("manifest.name: %s", manifest.name)
     _logger.debug("args: %s", args)
     if len(args) == 1:
