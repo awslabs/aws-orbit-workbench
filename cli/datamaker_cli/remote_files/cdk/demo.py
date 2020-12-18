@@ -62,7 +62,7 @@ class DemoStack(Stack):
 
         self._ssm_parameter = ssm.StringParameter(
             self,
-            id="/datamaker/demo",
+            id="/datamaker/DemoParams",
             string_value=json.dumps(
                 {
                     "VpcId": self.vpc.vpc_id,
