@@ -336,7 +336,7 @@ Resources:
             Resource: '*'
 Outputs:
   DeployId:
-    Value: ${deploy_id}
+    Value: '${deploy_id}'
     Export:
       Name: datamaker-${env_name}-deploy-id
   KmsKeyArn:

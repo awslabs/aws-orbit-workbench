@@ -346,7 +346,7 @@ class Manifest:
         for output in response["Stacks"][0]["Outputs"]:
             if output["ExportName"] == f"datamaker-{self.name}-deploy-id":
                 _logger.debug("Export value: %s", output["OutputValue"])
-                self.deploy_id = str(int(float(output["OutputValue"])))
+                self.deploy_id = output["OutputValue"]
             if output["ExportName"] == f"datamaker-{self.name}-kms-arn":
                 _logger.debug("Export value: %s", output["OutputValue"])
                 self.toolkit_kms_arn = output["OutputValue"]
