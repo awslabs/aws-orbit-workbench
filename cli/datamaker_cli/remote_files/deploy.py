@@ -79,7 +79,7 @@ def deploy_images_remotely(manifest: Manifest) -> None:
 
         images: List[Tuple[str, Optional[str]]] = [
             ("jupyter-hub", None),
-            ("jupyter-user", None),
+            ("jupyter-user", "build.sh"),
             ("landing-page", "build.sh"),
         ]
 
@@ -95,7 +95,7 @@ def deploy_images_remotely(manifest: Manifest) -> None:
         for name, script in images:
             _logger.debug("name: %s | script: %s", name, script)
 
-            path = os.path.join(manifest.filename_dir, name)
+            path = os.path.join(os.path.dirname(manifest.filename_dir), name)
             _logger.debug("path: %s", path)
 
             if manifest.images.get(name, {"source": "code"}).get("source") == "code":
