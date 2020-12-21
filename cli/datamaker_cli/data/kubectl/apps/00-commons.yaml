@@ -23,6 +23,6 @@ data:
         Name cloudwatch_logs
         Match   *
         region ${region}
-        log_group_name /datamaker/${env_name}/pods
+        log_group_name /datamaker/pods/${env_name}
         log_stream_prefix fluent-bit-
         auto_create_group On
