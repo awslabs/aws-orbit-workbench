@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from attr import s
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_s3 as s3
 import aws_cdk.core as core
@@ -306,4 +307,23 @@ class IamBuilder:
             id="container_runner_role",
             role_name=f"datamaker-{manifest.name}-{team_manifest.name}-runner",
             assumed_by=iam.ServicePrincipal("states.amazonaws.com"),
+            inline_policies={
+                "cloudwatch-logs": iam.PolicyDocument(
+                    statements=[
+                        iam.PolicyStatement(
+                            effect=iam.Effect.ALLOW,
+                            actions=[
+                                "logs:CreateLogStream",
+                                "logs:CreateLogGroup",
+                                "logs:DescribeLogStreams",
+                                "logs:PutLogEvents"
+                            ],
+                            resources=[
+                                f"arn:{core.Aws.PARTITION}:logs:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:log-group:/datamaker/pods/{manifest.name}",
+                                f"arn:{core.Aws.PARTITION}:logs:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:log-group:/datamaker/pods/{manifest.name}:*"
+                            ]
+                        )
+                    ]
+                )
+            }
         )
