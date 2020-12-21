@@ -16,6 +16,7 @@ import glob
 import logging
 import os
 import shutil
+from pprint import pformat
 from typing import List, Optional, Tuple
 
 from datamaker_cli import DATAMAKER_CLI_ROOT
@@ -94,7 +95,8 @@ def generate_bundle(
     changeset: Optional[Changeset] = None,
     plugins: bool = True,
 ) -> str:
-    remote_dir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "remote", command_name)
+    conf_dir = os.path.dirname(os.path.abspath(manifest.filename))
+    remote_dir = os.path.join(os.path.dirname(conf_dir), ".datamaker.out", manifest.name, "remote", command_name)
     bundle_dir = os.path.join(remote_dir, "bundle")
     try:
         shutil.rmtree(bundle_dir)
@@ -102,13 +104,18 @@ def generate_bundle(
         pass
 
     # manifest
-    bundled_manifest_path = os.path.join(bundle_dir, "manifest.yaml")
+    bundled_manifest_path = os.path.join(bundle_dir, "conf", "manifest.yaml")
+    bundled_manifest_path_conf = os.path.join(bundle_dir, "conf")
     os.makedirs(bundle_dir, exist_ok=True)
+
+    _logger.debug(f"copy conf_dir={conf_dir} to {bundled_manifest_path_conf}")
+    shutil.copytree(src=conf_dir, dst=bundled_manifest_path_conf)
+    _logger.debug(f"copy manifest file={manifest.filename} to {bundled_manifest_path}")
     shutil.copy(src=manifest.filename, dst=bundled_manifest_path)
 
     # changeset
     if changeset is not None:
-        bundled_changeset_path = os.path.join(bundle_dir, "changeset.json")
+        bundled_changeset_path = os.path.join(bundle_dir, "conf", "changeset.json")
         changeset.write_changeset_file(filename=bundled_changeset_path)
 
     # DataMaker CLI Source
@@ -121,16 +128,17 @@ def generate_bundle(
             plugin_bundle_dir = os.path.join(bundle_dir, team_manifest.name)
             _logger.debug("plugin_bundle_dir: %s", plugin_bundle_dir)
             for plugin in team_manifest.plugins:
-                if plugin.path:
-                    _logger.debug("Bundling plugin %s (%s)...", plugin.name, plugin.path)
-                    _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin.path, name=plugin.name)
+                if plugin.path is not None and plugin.module is not None:
+                    _logger.debug("Bundling plugin %s (%s)...", plugin.plugin_id, plugin.path)
+                    _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin.path, name=plugin.module)
         if changeset is not None:
             for plugin_changeset in changeset.plugin_changesets:
                 plugin_bundle_dir = os.path.join(bundle_dir, plugin_changeset.team_name)
                 for plugin_name, plugin_path in plugin_changeset.old_paths.items():
-                    if plugin_name not in plugin_changeset.new:
+                    module: str = plugin_changeset.old_modules[plugin_name]
+                    if plugin_name not in plugin_changeset.new and module is not None:
                         _logger.debug("Changest - Bundling plugin %s (%s)...", plugin_name, plugin_path)
-                        _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin_path, name=plugin_name)
+                        _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin_path, name=module)
 
     # Extra Directories
     if dirs is not None:
@@ -138,5 +146,9 @@ def generate_bundle(
             _generate_dir(bundle_dir=bundle_dir, dir=dir, name=name)
 
     _logger.debug("bundle_dir: %s", bundle_dir)
+
+    files = glob.glob(bundle_dir + "/**", recursive=True)
+    _logger.debug("files:\n%s", pformat(files))
+
     shutil.make_archive(base_name=bundle_dir, format="zip", root_dir=remote_dir, base_dir="bundle")
     return bundle_dir + ".zip"

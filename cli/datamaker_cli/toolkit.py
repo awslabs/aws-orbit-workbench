@@ -26,7 +26,8 @@ MODEL_FILENAME = os.path.join(DATAMAKER_CLI_ROOT, "data", "toolkit", FILENAME)
 
 
 def synth(manifest: Manifest) -> str:
-    outdir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "toolkit")
+    conf_dir = os.path.dirname(os.path.abspath(manifest.filename))
+    outdir = os.path.join(os.path.dirname(conf_dir), ".datamaker.out", manifest.name, "toolkit")
     output_filename = os.path.join(outdir, FILENAME)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)

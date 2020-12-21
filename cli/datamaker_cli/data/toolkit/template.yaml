@@ -49,12 +49,15 @@ Resources:
               - ecr:ListImages
               - ecr:DescribeImages
               - cloudformation:ListStacks
+              - elasticfilesystem:DescribeFileSystemPolicy
               - elasticfilesystem:CreateFileSystem
               - elasticfilesystem:CreateMountTarget
               - elasticfilesystem:DescribeFileSystems
               - elasticfilesystem:DeleteMountTarget
               - elasticfilesystem:DescribeMountTargets
               - elasticfilesystem:DeleteFileSystem
+              - elasticfilesystem:PutLifecycleConfiguration
+              - elasticfilesystem:ListTagsForResource
               - iam:ListAttachedRolePolicies
               - iam:GetPolicy
               - iam:ListPolicyVersions
@@ -187,6 +190,7 @@ Resources:
             Resource:
               - arn:aws:ssm:${region}:${account_id}:parameter/datamaker/${env_name}/manifest
               - arn:aws:ssm:${region}:${account_id}:parameter/datamaker/${env_name}/teams/*
+              - arn:aws:ssm:${region}:${account_id}:parameter/datamaker/${env_name}/demo
           - Effect: Allow
             Action:
               - kms:*
@@ -343,7 +347,7 @@ Resources:
             Resource: '*'
 Outputs:
   DeployId:
-    Value: ${deploy_id}
+    Value: '${deploy_id}'
     Export:
       Name: datamaker-${env_name}-deploy-id
   KmsKeyArn:

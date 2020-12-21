@@ -23,4 +23,5 @@ setup(
     python_requires=">=3.6, <3.9",
     install_requires=open("requirements.txt").read().strip().split("\n"),
     include_package_data=True,
+    package_data={"team_script_launcher": ["*.yaml"]},
 )

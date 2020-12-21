@@ -3,6 +3,7 @@ kind: PersistentVolume
 metadata:
   labels:
     app: jupyterhub
+    efs-id: ${efsid}
   name: jupyterhub-${team}
 spec:
   accessModes:
@@ -205,3 +206,38 @@ spec:
         - name: efs-volume
           persistentVolumeClaim:
             claimName: jupyterhub
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: efs-init-${team}
+  namespace: ${team}
+  labels:
+    app: datamaker-jupyterhub
+    volume: ${efsid}
+    job-name: efs-init-${team}
+spec:
+  template:
+    spec:
+      nodeSelector:
+        team: ${team}
+      containers:
+      - name: run-efs-init
+        securityContext:
+          runAsUser: 0
+        imagePullPolicy: Always
+        image: ${account_id}.dkr.ecr.${region}.amazonaws.com/datamaker-${env_name}-jupyter-user:${tag}
+        command: ["/bin/bash"]
+        args:
+          - -c
+          - >-
+            sudo chmod 777 /efs &&
+            ls -ld /efs
+        volumeMounts:
+          - mountPath: /efs
+            name: efs-volume
+      volumes:
+        - name: efs-volume
+          persistentVolumeClaim:
+            claimName: jupyterhub
+      restartPolicy: Never

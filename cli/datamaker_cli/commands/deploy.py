@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import logging
+import os
 import uuid
 from time import sleep
 from typing import List, Optional, Tuple, cast
@@ -46,7 +47,11 @@ def _get_images_dirs(manifest: Manifest, skip_images: bool) -> List[Tuple[str, s
     if skip_images:
         dirs: List[Tuple[str, str]] = []
     else:
-        dirs = [(attrs["path"], name) for name, attrs in manifest.images.items() if attrs["source"] == "code"]
+        dirs = [
+            (os.path.join(manifest.filename_dir, attrs["path"]), name)
+            for name, attrs in manifest.images.items()
+            if attrs["source"] == "code"
+        ]
         _logger.debug("dirs: %s", dirs)
     return dirs
 
@@ -155,7 +160,7 @@ def deploy(
             bundle_path=bundle_path,
             buildspec=buildspec,
             codebuild_log_callback=ctx.progress_bar_callback,
-            timeout=60,
+            timeout=90,
         )
         ctx.info("DataMaker deployed")
         ctx.progress(98)

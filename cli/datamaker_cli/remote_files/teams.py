@@ -24,7 +24,6 @@ from datamaker_cli.manifest import Manifest
 from datamaker_cli.services import cfn, ecr, s3
 
 if TYPE_CHECKING:
-    from datamaker_cli.changeset import PluginChangeset
     from datamaker_cli.manifest.team import TeamManifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -56,13 +55,13 @@ def _create_dockerfile(manifest: "Manifest", team_manifest: "TeamManifest") -> s
         hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
             manifest=manifest,
             team_name=team_manifest.name,
-            plugin_name=plugin.name,
+            plugin_name=plugin.plugin_id,
             hook_name="dockerfile_injection_hook",
         )
         if hook is not None:
-            plugin_cmds = cast(Optional[List[str]], hook(manifest, team_manifest, plugin.parameters))
+            plugin_cmds = cast(Optional[List[str]], hook(plugin.plugin_id, manifest, team_manifest, plugin.parameters))
             if plugin_cmds is not None:
-                cmds += [f"# Commands for {plugin.name} plugin"] + plugin_cmds
+                cmds += [f"# Commands for {plugin.plugin_id} plugin"] + plugin_cmds
     _logger.debug("cmds: %s", cmds)
     outdir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, team_manifest.name, "image")
     output_filename = os.path.join(outdir, "Dockerfile")
@@ -90,14 +89,16 @@ def _deploy_team_bootstrap(manifest: "Manifest", team_manifest: "TeamManifest") 
         hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
             manifest=manifest,
             team_name=team_manifest.name,
-            plugin_name=plugin.name,
+            plugin_name=plugin.plugin_id,
             hook_name="bootstrap_injection_hook",
         )
         if hook is not None:
-            script_content: Optional[str] = cast(Optional[str], hook(manifest, team_manifest, plugin.parameters))
+            script_content: Optional[str] = cast(
+                Optional[str], hook(plugin.plugin_id, manifest, team_manifest, plugin.parameters)
+            )
             if script_content is not None:
                 client = boto3.client("s3")
-                key: str = f"{team_manifest.bootstrap_s3_prefix}{plugin.name}.sh"
+                key: str = f"{team_manifest.bootstrap_s3_prefix}{plugin.plugin_id}.sh"
                 _logger.debug("Uploading s3://{manifest.toolkit_s3_bucket}/{key}")
                 client.put_object(
                     Body=script_content.encode("utf-8"),
@@ -106,7 +107,7 @@ def _deploy_team_bootstrap(manifest: "Manifest", team_manifest: "TeamManifest") 
                 )
 
 
-def deploy(manifest: "Manifest", changes: List["PluginChangeset"]) -> None:
+def deploy(manifest: "Manifest") -> None:
     for team_manifest in manifest.teams:
         cdk.deploy(
             manifest=manifest,
@@ -115,7 +116,6 @@ def deploy(manifest: "Manifest", changes: List["PluginChangeset"]) -> None:
             args=[manifest.filename, team_manifest.name],
         )
         team_manifest.fetch_ssm()
-        plugins.PLUGINS_REGISTRIES.deploy_team_plugins(manifest=manifest, team_manifest=team_manifest, changes=changes)
     for team_manifest in manifest.teams:
         _deploy_team_image(manifest=manifest, team_manifest=team_manifest)
         _deploy_team_bootstrap(manifest=manifest, team_manifest=team_manifest)
@@ -125,7 +125,6 @@ def destroy(manifest: "Manifest") -> None:
     for team_manifest in manifest.teams:
         _logger.debug("Stack name: %s", team_manifest.stack_name)
         if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.toolkit_stack_name):
-            plugins.PLUGINS_REGISTRIES.destroy_team_plugins(manifest=manifest, team_manifest=team_manifest)
             if team_manifest.scratch_bucket is not None:
                 try:
                     s3.delete_bucket(manifest=manifest, bucket=team_manifest.scratch_bucket)

@@ -12,7 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from attr import s
+from typing import List
+
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_s3 as s3
 import aws_cdk.core as core
@@ -27,7 +28,7 @@ class IamBuilder:
         scope: core.Construct,
         manifest: Manifest,
         team_manifest: TeamManifest,
-        policy_name: str,
+        policy_names: List[str],
         scratch_bucket: s3.Bucket,
     ) -> iam.Role:
         env_name = manifest.name
@@ -237,6 +238,24 @@ class IamBuilder:
             ],
         )
 
+        lambda_access_policy = iam.ManagedPolicy(
+            scope=scope,
+            id="lambda_policy",
+            managed_policy_name=f"datamaker-{env_name}-{team_name}-lambda-policy",
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "lambda:InvokeFunction",
+                    ],
+                    resources=[
+                        f"arn:{partition}:lambda:{region}:{account}:function:datamaker-{env_name}-{team_name}-*",
+                        f"arn:{partition}:lambda:{region}:{account}:function:datamaker-{env_name}-token-validation",
+                    ],
+                ),
+            ],
+        )
+
         glue_policy = iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSGlueServiceRole")
         ssm_manage_policy = iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMManagedInstanceCore")
         eks_policies = [
@@ -247,14 +266,26 @@ class IamBuilder:
 
         managed_policies = [
             lake_operational_policy,
+            lambda_access_policy,
             code_artifact_user_policy,
             glue_policy,
             ssm_manage_policy,
         ] + eks_policies
 
-        user_policies = [iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name=policy_name)]
+        # Parse list to IAM policies
+        aws_managed_user_policies = [
+            iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name=policy_name)
+            for policy_name in policy_names
+            if "datamaker" not in policy_name
+        ]
 
-        managed_policies = managed_policies + user_policies
+        datamaker_custom_policies = [
+            iam.ManagedPolicy.from_managed_policy_name(scope=scope, id=policy_name, managed_policy_name=policy_name)
+            for policy_name in policy_names
+            if "datamaker" in policy_name
+        ]
+
+        managed_policies = managed_policies + aws_managed_user_policies + datamaker_custom_policies
 
         role = iam.Role(
             scope=scope,
