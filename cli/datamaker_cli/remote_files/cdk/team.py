@@ -152,7 +152,7 @@ class Team(Stack):
             role=self.container_runner_role,
             node_type="ec2",
         )
-        self.eks_get_pod_logs = StateMachineBuilder.build_eks_get_pod_logs_state_machine(
+        self.eks_k8s_api = StateMachineBuilder.build_eks_k8s_api_state_machine(
             scope=self,
             manifest=manifest,
             team_manifest=team_manifest,
@@ -173,6 +173,7 @@ class Team(Stack):
         self.team_manifest.scratch_bucket = self.scratch_bucket.bucket_name
         self.team_manifest.ecs_cluster_name = self.ecs_cluster.cluster_name
         self.team_manifest.container_runner_arn = self.container_runner.function_arn
+        self.team_manifest.eks_k8s_api_arn = self.eks_k8s_api.state_machine_arn
 
         self.manifest_parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,

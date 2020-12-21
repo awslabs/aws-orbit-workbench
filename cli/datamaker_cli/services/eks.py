@@ -47,7 +47,7 @@ WAITER_CONFIG = {
             "delay": DELAY,
             "maxAttempts": MAX_ATTEMPTS,
             "acceptors": [
-                {"expected": "ResourceNotFoundException", "matcher": "error", "state": "success"},
+                {"matcher": "error", "expected": "ResourceNotFoundException", "state": "success"},
                 {"matcher": "path", "expected": "DELETING", "argument": "fargateProfile.status", "state": "retry"},
                 {
                     "matcher": "path",

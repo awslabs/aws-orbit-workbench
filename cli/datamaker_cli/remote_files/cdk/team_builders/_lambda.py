@@ -101,19 +101,19 @@ class LambdaBuilder:
         return lambda_function
 
     @staticmethod
-    def get_or_build_construct_url(
+    def get_or_build_construct_request(
         scope: core.Construct,
         manifest: Manifest,
         team_manifest: TeamManifest,
     ) -> aws_lambda.Function:
         stack = core.Stack.of(scope)
-        lambda_function = cast(aws_lambda.Function, stack.node.try_find_child("construct_url"))
+        lambda_function = cast(aws_lambda.Function, stack.node.try_find_child("construct_request"))
         if lambda_function is None:
             lambda_function = aws_lambda.Function(
                 scope=stack,
-                id="construct_url",
-                function_name=f"datamaker-{manifest.name}-{team_manifest.name}-construct-url",
-                code=aws_lambda.Code.asset(_lambda_path("construct_url")),
+                id="construct_request",
+                function_name=f"datamaker-{manifest.name}-{team_manifest.name}-k8s-construct-request",
+                code=aws_lambda.Code.asset(_lambda_path("construct_request")),
                 handler="index.handler",
                 runtime=aws_lambda.Runtime.PYTHON_3_6,
                 timeout=core.Duration.seconds(10),

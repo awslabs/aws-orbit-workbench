@@ -83,11 +83,23 @@ def _start_ecs_fargate(event: Dict[str, Any], execution_vars: Dict[str, Any]) ->
         _get_event_output(execution_arn=execution_arn, event_type="TaskSubmitted", event_id=5, details_key="output")
     )
 
-    return {"ExecutionType": "ecs", "ExecutionArn": execution_arn, "JobArn": output["Tasks"][0]["TaskArn"]}
+    return {"ExecutionType": "ecs", "ExecutionArn": execution_arn, "Identifier": output["Tasks"][0]["TaskArn"]}
 
 
 def _start_ecs_ec2(event: Dict[str, Any], execution_vars: Dict[str, Any]) -> Dict[str, str]:
     logger.info(f"start_ecs_ec2: {json.dumps(execution_vars)}")
+
+    state_machine_arn = os.environ["EKS_EC2_STATE_MACHINE_ARN"]
+    response = sfn.start_execution(
+        stateMachineArn=state_machine_arn,
+        input=json.dumps(execution_vars)
+    )
+
+    execution_arn = response["executionArn"]
+    output = json.loads(
+        _get_event_output(execution_arn=execution_arn, event_type="TaskSubmitted", event_id=10, details_key="output")
+    )
+
     raise NotImplementedError("ECS/EC2 Execution not yet implemented")
 
 

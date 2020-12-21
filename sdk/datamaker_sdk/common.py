@@ -1,7 +1,7 @@
 import json
 import os
 from os.path import expanduser
-from typing import Dict, Tuple
+from typing import Any, Dict, Tuple
 
 import boto3
 from yaml import safe_load
@@ -174,3 +174,38 @@ def get_scratch_database() -> str:
         }
     )
     return scratch_db_name
+
+
+def get_stepfunctions_waiter_config(delay: int, max_attempts: int) -> Dict[str, Any]:
+    return {
+        "version": 2,
+        "waiters": {
+            "ExecutionComplete": {
+                "operation": "DescribeExecution",
+                "delay": delay,
+                "maxAttempts": max_attempts,
+                "acceptors": [
+                    {"matcher": "path", "expected": "SUCCEEDED", "argument": "status", "state": "success"},
+                    {"matcher": "path", "expected": "RUNNING", "argument": "status", "state": "retry"},
+                    {
+                        "matcher": "path",
+                        "expected": "FAILED",
+                        "argument": "status",
+                        "state": "failure",
+                    },
+                    {
+                        "matcher": "path",
+                        "expected": "TIMED_OUT",
+                        "argument": "status",
+                        "state": "failure",
+                    },
+                    {
+                        "matcher": "path",
+                        "expected": "ABORTED",
+                        "argument": "status",
+                        "state": "failure",
+                    },
+                ],
+            },
+        },
+    }

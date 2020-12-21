@@ -17,6 +17,7 @@ import logging
 import os
 import time
 import urllib
+from botocore.waiter import WaiterModel, create_waiter_with_client
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -24,7 +25,7 @@ from typing import Any, Dict, List, Optional, Union
 import boto3
 import pandas as pd
 
-from datamaker_sdk.common import get_properties
+from datamaker_sdk.common import get_properties, get_stepfunctions_waiter_config
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -595,28 +596,34 @@ def wait_for_tasks_to_complete(
 
 
     """
+    sfn = boto3.client("stepfunctions")
     ecs = boto3.client("ecs")
     logs = boto3.client("logs")
     paginator = logs.get_paginator("filter_log_events")
 
     props = get_properties()
-    clusterName = props["ecs_cluster"]
 
-    ecs_tasks = [t["JobArn"] for t in tasks if t["ExecutionType"] == "ecs"]
-    if not tail_log:
+    waiter_model = WaiterModel(get_stepfunctions_waiter_config(delay=delay, max_attempts=maxAttempts))
+    waiter = create_waiter_with_client("ExecutionComplete", waiter_model, sfn)
+
+    for task in tasks:
+        waiter.wait(executionArn=task["ExecutionArn"])
         waiter = ecs.get_waiter("tasks_stopped")
-        waiter.wait(
-            cluster=clusterName,
-            tasks=ecs_tasks,
-            WaiterConfig={"Delay": delay, "MaxAttempts": maxAttempts},
-        )
     else:
-        logGroupName = f"/datamaker/tasks/{props['AWS_DATAMAKER_ENV']}/{props['DATAMAKER_TEAM_SPACE']}/containers"
-        logger.info("start logging from %s", logGroupName)
-        logStreams = []
-        for t in ecs_tasks:
-            id = t.split("/")[2]
-            logStreams.append(
+        log_configs = {
+            "ECSLogs": {
+                "LogGroupName": f"/datamaker/tasks/{props['AWS_DATAMAKER_ENV']}/{props['DATAMAKER_TEAM_SPACE']}/containers",
+                "LogStreams": []
+            },
+            "EKSLogs": {
+                "LogGroupName": f"/datamaker/pods/{props['AWS_DATAMAKER_ENV']}",
+                "LogStreams": []
+            }
+        }
+        for task in tasks:
+            if task["ExecutionType"] == "ecs":
+            id = task["Identifier"].split("/")[2]
+            log_configs["ECSLogs"]["LogStreams"].append(
                 f"datamaker-{props['AWS_DATAMAKER_ENV']}-{props['DATAMAKER_TEAM_SPACE']}/datamaker-runner/{id}"
             )
 
