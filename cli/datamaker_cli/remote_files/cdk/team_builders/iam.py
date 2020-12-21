@@ -347,14 +347,16 @@ class IamBuilder:
                                 "logs:CreateLogStream",
                                 "logs:CreateLogGroup",
                                 "logs:DescribeLogStreams",
-                                "logs:PutLogEvents"
+                                "logs:PutLogEvents",
                             ],
                             resources=[
-                                f"arn:{core.Aws.PARTITION}:logs:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:log-group:/datamaker/pods/{manifest.name}",
-                                f"arn:{core.Aws.PARTITION}:logs:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:log-group:/datamaker/pods/{manifest.name}:*"
-                            ]
+                                f"arn:{core.Aws.PARTITION}:logs:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:"
+                                f"log-group:/datamaker/pods/{manifest.name}",
+                                f"arn:{core.Aws.PARTITION}:logs:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:"
+                                f"log-group:/datamaker/pods/{manifest.name}:*",
+                            ],
                         )
                     ]
                 )
-            }
+            },
         )
