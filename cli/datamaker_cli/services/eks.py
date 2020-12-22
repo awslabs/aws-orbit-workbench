@@ -90,6 +90,18 @@ def describe_cluster(
         return None
 
 
+def describe_nodegroup(manifest: Manifest, cluster_name: str, nodegroup_name: str) -> Optional[Dict[str, Any]]:
+    _logger.debug(f"Describing NodeGroup: {nodegroup_name}")
+    eks_client = manifest.boto3_client("eks")
+
+    try:
+        return cast(
+            Dict[str, Any], eks_client.describe_nodegroup(clusterName=cluster_name, nodegroupName=nodegroup_name)
+        )
+    except eks_client.exceptions.ResourceNotFoundException:
+        return None
+
+
 def create_fargate_profile(
     manifest: Manifest,
     profile_name: str,
