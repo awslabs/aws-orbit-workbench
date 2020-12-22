@@ -163,7 +163,9 @@ class Manifest:
 
         self.raw_ssm: Optional[MANIFEST_TYPE] = None  # Env
         self.eks_cluster_role_arn: Optional[str] = None  # Env
+        self.eks_fargate_profile_role_arn: Optional[str] = None  # Env
         self.eks_env_nodegroup_role_arn: Optional[str] = None  # Env
+        self.eks_oidc_provider: Optional[str] = None  # Env
         self.user_pool_client_id: Optional[str] = None  # Env
         self.identity_pool_id: Optional[str] = None  # Env
         self.user_pool_id: Optional[str] = None  # Env
@@ -218,7 +220,7 @@ class Manifest:
                 nodes_num_max=cast(int, t["nodes-num-max"]),
                 nodes_num_min=cast(int, t["nodes-num-min"]),
                 efs_life_cycle=cast(str, t["efs-life-cycle"]) if "efs-life-cycle" in t else "",
-                policy=cast(str, t["policy"]),
+                policies=cast(List[str], t.get("policies", [])),
                 grant_sudo=cast(bool, t.get("grant-sudo", False)),
                 jupyterhub_inbound_ranges=cast(List[str], t.get("jupyterhub-inbound-ranges", [])),
                 image=cast(Optional[str], t.get("image")),
@@ -305,7 +307,9 @@ class Manifest:
             self.toolkit_kms_arn = cast(Optional[str], raw.get("toolkit-kms-arn"))
             self.cdk_toolkit_s3_bucket = cast(Optional[str], raw.get("cdk-toolkit-s3-bucket"))
             self.eks_cluster_role_arn = cast(Optional[str], raw.get("eks-cluster-role-arn"))
+            self.eks_fargate_profile_role_arn = cast(Optional[str], raw.get("eks-fargate-profile-role-arn"))
             self.eks_env_nodegroup_role_arn = cast(Optional[str], raw.get("eks-env-nodegroup-role-arn"))
+            self.eks_oidc_provider = cast(Optional[str], raw.get("eks-oidc-provider"))
             self.user_pool_client_id = cast(Optional[str], raw.get("user-pool-client-id"))
             self.identity_pool_id = cast(Optional[str], raw.get("identity-pool-id"))
             self.cognito_external_provider_domain = cast(Optional[str], raw.get("cognito-external-provider-domain"))

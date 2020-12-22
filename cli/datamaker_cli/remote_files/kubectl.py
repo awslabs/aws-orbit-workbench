@@ -35,11 +35,19 @@ EFS_DRIVE = "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/ove
 MODELS_PATH = os.path.join(DATAMAKER_CLI_ROOT, "data", "kubectl")
 
 
-def _commons(output_path: str) -> None:
+def _commons(manifest: Manifest, output_path: str) -> None:
     filename = "00-commons.yaml"
     input = os.path.join(MODELS_PATH, "apps", filename)
     output = os.path.join(output_path, filename)
-    shutil.copyfile(src=input, dst=output)
+
+    with open(input, "r") as file:
+        content: str = file.read()
+    content = content.replace("$", "").format(
+        region=manifest.region,
+        env_name=manifest.name,
+    )
+    with open(output, "w") as file:
+        file.write(content)
 
 
 def _team(manifest: Manifest, team_manifest: TeamManifest, output_path: str) -> None:
@@ -129,7 +137,7 @@ def _generate_env_manifest(manifest: Manifest, clean_up: bool = True) -> str:
     os.makedirs(output_path, exist_ok=True)
     if clean_up:
         _cleanup_output(output_path=output_path)
-    _commons(output_path=output_path)
+    _commons(manifest=manifest, output_path=output_path)
 
     if manifest.account_id is None:
         raise RuntimeError("manifest.account_id is None!")
@@ -170,31 +178,54 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
         "\n".join(sh.run_iterating(f"kubectl get configmap --context {context} -o yaml -n kube-system aws-auth")),
         Loader=yaml.SafeLoader,
     )
+    map_roles = yaml.load(config_map["data"]["mapRoles"], Loader=yaml.SafeLoader)
+    team_usernames = {f"datamaker-{manifest.name}-{t.name}-runner" for t in manifest.teams}
+    admin_usernames = {
+        f"datamaker-{manifest.name}-admin",
+    }
 
-    team_usernames = {f"datamaker-{manifest.name}-{t.name}" for t in manifest.teams}
-
-    if "data" in config_map:
-        map_roles = yaml.load(config_map["data"]["mapRoles"], Loader=yaml.SafeLoader)
-        map_roles = [role for role in map_roles if role["username"] not in team_usernames]
-    else:
-        map_roles = []
+    map_roles = [
+        role for role in map_roles if role["username"] not in team_usernames and role["username"] not in admin_usernames
+    ]
+    for username in admin_usernames:
+        map_roles.append(
+            {
+                "groups": ["system:masters"],
+                "rolearn": f"arn:aws:iam::{manifest.account_id}:role/{username}",
+                "username": username,
+            }
+        )
 
     if with_teams:
         for username in team_usernames:
             map_roles.append(
                 {
                     "groups": ["system:masters"],
-                    "rolearn": f"arn:aws:iam::{manifest.account_id}:role/{username}-role",
+                    "rolearn": f"arn:aws:iam::{manifest.account_id}:role/{username}",
                     "username": username,
                 }
             )
 
-    config_map["data"]["mapRoles"] = yaml.dump(map_roles)
+    config_map = {
+        "apiVersion": "v1",
+        "data": {
+            "mapRoles": yaml.dump(map_roles),
+        },
+        "kind": "ConfigMap",
+        "metadata": {
+            "name": "aws-auth",
+            "namespace": "kube-system",
+        },
+    }
+
+    config_map_yaml = yaml.dump(config_map)
     config_map_file = os.path.join(output_path, "config_map.yaml")
+
     _logger.debug(f"config_map: {config_map}")
-    _logger.debug(f"config_map_yaml: {config_map_file}")
+    _logger.debug(f"config_map_yaml: {config_map_yaml}")
+
     with open(config_map_file, "w") as yaml_file:
-        yaml_file.write(yaml.dump(config_map))
+        yaml_file.write(config_map_yaml)
 
     return config_map_file
 
