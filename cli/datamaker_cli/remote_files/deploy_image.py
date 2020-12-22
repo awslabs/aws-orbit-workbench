@@ -52,15 +52,6 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, changes=changes.plugin_changesets)
     _logger.debug("Plugins loaded")
 
-    env.deploy(
-        manifest=manifest,
-        add_images=[image_name],
-        remove_images=[],
-    )
-    _logger.debug("Env changes deployed")
-    teams.deploy(manifest=manifest)
-    _logger.debug("Teams Stacks deployed")
-    _logger.debug("Deploying the %s Docker image", image_name)
     if manifest.images.get(image_name, {"source": "code"}).get("source") == "code":
         path = os.path.join(os.path.dirname(manifest.filename_dir), image_name)
         _logger.debug("path: %s", path)
