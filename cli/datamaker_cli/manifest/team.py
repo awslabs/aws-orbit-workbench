@@ -39,7 +39,7 @@ class TeamManifest:
         nodes_num_desired: int,
         nodes_num_max: int,
         nodes_num_min: int,
-        policy: str,
+        policies: List[str],
         efs_life_cycle: str,
         plugins: List[PluginManifest],
         grant_sudo: bool,
@@ -54,7 +54,7 @@ class TeamManifest:
         self.nodes_num_desired: int = nodes_num_desired
         self.nodes_num_max: int = nodes_num_max
         self.nodes_num_min: int = nodes_num_min
-        self.policy: str = policy
+        self.policies: List[str] = policies
         self.grant_sudo: bool = grant_sudo
         self.jupyterhub_inbound_ranges: List[str] = jupyterhub_inbound_ranges
         self.plugins: List[PluginManifest] = plugins
@@ -130,7 +130,7 @@ class TeamManifest:
             "nodes-num-desired": self.nodes_num_desired,
             "nodes-num-max": self.nodes_num_max,
             "nodes-num-min": self.nodes_num_min,
-            "policy": self.policy,
+            "policies": self.policies,
             "grant-sudo": self.grant_sudo,
             "image": self.image,
             "jupyterhub-inbound-ranges": self.jupyterhub_inbound_ranges,
