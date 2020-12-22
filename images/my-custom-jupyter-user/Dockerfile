@@ -1,4 +1,4 @@
-FROM 787535711150.dkr.ecr.us-east-1.amazonaws.com/datamaker-my-env-jupyter-user
+FROM ${jupyter_user_base}
 
 ENV MY_CUSTOM_ENV_VAR COOL
 

@@ -95,9 +95,8 @@ profile_list_default = [
 def per_user_profiles(spawner):
     team = spawner.environment["DATAMAKER_TEAM_SPACE"]
     env = spawner.environment["AWS_DATAMAKER_ENV"]
-    region = spawner.environment["AWS_DEFAULT_REGION"]
     ssm = boto3.client("ssm")
-
+    app_log.info("Getting profiles...")
     ssm_parameter_name: str = f"/datamaker/{env}/teams/{team}/manifest"
     json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
 
@@ -105,11 +104,11 @@ def per_user_profiles(spawner):
     if team_manifest_dic.get("profiles"):
         return team_manifest_dic["profiles"]
     else:
+        app_log.info("No profiles found")
         return profile_list_default
 
 
 c.KubeSpawner.profile_list = per_user_profiles
-
 
 """
 AUTH

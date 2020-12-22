@@ -15,10 +15,12 @@ RUN python3 -m pip install --upgrade awscli
 RUN jupyter serverextension enable jupyterlab
 ENV JUPYTER_ENABLE_LAB true
 ADD jupyterhub_config.py /etc/jupyterhub/jupyterhub_config.py
+RUN cat /etc/jupyterhub/jupyterhub_config.py
 ADD utils/setup.py /etc/jupyterhub/utils/setup.py
 ADD utils/requirements.txt /etc/jupyterhub/utils/requirements.txt
 ADD utils/jupyterhub_utils /etc/jupyterhub/utils/jupyterhub_utils
 RUN python3 -m pip install -e /etc/jupyterhub/utils/
+RUN apt-get install -y vim
 
 # Ports
 EXPOSE 8000

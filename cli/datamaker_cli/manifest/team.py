@@ -110,9 +110,14 @@ class TeamManifest:
             exists = False
         _logger.debug("Does Team %s Manifest SSM parameter exist? %s", self.name, exists)
         if exists:
+            json_str = self.asjson()
+            # resolve any parameters inside team manifest per context
+            json_str = utils.resolve_parameters(
+                json_str, dict(region=self.manifest.region, account=self.manifest.account_id, env=self.manifest.name)
+            )
             client.put_parameter(
                 Name=self.ssm_parameter_name,
-                Value=self.asjson(),
+                Value=json_str,
                 Overwrite=True,
                 Tier="Intelligent-Tiering",
             )

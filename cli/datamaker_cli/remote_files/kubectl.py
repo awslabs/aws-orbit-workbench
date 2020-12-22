@@ -270,7 +270,7 @@ def deploy_env(manifest: Manifest) -> None:
             sh.run(f"kubectl apply -k {EFS_DRIVE} --context {context}")
         output_path = _generate_env_manifest(manifest=manifest)
         sh.run(f"kubectl apply -f {output_path} --context {context}")
-        fetch_kubectl_data(manifest=manifest, context=context, include_teams=False)
+    fetch_kubectl_data(manifest=manifest, context=context, include_teams=False)
 
 
 def deploy_teams(manifest: Manifest, changes: List["PluginChangeset"]) -> None:
@@ -286,7 +286,8 @@ def deploy_teams(manifest: Manifest, changes: List["PluginChangeset"]) -> None:
         output_path = _generate_aws_auth_config_map(manifest=manifest, context=context, with_teams=True)
         _logger.debug("Updating aws-auth configMap")
         sh.run(f"kubectl apply -f {output_path} --context {context}")
-        fetch_kubectl_data(manifest=manifest, context=context, include_teams=True)
+    fetch_kubectl_data(manifest=manifest, context=context, include_teams=True)
+    if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
         for team_manifest in manifest.teams:
             plugins.PLUGINS_REGISTRIES.deploy_team_plugins(
                 manifest=manifest, team_manifest=team_manifest, changes=changes
