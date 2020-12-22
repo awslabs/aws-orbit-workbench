@@ -160,6 +160,7 @@ Resources:
               - iam:CreateServiceLinkedRole
             Resource:
               - arn:aws:iam::${account_id}:role/aws-service-role/eks-nodegroup.amazonaws.com/AWSServiceRoleForAmazonEKSNodegroup
+              - arn:aws:iam::${account_id}:role/aws-service-role/eks-fargate.amazonaws.com/AWSServiceRoleForAmazonEKSForFargate
           - Effect: Allow
             Action:
               - iam:AddClientIDToOpenIDConnectProvider
