@@ -31,6 +31,8 @@ class LambdaBuilder:
         manifest: Manifest,
         team_manifest: TeamManifest,
         ecs_fargate_runner: sfn.StateMachine,
+        eks_fargate_runner: sfn.StateMachine,
+        eks_ec2_runner: sfn.StateMachine,
     ) -> aws_lambda.Function:
         return aws_lambda.Function(
             scope=scope,
@@ -42,6 +44,8 @@ class LambdaBuilder:
             timeout=core.Duration.minutes(5),
             environment={
                 "ECS_FARGATE_STATE_MACHINE_ARN": ecs_fargate_runner.state_machine_arn,
+                "EKS_FARGATE_STATE_MACHINE_ARN": eks_fargate_runner.state_machine_arn,
+                "EKS_EC2_STATE_MACHINE_ARN": eks_ec2_runner.state_machine_arn,
             },
             initial_policy=[
                 iam.PolicyStatement(
