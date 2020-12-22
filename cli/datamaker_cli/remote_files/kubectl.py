@@ -167,7 +167,7 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
     os.makedirs(output_path, exist_ok=True)
     _cleanup_output(output_path=output_path)
     config_map = yaml.load(
-        "\n".join(sh.run_iterating(f"kubectl get configmap --context {context} -o yaml -n kube-system aws-auth")),
+        "\n".join(sh.run_with_logging(f"kubectl get configmap --context {context} -o yaml -n kube-system aws-auth")),
         Loader=yaml.SafeLoader,
     )
 
