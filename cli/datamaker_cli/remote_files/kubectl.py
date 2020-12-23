@@ -167,7 +167,7 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
     os.makedirs(output_path, exist_ok=True)
     _cleanup_output(output_path=output_path)
     config_map = yaml.load(
-        "\n".join(sh.run_with_logging(f"kubectl get configmap --context {context} -o yaml -n kube-system aws-auth")),
+        "\n".join(sh.run_iterating(f"kubectl get configmap --context {context} -o yaml -n kube-system aws-auth")),
         Loader=yaml.SafeLoader,
     )
 
@@ -175,7 +175,7 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
 
     if "data" in config_map:
         map_roles = yaml.load(config_map["data"]["mapRoles"], Loader=yaml.SafeLoader)
-        map_roles = [role for role in map_roles if role["username"] not in team_usernames]
+        map_roles = [role for role in map_roles if "username" in role and role["username"] not in team_usernames]
     else:
         map_roles = []
 
@@ -190,6 +190,7 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
             )
 
     config_map["data"]["mapRoles"] = yaml.dump(map_roles)
+    config_map["kind"] = "ConfigMap"
     config_map_file = os.path.join(output_path, "config_map.yaml")
     _logger.debug(f"config_map: {config_map}")
     _logger.debug(f"config_map_yaml: {config_map_file}")
