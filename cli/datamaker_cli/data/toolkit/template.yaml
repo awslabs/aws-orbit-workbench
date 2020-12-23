@@ -160,6 +160,17 @@ Resources:
               - iam:CreateServiceLinkedRole
             Resource:
               - arn:aws:iam::${account_id}:role/aws-service-role/eks-nodegroup.amazonaws.com/AWSServiceRoleForAmazonEKSNodegroup
+              - arn:aws:iam::${account_id}:role/aws-service-role/eks-fargate.amazonaws.com/AWSServiceRoleForAmazonEKSForFargate
+          - Effect: Allow
+            Action:
+              - iam:AddClientIDToOpenIDConnectProvider
+              - iam:CreateOpenIDConnectProvider
+              - iam:DeleteOpenIDConnectProvider
+              - iam:GetOpenIDConnectProvider
+              - iam:ListOpenIDConnectProviders
+              - iam:UpdateOpenIDConnectProviderThumbprint
+            Resource:
+              - arn:aws:iam::${account_id}:oidc-provider/oidc.eks.${region}.amazonaws.com*
           - Effect: Allow
             Action:
               - iam:CreatePolicy
@@ -194,6 +205,7 @@ Resources:
               - arn:aws:eks:${region}:${account_id}:cluster/datamaker-${env_name}
               - arn:aws:eks:${region}:${account_id}:cluster/datamaker-${env_name}/*
               - arn:aws:eks:${region}:${account_id}:nodegroup/datamaker-${env_name}/*
+              - arn:aws:eks:${region}:${account_id}:fargateprofile/datamaker-${env_name}/*
           - Effect: Allow
             Action:
               - ecs:*

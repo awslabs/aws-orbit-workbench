@@ -287,7 +287,7 @@ class IamBuilder:
 
         managed_policies = managed_policies + aws_managed_user_policies + datamaker_custom_policies
 
-        return iam.Role(
+        role = iam.Role(
             scope=scope,
             id=lake_role_name,
             role_name=lake_role_name,
@@ -299,18 +299,64 @@ class IamBuilder:
                 iam.ServicePrincipal("redshift.amazonaws.com"),
                 iam.ServicePrincipal("codepipeline.amazonaws.com"),
                 iam.ServicePrincipal("personalize.amazonaws.com"),
-                iam.ServicePrincipal("states.amazonaws.com"),
             ),
             managed_policies=managed_policies,
         )
+        role.assume_role_policy.add_statements(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["sts:AssumeRoleWithWebIdentity"],
+                principals=[
+                    iam.FederatedPrincipal(
+                        federated=f"arn:{partition}:iam::{account}:oidc-provider/{manifest.eks_oidc_provider}",
+                        conditions={
+                            "StringLike": {
+                                f"{manifest.eks_oidc_provider}:sub": f"system:serviceaccount:{team_manifest.name}:*"
+                            }
+                        },
+                    )
+                ],
+            ),
+        )
+        return role
 
     @staticmethod
     def build_ecs_role(scope: core.Construct) -> iam.Role:
         return iam.Role(
-            scope,
-            "ecs_execution_role",
+            scope=scope,
+            id="ecs_execution_role",
             assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
             managed_policies=[
                 iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AmazonECSTaskExecutionRolePolicy")
             ],
+        )
+
+    @staticmethod
+    def build_container_runner_role(scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest) -> iam.Role:
+        return iam.Role(
+            scope=scope,
+            id="container_runner_role",
+            role_name=f"datamaker-{manifest.name}-{team_manifest.name}-runner",
+            assumed_by=iam.ServicePrincipal("states.amazonaws.com"),
+            inline_policies={
+                "cloudwatch-logs": iam.PolicyDocument(
+                    statements=[
+                        iam.PolicyStatement(
+                            effect=iam.Effect.ALLOW,
+                            actions=[
+                                "logs:CreateLogStream",
+                                "logs:CreateLogGroup",
+                                "logs:DescribeLogStreams",
+                                "logs:PutLogEvents",
+                            ],
+                            resources=[
+                                f"arn:{core.Aws.PARTITION}:logs:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:"
+                                f"log-group:/datamaker/pods/{manifest.name}",
+                                f"arn:{core.Aws.PARTITION}:logs:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:"
+                                f"log-group:/datamaker/pods/{manifest.name}:*",
+                            ],
+                        )
+                    ]
+                )
+            },
         )

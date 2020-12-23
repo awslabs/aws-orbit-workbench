@@ -44,6 +44,16 @@ metadata:
   name: jupyterhub
   namespace: ${team}
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    team: ${team}
+  name: ${team}
+  namespace: ${team}
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::${account_id}:role/datamaker-${env_name}-${team}-role
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
