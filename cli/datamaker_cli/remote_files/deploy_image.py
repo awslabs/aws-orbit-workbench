@@ -56,9 +56,7 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     ecr_repo = f"datamaker-{manifest.name}-{image_name}"
     try:
         ecr.describe_repositories(repositoryNames=[ecr_repo])
-    except Exception:
-        createRepository(manifest, ecr, ecr_repo)
-    except:
+    except ecr.exceptions.RepositoryNotFoundException:
         createRepository(manifest, ecr, ecr_repo)
 
     if manifest.images.get(image_name, {"source": "code"}).get("source") == "code":
