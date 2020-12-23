@@ -178,23 +178,14 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
         "\n".join(sh.run_iterating(f"kubectl get configmap --context {context} -o yaml -n kube-system aws-auth")),
         Loader=yaml.SafeLoader,
     )
-    map_roles = yaml.load(config_map["data"]["mapRoles"], Loader=yaml.SafeLoader)
-    team_usernames = {f"datamaker-{manifest.name}-{t.name}-runner" for t in manifest.teams}
-    admin_usernames = {
-        f"datamaker-{manifest.name}-admin",
-    }
 
-    map_roles = [
-        role for role in map_roles if role["username"] not in team_usernames and role["username"] not in admin_usernames
-    ]
-    for username in admin_usernames:
-        map_roles.append(
-            {
-                "groups": ["system:masters"],
-                "rolearn": f"arn:aws:iam::{manifest.account_id}:role/{username}",
-                "username": username,
-            }
-        )
+    team_usernames = {f"datamaker-{manifest.name}-{t.name}" for t in manifest.teams}
+
+    if "data" in config_map:
+        map_roles = yaml.load(config_map["data"]["mapRoles"], Loader=yaml.SafeLoader)
+        map_roles = [role for role in map_roles if role["username"] not in team_usernames]
+    else:
+        map_roles = []
 
     if with_teams:
         for username in team_usernames:
@@ -206,26 +197,12 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
                 }
             )
 
-    config_map = {
-        "apiVersion": "v1",
-        "data": {
-            "mapRoles": yaml.dump(map_roles),
-        },
-        "kind": "ConfigMap",
-        "metadata": {
-            "name": "aws-auth",
-            "namespace": "kube-system",
-        },
-    }
-
-    config_map_yaml = yaml.dump(config_map)
+    config_map["data"]["mapRoles"] = yaml.dump(map_roles)
     config_map_file = os.path.join(output_path, "config_map.yaml")
-
     _logger.debug(f"config_map: {config_map}")
-    _logger.debug(f"config_map_yaml: {config_map_yaml}")
-
+    _logger.debug(f"config_map_yaml: {config_map_file}")
     with open(config_map_file, "w") as yaml_file:
-        yaml_file.write(config_map_yaml)
+        yaml_file.write(yaml.dump(config_map))
 
     return config_map_file
 
