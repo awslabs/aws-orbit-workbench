@@ -16,9 +16,10 @@ import logging
 import os
 from typing import Optional, Tuple
 
+from boto3 import client
+
 from datamaker_cli import changeset, docker, plugins, sh
 from datamaker_cli.manifest import Manifest
-from datamaker_cli.remote_files import env, teams
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -55,18 +56,10 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     ecr_repo = f"datamaker-{manifest.name}-{image_name}"
     try:
         ecr.describe_repositories(repositoryNames=[ecr_repo])
+    except Exception:
+        createRepository(manifest, ecr, ecr_repo)
     except:
-        response = ecr.create_repository(
-            repositoryName=ecr_repo,
-            tags=[
-                {"Key": "Env", "Value": "xxx"},
-            ],
-        )
-        if "repository" in response and "repositoryName" in response["repository"]:
-            _logger.debug("ECR repository not exist, creating for %s", ecr_repo)
-        else:
-            _logger.error("ECR repository creation failed, response %s", response)
-            raise RuntimeError(response)
+        createRepository(manifest, ecr, ecr_repo)
 
     if manifest.images.get(image_name, {"source": "code"}).get("source") == "code":
         path = os.path.join(os.path.dirname(manifest.filename_dir), image_name)
@@ -77,3 +70,17 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     else:
         docker.replicate_image(manifest=manifest, image_name=image_name, deployed_name=ecr_repo)
     _logger.debug("Docker Image Deployed to ECR")
+
+
+def createRepository(manifest: Manifest, ecr: client, ecr_repo: str) -> None:
+    response = ecr.create_repository(
+        repositoryName=ecr_repo,
+        tags=[
+            {"Key": "Env", "Value": manifest.name},
+        ],
+    )
+    if "repository" in response and "repositoryName" in response["repository"]:
+        _logger.debug("ECR repository not exist, creating for %s", ecr_repo)
+    else:
+        _logger.error("ECR repository creation failed, response %s", response)
+        raise RuntimeError(response)
