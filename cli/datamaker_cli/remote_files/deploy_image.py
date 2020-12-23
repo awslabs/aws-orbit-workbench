@@ -51,15 +51,34 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
 
     plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, changes=changes.plugin_changesets)
     _logger.debug("Plugins loaded")
+    ecr = manifest.boto3_client("ecr")
+    ecr_repo = f'datamaker-{manifest.name}-{image_name}'
+    try:
+        ecr.describe_repositories(repositoryNames=[ecr_repo])
+    except:
+        response = ecr.create_repository(
+            repositoryName=ecr_repo,
+            tags=[
+                {
+                    'Key': 'Env',
+                    'Value': 'xxx'
+                },
+            ]
+        )
+        if 'repository' in response and 'repositoryName' in response['repository']:
+            _logger.debug("ECR repository not exist, creating for %s", ecr_repo)
+        else:
+            _logger.error("ECR repository creation failed, response %s", response)
+            raise RuntimeError(response)
 
     if manifest.images.get(image_name, {"source": "code"}).get("source") == "code":
         path = os.path.join(os.path.dirname(manifest.filename_dir), image_name)
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
-        docker.deploy_image_from_source(manifest=manifest, dir=path, name=f"datamaker-{manifest.name}-{image_name}")
+        docker.deploy_image_from_source(manifest=manifest, dir=path, name=ecr_repo)
     else:
         docker.replicate_image(
-            manifest=manifest, image_name=image_name, deployed_name=f"datamaker-{manifest.name}-{image_name}"
+            manifest=manifest, image_name=image_name, deployed_name=ecr_repo
         )
     _logger.debug("Docker Image Deployed to ECR")
