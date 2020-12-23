@@ -91,7 +91,7 @@ def update_docker_file(manifest: "Manifest", dir: str) -> None:
     utils.print_dir(dir)
     docker_file = os.path.join(dir, "Dockerfile")
     if os.path.exists(docker_file):
-        _logger.info(f"Building DockerFile %s", docker_file)
+        _logger.info("Building DockerFile %s", docker_file)
         jupyter_user_base = (
             f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/datamaker-{manifest.name}-jupyter-user"
         )
