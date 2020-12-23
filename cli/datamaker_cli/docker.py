@@ -1,7 +1,8 @@
 import logging
+import os
 from typing import TYPE_CHECKING, List, Optional
 
-from datamaker_cli import dockerhub, exceptions, sh
+from datamaker_cli import dockerhub, exceptions, sh, utils
 from datamaker_cli.services import ecr
 
 if TYPE_CHECKING:
@@ -85,6 +86,30 @@ def push(manifest: "Manifest", name: str, tag: str = "latest") -> None:
     sh.run(f"docker push {repo_address}")
 
 
+def update_docker_file(manifest: "Manifest", dir: str) -> None:
+    _logger.debug("Docker directory before building: %s", os.path.abspath(dir))
+    utils.print_dir(dir)
+    docker_file = os.path.join(dir, "Dockerfile")
+    if os.path.exists(docker_file):
+        _logger.info("Building DockerFile %s", docker_file)
+        jupyter_user_base = (
+            f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/datamaker-{manifest.name}-jupyter-user"
+        )
+        with open(docker_file, "r") as file:
+            content: str = file.read()
+        content = utils.resolve_parameters(
+            content,
+            dict(
+                region=manifest.region,
+                account=manifest.account_id,
+                env=manifest.name,
+                jupyter_user_base=jupyter_user_base,
+            ),
+        )
+        with open(docker_file, "w") as file:
+            file.write(content)
+
+
 def deploy_image_from_source(
     manifest: "Manifest",
     dir: str,
@@ -92,6 +117,8 @@ def deploy_image_from_source(
     tag: str = "latest",
     use_cache: bool = True,
 ) -> None:
+    _logger.debug("Building docker image from %s", os.path.abspath(dir))
+    update_docker_file(manifest, dir)
     build(manifest=manifest, dir=dir, name=name, tag=tag, use_cache=use_cache, pull=True)
     _logger.debug("Docker Image built")
     tag_image(manifest=manifest, remote_name=name, remote_source="local", name=name, tag=tag)
