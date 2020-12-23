@@ -52,20 +52,17 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, changes=changes.plugin_changesets)
     _logger.debug("Plugins loaded")
     ecr = manifest.boto3_client("ecr")
-    ecr_repo = f'datamaker-{manifest.name}-{image_name}'
+    ecr_repo = f"datamaker-{manifest.name}-{image_name}"
     try:
         ecr.describe_repositories(repositoryNames=[ecr_repo])
     except:
         response = ecr.create_repository(
             repositoryName=ecr_repo,
             tags=[
-                {
-                    'Key': 'Env',
-                    'Value': 'xxx'
-                },
-            ]
+                {"Key": "Env", "Value": "xxx"},
+            ],
         )
-        if 'repository' in response and 'repositoryName' in response['repository']:
+        if "repository" in response and "repositoryName" in response["repository"]:
             _logger.debug("ECR repository not exist, creating for %s", ecr_repo)
         else:
             _logger.error("ECR repository creation failed, response %s", response)
@@ -78,7 +75,5 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
             sh.run(f"sh {script}", cwd=path)
         docker.deploy_image_from_source(manifest=manifest, dir=path, name=ecr_repo)
     else:
-        docker.replicate_image(
-            manifest=manifest, image_name=image_name, deployed_name=ecr_repo
-        )
+        docker.replicate_image(manifest=manifest, image_name=image_name, deployed_name=ecr_repo)
     _logger.debug("Docker Image Deployed to ECR")

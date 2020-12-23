@@ -39,7 +39,7 @@ def destroy_toolkit(manifest: Manifest) -> None:
         cfn.destroy_stack(manifest=manifest, stack_name=manifest.toolkit_stack_name)
 
 
-def destroy(filename: str, teams_only: bool, keep_demo, debug: bool) -> None:
+def destroy(filename: str, teams_only: bool, keep_demo: bool, debug: bool) -> None:
     with MessagesContext("Destroying", debug=debug) as ctx:
         manifest = Manifest(filename=filename)
         manifest.fillup()

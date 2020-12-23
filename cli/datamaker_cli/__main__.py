@@ -154,6 +154,7 @@ def deploy_cli(
         debug=debug,
     )
 
+
 @click.command(name="destroy")
 @click.option(
     "--filename",
@@ -173,7 +174,7 @@ def deploy_cli(
     help="Enable detailed logging.",
     show_default=True,
 )
-def destroy_cli(filename: str,team_stacks: bool, keep_demo: bool, debug: bool) -> None:
+def destroy_cli(filename: str, team_stacks: bool, keep_demo: bool, debug: bool) -> None:
     """Destroy a DataMaker environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
@@ -182,6 +183,7 @@ def destroy_cli(filename: str,team_stacks: bool, keep_demo: bool, debug: bool) -
     _logger.debug("teams only: %s", str(team_stacks))
     _logger.debug("keep demo: %s", str(keep_demo))
     destroy(filename=filename, teams_only=team_stacks, keep_demo=keep_demo, debug=debug)
+
 
 @click.command(name="deploy-image")
 @click.option(
