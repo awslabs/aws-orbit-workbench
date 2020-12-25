@@ -30,9 +30,12 @@ RUN python3 -m pip install --use-feature=2020-resolver --requirement /etc/jupyte
 # Jupyter Lab extensions
 ENV JUPYTER_ENABLE_LAB true
 RUN jupyter serverextension enable --py jupyterlab --sys-prefix
-RUN python3 -m pip install jupyterlab-s3-browser
-RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager jupyterlab-s3-browser @8080labs/qgrid --no-build
-RUN jupyter serverextension enable --py jupyterlab_s3_browser
+RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager @8080labs/qgrid --no-build
+
+#RUN python3 -m pip install jupyterlab-s3-browser
+#RUN jupyter labextension install jupyterlab-s3-browser --no-build
+#RUN jupyter serverextension enable --py jupyterlab_s3_browser
+
 RUN jupyter lab build
 
 # Container Run
