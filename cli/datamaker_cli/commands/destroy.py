@@ -85,7 +85,7 @@ def destroy(filename: str, teams_only: bool, keep_demo: bool, debug: bool) -> No
         ctx.progress(95)
 
         try:
-            if not teams_only:
+            if not teams_only and not keep_demo:
                 destroy_toolkit(manifest=manifest)
         except botocore.exceptions.ClientError as ex:
             error = ex.response["Error"]

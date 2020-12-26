@@ -20,7 +20,7 @@ RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install --upgrade wheel
 RUN python3 -m pip install --upgrade awscli
 RUN python3 -m pip install --upgrade notebook
-RUN python3 -m pip install --upgrade jupyterlab
+RUN python3 -m pip install --upgrade jupyterlab==2.2.9
 RUN python3 -m pip install --upgrade kubernetes~=11.0.0
 RUN python3 -m pip install --upgrade papermill~=2.1.3
 

@@ -163,10 +163,14 @@ def deploy_cli(
     help="The target DataMaker manifest file (yaml).",
 )
 @click.option(
-    "--team-stacks/--all-stacks", default=False, help="Destroy Team Stacks only or All Stacks", show_default=True
+    "--team-stacks", is_flag=True, default=False, help="Destroy Team Stacks only or All Stacks", show_default=True
 )
 @click.option(
-    "--keep-demo", default=False, help="Destroy Env and Team, but keeps Demo env if one was used", show_default=True
+    "--keep-demo",
+    is_flag=True,
+    default=False,
+    help="Destroy Env and Team, but keeps Demo env if one was used",
+    show_default=True,
 )
 @click.option(
     "--debug/--no-debug",
