@@ -53,7 +53,7 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, changes=changes.plugin_changesets)
     _logger.debug("Plugins loaded")
     ecr = manifest.boto3_client("ecr")
-    ecr_repo = f"datamaker-{manifest.name}-{image_name}"
+    ecr_repo = f"orbit-{manifest.name}-{image_name}"
     try:
         ecr.describe_repositories(repositoryNames=[ecr_repo])
     except ecr.exceptions.RepositoryNotFoundException:

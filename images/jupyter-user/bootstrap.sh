@@ -30,8 +30,8 @@ ln -s /efs/shared/ /home/jovyan/shared
 
 # Bootstrap
 
-LOCAL_PATH="/home/jovyan/.datamaker/bootstrap/scripts/"
-S3_PATH="s3://${AWS_DATAMAKER_S3_BUCKET}/teams/${DATAMAKER_TEAM_SPACE}/bootstrap/"
+LOCAL_PATH="/home/jovyan/.orbit/bootstrap/scripts/"
+S3_PATH="s3://${AWS_ORBIT_S3_BUCKET}/teams/${ORBIT_TEAM_SPACE}/bootstrap/"
 
 mkdir -p $LOCAL_PATH
 aws s3 cp $S3_PATH $LOCAL_PATH --recursive

@@ -16,10 +16,10 @@ from pandas import DataFrame
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from datamaker_sdk.common import *
-from datamaker_sdk.glue_catalog import run_crawler
-from datamaker_sdk.json import display_json
-from datamaker_sdk.magics.database import AthenaMagics, RedshiftMagics
+from orbit_sdk.common import *
+from orbit_sdk.glue_catalog import run_crawler
+from orbit_sdk.json import display_json
+from orbit_sdk.magics.database import AthenaMagics, RedshiftMagics
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -212,9 +212,9 @@ class RedshiftUtils(DatabaseCommon):
         Note
         ----
         To connect to existing cluster:
-            **Cluster networking is configured correctly (has access to the DataMaker VPC).
+            **Cluster networking is configured correctly (has access to the Orbit Workbench VPC).
             **Cluster ESG was created, assigned to the cluster.
-            **The ESG should have an ingress rule to allow inbound tcp on the redshift port from the DataMaker
+            **The ESG should have an ingress rule to allow inbound tcp on the redshift port from the Orbit Workbench
                 instance SG.
             **A new teamspace should be launched from the Service Catalog and the ESG should be passed as a parameter
                 to allow external traffic.
@@ -488,9 +488,9 @@ class RedshiftUtils(DatabaseCommon):
 
         redshift = boto3.client("redshift")
         cluster_identifier = (
-            props["AWS_DATAMAKER_ENV"]
+            props["AWS_ORBIT_ENV"]
             + "-"
-            + props["DATAMAKER_TEAM_SPACE"]
+            + props["ORBIT_TEAM_SPACE"]
             + "-"
             + cluster_name
         ).lower()
@@ -549,9 +549,9 @@ class RedshiftUtils(DatabaseCommon):
         props = get_properties()
         funcName = "ConnectToRedshiftFunction"
 
-        datamaker = props["AWS_DATAMAKER_ENV"]
-        team_space = props["DATAMAKER_TEAM_SPACE"]
-        functionName = "{}-{}-{}".format(datamaker, team_space, funcName)
+        orbit = props["AWS_ORBIT_ENV"]
+        team_space = props["ORBIT_TEAM_SPACE"]
+        functionName = "{}-{}-{}".format(orbit, team_space, funcName)
         lambda_client = boto3.client("lambda")
 
         invoke_response = lambda_client.invoke(
@@ -596,7 +596,7 @@ class RedshiftUtils(DatabaseCommon):
         props = get_properties()
         redshift = boto3.client("redshift")
         namespace = (
-            props["AWS_DATAMAKER_ENV"] + "-" + props["DATAMAKER_TEAM_SPACE"] + "-"
+            props["AWS_ORBIT_ENV"] + "-" + props["ORBIT_TEAM_SPACE"] + "-"
         )
         cluster_identifier = (
             cluster_name if namespace in cluster_name else cluster_name + cluster_name
@@ -665,8 +665,8 @@ class RedshiftUtils(DatabaseCommon):
 
         lambda_client = boto3.client("lambda")
         props = get_properties()
-        env_name = props["AWS_DATAMAKER_ENV"]
-        team_space = props["DATAMAKER_TEAM_SPACE"]
+        env_name = props["AWS_ORBIT_ENV"]
+        team_space = props["ORBIT_TEAM_SPACE"]
         namespace = f"{env_name}-{team_space}"
         funcs = []
         while True:
@@ -695,8 +695,8 @@ class RedshiftUtils(DatabaseCommon):
             del func_desc["RedshiftClusterParameterGroup"]
             del func_desc["RedshiftClusterSubnetGroup"]
             del func_desc["RedshiftClusterSecurityGroup"]
-            del func_desc[DATAMAKER_ENV]
-            del func_desc[DATAMAKER_TEAM_SPACE]
+            del func_desc[ORBIT_ENV]
+            del func_desc[ORBIT_TEAM_SPACE]
             del func_desc["SecretId"]
             del func_desc["PortNumber"]
             del func_desc["Role"]
@@ -715,13 +715,13 @@ class RedshiftUtils(DatabaseCommon):
         Starts the Redshift Cluster and waits until cluster is available for use.
 
         """
-        env = props["AWS_DATAMAKER_ENV"]
-        team_space = props["DATAMAKER_TEAM_SPACE"]
+        env = props["AWS_ORBIT_ENV"]
+        team_space = props["ORBIT_TEAM_SPACE"]
         funcName = f"Standard"
         if "redshift_start_function" in clusterArgs.keys():
             funcName = clusterArgs["redshift_start_function"]
 
-        cluster_def_func = f"datamaker-{env}-{team_space}-StartRedshift-{funcName}"
+        cluster_def_func = f"orbit-{env}-{team_space}-StartRedshift-{funcName}"
 
         lambda_client = boto3.client("lambda")
         clusterArgs["cluster_name"] = cluster_name
@@ -879,7 +879,7 @@ class RedshiftUtils(DatabaseCommon):
         Parameters
         ----------
         cluster_id : str, optional
-            Gets information for a specific cluster Id. Default looks at cluster tagged with 'DATAMAKER_TEAM_SPACE'
+            Gets information for a specific cluster Id. Default looks at cluster tagged with 'ORBIT_TEAM_SPACE'
 
         Returns
         -------
@@ -898,7 +898,7 @@ class RedshiftUtils(DatabaseCommon):
         props = get_properties()
         if cluster_id == None:
             clusters = redshift.describe_clusters(
-                TagValues=[props["DATAMAKER_TEAM_SPACE"]]
+                TagValues=[props["ORBIT_TEAM_SPACE"]]
             )["Clusters"]
         else:
             clusters = redshift.describe_clusters(

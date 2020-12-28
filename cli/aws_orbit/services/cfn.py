@@ -25,7 +25,7 @@ from aws_orbit.services import s3
 if TYPE_CHECKING:
     from aws_orbit.manifest import Manifest
 
-CHANGESET_PREFIX = "aws-datamaker-cli-deploy-"
+CHANGESET_PREFIX = "aws-orbit-cli-deploy-"
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -97,7 +97,7 @@ def _create_changeset(
     manifest: "Manifest", stack_name: str, template_str: str, env_tag: str, template_path: str = ""
 ) -> Tuple[str, str]:
     now = datetime.utcnow().isoformat()
-    description = f"Created by AWS DataMaker CLI at {now} UTC"
+    description = f"Created by AWS Orbit Workbench CLI at {now} UTC"
     changeset_name = CHANGESET_PREFIX + str(int(time.time()))
     changeset_type = "UPDATE" if does_stack_exist(manifest=manifest, stack_name=stack_name) else "CREATE"
     kwargs = {

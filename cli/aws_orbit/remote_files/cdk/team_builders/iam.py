@@ -37,11 +37,11 @@ class IamBuilder:
         account = core.Aws.ACCOUNT_ID
         region = core.Aws.REGION
 
-        lake_role_name: str = f"datamaker-{env_name}-{team_name}-role"
+        lake_role_name: str = f"orbit-{env_name}-{team_name}-role"
         code_artifact_user_policy = iam.ManagedPolicy(
             scope=scope,
             id="code_artifact_user",
-            managed_policy_name=f"datamaker-{env_name}-{team_name}-ca-access",
+            managed_policy_name=f"orbit-{env_name}-{team_name}-ca-access",
             statements=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -69,7 +69,7 @@ class IamBuilder:
         lake_operational_policy = iam.ManagedPolicy(
             scope=scope,
             id="lake_operational_policy",
-            managed_policy_name=f"datamaker-{env_name}-{team_name}-user-access",
+            managed_policy_name=f"orbit-{env_name}-{team_name}-user-access",
             statements=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -92,7 +92,7 @@ class IamBuilder:
                     effect=iam.Effect.ALLOW,
                     actions=["ssm:Describe*", "ssm:Get*"],
                     resources=[
-                        f"arn:{partition}:ssm:{region}:{account}:parameter/datamaker*",
+                        f"arn:{partition}:ssm:{region}:{account}:parameter/orbit*",
                         f"arn:{partition}:ssm:{region}:{account}:parameter/emr_launch/",
                     ],
                 ),
@@ -128,7 +128,7 @@ class IamBuilder:
                     actions=["sagemaker:StopNotebookInstance"],
                     resources=[
                         f"arn:{partition}:sagemaker:{region}:{account}:notebook-instance/"
-                        f"datamaker-{env_name}-{team_name}*"
+                        f"orbit-{env_name}-{team_name}*"
                     ],
                 ),
                 iam.PolicyStatement(
@@ -241,7 +241,7 @@ class IamBuilder:
         lambda_access_policy = iam.ManagedPolicy(
             scope=scope,
             id="lambda_policy",
-            managed_policy_name=f"datamaker-{env_name}-{team_name}-lambda-policy",
+            managed_policy_name=f"orbit-{env_name}-{team_name}-lambda-policy",
             statements=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -249,8 +249,8 @@ class IamBuilder:
                         "lambda:InvokeFunction",
                     ],
                     resources=[
-                        f"arn:{partition}:lambda:{region}:{account}:function:datamaker-{env_name}-{team_name}-*",
-                        f"arn:{partition}:lambda:{region}:{account}:function:datamaker-{env_name}-token-validation",
+                        f"arn:{partition}:lambda:{region}:{account}:function:orbit-{env_name}-{team_name}-*",
+                        f"arn:{partition}:lambda:{region}:{account}:function:orbit-{env_name}-token-validation",
                     ],
                 ),
             ],
@@ -276,16 +276,16 @@ class IamBuilder:
         aws_managed_user_policies = [
             iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name=policy_name)
             for policy_name in policy_names
-            if "datamaker" not in policy_name
+            if "orbit" not in policy_name
         ]
 
-        datamaker_custom_policies = [
+        orbit_custom_policies = [
             iam.ManagedPolicy.from_managed_policy_name(scope=scope, id=policy_name, managed_policy_name=policy_name)
             for policy_name in policy_names
-            if "datamaker" in policy_name
+            if "orbit" in policy_name
         ]
 
-        managed_policies = managed_policies + aws_managed_user_policies + datamaker_custom_policies
+        managed_policies = managed_policies + aws_managed_user_policies + orbit_custom_policies
 
         role = iam.Role(
             scope=scope,
@@ -336,7 +336,7 @@ class IamBuilder:
         return iam.Role(
             scope=scope,
             id="container_runner_role",
-            role_name=f"datamaker-{manifest.name}-{team_manifest.name}-runner",
+            role_name=f"orbit-{manifest.name}-{team_manifest.name}-runner",
             assumed_by=iam.ServicePrincipal("states.amazonaws.com"),
             inline_policies={
                 "cloudwatch-logs": iam.PolicyDocument(
@@ -351,9 +351,9 @@ class IamBuilder:
                             ],
                             resources=[
                                 f"arn:{core.Aws.PARTITION}:logs:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:"
-                                f"log-group:/datamaker/pods/{manifest.name}",
+                                f"log-group:/orbit/pods/{manifest.name}",
                                 f"arn:{core.Aws.PARTITION}:logs:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:"
-                                f"log-group:/datamaker/pods/{manifest.name}:*",
+                                f"log-group:/orbit/pods/{manifest.name}:*",
                             ],
                         )
                     ]

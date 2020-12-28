@@ -11,14 +11,14 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _fetch_repo_uri(names: List[str], manifest: Manifest) -> Dict[str, str]:
-    names = [f"datamaker-{manifest.name}-{x}" for x in names]
+    names = [f"orbit-{manifest.name}-{x}" for x in names]
     ret: Dict[str, str] = {x: "" for x in names}
     client = manifest.boto3_client("ecr")
     paginator = client.get_paginator("describe_repositories")
     for page in paginator.paginate(repositoryNames=names):
         for repo in page["repositories"]:
             ret[repo["repositoryName"]] = repo["repositoryUri"]
-    ret = {k.replace(f"datamaker-{manifest.name}-", ""): v for k, v in ret.items()}
+    ret = {k.replace(f"orbit-{manifest.name}-", ""): v for k, v in ret.items()}
     return ret
 
 

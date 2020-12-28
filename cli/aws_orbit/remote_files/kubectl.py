@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, List, Optional
 
 import yaml
 
-from aws_orbit import DATAMAKER_CLI_ROOT, exceptions, k8s, plugins, sh, utils
+from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, plugins, sh, utils
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest
 from aws_orbit.remote_files.utils import get_k8s_context
@@ -32,7 +32,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 EFS_DRIVE = "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/ecr/?ref=release-1.0"
-MODELS_PATH = os.path.join(DATAMAKER_CLI_ROOT, "data", "kubectl")
+MODELS_PATH = os.path.join(ORBIT_CLI_ROOT, "data", "kubectl")
 
 
 def _commons(manifest: Manifest, output_path: str) -> None:
@@ -133,7 +133,7 @@ def _cleanup_output(output_path: str) -> None:
 
 
 def _generate_env_manifest(manifest: Manifest, clean_up: bool = True) -> str:
-    output_path = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "kubectl", "apps")
+    output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "apps")
     os.makedirs(output_path, exist_ok=True)
     if clean_up:
         _cleanup_output(output_path=output_path)
@@ -158,7 +158,7 @@ def _generate_env_manifest(manifest: Manifest, clean_up: bool = True) -> str:
 
 
 def _generate_teams_manifest(manifest: Manifest) -> str:
-    output_path = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "kubectl", "apps")
+    output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "apps")
     os.makedirs(output_path, exist_ok=True)
     _cleanup_output(output_path=output_path)
     if manifest.account_id is None:
@@ -171,7 +171,7 @@ def _generate_teams_manifest(manifest: Manifest) -> str:
 
 
 def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: bool) -> str:
-    output_path = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "kubectl", "aws_auth_config_map")
+    output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "aws_auth_config_map")
     os.makedirs(output_path, exist_ok=True)
     _cleanup_output(output_path=output_path)
     config_map = yaml.load(
@@ -179,9 +179,9 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
         Loader=yaml.SafeLoader,
     )
     map_roles = yaml.load(config_map["data"]["mapRoles"], Loader=yaml.SafeLoader)
-    team_usernames = {f"datamaker-{manifest.name}-{t.name}-runner" for t in manifest.teams}
+    team_usernames = {f"orbit-{manifest.name}-{t.name}-runner" for t in manifest.teams}
     admin_usernames = {
-        f"datamaker-{manifest.name}-admin",
+        f"orbit-{manifest.name}-admin",
     }
 
     map_roles = [
@@ -276,7 +276,7 @@ def _efs_driver_overlays(output_path: str, manifest: Manifest) -> None:
 
 
 def _generate_efs_driver_manifest(manifest: Manifest) -> str:
-    output_path = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "kubectl", "efs_driver")
+    output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "efs_driver")
     os.makedirs(output_path, exist_ok=True)
     _cleanup_output(output_path=output_path)
     if manifest.account_id is None:
@@ -289,7 +289,7 @@ def _generate_efs_driver_manifest(manifest: Manifest) -> str:
 
 
 def deploy_env(manifest: Manifest) -> None:
-    eks_stack_name: str = f"eksctl-datamaker-{manifest.name}-cluster"
+    eks_stack_name: str = f"eksctl-orbit-{manifest.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
         context = get_k8s_context(manifest=manifest)
@@ -305,10 +305,10 @@ def deploy_env(manifest: Manifest) -> None:
 
 
 def deploy_teams(manifest: Manifest, changes: List["PluginChangeset"]) -> None:
-    eks_stack_name: str = f"eksctl-datamaker-{manifest.name}-cluster"
+    eks_stack_name: str = f"eksctl-orbit-{manifest.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
-        sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
+        sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{manifest.name} --set-kubeconfig-context")
         context = get_k8s_context(manifest=manifest)
         _logger.debug("kubectl context: %s", context)
         output_path = _generate_teams_manifest(manifest=manifest)
@@ -325,10 +325,10 @@ def deploy_teams(manifest: Manifest, changes: List["PluginChangeset"]) -> None:
 
 
 def destroy_env(manifest: Manifest) -> None:
-    eks_stack_name: str = f"eksctl-datamaker-{manifest.name}-cluster"
+    eks_stack_name: str = f"eksctl-orbit-{manifest.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
-        sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
+        sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{manifest.name} --set-kubeconfig-context")
         context = get_k8s_context(manifest=manifest)
         _logger.debug("kubectl context: %s", context)
         output_path = _generate_env_manifest(manifest=manifest)
@@ -343,10 +343,10 @@ def destroy_env(manifest: Manifest) -> None:
 
 
 def destroy_teams(manifest: Manifest) -> None:
-    eks_stack_name: str = f"eksctl-datamaker-{manifest.name}-cluster"
+    eks_stack_name: str = f"eksctl-orbit-{manifest.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
-        sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
+        sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{manifest.name} --set-kubeconfig-context")
         for team_manifest in manifest.teams:
             plugins.PLUGINS_REGISTRIES.destroy_team_plugins(manifest=manifest, team_manifest=team_manifest)
         context = get_k8s_context(manifest=manifest)

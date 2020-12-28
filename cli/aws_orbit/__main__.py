@@ -42,7 +42,7 @@ def enable_debug(format: str) -> None:
 
 @click.group()
 def cli() -> None:
-    """DataMaker CLI - Data & ML Unified Development and Production Environment"""
+    """Orbit Workbench CLI - Data & ML Unified Development and Production Environment"""
     pass
 
 
@@ -51,7 +51,7 @@ def cli() -> None:
     "--name",
     "-n",
     type=str,
-    help="The name of the DataMaker enviroment. MUST be unique per AWS account.",
+    help="The name of the Orbit Workbench enviroment. MUST be unique per AWS account.",
     required=False,
     default="my-env",
     show_default=True,
@@ -87,7 +87,7 @@ def init_cli(
     dev: bool,
     debug: bool,
 ) -> None:
-    """Creates a DataMaker manifest model file (yaml) where all your deployment settings will rest."""
+    """Creates a Orbit Workbench manifest model file (yaml) where all your deployment settings will rest."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     _logger.debug("name: %s", name)
@@ -103,7 +103,7 @@ def init_cli(
     "--filename",
     "-f",
     type=str,
-    help="The target DataMaker manifest file (yaml).",
+    help="The target Orbit Workbench manifest file (yaml).",
 )
 @click.option(
     "--username",
@@ -138,7 +138,7 @@ def deploy_cli(
     username: Optional[str] = None,
     password: Optional[str] = None,
 ) -> None:
-    """Deploy a DataMaker environment based on a manisfest file (yaml)."""
+    """Deploy a Orbit Workbench environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     filename = filename if filename[0] in (".", "/") else f"./{filename}"
@@ -160,7 +160,7 @@ def deploy_cli(
     "--filename",
     "-f",
     type=str,
-    help="The target DataMaker manifest file (yaml).",
+    help="The target Orbit Workbench manifest file (yaml).",
 )
 @click.option(
     "--team-stacks", is_flag=True, default=False, help="Destroy Team Stacks only or All Stacks", show_default=True
@@ -179,7 +179,7 @@ def deploy_cli(
     show_default=True,
 )
 def destroy_cli(filename: str, team_stacks: bool, keep_demo: bool, debug: bool) -> None:
-    """Destroy a DataMaker environment based on a manisfest file (yaml)."""
+    """Destroy a Orbit Workbench environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     filename = filename if filename[0] in (".", "/") else f"./{filename}"
@@ -194,7 +194,7 @@ def destroy_cli(filename: str, team_stacks: bool, keep_demo: bool, debug: bool) 
     "--filename",
     "-f",
     type=str,
-    help="The target DataMaker manifest file (yaml).",
+    help="The target Orbit Workbench manifest file (yaml).",
     show_default=False,
     required=True,
 )
@@ -232,7 +232,7 @@ def deploy_image_cli(filename: str, dir: str, name: str, script: Optional[str], 
     "--filename",
     "-f",
     type=str,
-    help="The target DataMaker manifest file (yaml).",
+    help="The target Orbit Workbench manifest file (yaml).",
     show_default=False,
     required=True,
 )
@@ -259,7 +259,7 @@ def destroy_image_cli(filename: str, name: str, debug: bool) -> None:
     "--filename",
     "-f",
     type=str,
-    help="The target DataMaker manifest file (yaml).",
+    help="The target Orbit Workbench manifest file (yaml).",
     show_default=False,
     required=True,
 )

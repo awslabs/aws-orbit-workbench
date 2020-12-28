@@ -35,7 +35,7 @@ class EcsBuilder:
             scope,
             "ecs_cluster",
             vpc=vpc,
-            cluster_name=f"datamaker-{manifest.name}-{team_manifest.name}-cluster",
+            cluster_name=f"orbit-{manifest.name}-{team_manifest.name}-cluster",
         )
 
     @staticmethod
@@ -61,7 +61,7 @@ class EcsBuilder:
         ecs_log_group = logs.LogGroup(
             scope,
             "ecs_log_group",
-            log_group_name=f"/datamaker/tasks/{manifest.name}/{team_manifest.name}/containers",
+            log_group_name=f"/orbit/tasks/{manifest.name}/{team_manifest.name}/containers",
             removal_policy=core.RemovalPolicy.DESTROY,
         )
 
@@ -73,7 +73,7 @@ class EcsBuilder:
             execution_role=ecs_execution_role,
             task_role=ecs_task_role,
             compatibility=ecs.Compatibility.EC2_AND_FARGATE,
-            family=f"datamaker-{manifest.name}-{team_manifest.name}-task-definition",
+            family=f"orbit-{manifest.name}-{team_manifest.name}-task-definition",
             network_mode=ecs.NetworkMode.AWS_VPC,
             volumes=[
                 ecs.Volume(
@@ -85,11 +85,11 @@ class EcsBuilder:
             ],
         )
         container_definition = task_definition.add_container(
-            "datamaker-runner",
+            "orbit-runner",
             memory_limit_mib=team_manifest.container_defaults["memory"],
             image=image,
             logging=ecs.LogDriver.aws_logs(
-                stream_prefix=f"datamaker-{manifest.name}-{team_manifest.name}",
+                stream_prefix=f"orbit-{manifest.name}-{team_manifest.name}",
                 log_group=ecs_log_group,
             ),
         )

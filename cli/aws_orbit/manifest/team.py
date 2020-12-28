@@ -63,19 +63,19 @@ class TeamManifest:
         if self.image is None:
             self.base_image_address: str = (
                 f"{self.manifest.account_id}.dkr.ecr.{self.manifest.region}.amazonaws.com/"
-                f"datamaker-{self.manifest.name}-jupyter-user"
+                f"orbit-{self.manifest.name}-jupyter-user"
             )
         else:
             self.base_image_address = (
                 f"{self.manifest.account_id}.dkr.ecr.{self.manifest.region}.amazonaws.com/"
-                f"datamaker-{self.manifest.name}-{self.image}"
+                f"orbit-{self.manifest.name}-{self.image}"
             )
         self.final_image_address: str = (
             f"{self.manifest.account_id}.dkr.ecr.{self.manifest.region}.amazonaws.com/"
-            f"datamaker-{self.manifest.name}-{self.name}"
+            f"orbit-{self.manifest.name}-{self.name}"
         )
-        self.stack_name: str = f"datamaker-{self.manifest.name}-{self.name}"
-        self.ssm_parameter_name: str = f"/datamaker/{self.manifest.name}/teams/{self.name}/manifest"
+        self.stack_name: str = f"orbit-{self.manifest.name}-{self.name}"
+        self.ssm_parameter_name: str = f"/orbit/{self.manifest.name}/teams/{self.name}/manifest"
         self.bootstrap_s3_prefix: str = f"teams/{self.name}/bootstrap/"
         self.scratch_bucket: Optional[str] = None
         self.scratch_retention_days: int = 30
@@ -167,7 +167,7 @@ class TeamManifest:
         image = self.image if self.image is not None else "jupyter-user:latest"
         if ":" not in image:
             image += ":latest"
-        return f"datamaker-{env}-{image}"
+        return f"orbit-{env}-{image}"
 
     def get_plugin_by_id(self, plugin_id: str) -> Optional[PluginManifest]:
         for p in self.plugins:

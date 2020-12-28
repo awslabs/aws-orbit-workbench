@@ -35,7 +35,7 @@ class DemoStack(Stack):
         self.env_name = manifest.name
         self.manifest = manifest
         super().__init__(scope, id, **kwargs)
-        Tags.of(scope=self).add(key="Env", value=f"datamaker-{self.env_name}")
+        Tags.of(scope=self).add(key="Env", value=f"orbit-{self.env_name}")
         self.vpc: ec2.Vpc = self._create_vpc()
         self.public_subnets_ids: Tuple[str, ...] = tuple(x.subnet_id for x in self.vpc.public_subnets)
         self.private_subnets_ids: Tuple[str, ...] = tuple(x.subnet_id for x in self.vpc.private_subnets)
@@ -54,7 +54,7 @@ class DemoStack(Stack):
 
         # self.lake_bucket = self._create_lake_bucket()
         self.bucket_names: Dict[str, Any] = {
-            "lake-bucket": f"datamaker-{self.env_name}-demo-lake-{self.manifest.account_id}-{self.manifest.deploy_id}",
+            "lake-bucket": f"orbit-{self.env_name}-demo-lake-{self.manifest.account_id}-{self.manifest.deploy_id}",
             "toolkit-bucket": toolkit_s3_bucket_name,
         }
         self.lake_bucket_full_access = self._create_fullaccess_managed_policies()
@@ -62,7 +62,7 @@ class DemoStack(Stack):
 
         self._ssm_parameter = ssm.StringParameter(
             self,
-            id="/datamaker/DemoParams",
+            id="/orbit/DemoParams",
             string_value=json.dumps(
                 {
                     "VpcId": self.vpc.vpc_id,
@@ -74,8 +74,8 @@ class DemoStack(Stack):
                 }
             ),
             type=ssm.ParameterType.STRING,
-            description="DataMaker Demo resources.",
-            parameter_name=f"/datamaker/{self.env_name}/demo",
+            description="Orbit Workbench Demo resources.",
+            parameter_name=f"/orbit/{self.env_name}/demo",
             simple_name=False,
             tier=ssm.ParameterTier.INTELLIGENT_TIERING,
         )
@@ -83,19 +83,19 @@ class DemoStack(Stack):
         CfnOutput(
             scope=self,
             id=f"{id}publicsubnetsids",
-            export_name=f"datamaker-{self.env_name}-public-subnets-ids",
+            export_name=f"orbit-{self.env_name}-public-subnets-ids",
             value=",".join(self.public_subnets_ids),
         )
         CfnOutput(
             scope=self,
             id=f"{id}privatesubnetsids",
-            export_name=f"datamaker-{self.env_name}-private-subnets-ids",
+            export_name=f"orbit-{self.env_name}-private-subnets-ids",
             value=",".join(self.private_subnets_ids),
         )
         CfnOutput(
             scope=self,
             id=f"{id}isolatedsubnetsids",
-            export_name=f"datamaker-{self.env_name}-isolated-subnets-ids",
+            export_name=f"orbit-{self.env_name}-isolated-subnets-ids",
             value=",".join(self.isolated_subnets_ids),
         )
 
@@ -266,7 +266,7 @@ class DemoStack(Stack):
                     ],
                 ),
             ],
-            managed_policy_name=f"datamaker-{self.env_name}-demo-lake-bucket-fullaccess",
+            managed_policy_name=f"orbit-{self.env_name}-demo-lake-bucket-fullaccess",
         )
         return lake_bucket_full_access
 
@@ -286,7 +286,7 @@ class DemoStack(Stack):
                     ],
                 ),
             ],
-            managed_policy_name=f"datamaker-{self.env_name}-demo-lake-bucket-readonlyaccess",
+            managed_policy_name=f"orbit-{self.env_name}-demo-lake-bucket-readonlyaccess",
         )
         return lake_bucket_read_only_access
 
@@ -301,7 +301,7 @@ def main() -> None:
     manifest: Manifest = Manifest(filename=filename)
     manifest.fillup()
 
-    outdir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "cdk", manifest.demo_stack_name)
+    outdir = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "cdk", manifest.demo_stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
 

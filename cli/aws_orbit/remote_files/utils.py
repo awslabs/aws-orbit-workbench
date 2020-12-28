@@ -11,7 +11,7 @@ def get_k8s_context(manifest: "Manifest") -> str:
         contexts: List[str] = [str(c["name"]) for c in config.list_kube_config_contexts()[0]]
     except config.config_exception.ConfigException:
         raise RuntimeError("Context not found")
-    expected_domain: str = f"@datamaker-{manifest.name}.{manifest.region}.eksctl.io"
+    expected_domain: str = f"@orbit-{manifest.name}.{manifest.region}.eksctl.io"
     for context in contexts:
         if context.endswith(expected_domain):
             return context

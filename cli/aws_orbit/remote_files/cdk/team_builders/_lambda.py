@@ -37,7 +37,7 @@ class LambdaBuilder:
         return aws_lambda.Function(
             scope=scope,
             id="container_runner",
-            function_name=f"datamaker-{manifest.name}-{team_manifest.name}-container-runner",
+            function_name=f"orbit-{manifest.name}-{team_manifest.name}-container-runner",
             code=aws_lambda.Code.asset(_lambda_path("container_runner")),
             handler="index.handler",
             runtime=aws_lambda.Runtime.PYTHON_3_6,
@@ -85,7 +85,7 @@ class LambdaBuilder:
             lambda_function = aws_lambda.Function(
                 scope=stack,
                 id="eks_describe_cluster",
-                function_name=f"datamaker-{manifest.name}-{team_manifest.name}-eks-describe-cluster",
+                function_name=f"orbit-{manifest.name}-{team_manifest.name}-eks-describe-cluster",
                 code=aws_lambda.Code.asset(_lambda_path("eks_describe_cluster")),
                 handler="index.handler",
                 runtime=aws_lambda.Runtime.PYTHON_3_6,
@@ -112,7 +112,7 @@ class LambdaBuilder:
             lambda_function = aws_lambda.Function(
                 scope=stack,
                 id="construct_url",
-                function_name=f"datamaker-{manifest.name}-{team_manifest.name}-construct-url",
+                function_name=f"orbit-{manifest.name}-{team_manifest.name}-construct-url",
                 code=aws_lambda.Code.asset(_lambda_path("construct_url")),
                 handler="index.handler",
                 runtime=aws_lambda.Runtime.PYTHON_3_6,

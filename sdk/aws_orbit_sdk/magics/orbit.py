@@ -15,8 +15,8 @@ from IPython.core.magic import (
     needs_local_scope,
 )
 
-from datamaker_sdk.controller import controller
-from datamaker_sdk.json import display_json, run_schema_induction_args
+from orbit_sdk.controller import controller
+from orbit_sdk.json import display_json, run_schema_induction_args
 
 
 def exception_handler(exception_type, exception, traceback):
@@ -30,9 +30,9 @@ class ArgumentParserNoSysExit(argparse.ArgumentParser):
 
 
 @magics_class
-class DataMakerMagics(Magics):
+class Orbit WorkbenchMagics(Magics):
     def __init__(self, shell):
-        super(DataMakerMagics, self).__init__(shell)
+        super(Orbit WorkbenchMagics, self).__init__(shell)
         self.ip = get_ipython()
 
     @line_magic
@@ -438,7 +438,7 @@ def load_ipython_extension(ipython):
     """
     # You can register the class itself without instantiating it.  IPython will
     # call the default constructor on it.
-    ipython.register_magics(DataMakerMagics)
+    ipython.register_magics(Orbit WorkbenchMagics)
 
 
 #
@@ -456,5 +456,5 @@ def load_ipython_extension(ipython):
 
 
 ip = get_ipython()
-magics = DataMakerMagics(ip)
+magics = Orbit WorkbenchMagics(ip)
 ip.register_magics(magics)

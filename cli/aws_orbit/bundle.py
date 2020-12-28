@@ -19,7 +19,7 @@ import shutil
 from pprint import pformat
 from typing import List, Optional, Tuple
 
-from aws_orbit import DATAMAKER_CLI_ROOT
+from aws_orbit import ORBIT_CLI_ROOT
 from aws_orbit.changeset import Changeset
 from aws_orbit.manifest import Manifest
 
@@ -27,7 +27,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _list_self_files() -> List[str]:
-    path = os.path.join(DATAMAKER_CLI_ROOT, "**")
+    path = os.path.join(ORBIT_CLI_ROOT, "**")
     extensions = (".py", ".yaml", ".typed", ".json")
     return [f for f in glob.iglob(path, recursive=True) if os.path.isfile(f) and f.endswith(extensions)]
 
@@ -52,14 +52,14 @@ def _generate_self_dir(bundle_dir: str) -> str:
 
     _logger.debug("Copying files to %s", module_dir)
     for file in _list_self_files():
-        relpath = os.path.relpath(file, DATAMAKER_CLI_ROOT)
+        relpath = os.path.relpath(file, ORBIT_CLI_ROOT)
         new_file = os.path.join(module_dir, relpath)
         os.makedirs(os.path.dirname(new_file), exist_ok=True)
         _logger.debug("Copying file to %s", new_file)
         shutil.copy(src=file, dst=new_file)
 
     for filename in ("setup.py", "VERSION", "requirements.txt"):
-        src_file = os.path.join(DATAMAKER_CLI_ROOT, "..", filename)
+        src_file = os.path.join(ORBIT_CLI_ROOT, "..", filename)
         dst_file = os.path.join(cli_dir, filename)
         shutil.copy(src=src_file, dst=dst_file)
 
@@ -96,7 +96,7 @@ def generate_bundle(
     plugins: bool = True,
 ) -> str:
     conf_dir = os.path.dirname(os.path.abspath(manifest.filename))
-    remote_dir = os.path.join(os.path.dirname(conf_dir), ".datamaker.out", manifest.name, "remote", command_name)
+    remote_dir = os.path.join(os.path.dirname(conf_dir), ".orbit.out", manifest.name, "remote", command_name)
     bundle_dir = os.path.join(remote_dir, "bundle")
     try:
         shutil.rmtree(bundle_dir)
@@ -118,7 +118,7 @@ def generate_bundle(
         bundled_changeset_path = os.path.join(bundle_dir, "conf", "changeset.json")
         changeset.write_changeset_file(filename=bundled_changeset_path)
 
-    # DataMaker CLI Source
+    # Orbit Workbench CLI Source
     if manifest.dev:
         _generate_self_dir(bundle_dir=bundle_dir)
 

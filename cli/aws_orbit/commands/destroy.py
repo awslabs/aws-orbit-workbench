@@ -67,7 +67,7 @@ def destroy(filename: str, teams_only: bool, keep_demo: bool, debug: bool) -> No
             buildspec = codebuild.generate_spec(
                 manifest=manifest,
                 plugins=True,
-                cmds_build=[f"datamaker remote --command destroy {flags}"],
+                cmds_build=[f"orbit remote --command destroy {flags}"],
                 changeset=changes,
             )
             remote.run(

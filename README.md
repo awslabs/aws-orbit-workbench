@@ -12,15 +12,15 @@ Data & ML Unified Development and Production Environment.
 
 ## 1 - Components
 
-DataMaker is built through a composition of several components with specific scopes, based on different programming languages and sometimes relying on conflicting dependencies. So, in the end, this repository is a [monorepo](https://en.wikipedia.org/wiki/Monorepo) tying up all components around to deliver a solid and integrated data environment.
+Orbit Workbench is built through a composition of several components with specific scopes, based on different programming languages and sometimes relying on conflicting dependencies. So, in the end, this repository is a [monorepo](https://en.wikipedia.org/wiki/Monorepo) tying up all components around to deliver a solid and integrated data environment.
 
 | Component | Description | Technologies |
 |-----------|-------------|--------------|
 | [**CLI**](cli/) | Deploy/destroy the infrastructure and all others components | CDK, Kubectl, Eksctl |
 | [**JupyterHub**](images/jupyter-hub/) | JupyterHub application (Server/Hub side)| JupyterHub |
 | [**JupyterUser**](images/jupyter-user/) | JupyterHub application (client side) and all Jupyterlab extensions | JupyterLab, React.js |
-| [**LandingPage**](images/landing-page/) | DataMaker Landing Page application | React.js |
-| [**SDK**](sdk/) | Python package to interact with DataMaker programmatically | Python3 |
+| [**LandingPage**](images/landing-page/) | Orbit Workbench Landing Page application | React.js |
+| [**SDK**](sdk/) | Python package to interact with Orbit Workbench programmatically | Python3 |
 
 ## 2 - Contributing
 

@@ -54,7 +54,7 @@ class Env(Stack):
             stack_name=id,
             env=Environment(account=self.manifest.account_id, region=self.manifest.region),
         )
-        Tags.of(scope=self).add(key="Env", value=f"datamaker-{self.manifest.name}")
+        Tags.of(scope=self).add(key="Env", value=f"orbit-{self.manifest.name}")
         self.i_vpc = ec2.Vpc.from_vpc_attributes(
             scope=self,
             id="vpc",
@@ -75,7 +75,7 @@ class Env(Stack):
         return ecr.Repository(
             scope=self,
             id=f"repo-{image_name}",
-            repository_name=f"datamaker-{self.manifest.name}-{image_name}",
+            repository_name=f"orbit-{self.manifest.name}-{image_name}",
         )
 
     def _create_ecr_repos(self) -> List[ecr.Repository]:
@@ -91,13 +91,13 @@ class Env(Stack):
             CfnOutput(
                 scope=self,
                 id="repos",
-                export_name=f"datamaker-{self.manifest.name}-repos",
+                export_name=f"orbit-{self.manifest.name}-repos",
                 value=",".join([x for x in current_images_names]),
             )
         return repos
 
     def _create_role_cluster(self) -> iam.Role:
-        name: str = f"datamaker-{self.manifest.name}-eks-cluster-role"
+        name: str = f"orbit-{self.manifest.name}-eks-cluster-role"
         role = iam.Role(
             scope=self,
             id=name,
@@ -131,7 +131,7 @@ class Env(Stack):
         return role
 
     def _create_role_fargate_profile(self) -> iam.Role:
-        name: str = f"datamaker-{self.manifest.name}-eks-fargate-profile-role"
+        name: str = f"orbit-{self.manifest.name}-eks-fargate-profile-role"
         return iam.Role(
             scope=self,
             id=name,
@@ -167,7 +167,7 @@ class Env(Stack):
         )
 
     def _create_env_nodegroup_role(self) -> iam.Role:
-        name: str = f"datamaker-{self.manifest.name}-eks-nodegroup-role"
+        name: str = f"orbit-{self.manifest.name}-eks-nodegroup-role"
         role = iam.Role(
             scope=self,
             id=name,
@@ -211,8 +211,8 @@ class Env(Stack):
                 email=cognito.StandardAttribute(required=True, mutable=True)
             ),
             user_invitation=cognito.UserInvitationConfig(
-                email_subject="Invite to join DataMaker!",
-                email_body="Hello, you have been invited to join DataMaker!<br/><br/>"
+                email_subject="Invite to join Orbit Workbench!",
+                email_body="Hello, you have been invited to join Orbit Workbench!<br/><br/>"
                 "Username: {username}<br/>"
                 "Temporary password: {####}<br/><br/>"
                 "Regards",
@@ -229,7 +229,7 @@ class Env(Stack):
             auth_flows=cognito.AuthFlow(user_srp=True, admin_user_password=False, custom=False),
             generate_secret=False,
             prevent_user_existence_errors=True,
-            user_pool_client_name="datamaker",
+            user_pool_client_name="orbit",
         )
 
     def _create_identity_pool(self) -> cognito.CfnIdentityPool:
@@ -278,7 +278,7 @@ class Env(Stack):
                             actions=["ssm:DescribeParameters", "ssm:GetParameters"],
                             resources=[
                                 f"arn:aws:ssm:{self.manifest.region}:{self.manifest.account_id}:"
-                                f"parameter/datamaker/{self.manifest.name}/teams/*"
+                                f"parameter/orbit/{self.manifest.name}/teams/*"
                             ],
                         )
                     ]
@@ -327,7 +327,7 @@ class Env(Stack):
         return lambda_python.PythonFunction(
             scope=self,
             id="token_validation_lambda",
-            function_name=f"datamaker-{self.manifest.name}-token-validation",
+            function_name=f"orbit-{self.manifest.name}-token-validation",
             entry=_lambda_path("token_validation"),
             index="index.py",
             handler="handler",
@@ -360,7 +360,7 @@ class Env(Stack):
             id=self.manifest.ssm_parameter_name,
             string_value=manifest_json,
             type=ssm.ParameterType.STRING,
-            description="DataMaker Remote Manifest.",
+            description="Orbit Workbench Remote Manifest.",
             parameter_name=self.manifest.ssm_parameter_name,
             simple_name=False,
             tier=ssm.ParameterTier.INTELLIGENT_TIERING,
@@ -380,7 +380,7 @@ def main() -> None:
     manifest: Manifest = Manifest(filename=filename)
     manifest.fillup()
 
-    outdir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "cdk", manifest.env_stack_name)
+    outdir = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "cdk", manifest.env_stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
 

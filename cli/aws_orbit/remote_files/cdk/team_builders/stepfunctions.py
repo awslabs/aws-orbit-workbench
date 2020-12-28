@@ -115,10 +115,10 @@ class StateMachineBuilder:
                         sfn_tasks.TaskEnvironmentVariable(name="task_type", value=sfn.JsonPath.string_at("$.TaskType")),
                         sfn_tasks.TaskEnvironmentVariable(name="tasks", value=sfn.JsonPath.string_at("$.Tasks")),
                         sfn_tasks.TaskEnvironmentVariable(name="compute", value=sfn.JsonPath.string_at("$.Compute")),
-                        sfn_tasks.TaskEnvironmentVariable(name="DATAMAKER_TEAM_SPACE", value=team_manifest.name),
-                        sfn_tasks.TaskEnvironmentVariable(name="AWS_DATAMAKER_ENV", value=manifest.name),
+                        sfn_tasks.TaskEnvironmentVariable(name="ORBIT_TEAM_SPACE", value=team_manifest.name),
+                        sfn_tasks.TaskEnvironmentVariable(name="AWS_ORBIT_ENV", value=manifest.name),
                         sfn_tasks.TaskEnvironmentVariable(
-                            name="AWS_DATAMAKER_S3_BUCKET", value=scratch_bucket.bucket_name
+                            name="AWS_ORBIT_S3_BUCKET", value=scratch_bucket.bucket_name
                         ),
                         sfn_tasks.TaskEnvironmentVariable(
                             name="JUPYTERHUB_USER", value=sfn.JsonPath.string_at("$.JupyterHubUser")
@@ -134,7 +134,7 @@ class StateMachineBuilder:
         return sfn.StateMachine(
             scope=construct,
             id="ecs_run_container_state_machine",
-            state_machine_name=f"datamaker-{manifest.name}-{team_manifest.name}-ecs-container-runner",
+            state_machine_name=f"orbit-{manifest.name}-{team_manifest.name}-ecs-container-runner",
             definition=definition,
             role=role,
         )
@@ -166,8 +166,8 @@ class StateMachineBuilder:
             "apiVersion": "batch/v1",
             "kind": "Job",
             "metadata": {
-                "labels": {"app": f"datamaker-{team_manifest.name}-runner"},
-                "generateName": f"datamaker-{team_manifest.name}-runner-",
+                "labels": {"app": f"orbit-{team_manifest.name}-runner"},
+                "generateName": f"orbit-{team_manifest.name}-runner-",
                 "namespace": team_manifest.name,
             },
             "spec": {
@@ -176,13 +176,13 @@ class StateMachineBuilder:
                 "ttlSecondsAfterFinished": 120,
                 "template": {
                     "metadata": {
-                        "labels": {"app": f"datamaker-{team_manifest.name}-runner", "team": team_manifest.name},
+                        "labels": {"app": f"orbit-{team_manifest.name}-runner", "team": team_manifest.name},
                         "namespace": team_manifest.name,
                     },
                     "spec": {
                         "containers": [
                             {
-                                "name": "datamaker-runner",
+                                "name": "orbit-runner",
                                 "image": image.image_name,
                                 "command": COMMAND,
                                 "securityContext": {
@@ -202,8 +202,8 @@ class StateMachineBuilder:
                                     {"name": "task_type", "value": sfn.JsonPath.string_at("$.TaskType")},
                                     {"name": "tasks", "value": sfn.JsonPath.string_at("$.Tasks")},
                                     {"name": "compute", "value": sfn.JsonPath.string_at("$.Compute")},
-                                    {"name": "DATAMAKER_TEAM_SPACE", "value": team_manifest.name},
-                                    {"name": "AWS_DATAMAKER_ENV", "value": manifest.name},
+                                    {"name": "ORBIT_TEAM_SPACE", "value": team_manifest.name},
+                                    {"name": "AWS_ORBIT_ENV", "value": manifest.name},
                                     {"name": "JUPYTERHUB_USER", "value": sfn.JsonPath.string_at("$.JupyterHubUser")},
                                 ],
                                 "volumeMounts": [{"name": "efs-volume", "mountPath": "/efs"}],
@@ -219,12 +219,12 @@ class StateMachineBuilder:
         if node_type == "ec2":
             job["spec"]["template"]["spec"]["nodeSelector"] = {
                 "team": team_manifest.name,
-                "datamaker/compute-type": "ec2",
+                "orbit/compute-type": "ec2",
             }
         elif node_type == "fargate":
             job["spec"]["template"]["spec"]["serviceAccountName"] = team_manifest.name
             job["spec"]["template"]["spec"]["securityContext"] = {"fsGroup": 1000}
-            job["spec"]["template"]["metadata"]["labels"]["datamaker/compute-type"] = "fargate"
+            job["spec"]["template"]["metadata"]["labels"]["orbit/compute-type"] = "fargate"
 
         run_job = EksRunJob(
             scope=construct,
@@ -246,7 +246,7 @@ class StateMachineBuilder:
         return sfn.StateMachine(
             scope=construct,
             id="eks_run_container_state_machine",
-            state_machine_name=f"datamaker-{manifest.name}-{team_manifest.name}-eks-{node_type}-container-runner",
+            state_machine_name=f"orbit-{manifest.name}-{team_manifest.name}-eks-{node_type}-container-runner",
             definition=definition,
             role=role,
         )
@@ -302,7 +302,7 @@ class StateMachineBuilder:
         return sfn.StateMachine(
             scope=construct,
             id="eks_get_pod_logs_state_machine",
-            state_machine_name=f"datamaker-{manifest.name}-{team_manifest.name}-get-pod-logs",
+            state_machine_name=f"orbit-{manifest.name}-{team_manifest.name}-get-pod-logs",
             state_machine_type=sfn.StateMachineType.EXPRESS,
             definition=definition,
             role=role,

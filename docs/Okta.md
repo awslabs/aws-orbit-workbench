@@ -19,7 +19,7 @@
 ## 1 - Preparing Cognito User Pool
 
 * Open the Cognito User Pool console: `https://console.aws.amazon.com/cognito/users/`
-* Select your User Pool (`datamaker-{YOUR_ENV_NAME}`)
+* Select your User Pool (`orbit-{YOUR_ENV_NAME}`)
 * In the left pane click in `General settings` > `Attributes`
 * In the page botton click in `Add another attribute` and then save it.
 
@@ -52,8 +52,8 @@
 
 > _For more information, see [Prepare your integration](https://developer.okta.com/docs/guides/build-sso-integration/saml2/before-you-begin/) in the Build a Single Sign-On (SSO) Integration guide on the Okta Developer website._
 
-* On the Create SAML Integration page, under General Settings, enter a name for your app. (e.g. datamaker-my-env)
-* (Optional) Upload the [DataMaker logo](https://github.com/awslabs/aws-eks-data-maker/blob/main/images/landing-page/public/orbit1.png) and choose the visibility settings for your app.
+* On the Create SAML Integration page, under General Settings, enter a name for your app. (e.g. orbit-my-env)
+* (Optional) Upload the [Orbit Workbench logo](https://github.com/awslabs/aws-eks-data-maker/blob/main/images/landing-page/public/orbit1.png) and choose the visibility settings for your app.
 * Choose Next.
 * Under **GENERAL**, for **Single sign on URL**, enter `https://yourDomainPrefix.auth.region.amazoncognito.com/saml2/idpresponse`.
 
@@ -102,7 +102,7 @@
 ## 6 - Configuring Cognito User Pool - Identity Provider
 
 * Open the Cognito User Pool console: `https://console.aws.amazon.com/cognito/users/`
-* Select your User Pool (`datamaker-{YOUR_ENV_NAME}`)
+* Select your User Pool (`orbit-{YOUR_ENV_NAME}`)
 * In the left navigation pane, under **Federation**, choose **Identity providers**.
 * Choose SAML.
 * Under **Metadata document**, paste the **Identity Provider metadata** URL that you copied.
@@ -133,8 +133,8 @@
 * In the left navigation pane, under **App integration**, choose **App client settings**.
 * On the app client page, do the following:
 Under Enabled Identity Providers, select the Okta and Cognito User Pool check boxes.
-* For Callback URL(s), enter a URL where you want your users to be redirected after they log in. Enter your DataMaker URL.
-* For Sign out URL(s), enter a URL where you want your users to be redirected after they log out.  Enter your DataMaker URL.
+* For Callback URL(s), enter a URL where you want your users to be redirected after they log in. Enter your Orbit Workbench URL.
+* For Sign out URL(s), enter a URL where you want your users to be redirected after they log out.  Enter your Orbit Workbench URL.
 * Under Allowed OAuth Flows, be sure to select at least the Implicit grant check box.
 * Under Allowed OAuth Scopes, be sure to select at least the email and openid check boxes.
 * Choose Save changes.
@@ -143,7 +143,7 @@ Under Enabled Identity Providers, select the Okta and Cognito User Pool check bo
 
 ![Client Settings](_static/okta/client-settings.png?raw=true "Client Settings")
 
-## 8 - Configuring the DataMaker manifest file (YAML)
+## 8 - Configuring the Orbit Workbench manifest file (YAML)
 
 * Add two new attributes in the root level:
 

@@ -26,15 +26,15 @@ def read_yaml_file(path):
     with open(path, 'r') as f:
         return yaml.load(f, Loader=NoDatesSafeLoader)
 
-def writeDataMakerYaml():
+def writeOrbit WorkbenchYaml():
     data = dict(properties=
         dict(
-            AWS_DATAMAKER_ENV=os.environ['AWS_DATAMAKER_ENV'],
-            DATAMAKER_TEAM_SPACE=os.environ['DATAMAKER_TEAM_SPACE'],
+            AWS_ORBIT_ENV=os.environ['AWS_ORBIT_ENV'],
+            ORBIT_TEAM_SPACE=os.environ['ORBIT_TEAM_SPACE'],
         )
     )
     home = expanduser("~")
-    propFilePath = f"{home}/datamaker.yaml"
+    propFilePath = f"{home}/orbit.yaml"
 
     with open(propFilePath, 'w') as outfile:
         yaml.dump(data, outfile, default_flow_style=False)
@@ -68,7 +68,7 @@ def run_tasks():
         env_params += param + " = " + os.environ[param] + "\n"
     logger.debug(env_params)
 
-    writeDataMakerYaml()
+    writeOrbit WorkbenchYaml()
     compute = yaml.load(os.environ['compute'], Loader=NoDatesSafeLoader)
     task_type = os.environ['task_type']
     try:

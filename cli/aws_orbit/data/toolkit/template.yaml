@@ -1,14 +1,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: |
-  DataMaker Toolkit Stack - ${env_name}
+  Orbit Workbench Toolkit Stack - ${env_name}
 Resources:
   Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: datamaker-${env_name}-toolkit-${account_id}-${deploy_id}
+      BucketName: orbit-${env_name}-toolkit-${account_id}-${deploy_id}
       Tags:
         - Key: Env
-          Value: datamaker-${env_name}
+          Value: orbit-${env_name}
       VersioningConfiguration:
         Status: Suspended
       PublicAccessBlockConfiguration:
@@ -101,12 +101,12 @@ Resources:
               - s3:DeleteObjectVersion
               - s3:DeleteBucket
             Resource:
-              - arn:aws:s3:::datamaker-${env_name}-*-scratch-${account_id}-${deploy_id}/*
-              - arn:aws:s3:::datamaker-${env_name}-*-scratch-${account_id}-${deploy_id}
-              - arn:aws:s3:::datamaker-${env_name}-toolkit-${account_id}-${deploy_id}/*
-              - arn:aws:s3:::datamaker-${env_name}-toolkit-${account_id}-${deploy_id}
-              - arn:aws:s3:::datamaker-${env_name}-cdk-toolkit-${account_id}-${deploy_id}/*
-              - arn:aws:s3:::datamaker-${env_name}-cdk-toolkit-${account_id}-${deploy_id}
+              - arn:aws:s3:::orbit-${env_name}-*-scratch-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::orbit-${env_name}-*-scratch-${account_id}-${deploy_id}
+              - arn:aws:s3:::orbit-${env_name}-toolkit-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::orbit-${env_name}-toolkit-${account_id}-${deploy_id}
+              - arn:aws:s3:::orbit-${env_name}-cdk-toolkit-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::orbit-${env_name}-cdk-toolkit-${account_id}-${deploy_id}
           - Effect: Allow
             Action:
               - codebuild:CreateReportGroup
@@ -121,23 +121,23 @@ Resources:
               - codebuild:StartBuild
               - codebuild:BatchGetBuilds
             Resource:
-              - arn:aws:codebuild:${region}:${account_id}:project/datamaker-${env_name}
+              - arn:aws:codebuild:${region}:${account_id}:project/orbit-${env_name}
           - Effect: Allow
             Action:
               - ecr:*
             Resource:
-              - arn:aws:ecr:${region}:${account_id}:repository/datamaker-${env_name}-*
+              - arn:aws:ecr:${region}:${account_id}:repository/orbit-${env_name}-*
           - Effect: Allow
             Action:
               - states:*
             Resource:
-              - arn:aws:states:${region}:${account_id}:stateMachine:datamaker-${env_name}-*
+              - arn:aws:states:${region}:${account_id}:stateMachine:orbit-${env_name}-*
           - Effect: Allow
             Action:
               - cloudformation:*
             Resource:
-              - arn:aws:cloudformation:${region}:${account_id}:stack/datamaker-${env_name}*
-              - arn:aws:cloudformation:${region}:${account_id}:stack/eksctl-datamaker-${env_name}*
+              - arn:aws:cloudformation:${region}:${account_id}:stack/orbit-${env_name}*
+              - arn:aws:cloudformation:${region}:${account_id}:stack/eksctl-orbit-${env_name}*
           - Effect: Allow
             Action:
               - iam:CreateRole
@@ -153,8 +153,8 @@ Resources:
               - iam:ListAttachedRolePolicies
               - iam:UpdateAssumeRolePolicy
             Resource:
-              - arn:aws:iam::${account_id}:role/datamaker-${env_name}-*
-              - arn:aws:iam::${account_id}:role/eksctl-datamaker-${env_name}-*
+              - arn:aws:iam::${account_id}:role/orbit-${env_name}-*
+              - arn:aws:iam::${account_id}:role/eksctl-orbit-${env_name}-*
           - Effect: Allow
             Action:
               - iam:CreateServiceLinkedRole
@@ -178,7 +178,7 @@ Resources:
               - iam:CreatePolicyVersion
               - iam:DeletePolicyVersion
             Resource:
-              - arn:aws:iam::${account_id}:policy/datamaker-${env_name}-*
+              - arn:aws:iam::${account_id}:policy/orbit-${env_name}-*
           - Effect: Allow
             Action:
               - ssm:GetParameters
@@ -189,33 +189,33 @@ Resources:
               - ssm:AddTagsToResource
               - ssm:DeleteParameter
             Resource:
-              - arn:aws:ssm:${region}:${account_id}:parameter/datamaker/${env_name}/manifest
-              - arn:aws:ssm:${region}:${account_id}:parameter/datamaker/${env_name}/teams/*
-              - arn:aws:ssm:${region}:${account_id}:parameter/datamaker/${env_name}/demo
+              - arn:aws:ssm:${region}:${account_id}:parameter/orbit/${env_name}/manifest
+              - arn:aws:ssm:${region}:${account_id}:parameter/orbit/${env_name}/teams/*
+              - arn:aws:ssm:${region}:${account_id}:parameter/orbit/${env_name}/demo
           - Effect: Allow
             Action:
               - kms:*
             Resource:
-              - arn:aws:kms:${region}:${account_id}:alias/datamaker-{env_name}*
+              - arn:aws:kms:${region}:${account_id}:alias/orbit-{env_name}*
               - arn:aws:kms:${region}:${account_id}:key/*
           - Effect: Allow
             Action:
               - eks:*
             Resource:
-              - arn:aws:eks:${region}:${account_id}:cluster/datamaker-${env_name}
-              - arn:aws:eks:${region}:${account_id}:cluster/datamaker-${env_name}/*
-              - arn:aws:eks:${region}:${account_id}:nodegroup/datamaker-${env_name}/*
-              - arn:aws:eks:${region}:${account_id}:fargateprofile/datamaker-${env_name}/*
+              - arn:aws:eks:${region}:${account_id}:cluster/orbit-${env_name}
+              - arn:aws:eks:${region}:${account_id}:cluster/orbit-${env_name}/*
+              - arn:aws:eks:${region}:${account_id}:nodegroup/orbit-${env_name}/*
+              - arn:aws:eks:${region}:${account_id}:fargateprofile/orbit-${env_name}/*
           - Effect: Allow
             Action:
               - ecs:*
             Resource:
-              - arn:aws:ecs:${region}:${account_id}:cluster/datamaker-${env_name}-*
+              - arn:aws:ecs:${region}:${account_id}:cluster/orbit-${env_name}-*
           - Effect: Allow
             Action:
               - lambda:*
             Resource:
-              - arn:aws:lambda:${region}:${account_id}:function:datamaker-${env_name}-*
+              - arn:aws:lambda:${region}:${account_id}:function:orbit-${env_name}-*
           - Effect: Allow
             Action:
               - codeartifact:GetAuthorizationToken
@@ -233,10 +233,10 @@ Resources:
             Action:
               - codecommit:*
             Resource:
-              - arn:aws:codecommit:${region}:${account_id}:datamaker-${env_name}-*
+              - arn:aws:codecommit:${region}:${account_id}:orbit-${env_name}-*
         Version: '2012-10-17'
       Description: ''
-      ManagedPolicyName: datamaker-${env_name}-admin
+      ManagedPolicyName: orbit-${env_name}-admin
       Path: /
   AdminRole:
     Type: AWS::IAM::Role
@@ -245,7 +245,7 @@ Resources:
       ManagedPolicyArns:
         - Ref: ManagedPolicy
         - arn:aws:iam::aws:policy/AWSServiceCatalogAdminFullAccess
-      RoleName: datamaker-${env_name}-admin
+      RoleName: orbit-${env_name}-admin
       MaxSessionDuration: 10000
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -273,11 +273,11 @@ Resources:
   CodeBuild:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: datamaker-${env_name}
+      Name: orbit-${env_name}
       Tags:
         - Key: Env
-          Value: datamaker-${env_name}
-      Description: DataMaker CLI backend.
+          Value: orbit-${env_name}
+      Description: Orbit Workbench CLI backend.
       ServiceRole: !Ref AdminRole
       Artifacts:
         Type: NO_ARTIFACTS
@@ -301,13 +301,13 @@ Resources:
       LogsConfig:
         CloudWatchLogs:
           Status: ENABLED
-          GroupName: /aws/codebuild/datamaker-${env_name}
+          GroupName: /aws/codebuild/orbit-${env_name}
         S3Logs:
           Status: DISABLED
   KmsKeyAlias:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: alias/datamaker-${env_name}-${deploy_id}
+      AliasName: alias/orbit-${env_name}-${deploy_id}
       TargetKeyId:
         Ref: KmsKey
   KmsKey:
@@ -315,11 +315,11 @@ Resources:
     Properties:
       Tags:
         - Key: Env
-          Value: datamaker-${env_name}
-      Description: DataMaker key for ${env_name}.
+          Value: orbit-${env_name}
+      Description: Orbit Workbench key for ${env_name}.
       KeyPolicy:
         Version: '2012-10-17'
-        Id: datamaker-${env_name}
+        Id: orbit-${env_name}
         Statement:
           - Sid: Enable IAM User Permissions
             Effect: Allow
@@ -350,11 +350,11 @@ Outputs:
   DeployId:
     Value: '${deploy_id}'
     Export:
-      Name: datamaker-${env_name}-deploy-id
+      Name: orbit-${env_name}-deploy-id
   KmsKeyArn:
     Value:
       Fn::GetAtt:
         - KmsKey
         - Arn
     Export:
-      Name: datamaker-${env_name}-kms-arn
+      Name: orbit-${env_name}-kms-arn

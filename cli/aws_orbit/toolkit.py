@@ -16,18 +16,18 @@ import logging
 import os
 import shutil
 
-from aws_orbit import DATAMAKER_CLI_ROOT
+from aws_orbit import ORBIT_CLI_ROOT
 from aws_orbit.manifest import Manifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 FILENAME = "template.yaml"
-MODEL_FILENAME = os.path.join(DATAMAKER_CLI_ROOT, "data", "toolkit", FILENAME)
+MODEL_FILENAME = os.path.join(ORBIT_CLI_ROOT, "data", "toolkit", FILENAME)
 
 
 def synth(manifest: Manifest) -> str:
     conf_dir = os.path.dirname(os.path.abspath(manifest.filename))
-    outdir = os.path.join(os.path.dirname(conf_dir), ".datamaker.out", manifest.name, "toolkit")
+    outdir = os.path.join(os.path.dirname(conf_dir), ".orbit.out", manifest.name, "toolkit")
     output_filename = os.path.join(outdir, FILENAME)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)

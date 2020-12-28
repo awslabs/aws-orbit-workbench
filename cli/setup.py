@@ -35,7 +35,7 @@ setup(
     packages=find_packages(include=["aws_orbit", "aws_orbit.*"]),
     python_requires=">=3.6, <3.9",
     install_requires=open("requirements.txt").read().strip().split("\n"),
-    entry_points={"console_scripts": ["datamaker = aws_orbit.__main__:main"]},
+    entry_points={"console_scripts": ["orbit = aws_orbit.__main__:main"]},
     classifiers=[
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",

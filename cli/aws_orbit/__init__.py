@@ -20,4 +20,4 @@ from aws_orbit.__metadata__ import __description__, __license__, __title__  # no
 
 __version__: str = pkg_resources.get_distribution(__title__).version
 
-DATAMAKER_CLI_ROOT = os.path.dirname(os.path.abspath(__file__))
+ORBIT_CLI_ROOT = os.path.dirname(os.path.abspath(__file__))

@@ -50,11 +50,11 @@ def _deploy_image(filename: str, args: Tuple[str, ...]) -> None:
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
-        docker.deploy_image_from_source(manifest=manifest, dir=path, name=f"datamaker-{manifest.name}-{image_name}")
+        docker.deploy_image_from_source(manifest=manifest, dir=path, name=f"orbit-{manifest.name}-{image_name}")
     else:
         _logger.debug("Replicating docker iamge to ECR...")
         docker.replicate_image(
-            manifest=manifest, image_name=image_name, deployed_name=f"datamaker-{manifest.name}-{image_name}"
+            manifest=manifest, image_name=image_name, deployed_name=f"orbit-{manifest.name}-{image_name}"
         )
 
     _logger.debug("Docker Image Deployed to ECR")
@@ -111,7 +111,7 @@ def deploy_images_remotely(manifest: Manifest) -> None:
             buildspec = codebuild.generate_spec(
                 manifest=manifest,
                 plugins=False,
-                cmds_build=[f"datamaker remote --command _deploy_image {name} {script_str}"],
+                cmds_build=[f"orbit remote --command _deploy_image {name} {script_str}"],
             )
             futures.append(executor.submit(deploy_image_remotely, manifest, name, bundle_path, buildspec))
 

@@ -53,7 +53,7 @@ class Team(Stack):
             stack_name=id,
             env=Environment(account=self.manifest.account_id, region=self.manifest.region),
         )
-        Tags.of(scope=self).add(key="Env", value=f"datamaker-{self.manifest.name}")
+        Tags.of(scope=self).add(key="Env", value=f"orbit-{self.manifest.name}")
         Tags.of(scope=self).add(key="TeamSpace", value=self.team_manifest.name)
 
         self.i_vpc = ec2.Vpc.from_vpc_attributes(
@@ -72,7 +72,7 @@ class Team(Stack):
         self.ecr_repo: ecr.Repository = ecr.Repository(
             scope=self,
             id="repo",
-            repository_name=f"datamaker-{self.manifest.name}-{self.team_manifest.name}",
+            repository_name=f"orbit-{self.manifest.name}-{self.team_manifest.name}",
         )
 
         self.policies: List[str] = self.team_manifest.policies
@@ -180,7 +180,7 @@ class Team(Stack):
             id=self.team_manifest.ssm_parameter_name,
             string_value=self.team_manifest.asjson(),
             type=ssm.ParameterType.STRING,
-            description="DataMaker Team Context.",
+            description="Orbit Workbench Team Context.",
             parameter_name=self.team_manifest.ssm_parameter_name,
             simple_name=False,
             tier=ssm.ParameterTier.INTELLIGENT_TIERING,
@@ -205,7 +205,7 @@ def main() -> None:
     else:
         raise ValueError(f"Team {team_name} not found in the manifest.")
 
-    outdir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "cdk", team_manifest.stack_name)
+    outdir = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "cdk", team_manifest.stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
 

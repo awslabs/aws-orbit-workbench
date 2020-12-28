@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 import boto3
 
-from datamaker_sdk.common import get_workspace
+from orbit_sdk.common import get_workspace
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -146,7 +146,7 @@ def update_teamspace_lakeformation_permissions(db_name: Optional[str] = "*") -> 
     }
     payload = json.dumps(inp)
     response = lambda_client.invoke(
-        FunctionName=f"datamaker-{workspace['env_name']}-authorize_lake_formation_for_role",
+        FunctionName=f"orbit-{workspace['env_name']}-authorize_lake_formation_for_role",
         InvocationType="RequestResponse",
         LogType="Tail",
         Payload=bytes(payload, "utf-8"),
@@ -213,7 +213,7 @@ def tag_columns(
     Examples
     --------
     >>> import aws.utils.notebooks.glue as glue
-    >>> update_table = datamaker_catalog_api.tag_columns(
+    >>> update_table = orbit_catalog_api.tag_columns(
     ...                        database='secured_database',
     ...                        table_name='table1',
     ...                        key='security-level',
@@ -279,7 +279,7 @@ def untag_columns(
     Example
     -------
     >>> import aws.utils.notebooks.glue as glue
-    >>> datamaker_catalog_api.untag_columns(database='secured_database',key='security-level')
+    >>> orbit_catalog_api.untag_columns(database='secured_database',key='security-level')
     """
     glue = boto3.client("glue")
     table_names = []

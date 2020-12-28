@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 import boto3
 import requests
 
-from datamaker_sdk.common import *
+from orbit_sdk.common import *
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -394,9 +394,9 @@ def _get_emr_functions() -> List[str]:
     Returns a list of all EMR Launch functions and their current values.
     """
     props = get_properties()
-    env_name = props["AWS_DATAMAKER_ENV"]
-    team_space = props["DATAMAKER_TEAM_SPACE"]
-    namespace = f"datamaker-{env_name}-{team_space}"
+    env_name = props["AWS_ORBIT_ENV"]
+    team_space = props["ORBIT_TEAM_SPACE"]
+    namespace = f"orbit-{env_name}-{team_space}"
     res = _get_functions(namespace)
     functionList = _get_functions(namespace=namespace)["EMRLaunchFunctions"]
     while "NextToken" in res:
@@ -531,8 +531,8 @@ def spark_submit(job: Dict[str, Any]) -> Dict[str, Any]:
     notebookInstanceName = socket.gethostname()
 
     s3WorkspaceDir = "s3://{}/{}/workspaces/{}".format(
-        props["AWS_DATAMAKER_S3_BUCKET"],
-        props["DATAMAKER_TEAM_SPACE"],
+        props["AWS_ORBIT_S3_BUCKET"],
+        props["ORBIT_TEAM_SPACE"],
         notebookInstanceName,
     )
     cmd = 'aws s3 sync --delete --exclude "*.git/*" {} {}'.format(
@@ -626,14 +626,14 @@ def get_team_clusters(cluster_id: Optional[str] = None) -> Dict[str, Dict[str, s
             tags[tag["Key"]] = tag["Value"]
 
         if (
-            DATAMAKER_PRODUCT_KEY not in tags
-            or tags[DATAMAKER_PRODUCT_KEY] != DATAMAKER_PRODUCT_NAME
+            ORBIT_PRODUCT_KEY not in tags
+            or tags[ORBIT_PRODUCT_KEY] != ORBIT_PRODUCT_NAME
         ):
             continue
 
         if (
-            tags[DATAMAKER_ENV] != props["AWS_DATAMAKER_ENV"]
-            or tags[DATAMAKER_TEAM_SPACE] != props["DATAMAKER_TEAM_SPACE"]
+            tags[ORBIT_ENV] != props["AWS_ORBIT_ENV"]
+            or tags[ORBIT_TEAM_SPACE] != props["ORBIT_TEAM_SPACE"]
         ):
             continue
 

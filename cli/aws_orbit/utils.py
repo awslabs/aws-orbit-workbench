@@ -89,13 +89,13 @@ def extract_images_names(manifest: "Manifest") -> List[str]:
     resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
     try:
         response: resp_type = manifest.boto3_client("cloudformation").describe_stacks(
-            StackName=f"datamaker-{manifest.name}"
+            StackName=f"orbit-{manifest.name}"
         )
     except botocore.exceptions.ClientError as ex:
         error: Dict[str, Any] = ex.response["Error"]
         if (
             error["Code"] == "ValidationError"
-            and f"Stack with id datamaker-{manifest.name} does not exist" in error["Message"]
+            and f"Stack with id orbit-{manifest.name} does not exist" in error["Message"]
         ):
             return []
         raise
@@ -104,11 +104,11 @@ def extract_images_names(manifest: "Manifest") -> List[str]:
     if "Outputs" not in response["Stacks"][0]:
         return []
     for output in response["Stacks"][0]["Outputs"]:
-        if output["ExportName"] == f"datamaker-{manifest.name}-repos":
+        if output["ExportName"] == f"orbit-{manifest.name}-repos":
             _logger.debug("Export value: %s", output["OutputValue"])
             return output["OutputValue"].split(",")
     raise RuntimeError(
-        f"Stack datamaker-{manifest.name} does not have the expected datamaker-{manifest.name}-repos output."
+        f"Stack orbit-{manifest.name} does not have the expected orbit-{manifest.name}-repos output."
     )
 
 

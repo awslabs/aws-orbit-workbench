@@ -63,7 +63,7 @@ def cdk_handler(stack_class: Type["Stack"]) -> None:
 
     outdir = os.path.join(
         manifest.filename_dir,
-        ".datamaker.out",
+        ".orbit.out",
         manifest.name,
         "cdk",
         stack_name,

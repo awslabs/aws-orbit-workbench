@@ -43,7 +43,7 @@ class Ec2Builder:
     def build_efs_security_group(
         scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest, vpc: ec2.Vpc, subnet_kind: SubnetKind
     ) -> ec2.SecurityGroup:
-        name: str = f"datamaker-{manifest.name}-{team_manifest.name}-efs-sg"
+        name: str = f"orbit-{manifest.name}-{team_manifest.name}-efs-sg"
         sg = ec2.SecurityGroup(
             scope=scope,
             id=name,

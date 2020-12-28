@@ -27,7 +27,7 @@ class S3Builder:
         team_manifest: TeamManifest,
     ) -> s3.Bucket:
         bucket_name: str = (
-            f"datamaker-{team_manifest.manifest.name}-{team_manifest.name}"
+            f"orbit-{team_manifest.manifest.name}-{team_manifest.name}"
             f"-scratch-{core.Aws.ACCOUNT_ID}-{manifest.deploy_id}"
         )
         return s3.Bucket(

@@ -27,7 +27,7 @@ def _tags2dict(tags: List[Dict[str, str]]) -> Dict[str, str]:
 
 
 def _check_elb_tag(manifest: "Manifest", tags: Dict[str, str]) -> bool:
-    key: str = f"kubernetes.io/cluster/datamaker-{manifest.name}"
+    key: str = f"kubernetes.io/cluster/orbit-{manifest.name}"
     return tags.get(key) == "owned"
 
 

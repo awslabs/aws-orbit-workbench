@@ -32,7 +32,7 @@ class EfsBuilder:
         efs_security_group: ec2.ISecurityGroup,
         subnets: List[ec2.ISubnet],
     ) -> efs.FileSystem:
-        name: str = f"datamaker-{manifest.name}-{team_manifest.name}-fs"
+        name: str = f"orbit-{manifest.name}-{team_manifest.name}-fs"
         return efs.FileSystem(
             scope=scope,
             id=name,

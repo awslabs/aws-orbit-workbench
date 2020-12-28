@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Iterator, List, Optional, cast
 
 import boto3
 
-from aws_orbit import DATAMAKER_CLI_ROOT, cdk, docker, plugins
+from aws_orbit import ORBIT_CLI_ROOT, cdk, docker, plugins
 from aws_orbit.manifest import Manifest
 from aws_orbit.services import cfn, ecr, s3
 
@@ -63,7 +63,7 @@ def _create_dockerfile(manifest: "Manifest", team_manifest: "TeamManifest") -> s
             if plugin_cmds is not None:
                 cmds += [f"# Commands for {plugin.plugin_id} plugin"] + plugin_cmds
     _logger.debug("cmds: %s", cmds)
-    outdir = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, team_manifest.name, "image")
+    outdir = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, team_manifest.name, "image")
     output_filename = os.path.join(outdir, "Dockerfile")
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
@@ -78,7 +78,7 @@ def _create_dockerfile(manifest: "Manifest", team_manifest: "TeamManifest") -> s
 
 def _deploy_team_image(manifest: "Manifest", team_manifest: "TeamManifest") -> None:
     image_dir: str = _create_dockerfile(manifest=manifest, team_manifest=team_manifest)
-    image_name: str = f"datamaker-{manifest.name}-{team_manifest.name}"
+    image_name: str = f"orbit-{manifest.name}-{team_manifest.name}"
     _logger.debug("Deploying the %s Docker image", image_name)
     docker.deploy_image_from_source(manifest=manifest, dir=image_dir, name=image_name)
     _logger.debug("Docker Image Deployed to ECR")
@@ -112,7 +112,7 @@ def deploy(manifest: "Manifest") -> None:
         cdk.deploy(
             manifest=manifest,
             stack_name=team_manifest.stack_name,
-            app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "team.py"),
+            app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
             args=[manifest.filename, team_manifest.name],
         )
         team_manifest.fetch_ssm()
@@ -136,13 +136,13 @@ def destroy(manifest: "Manifest") -> None:
                 except Exception as ex:
                     _logger.debug("Skipping Team EFS Target deletion. Cause: %s", ex)
             try:
-                ecr.delete_repo(manifest=manifest, repo=f"datamaker-{manifest.name}-{team_manifest.name}")
+                ecr.delete_repo(manifest=manifest, repo=f"orbit-{manifest.name}-{team_manifest.name}")
             except Exception as ex:
                 _logger.debug("Skipping Team ECR Repository deletion. Cause: %s", ex)
             if cfn.does_stack_exist(manifest=manifest, stack_name=team_manifest.stack_name):
                 cdk.destroy(
                     manifest=manifest,
                     stack_name=team_manifest.stack_name,
-                    app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "team.py"),
+                    app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
                     args=[manifest.filename, team_manifest.name],
                 )

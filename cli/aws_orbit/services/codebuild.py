@@ -233,7 +233,7 @@ def generate_spec(
         "eksctl version",
     ]
 
-    # DataMaker CLI
+    # Orbit Workbench CLI
     if manifest.dev:
         install.append("pip install -e cli/")
     else:
@@ -243,7 +243,7 @@ def generate_spec(
                 f"--domain {manifest.codeartifact_domain} "
                 f"--repository {manifest.codeartifact_repository}"
             )
-        install.append("pip install datamaker-cli")
+        install.append("pip install orbit-cli")
 
     # Plugins
     if plugins:

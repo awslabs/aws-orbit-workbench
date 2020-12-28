@@ -22,7 +22,7 @@ from typing import Any, Dict, List, cast
 
 import botocore.exceptions
 
-from aws_orbit import DATAMAKER_CLI_ROOT, cdk, exceptions, sh
+from aws_orbit import ORBIT_CLI_ROOT, cdk, exceptions, sh
 from aws_orbit.manifest import Manifest
 from aws_orbit.services import cfn, s3, vpc
 
@@ -221,7 +221,7 @@ def _prepare_demo_data(manifest: Manifest) -> None:
         manifest=manifest, bucket_name=bucket_name, bucket_key_prefix="data/sagemaker/", download_files=sagemaker_files
     )
     _logger.debug("Adding CSM schema files")
-    cms_schema_files = os.path.join(DATAMAKER_CLI_ROOT, "data", "cms", "schema")
+    cms_schema_files = os.path.join(ORBIT_CLI_ROOT, "data", "cms", "schema")
     schema_key_prefix = "cms/schema/"
     sh.run(f"aws s3 cp --recursive {cms_schema_files} s3://{bucket_name}/{schema_key_prefix}")
 
@@ -233,7 +233,7 @@ def deploy(manifest: Manifest) -> None:
         deploy_args: Dict[str, Any] = {
             "manifest": manifest,
             "stack_name": stack_name,
-            "app_filename": os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "demo.py"),
+            "app_filename": os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "demo.py"),
             "args": [manifest.filename],
         }
         try:
@@ -272,6 +272,6 @@ def destroy(manifest: Manifest) -> None:
         cdk.destroy(
             manifest=manifest,
             stack_name=manifest.demo_stack_name,
-            app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "demo.py"),
+            app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "demo.py"),
             args=[manifest.filename],
         )

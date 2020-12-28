@@ -6,9 +6,9 @@ VERSION=$(cat VERSION)
 rm dist/*
 
 aws codeartifact delete-package-versions \
-    --domain aws-datamaker \
+    --domain aws-orbit \
     --repository python-repository \
-    --package datamaker-sdk \
+    --package orbit-sdk \
     --versions $VERSION \
     --format pypi
 

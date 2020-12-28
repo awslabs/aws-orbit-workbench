@@ -40,7 +40,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    app: datamaker-jupyterhub
+    app: orbit-jupyterhub
   name: jupyterhub
   namespace: ${team}
 ---
@@ -52,13 +52,13 @@ metadata:
   name: ${team}
   namespace: ${team}
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::${account_id}:role/datamaker-${env_name}-${team}-role
+    eks.amazonaws.com/role-arn: arn:aws:iam::${account_id}:role/orbit-${env_name}-${team}-role
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   labels:
-    app: datamaker-jupyterhub
+    app: orbit-jupyterhub
   name: jupyterhub
   namespace: ${team}
 rules:
@@ -86,7 +86,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   labels:
-    app: datamaker-jupyterhub
+    app: orbit-jupyterhub
   name: jupyterhub
   namespace: ${team}
 roleRef:
@@ -102,7 +102,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: datamaker-jupyterhub
+    app: orbit-jupyterhub
   name: jupyterhub-private
   namespace: ${team}
 spec:
@@ -111,14 +111,14 @@ spec:
       protocol: TCP
       targetPort: 8081
   selector:
-    app: datamaker-jupyterhub
+    app: orbit-jupyterhub
   type: ClusterIP
 ---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: datamaker-jupyterhub
+    app: orbit-jupyterhub
   name: jupyterhub-api
   namespace: ${team}
 spec:
@@ -127,14 +127,14 @@ spec:
       protocol: TCP
       targetPort: 8001
   selector:
-    app: datamaker-jupyterhub
+    app: orbit-jupyterhub
   type: ClusterIP
 ---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: datamaker-jupyterhub
+    app: orbit-jupyterhub
   name: jupyterhub-public
   namespace: ${team}
   annotations:
@@ -145,7 +145,7 @@ spec:
       protocol: TCP
       targetPort: 8000
   selector:
-    app: datamaker-jupyterhub
+    app: orbit-jupyterhub
   type: LoadBalancer
   loadBalancerSourceRanges: ${jupyterhub_inbound_ranges}
 ---
@@ -153,14 +153,14 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: datamaker-jupyterhub
+    app: orbit-jupyterhub
   name: jupyterhub
   namespace: ${team}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: datamaker-jupyterhub
+      app: orbit-jupyterhub
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -169,11 +169,11 @@ spec:
   template:
     metadata:
       labels:
-        app: datamaker-jupyterhub
+        app: orbit-jupyterhub
       name: jupyterhub
     spec:
       containers:
-        - image: ${account_id}.dkr.ecr.${region}.amazonaws.com/datamaker-${env_name}-jupyter-hub:${tag}
+        - image: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-jupyter-hub:${tag}
           env:
             - name: AWS_DEFAULT_REGION
               value: ${region}
@@ -213,7 +213,7 @@ metadata:
   name: efs-init-${team}
   namespace: ${team}
   labels:
-    app: datamaker-jupyterhub
+    app: orbit-jupyterhub
     volume: ${efsid}
     job-name: efs-init-${team}
 spec:
@@ -226,7 +226,7 @@ spec:
         securityContext:
           runAsUser: 0
         imagePullPolicy: Always
-        image: ${account_id}.dkr.ecr.${region}.amazonaws.com/datamaker-${env_name}-jupyter-user:${tag}
+        image: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-jupyter-user:${tag}
         command: ["/bin/bash"]
         args:
           - -c

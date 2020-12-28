@@ -60,17 +60,17 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
     MANIFEST_FILE_IMAGES_TYPE,
     {
         "jupyter-hub": {
-            "repository": "aws-datamaker-jupyter-hub",
+            "repository": "aws-orbit-jupyter-hub",
             "source": "dockerhub",
             "version": "latest",
         },
         "jupyter-user": {
-            "repository": "aws-datamaker-jupyter-user",
+            "repository": "aws-orbit-jupyter-user",
             "source": "dockerhub",
             "version": "latest",
         },
         "landing-page": {
-            "repository": "aws-datamaker-landing-page",
+            "repository": "aws-orbit-landing-page",
             "source": "dockerhub",
             "version": "latest",
         },
@@ -134,15 +134,15 @@ class Manifest:
                 if k not in self.images:
                     self.images[k] = v
 
-        self.env_tag: str = f"datamaker-{self.name}"
-        self.ssm_parameter_name: str = f"/datamaker/{self.name}/manifest"
-        self.ssm_dockerhub_parameter_name: str = f"/datamaker/{self.name}/dockerhub"
-        self.toolkit_stack_name: str = f"datamaker-{self.name}-toolkit"
-        self.cdk_toolkit_stack_name: str = f"datamaker-{self.name}-cdk-toolkit"
-        self.demo_stack_name: str = f"datamaker-{self.name}-demo"
-        self.env_stack_name: str = f"datamaker-{self.name}"
+        self.env_tag: str = f"orbit-{self.name}"
+        self.ssm_parameter_name: str = f"/orbit/{self.name}/manifest"
+        self.ssm_dockerhub_parameter_name: str = f"/orbit/{self.name}/dockerhub"
+        self.toolkit_stack_name: str = f"orbit-{self.name}-toolkit"
+        self.cdk_toolkit_stack_name: str = f"orbit-{self.name}-cdk-toolkit"
+        self.demo_stack_name: str = f"orbit-{self.name}-demo"
+        self.env_stack_name: str = f"orbit-{self.name}"
         self.eks_stack_name: str = f"eksctl-{self.env_stack_name}-cluster"
-        self.toolkit_codebuild_project: str = f"datamaker-{self.name}"
+        self.toolkit_codebuild_project: str = f"orbit-{self.name}"
         self.account_id: str = utils.get_account_id(manifest=self)
         self.available_eks_regions: List[str] = self._boto3_session().get_available_regions("eks")
         self.vpc: VpcManifest = self._parse_vpc()
@@ -348,23 +348,23 @@ class Manifest:
             return
 
         for output in response["Stacks"][0]["Outputs"]:
-            if output["ExportName"] == f"datamaker-{self.name}-deploy-id":
+            if output["ExportName"] == f"orbit-{self.name}-deploy-id":
                 _logger.debug("Export value: %s", output["OutputValue"])
                 self.deploy_id = output["OutputValue"]
-            if output["ExportName"] == f"datamaker-{self.name}-kms-arn":
+            if output["ExportName"] == f"orbit-{self.name}-kms-arn":
                 _logger.debug("Export value: %s", output["OutputValue"])
                 self.toolkit_kms_arn = output["OutputValue"]
         if self.deploy_id is None:
             raise RuntimeError(
-                f"Stack {self.toolkit_stack_name} does not have the expected datamaker-{self.name}-deploy-id output."
+                f"Stack {self.toolkit_stack_name} does not have the expected orbit-{self.name}-deploy-id output."
             )
         if self.toolkit_kms_arn is None:
             raise RuntimeError(
-                f"Stack {self.toolkit_stack_name} does not have the expected datamaker-{self.name}-kms-arn output."
+                f"Stack {self.toolkit_stack_name} does not have the expected orbit-{self.name}-kms-arn output."
             )
-        self.toolkit_kms_alias = f"datamaker-{self.name}-{self.deploy_id}"
-        self.toolkit_s3_bucket = f"datamaker-{self.name}-toolkit-{self.account_id}-{self.deploy_id}"
-        self.cdk_toolkit_s3_bucket = f"datamaker-{self.name}-cdk-toolkit-{self.account_id}-{self.deploy_id}"
+        self.toolkit_kms_alias = f"orbit-{self.name}-{self.deploy_id}"
+        self.toolkit_s3_bucket = f"orbit-{self.name}-toolkit-{self.account_id}-{self.deploy_id}"
+        self.cdk_toolkit_s3_bucket = f"orbit-{self.name}-cdk-toolkit-{self.account_id}-{self.deploy_id}"
         self.write_manifest_ssm()
         _logger.debug("Toolkit data fetched successfully.")
 
@@ -388,11 +388,11 @@ class Manifest:
             return
 
         for output in response["Stacks"][0]["Outputs"]:
-            if self.internet_accessible and output["ExportName"] == f"datamaker-{self.name}-private-subnets-ids":
+            if self.internet_accessible and output["ExportName"] == f"orbit-{self.name}-private-subnets-ids":
                 self.nodes_subnets = output["OutputValue"].split(",")
-            elif not self.internet_accessible and output["ExportName"] == f"datamaker-{self.name}-isolated-subnets-ids":
+            elif not self.internet_accessible and output["ExportName"] == f"orbit-{self.name}-isolated-subnets-ids":
                 self.nodes_subnets = output["OutputValue"].split(",")
-            elif output["ExportName"] == f"datamaker-{self.name}-public-subnets-ids":
+            elif output["ExportName"] == f"orbit-{self.name}-public-subnets-ids":
                 self.load_balancers_subnets = output["OutputValue"].split(",")
 
         self.vpc = self._parse_vpc()

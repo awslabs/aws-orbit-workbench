@@ -32,4 +32,4 @@ docker run \
     -p 8005:8005 \
     --rm \
     -it \
-    datamaker-jupyter-hub
+    orbit-jupyter-hub

@@ -15,9 +15,9 @@
 from setuptools import setup
 
 setup(
-    name="datamaker-codecommit",
+    name="orbit-codecommit",
     version="0.0b0",
-    description="DataMaker CodeCommit Plugin.",
+    description="Orbit Workbench CodeCommit Plugin.",
     license="Apache License 2.0",
     packages=["code_commit"],
     python_requires=">=3.6, <3.9",

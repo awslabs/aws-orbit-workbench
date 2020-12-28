@@ -15,7 +15,7 @@ def get_app_argument(app_filename: str, args: List[str]) -> str:
 
 
 def get_output_argument(manifest: Manifest, stack_name: str) -> str:
-    path: str = os.path.join(manifest.filename_dir, ".datamaker.out", manifest.name, "cdk", stack_name)
+    path: str = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "cdk", stack_name)
     return f"--output {path}"
 
 

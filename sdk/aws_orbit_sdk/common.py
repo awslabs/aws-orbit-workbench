@@ -7,17 +7,17 @@ import boto3
 from yaml import safe_load
 
 # Tags
-DATAMAKER_PRODUCT_KEY = "Product"
-DATAMAKER_SUBPRODUCT_KEY = "SubProduct"
-DATAMAKER_SUBPRODUCT_EMR = "EMR"
-DATAMAKER_PRODUCT_NAME = "DataMaker"
-DATAMAKER_ENV = "Env"
-DATAMAKER_TEAM_SPACE = "TeamSpace"
+ORBIT_PRODUCT_KEY = "Product"
+ORBIT_SUBPRODUCT_KEY = "SubProduct"
+ORBIT_SUBPRODUCT_EMR = "EMR"
+ORBIT_PRODUCT_NAME = "Orbit Workbench"
+ORBIT_ENV = "Env"
+ORBIT_TEAM_SPACE = "TeamSpace"
 
 
 def get_properties() -> Dict[str, str]:
     """
-    Returns the properties and pathnames of the current DataMaker Environment.
+    Returns the properties and pathnames of the current Orbit Workbench Environment.
 
     Parameters
     ----------
@@ -27,7 +27,7 @@ def get_properties() -> Dict[str, str]:
     Returns
     -------
     prop : dict
-        Dictionary containing pathnames for the DataMaker Enviornment, Team Space, S3 Bucket Path, DataMaker Source
+        Dictionary containing pathnames for the Orbit Workbench Enviornment, Team Space, S3 Bucket Path, Orbit Workbench Source
         Repository and ECS Cluster.
 
     Example
@@ -35,32 +35,32 @@ def get_properties() -> Dict[str, str]:
     >>> from aws_orbit_sdk.common import get_properties
     >>> props = get_properties()
     """
-    if "AWS_DATAMAKER_ENV" in os.environ.keys():
+    if "AWS_ORBIT_ENV" in os.environ.keys():
         if (
-            "DATAMAKER_TEAM_SPACE" not in os.environ.keys()
-            or "AWS_DATAMAKER_S3_BUCKET" not in os.environ.keys()
+            "ORBIT_TEAM_SPACE" not in os.environ.keys()
+            or "AWS_ORBIT_S3_BUCKET" not in os.environ.keys()
         ):
             raise Exception(
-                "if AWS_DATAMAKER_ENV then DATAMAKER_TEAM_SPACE, AWS_DATAMAKER_S3_BUCKET and "
+                "if AWS_ORBIT_ENV then ORBIT_TEAM_SPACE, AWS_ORBIT_S3_BUCKET and "
                 "must be set"
             )
         else:
             prop = dict(
-                AWS_DATAMAKER_ENV=os.environ.get("AWS_DATAMAKER_ENV", ""),
-                DATAMAKER_TEAM_SPACE=os.environ.get("DATAMAKER_TEAM_SPACE", ""),
-                AWS_DATAMAKER_S3_BUCKET=os.environ.get("AWS_DATAMAKER_S3_BUCKET", ""),
+                AWS_ORBIT_ENV=os.environ.get("AWS_ORBIT_ENV", ""),
+                ORBIT_TEAM_SPACE=os.environ.get("ORBIT_TEAM_SPACE", ""),
+                AWS_ORBIT_S3_BUCKET=os.environ.get("AWS_ORBIT_S3_BUCKET", ""),
             )
     else:
         # this path is used by the sagemaker notebooks where we cannot create the env variable in the context of the notebook
         home = expanduser("~")
-        propFilePath = f"{home}/datamaker.yaml"
+        propFilePath = f"{home}/orbit.yaml"
         with open(propFilePath, "r") as f:
             prop = safe_load(f)["properties"]
 
     prop[
         "ecs_cluster"
-    ] = f"datamaker-{prop['AWS_DATAMAKER_ENV']}-{prop['DATAMAKER_TEAM_SPACE']}-cluster"
-    prop["eks_cluster"] = f"datamaker-{prop['AWS_DATAMAKER_ENV']}"
+    ] = f"orbit-{prop['AWS_ORBIT_ENV']}-{prop['ORBIT_TEAM_SPACE']}-cluster"
+    prop["eks_cluster"] = f"orbit-{prop['AWS_ORBIT_ENV']}"
     return prop
 
 
@@ -115,7 +115,7 @@ def get_workspace() -> Dict[str, str]:
     ssm = boto3.client("ssm")
     props = get_properties()
 
-    role_key = f"/datamaker/{props['AWS_DATAMAKER_ENV']}/teams/{props['DATAMAKER_TEAM_SPACE']}/manifest"
+    role_key = f"/orbit/{props['AWS_ORBIT_ENV']}/teams/{props['ORBIT_TEAM_SPACE']}/manifest"
 
     role_config_str = ssm.get_parameter(Name=role_key)["Parameter"]["Value"]
 
@@ -123,8 +123,8 @@ def get_workspace() -> Dict[str, str]:
     my_session = boto3.session.Session()
     my_region = my_session.region_name
     config["region"] = my_region
-    config["env_name"] = props["AWS_DATAMAKER_ENV"]
-    config["team_space"] = props["DATAMAKER_TEAM_SPACE"]
+    config["env_name"] = props["AWS_ORBIT_ENV"]
+    config["team_space"] = props["ORBIT_TEAM_SPACE"]
 
     return config
 
@@ -167,9 +167,9 @@ def get_scratch_database() -> str:
             "Description": f"scratch database for TeamSpace {workspace['env_name']}.{workspace['team_space']}",
             "LocationUri": new_location,
             "Parameters": {
-                DATAMAKER_PRODUCT_KEY: DATAMAKER_PRODUCT_NAME,
-                DATAMAKER_ENV: workspace["env_name"],
-                DATAMAKER_TEAM_SPACE: workspace["team_space"],
+                ORBIT_PRODUCT_KEY: ORBIT_PRODUCT_NAME,
+                ORBIT_ENV: workspace["env_name"],
+                ORBIT_TEAM_SPACE: workspace["team_space"],
             },
         }
     )

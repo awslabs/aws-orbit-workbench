@@ -11,6 +11,6 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-__title__: str = "datamaker-cli"
+__title__: str = "orbit-cli"
 __description__: str = "Data & ML Unified Development and Production Environment."
 __license__: str = "Apache License 2.0"

@@ -7,14 +7,14 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: datamaker-landing-page
+    app: orbit-landing-page
   name: landing-page
   namespace: env
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: datamaker-landing-page
+      app: orbit-landing-page
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -23,12 +23,12 @@ spec:
   template:
     metadata:
       labels:
-        app: datamaker-landing-page
+        app: orbit-landing-page
       name: landing-page
     spec:
       restartPolicy: Always
       containers:
-        - image: ${account_id}.dkr.ecr.${region}.amazonaws.com/datamaker-${env_name}-landing-page:${tag}
+        - image: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-landing-page:${tag}
           env:
             - name: AWS_DEFAULT_REGION
               value: ${region}
@@ -66,7 +66,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: datamaker-landing-page
+    app: orbit-landing-page
   name: landing-page-public
   namespace: env
   annotations:
@@ -77,5 +77,5 @@ spec:
       protocol: TCP
       targetPort: 80
   selector:
-    app: datamaker-landing-page
+    app: orbit-landing-page
   type: LoadBalancer

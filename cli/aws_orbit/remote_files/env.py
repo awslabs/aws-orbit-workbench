@@ -17,7 +17,7 @@ import os
 import time
 from typing import Any, Dict, Iterator, List, Tuple
 
-from aws_orbit import DATAMAKER_CLI_ROOT, cdk, docker
+from aws_orbit import ORBIT_CLI_ROOT, cdk, docker
 from aws_orbit.manifest import Manifest
 from aws_orbit.services import cfn, ecr
 
@@ -33,7 +33,7 @@ def _filter_repos(manifest: Manifest, page: Dict[str, Any]) -> Iterator[str]:
     for repo in page["repositories"]:
         response: Dict[str, Any] = client.list_tags_for_resource(resourceArn=repo["repositoryArn"])
         for tag in response["tags"]:
-            if tag["Key"] == "Env" and tag["Value"] == f"datamaker-{manifest.name}":
+            if tag["Key"] == "Env" and tag["Value"] == f"orbit-{manifest.name}":
                 yield repo["repositoryName"]
 
 
@@ -53,7 +53,7 @@ def _ecr(manifest: Manifest) -> None:
 def _filter_filesystems(page: Dict[str, Any], env_name: str) -> Iterator[str]:
     for fs in page["FileSystems"]:
         for tag in fs["Tags"]:
-            if tag["Key"] == "Env" and tag["Value"] == f"datamaker-{env_name}":
+            if tag["Key"] == "Env" and tag["Value"] == f"orbit-{env_name}":
                 yield fs["FileSystemId"]
 
 
@@ -120,7 +120,7 @@ def deploy(manifest: Manifest, add_images: List[str], remove_images: List[str]) 
     cdk.deploy(
         manifest=manifest,
         stack_name=manifest.env_stack_name,
-        app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "env.py"),
+        app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "env.py"),
         args=[manifest.filename, add_images_str, remove_images_str],
     )
     manifest.fetch_ssm()
@@ -137,6 +137,6 @@ def destroy(manifest: Manifest) -> None:
         cdk.destroy(
             manifest=manifest,
             stack_name=manifest.env_stack_name,
-            app_filename=os.path.join(DATAMAKER_CLI_ROOT, "remote_files", "cdk", "env.py"),
+            app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "env.py"),
             args=[manifest.filename, add_images_str, remove_images_str],
         )

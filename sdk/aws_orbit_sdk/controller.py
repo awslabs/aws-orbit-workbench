@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Optional, Union
 import boto3
 import pandas as pd
 
-from datamaker_sdk.common import get_properties
+from orbit_sdk.common import get_properties
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -95,26 +95,26 @@ def _get_execution_history_from_s3(
 
     notebookDir = os.path.join(notebookBaseDir, srcNotebook.split(".")[0])
 
-    path = "{}/output/notebooks/{}/".format(props["DATAMAKER_TEAM_SPACE"], notebookDir)
+    path = "{}/output/notebooks/{}/".format(props["ORBIT_TEAM_SPACE"], notebookDir)
     executions = []
-    objects = s3.list_objects_v2(Bucket=props["AWS_DATAMAKER_S3_BUCKET"], Prefix=path)
+    objects = s3.list_objects_v2(Bucket=props["AWS_ORBIT_S3_BUCKET"], Prefix=path)
     if "Contents" in objects.keys():
         for key in s3.list_objects_v2(
-            Bucket=props["AWS_DATAMAKER_S3_BUCKET"], Prefix=path
+            Bucket=props["AWS_ORBIT_S3_BUCKET"], Prefix=path
         )["Contents"]:
             if key["Key"][-1] == "/":
                 continue
             notebookName = os.path.basename(key["Key"])
             path = key["Key"]
             arg = urllib.parse.quote(path)
-            s3path = "s3://{}/{}".format(props["AWS_DATAMAKER_S3_BUCKET"], path)
+            s3path = "s3://{}/{}".format(props["AWS_ORBIT_S3_BUCKET"], path)
             #     link = '<a href="{}" target="_blank">{}</a>'.format(site + arg,"open")
             timestamp = key["LastModified"]
             executions.append((notebookName, timestamp, s3path))
     else:
         print(
             "No output notebooks founds at: s3://{}/{}".format(
-                props["AWS_DATAMAKER_S3_BUCKET"], path
+                props["AWS_ORBIT_S3_BUCKET"], path
             )
         )
 
@@ -131,7 +131,7 @@ def _get_invoke_function_name() -> Any:
     Function Name.
     """
     props = get_properties()
-    functionName = f"datamaker-{props['AWS_DATAMAKER_ENV']}-{props['DATAMAKER_TEAM_SPACE']}-container-runner"
+    functionName = f"orbit-{props['AWS_ORBIT_ENV']}-{props['ORBIT_TEAM_SPACE']}-container-runner"
     return functionName
 
 
@@ -504,18 +504,18 @@ def get_active_tasks(user_filter: Optional[Any]) -> Union[dict, List[Dict[str, A
 
         for k in t["overrides"]["containerOverrides"][0]["environment"]:
             vars[k["name"]] = k["value"]
-        datamaker_task = json.loads(vars["tasks"].replace("'", '"'))
-        if "notebookName" in datamaker_task["tasks"][0]:
+        orbit_task = json.loads(vars["tasks"].replace("'", '"'))
+        if "notebookName" in orbit_task["tasks"][0]:
             task_name = (
-                datamaker_task["tasks"][0]["notebookName"].split(".")[0]
-                if "notebookName" in datamaker_task["tasks"][0]
+                orbit_task["tasks"][0]["notebookName"].split(".")[0]
+                if "notebookName" in orbit_task["tasks"][0]
                 else ""
             )
-        elif "module" in datamaker_task["tasks"][0]:
-            module = datamaker_task["tasks"][0]["module"]
+        elif "module" in orbit_task["tasks"][0]:
+            module = orbit_task["tasks"][0]["module"]
             functionName = (
-                datamaker_task["tasks"][0]["functionName"]
-                if "functionName" in datamaker_task["tasks"][0]
+                orbit_task["tasks"][0]["functionName"]
+                if "functionName" in orbit_task["tasks"][0]
                 else ""
             )
             task_name = f"{module}.{functionName}"
@@ -611,13 +611,13 @@ def wait_for_tasks_to_complete(
             WaiterConfig={"Delay": delay, "MaxAttempts": maxAttempts},
         )
     else:
-        logGroupName = f"/datamaker/tasks/{props['AWS_DATAMAKER_ENV']}/{props['DATAMAKER_TEAM_SPACE']}/containers"
+        logGroupName = f"/orbit/tasks/{props['AWS_ORBIT_ENV']}/{props['ORBIT_TEAM_SPACE']}/containers"
         logger.info("start logging from %s", logGroupName)
         logStreams = []
         for t in ecs_tasks:
             id = t.split("/")[2]
             logStreams.append(
-                f"datamaker-{props['AWS_DATAMAKER_ENV']}-{props['DATAMAKER_TEAM_SPACE']}/datamaker-runner/{id}"
+                f"orbit-{props['AWS_ORBIT_ENV']}-{props['ORBIT_TEAM_SPACE']}/orbit-runner/{id}"
             )
 
         logger.info("waiting until tasks start running")

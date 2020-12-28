@@ -12,7 +12,7 @@ import boto3
 import IPython.display
 from IPython.display import JSON
 
-from datamaker_sdk.common import get_properties, get_workspace, split_s3_path
+from orbit_sdk.common import get_properties, get_workspace, split_s3_path
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -219,7 +219,7 @@ def run_schema_induction_args(
 
     home = expanduser("~")
 
-    jar = glob.glob(f"{home}/datamaker/java/schema-induction*.jar")[0]
+    jar = glob.glob(f"{home}/orbit/java/schema-induction*.jar")[0]
 
     args = [
         "/opt/jdk-13.0.1/bin/java",

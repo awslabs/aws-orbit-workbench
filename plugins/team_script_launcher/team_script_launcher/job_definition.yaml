@@ -12,7 +12,7 @@ spec:
         securityContext:
           runAsUser: 1000
         imagePullPolicy: Always
-        image: ${account_id}.dkr.ecr.${region}.amazonaws.com/datamaker-${env_name}-jupyter-user:${tag}
+        image: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-jupyter-user:${tag}
         env:
           - name: AWS_DEFAULT_REGION
             value: ${region}

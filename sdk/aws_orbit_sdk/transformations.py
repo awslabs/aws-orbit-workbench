@@ -6,9 +6,9 @@ from typing import Any, Dict, List
 
 import boto3
 
-import datamaker_sdk.controller as controller
-import datamaker_sdk.emr as sparkConnection
-from datamaker_sdk.common import get_workspace
+import orbit_sdk.controller as controller
+import orbit_sdk.emr as sparkConnection
+from orbit_sdk.common import get_workspace
 
 # Initialize parameters
 logging.basicConfig(
@@ -27,8 +27,8 @@ notebook_name = "Automated-Data-Transformations.ipynb"
 workspace = get_workspace()
 team_space = workspace["team_space"]
 env_name = workspace["env_name"]
-source_path = "$DATAMAKER_TRANSFORMATION_NOTEBOOKS_ROOT"
-base_path = "datamaker/profiling"
+source_path = "$ORBIT_TRANSFORMATION_NOTEBOOKS_ROOT"
+base_path = "orbit/profiling"
 logger.info(f"Team space: {team_space}, Environment name: {env_name}")
 
 

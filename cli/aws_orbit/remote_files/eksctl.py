@@ -50,8 +50,8 @@ def create_nodegroup_structure(team: TeamManifest, env_name: str) -> Dict[str, A
         "maxSize": team.nodes_num_max,
         "volumeSize": team.local_storage_size,
         "ssh": {"allow": False},
-        "labels": {"team": team.name, "datamaker/compute-type": "ec2"},
-        "tags": {"Env": f"datamaker-{env_name}", "TeamSpace": team.name},
+        "labels": {"team": team.name, "orbit/compute-type": "ec2"},
+        "tags": {"Env": f"orbit-{env_name}", "TeamSpace": team.name},
         "iam": {"instanceRoleARN": team.eks_nodegroup_role_arn},
     }
 
@@ -92,7 +92,7 @@ def generate_manifest(manifest: Manifest, name: str, output_teams: bool = True) 
             "volumeSize": 64,
             "ssh": {"allow": False},
             "labels": {"team": "env"},
-            "tags": {"Env": "datamaker"},
+            "tags": {"Env": "orbit"},
             "iam": {"instanceRoleARN": manifest.eks_env_nodegroup_role_arn},
         }
     )
@@ -110,7 +110,7 @@ def generate_manifest(manifest: Manifest, name: str, output_teams: bool = True) 
     MANIFEST["cloudWatch"] = {"clusterLogging": {"enableTypes": ["*"]}}
 
     _logger.debug("eksctl manifest:\n%s", pprint.pformat(MANIFEST))
-    output_filename = f"{manifest.filename_dir}/.datamaker.out/{manifest.name}/eksctl/cluster.yaml"
+    output_filename = f"{manifest.filename_dir}/.orbit.out/{manifest.name}/eksctl/cluster.yaml"
     os.makedirs(os.path.dirname(output_filename), exist_ok=True)
     with open(output_filename, "w") as file:
         yaml.dump(MANIFEST, file, sort_keys=False)
@@ -130,18 +130,18 @@ def fetch_cluster_data(manifest: Manifest, cluster_name: str) -> None:
 
 
 def deploy_env(manifest: Manifest) -> None:
-    stack_name: str = f"datamaker-{manifest.name}"
+    stack_name: str = f"orbit-{manifest.name}"
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
     _logger.debug("Synthetizing the EKSCTL Environment manifest")
     output_filename = generate_manifest(manifest=manifest, name=stack_name, output_teams=False)
-    cluster_name = f"datamaker-{manifest.name}"
+    cluster_name = f"orbit-{manifest.name}"
 
     if not cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name):
         _logger.debug("Deploying EKSCTL Environment resources")
         sh.run(f"eksctl create cluster -f {output_filename} --write-kubeconfig --verbose 4")
     else:
-        sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
+        sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{manifest.name} --set-kubeconfig-context")
 
     fetch_cluster_data(manifest=manifest, cluster_name=cluster_name)
 
@@ -159,7 +159,7 @@ def deploy_env(manifest: Manifest) -> None:
 
 
 def deploy_teams(manifest: Manifest) -> None:
-    stack_name: str = f"datamaker-{manifest.name}"
+    stack_name: str = f"orbit-{manifest.name}"
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
     _logger.debug("Synthetizing the EKSCTL Teams manifest")
@@ -170,43 +170,43 @@ def deploy_teams(manifest: Manifest) -> None:
         for team in manifest.teams:
             eks.create_fargate_profile(
                 manifest=manifest,
-                profile_name=f"datamaker-{manifest.name}-{team.name}",
-                cluster_name=f"datamaker-{manifest.name}",
+                profile_name=f"orbit-{manifest.name}-{team.name}",
+                cluster_name=f"orbit-{manifest.name}",
                 role_arn=cast(str, manifest.eks_fargate_profile_role_arn),
                 subnets=subnets,
                 namespace=team.name,
-                selector_labels={"team": team.name, "datamaker/compute-type": "fargate"},
+                selector_labels={"team": team.name, "orbit/compute-type": "fargate"},
             )
 
         teams = ",".join([t.name for t in manifest.teams])
         _logger.debug("Deploying EKSCTL Teams resources")
-        sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
+        sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{manifest.name} --set-kubeconfig-context")
         sh.run(f"eksctl create nodegroup -f {output_filename} --include={teams} --verbose 4")
 
     _logger.debug("EKSCTL deployed")
 
 
 def destroy_env(manifest: Manifest) -> None:
-    stack_name: str = f"datamaker-{manifest.name}"
+    stack_name: str = f"orbit-{manifest.name}"
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name):
-        sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
+        sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{manifest.name} --set-kubeconfig-context")
         output_filename = generate_manifest(manifest=manifest, name=stack_name)
         sh.run(f"eksctl delete cluster -f {output_filename} --wait --verbose 4")
         _logger.debug("EKSCTL Envrionment destroyed")
 
 
 def destroy_teams(manifest: Manifest) -> None:
-    stack_name: str = f"datamaker-{manifest.name}"
+    stack_name: str = f"orbit-{manifest.name}"
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
-    cluster_name = f"datamaker-{manifest.name}"
+    cluster_name = f"orbit-{manifest.name}"
     if cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name) and manifest.teams:
         for team in manifest.teams:
             eks.delete_fargate_profile(
                 manifest=manifest,
-                profile_name=f"datamaker-{manifest.name}-{team.name}",
+                profile_name=f"orbit-{manifest.name}-{team.name}",
                 cluster_name=cluster_name,
             )
 
@@ -218,7 +218,7 @@ def destroy_teams(manifest: Manifest) -> None:
                 is not None
             ]
         )
-        sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
+        sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{manifest.name} --set-kubeconfig-context")
         output_filename = generate_manifest(manifest=manifest, name=stack_name)
         if teams:
             sh.run(

@@ -93,7 +93,7 @@ def update_docker_file(manifest: "Manifest", dir: str) -> None:
     if os.path.exists(docker_file):
         _logger.info("Building DockerFile %s", docker_file)
         jupyter_user_base = (
-            f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/datamaker-{manifest.name}-jupyter-user"
+            f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/orbit-{manifest.name}-jupyter-user"
         )
         with open(docker_file, "r") as file:
             content: str = file.read()

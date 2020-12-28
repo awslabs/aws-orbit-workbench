@@ -17,7 +17,7 @@ import os
 import shutil
 from typing import Optional
 
-from aws_orbit import DATAMAKER_CLI_ROOT, utils
+from aws_orbit import ORBIT_CLI_ROOT, utils
 from aws_orbit.messages import MessagesContext, stylize
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ def create_manifest(
     dev: bool,
 ) -> None:
     region_str: str = region if region is not None else utils.get_region()
-    input = os.path.join(DATAMAKER_CLI_ROOT, "data", "init", "default-manifest.yaml")
+    input = os.path.join(ORBIT_CLI_ROOT, "data", "init", "default-manifest.yaml")
     with open(input, "r") as file:
         content: str = file.read()
     content = content.replace("$", "").format(
@@ -40,9 +40,9 @@ def create_manifest(
         demo="true" if demo else False,
         dev="true" if dev else False,
         images_source="code" if dev else "dockerhub",
-        jupyter_hub_repository="../images/jupyter-hub/" if dev else "aws-datamaker-jupyter-hub",
-        jupyter_user_repository="../images/jupyter-user/" if dev else "aws-datamaker-jupyter-user",
-        landing_page_repository="../images/landing-page/" if dev else "aws-datamaker-landing-page",
+        jupyter_hub_repository="../images/jupyter-hub/" if dev else "aws-orbit-jupyter-hub",
+        jupyter_user_repository="../images/jupyter-user/" if dev else "aws-orbit-jupyter-user",
+        landing_page_repository="../images/landing-page/" if dev else "aws-orbit-landing-page",
     )
 
     with open(filename, "w") as file:
@@ -52,7 +52,7 @@ def create_manifest(
 def init(name: str, region: Optional[str], demo: bool, dev: bool, debug: bool) -> None:
     conf_dir = "conf"
     with MessagesContext("Initializing", debug=debug) as ctx:
-        conf_dir_src = os.path.join(DATAMAKER_CLI_ROOT, "data", "init")
+        conf_dir_src = os.path.join(ORBIT_CLI_ROOT, "data", "init")
         if os.path.exists(conf_dir):
             shutil.rmtree(conf_dir)
         shutil.copytree(src=conf_dir_src, dst=conf_dir, ignore=shutil.ignore_patterns("default-manifest.yaml"))
@@ -63,8 +63,8 @@ def init(name: str, region: Optional[str], demo: bool, dev: bool, debug: bool) -
         ctx.info(f"Manifest generated as {filename}")
         ctx.progress(100)
         if demo:
-            ctx.tip(f"Recommended next step: {stylize(f'datamaker deploy -f {filename}')}")
+            ctx.tip(f"Recommended next step: {stylize(f'orbit deploy -f {filename}')}")
         else:
             ctx.tip(
-                f"Fill up the manifest file ({filename}) " f"and run: " f"{stylize(f'datamaker deploy -f {filename}')}"
+                f"Fill up the manifest file ({filename}) " f"and run: " f"{stylize(f'orbit deploy -f {filename}')}"
             )

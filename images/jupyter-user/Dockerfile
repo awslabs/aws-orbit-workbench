@@ -47,7 +47,7 @@ ADD bootstrap.sh /etc/jupyterhub/bootstrap.sh
 
 # Necessary to install packages from CodeArtifact
 ADD pip.conf /etc/pip.conf
-RUN python3 -m pip install --upgrade datamaker-sdk
+RUN python3 -m pip install --upgrade orbit-sdk
 RUN rm /etc/pip.conf
 
 # should always be the last line of code:

@@ -14,7 +14,7 @@
  *   limitations under the License.
  */
 
-import DataMakerLogoImage from "../images/orbit1.png";
+import Orbit WorkbenchLogoImage from "../images/orbit1.png";
 import "../App.css";
 import { Space, Row } from "antd";
 
@@ -23,10 +23,10 @@ const Frame = ({ content }) => (
     <Space direction="vertical" size="large" align="center">
       <Row />
       <Row>
-        <img className="datamaker-logo" src={DataMakerLogoImage} alt="DataMakerLogo" />
+        <img className="orbit-logo" src={Orbit WorkbenchLogoImage} alt="Orbit WorkbenchLogo" />
       </Row>
       <Row>
-        <div className="datamaker-content"> {content} </div>
+        <div className="orbit-content"> {content} </div>
       </Row>
     </Space>
   </div>

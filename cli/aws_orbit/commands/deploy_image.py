@@ -29,7 +29,7 @@ def deploy_image(filename: str, dir: str, name: str, script: Optional[str], debu
         manifest = Manifest(filename=filename)
         manifest.fillup()
         ctx.info(f"Manifest loaded: {filename}")
-        if cfn.does_stack_exist(manifest=manifest, stack_name=f"datamaker-{manifest.name}") is False:
+        if cfn.does_stack_exist(manifest=manifest, stack_name=f"orbit-{manifest.name}") is False:
             ctx.error("Please, deploy your environment before deploy any addicional docker image")
             return
 
@@ -49,7 +49,7 @@ def deploy_image(filename: str, dir: str, name: str, script: Optional[str], debu
         buildspec = codebuild.generate_spec(
             manifest=manifest,
             plugins=True,
-            cmds_build=[f"datamaker remote --command deploy_image {name} {script_str}"],
+            cmds_build=[f"orbit remote --command deploy_image {name} {script_str}"],
             changeset=changes,
         )
         remote.run(
@@ -61,6 +61,6 @@ def deploy_image(filename: str, dir: str, name: str, script: Optional[str], debu
             timeout=10,
         )
         ctx.info("Docker Image deploy into ECR")
-        address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/datamaker-{manifest.name}-{name}"
+        address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/orbit-{manifest.name}-{name}"
         ctx.tip(f"ECR Image Address: {stylize(address, underline=True)}")
         ctx.progress(100)

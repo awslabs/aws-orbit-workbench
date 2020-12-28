@@ -28,7 +28,7 @@ def destroy_image(filename: str, name: str, debug: bool) -> None:
         manifest = Manifest(filename=filename)
         manifest.fillup()
         ctx.info(f"Manifest loaded: {filename}")
-        if cfn.does_stack_exist(manifest=manifest, stack_name=f"datamaker-{manifest.name}") is False:
+        if cfn.does_stack_exist(manifest=manifest, stack_name=f"orbit-{manifest.name}") is False:
             ctx.error("Please, deploy your environment before deploy/destroy any docker image")
             return
 
@@ -47,7 +47,7 @@ def destroy_image(filename: str, name: str, debug: bool) -> None:
         buildspec = codebuild.generate_spec(
             manifest=manifest,
             plugins=False,
-            cmds_build=[f"datamaker remote --command destroy_image {name}"],
+            cmds_build=[f"orbit remote --command destroy_image {name}"],
             changeset=changes,
         )
         remote.run(

@@ -151,7 +151,7 @@ def deploy(
         buildspec = codebuild.generate_spec(
             manifest=manifest,
             plugins=True,
-            cmds_build=[f"datamaker remote --command deploy {skip_images_remote_flag} {env_only_flag}"],
+            cmds_build=[f"orbit remote --command deploy {skip_images_remote_flag} {env_only_flag}"],
             changeset=changes,
         )
         remote.run(
@@ -162,7 +162,7 @@ def deploy(
             codebuild_log_callback=ctx.progress_bar_callback,
             timeout=90,
         )
-        ctx.info("DataMaker deployed")
+        ctx.info("Orbit Workbench deployed")
         ctx.progress(98)
 
         if manifest.demo and cfn.does_stack_exist(manifest=manifest, stack_name=manifest.demo_stack_name):
@@ -175,7 +175,7 @@ def deploy(
         else:
             RuntimeError("Cognito Users URL not found.")
         if manifest.landing_page_url:
-            ctx.tip(f"Access DataMaker: {stylize(manifest.landing_page_url, underline=True)}")
+            ctx.tip(f"Access Orbit Workbench: {stylize(manifest.landing_page_url, underline=True)}")
         else:
             RuntimeError("Landing Page URL not found.")
         ctx.progress(100)
