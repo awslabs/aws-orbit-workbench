@@ -53,7 +53,7 @@
 > _For more information, see [Prepare your integration](https://developer.okta.com/docs/guides/build-sso-integration/saml2/before-you-begin/) in the Build a Single Sign-On (SSO) Integration guide on the Okta Developer website._
 
 * On the Create SAML Integration page, under General Settings, enter a name for your app. (e.g. datamaker-my-env)
-* (Optional) Upload the [DataMaker logo](https://github.com/awslabs/aws-eks-data-maker/blob/main/images/landing-page/public/datamaker.png) and choose the visibility settings for your app.
+* (Optional) Upload the [DataMaker logo](https://github.com/awslabs/aws-eks-data-maker/blob/main/images/landing-page/public/orbit1.png) and choose the visibility settings for your app.
 * Choose Next.
 * Under **GENERAL**, for **Single sign on URL**, enter `https://yourDomainPrefix.auth.region.amazoncognito.com/saml2/idpresponse`.
 

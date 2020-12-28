@@ -12,44 +12,30 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import Any, Dict
-
 import aws_cdk.aws_s3 as s3
 import aws_cdk.core as core
-from aws_cdk.core import Construct, Environment, Stack, Tags
+
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest
-from aws_orbit.plugins.helpers import cdk_handler
 
 
-class MyStack(Stack):
-    def __init__(
-        self, scope: Construct, id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]
-    ) -> None:
-
-        super().__init__(
-            scope=scope,
-            id=id,
-            stack_name=id,
-            env=Environment(account=manifest.account_id, region=manifest.region),
-        )
-        Tags.of(scope=self).add(key="Env", value=f"datamaker-{manifest.name}")
-
-        suffix: str = parameters.get("BucketNameInjection", "foo")
+class S3Builder:
+    @staticmethod
+    def build_scratch_bucket(
+        scope: core.Construct,
+        manifest: Manifest,
+        team_manifest: TeamManifest,
+    ) -> s3.Bucket:
         bucket_name: str = (
             f"datamaker-{team_manifest.manifest.name}-{team_manifest.name}"
-            f"-{suffix}-scratch-{core.Aws.ACCOUNT_ID}-{manifest.deploy_id}"
+            f"-scratch-{core.Aws.ACCOUNT_ID}-{manifest.deploy_id}"
         )
-
-        s3.Bucket(
-            scope=self,
-            id="hello_bucket",
+        return s3.Bucket(
+            scope=scope,
+            id="scratch_bucket",
             bucket_name=bucket_name,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            removal_policy=core.RemovalPolicy.DESTROY,
+            removal_policy=core.RemovalPolicy.RETAIN,
             encryption=s3.BucketEncryption.S3_MANAGED,
+            lifecycle_rules=[s3.LifecycleRule(expiration=core.Duration.days(team_manifest.scratch_retention_days))],
         )
-
-
-if __name__ == "__main__":
-    cdk_handler(stack_class=MyStack)

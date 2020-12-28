@@ -14,7 +14,7 @@
  *   limitations under the License.
  */
 
-import DataMakerLogoImage from "../images/datamaker.png";
+import DataMakerLogoImage from "../images/orbit1.png";
 import "../App.css";
 import { Space, Row } from "antd";
 

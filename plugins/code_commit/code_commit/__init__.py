@@ -16,12 +16,12 @@ import logging
 import os
 from typing import Any, Dict, List
 
-from datamaker_cli.manifest import Manifest
-from datamaker_cli.manifest.team import TeamManifest
-from datamaker_cli.plugins import hooks
-from datamaker_cli.plugins.helpers import cdk_deploy, cdk_destroy
+from aws_orbit.manifest import Manifest
+from aws_orbit.manifest.team import TeamManifest
+from aws_orbit.plugins import hooks
+from aws_orbit.plugins.helpers import cdk_deploy, cdk_destroy
 
-_logger: logging.Logger = logging.getLogger("datamaker_cli")
+_logger: logging.Logger = logging.getLogger("aws_orbit")
 
 DATAMAKER_CODE_COMMIT_ROOT = os.path.dirname(os.path.abspath(__file__))
 

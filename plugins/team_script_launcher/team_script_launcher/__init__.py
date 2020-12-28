@@ -16,12 +16,12 @@ import logging
 import os
 from typing import Any, Dict
 
-from datamaker_cli import sh
-from datamaker_cli.manifest import Manifest
-from datamaker_cli.manifest.team import TeamManifest
-from datamaker_cli.plugins import hooks
-from datamaker_cli import utils
-_logger: logging.Logger = logging.getLogger("datamaker_cli")
+from aws_orbit import sh
+from aws_orbit.manifest import Manifest
+from aws_orbit.manifest.team import TeamManifest
+from aws_orbit.plugins import hooks
+from aws_orbit import utils
+_logger: logging.Logger = logging.getLogger("aws_orbit")
 POD_FILENAME = os.path.join(os.path.dirname(__file__), "job_definition.yaml")
 
 

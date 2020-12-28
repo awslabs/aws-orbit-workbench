@@ -1,0 +1,116 @@
+#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License").
+#    You may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
+import logging
+import time
+from datetime import datetime, timedelta, timezone
+from typing import Callable, List, Optional
+
+from aws_orbit.manifest import Manifest
+from aws_orbit.services import cloudwatch, codebuild, s3
+
+_logger: logging.Logger = logging.getLogger(__name__)
+
+
+def _print_codebuild_logs(
+    events: List[cloudwatch.CloudWatchEvent],
+    codebuild_log_callback: Callable[[str], None],
+) -> None:
+    for event in events:
+        msg = event.message[:-1] if event.message.endswith("\n") else event.message
+        _logger.debug("[CODEBUILD] %s", msg)
+        codebuild_log_callback(msg)
+
+
+def _wait_execution(
+    manifest: Manifest,
+    build_id: str,
+    stream_name_prefix: str,
+    codebuild_log_callback: Optional[Callable[[str], None]] = None,
+) -> None:
+    start_time: Optional[datetime] = None
+    stream_name: Optional[str] = None
+    for status in codebuild.wait(manifest=manifest, build_id=build_id):
+        if codebuild_log_callback is not None and status.logs.enabled and status.logs.group_name:
+            if stream_name is None:
+                stream_name = cloudwatch.get_stream_name_by_prefix(
+                    manifest=manifest,
+                    group_name=status.logs.group_name,
+                    prefix=f"{stream_name_prefix}/",
+                )
+            if stream_name is not None:
+                events = cloudwatch.get_log_events(
+                    manifest=manifest,
+                    group_name=status.logs.group_name,
+                    stream_name=stream_name,
+                    start_time=start_time,
+                )
+                _print_codebuild_logs(events=events.events, codebuild_log_callback=codebuild_log_callback)
+                if events.last_timestamp is not None:
+                    start_time = events.last_timestamp + timedelta(milliseconds=1)
+
+
+def _execute_codebuild(
+    manifest: Manifest,
+    command_name: str,
+    buildspec: codebuild.SPEC_TYPE,
+    timeout: int,
+    codebuild_log_callback: Optional[Callable[[str], None]] = None,
+) -> None:
+    bundle_location = f"{manifest.toolkit_s3_bucket}/cli/remote/{command_name}/bundle.zip"
+    _logger.debug("bundle_location: %s", bundle_location)
+    stream_name_prefix = f"{command_name}-{int(datetime.now(timezone.utc).timestamp() * 1_000_000)}"
+    _logger.debug("stream_name_prefix: %s", stream_name_prefix)
+    build_id = codebuild.start(
+        manifest=manifest,
+        project_name=manifest.toolkit_codebuild_project,
+        stream_name=stream_name_prefix,
+        bundle_location=bundle_location,
+        buildspec=buildspec,
+        timeout=timeout,
+    )
+    _wait_execution(
+        manifest=manifest,
+        build_id=build_id,
+        stream_name_prefix=stream_name_prefix,
+        codebuild_log_callback=codebuild_log_callback,
+    )
+
+
+def run(
+    command_name: str,
+    manifest: Manifest,
+    bundle_path: str,
+    buildspec: codebuild.SPEC_TYPE,
+    timeout: int,
+    codebuild_log_callback: Optional[Callable[[str], None]] = None,
+) -> None:
+    if manifest.toolkit_s3_bucket is None:
+        manifest.fetch_ssm()
+        if manifest.toolkit_s3_bucket is None:
+            manifest.fetch_toolkit_data()
+        raise ValueError(f"manifest.toolkit_s3_bucket: {manifest.toolkit_s3_bucket}")
+    bucket = manifest.toolkit_s3_bucket
+    key = f"cli/remote/{command_name}/bundle.zip"
+    s3.delete_objects(manifest=manifest, bucket=bucket, keys=[key])
+    s3.upload_file(manifest=manifest, src=bundle_path, bucket=bucket, key=key)
+    time.sleep(3)  # Avoiding eventual consistence issues
+    _execute_codebuild(
+        manifest=manifest,
+        command_name=command_name,
+        buildspec=buildspec,
+        codebuild_log_callback=codebuild_log_callback,
+        timeout=timeout,
+    )
+    s3.delete_objects(manifest=manifest, bucket=bucket, keys=[key])
