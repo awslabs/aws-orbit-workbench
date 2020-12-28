@@ -243,7 +243,7 @@ def generate_spec(
                 f"--domain {manifest.codeartifact_domain} "
                 f"--repository {manifest.codeartifact_repository}"
             )
-        install.append("pip install orbit-cli")
+        install.append("pip install aws-orbit")
 
     # Plugins
     if plugins:
