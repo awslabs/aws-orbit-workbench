@@ -45,12 +45,14 @@ class PluginChangeset:
         new: List[str],
         old_paths: Dict[str, str],
         old_parameters: Dict[str, Dict[str, Any]],
+        old_modules: Dict[str, str],
     ) -> None:
         self.team_name: str = team_name
         self.old: List[str] = old
         self.new: List[str] = new
         self.old_paths: Dict[str, str] = old_paths
         self.old_parameters: Dict[str, Dict[str, Any]] = old_parameters
+        self.old_modules: Dict[str, str] = old_modules
 
     def asdict(self) -> CHANGESET_FILE_IMAGE_TYPE:
         return vars(self)
@@ -131,25 +133,34 @@ def extract_changeset(manifest: "Manifest", ctx: "MessagesContext") -> Changeset
         if team.raw_ssm is None:
             continue
         old: List[str] = [
-            cast(str, p["name"]) for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team.raw_ssm.get("plugins", []))
+            cast(str, p["id"]) for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team.raw_ssm.get("plugins", []))
         ]
-        new: List[str] = [p.name for p in team.plugins]
+        new: List[str] = [p.plugin_id for p in team.plugins]
         old.sort()
         new.sort()
         _logger.debug("Inpecting Plugins Change for team %s: %s -> %s", team.name, old, new)
         if old != new:
             ctx.info(f"Plugin change detected for Team {team.name}: {old} -> {new}")
             old_paths: Dict[str, str] = {
-                cast(str, p["name"]): cast(str, p["path"])
+                cast(str, p["id"]): cast(str, p["path"])
                 for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team.raw_ssm.get("plugins", []))
             }
             old_parameters: Dict[str, Dict[str, Any]] = {
-                cast(str, p["name"]): cast(Dict[str, Any], p.get("parameters", {}))
+                cast(str, p["id"]): cast(Dict[str, Any], p.get("parameters", {}))
+                for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team.raw_ssm.get("plugins", []))
+            }
+            old_modules: Dict[str, str] = {
+                cast(str, p["id"]): cast(str, p.get("module", None))
                 for p in cast(List[MANIFEST_FILE_PLUGIN_TYPE], team.raw_ssm.get("plugins", []))
             }
             plugin_changesets.append(
                 PluginChangeset(
-                    team_name=team.name, old=old, new=new, old_paths=old_paths, old_parameters=old_parameters
+                    team_name=team.name,
+                    old=old,
+                    new=new,
+                    old_paths=old_paths,
+                    old_parameters=old_parameters,
+                    old_modules=old_modules,
                 )
             )
 
@@ -208,6 +219,7 @@ def read_changeset_file(filename: str) -> Changeset:
                 new=cast(List[str], i["new"]),
                 old_paths=cast(Dict[str, str], i["old_paths"]),
                 old_parameters=cast(Dict[str, Dict[str, Any]], i["old_parameters"]),
+                old_modules=cast(Dict[str, str], i["old_modules"]),
             )
             for i in cast(List[CHANGESET_FILE_PLUGIN_TYPE], raw.get("plugin_changesets", []))
         ],

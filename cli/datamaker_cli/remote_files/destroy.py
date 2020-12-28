@@ -45,6 +45,7 @@ def destroy(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug("args %s", args)
     if len(args) == 1:
         teams_only: bool = args[0] == "teams-stacks"
+        keep_demo: bool = args[0] == "keep-demo"
     else:
         raise ValueError("Unexpected number of values in args.")
 
@@ -71,9 +72,10 @@ def destroy(filename: str, args: Tuple[str, ...]) -> None:
         _logger.debug("EKS Environment Stacks destroyed")
         env.destroy(manifest=manifest)
         _logger.debug("Env Stack destroyed")
-        demo.destroy(manifest=manifest)
-        _logger.debug("Demo Stack destroyed")
-        cdk_toolkit.destroy(manifest=manifest)
-        _logger.debug("CDK Toolkit Stack destroyed")
+        if not keep_demo:
+            demo.destroy(manifest=manifest)
+            _logger.debug("Demo Stack destroyed")
+            cdk_toolkit.destroy(manifest=manifest)
+            _logger.debug("CDK Toolkit Stack destroyed")
     else:
         _logger.debug("Skipping Environment, Demo, and CDK Toolkit Stacks")

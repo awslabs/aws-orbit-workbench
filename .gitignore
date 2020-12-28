@@ -381,6 +381,7 @@ cdk.json
 # DataMaker CLI
 cli/*.yaml
 cli/.datamaker.out
+cli/conf/
 
 # DataMaker Images
 images/landing-page/yarn.lock

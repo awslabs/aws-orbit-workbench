@@ -28,3 +28,11 @@ def run(cmd: str, cwd: Optional[str] = None, hide_cmd: bool = False) -> None:
         _logger.debug(f"+ {cmd}")
     for line in run_iterating(cmd=cmd, cwd=cwd):
         _logger.debug(line)
+
+
+def run_with_logging(cmd: str, cwd: Optional[str] = None, hide_cmd: bool = False) -> Iterable[str]:
+    if hide_cmd is False:
+        _logger.debug(f"+ {cmd}")
+    for line in run_iterating(cmd=cmd, cwd=cwd):
+        _logger.debug(line)
+        yield line

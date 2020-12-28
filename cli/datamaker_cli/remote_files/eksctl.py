@@ -201,18 +201,28 @@ def destroy_teams(manifest: Manifest) -> None:
     stack_name: str = f"datamaker-{manifest.name}"
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
+    cluster_name = f"datamaker-{manifest.name}"
     if cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name) and manifest.teams:
         for team in manifest.teams:
             eks.delete_fargate_profile(
                 manifest=manifest,
                 profile_name=f"datamaker-{manifest.name}-{team.name}",
-                cluster_name=f"datamaker-{manifest.name}",
+                cluster_name=cluster_name,
             )
 
-        teams = ",".join([t.name for t in manifest.teams])
+        teams = ",".join(
+            [
+                t.name
+                for t in manifest.teams
+                if eks.describe_nodegroup(manifest=manifest, cluster_name=cluster_name, nodegroup_name=t.name)
+                is not None
+            ]
+        )
         sh.run(f"eksctl utils write-kubeconfig --cluster datamaker-{manifest.name} --set-kubeconfig-context")
         output_filename = generate_manifest(manifest=manifest, name=stack_name)
-        sh.run(
-            f"eksctl delete nodegroup -f {output_filename} --include={teams} --approve --wait --drain=false --verbose 4"
-        )
+        if teams:
+            sh.run(
+                f"eksctl delete nodegroup -f {output_filename} --include={teams} "
+                "--approve --wait --drain=false --verbose 4"
+            )
         _logger.debug("EKSCTL Teams destroyed")

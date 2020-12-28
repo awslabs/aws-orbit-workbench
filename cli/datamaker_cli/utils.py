@@ -18,6 +18,7 @@ import math
 import os
 import random
 import time
+from string import Template
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Optional, Union
 
 import boto3
@@ -79,7 +80,7 @@ def replace_underscores(original: Dict[str, Any]) -> Dict[str, Any]:
     return ret
 
 
-def extract_plugin_name(func: Callable[..., Union[None, List[str], str]]) -> str:
+def extract_plugin_module_name(func: Callable[..., Union[None, List[str], str]]) -> str:
     name = func.__module__.split(sep=".", maxsplit=1)[0]
     return name
 
@@ -165,3 +166,19 @@ def get_dns_ip_cidr(manifest: "Manifest") -> str:
     cidr: str = f"{get_dns_ip(manifest)}/32"
     _logger.debug("DNS CIDR: %s", cidr)
     return cidr
+
+
+def print_dir(dir: str) -> None:
+    for dirname, dirnames, filenames in os.walk(dir):
+        # print path to all subdirectories first.
+        for subdirname in dirnames:
+            _logger.debug(os.path.join(dirname, subdirname))
+        # print path to all filenames.
+        for filename in filenames:
+            _logger.debug((os.path.join(dirname, filename)))
+
+
+def resolve_parameters(template: str, parameters: Dict[str, str]) -> str:
+    string_template = Template(template)
+    template = string_template.safe_substitute(parameters)
+    return template
