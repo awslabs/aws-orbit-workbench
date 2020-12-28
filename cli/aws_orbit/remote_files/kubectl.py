@@ -18,7 +18,6 @@ import shutil
 from typing import TYPE_CHECKING, List, Optional
 
 import yaml
-
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, plugins, sh, utils
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest

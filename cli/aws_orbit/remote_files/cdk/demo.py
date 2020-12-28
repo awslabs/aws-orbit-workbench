@@ -24,7 +24,6 @@ from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_ssm as ssm
 from aws_cdk.core import App, CfnOutput, Construct, Stack, Tags
-
 from aws_orbit.manifest import Manifest
 
 _logger: logging.Logger = logging.getLogger(__name__)

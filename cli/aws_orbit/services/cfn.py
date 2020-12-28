@@ -19,7 +19,6 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
 
 import botocore.exceptions
-
 from aws_orbit.services import s3
 
 if TYPE_CHECKING:

@@ -15,9 +15,8 @@
 import logging
 from typing import Any, Dict, List, Optional, cast
 
-from botocore.waiter import WaiterModel, create_waiter_with_client
-
 from aws_orbit.manifest import Manifest
+from botocore.waiter import WaiterModel, create_waiter_with_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
 

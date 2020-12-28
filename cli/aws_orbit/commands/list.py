@@ -2,7 +2,6 @@ import logging
 from typing import Dict, List
 
 import click
-
 from aws_orbit.manifest import Manifest
 from aws_orbit.messages import print_list, stylize
 from aws_orbit.utils import extract_images_names

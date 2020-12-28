@@ -16,10 +16,9 @@ import logging
 import os
 from typing import Optional, Tuple
 
-from boto3 import client
-
 from aws_orbit import changeset, docker, plugins, sh
 from aws_orbit.manifest import Manifest
+from boto3 import client
 
 _logger: logging.Logger = logging.getLogger(__name__)
 

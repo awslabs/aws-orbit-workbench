@@ -18,7 +18,6 @@ import aws_cdk.aws_iam as iam
 import aws_cdk.aws_stepfunctions as sfn
 import aws_cdk.core as core
 from aws_cdk import aws_lambda
-
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest
 from aws_orbit.remote_files.cdk import _lambda_path

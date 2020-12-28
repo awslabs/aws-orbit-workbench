@@ -17,7 +17,6 @@ from typing import List
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_efs as efs
 import aws_cdk.core as core
-
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest
 

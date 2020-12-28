@@ -20,7 +20,6 @@ from typing import TYPE_CHECKING, Any, Dict, Iterable, List, NamedTuple, Optiona
 
 import botocore.exceptions
 import yaml
-
 from aws_orbit.utils import try_it
 
 if TYPE_CHECKING:

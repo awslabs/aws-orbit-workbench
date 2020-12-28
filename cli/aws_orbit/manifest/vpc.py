@@ -16,7 +16,6 @@ import logging
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Union, cast
 
 import botocore.exceptions
-
 from aws_orbit.manifest.subnet import MANIFEST_SUBNET_TYPE, SubnetKind, SubnetManifest
 
 if TYPE_CHECKING:

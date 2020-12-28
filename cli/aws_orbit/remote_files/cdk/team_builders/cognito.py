@@ -14,7 +14,6 @@
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.core as core
-
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest
 

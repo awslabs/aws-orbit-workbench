@@ -22,7 +22,6 @@ import aws_cdk.aws_stepfunctions as sfn
 import aws_cdk.aws_stepfunctions_tasks as sfn_tasks
 import aws_cdk.core as core
 from aws_cdk import aws_lambda
-
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest
 from aws_orbit.remote_files.cdk.team_builders._lambda import LambdaBuilder
@@ -117,9 +116,7 @@ class StateMachineBuilder:
                         sfn_tasks.TaskEnvironmentVariable(name="compute", value=sfn.JsonPath.string_at("$.Compute")),
                         sfn_tasks.TaskEnvironmentVariable(name="ORBIT_TEAM_SPACE", value=team_manifest.name),
                         sfn_tasks.TaskEnvironmentVariable(name="AWS_ORBIT_ENV", value=manifest.name),
-                        sfn_tasks.TaskEnvironmentVariable(
-                            name="AWS_ORBIT_S3_BUCKET", value=scratch_bucket.bucket_name
-                        ),
+                        sfn_tasks.TaskEnvironmentVariable(name="AWS_ORBIT_S3_BUCKET", value=scratch_bucket.bucket_name),
                         sfn_tasks.TaskEnvironmentVariable(
                             name="JUPYTERHUB_USER", value=sfn.JsonPath.string_at("$.JupyterHubUser")
                         ),

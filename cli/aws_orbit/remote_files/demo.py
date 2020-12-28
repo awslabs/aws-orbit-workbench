@@ -21,7 +21,6 @@ from itertools import repeat
 from typing import Any, Dict, List, cast
 
 import botocore.exceptions
-
 from aws_orbit import ORBIT_CLI_ROOT, cdk, exceptions, sh
 from aws_orbit.manifest import Manifest
 from aws_orbit.services import cfn, s3, vpc

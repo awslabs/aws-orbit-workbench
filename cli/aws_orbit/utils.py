@@ -107,9 +107,7 @@ def extract_images_names(manifest: "Manifest") -> List[str]:
         if output["ExportName"] == f"orbit-{manifest.name}-repos":
             _logger.debug("Export value: %s", output["OutputValue"])
             return output["OutputValue"].split(",")
-    raise RuntimeError(
-        f"Stack orbit-{manifest.name} does not have the expected orbit-{manifest.name}-repos output."
-    )
+    raise RuntimeError(f"Stack orbit-{manifest.name} does not have the expected orbit-{manifest.name}-repos output.")
 
 
 def try_it(

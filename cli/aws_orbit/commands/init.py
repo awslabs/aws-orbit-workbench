@@ -65,6 +65,4 @@ def init(name: str, region: Optional[str], demo: bool, dev: bool, debug: bool) -
         if demo:
             ctx.tip(f"Recommended next step: {stylize(f'orbit deploy -f {filename}')}")
         else:
-            ctx.tip(
-                f"Fill up the manifest file ({filename}) " f"and run: " f"{stylize(f'orbit deploy -f {filename}')}"
-            )
+            ctx.tip(f"Fill up the manifest file ({filename}) " f"and run: " f"{stylize(f'orbit deploy -f {filename}')}")

@@ -18,7 +18,6 @@ import pprint
 from typing import Any, Dict, cast
 
 import yaml
-
 from aws_orbit import sh
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.subnet import SubnetKind

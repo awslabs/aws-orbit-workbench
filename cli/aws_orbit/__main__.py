@@ -16,7 +16,6 @@ import logging
 from typing import Optional, Tuple
 
 import click
-
 from aws_orbit.commands.deploy import deploy
 from aws_orbit.commands.deploy_image import deploy_image
 from aws_orbit.commands.destroy import destroy
