@@ -8,7 +8,7 @@ with open("README.md") as fp:
 
 
 setuptools.setup(
-    name="orbit-sdk",
+    name="aws-orbit-sdk",
     version=version,
     description="AWS Orbit Workbench SDK",
     long_description=long_description,

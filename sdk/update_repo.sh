@@ -8,7 +8,7 @@ rm dist/*
 aws codeartifact delete-package-versions \
     --domain aws-orbit \
     --repository python-repository \
-    --package orbit-sdk \
+    --package aws-orbit-sdk \
     --versions $VERSION \
     --format pypi
 
