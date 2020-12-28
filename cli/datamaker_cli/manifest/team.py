@@ -17,7 +17,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
 
 from datamaker_cli import utils
-from datamaker_cli.manifest.plugin import MANIFEST_PLUGIN_TYPE, PluginManifest
+from datamaker_cli.manifest.plugin import MANIFEST_PLUGIN_TYPE, PluginManifest, parse_plugins
 
 if TYPE_CHECKING:
     from datamaker_cli.manifest import Manifest
@@ -89,17 +89,6 @@ class TeamManifest:
         self.ecs_cluster_name: Optional[str] = None
         self.container_runner_arn: Optional[str] = None
 
-    def _read_manifest_ssm(self) -> Optional[MANIFEST_TEAM_TYPE]:
-        _logger.debug("Trying to read manifest from SSM parameter.")
-        client = self.manifest.boto3_client(service_name="ssm")
-        try:
-            json_str: str = client.get_parameter(Name=self.ssm_parameter_name)["Parameter"]["Value"]
-        except client.exceptions.ParameterNotFound:
-            _logger.debug("Team %s Manifest SSM parameter not found: %s", self.name, self.ssm_parameter_name)
-            return None
-        _logger.debug("Team %s Manifest SSM parameter found.", self.name)
-        return cast(MANIFEST_TEAM_TYPE, json.loads(json_str))
-
     def write_manifest_ssm(self) -> None:
         client = self.manifest.boto3_client("ssm")
         _logger.debug("Writing team %s manifest to SSM parameter.", self.name)
@@ -151,7 +140,7 @@ class TeamManifest:
 
     def fetch_ssm(self) -> None:
         _logger.debug("Fetching SSM manifest data (Team %s)...", self.name)
-        self.raw_ssm = self._read_manifest_ssm()
+        self.raw_ssm = read_raw_manifest_ssm(manifest=self.manifest, team_name=self.name)
         if self.raw_ssm is not None:
             raw: MANIFEST_TEAM_TYPE = self.raw_ssm
             self.efs_id = cast(Optional[str], raw.get("efs-id"))
@@ -174,3 +163,38 @@ class TeamManifest:
             if p.plugin_id == plugin_id:
                 return p
         return None
+
+
+def parse_teams(manifest: "Manifest", raw_teams: List[MANIFEST_FILE_TEAM_TYPE]) -> List[TeamManifest]:
+    return [
+        TeamManifest(
+            manifest=manifest,
+            name=cast(str, t["name"]),
+            instance_type=cast(str, t["instance-type"]),
+            local_storage_size=cast(int, t["local-storage-size"]),
+            nodes_num_desired=cast(int, t["nodes-num-desired"]),
+            nodes_num_max=cast(int, t["nodes-num-max"]),
+            nodes_num_min=cast(int, t["nodes-num-min"]),
+            efs_life_cycle=cast(str, t["efs-life-cycle"]) if "efs-life-cycle" in t else "",
+            policies=cast(List[str], t.get("policies", [])),
+            grant_sudo=cast(bool, t.get("grant-sudo", False)),
+            jupyterhub_inbound_ranges=cast(List[str], t.get("jupyterhub-inbound-ranges", [])),
+            image=cast(Optional[str], t.get("image")),
+            plugins=parse_plugins(team=t),
+            profiles=cast(List[MANIFEST_PROPERTY_MAP_TYPE], t.get("profiles")),
+        )
+        for t in raw_teams
+    ]
+
+
+def read_raw_manifest_ssm(manifest: "Manifest", team_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
+    parameter_name: str = f"/datamaker/{manifest.name}/teams/{team_name}/manifest"
+    _logger.debug("Trying to read manifest from SSM parameter (%s).", parameter_name)
+    client = manifest.boto3_client(service_name="ssm")
+    try:
+        json_str: str = client.get_parameter(Name=parameter_name)["Parameter"]["Value"]
+    except client.exceptions.ParameterNotFound:
+        _logger.debug("Team %s Manifest SSM parameter not found: %s", team_name, parameter_name)
+        return None
+    _logger.debug("Team %s Manifest SSM parameter found.", team_name)
+    return cast(MANIFEST_TEAM_TYPE, json.loads(json_str))
