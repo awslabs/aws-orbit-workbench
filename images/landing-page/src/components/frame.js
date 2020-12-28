@@ -14,7 +14,7 @@
  *   limitations under the License.
  */
 
-import Orbit WorkbenchLogoImage from "../images/orbit1.png";
+import OrbitWorkbenchLogoImage from "../images/orbit1.png";
 import "../App.css";
 import { Space, Row } from "antd";
 
@@ -23,7 +23,7 @@ const Frame = ({ content }) => (
     <Space direction="vertical" size="large" align="center">
       <Row />
       <Row>
-        <img className="orbit-logo" src={Orbit WorkbenchLogoImage} alt="Orbit WorkbenchLogo" />
+        <img className="orbit-logo" src={OrbitWorkbenchLogoImage} alt="Orbit WorkbenchLogo" />
       </Row>
       <Row>
         <div className="orbit-content"> {content} </div>
