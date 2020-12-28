@@ -24,10 +24,8 @@ import yaml
 from yamlinclude import YamlIncludeConstructor
 
 from datamaker_cli import utils
-from datamaker_cli.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE, PluginManifest, plugins_manifest_checks
-from datamaker_cli.manifest.subnet import SubnetKind, SubnetManifest
-from datamaker_cli.manifest.team import MANIFEST_FILE_TEAM_TYPE, TeamManifest
-from datamaker_cli.manifest.vpc import MANIFEST_FILE_VPC_TYPE, MANIFEST_VPC_TYPE, VpcManifest
+from datamaker_cli.manifest.team import MANIFEST_FILE_TEAM_TYPE, TeamManifest, parse_teams
+from datamaker_cli.manifest.vpc import MANIFEST_FILE_VPC_TYPE, MANIFEST_VPC_TYPE, VpcManifest, parse_vpc
 from datamaker_cli.services import cognito
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -145,8 +143,10 @@ class Manifest:
         self.toolkit_codebuild_project: str = f"datamaker-{self.name}"
         self.account_id: str = utils.get_account_id(manifest=self)
         self.available_eks_regions: List[str] = self._boto3_session().get_available_regions("eks")
-        self.vpc: VpcManifest = self._parse_vpc()
-        self.teams: List[TeamManifest] = self._parse_teams()
+        self.vpc: VpcManifest = parse_vpc(manifest=self)
+        self.teams: List[TeamManifest] = parse_teams(
+            manifest=self, raw_teams=cast(List[MANIFEST_FILE_TEAM_TYPE], self.raw_file["teams"])
+        )
 
         self.cognito_external_provider: Optional[str] = cast(Optional[str], self.raw_file.get("external-idp", None))
         self.cognito_external_provider_label: Optional[str] = cast(
@@ -192,64 +192,6 @@ class Manifest:
     @staticmethod
     def _botocore_config() -> botocore.config.Config:
         return botocore.config.Config(retries={"max_attempts": 5}, connect_timeout=10, max_pool_connections=10)
-
-    @staticmethod
-    def _parse_plugins(team: MANIFEST_FILE_TEAM_TYPE) -> List[PluginManifest]:
-        if "plugins" in team:
-            raw: List[MANIFEST_FILE_PLUGIN_TYPE] = cast(List[MANIFEST_FILE_PLUGIN_TYPE], team["plugins"])
-            plugins_manifest_checks(team_name=cast(str, team["name"]), plugins=raw)
-            return [
-                PluginManifest(
-                    plugin_id=cast(str, p["id"]),
-                    module=cast(str, p.get("module", None)),
-                    path=cast(str, p["path"]),
-                    parameters=cast(Dict[str, Any], p.get("parameters", {})),
-                )
-                for p in raw
-            ]
-        return []
-
-    def _parse_teams(self) -> List[TeamManifest]:
-        return [
-            TeamManifest(
-                manifest=self,
-                name=cast(str, t["name"]),
-                instance_type=cast(str, t["instance-type"]),
-                local_storage_size=cast(int, t["local-storage-size"]),
-                nodes_num_desired=cast(int, t["nodes-num-desired"]),
-                nodes_num_max=cast(int, t["nodes-num-max"]),
-                nodes_num_min=cast(int, t["nodes-num-min"]),
-                efs_life_cycle=cast(str, t["efs-life-cycle"]) if "efs-life-cycle" in t else "",
-                policies=cast(List[str], t.get("policies", [])),
-                grant_sudo=cast(bool, t.get("grant-sudo", False)),
-                jupyterhub_inbound_ranges=cast(List[str], t.get("jupyterhub-inbound-ranges", [])),
-                image=cast(Optional[str], t.get("image")),
-                plugins=self._parse_plugins(team=t),
-                profiles=cast(List[MANIFEST_PROPERTY_MAP_TYPE], t.get("profiles")),
-            )
-            for t in cast(List[MANIFEST_FILE_TEAM_TYPE], self.raw_file["teams"])
-        ]
-
-    def _parse_vpc(self) -> VpcManifest:
-        subnets: List[SubnetManifest] = []
-
-        if self.internet_accessible:
-            for s in self.nodes_subnets:
-                _logger.debug("Adding private subnet %s in the manifest.", s)
-                subnets.append(SubnetManifest(manifest=self, subnet_id=s, kind=SubnetKind.private))
-        else:
-            for s in self.nodes_subnets:
-                _logger.debug("Adding isolated subnet %s in the manifest.", s)
-                subnets.append(SubnetManifest(manifest=self, subnet_id=s, kind=SubnetKind.isolated))
-
-        for s in self.load_balancers_subnets:
-            _logger.debug("Adding public subnet %s in the manifest.", s)
-            subnets.append(SubnetManifest(manifest=self, subnet_id=s, kind=SubnetKind.public))
-
-        return VpcManifest(
-            manifest=self,
-            subnets=subnets,
-        )
 
     def _boto3_session(self) -> boto3.Session:
         return boto3.Session(region_name=self.region)
@@ -395,7 +337,7 @@ class Manifest:
             elif output["ExportName"] == f"datamaker-{self.name}-public-subnets-ids":
                 self.load_balancers_subnets = output["OutputValue"].split(",")
 
-        self.vpc = self._parse_vpc()
+        self.vpc = parse_vpc(manifest=self)
 
         self.fetch_ssm()
         self.write_manifest_ssm()
