@@ -30,9 +30,9 @@ class ArgumentParserNoSysExit(argparse.ArgumentParser):
 
 
 @magics_class
-class Orbit WorkbenchMagics(Magics):
+class OrbitWorkbenchMagics(Magics):
     def __init__(self, shell):
-        super(Orbit WorkbenchMagics, self).__init__(shell)
+        super(OrbitWorkbenchMagics, self).__init__(shell)
         self.ip = get_ipython()
 
     @line_magic
@@ -438,7 +438,7 @@ def load_ipython_extension(ipython):
     """
     # You can register the class itself without instantiating it.  IPython will
     # call the default constructor on it.
-    ipython.register_magics(Orbit WorkbenchMagics)
+    ipython.register_magics(OrbitWorkbenchMagics)
 
 
 #
@@ -456,5 +456,5 @@ def load_ipython_extension(ipython):
 
 
 ip = get_ipython()
-magics = Orbit WorkbenchMagics(ip)
+magics = OrbitWorkbenchMagics(ip)
 ip.register_magics(magics)

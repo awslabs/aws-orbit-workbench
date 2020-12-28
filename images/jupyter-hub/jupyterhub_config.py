@@ -20,7 +20,7 @@ import os
 import boto3
 from tornado.log import app_log
 
-from jupyterhub_utils.authenticator import Orbit WorkbenchAuthenticator
+from jupyterhub_utils.authenticator import OrbitWorkbenchAuthenticator
 from jupyterhub_utils.ssm import ACCOUNT_ID, ENV_NAME, GRANT_SUDO, IMAGE, REGION, TEAM, TOOLKIT_S3_BUCKET
 
 app_log.info("ACCOUNT_ID: %s", ACCOUNT_ID)
@@ -114,7 +114,7 @@ c.KubeSpawner.profile_list = per_user_profiles
 AUTH
 """
 
-c.JupyterHub.authenticator_class = Orbit WorkbenchAuthenticator
+c.JupyterHub.authenticator_class = OrbitWorkbenchAuthenticator
 c.Authenticator.auto_login = True
 
 """

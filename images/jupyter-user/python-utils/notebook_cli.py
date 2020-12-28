@@ -26,7 +26,7 @@ def read_yaml_file(path):
     with open(path, 'r') as f:
         return yaml.load(f, Loader=NoDatesSafeLoader)
 
-def writeOrbit WorkbenchYaml():
+def writeOrbitYaml():
     data = dict(properties=
         dict(
             AWS_ORBIT_ENV=os.environ['AWS_ORBIT_ENV'],
@@ -68,7 +68,7 @@ def run_tasks():
         env_params += param + " = " + os.environ[param] + "\n"
     logger.debug(env_params)
 
-    writeOrbit WorkbenchYaml()
+    writeOrbitYaml()
     compute = yaml.load(os.environ['compute'], Loader=NoDatesSafeLoader)
     task_type = os.environ['task_type']
     try:

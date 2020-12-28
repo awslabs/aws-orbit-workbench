@@ -23,7 +23,7 @@ from tornado.web import RequestHandler
 from jupyterhub_utils.ssm import ENV_NAME
 
 
-class Orbit WorkbenchAuthenticator(Authenticator):  # type: ignore
+class OrbitWorkbenchAuthenticator(Authenticator):  # type: ignore
     def authenticate(self, handler: RequestHandler, data: Dict[str, str]) -> Any:
         app_log.info("data: %s", data)
         if handler.request.uri is None:
