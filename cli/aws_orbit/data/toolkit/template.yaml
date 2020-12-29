@@ -1,0 +1,360 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  Orbit Workbench Toolkit Stack - ${env_name}
+Resources:
+  Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: orbit-${env_name}-toolkit-${account_id}-${deploy_id}
+      Tags:
+        - Key: Env
+          Value: orbit-${env_name}
+      VersioningConfiguration:
+        Status: Suspended
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: CleaningUp
+            Status: Enabled
+            ExpirationInDays: 1
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+            NoncurrentVersionExpirationInDays: 1
+            Prefix: cli/remote/
+  ManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:*
+              - kms:CreateKey
+              - secretsmanager:GetRandomPassword
+              - ecr:GetAuthorizationToken
+              - ecr:DescribeRepositories
+              - ecr:ListTagsForResource
+              - ecr:BatchGetImage
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchCheckLayerAvailability
+              - ecr:GetRepositoryPolicy
+              - ecr:ListImages
+              - ecr:DescribeImages
+              - cloudformation:ListStacks
+              - elasticfilesystem:DescribeFileSystemPolicy
+              - elasticfilesystem:CreateFileSystem
+              - elasticfilesystem:CreateMountTarget
+              - elasticfilesystem:DescribeFileSystems
+              - elasticfilesystem:DeleteMountTarget
+              - elasticfilesystem:DescribeMountTargets
+              - elasticfilesystem:DeleteFileSystem
+              - elasticfilesystem:PutLifecycleConfiguration
+              - elasticfilesystem:ListTagsForResource
+              - iam:ListAttachedRolePolicies
+              - iam:GetPolicy
+              - iam:ListPolicyVersions
+              - iam:GetRole
+              - iam:GetRolePolicy
+              - iam:ListRoleTags
+              - iam:GetOpenIDConnectProvider
+              - cognito-idp:CreateUserPool
+              - cognito-idp:DeleteUserPool
+              - cognito-idp:CreateUserPoolClient
+              - cognito-idp:DeleteUserPoolClient
+              - cognito-idp:CreateGroup
+              - cognito-idp:DeleteGroup
+              - cognito-identity:CreateIdentityPool
+              - cognito-identity:DeleteIdentityPool
+              - cognito-identity:UntagResource
+              - cognito-identity:TagResource
+              - cognito-identity:SetIdentityPoolRoles
+              - ec2:*
+              - elasticloadbalancing:*
+              - ecs:CreateCluster
+              - ecs:RegisterTaskDefinition
+              - ecs:DeregisterTaskDefinition
+              - codecommit:ListRepositories
+              - cognito-idp:DescribeUserPool
+              - cognito-idp:DescribeUserPoolClient
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - s3:List*
+              - s3:Describe*
+              - s3:Get*
+              - s3:CreateBucket
+              - s3:PutLifecycleConfiguration
+              - s3:PutBucketTagging
+              - s3:PutEncryptionConfiguration
+              - s3:PutBucketPublicAccessBlock
+              - s3:PutBucketPolicy
+              - s3:PutObject
+              - s3:DeleteObject
+              - s3:DeleteObjectVersion
+              - s3:DeleteBucket
+            Resource:
+              - arn:aws:s3:::orbit-${env_name}-*-scratch-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::orbit-${env_name}-*-scratch-${account_id}-${deploy_id}
+              - arn:aws:s3:::orbit-${env_name}-toolkit-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::orbit-${env_name}-toolkit-${account_id}-${deploy_id}
+              - arn:aws:s3:::orbit-${env_name}-cdk-toolkit-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::orbit-${env_name}-cdk-toolkit-${account_id}-${deploy_id}
+          - Effect: Allow
+            Action:
+              - codebuild:CreateReportGroup
+              - codebuild:CreateReport
+              - codebuild:UpdateReport
+              - codebuild:BatchPutTestCases
+              - codebuild:BatchPutCodeCoverages
+            Resource:
+              - arn:aws:codebuild:*
+          - Effect: Allow
+            Action:
+              - codebuild:StartBuild
+              - codebuild:BatchGetBuilds
+            Resource:
+              - arn:aws:codebuild:${region}:${account_id}:project/orbit-${env_name}
+          - Effect: Allow
+            Action:
+              - ecr:*
+            Resource:
+              - arn:aws:ecr:${region}:${account_id}:repository/orbit-${env_name}-*
+          - Effect: Allow
+            Action:
+              - states:*
+            Resource:
+              - arn:aws:states:${region}:${account_id}:stateMachine:orbit-${env_name}-*
+          - Effect: Allow
+            Action:
+              - cloudformation:*
+            Resource:
+              - arn:aws:cloudformation:${region}:${account_id}:stack/orbit-${env_name}*
+              - arn:aws:cloudformation:${region}:${account_id}:stack/eksctl-orbit-${env_name}*
+          - Effect: Allow
+            Action:
+              - iam:CreateRole
+              - iam:AttachRolePolicy
+              - iam:PutRolePolicy
+              - iam:DetachRolePolicy
+              - iam:DeleteRolePolicy
+              - iam:DeleteRole
+              - iam:TagRole
+              - iam:UntagRole
+              - iam:ListRoleTags
+              - iam:PassRole
+              - iam:ListAttachedRolePolicies
+              - iam:UpdateAssumeRolePolicy
+            Resource:
+              - arn:aws:iam::${account_id}:role/orbit-${env_name}-*
+              - arn:aws:iam::${account_id}:role/eksctl-orbit-${env_name}-*
+          - Effect: Allow
+            Action:
+              - iam:CreateServiceLinkedRole
+            Resource:
+              - arn:aws:iam::${account_id}:role/aws-service-role/eks-nodegroup.amazonaws.com/AWSServiceRoleForAmazonEKSNodegroup
+              - arn:aws:iam::${account_id}:role/aws-service-role/eks-fargate.amazonaws.com/AWSServiceRoleForAmazonEKSForFargate
+          - Effect: Allow
+            Action:
+              - iam:AddClientIDToOpenIDConnectProvider
+              - iam:CreateOpenIDConnectProvider
+              - iam:DeleteOpenIDConnectProvider
+              - iam:GetOpenIDConnectProvider
+              - iam:ListOpenIDConnectProviders
+              - iam:UpdateOpenIDConnectProviderThumbprint
+            Resource:
+              - arn:aws:iam::${account_id}:oidc-provider/oidc.eks.${region}.amazonaws.com*
+          - Effect: Allow
+            Action:
+              - iam:CreatePolicy
+              - iam:DeletePolicy
+              - iam:CreatePolicyVersion
+              - iam:DeletePolicyVersion
+            Resource:
+              - arn:aws:iam::${account_id}:policy/orbit-${env_name}-*
+          - Effect: Allow
+            Action:
+              - ssm:GetParameters
+              - ssm:DescribeParameters
+              - ssm:GetParameter
+              - ssm:DescribeParameter
+              - ssm:PutParameter
+              - ssm:AddTagsToResource
+              - ssm:DeleteParameter
+            Resource:
+              - arn:aws:ssm:${region}:${account_id}:parameter/orbit/${env_name}/manifest
+              - arn:aws:ssm:${region}:${account_id}:parameter/orbit/${env_name}/teams/*
+              - arn:aws:ssm:${region}:${account_id}:parameter/orbit/${env_name}/demo
+          - Effect: Allow
+            Action:
+              - kms:*
+            Resource:
+              - arn:aws:kms:${region}:${account_id}:alias/orbit-{env_name}*
+              - arn:aws:kms:${region}:${account_id}:key/*
+          - Effect: Allow
+            Action:
+              - eks:*
+            Resource:
+              - arn:aws:eks:${region}:${account_id}:cluster/orbit-${env_name}
+              - arn:aws:eks:${region}:${account_id}:cluster/orbit-${env_name}/*
+              - arn:aws:eks:${region}:${account_id}:nodegroup/orbit-${env_name}/*
+              - arn:aws:eks:${region}:${account_id}:fargateprofile/orbit-${env_name}/*
+          - Effect: Allow
+            Action:
+              - ecs:*
+            Resource:
+              - arn:aws:ecs:${region}:${account_id}:cluster/orbit-${env_name}-*
+          - Effect: Allow
+            Action:
+              - lambda:*
+            Resource:
+              - arn:aws:lambda:${region}:${account_id}:function:orbit-${env_name}-*
+          - Effect: Allow
+            Action:
+              - codeartifact:GetAuthorizationToken
+              - codeartifact:GetRepositoryEndpoint
+              - codeartifact:ReadFromRepository
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - sts:GetServiceBearerToken
+            Resource: '*'
+            Condition:
+              StringEquals:
+                sts:AWSServiceName: codeartifact.amazonaws.com
+          - Effect: Allow
+            Action:
+              - codecommit:*
+            Resource:
+              - arn:aws:codecommit:${region}:${account_id}:orbit-${env_name}-*
+        Version: '2012-10-17'
+      Description: ''
+      ManagedPolicyName: orbit-${env_name}-admin
+      Path: /
+  AdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      ManagedPolicyArns:
+        - Ref: ManagedPolicy
+        - arn:aws:iam::aws:policy/AWSServiceCatalogAdminFullAccess
+      RoleName: orbit-${env_name}-admin
+      MaxSessionDuration: 10000
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service: sagemaker.amazonaws.com
+            Action: sts:AssumeRole
+  CodeBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: orbit-${env_name}
+      Tags:
+        - Key: Env
+          Value: orbit-${env_name}
+      Description: Orbit Workbench CLI backend.
+      ServiceRole: !Ref AdminRole
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: aws/codebuild/standard:4.0
+      Source:
+        Type: NO_SOURCE
+        BuildSpec:  |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                python: 3.7
+                nodejs: 12
+            build:
+              commands:
+                - ls -la
+      TimeoutInMinutes: 120
+      LogsConfig:
+        CloudWatchLogs:
+          Status: ENABLED
+          GroupName: /aws/codebuild/orbit-${env_name}
+        S3Logs:
+          Status: DISABLED
+  KmsKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/orbit-${env_name}-${deploy_id}
+      TargetKeyId:
+        Ref: KmsKey
+  KmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Tags:
+        - Key: Env
+          Value: orbit-${env_name}
+      Description: Orbit Workbench key for ${env_name}.
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: orbit-${env_name}
+        Statement:
+          - Sid: Enable IAM User Permissions
+            Effect: Allow
+            Principal:
+              AWS: arn:aws:iam::${account_id}:root
+            Action: kms:*
+            Resource: '*'
+          - Sid: Allow administration of the key
+            Effect: Allow
+            Principal:
+              AWS:
+                Ref: AWS::AccountId
+            Action:
+              - kms:Create*
+              - kms:Describe*
+              - kms:Enable*
+              - kms:List*
+              - kms:Put*
+              - kms:Update*
+              - kms:Revoke*
+              - kms:Disable*
+              - kms:Get*
+              - kms:Delete*
+              - kms:ScheduleKeyDeletion
+              - kms:CancelKeyDeletion
+            Resource: '*'
+Outputs:
+  DeployId:
+    Value: '${deploy_id}'
+    Export:
+      Name: orbit-${env_name}-deploy-id
+  KmsKeyArn:
+    Value:
+      Fn::GetAtt:
+        - KmsKey
+        - Arn
+    Export:
+      Name: orbit-${env_name}-kms-arn

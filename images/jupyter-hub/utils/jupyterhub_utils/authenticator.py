@@ -23,14 +23,14 @@ from tornado.web import RequestHandler
 from jupyterhub_utils.ssm import ENV_NAME
 
 
-class DataMakerAuthenticator(Authenticator):  # type: ignore
+class OrbitWorkbenchAuthenticator(Authenticator):  # type: ignore
     def authenticate(self, handler: RequestHandler, data: Dict[str, str]) -> Any:
         app_log.info("data: %s", data)
         if handler.request.uri is None:
             raise RuntimeError("Empty URI.")
         token: str = self._get_token(url=handler.request.uri)
         response: Dict[str, Any] = boto3.client("lambda").invoke(
-            FunctionName=f"datamaker-{ENV_NAME}-token-validation",
+            FunctionName=f"orbit-{ENV_NAME}-token-validation",
             InvocationType="RequestResponse",
             Payload=json.dumps({"token": token}).encode("utf-8"),
         )

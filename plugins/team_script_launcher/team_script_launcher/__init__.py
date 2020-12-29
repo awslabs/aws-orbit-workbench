@@ -16,12 +16,12 @@ import logging
 import os
 from typing import Any, Dict
 
-from datamaker_cli import sh
-from datamaker_cli.manifest import Manifest
-from datamaker_cli.manifest.team import TeamManifest
-from datamaker_cli.plugins import hooks
-from datamaker_cli import utils
-_logger: logging.Logger = logging.getLogger("datamaker_cli")
+from aws_orbit import sh
+from aws_orbit.manifest import Manifest
+from aws_orbit.manifest.team import TeamManifest
+from aws_orbit.plugins import hooks
+from aws_orbit import utils
+_logger: logging.Logger = logging.getLogger("aws_orbit")
 POD_FILENAME = os.path.join(os.path.dirname(__file__), "job_definition.yaml")
 
 
@@ -47,10 +47,11 @@ def deploy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, para
         raise Exception(f"Plugin {plugin_id} must define parameter 'script'")
     script_file = os.path.join(os.path.dirname(POD_FILENAME), f"{plugin_id}-script.sh")
 
-    script_file = utils.resolve_parameters(script_file,vars)
+    script_body = utils.resolve_parameters(script_body,vars)
     with open(script_file, "w") as file:
         file.write(script_body)
 
+    _logger.debug(script_body)
     # Cleanup of previous installation if needed
     sh.run(f"kubectl delete jobs/team-script-{plugin_id} --namespace {team_manifest.name} --ignore-not-found")
     sh.run(f"kubectl delete configmap {configmap_script_name} --namespace {team_manifest.name} --ignore-not-found")

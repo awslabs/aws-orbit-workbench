@@ -9,7 +9,7 @@ https://github.com/awslabs/aws-eks-data-maker/issues/<NUMBER>
 ----------
 ### Do not change content below. Mark applicable check boxes only.
 
-Thank you for submitting a contribution to AWS EKS Data Maker.
+Thank you for submitting a contribution to AWS Orbit Workbench.
 
 In order to streamline the review of the contribution we ask you
 to ensure the following steps have been taken:

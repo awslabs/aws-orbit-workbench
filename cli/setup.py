@@ -20,7 +20,7 @@ from setuptools import find_packages, setup
 
 here = os.path.abspath(os.path.dirname(__file__))
 about: Dict[str, str] = {}
-path = os.path.join(here, "datamaker_cli", "__metadata__.py")
+path = os.path.join(here, "aws_orbit", "__metadata__.py")
 with open(file=path, mode="r", encoding="utf-8") as f:
     exec(f.read(), about)
 
@@ -32,17 +32,17 @@ setup(
     version=version,
     description=about["__description__"],
     license=about["__license__"],
-    packages=find_packages(include=["datamaker_cli", "datamaker_cli.*"]),
+    packages=find_packages(include=["aws_orbit", "aws_orbit.*"]),
     python_requires=">=3.6, <3.9",
     install_requires=open("requirements.txt").read().strip().split("\n"),
-    entry_points={"console_scripts": ["datamaker = datamaker_cli.__main__:main"]},
+    entry_points={"console_scripts": ["orbit = aws_orbit.__main__:main"]},
     classifiers=[
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],
     package_data={
-        "datamaker_cli": [
+        "aws_orbit": [
             "data/kubectl/apps/*.yaml",
             "data/kubectl/efs_driver/*/*.yaml",
             "data/toolkit/*.yaml",

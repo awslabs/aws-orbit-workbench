@@ -19,5 +19,5 @@
 
 set -ex
 
-aws codeartifact login --tool pip --domain aws-datamaker --repository python-repository
+aws codeartifact login --tool pip --domain aws-orbit --repository python-repository
 cp ~/.config/pip/pip.conf .

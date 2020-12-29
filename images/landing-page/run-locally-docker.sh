@@ -36,4 +36,4 @@ docker run \
     -p 8080:80 \
     --rm \
     -it \
-    datamaker-landing-page
+    orbit-landing-page

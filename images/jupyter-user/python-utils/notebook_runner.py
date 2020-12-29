@@ -148,7 +148,7 @@ def prepareNotebook(default_output_directory, notebook, key):
     outputName = targetPrefix + "@" + timestamp + ".ipynb"
 
     logger.debug(f"Source Path: {sourcePath}")
-    sourcePath = sourcePath.replace("$DATAMAKER_TRANSFORMATION_NOTEBOOKS_ROOT", "/opt/transformations/")
+    sourcePath = sourcePath.replace("$ORBIT_TRANSFORMATION_NOTEBOOKS_ROOT", "/opt/transformations/")
     workdir = os.path.abspath(sourcePath)
 
     pathToNotebook = os.path.join(sourcePath, notebookName)

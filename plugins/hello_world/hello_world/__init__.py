@@ -16,13 +16,13 @@ import logging
 import os
 from typing import Any, Dict, List
 
-from datamaker_cli import sh
-from datamaker_cli.manifest import Manifest
-from datamaker_cli.manifest.team import TeamManifest
-from datamaker_cli.plugins import hooks
-from datamaker_cli.plugins.helpers import cdk_deploy, cdk_destroy
+from aws_orbit import sh
+from aws_orbit.manifest import Manifest
+from aws_orbit.manifest.team import TeamManifest
+from aws_orbit.plugins import hooks
+from aws_orbit.plugins.helpers import cdk_deploy, cdk_destroy
 
-_logger: logging.Logger = logging.getLogger("datamaker_cli")
+_logger: logging.Logger = logging.getLogger("aws_orbit")
 
 PLUGIN_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -32,7 +32,7 @@ def deploy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, para
     _logger.debug("Running hello_world deploy!")
     sh.run(f"echo 'Team name: {team_manifest.name} | Plugin ID: {plugin_id}'")
     cdk_deploy(
-        stack_name=f"datamaker-{manifest.name}-{team_manifest.name}-hello",
+        stack_name=f"orbit-{manifest.name}-{team_manifest.name}-hello",
         app_filename=os.path.join(PLUGIN_ROOT_PATH, "hello_cdk.py"),
         manifest=manifest,
         team_manifest=team_manifest,
@@ -45,7 +45,7 @@ def destroy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, par
     _logger.debug("Running hello_world destroy!")
     sh.run(f"echo 'Team name: {team_manifest.name} | Plugin ID: {plugin_id}'")
     cdk_destroy(
-        stack_name=f"datamaker-{manifest.name}-{team_manifest.name}-hello",
+        stack_name=f"orbit-{manifest.name}-{team_manifest.name}-hello",
         app_filename=os.path.join(PLUGIN_ROOT_PATH, "hello_cdk.py"),
         manifest=manifest,
         team_manifest=team_manifest,

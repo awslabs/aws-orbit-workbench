@@ -18,7 +18,7 @@
 set -ex
 
 LOCAL_NAME=my-custom-jupyter-user
-AWS_REPO_NAME=datamaker-myenv-jupyter-user
+AWS_REPO_NAME=orbit-myenv-jupyter-user
 
 REGION=$(aws configure get region)
 ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)

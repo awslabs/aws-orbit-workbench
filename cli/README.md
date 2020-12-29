@@ -14,7 +14,7 @@
 #    limitations under the License.
 -->
 
-# AWS EKS DataMaker CLI
+# AWS Orbit Workbench CLI
 
 ## Contributing
 
@@ -50,27 +50,27 @@
 
 * `./validate.sh`
 
-### Initiating a DataMaker environment with DEMO and DEV enabled
+### Initiating a Orbit Workbench environment with DEMO and DEV enabled
 
 > The `demo` flag will ensure that a mocked environment will also be deployed.
 >
 > The `dev` flag will ensure that all artifacts will be built from source (W/o DockerHub and PyPi).
 
-* `datamaker init --demo --dev`
+* `orbit init --demo --dev`
 
 ### Deploying
 
-* `datamaker deploy -f my-env.yaml`
+* `orbit deploy -f my-env.yaml`
 
 ### Destroying
 
-* `datamaker destroy -f my-env.yaml`
+* `orbit destroy -f my-env.yaml`
 
 ## 4 - Assuming Admin Role to Access EKS
 
 * Install [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html)
 * Go to the IAM console
-* Find the Admin Role (`arn:aws:iam::{ACCOUNT_ID}:role/datamaker-{ENV_NAME}-admin`).
+* Find the Admin Role (`arn:aws:iam::{ACCOUNT_ID}:role/orbit-{ENV_NAME}-admin`).
 * Add your user or role under the `Trust Relationship` tab.
 
 ```json
@@ -84,7 +84,7 @@
 ```
 
 * Open the temrinal and user the AWS CLI to configure your kubeconfig
-* `aws eks update-kubeconfig --name datamaker-{ENV_NAME} --role-arn arn:aws:iam::{ACCOUNT_ID}:role/datamaker-{ENV_NAME}-admin`
+* `aws eks update-kubeconfig --name orbit-{ENV_NAME} --role-arn arn:aws:iam::{ACCOUNT_ID}:role/orbit-{ENV_NAME}-admin`
 * Validate you access
 * `kubectl get pod -A`
 
