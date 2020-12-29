@@ -14,7 +14,7 @@
 #    limitations under the License.
 -->
 
-# AWS EKS Orbit Workbench CLI
+# AWS Orbit Workbench CLI
 
 ## Contributing
 

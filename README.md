@@ -1,4 +1,4 @@
-# AWS EKS Data Maker
+# AWS Orbit Workbench
 
 Data & ML Unified Development and Production Environment.
 
