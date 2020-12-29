@@ -18,7 +18,7 @@ from typing import Any, Dict, Optional, Sequence
 import click
 import tqdm
 
-COLOR_DATAMAKER = "bright_blue"
+COLOR_ORBIT = "bright_blue"
 COLOR_ERROR = "bright_red"
 COLOR_WARN = "bright_yellow"
 
@@ -27,7 +27,7 @@ PROGRESS_BAR_FORMAT = "{desc} |{bar}| {percentage:3.0f}% "
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def stylize(text: str, color: str = COLOR_DATAMAKER, bold: bool = False, underline: bool = False) -> str:
+def stylize(text: str, color: str = COLOR_ORBIT, bold: bool = False, underline: bool = False) -> str:
     return click.style(text=text, bold=bold, underline=underline, fg=color)
 
 
@@ -147,7 +147,7 @@ class MessagesContext:
         self.echo(tittle=tittle, msg=msg)
 
     def tip(self, msg: str) -> None:
-        tittle: str = stylize(text=" Tip ", color=COLOR_DATAMAKER, bold=False, underline=False)
+        tittle: str = stylize(text=" Tip ", color=COLOR_ORBIT, bold=False, underline=False)
         self.echo(tittle=tittle, msg=msg)
 
     def warn(self, msg: str) -> None:

@@ -378,10 +378,10 @@ cdk.out
 cdk.context.json
 cdk.json
 
-# DataMaker CLI
+# Orbit CLI
 cli/*.yaml
-cli/.datamaker.out
+cli/.orbit.out
 cli/conf/
 
-# DataMaker Images
+# Orbit Images
 images/landing-page/yarn.lock
