@@ -188,7 +188,7 @@ def parse_teams(manifest: "Manifest", raw_teams: List[MANIFEST_FILE_TEAM_TYPE]) 
 
 
 def read_raw_manifest_ssm(manifest: "Manifest", team_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
-    parameter_name: str = f"/datamaker/{manifest.name}/teams/{team_name}/manifest"
+    parameter_name: str = f"/orbit/{manifest.name}/teams/{team_name}/manifest"
     _logger.debug("Trying to read manifest from SSM parameter (%s).", parameter_name)
     client = manifest.boto3_client(service_name="ssm")
     try:

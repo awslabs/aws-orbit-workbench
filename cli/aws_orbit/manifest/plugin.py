@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Union, cast
 from aws_orbit import utils
 
 if TYPE_CHECKING:
-    from datamaker_cli.manifest.team import MANIFEST_FILE_TEAM_TYPE, MANIFEST_TEAM_TYPE
+    from orbit_cli.manifest.team import MANIFEST_FILE_TEAM_TYPE, MANIFEST_TEAM_TYPE
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
