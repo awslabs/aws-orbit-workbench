@@ -15,9 +15,12 @@
 import collections
 import logging
 from pprint import pformat
-from typing import Any, Dict, List, Optional, Set, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Union, cast
 
 from aws_orbit import utils
+
+if TYPE_CHECKING:
+    from datamaker_cli.manifest.team import MANIFEST_FILE_TEAM_TYPE, MANIFEST_TEAM_TYPE
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -67,3 +70,19 @@ class PluginManifest:
     @property
     def parameters(self) -> Dict[str, Any]:
         return self._parameters
+
+
+def parse_plugins(team: Union["MANIFEST_FILE_TEAM_TYPE", "MANIFEST_TEAM_TYPE"]) -> List[PluginManifest]:
+    if "plugins" in team:
+        raw: List[MANIFEST_FILE_PLUGIN_TYPE] = cast(List[MANIFEST_FILE_PLUGIN_TYPE], team["plugins"])
+        plugins_manifest_checks(team_name=cast(str, team["name"]), plugins=raw)
+        return [
+            PluginManifest(
+                plugin_id=cast(str, p["id"]),
+                module=cast(str, p.get("module", None)),
+                path=cast(str, p["path"]),
+                parameters=cast(Dict[str, Any], p.get("parameters", {})),
+            )
+            for p in raw
+        ]
+    return []

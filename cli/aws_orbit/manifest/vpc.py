@@ -97,3 +97,25 @@ class VpcManifest:
             "availability-zones": self.availability_zones,
             "subnets": [s.asdict() for s in self.subnets],
         }
+
+
+def parse_vpc(manifest: "Manifest") -> VpcManifest:
+    subnets: List[SubnetManifest] = []
+
+    if manifest.internet_accessible:
+        for s in manifest.nodes_subnets:
+            _logger.debug("Adding private subnet %s in the manifest.", s)
+            subnets.append(SubnetManifest(manifest=manifest, subnet_id=s, kind=SubnetKind.private))
+    else:
+        for s in manifest.nodes_subnets:
+            _logger.debug("Adding isolated subnet %s in the manifest.", s)
+            subnets.append(SubnetManifest(manifest=manifest, subnet_id=s, kind=SubnetKind.isolated))
+
+    for s in manifest.load_balancers_subnets:
+        _logger.debug("Adding public subnet %s in the manifest.", s)
+        subnets.append(SubnetManifest(manifest=manifest, subnet_id=s, kind=SubnetKind.public))
+
+    return VpcManifest(
+        manifest=manifest,
+        subnets=subnets,
+    )

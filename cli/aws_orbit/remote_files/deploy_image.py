@@ -44,7 +44,7 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug("DockerHub and ECR Logged in")
 
     changes: changeset.Changeset = changeset.read_changeset_file(
-        filename=os.path.join(manifest.filename_dir, "changeset.json")
+        manifest=manifest, filename=os.path.join(manifest.filename_dir, "changeset.json")
     )
     _logger.debug(f"Changeset: {changes.asdict()}")
     _logger.debug("Changeset loaded")
