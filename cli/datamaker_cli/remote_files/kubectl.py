@@ -15,6 +15,7 @@
 import logging
 import os
 import shutil
+from pprint import pformat
 from typing import TYPE_CHECKING, List, Optional
 
 import yaml
@@ -178,6 +179,7 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
         "\n".join(sh.run_iterating(f"kubectl get configmap --context {context} -o yaml -n kube-system aws-auth")),
         Loader=yaml.SafeLoader,
     )
+    _logger.debug("config_map:\n%s", pformat(config_map))
     map_roles = yaml.load(config_map["data"]["mapRoles"], Loader=yaml.SafeLoader)
     team_usernames = {f"datamaker-{manifest.name}-{t.name}-runner" for t in manifest.teams}
     admin_usernames = {
