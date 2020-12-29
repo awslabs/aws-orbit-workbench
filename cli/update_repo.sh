@@ -9,7 +9,7 @@ aws codeartifact login --tool twine --domain aws-orbit --repository python-repos
 aws codeartifact delete-package-versions \
     --domain aws-orbit \
     --repository python-repository \
-    --package orbit-cli \
+    --package aws-orbit \
     --versions $VERSION \
     --format pypi
 
