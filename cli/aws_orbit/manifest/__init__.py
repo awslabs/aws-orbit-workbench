@@ -22,8 +22,6 @@ import botocore.config
 import botocore.exceptions
 import yaml
 from aws_orbit import utils
-from aws_orbit.manifest.plugin import MANIFEST_FILE_PLUGIN_TYPE, PluginManifest, plugins_manifest_checks
-from aws_orbit.manifest.subnet import SubnetKind, SubnetManifest
 from aws_orbit.manifest.team import MANIFEST_FILE_TEAM_TYPE, TeamManifest, parse_teams
 from aws_orbit.manifest.vpc import MANIFEST_FILE_VPC_TYPE, MANIFEST_VPC_TYPE, VpcManifest, parse_vpc
 from aws_orbit.services import cognito
