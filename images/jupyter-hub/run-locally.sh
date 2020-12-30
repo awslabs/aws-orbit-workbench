@@ -17,19 +17,24 @@
 
 set -ex
 
-AWS_ACCESS_KEY_ID=$(aws --profile default configure get aws_access_key_id)
-AWS_SECRET_ACCESS_KEY=$(aws --profile default configure get aws_secret_access_key)
 AWS_DEFAULT_REGION=$(aws configure get region)
+`(isengardcli creds)`
+
+
 
 docker run \
     -e JUPYTERHUB_PRIVATE_SERVICE_HOST=127.0.0.1 \
     -e JUPYTERHUB_PRIVATE_SERVICE_PORT=8005 \
     -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
     -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+    -e AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN} \
     -e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} \
-    -e TEAM=data-engineering \
-    -e ENV_NAME=env \
+    -e GRANT_SUDO=${GRANT_SUDO} \
+    -e TEAM=lake-creator \
+    -e ENV_NAME=dev-env \
     -p 8005:8005 \
+    -p 8000:8000 \
+    -p 8001:8001 \
     --rm \
     -it \
-    orbit-jupyter-hub
+    orbit-jupyter-hub:1.0
