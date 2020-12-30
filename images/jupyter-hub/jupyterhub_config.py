@@ -17,6 +17,7 @@
 import json
 import os
 import sys
+
 import boto3
 from tornado.log import app_log
 
@@ -69,14 +70,9 @@ c.JupyterHub.allow_named_servers = True
 c.JupyterHub.named_server_limit_per_user = 5
 c.JupyterHub.services = [
     {
-        'name': 'idle-culler',
-        'admin': True,
-        'command': [
-            sys.executable,
-            '-m', 'jupyterhub_idle_culler',
-            '--remove-named-servers=True',
-            '--timeout=28800'
-        ],
+        "name": "idle-culler",
+        "admin": True,
+        "command": [sys.executable, "-m", "jupyterhub_idle_culler", "--remove-named-servers=True", "--timeout=28800"],
     }
 ]
 profile_list_default = [
@@ -104,6 +100,7 @@ profile_list_default = [
         "default": True,
     },
 ]
+
 
 def per_user_profiles(spawner):
     team = spawner.environment["ORBIT_TEAM_SPACE"]

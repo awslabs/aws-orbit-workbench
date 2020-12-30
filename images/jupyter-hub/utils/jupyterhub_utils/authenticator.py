@@ -17,10 +17,12 @@ from typing import Any, Dict, Tuple, Union, cast
 
 import boto3
 from jupyterhub.auth import Authenticator
+from tornado.httpclient import HTTPError
 from tornado.log import app_log
 from tornado.web import RequestHandler
-from tornado.httpclient import HTTPRequest, AsyncHTTPClient, HTTPError
+
 from jupyterhub_utils.ssm import ENV_NAME
+
 
 class OrbitWorkbenchAuthenticator(Authenticator):  # type: ignore
     def authenticate(self, handler: RequestHandler, data: Dict[str, str]) -> Any:
@@ -40,7 +42,7 @@ class OrbitWorkbenchAuthenticator(Authenticator):  # type: ignore
         claims: Dict[str, Union[str, int]] = json.loads(response["Payload"].read().decode("utf-8"))
         app_log.info("claims: %s", claims)
         if "cognito:username" not in claims or claims.get("cognito:username") is None:
-            if 'errorMessage' in claims:
+            if "errorMessage" in claims:
                 app_log.error(f"Failed authentication with error: {claims['errorMessage']}")
                 return
             else:
