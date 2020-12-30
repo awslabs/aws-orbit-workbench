@@ -65,6 +65,8 @@ c.KubeSpawner.volume_mounts = [{"mountPath": "/efs", "name": "efs-volume"}]
 c.KubeSpawner.lifecycle_hooks = {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh"]}}}
 c.KubeSpawner.node_selector = {"team": TEAM}
 c.KubeSpawner.service_account = "jupyter-user"
+c.JupyterHub.allow_named_servers = True
+c.JupyterHub.named_server_limit_per_user = 5
 c.JupyterHub.services = [
     {
         'name': 'idle-culler',
@@ -73,7 +75,7 @@ c.JupyterHub.services = [
             sys.executable,
             '-m', 'jupyterhub_idle_culler',
             '--remove-named-servers=True',
-            '--timeout=300'
+            '--timeout=28800'
         ],
     }
 ]
@@ -102,7 +104,6 @@ profile_list_default = [
         "default": True,
     },
 ]
-
 
 def per_user_profiles(spawner):
     team = spawner.environment["ORBIT_TEAM_SPACE"]
