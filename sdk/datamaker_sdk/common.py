@@ -151,7 +151,11 @@ def get_scratch_database() -> str:
     glue = boto3.client("glue")
     response = glue.get_databases()
     workspace = get_workspace()
-    scratch_db_name = f"scratch_db_{workspace['env_name']}_{workspace['team_space']}".lower().replace("-", "_")
+    scratch_db_name = (
+        f"scratch_db_{workspace['env_name']}_{workspace['team_space']}".lower().replace(
+            "-", "_"
+        )
+    )
     new_location = f"s3://{workspace['scratch-bucket']}/{workspace['team_space']}/{scratch_db_name}"
     for db in response["DatabaseList"]:
         if db["Name"].lower() == scratch_db_name:
@@ -185,8 +189,18 @@ def get_stepfunctions_waiter_config(delay: int, max_attempts: int) -> Dict[str, 
                 "delay": delay,
                 "maxAttempts": max_attempts,
                 "acceptors": [
-                    {"matcher": "path", "expected": "SUCCEEDED", "argument": "status", "state": "success"},
-                    {"matcher": "path", "expected": "RUNNING", "argument": "status", "state": "retry"},
+                    {
+                        "matcher": "path",
+                        "expected": "SUCCEEDED",
+                        "argument": "status",
+                        "state": "success",
+                    },
+                    {
+                        "matcher": "path",
+                        "expected": "RUNNING",
+                        "argument": "status",
+                        "state": "retry",
+                    },
                     {
                         "matcher": "path",
                         "expected": "FAILED",

@@ -17,13 +17,13 @@ import logging
 import os
 import time
 import urllib
-from botocore.waiter import WaiterModel, create_waiter_with_client
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import boto3
 import pandas as pd
+from botocore.waiter import WaiterModel, create_waiter_with_client
 
 from datamaker_sdk.common import get_properties, get_stepfunctions_waiter_config
 
@@ -597,71 +597,112 @@ def wait_for_tasks_to_complete(
 
     """
     sfn = boto3.client("stepfunctions")
-    ecs = boto3.client("ecs")
     logs = boto3.client("logs")
-    paginator = logs.get_paginator("filter_log_events")
 
     props = get_properties()
 
-    waiter_model = WaiterModel(get_stepfunctions_waiter_config(delay=delay, max_attempts=maxAttempts))
-    waiter = create_waiter_with_client("ExecutionComplete", waiter_model, sfn)
+    waiter_model = WaiterModel(
+        get_stepfunctions_waiter_config(delay=delay, max_attempts=maxAttempts)
+    )
+    waiter = waiter_model.get_waiter("ExecutionComplete")
 
-    for task in tasks:
-        waiter.wait(executionArn=task["ExecutionArn"])
-        waiter = ecs.get_waiter("tasks_stopped")
-    else:
-        log_configs = {
-            "ECSLogs": {
-                "LogGroupName": f"/datamaker/tasks/{props['AWS_DATAMAKER_ENV']}/{props['DATAMAKER_TEAM_SPACE']}/containers",
-                "LogStreams": []
-            },
-            "EKSLogs": {
-                "LogGroupName": f"/datamaker/pods/{props['AWS_DATAMAKER_ENV']}",
-                "LogStreams": []
-            }
-        }
-        for task in tasks:
+    completed_tasks = []
+    errored_tasks = []
+    attempts = 0
+
+    while True:
+        incomplete_tasks = []
+        attempts += 1
+
+        while tasks:
+            task = tasks.pop(0)
+            response = sfn.describe_execution(executionArn=task["ExecutionArn"])
+
+            for acceptor in waiter.acceptors:
+                if acceptor.matcher_func(response):
+                    task["State"] = acceptor.state
+                    if acceptor.state == "success":
+                        completed_tasks.append(task)
+                        break
+                    elif acceptor.state == "failure":
+                        errored_tasks.append(task)
+                        break
+            else:
+                if "Error" in response:
+                    task["State"] = response["Error"].get("Message", "Unknown")
+                    errored_tasks.append(task)
+                else:
+                    incomplete_tasks.append(task)
+
+        tasks = incomplete_tasks
+
+        if not tasks:
+            logger.info("All tasks stopped")
+            break
+
+        if attempts >= maxAttempts:
+            logger.info("Stopped waiting as maxAttempts reached")
+            break
+
+        time.sleep(delay)
+
+    if tail_log:
+
+        def log_config(task):
             if task["ExecutionType"] == "ecs":
-            id = task["Identifier"].split("/")[2]
-            log_configs["ECSLogs"]["LogStreams"].append(
-                f"datamaker-{props['AWS_DATAMAKER_ENV']}-{props['DATAMAKER_TEAM_SPACE']}/datamaker-runner/{id}"
-            )
+                id = task["Identifier"].split("/")[2]
+                return {
+                    "Identifier": task["Identifier"],
+                    "LogGroupName": f"/datamaker/tasks/{props['AWS_DATAMAKER_ENV']}/{props['DATAMAKER_TEAM_SPACE']}/containers",
+                    "LogStreamName": f"datamaker-{props['AWS_DATAMAKER_ENV']}-{props['DATAMAKER_TEAM_SPACE']}/datamaker-runner/{id}",
+                }
+            elif task["ExecutionType"] == "eks":
+                log_group = f"/datamaker/pods/{props['AWS_DATAMAKER_ENV']}"
+                prefix = f"fluent-bit-kube.var.log.containers.{task['Identifier']}-"
+                response = logs.describe_log_streams(
+                    logGroupName=log_group, logStreamNamePrefix=prefix
+                )
+                log_streams = response.get("logStreams", [])
+                if log_streams:
+                    return {
+                        "Identifier": task["Identifier"],
+                        "LogGroupName": log_group,
+                        "LogStreamName": log_streams[0]["logStreamName"],
+                    }
+                else:
+                    return None
+            else:
+                return None
 
-        logger.info("waiting until tasks start running")
+        def print_logs(type, log_configs):
+            if not log_configs:
+                return
 
-        try:
-            ecs.get_waiter("tasks_running").wait(
-                cluster=clusterName,
-                tasks=ecs_tasks,
-                WaiterConfig={"Delay": delay, "MaxAttempts": maxAttempts},
-            )
-            logger.info("Tasks started running...")
-        except:
-            logger.info("tasks already been terminated")
+            print("-" * 20 + f" {type} " + "-" * 20)
+            for log_config in log_configs:
+                if log_config is None:
+                    continue
 
-        remainingDelay = delay
-        lastTime = 0
-        try:
-            while True:
-                lastTime = logEvents(paginator, logGroupName, logStreams, lastTime)
-                tasks_state = ecs.describe_tasks(cluster=clusterName, tasks=ecs_tasks)
+                print(f"Identifier: {log_config['Identifier']}")
+                response = logs.get_log_events(
+                    logGroupName=log_config["LogGroupName"],
+                    logStreamName=log_config["LogStreamName"],
+                    limit=20,
+                )
 
-                if all_tasks_stopped(tasks_state):
-                    logger.info("All tasks stopped")
-                    return
+                for e in response.get("events", []):
+                    print(
+                        datetime.fromtimestamp(e["timestamp"] / 1000).strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        ),
+                        e["message"],
+                    )
+                else:
+                    print()
 
-                if remainingDelay < 0:
-                    maxAttempts -= 1
-                    remainingDelay = delay
-                if maxAttempts < 0:
-                    logger.info("Stopped waiting as maxAttempts reached")
-                    return
-                throttle = 10
-                time.sleep(throttle)
-                remainingDelay -= throttle
-        except Exception as ex:
-            logger.error(ex)
-            logger.error("Error logging from %s.%s", logGroupName, ",".join(logStreams))
+        print_logs("Completed", [log_config(t) for t in completed_tasks])
+        print_logs("Errored", [log_config(t) for t in errored_tasks])
+        print_logs("Running", [log_config(t) for t in tasks])
 
 
 def logEvents(paginator: Any, logGroupName: Any, logStreams: Any, fromTime: Any) -> int:
