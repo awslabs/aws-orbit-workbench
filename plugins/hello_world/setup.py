@@ -17,7 +17,7 @@ from setuptools import setup
 setup(
     name="hello_world",
     version="0.0b0",
-    description="Minimal DataMaker Plugin.",
+    description="Minimal Orbit Workbench Plugin.",
     license="Apache License 2.0",
     packages=["hello_world"],
     python_requires=">=3.6, <3.9",

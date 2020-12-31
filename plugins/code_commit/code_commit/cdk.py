@@ -18,9 +18,9 @@ from typing import Any, Dict
 import aws_cdk.aws_codecommit as codecommit
 import aws_cdk.aws_iam as iam
 from aws_cdk.core import Construct, Environment, Stack, Tags
-from datamaker_cli.manifest import Manifest
-from datamaker_cli.manifest.team import TeamManifest
-from datamaker_cli.plugins.helpers import cdk_handler
+from aws_orbit.manifest import Manifest
+from aws_orbit.manifest.team import TeamManifest
+from aws_orbit.plugins.helpers import cdk_handler
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -36,12 +36,12 @@ class Team(Stack):
             stack_name=id,
             env=Environment(account=manifest.account_id, region=manifest.region),
         )
-        Tags.of(scope=self).add(key="Env", value=f"datamaker-{manifest.name}")
+        Tags.of(scope=self).add(key="Env", value=f"orbit-{manifest.name}")
 
         repo: codecommit.Repository = codecommit.Repository(
             scope=self,
             id="repo",
-            repository_name=f"datamaker-{manifest.name}-{team_manifest.name}",
+            repository_name=f"orbit-{manifest.name}-{team_manifest.name}",
         )
 
         team_role: iam.Role = iam.Role.from_role_arn(

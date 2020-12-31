@@ -17,29 +17,37 @@ from typing import Any, Dict, Tuple, Union, cast
 
 import boto3
 from jupyterhub.auth import Authenticator
+from tornado.httpclient import HTTPError
 from tornado.log import app_log
 from tornado.web import RequestHandler
 
 from jupyterhub_utils.ssm import ENV_NAME
 
 
-class DataMakerAuthenticator(Authenticator):  # type: ignore
+class OrbitWorkbenchAuthenticator(Authenticator):  # type: ignore
     def authenticate(self, handler: RequestHandler, data: Dict[str, str]) -> Any:
         app_log.info("data: %s", data)
         if handler.request.uri is None:
-            raise RuntimeError("Empty URI.")
+            app_log.error("Empty URI")
+            return
         token: str = self._get_token(url=handler.request.uri)
         response: Dict[str, Any] = boto3.client("lambda").invoke(
-            FunctionName=f"datamaker-{ENV_NAME}-token-validation",
+            FunctionName=f"orbit-{ENV_NAME}-token-validation",
             InvocationType="RequestResponse",
             Payload=json.dumps({"token": token}).encode("utf-8"),
         )
         if response.get("StatusCode") != 200 or response.get("Payload") is None:
-            raise RuntimeError(f"Invalid Lambda response:\n{response}")
+            app_log.error(f"Invalid Lambda response:\n{response}")
+            return
         claims: Dict[str, Union[str, int]] = json.loads(response["Payload"].read().decode("utf-8"))
         app_log.info("claims: %s", claims)
         if "cognito:username" not in claims or claims.get("cognito:username") is None:
-            raise RuntimeError(f"Invalid claims:\n{claims}")
+            if "errorMessage" in claims:
+                app_log.error(f"Failed authentication with error: {claims['errorMessage']}")
+                return
+            else:
+                app_log.error(f"Failed authentication with unknown return: {claims}")
+                return
         return cast(str, claims["cognito:username"])
 
     @staticmethod
@@ -47,5 +55,5 @@ class DataMakerAuthenticator(Authenticator):  # type: ignore
         app_log.info("url: %s", url)
         parts: Tuple[str, ...] = tuple(url.split(sep="/login?next=%2Fhub%2Fhome&token=", maxsplit=1))
         if len(parts) != 2:
-            raise RuntimeError(f"url: {url}")
+            raise HTTPError(500, f"url: {url}")
         return parts[1]

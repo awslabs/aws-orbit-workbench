@@ -1,0 +1,225 @@
+import json
+import os
+from os.path import expanduser
+from typing import Any, Dict, Tuple
+
+import boto3
+from yaml import safe_load
+
+# Tags
+ORBIT_PRODUCT_KEY = "Product"
+ORBIT_SUBPRODUCT_KEY = "SubProduct"
+ORBIT_SUBPRODUCT_EMR = "EMR"
+ORBIT_PRODUCT_NAME = "Orbit Workbench"
+ORBIT_ENV = "Env"
+ORBIT_TEAM_SPACE = "TeamSpace"
+
+
+def get_properties() -> Dict[str, str]:
+    """
+    Returns the properties and pathnames of the current Orbit Workbench Environment.
+
+    Parameters
+    ----------
+    None
+        None.
+
+    Returns
+    -------
+    prop : dict
+        Dictionary containing pathnames for the Orbit Workbench Enviornment, Team Space, S3 Bucket Path, Orbit Workbench Source
+        Repository and ECS Cluster.
+
+    Example
+    -------
+    >>> from aws_orbit_sdk.common import get_properties
+    >>> props = get_properties()
+    """
+    if "AWS_ORBIT_ENV" in os.environ.keys():
+        if (
+            "ORBIT_TEAM_SPACE" not in os.environ.keys()
+            or "AWS_ORBIT_S3_BUCKET" not in os.environ.keys()
+        ):
+            raise Exception(
+                "if AWS_ORBIT_ENV then ORBIT_TEAM_SPACE, AWS_ORBIT_S3_BUCKET and "
+                "must be set"
+            )
+        else:
+            prop = dict(
+                AWS_ORBIT_ENV=os.environ.get("AWS_ORBIT_ENV", ""),
+                ORBIT_TEAM_SPACE=os.environ.get("ORBIT_TEAM_SPACE", ""),
+                AWS_ORBIT_S3_BUCKET=os.environ.get("AWS_ORBIT_S3_BUCKET", ""),
+            )
+    else:
+        # this path is used by the sagemaker notebooks where we cannot create the env variable in the context of the notebook
+        home = expanduser("~")
+        propFilePath = f"{home}/orbit.yaml"
+        with open(propFilePath, "r") as f:
+            prop = safe_load(f)["properties"]
+
+    prop[
+        "ecs_cluster"
+    ] = f"orbit-{prop['AWS_ORBIT_ENV']}-{prop['ORBIT_TEAM_SPACE']}-cluster"
+    prop["eks_cluster"] = f"orbit-{prop['AWS_ORBIT_ENV']}"
+    return prop
+
+
+def split_s3_path(s3_path: str) -> Tuple[str, str]:
+    """
+    Splits a s3 bucket path to its bucket name and its key with prefixes.
+
+    Parameters
+    ----------
+    s3_path : str
+        s3 bucket path to split.
+
+    Returns
+    -------
+    bucket : str
+        Bucket name derived from the s3 path
+    key : str
+        Object key and prefixes in the s3 bucket
+
+    Example
+    -------
+    >>> from aws_orbit_sdk.common import split_s3_path
+    >>> bucket, key = split_s3_path("s3://my-bucket/prefix/myobject.csv")
+    """
+
+    path_parts = s3_path.replace("s3://", "").split("/")
+    bucket = path_parts.pop(0)
+    key = "/".join(path_parts)
+    return bucket, key
+
+
+def get_workspace() -> Dict[str, str]:
+    """
+    Returns workspace configuration for your given role for your Team Space in a dictionary object.
+
+    Parameters
+    ----------
+    None
+        None.
+
+    Returns
+    -------
+    config : dict
+        Dictionary object containing workspace config. on scratch-bucket, notebook_bucket, role_arn,
+        instance_profile_arn, instance_profile_name, region, env_name, and team-space.
+
+    Example
+    -------
+    >>> from aws_orbit_sdk.common import get_workspace
+    >>> workspace = get_workspace()
+    """
+    ssm = boto3.client("ssm")
+    props = get_properties()
+
+    role_key = f"/orbit/{props['AWS_ORBIT_ENV']}/teams/{props['ORBIT_TEAM_SPACE']}/manifest"
+
+    role_config_str = ssm.get_parameter(Name=role_key)["Parameter"]["Value"]
+
+    config = json.loads(role_config_str)
+    my_session = boto3.session.Session()
+    my_region = my_session.region_name
+    config["region"] = my_region
+    config["env_name"] = props["AWS_ORBIT_ENV"]
+    config["team_space"] = props["ORBIT_TEAM_SPACE"]
+
+    return config
+
+
+def get_scratch_database() -> str:
+    """
+    Creates a new scratch database for the TeamSpace located in the scratch s3 bucket.
+
+    Parameters
+    ----------
+    None
+        None.
+
+    Returns
+    -------
+    scratch_db_name : str
+        Name of the new scratch database
+
+    Example
+    -------
+    >>> from aws_orbit_sdk.common import get_scratch_database
+    >>> scratch_database = get_scratch_database()
+    """
+    glue = boto3.client("glue")
+    response = glue.get_databases()
+    workspace = get_workspace()
+    scratch_db_name = (
+        f"scratch_db_{workspace['env_name']}_{workspace['team_space']}".lower().replace(
+            "-", "_"
+        )
+    )
+    new_location = f"s3://{workspace['scratch-bucket']}/{workspace['team_space']}/{scratch_db_name}"
+    for db in response["DatabaseList"]:
+        if db["Name"].lower() == scratch_db_name:
+            if new_location == db["LocationUri"]:
+                return scratch_db_name
+            else:
+                ## scratch database left from previous teamspace creation , will delete it.
+                glue.delete_database(Name=scratch_db_name)
+
+    response = glue.create_database(
+        DatabaseInput={
+            "Name": scratch_db_name,
+            "Description": f"scratch database for TeamSpace {workspace['env_name']}.{workspace['team_space']}",
+            "LocationUri": new_location,
+            "Parameters": {
+                ORBIT_PRODUCT_KEY: ORBIT_PRODUCT_NAME,
+                ORBIT_ENV: workspace["env_name"],
+                ORBIT_TEAM_SPACE: workspace["team_space"],
+            },
+        }
+    )
+    return scratch_db_name
+
+
+def get_stepfunctions_waiter_config(delay: int, max_attempts: int) -> Dict[str, Any]:
+    return {
+        "version": 2,
+        "waiters": {
+            "ExecutionComplete": {
+                "operation": "DescribeExecution",
+                "delay": delay,
+                "maxAttempts": max_attempts,
+                "acceptors": [
+                    {
+                        "matcher": "path",
+                        "expected": "SUCCEEDED",
+                        "argument": "status",
+                        "state": "success",
+                    },
+                    {
+                        "matcher": "path",
+                        "expected": "RUNNING",
+                        "argument": "status",
+                        "state": "retry",
+                    },
+                    {
+                        "matcher": "path",
+                        "expected": "FAILED",
+                        "argument": "status",
+                        "state": "failure",
+                    },
+                    {
+                        "matcher": "path",
+                        "expected": "TIMED_OUT",
+                        "argument": "status",
+                        "state": "failure",
+                    },
+                    {
+                        "matcher": "path",
+                        "expected": "ABORTED",
+                        "argument": "status",
+                        "state": "failure",
+                    },
+                ],
+            },
+        },
+    }

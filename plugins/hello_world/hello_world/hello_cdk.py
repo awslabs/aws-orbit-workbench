@@ -17,9 +17,9 @@ from typing import Any, Dict
 import aws_cdk.aws_s3 as s3
 import aws_cdk.core as core
 from aws_cdk.core import Construct, Environment, Stack, Tags
-from datamaker_cli.manifest import Manifest
-from datamaker_cli.manifest.team import TeamManifest
-from datamaker_cli.plugins.helpers import cdk_handler
+from aws_orbit.manifest import Manifest
+from aws_orbit.manifest.team import TeamManifest
+from aws_orbit.plugins.helpers import cdk_handler
 
 
 class MyStack(Stack):
@@ -33,11 +33,11 @@ class MyStack(Stack):
             stack_name=id,
             env=Environment(account=manifest.account_id, region=manifest.region),
         )
-        Tags.of(scope=self).add(key="Env", value=f"datamaker-{manifest.name}")
+        Tags.of(scope=self).add(key="Env", value=f"orbit-{manifest.name}")
 
         suffix: str = parameters.get("BucketNameInjection", "foo")
         bucket_name: str = (
-            f"datamaker-{team_manifest.manifest.name}-{team_manifest.name}"
+            f"orbit-{team_manifest.manifest.name}-{team_manifest.name}"
             f"-{suffix}-scratch-{core.Aws.ACCOUNT_ID}-{manifest.deploy_id}"
         )
 

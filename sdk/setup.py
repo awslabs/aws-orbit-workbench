@@ -8,13 +8,13 @@ with open("README.md") as fp:
 
 
 setuptools.setup(
-    name="datamaker-sdk",
+    name="aws-orbit-sdk",
     version=version,
-    description="AWS DataMaker SDK",
+    description="AWS Orbit Workbench SDK",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="author",
-    package_dir={"datamaker_sdk": "datamaker_sdk"},
+    package_dir={"aws_orbit_sdk": "aws_orbit_sdk"},
     packages=setuptools.find_packages(),
     include_package_data=True,
     python_requires=">=3.6",

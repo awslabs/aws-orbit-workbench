@@ -18,4 +18,4 @@
 set -ex
 
 ./build.sh
-docker build -t datamaker-landing-page .
+docker build -t orbit-landing-page .

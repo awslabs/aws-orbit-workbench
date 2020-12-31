@@ -16,22 +16,22 @@ import logging
 import os
 from typing import Any, Dict, List
 
-from datamaker_cli.manifest import Manifest
-from datamaker_cli.manifest.team import TeamManifest
-from datamaker_cli.plugins import hooks
-from datamaker_cli.plugins.helpers import cdk_deploy, cdk_destroy
+from aws_orbit.manifest import Manifest
+from aws_orbit.manifest.team import TeamManifest
+from aws_orbit.plugins import hooks
+from aws_orbit.plugins.helpers import cdk_deploy, cdk_destroy
 
-_logger: logging.Logger = logging.getLogger("datamaker_cli")
+_logger: logging.Logger = logging.getLogger("aws_orbit")
 
-DATAMAKER_CODE_COMMIT_ROOT = os.path.dirname(os.path.abspath(__file__))
+ORBIT_CODE_COMMIT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 @hooks.deploy
 def deploy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
     _logger.debug("Deploying CodeCommit plugin resources for team %s", team_manifest.name)
     cdk_deploy(
-        stack_name=f"datamaker-{manifest.name}-{team_manifest.name}-codecommit",
-        app_filename=os.path.join(DATAMAKER_CODE_COMMIT_ROOT, "cdk.py"),
+        stack_name=f"orbit-{manifest.name}-{team_manifest.name}-codecommit",
+        app_filename=os.path.join(ORBIT_CODE_COMMIT_ROOT, "cdk.py"),
         manifest=manifest,
         team_manifest=team_manifest,
         parameters=parameters,
@@ -42,8 +42,8 @@ def deploy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, para
 def destroy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
     _logger.debug("Destroying CodeCommit plugin resources for team %s", team_manifest.name)
     cdk_destroy(
-        stack_name=f"datamaker-{manifest.name}-{team_manifest.name}-codecommit",
-        app_filename=os.path.join(DATAMAKER_CODE_COMMIT_ROOT, "cdk.py"),
+        stack_name=f"orbit-{manifest.name}-{team_manifest.name}-codecommit",
+        app_filename=os.path.join(ORBIT_CODE_COMMIT_ROOT, "cdk.py"),
         manifest=manifest,
         team_manifest=team_manifest,
         parameters=parameters,
@@ -81,7 +81,7 @@ configs='
 echo "$configs" > /home/jovyan/.gitconfig
 
 REPO_LOCAL_PATH="/efs/"${USERNAME}"/codecommit"
-REPO_ADDRESS="https://git-codecommit.${AWS_DEFAULT_REGION}.amazonaws.com/v1/repos/datamaker-${AWS_DATAMAKER_ENV}-${DATAMAKER_TEAM_SPACE}"
+REPO_ADDRESS="https://git-codecommit.${AWS_DEFAULT_REGION}.amazonaws.com/v1/repos/orbit-${AWS_ORBIT_ENV}-${ORBIT_TEAM_SPACE}"
 
 if [ ! -d "${REPO_LOCAL_PATH}" ] ; then
     git clone "${REPO_ADDRESS}" "${REPO_LOCAL_PATH}"

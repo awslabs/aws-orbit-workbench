@@ -16,11 +16,12 @@
 
 import json
 import os
+import sys
 
 import boto3
 from tornado.log import app_log
 
-from jupyterhub_utils.authenticator import DataMakerAuthenticator
+from jupyterhub_utils.authenticator import OrbitWorkbenchAuthenticator
 from jupyterhub_utils.ssm import ACCOUNT_ID, ENV_NAME, GRANT_SUDO, IMAGE, REGION, TEAM, TOOLKIT_S3_BUCKET
 
 app_log.info("ACCOUNT_ID: %s", ACCOUNT_ID)
@@ -51,11 +52,11 @@ c.KubeSpawner.namespace = TEAM
 c.KubeSpawner.environment = {
     "USERNAME": lambda spawner: str(spawner.user.name),
     "JUPYTER_ENABLE_LAB": "true",
-    "DATAMAKER_TEAM_SPACE": TEAM,
-    "AWS_DATAMAKER_ENV": ENV_NAME,
+    "ORBIT_TEAM_SPACE": TEAM,
+    "AWS_ORBIT_ENV": ENV_NAME,
     "AWS_DEFAULT_REGION": REGION,
     "ACCOUNT_ID": ACCOUNT_ID,
-    "AWS_DATAMAKER_S3_BUCKET": TOOLKIT_S3_BUCKET,
+    "AWS_ORBIT_S3_BUCKET": TOOLKIT_S3_BUCKET,
     "GRANT_SUDO": GRANT_SUDO,
 }
 c.KubeSpawner.image = IMAGE
@@ -65,6 +66,15 @@ c.KubeSpawner.volume_mounts = [{"mountPath": "/efs", "name": "efs-volume"}]
 c.KubeSpawner.lifecycle_hooks = {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh"]}}}
 c.KubeSpawner.node_selector = {"team": TEAM}
 c.KubeSpawner.service_account = "jupyter-user"
+c.JupyterHub.allow_named_servers = True
+c.JupyterHub.named_server_limit_per_user = 5
+c.JupyterHub.services = [
+    {
+        "name": "idle-culler",
+        "admin": True,
+        "command": [sys.executable, "-m", "jupyterhub_idle_culler", "--remove-named-servers=True", "--timeout=28800"],
+    }
+]
 profile_list_default = [
     {
         "display_name": "Nano",
@@ -93,11 +103,11 @@ profile_list_default = [
 
 
 def per_user_profiles(spawner):
-    team = spawner.environment["DATAMAKER_TEAM_SPACE"]
-    env = spawner.environment["AWS_DATAMAKER_ENV"]
+    team = spawner.environment["ORBIT_TEAM_SPACE"]
+    env = spawner.environment["AWS_ORBIT_ENV"]
     ssm = boto3.client("ssm")
     app_log.info("Getting profiles...")
-    ssm_parameter_name: str = f"/datamaker/{env}/teams/{team}/manifest"
+    ssm_parameter_name: str = f"/orbit/{env}/teams/{team}/manifest"
     json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
 
     team_manifest_dic = json.loads(json_str)
@@ -114,7 +124,7 @@ c.KubeSpawner.profile_list = per_user_profiles
 AUTH
 """
 
-c.JupyterHub.authenticator_class = DataMakerAuthenticator
+c.JupyterHub.authenticator_class = OrbitWorkbenchAuthenticator
 c.Authenticator.auto_login = True
 
 """
