@@ -24,7 +24,6 @@ from typing import Any, Dict, List, Optional, Union
 import boto3
 import pandas as pd
 from botocore.waiter import WaiterModel, create_waiter_with_client
-
 from orbit_sdk.common import get_properties, get_stepfunctions_waiter_config
 
 logging.basicConfig(
@@ -100,9 +99,9 @@ def _get_execution_history_from_s3(
     executions = []
     objects = s3.list_objects_v2(Bucket=props["AWS_ORBIT_S3_BUCKET"], Prefix=path)
     if "Contents" in objects.keys():
-        for key in s3.list_objects_v2(
-            Bucket=props["AWS_ORBIT_S3_BUCKET"], Prefix=path
-        )["Contents"]:
+        for key in s3.list_objects_v2(Bucket=props["AWS_ORBIT_S3_BUCKET"], Prefix=path)[
+            "Contents"
+        ]:
             if key["Key"][-1] == "/":
                 continue
             notebookName = os.path.basename(key["Key"])
@@ -132,7 +131,9 @@ def _get_invoke_function_name() -> Any:
     Function Name.
     """
     props = get_properties()
-    functionName = f"orbit-{props['AWS_ORBIT_ENV']}-{props['ORBIT_TEAM_SPACE']}-container-runner"
+    functionName = (
+        f"orbit-{props['AWS_ORBIT_ENV']}-{props['ORBIT_TEAM_SPACE']}-container-runner"
+    )
     return functionName
 
 
@@ -636,7 +637,9 @@ def wait_for_tasks_to_complete(
 
         tasks = incomplete_tasks
 
-        logger.info(f"Running: {len(tasks)} Completed: {len(completed_tasks)} Errored: {len(errored_tasks)}")
+        logger.info(
+            f"Running: {len(tasks)} Completed: {len(completed_tasks)} Errored: {len(errored_tasks)}"
+        )
 
         if not tasks:
             logger.info("All tasks stopped")

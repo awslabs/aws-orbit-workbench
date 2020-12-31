@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import boto3
 import requests
-
 from orbit_sdk.common import *
 
 logging.basicConfig(

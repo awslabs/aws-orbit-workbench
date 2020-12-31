@@ -11,7 +11,6 @@ from typing import Any, Dict, List, Optional, Union
 import boto3
 import IPython.display
 from IPython.display import JSON
-
 from orbit_sdk.common import get_properties, get_workspace, split_s3_path
 
 logging.basicConfig(

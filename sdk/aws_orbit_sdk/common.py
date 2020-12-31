@@ -115,7 +115,9 @@ def get_workspace() -> Dict[str, str]:
     ssm = boto3.client("ssm")
     props = get_properties()
 
-    role_key = f"/orbit/{props['AWS_ORBIT_ENV']}/teams/{props['ORBIT_TEAM_SPACE']}/manifest"
+    role_key = (
+        f"/orbit/{props['AWS_ORBIT_ENV']}/teams/{props['ORBIT_TEAM_SPACE']}/manifest"
+    )
 
     role_config_str = ssm.get_parameter(Name=role_key)["Parameter"]["Value"]
 
