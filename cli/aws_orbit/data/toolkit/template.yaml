@@ -173,16 +173,6 @@ Resources:
               - arn:aws:iam::${account_id}:oidc-provider/oidc.eks.${region}.amazonaws.com*
           - Effect: Allow
             Action:
-              - iam:AddClientIDToOpenIDConnectProvider
-              - iam:CreateOpenIDConnectProvider
-              - iam:DeleteOpenIDConnectProvider
-              - iam:GetOpenIDConnectProvider
-              - iam:ListOpenIDConnectProviders
-              - iam:UpdateOpenIDConnectProviderThumbprint
-            Resource:
-              - arn:aws:iam::${account_id}:oidc-provider/oidc.eks.${region}.amazonaws.com*
-          - Effect: Allow
-            Action:
               - iam:CreatePolicy
               - iam:DeletePolicy
               - iam:CreatePolicyVersion
