@@ -40,9 +40,4 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
     path = path.format(**path_args) if path_args else path
     full_path = base_path + path
     logger.info(f"Reqeust: {method} {full_path}")
-    return {
-        "Path": full_path,
-        "Method": method,
-        "QueryParameters": query_parameters,
-        "RequestBody": request_body
-    }
+    return {"Path": full_path, "Method": method, "QueryParameters": query_parameters, "RequestBody": request_body}

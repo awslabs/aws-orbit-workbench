@@ -59,7 +59,9 @@ def _get_event_output(execution_arn: str, event_type: str, event_id: int, detail
                 return_val = details.get(details_key, "")
                 break
             elif type == "ExecutionFailed":
-                raise Exception(f"ExecutionFailed: {event['executionFailedEventDetails'].get('cause', 'Unknown error')}")
+                raise Exception(
+                    f"ExecutionFailed: {event['executionFailedEventDetails'].get('cause', 'Unknown error')}"
+                )
 
         if return_val is not None:
             break
@@ -97,34 +99,36 @@ def _start_eks_fargate(event: Dict[str, Any], execution_vars: Dict[str, Any]) ->
     logger.info(f"start_eks_fargate: {json.dumps(execution_vars)}")
 
     state_machine_arn = os.environ["EKS_FARGATE_STATE_MACHINE_ARN"]
-    response = sfn.start_execution(
-        stateMachineArn=state_machine_arn,
-        input=json.dumps(execution_vars)
-    )
+    response = sfn.start_execution(stateMachineArn=state_machine_arn, input=json.dumps(execution_vars))
 
     execution_arn = response["executionArn"]
     output = json.loads(
         _get_event_output(execution_arn=execution_arn, event_type="TaskSubmitted", event_id=10, details_key="output")
     )
 
-    return {"ExecutionType": "eks", "ExecutionArn": execution_arn, "Identifier": output["ResponseBody"]["metadata"]["name"]}
+    return {
+        "ExecutionType": "eks",
+        "ExecutionArn": execution_arn,
+        "Identifier": output["ResponseBody"]["metadata"]["name"],
+    }
 
 
 def _start_eks_ec2(event: Dict[str, Any], execution_vars: Dict[str, Any]) -> Dict[str, str]:
     logger.info(f"start_eks_ec2: {json.dumps(execution_vars)}")
 
     state_machine_arn = os.environ["EKS_EC2_STATE_MACHINE_ARN"]
-    response = sfn.start_execution(
-        stateMachineArn=state_machine_arn,
-        input=json.dumps(execution_vars)
-    )
+    response = sfn.start_execution(stateMachineArn=state_machine_arn, input=json.dumps(execution_vars))
 
     execution_arn = response["executionArn"]
     output = json.loads(
         _get_event_output(execution_arn=execution_arn, event_type="TaskSubmitted", event_id=10, details_key="output")
     )
 
-    return {"ExecutionType": "eks", "ExecutionArn": execution_arn, "Identifier": output["ResponseBody"]["metadata"]["name"]}
+    return {
+        "ExecutionType": "eks",
+        "ExecutionArn": execution_arn,
+        "Identifier": output["ResponseBody"]["metadata"]["name"],
+    }
 
 
 def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Dict[str, str]:
@@ -156,7 +160,7 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Dict[st
         "Timeout": event.get("timeout", 99999999),
         "EnvVars": event.get("env_vars", None),
         "CPU": f"{cpu}",
-        "Memory": f"{memory}"
+        "Memory": f"{memory}",
     }
 
     if compute_type == "ecs" and node_type == "fargate":

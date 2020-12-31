@@ -48,7 +48,6 @@ class LambdaBuilder:
                 "DEFAULT_CPU": f"{team_manifest.container_defaults['cpu']}",
                 "DEFAULT_MEMORY": f"{team_manifest.container_defaults['memory']}M",
                 "DEFAULT_EKS_CLUSTER": f"orbit-{manifest.name}",
-
             },
             initial_policy=[
                 iam.PolicyStatement(

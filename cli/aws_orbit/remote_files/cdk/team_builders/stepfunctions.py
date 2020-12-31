@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import Any, Dict, List, Union, cast
+from typing import Any, Dict, List, cast
 
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecs as ecs
@@ -72,10 +72,12 @@ class StateMachineBuilder:
                 scope=scope, manifest=manifest, team_manifest=team_manifest
             ),
             payload_response_only=True,
-            payload=sfn.TaskInput.from_object({
-                "ExecutionInput": sfn.TaskInput.from_context_at('$$.Execution.Input').value,
-                "Namespace": namespace,
-            }),
+            payload=sfn.TaskInput.from_object(
+                {
+                    "ExecutionInput": sfn.TaskInput.from_context_at("$$.Execution.Input").value,
+                    "Namespace": namespace,
+                }
+            ),
             result_path=result_path,
         )
 
@@ -285,7 +287,7 @@ class StateMachineBuilder:
             method=sfn.JsonPath.string_at("$.RequestResult.Method"),
             path=sfn.JsonPath.string_at("$.RequestResult.Path"),
             query_parameters=sfn.JsonPath.string_at("$.RequestResult.QueryParameters"),
-            request_body=sfn.TaskInput.from_data_at("$.RequestResult.RequestBody").value
+            request_body=sfn.TaskInput.from_data_at("$.RequestResult.RequestBody").value,
         )
 
         definition = (
