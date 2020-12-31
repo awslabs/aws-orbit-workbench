@@ -636,6 +636,8 @@ def wait_for_tasks_to_complete(
 
         tasks = incomplete_tasks
 
+        logger.info(f"Running: {len(tasks)} Completed: {len(completed_tasks)} Errored: {len(errored_tasks)}")
+
         if not tasks:
             logger.info("All tasks stopped")
             break
