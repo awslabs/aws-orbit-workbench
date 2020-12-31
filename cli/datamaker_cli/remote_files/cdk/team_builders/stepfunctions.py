@@ -192,12 +192,12 @@ class StateMachineBuilder:
                                 },
                                 "resources": {
                                     "limits": {
-                                        "cpu": f"{team_manifest.container_defaults['cpu']}",
-                                        "memory": f"{team_manifest.container_defaults['memory']}M",
+                                        "cpu": sfn.JsonPath.string_at("$.CPU"),
+                                        "memory": sfn.JsonPath.string_at("$.Memory"),
                                     },
                                     "requests": {
-                                        "cpu": f"{team_manifest.container_defaults['cpu']}",
-                                        "memory": f"{team_manifest.container_defaults['memory']}M",
+                                        "cpu": sfn.JsonPath.string_at("$.CPU"),
+                                        "memory": sfn.JsonPath.string_at("$.Memory"),
                                     },
                                 },
                                 "env": [
