@@ -136,7 +136,7 @@ def generate_bundle(
                 plugin_bundle_dir = os.path.join(bundle_dir, plugin_changeset.team_name)
                 for plugin_name, plugin_path in plugin_changeset.old_paths.items():
                     module: str = plugin_changeset.old_modules[plugin_name]
-                    if plugin_name not in plugin_changeset.new and module is not None:
+                    if plugin_name not in plugin_changeset.new and module is not None and plugin_path is not None:
                         _logger.debug("Changest - Bundling plugin %s (%s)...", plugin_name, plugin_path)
                         _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin_path, name=module)
 

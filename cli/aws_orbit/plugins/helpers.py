@@ -20,7 +20,7 @@ import shutil
 import sys
 from typing import TYPE_CHECKING, Any, Dict, List, Type, cast
 
-from aws_orbit import cdk, sh
+from aws_orbit import cdk, changeset, sh
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest
 from aws_orbit.services import cfn
@@ -54,12 +54,24 @@ def cdk_handler(stack_class: Type["Stack"]) -> None:
     manifest: Manifest = Manifest(filename=filename)
     manifest.fillup()
 
-    for team in manifest.teams:
-        if team.name == team_name:
-            team_manifest: TeamManifest = team
-            break
+    changes: changeset.Changeset = changeset.read_changeset_file(
+        manifest=manifest, filename=os.path.join(manifest.filename_dir, "changeset.json")
+    )
+    if changes.teams_changeset and team_name in changes.teams_changeset.removed_teams_names:
+        for team in changes.teams_changeset.old_teams:
+            if team.name == team_name:
+                team_manifest: TeamManifest = team
+                team_manifest.fetch_ssm()
+                break
+        else:
+            raise ValueError(f"Team {team_name} not found in the teams_changeset.old_teams list.")
     else:
-        raise ValueError(f"Team {team_name} not found in the manifest.")
+        for team in manifest.teams:
+            if team.name == team_name:
+                team_manifest = team
+                break
+        else:
+            raise ValueError(f"Team {team_name} not found in the manifest.")
 
     outdir = os.path.join(
         manifest.filename_dir,

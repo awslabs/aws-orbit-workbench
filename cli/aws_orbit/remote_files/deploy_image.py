@@ -49,7 +49,9 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug(f"Changeset: {changes.asdict()}")
     _logger.debug("Changeset loaded")
 
-    plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, changes=changes.plugin_changesets)
+    plugins.PLUGINS_REGISTRIES.load_plugins(
+        manifest=manifest, plugin_changesets=changes.plugin_changesets, teams_changeset=changes.teams_changeset
+    )
     _logger.debug("Plugins loaded")
     ecr = manifest.boto3_client("ecr")
     ecr_repo = f"orbit-{manifest.name}-{image_name}"

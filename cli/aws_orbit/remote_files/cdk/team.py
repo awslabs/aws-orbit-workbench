@@ -25,6 +25,7 @@ import aws_cdk.aws_efs as efs
 import aws_cdk.aws_s3 as s3
 import aws_cdk.aws_ssm as ssm
 from aws_cdk.core import App, Construct, Environment, Stack, Tags
+from aws_orbit import changeset
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.subnet import SubnetKind
 from aws_orbit.manifest.team import TeamManifest
@@ -198,12 +199,23 @@ def main() -> None:
     manifest: Manifest = Manifest(filename=filename)
     manifest.fillup()
 
-    for team in manifest.teams:
-        if team.name == team_name:
-            team_manifest: TeamManifest = team
-            break
+    changes: changeset.Changeset = changeset.read_changeset_file(
+        manifest=manifest, filename=os.path.join(manifest.filename_dir, "changeset.json")
+    )
+    if changes.teams_changeset and team_name in changes.teams_changeset.removed_teams_names:
+        for team in changes.teams_changeset.old_teams:
+            if team.name == team_name:
+                team_manifest: TeamManifest = team
+                break
+        else:
+            raise ValueError(f"Team {team_name} not found in the teams_changeset.old_teams list.")
     else:
-        raise ValueError(f"Team {team_name} not found in the manifest.")
+        for team in manifest.teams:
+            if team.name == team_name:
+                team_manifest = team
+                break
+        else:
+            raise ValueError(f"Team {team_name} not found in the manifest.")
 
     outdir = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "cdk", team_manifest.stack_name)
     os.makedirs(outdir, exist_ok=True)

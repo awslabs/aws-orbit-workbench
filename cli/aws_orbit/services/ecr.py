@@ -45,7 +45,7 @@ def delete_images(manifest: "Manifest", repo: str) -> None:
 
 def delete_repo(manifest: "Manifest", repo: str) -> None:
     client = manifest.boto3_client("ecr")
-    _logger.debug(f"Deleting Repository Images: {repo}")
+    _logger.debug("Deleting Repository Images: %s", repo)
     delete_images(manifest=manifest, repo=repo)
-    _logger.debug(f"Deleting Repository: {repo}")
+    _logger.debug("Deleting Repository: %s", repo)
     client.delete_repository(repositoryName=repo, force=True)
