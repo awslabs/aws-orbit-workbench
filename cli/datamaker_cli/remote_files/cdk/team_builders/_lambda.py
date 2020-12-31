@@ -46,6 +46,10 @@ class LambdaBuilder:
                 "ECS_FARGATE_STATE_MACHINE_ARN": ecs_fargate_runner.state_machine_arn,
                 "EKS_FARGATE_STATE_MACHINE_ARN": eks_fargate_runner.state_machine_arn,
                 "EKS_EC2_STATE_MACHINE_ARN": eks_ec2_runner.state_machine_arn,
+                "DEFAULT_CPU": f"{team_manifest.container_defaults['cpu']}",
+                "DEFAULT_MEMORY": f"{team_manifest.container_defaults['memory']}M",
+                "DEFAULT_EKS_CLUSTER": f"datamaker-{manifest.name}",
+
             },
             initial_policy=[
                 iam.PolicyStatement(
@@ -58,7 +62,11 @@ class LambdaBuilder:
                     actions=[
                         "states:StartExecution",
                     ],
-                    resources=[ecs_fargate_runner.state_machine_arn],
+                    resources=[
+                        ecs_fargate_runner.state_machine_arn,
+                        eks_fargate_runner.state_machine_arn,
+                        eks_ec2_runner.state_machine_arn,
+                    ],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -67,7 +75,11 @@ class LambdaBuilder:
                     ],
                     resources=[
                         f"arn:{core.Aws.PARTITION}:states:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:"
-                        f"execution:{ecs_fargate_runner.state_machine_name}*"
+                        f"execution:{ecs_fargate_runner.state_machine_name}*",
+                        f"arn:{core.Aws.PARTITION}:states:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:"
+                        f"execution:{eks_fargate_runner.state_machine_name}*",
+                        f"arn:{core.Aws.PARTITION}:states:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:"
+                        f"execution:{eks_ec2_runner.state_machine_name}*",
                     ],
                 ),
             ],
