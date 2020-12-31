@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Iterator, List, Optional, cast
 import boto3
 from aws_orbit import ORBIT_CLI_ROOT, cdk, docker, plugins
 from aws_orbit.manifest import Manifest
-from aws_orbit.services import cfn, ecr, s3
+from aws_orbit.services import cfn, ecr, efs, s3
 
 if TYPE_CHECKING:
     from aws_orbit.manifest.team import TeamManifest
@@ -120,28 +120,34 @@ def deploy(manifest: "Manifest") -> None:
         _deploy_team_bootstrap(manifest=manifest, team_manifest=team_manifest)
 
 
-def destroy(manifest: "Manifest") -> None:
+def destroy(manifest: "Manifest", team_manifest: "TeamManifest") -> None:
+    _logger.debug("Stack name: %s", team_manifest.stack_name)
+    if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.toolkit_stack_name):
+        scratch_bucket: str = (
+            f"orbit-{team_manifest.manifest.name}-{team_manifest.name}"
+            f"-scratch-{manifest.account_id}-{manifest.deploy_id}"
+        )
+        try:
+            s3.delete_bucket(manifest=manifest, bucket=scratch_bucket)
+        except Exception as ex:
+            _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
+        try:
+            efs.delete_filesystems_by_team(manifest=manifest, team_name=team_manifest.name)
+        except Exception as ex:
+            _logger.debug("Skipping Team EFS Target deletion. Cause: %s", ex)
+        try:
+            ecr.delete_repo(manifest=manifest, repo=f"orbit-{manifest.name}-{team_manifest.name}")
+        except Exception as ex:
+            _logger.debug("Skipping Team ECR Repository deletion. Cause: %s", ex)
+        if cfn.does_stack_exist(manifest=manifest, stack_name=team_manifest.stack_name):
+            cdk.destroy(
+                manifest=manifest,
+                stack_name=team_manifest.stack_name,
+                app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
+                args=[manifest.filename, team_manifest.name],
+            )
+
+
+def destroy_all(manifest: "Manifest") -> None:
     for team_manifest in manifest.teams:
-        _logger.debug("Stack name: %s", team_manifest.stack_name)
-        if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.toolkit_stack_name):
-            if team_manifest.scratch_bucket is not None:
-                try:
-                    s3.delete_bucket(manifest=manifest, bucket=team_manifest.scratch_bucket)
-                except Exception as ex:
-                    _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
-            if team_manifest.efs_id is not None:
-                try:
-                    _delete_targets(manifest=manifest, fs_id=team_manifest.efs_id)
-                except Exception as ex:
-                    _logger.debug("Skipping Team EFS Target deletion. Cause: %s", ex)
-            try:
-                ecr.delete_repo(manifest=manifest, repo=f"orbit-{manifest.name}-{team_manifest.name}")
-            except Exception as ex:
-                _logger.debug("Skipping Team ECR Repository deletion. Cause: %s", ex)
-            if cfn.does_stack_exist(manifest=manifest, stack_name=team_manifest.stack_name):
-                cdk.destroy(
-                    manifest=manifest,
-                    stack_name=team_manifest.stack_name,
-                    app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
-                    args=[manifest.filename, team_manifest.name],
-                )
+        destroy(manifest=manifest, team_manifest=team_manifest)

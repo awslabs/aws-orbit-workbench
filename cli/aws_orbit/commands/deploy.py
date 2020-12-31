@@ -126,7 +126,12 @@ def deploy(
         _logger.debug(f"Changeset: {changes.asdict()}")
         ctx.progress(4)
 
-        plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, ctx=ctx, changes=changes.plugin_changesets)
+        plugins.PLUGINS_REGISTRIES.load_plugins(
+            manifest=manifest,
+            ctx=ctx,
+            plugin_changesets=changes.plugin_changesets,
+            teams_changeset=changes.teams_changeset,
+        )
         ctx.progress(5)
 
         deploy_toolkit(

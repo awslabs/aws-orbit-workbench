@@ -21,12 +21,12 @@ from typing import TYPE_CHECKING, List, Optional
 import yaml
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, plugins, sh, utils
 from aws_orbit.manifest import Manifest
-from aws_orbit.manifest.team import TeamManifest
 from aws_orbit.remote_files.utils import get_k8s_context
 from aws_orbit.services import cfn, elb
 
 if TYPE_CHECKING:
     from aws_orbit.changeset import PluginChangeset
+    from aws_orbit.manifest.team import TeamManifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ def _commons(manifest: Manifest, output_path: str) -> None:
         file.write(content)
 
 
-def _team(manifest: Manifest, team_manifest: TeamManifest, output_path: str) -> None:
+def _team(manifest: Manifest, team_manifest: "TeamManifest", output_path: str) -> None:
     input = os.path.join(MODELS_PATH, "apps", "01-team.yaml")
     output = os.path.join(output_path, f"01-{team_manifest.name}-team.yaml")
 
@@ -157,20 +157,31 @@ def _generate_env_manifest(manifest: Manifest, clean_up: bool = True) -> str:
     return output_path
 
 
-def _generate_teams_manifest(manifest: Manifest) -> str:
+def _prepare_team_manifest_path(manifest: Manifest) -> str:
     output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "apps")
     os.makedirs(output_path, exist_ok=True)
     _cleanup_output(output_path=output_path)
     if manifest.account_id is None:
         raise RuntimeError("manifest.account_id is None!")
-
-    for team_manifest in manifest.teams:
-        _team(manifest=manifest, team_manifest=team_manifest, output_path=output_path)
-
     return output_path
 
 
-def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: bool) -> str:
+def _generate_teams_manifest(manifest: Manifest) -> str:
+    output_path: str = _prepare_team_manifest_path(manifest=manifest)
+    for team_manifest in manifest.teams:
+        _team(manifest=manifest, team_manifest=team_manifest, output_path=output_path)
+    return output_path
+
+
+def _generate_team_manifest(manifest: Manifest, team_manifest: "TeamManifest") -> str:
+    output_path: str = _prepare_team_manifest_path(manifest=manifest)
+    _team(manifest=manifest, team_manifest=team_manifest, output_path=output_path)
+    return output_path
+
+
+def _generate_aws_auth_config_map(
+    manifest: Manifest, context: str, with_teams: bool, exclude_team: Optional[str] = None
+) -> str:
     output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "aws_auth_config_map")
     os.makedirs(output_path, exist_ok=True)
     _cleanup_output(output_path=output_path)
@@ -203,13 +214,16 @@ def _generate_aws_auth_config_map(manifest: Manifest, context: str, with_teams: 
 
     if with_teams:
         for username in team_usernames:
-            map_roles.append(
-                {
-                    "groups": ["system:masters"],
-                    "rolearn": f"arn:aws:iam::{manifest.account_id}:role/{username}",
-                    "username": username,
-                }
-            )
+            if exclude_team is not None and f"orbit-{manifest.name}-{exclude_team}-runner" == username:
+                _logger.debug("Removing %s from config_map/map_roles.", username)
+            else:
+                map_roles.append(
+                    {
+                        "groups": ["system:masters"],
+                        "rolearn": f"arn:aws:iam::{manifest.account_id}:role/{username}",
+                        "username": username,
+                    }
+                )
 
     config_map = {
         "apiVersion": "v1",
@@ -369,3 +383,22 @@ def destroy_teams(manifest: Manifest) -> None:
         except exceptions.FailedShellCommand as ex:
             _logger.debug("Skipping: %s", ex)
             pass  # Let's leave for eksctl, it will destroy everything anyway...
+
+
+def destroy_team(manifest: Manifest, team_manifest: "TeamManifest") -> None:
+    eks_stack_name: str = f"eksctl-orbit-{manifest.name}-cluster"
+    _logger.debug("EKSCTL stack name: %s", eks_stack_name)
+    if cfn.does_stack_exist(manifest=manifest, stack_name=eks_stack_name):
+        context = get_k8s_context(manifest=manifest)
+        _logger.debug("kubectl context: %s", context)
+        _logger.debug("Attempting kubectl delete for team %s", team_manifest.name)
+        output_path = _generate_team_manifest(manifest=manifest, team_manifest=team_manifest)
+        sh.run(
+            f"kubectl delete -f {output_path} --grace-period=0 --force "
+            f"--ignore-not-found --wait=false --context {context}"
+        )
+        output_path = _generate_aws_auth_config_map(
+            manifest=manifest, context=context, with_teams=True, exclude_team=team_manifest.name
+        )
+        _logger.debug("Updating aws-auth configMap")
+        sh.run(f"kubectl apply -f {output_path} --context {context}")
