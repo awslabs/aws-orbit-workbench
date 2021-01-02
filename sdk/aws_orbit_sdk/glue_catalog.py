@@ -4,7 +4,6 @@ import time
 from typing import Any, Dict, List, Optional
 
 import boto3
-
 from orbit_sdk.common import get_workspace
 
 logging.basicConfig(

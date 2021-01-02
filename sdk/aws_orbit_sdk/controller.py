@@ -23,8 +23,8 @@ from typing import Any, Dict, List, Optional, Union
 
 import boto3
 import pandas as pd
-
-from orbit_sdk.common import get_properties
+from botocore.waiter import WaiterModel, create_waiter_with_client
+from orbit_sdk.common import get_properties, get_stepfunctions_waiter_config
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -99,9 +99,9 @@ def _get_execution_history_from_s3(
     executions = []
     objects = s3.list_objects_v2(Bucket=props["AWS_ORBIT_S3_BUCKET"], Prefix=path)
     if "Contents" in objects.keys():
-        for key in s3.list_objects_v2(
-            Bucket=props["AWS_ORBIT_S3_BUCKET"], Prefix=path
-        )["Contents"]:
+        for key in s3.list_objects_v2(Bucket=props["AWS_ORBIT_S3_BUCKET"], Prefix=path)[
+            "Contents"
+        ]:
             if key["Key"][-1] == "/":
                 continue
             notebookName = os.path.basename(key["Key"])
@@ -131,7 +131,9 @@ def _get_invoke_function_name() -> Any:
     Function Name.
     """
     props = get_properties()
-    functionName = f"orbit-{props['AWS_ORBIT_ENV']}-{props['ORBIT_TEAM_SPACE']}-container-runner"
+    functionName = (
+        f"orbit-{props['AWS_ORBIT_ENV']}-{props['ORBIT_TEAM_SPACE']}-container-runner"
+    )
     return functionName
 
 
@@ -595,66 +597,117 @@ def wait_for_tasks_to_complete(
 
 
     """
-    ecs = boto3.client("ecs")
+    sfn = boto3.client("stepfunctions")
     logs = boto3.client("logs")
-    paginator = logs.get_paginator("filter_log_events")
 
     props = get_properties()
-    clusterName = props["ecs_cluster"]
 
-    ecs_tasks = [t["JobArn"] for t in tasks if t["ExecutionType"] == "ecs"]
-    if not tail_log:
-        waiter = ecs.get_waiter("tasks_stopped")
-        waiter.wait(
-            cluster=clusterName,
-            tasks=ecs_tasks,
-            WaiterConfig={"Delay": delay, "MaxAttempts": maxAttempts},
+    waiter_model = WaiterModel(
+        get_stepfunctions_waiter_config(delay=delay, max_attempts=maxAttempts)
+    )
+    waiter = waiter_model.get_waiter("ExecutionComplete")
+
+    completed_tasks = []
+    errored_tasks = []
+    attempts = 0
+
+    while True:
+        incomplete_tasks = []
+        attempts += 1
+
+        while tasks:
+            task = tasks.pop(0)
+            response = sfn.describe_execution(executionArn=task["ExecutionArn"])
+
+            for acceptor in waiter.acceptors:
+                if acceptor.matcher_func(response):
+                    task["State"] = acceptor.state
+                    if acceptor.state == "success":
+                        completed_tasks.append(task)
+                        break
+                    elif acceptor.state == "failure":
+                        errored_tasks.append(task)
+                        break
+            else:
+                if "Error" in response:
+                    task["State"] = response["Error"].get("Message", "Unknown")
+                    errored_tasks.append(task)
+                else:
+                    incomplete_tasks.append(task)
+
+        tasks = incomplete_tasks
+
+        logger.info(
+            f"Running: {len(tasks)} Completed: {len(completed_tasks)} Errored: {len(errored_tasks)}"
         )
-    else:
-        logGroupName = f"/orbit/tasks/{props['AWS_ORBIT_ENV']}/{props['ORBIT_TEAM_SPACE']}/containers"
-        logger.info("start logging from %s", logGroupName)
-        logStreams = []
-        for t in ecs_tasks:
-            id = t.split("/")[2]
-            logStreams.append(
-                f"orbit-{props['AWS_ORBIT_ENV']}-{props['ORBIT_TEAM_SPACE']}/orbit-runner/{id}"
-            )
 
-        logger.info("waiting until tasks start running")
+        if not tasks:
+            logger.info("All tasks stopped")
+            break
 
-        try:
-            ecs.get_waiter("tasks_running").wait(
-                cluster=clusterName,
-                tasks=ecs_tasks,
-                WaiterConfig={"Delay": delay, "MaxAttempts": maxAttempts},
-            )
-            logger.info("Tasks started running...")
-        except:
-            logger.info("tasks already been terminated")
+        if attempts >= maxAttempts:
+            logger.info("Stopped waiting as maxAttempts reached")
+            break
 
-        remainingDelay = delay
-        lastTime = 0
-        try:
-            while True:
-                lastTime = logEvents(paginator, logGroupName, logStreams, lastTime)
-                tasks_state = ecs.describe_tasks(cluster=clusterName, tasks=ecs_tasks)
+        time.sleep(delay)
 
-                if all_tasks_stopped(tasks_state):
-                    logger.info("All tasks stopped")
-                    return
+    if tail_log:
 
-                if remainingDelay < 0:
-                    maxAttempts -= 1
-                    remainingDelay = delay
-                if maxAttempts < 0:
-                    logger.info("Stopped waiting as maxAttempts reached")
-                    return
-                throttle = 10
-                time.sleep(throttle)
-                remainingDelay -= throttle
-        except Exception as ex:
-            logger.error(ex)
-            logger.error("Error logging from %s.%s", logGroupName, ",".join(logStreams))
+        def log_config(task):
+            if task["ExecutionType"] == "ecs":
+                id = task["Identifier"].split("/")[2]
+                return {
+                    "Identifier": task["Identifier"],
+                    "LogGroupName": f"/orbit/tasks/{props['AWS_ORBIT_ENV']}/{props['ORBIT_TEAM_SPACE']}/containers",
+                    "LogStreamName": f"orbit-{props['AWS_ORBIT_ENV']}-{props['ORBIT_TEAM_SPACE']}/orbit-runner/{id}",
+                }
+            elif task["ExecutionType"] == "eks":
+                log_group = f"/orbit/pods/{props['AWS_ORBIT_ENV']}"
+                prefix = f"fluent-bit-kube.var.log.containers.{task['Identifier']}-"
+                response = logs.describe_log_streams(
+                    logGroupName=log_group, logStreamNamePrefix=prefix
+                )
+                log_streams = response.get("logStreams", [])
+                if log_streams:
+                    return {
+                        "Identifier": task["Identifier"],
+                        "LogGroupName": log_group,
+                        "LogStreamName": log_streams[0]["logStreamName"],
+                    }
+                else:
+                    return None
+            else:
+                return None
+
+        def print_logs(type, log_configs):
+            if not log_configs:
+                return
+
+            print("-" * 20 + f" {type} " + "-" * 20)
+            for log_config in log_configs:
+                if log_config is None:
+                    continue
+
+                print(f"Identifier: {log_config['Identifier']}")
+                response = logs.get_log_events(
+                    logGroupName=log_config["LogGroupName"],
+                    logStreamName=log_config["LogStreamName"],
+                    limit=20,
+                )
+
+                for e in response.get("events", []):
+                    print(
+                        datetime.fromtimestamp(e["timestamp"] / 1000).strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        ),
+                        e["message"],
+                    )
+                else:
+                    print()
+
+        print_logs("Completed", [log_config(t) for t in completed_tasks])
+        print_logs("Errored", [log_config(t) for t in errored_tasks])
+        print_logs("Running", [log_config(t) for t in tasks])
 
 
 def logEvents(paginator: Any, logGroupName: Any, logStreams: Any, fromTime: Any) -> int:

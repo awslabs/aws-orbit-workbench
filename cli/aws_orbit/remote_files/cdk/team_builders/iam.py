@@ -337,25 +337,4 @@ class IamBuilder:
             id="container_runner_role",
             role_name=f"orbit-{manifest.name}-{team_manifest.name}-runner",
             assumed_by=iam.ServicePrincipal("states.amazonaws.com"),
-            inline_policies={
-                "cloudwatch-logs": iam.PolicyDocument(
-                    statements=[
-                        iam.PolicyStatement(
-                            effect=iam.Effect.ALLOW,
-                            actions=[
-                                "logs:CreateLogStream",
-                                "logs:CreateLogGroup",
-                                "logs:DescribeLogStreams",
-                                "logs:PutLogEvents",
-                            ],
-                            resources=[
-                                f"arn:{core.Aws.PARTITION}:logs:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:"
-                                f"log-group:/orbit/pods/{manifest.name}",
-                                f"arn:{core.Aws.PARTITION}:logs:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:"
-                                f"log-group:/orbit/pods/{manifest.name}:*",
-                            ],
-                        )
-                    ]
-                )
-            },
         )

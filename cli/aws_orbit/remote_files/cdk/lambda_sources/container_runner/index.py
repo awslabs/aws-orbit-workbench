@@ -30,7 +30,7 @@ MAX_EXECUTION_HISTORY_ATTEMPTS = 5
 
 
 def _get_event_output(execution_arn: str, event_type: str, event_id: int, details_key: str) -> Any:
-    evnet_details_key = event_type[0].lower() + event_type[1:] + "EventDetails"
+    event_details_key = event_type[0].lower() + event_type[1:] + "EventDetails"
     return_val = None
     attempts = 0
     sleep_time = 1
@@ -55,9 +55,13 @@ def _get_event_output(execution_arn: str, event_type: str, event_id: int, detail
             max_event_id = max(max_event_id, id)
 
             if id == event_id and type == event_type:
-                details = event[evnet_details_key]
+                details = event[event_details_key]
                 return_val = details.get(details_key, "")
                 break
+            elif type == "ExecutionFailed":
+                raise Exception(
+                    f"ExecutionFailed: {event['executionFailedEventDetails'].get('cause', 'Unknown error')}"
+                )
 
         if return_val is not None:
             break
@@ -83,7 +87,7 @@ def _start_ecs_fargate(event: Dict[str, Any], execution_vars: Dict[str, Any]) ->
         _get_event_output(execution_arn=execution_arn, event_type="TaskSubmitted", event_id=5, details_key="output")
     )
 
-    return {"ExecutionType": "ecs", "ExecutionArn": execution_arn, "JobArn": output["Tasks"][0]["TaskArn"]}
+    return {"ExecutionType": "ecs", "ExecutionArn": execution_arn, "Identifier": output["Tasks"][0]["TaskArn"]}
 
 
 def _start_ecs_ec2(event: Dict[str, Any], execution_vars: Dict[str, Any]) -> Dict[str, str]:
@@ -93,19 +97,45 @@ def _start_ecs_ec2(event: Dict[str, Any], execution_vars: Dict[str, Any]) -> Dic
 
 def _start_eks_fargate(event: Dict[str, Any], execution_vars: Dict[str, Any]) -> Dict[str, str]:
     logger.info(f"start_eks_fargate: {json.dumps(execution_vars)}")
-    raise NotImplementedError("EKS/Fargate Execution not yet implemented")
+
+    state_machine_arn = os.environ["EKS_FARGATE_STATE_MACHINE_ARN"]
+    response = sfn.start_execution(stateMachineArn=state_machine_arn, input=json.dumps(execution_vars))
+
+    execution_arn = response["executionArn"]
+    output = json.loads(
+        _get_event_output(execution_arn=execution_arn, event_type="TaskSubmitted", event_id=10, details_key="output")
+    )
+
+    return {
+        "ExecutionType": "eks",
+        "ExecutionArn": execution_arn,
+        "Identifier": output["ResponseBody"]["metadata"]["name"],
+    }
 
 
 def _start_eks_ec2(event: Dict[str, Any], execution_vars: Dict[str, Any]) -> Dict[str, str]:
     logger.info(f"start_eks_ec2: {json.dumps(execution_vars)}")
-    raise NotImplementedError("EKS/EC2 Execution not yet implemented")
+
+    state_machine_arn = os.environ["EKS_EC2_STATE_MACHINE_ARN"]
+    response = sfn.start_execution(stateMachineArn=state_machine_arn, input=json.dumps(execution_vars))
+
+    execution_arn = response["executionArn"]
+    output = json.loads(
+        _get_event_output(execution_arn=execution_arn, event_type="TaskSubmitted", event_id=10, details_key="output")
+    )
+
+    return {
+        "ExecutionType": "eks",
+        "ExecutionArn": execution_arn,
+        "Identifier": output["ResponseBody"]["metadata"]["name"],
+    }
 
 
 def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Dict[str, str]:
     logger.info(f"Lambda metadata: {json.dumps(event)} (type = {type(event)})")
 
     task_type = event.get("task_type", None)
-    compute = event.get("compute", {"compute_type": "ecs", "node_type": "fargate"})
+    compute = event.get("compute", {"compute_type": "eks", "node_type": "fargate"})
     tasks = event.get("tasks", None)
     jupyterhub_user = event.get("jupyterhub_user", None)
 
@@ -115,17 +145,23 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Dict[st
             f"and jupyterhub_user ({jupyterhub_user}) are required"
         )
 
+    compute_type = compute.get("compute_type", "").lower()
+    node_type = compute.get("node_type", "").lower()
+    cluster_name = compute.get("cluster_name", os.environ["DEFAULT_EKS_CLUSTER"])
+    cpu = compute.get("cpu", os.environ["DEFAULT_CPU"])
+    memory = compute.get("memory", os.environ["DEFAULT_MEMORY"])
+
     execution_vars = {
+        "ClusterName": cluster_name,
         "TaskType": task_type,
         "Tasks": json.dumps({"tasks": tasks}),
         "Compute": json.dumps({"compute": compute}),
         "JupyterHubUser": jupyterhub_user,
         "Timeout": event.get("timeout", 99999999),
         "EnvVars": event.get("env_vars", None),
+        "CPU": f"{cpu}",
+        "Memory": f"{memory}",
     }
-
-    compute_type = compute.get("compute_type", "").lower()
-    node_type = compute.get("node_type", "").lower()
 
     if compute_type == "ecs" and node_type == "fargate":
         return _start_ecs_fargate(event, execution_vars)

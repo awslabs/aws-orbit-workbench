@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import Any, Dict, List, Union, cast
+from typing import Any, Dict, List, cast
 
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecs as ecs
@@ -58,22 +58,26 @@ class StateMachineBuilder:
         )
 
     @staticmethod
-    def _build_construct_url_task(
+    def _build_construct_request_task(
         scope: core.Construct,
         manifest: Manifest,
         team_manifest: TeamManifest,
-        url: str,
-        args: Dict[str, Union[str, sfn.JsonPath]],
-        result_path: str = "$.UrlResult",
+        namespace: str,
+        result_path: str = "$.RequestResult",
     ) -> sfn_tasks.LambdaInvoke:
         return LambdaInvoke(
             scope=scope,
-            id="ConstructUrl",
-            lambda_function=LambdaBuilder.get_or_build_construct_url(
+            id="ConstructRequest",
+            lambda_function=LambdaBuilder.get_or_build_construct_request(
                 scope=scope, manifest=manifest, team_manifest=team_manifest
             ),
             payload_response_only=True,
-            payload=sfn.TaskInput.from_object({"url": url, "args": args}),
+            payload=sfn.TaskInput.from_object(
+                {
+                    "ExecutionInput": sfn.TaskInput.from_context_at("$$.Execution.Input").value,
+                    "Namespace": namespace,
+                }
+            ),
             result_path=result_path,
         )
 
@@ -163,8 +167,8 @@ class StateMachineBuilder:
             "apiVersion": "batch/v1",
             "kind": "Job",
             "metadata": {
-                "labels": {"app": f"orbit-{team_manifest.name}-runner"},
-                "generateName": f"orbit-{team_manifest.name}-runner-",
+                "labels": {"app": f"orbit-{team_manifest.name}-{node_type}-runner"},
+                "generateName": f"orbit-{team_manifest.name}-{node_type}-runner-",
                 "namespace": team_manifest.name,
             },
             "spec": {
@@ -187,12 +191,12 @@ class StateMachineBuilder:
                                 },
                                 "resources": {
                                     "limits": {
-                                        "cpu": f"{team_manifest.container_defaults['cpu']}",
-                                        "memory": f"{team_manifest.container_defaults['memory']}M",
+                                        "cpu": sfn.JsonPath.string_at("$.CPU"),
+                                        "memory": sfn.JsonPath.string_at("$.Memory"),
                                     },
                                     "requests": {
-                                        "cpu": f"{team_manifest.container_defaults['cpu']}",
-                                        "memory": f"{team_manifest.container_defaults['memory']}M",
+                                        "cpu": sfn.JsonPath.string_at("$.CPU"),
+                                        "memory": sfn.JsonPath.string_at("$.Memory"),
                                     },
                                 },
                                 "env": [
@@ -249,14 +253,14 @@ class StateMachineBuilder:
         )
 
     @staticmethod
-    def build_eks_get_pod_logs_state_machine(
+    def build_eks_k8s_api_state_machine(
         scope: core.Construct,
         manifest: Manifest,
         team_manifest: TeamManifest,
         role: iam.IRole,
     ) -> sfn.StateMachine:
         # We use a nested Construct to avoid collisions with Lambda and Task ids
-        construct = core.Construct(scope, "eks_get_pod_logs_nested_construct")
+        construct = core.Construct(scope, "eks_k8s_api_nested_construct")
 
         eks_describe_cluster = LambdaBuilder.get_or_build_eks_describe_cluster(
             scope=construct, manifest=manifest, team_manifest=team_manifest
@@ -266,15 +270,11 @@ class StateMachineBuilder:
             lambda_function=eks_describe_cluster,
         )
 
-        construct_url = StateMachineBuilder._build_construct_url_task(
+        construct_request = StateMachineBuilder._build_construct_request_task(
             scope=construct,
             manifest=manifest,
             team_manifest=team_manifest,
-            url="/api/v1/namespaces/{namespace}/pods/{pod}/log",
-            args={
-                "namespace": team_manifest.name,
-                "pod": sfn.JsonPath.string_at("$.Pod"),
-            },
+            namespace=team_manifest.name,
         )
 
         eks_call = EksCall(
@@ -284,22 +284,23 @@ class StateMachineBuilder:
             cluster_name=sfn.JsonPath.string_at("$.ClusterName"),
             certificate_authority=sfn.JsonPath.string_at("$.DescribeResult.CertificateAuthority"),
             endpoint=sfn.JsonPath.string_at("$.DescribeResult.Endpoint"),
-            method="GET",
-            path=sfn.JsonPath.string_at("$.UrlResult"),
-            query_parameters={"tailLines": ["20"]},
+            method=sfn.JsonPath.string_at("$.RequestResult.Method"),
+            path=sfn.JsonPath.string_at("$.RequestResult.Path"),
+            query_parameters=sfn.JsonPath.string_at("$.RequestResult.QueryParameters"),
+            request_body=sfn.TaskInput.from_data_at("$.RequestResult.RequestBody").value,
         )
 
         definition = (
             sfn.Chain.start(eks_describe_cluster_task)
-            .next(construct_url)
+            .next(construct_request)
             .next(eks_call)
             .next(sfn.Succeed(scope=construct, id="Succeeded"))
         )
 
         return sfn.StateMachine(
             scope=construct,
-            id="eks_get_pod_logs_state_machine",
-            state_machine_name=f"orbit-{manifest.name}-{team_manifest.name}-get-pod-logs",
+            id="eks_k8s_api_state_machine",
+            state_machine_name=f"orbit-{manifest.name}-{team_manifest.name}-eks-k8s-api",
             state_machine_type=sfn.StateMachineType.EXPRESS,
             definition=definition,
             role=role,

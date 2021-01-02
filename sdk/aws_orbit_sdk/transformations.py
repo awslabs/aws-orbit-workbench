@@ -5,7 +5,6 @@ import time
 from typing import Any, Dict, List
 
 import boto3
-
 import orbit_sdk.controller as controller
 import orbit_sdk.emr as sparkConnection
 from orbit_sdk.common import get_workspace

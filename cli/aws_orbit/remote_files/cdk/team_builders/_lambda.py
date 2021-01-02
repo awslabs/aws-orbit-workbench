@@ -45,6 +45,9 @@ class LambdaBuilder:
                 "ECS_FARGATE_STATE_MACHINE_ARN": ecs_fargate_runner.state_machine_arn,
                 "EKS_FARGATE_STATE_MACHINE_ARN": eks_fargate_runner.state_machine_arn,
                 "EKS_EC2_STATE_MACHINE_ARN": eks_ec2_runner.state_machine_arn,
+                "DEFAULT_CPU": f"{team_manifest.container_defaults['cpu']}",
+                "DEFAULT_MEMORY": f"{team_manifest.container_defaults['memory']}M",
+                "DEFAULT_EKS_CLUSTER": f"orbit-{manifest.name}",
             },
             initial_policy=[
                 iam.PolicyStatement(
@@ -57,7 +60,11 @@ class LambdaBuilder:
                     actions=[
                         "states:StartExecution",
                     ],
-                    resources=[ecs_fargate_runner.state_machine_arn],
+                    resources=[
+                        ecs_fargate_runner.state_machine_arn,
+                        eks_fargate_runner.state_machine_arn,
+                        eks_ec2_runner.state_machine_arn,
+                    ],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -66,7 +73,11 @@ class LambdaBuilder:
                     ],
                     resources=[
                         f"arn:{core.Aws.PARTITION}:states:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:"
-                        f"execution:{ecs_fargate_runner.state_machine_name}*"
+                        f"execution:{ecs_fargate_runner.state_machine_name}*",
+                        f"arn:{core.Aws.PARTITION}:states:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:"
+                        f"execution:{eks_fargate_runner.state_machine_name}*",
+                        f"arn:{core.Aws.PARTITION}:states:{core.Aws.REGION}:{core.Aws.ACCOUNT_ID}:"
+                        f"execution:{eks_ec2_runner.state_machine_name}*",
                     ],
                 ),
             ],
@@ -100,19 +111,19 @@ class LambdaBuilder:
         return lambda_function
 
     @staticmethod
-    def get_or_build_construct_url(
+    def get_or_build_construct_request(
         scope: core.Construct,
         manifest: Manifest,
         team_manifest: TeamManifest,
     ) -> aws_lambda.Function:
         stack = core.Stack.of(scope)
-        lambda_function = cast(aws_lambda.Function, stack.node.try_find_child("construct_url"))
+        lambda_function = cast(aws_lambda.Function, stack.node.try_find_child("construct_request"))
         if lambda_function is None:
             lambda_function = aws_lambda.Function(
                 scope=stack,
-                id="construct_url",
-                function_name=f"orbit-{manifest.name}-{team_manifest.name}-construct-url",
-                code=aws_lambda.Code.asset(_lambda_path("construct_url")),
+                id="construct_request",
+                function_name=f"orbit-{manifest.name}-{team_manifest.name}-k8s-construct-request",
+                code=aws_lambda.Code.asset(_lambda_path("construct_request")),
                 handler="index.handler",
                 runtime=aws_lambda.Runtime.PYTHON_3_6,
                 timeout=core.Duration.seconds(10),
