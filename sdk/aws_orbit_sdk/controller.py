@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Optional, Union
 import boto3
 import pandas as pd
 from botocore.waiter import WaiterModel, create_waiter_with_client
-from orbit_sdk.common import get_properties, get_stepfunctions_waiter_config
+from aws_orbit_sdk.common import get_properties, get_stepfunctions_waiter_config
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",

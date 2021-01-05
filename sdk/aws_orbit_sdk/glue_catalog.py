@@ -4,7 +4,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 import boto3
-from orbit_sdk.common import get_workspace
+from aws_orbit_sdk.common import get_workspace
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",

@@ -14,8 +14,8 @@ from IPython.core.magic import (
     magics_class,
     needs_local_scope,
 )
-from orbit_sdk.controller import controller
-from orbit_sdk.json import display_json, run_schema_induction_args
+from aws_orbit_sdk.controller import controller
+from aws_orbit_sdk.json import display_json, run_schema_induction_args
 
 
 def exception_handler(exception_type, exception, traceback):

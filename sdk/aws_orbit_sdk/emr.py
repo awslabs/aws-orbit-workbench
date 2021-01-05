@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import boto3
 import requests
-from orbit_sdk.common import *
+from aws_orbit_sdk.common import *
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",

@@ -12,10 +12,10 @@ import IPython.core.display
 import sqlalchemy as sa
 from IPython import get_ipython
 from IPython.display import JSON
-from orbit_sdk.common import *
-from orbit_sdk.glue_catalog import run_crawler
-from orbit_sdk.json import display_json
-from orbit_sdk.magics.database import AthenaMagics, RedshiftMagics
+from aws_orbit_sdk.common import *
+from aws_orbit_sdk.glue_catalog import run_crawler
+from aws_orbit_sdk.json import display_json
+from aws_orbit_sdk.magics.database import AthenaMagics, RedshiftMagics
 from pandas import DataFrame
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm import sessionmaker
