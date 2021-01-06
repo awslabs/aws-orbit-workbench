@@ -200,7 +200,7 @@ def _generate_aws_auth_config_map(
     map_roles = [
         r
         for r in map_roles
-        if "username" not in r or (r["username"] not in team_usernames and r["username"] not in admin_usernames)
+        if "username" in r and r["username"] not in team_usernames and r["username"] not in admin_usernames
     ]
     _logger.debug("map_roles:\n%s", pformat(map_roles))
     for username in admin_usernames:
@@ -324,11 +324,11 @@ def deploy_env(manifest: Manifest) -> None:
         _logger.debug("kubectl context: %s", context)
         if manifest.internet_accessible is False:
             output_path = _generate_efs_driver_manifest(manifest=manifest)
-            sh.run(f"kubectl apply -k {output_path} --context {context}")
+            sh.run(f"kubectl apply -k {output_path} --context {context} --wait")
         else:
-            sh.run(f"kubectl apply -k {EFS_DRIVE} --context {context}")
+            sh.run(f"kubectl apply -k {EFS_DRIVE} --context {context} --wait")
         output_path = _generate_env_manifest(manifest=manifest)
-        sh.run(f"kubectl apply -f {output_path} --context {context}")
+        sh.run(f"kubectl apply -f {output_path} --context {context} --wait")
         fetch_kubectl_data(manifest=manifest, context=context, include_teams=False)
 
 
@@ -341,10 +341,12 @@ def deploy_teams(manifest: Manifest, changes: List["PluginChangeset"]) -> None:
         _logger.debug("kubectl context: %s", context)
         output_path = _generate_teams_manifest(manifest=manifest)
         output_path = _generate_env_manifest(manifest=manifest, clean_up=False)
-        sh.run(f"kubectl apply -f {output_path} --context {context}")
-        output_path = _generate_aws_auth_config_map(manifest=manifest, context=context, with_teams=True)
+        sh.run(f"kubectl apply -f {output_path} --context {context} --wait")
+        output_path = _generate_aws_auth_config_map(
+            manifest=manifest, context=context, with_teams=True, exclude_team=None
+        )
         _logger.debug("Updating aws-auth configMap")
-        sh.run(f"kubectl apply -f {output_path} --context {context}")
+        sh.run(f"kubectl apply -f {output_path} --context {context} --wait")
         fetch_kubectl_data(manifest=manifest, context=context, include_teams=True)
         for team_manifest in manifest.teams:
             plugins.PLUGINS_REGISTRIES.deploy_team_plugins(
@@ -379,9 +381,6 @@ def destroy_teams(manifest: Manifest) -> None:
             plugins.PLUGINS_REGISTRIES.destroy_team_plugins(manifest=manifest, team_manifest=team_manifest)
         context = get_k8s_context(manifest=manifest)
         _logger.debug("kubectl context: %s", context)
-        output_path = _generate_aws_auth_config_map(manifest=manifest, context=context, with_teams=False)
-        _logger.debug("Updating aws-auth configMap")
-        sh.run(f"kubectl apply -f {output_path} --context {context}")
         _logger.debug("Attempting kubectl delete")
         output_path = _generate_teams_manifest(manifest=manifest)
         try:
@@ -392,6 +391,9 @@ def destroy_teams(manifest: Manifest) -> None:
         except exceptions.FailedShellCommand as ex:
             _logger.debug("Skipping: %s", ex)
             pass  # Let's leave for eksctl, it will destroy everything anyway...
+        output_path = _generate_aws_auth_config_map(manifest=manifest, context=context, with_teams=False)
+        _logger.debug("Updating aws-auth configMap")
+        sh.run(f"kubectl apply -f {output_path} --context {context}")
 
 
 def destroy_team(manifest: Manifest, team_manifest: "TeamManifest") -> None:
@@ -404,10 +406,10 @@ def destroy_team(manifest: Manifest, team_manifest: "TeamManifest") -> None:
         output_path = _generate_team_manifest(manifest=manifest, team_manifest=team_manifest)
         sh.run(
             f"kubectl delete -f {output_path} --grace-period=0 --force "
-            f"--ignore-not-found --wait=false --context {context}"
+            f"--ignore-not-found --wait --context {context}"
         )
         output_path = _generate_aws_auth_config_map(
             manifest=manifest, context=context, with_teams=True, exclude_team=team_manifest.name
         )
         _logger.debug("Updating aws-auth configMap")
-        sh.run(f"kubectl apply -f {output_path} --context {context}")
+        sh.run(f"kubectl apply -f {output_path} --context {context} --wait")
