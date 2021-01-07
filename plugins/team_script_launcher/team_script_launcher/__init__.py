@@ -16,11 +16,11 @@ import logging
 import os
 from typing import Any, Dict
 
-from aws_orbit import sh
+from aws_orbit import sh, utils
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest
 from aws_orbit.plugins import hooks
-from aws_orbit import utils
+
 _logger: logging.Logger = logging.getLogger("aws_orbit")
 POD_FILENAME = os.path.join(os.path.dirname(__file__), "job_definition.yaml")
 
@@ -28,17 +28,18 @@ POD_FILENAME = os.path.join(os.path.dirname(__file__), "job_definition.yaml")
 @hooks.deploy
 def deploy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
     _logger.debug("Team Env name: %s | Team name: %s", manifest.name, team_manifest.name)
-    plugin_id = plugin_id.replace('_', '-')
+    plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
     configmap_script_name = f"{plugin_id}-script"
-    vars = dict(team=team_manifest.name,
+    vars = dict(
+        team=team_manifest.name,
         region=manifest.region,
         account_id=manifest.account_id,
         env_name=manifest.name,
         tag=team_manifest.manifest.images["jupyter-hub"]["version"],
         restart_policy=parameters["restartPolicy"] if "restartPolicy" in parameters else "Never",
         plugin_id=plugin_id,
-        toolkit_s3_bucket=manifest.toolkit_s3_bucket
+        toolkit_s3_bucket=manifest.toolkit_s3_bucket,
     )
 
     if "script" in parameters:
@@ -47,7 +48,7 @@ def deploy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, para
         raise Exception(f"Plugin {plugin_id} must define parameter 'script'")
     script_file = os.path.join(os.path.dirname(POD_FILENAME), f"{plugin_id}-script.sh")
 
-    script_body = utils.resolve_parameters(script_body,vars)
+    script_body = utils.resolve_parameters(script_body, vars)
     with open(script_file, "w") as file:
         file.write(script_body)
 
