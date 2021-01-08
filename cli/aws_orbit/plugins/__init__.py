@@ -20,7 +20,7 @@ from aws_orbit import utils
 from aws_orbit.services import s3
 
 if TYPE_CHECKING:
-    from aws_orbit.changeset import PluginChangeset
+    from aws_orbit.changeset import PluginChangeset, TeamsChangeset
     from aws_orbit.manifest import Manifest
     from aws_orbit.manifest.team import TeamManifest
     from aws_orbit.messages import MessagesContext
@@ -138,11 +138,19 @@ class PluginRegistries:
     def __init__(self) -> None:
         self._manifest: Optional["Manifest"] = None
         self._registries: Dict[str, Dict[str, "PluginRegistry"]] = {}
+        self._plugin_changesets: List["PluginChangeset"] = []
+        self._teams_changeset: Optional["TeamsChangeset"] = None
 
     def load_plugins(
-        self, manifest: "Manifest", changes: List["PluginChangeset"], ctx: Optional["MessagesContext"] = None
+        self,
+        manifest: "Manifest",
+        plugin_changesets: List["PluginChangeset"],
+        teams_changeset: Optional["TeamsChangeset"],
+        ctx: Optional["MessagesContext"] = None,
     ) -> None:
         self._manifest = manifest
+        self._plugin_changesets = plugin_changesets
+        self._teams_changeset = teams_changeset
         imports_names: Set[Optional[str]] = set()
 
         for team_manifest in manifest.teams:
@@ -158,7 +166,7 @@ class PluginRegistries:
                     module=plugin.module,
                 )
                 imports_names.add(plugin.module)
-        for change in changes:
+        for change in plugin_changesets:
             if change.team_name not in self._registries:
                 self._registries[change.team_name] = {}
             for plugin_id in change.old:
@@ -182,22 +190,20 @@ class PluginRegistries:
         if self._manifest is None:
             raise RuntimeError("Empty PLUGINS_REGISTRIES. Please, run load_plugins() before try to add hooks.")
         plugin_module_name: str = utils.extract_plugin_module_name(func=func)
-        for team_manifest in self._manifest.teams:
 
-            for plugin_name, registry in self._registries[team_manifest.name].items():
+        teams_names: List[str] = [t.name for t in self._manifest.teams]
+        if self._teams_changeset is not None:
+            for removed in self._teams_changeset.removed_teams_names:
+                if removed not in teams_names:
+                    teams_names.append(removed)
+
+        for team_name in teams_names:
+            for plugin_name, registry in self._registries[team_name].items():
                 if registry.module_name == plugin_module_name:
-                    self._registries[team_manifest.name][plugin_name].__setattr__(hook_name, func)
+                    self._registries[team_name][plugin_name].__setattr__(hook_name, func)
                     _logger.debug(
-                        "Team %s / Plugin %s (%s): %s registered.",
-                        team_manifest.name,
-                        plugin_name,
-                        plugin_module_name,
-                        hook_name,
-                    )
-                else:
-                    _logger.debug(
-                        "Team %s / Plugin %s (%s): %s skipping registration.",
-                        team_manifest.name,
+                        "Team %s / Plugin %s (%s): %s REGISTERED.",
+                        team_name,
                         plugin_name,
                         plugin_module_name,
                         hook_name,

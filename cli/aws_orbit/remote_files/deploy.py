@@ -16,12 +16,16 @@ import concurrent.futures
 import logging
 import os
 from concurrent.futures import Future
-from typing import Any, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
 from aws_orbit import bundle, changeset, docker, plugins, remote, sh
-from aws_orbit.manifest import Manifest
+from aws_orbit.manifest import Manifest, get_team_by_name
 from aws_orbit.remote_files import cdk_toolkit, demo, eksctl, env, kubectl, teams
 from aws_orbit.services import codebuild
+
+if TYPE_CHECKING:
+    from aws_orbit.changeset import TeamsChangeset
+    from aws_orbit.manifest.team import TeamManifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -119,6 +123,18 @@ def deploy_images_remotely(manifest: Manifest) -> None:
             f.result()
 
 
+def eval_teams_change(manifest: Manifest, teams_changeset: "TeamsChangeset") -> None:
+    _logger.debug("Teams %s must be deleted.", teams_changeset.removed_teams_names)
+    for name in teams_changeset.removed_teams_names:
+        team_manifest: "TeamManifest" = get_team_by_name(teams=teams_changeset.old_teams, name=name)
+        _logger.debug("Destroying team %s", name)
+        plugins.PLUGINS_REGISTRIES.destroy_team_plugins(manifest=manifest, team_manifest=team_manifest)
+        kubectl.destroy_team(manifest=manifest, team_manifest=team_manifest)
+        eksctl.destroy_team(manifest=manifest, team_manifest=team_manifest)
+        teams.destroy(manifest=manifest, team_manifest=team_manifest)
+        _logger.debug("Team %s destroyed", name)
+
+
 def deploy(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug("args: %s", args)
     if len(args) == 2:
@@ -137,7 +153,9 @@ def deploy(filename: str, args: Tuple[str, ...]) -> None:
     )
     _logger.debug(f"Changeset: {changes.asdict()}")
     _logger.debug("Changeset loaded")
-    plugins.PLUGINS_REGISTRIES.load_plugins(manifest=manifest, changes=changes.plugin_changesets)
+    plugins.PLUGINS_REGISTRIES.load_plugins(
+        manifest=manifest, plugin_changesets=changes.plugin_changesets, teams_changeset=changes.teams_changeset
+    )
     _logger.debug("Plugins loaded")
     cdk_toolkit.deploy(manifest=manifest)
     _logger.debug("CDK Toolkit Stack deployed")
@@ -161,13 +179,13 @@ def deploy(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug("Kubernetes Environment components deployed")
 
     if not env_only:
+        if changes.teams_changeset:
+            eval_teams_change(manifest=manifest, teams_changeset=changes.teams_changeset)
         teams.deploy(manifest=manifest)
         _logger.debug("Team Stacks deployed")
         eksctl.deploy_teams(manifest=manifest)
         _logger.debug("EKS Team Stacks deployed")
         kubectl.deploy_teams(manifest=manifest, changes=changes.plugin_changesets)
         _logger.debug("Kubernetes Team components deployed")
-        if changes.teams_changeset:
-            _logger.debug("Teams %s must be deleted.", changes.teams_changeset.removed_teams_names)
     else:
         _logger.debug("Skipping Team Stacks")

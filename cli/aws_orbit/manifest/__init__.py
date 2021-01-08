@@ -146,6 +146,7 @@ class Manifest:
         self.teams: List[TeamManifest] = parse_teams(
             manifest=self, raw_teams=cast(List[MANIFEST_FILE_TEAM_TYPE], self.raw_file["teams"])
         )
+        _logger.debug("Teams loaded: %s", [t.name for t in self.teams])
 
         self.cognito_external_provider: Optional[str] = cast(Optional[str], self.raw_file.get("external-idp", None))
         self.cognito_external_provider_label: Optional[str] = cast(
@@ -209,6 +210,7 @@ class Manifest:
     def write_manifest_ssm(self) -> None:
         client = self.boto3_client(service_name="ssm")
         _logger.debug("Writing manifest to SSM parameter.")
+        _logger.debug("Teams: %s", [t.name for t in self.teams])
         try:
             client.get_parameter(Name=self.ssm_parameter_name)["Parameter"]["Value"]
             exists: bool = True
@@ -416,8 +418,9 @@ class Manifest:
     def asjson(self) -> str:
         return str(json.dumps(obj=self.asdict(), sort_keys=True))
 
-    def get_team_by_name(self, name: str) -> Optional[TeamManifest]:
-        for t in self.teams:
-            if t.name == name:
-                return t
-        return None
+
+def get_team_by_name(teams: List["TeamManifest"], name: str) -> "TeamManifest":
+    for t in teams:
+        if t.name == name:
+            return t
+    raise RuntimeError(f"Team {name} not found!")

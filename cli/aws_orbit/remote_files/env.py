@@ -14,12 +14,11 @@
 
 import logging
 import os
-import time
 from typing import Any, Dict, Iterator, List, Tuple
 
 from aws_orbit import ORBIT_CLI_ROOT, cdk, docker
 from aws_orbit.manifest import Manifest
-from aws_orbit.services import cfn, ecr
+from aws_orbit.services import cfn, ecr, efs
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -50,57 +49,9 @@ def _ecr(manifest: Manifest) -> None:
         ecr.delete_repo(manifest=manifest, repo=repo)
 
 
-def _filter_filesystems(page: Dict[str, Any], env_name: str) -> Iterator[str]:
-    for fs in page["FileSystems"]:
-        for tag in fs["Tags"]:
-            if tag["Key"] == "Env" and tag["Value"] == f"orbit-{env_name}":
-                yield fs["FileSystemId"]
-
-
-def fetch_filesystems(manifest: Manifest) -> Iterator[str]:
-    client = manifest.boto3_client("efs")
-    paginator = client.get_paginator("describe_file_systems")
-    for page in paginator.paginate():
-        for fs_id in _filter_filesystems(page=page, env_name=manifest.name):
-            yield fs_id
-
-
-def _fetch_targets(manifest: Manifest, fs_id: str) -> Iterator[str]:
-    client = manifest.boto3_client("efs")
-    paginator = client.get_paginator("describe_mount_targets")
-    for page in paginator.paginate(FileSystemId=fs_id):
-        for target in page["MountTargets"]:
-            yield target["MountTargetId"]
-
-
-def _delete_targets(manifest: Manifest, fs_id: str) -> None:
-    client = manifest.boto3_client("efs")
-    for target in _fetch_targets(manifest=manifest, fs_id=fs_id):
-        try:
-            client.delete_mount_target(MountTargetId=target)
-        except client.exceptions.MountTargetNotFound:
-            _logger.warning(f"Ignoring MountTargetId {target} deletion cause it does not exist anymore.")
-
-
-def _efs_targets(manifest: Manifest) -> List[str]:
-    fs_ids: List[str] = []
-    for fs_id in fetch_filesystems(manifest=manifest):
-        fs_ids.append(fs_id)
-        _delete_targets(manifest=manifest, fs_id=fs_id)
-    return fs_ids
-
-
-def _efs(manifest: Manifest, fs_ids: List[str]) -> None:
-    client = manifest.boto3_client("efs")
-    for fs_id in fs_ids:
-        while client.describe_file_systems(FileSystemId=fs_id)["FileSystems"][0]["NumberOfMountTargets"] > 0:
-            time.sleep(1)
-        client.delete_file_system(FileSystemId=fs_id)
-
-
 def _cleanup_remaining_resources(manifest: Manifest) -> None:
     _ecr(manifest=manifest)
-    _efs(manifest=manifest, fs_ids=_efs_targets(manifest=manifest))
+    efs.delete_env_filesystems(manifest=manifest)
 
 
 def _concat_images_into_args(manifest: Manifest, add_images: List[str], remove_images: List[str]) -> Tuple[str, str]:

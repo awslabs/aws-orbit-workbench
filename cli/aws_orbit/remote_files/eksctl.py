@@ -15,14 +15,16 @@
 import logging
 import os
 import pprint
-from typing import Any, Dict, cast
+from typing import TYPE_CHECKING, Any, Dict, cast
 
 import yaml
 from aws_orbit import sh
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.subnet import SubnetKind
-from aws_orbit.manifest.team import TeamManifest
 from aws_orbit.services import cfn, eks, iam
+
+if TYPE_CHECKING:
+    from aws_orbit.manifest.team import TeamManifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -36,7 +38,7 @@ MANIFEST: Dict[str, Any] = {
 }
 
 
-def create_nodegroup_structure(team: TeamManifest, env_name: str) -> Dict[str, Any]:
+def create_nodegroup_structure(team: "TeamManifest", env_name: str) -> Dict[str, Any]:
     if team.eks_nodegroup_role_arn is None:
         _logger.debug(f"ValueError: team.eks_nodegroup_role_arn: {team.eks_nodegroup_role_arn}")
         return {"name": team.name}
@@ -225,3 +227,24 @@ def destroy_teams(manifest: Manifest) -> None:
                 "--approve --wait --drain=false --verbose 4"
             )
         _logger.debug("EKSCTL Teams destroyed")
+
+
+def destroy_team(manifest: Manifest, team_manifest: "TeamManifest") -> None:
+    stack_name: str = f"orbit-{manifest.name}"
+    final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
+    _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
+    cluster_name = f"orbit-{manifest.name}"
+    if cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name):
+        eks.delete_fargate_profile(
+            manifest=manifest,
+            profile_name=f"orbit-{manifest.name}-{team_manifest.name}",
+            cluster_name=cluster_name,
+        )
+        if eks.describe_nodegroup(manifest=manifest, cluster_name=cluster_name, nodegroup_name=team_manifest.name):
+            sh.run(
+                f"eksctl delete nodegroup --cluster {cluster_name} --name {team_manifest.name} "
+                "--update-auth-configmap --wait --drain=false --verbose 4"
+            )
+            _logger.debug("EKSCTL Team %s destroyed", team_manifest.name)
+        else:
+            _logger.debug("Team %s does not have nodegroup.", team_manifest.name)
