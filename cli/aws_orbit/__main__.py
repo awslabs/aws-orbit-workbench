@@ -17,16 +17,14 @@ import logging
 from typing import Optional, TextIO, Tuple
 
 import click
-from click.core import Option
-import aws_orbit.commands.run as run
-from click.types import File
 from aws_orbit.commands.deploy import deploy
 from aws_orbit.commands.deploy_image import deploy_image
 from aws_orbit.commands.destroy import destroy
 from aws_orbit.commands.destroy_image import destroy_image
 from aws_orbit.commands.init import init
 from aws_orbit.commands.list import list_images
-
+from click.core import Option
+from click.types import File
 
 DEBUG_LOGGING_FORMAT = "[%(asctime)s][%(filename)-13s:%(lineno)3d] %(message)s"
 DEBUG_LOGGING_FORMAT_REMOTE = "[%(filename)-13s:%(lineno)3d] %(message)s"
@@ -310,9 +308,7 @@ def run_container() -> None:
     try:
         import aws_orbit_sdk
     except ImportError:
-        _logger.error("Unable to load Orbit SDK package")
-        print("The \"utils\" submodule is required to use \"run\" commands")
-        return
+        raise click.ClickException("The \"utils\" submodule is required to use \"run\" commands")
     pass
 
 
@@ -329,12 +325,15 @@ def run_container() -> None:
 def run_python_container(env: str, team: str, user: str, wait: bool, delay: Optional[int], max_attempts: Optional[int], tail_logs: bool, debug: bool, input: TextIO) -> None:
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT_REMOTE)
+
     _logger.debug("env: %s", env)
     _logger.debug("team: %s", team)
     _logger.debug("user: %s", user)
 
     tasks = json.load(input)
     _logger.debug("tasks: %s", json.dumps(tasks))
+
+    import aws_orbit.commands.run as run
     run.run_python_container(env=env, team=team, user=user, tasks=tasks, wait=wait, delay=delay, max_attempts=max_attempts, tail_logs=tail_logs, debug=debug)
 
 
@@ -351,12 +350,15 @@ def run_python_container(env: str, team: str, user: str, wait: bool, delay: Opti
 def run_notebook_container(env: str, team: str, user: str, wait: bool, delay: Optional[int], max_attempts: Optional[int], tail_logs: bool, debug: bool, input: TextIO) -> None:
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT_REMOTE)
+
     _logger.debug("env: %s", env)
     _logger.debug("team: %s", team)
     _logger.debug("user: %s", user)
 
     tasks = json.load(input)
     _logger.debug("tasks: %s", json.dumps(tasks))
+
+    import aws_orbit.commands.run as run
     run.run_notebook_container(env=env, team=team, user=user, tasks=tasks, wait=wait, delay=delay, max_attempts=max_attempts, tail_logs=tail_logs, debug=debug)
 
 

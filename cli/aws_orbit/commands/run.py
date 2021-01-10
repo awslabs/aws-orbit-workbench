@@ -12,13 +12,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import logging
 import os
 from typing import Any, Dict, Optional
 
-import click
 import aws_orbit_sdk.common as common
 import aws_orbit_sdk.controller as controller
+import click
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -49,6 +50,8 @@ def run_python_container(env: str, team: str, user: str, tasks: Dict[str, Any], 
     response = controller.run_python(tasks)
     if wait:
         _wait(response, delay, max_attempts, tail_logs)
+    else:
+        print(json.dumps(response))
 
 def run_notebook_container(env: str, team: str, user: str, tasks: Dict[str, Any], wait: bool, delay: Optional[int], max_attempts: Optional[int], tail_logs: bool, debug: bool) -> None:
     if debug:
@@ -57,3 +60,5 @@ def run_notebook_container(env: str, team: str, user: str, tasks: Dict[str, Any]
     response = controller.run_notebooks(tasks)
     if wait:
         _wait(response, delay, max_attempts, tail_logs)
+    else:
+        print(json.dumps(response))
