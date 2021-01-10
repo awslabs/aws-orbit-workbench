@@ -286,7 +286,7 @@ def _run_task(taskConfiguration: dict) -> Any:
     lambda_client = boto3.client("lambda")
     taskConfiguration["jupyterhub_user"] = os.environ.get("JUPYTERHUB_USER", None)
     payload = json.dumps(taskConfiguration)
-    logger.debug(payload)
+    logger.debug(f"Execution Payload: {payload}")
     response = lambda_client.invoke(
         FunctionName=_get_invoke_function_name(),
         InvocationType="RequestResponse",
@@ -298,6 +298,7 @@ def _run_task(taskConfiguration: dict) -> Any:
     else:
         response_payload = None
 
+    logger.debug(f"Execution Response: {response_payload}")
     return response_payload
 
 
@@ -571,7 +572,7 @@ def order_def(task_definition: Any) -> datetime:
 def wait_for_tasks_to_complete(
     tasks: List[Dict[str, str]],
     delay: Optional[int] = 60,
-    maxAttempts: Optional[str] = 10,
+    maxAttempts: Optional[int] = 10,
     tail_log: Optional[bool] = False,
 ) -> None:
     """
@@ -617,22 +618,27 @@ def wait_for_tasks_to_complete(
 
         while tasks:
             task = tasks.pop(0)
+            logger.debug(f"Checking execution state of: {task}")
             response = sfn.describe_execution(executionArn=task["ExecutionArn"])
 
             for acceptor in waiter.acceptors:
                 if acceptor.matcher_func(response):
                     task["State"] = acceptor.state
                     if acceptor.state == "success":
+                        logger.debug("Execution success")
                         completed_tasks.append(task)
                         break
                     elif acceptor.state == "failure":
+                        logger.debug("Execution failure")
                         errored_tasks.append(task)
                         break
             else:
                 if "Error" in response:
                     task["State"] = response["Error"].get("Message", "Unknown")
+                    logger.debug(f"Execution error: {task['State']}")
                     errored_tasks.append(task)
                 else:
+                    logger.debug("Execution incomplete")
                     incomplete_tasks.append(task)
 
         tasks = incomplete_tasks
@@ -652,15 +658,19 @@ def wait_for_tasks_to_complete(
         time.sleep(delay)
 
     if tail_log:
+        logger.debug("Tailing Logs")
 
         def log_config(task):
+            logger.debug(f"Getting Log Config for Task: {task}")
             if task["ExecutionType"] == "ecs":
                 id = task["Identifier"].split("/")[2]
-                return {
+                config = {
                     "Identifier": task["Identifier"],
                     "LogGroupName": f"/orbit/tasks/{props['AWS_ORBIT_ENV']}/{props['ORBIT_TEAM_SPACE']}/containers",
                     "LogStreamName": f"orbit-{props['AWS_ORBIT_ENV']}-{props['ORBIT_TEAM_SPACE']}/orbit-runner/{id}",
                 }
+                logger.debug(f"Found LogConfig: {config}")
+                return config
             elif task["ExecutionType"] == "eks":
                 log_group = f"/orbit/pods/{props['AWS_ORBIT_ENV']}"
                 prefix = f"fluent-bit-kube.var.log.containers.{task['Identifier']}-"
@@ -669,14 +679,18 @@ def wait_for_tasks_to_complete(
                 )
                 log_streams = response.get("logStreams", [])
                 if log_streams:
-                    return {
+                    config = {
                         "Identifier": task["Identifier"],
                         "LogGroupName": log_group,
                         "LogStreamName": log_streams[0]["logStreamName"],
                     }
+                    logger.debug(f"Found LogConfig: {config}")
+                    return config
                 else:
+                    logger.debug("No LogConfig found")
                     return None
             else:
+                logger.debug("No LogConfig found")
                 return None
 
         def print_logs(type, log_configs):
@@ -685,6 +699,7 @@ def wait_for_tasks_to_complete(
 
             print("-" * 20 + f" {type} " + "-" * 20)
             for log_config in log_configs:
+                logger.debug(f"Retrieving Logs for: {log_config}")
                 if log_config is None:
                     continue
 
