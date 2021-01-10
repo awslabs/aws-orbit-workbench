@@ -148,6 +148,7 @@ class StateMachineBuilder:
         image: ecs.EcrImage,
         role: iam.IRole,
         node_type: str,
+        k8s_api_state_machine: sfn.StateMachine,
     ) -> sfn.StateMachine:
         if node_type not in {"ec2", "fargate"}:
             raise ValueError(f"Invalid node_type: {node_type}")
@@ -237,11 +238,34 @@ class StateMachineBuilder:
             job=job,
             log_options=LogOptions(retrieve_logs=True, log_parameters={"tailLines": ["20"]}),
             timeout_path="$.Timeout",
+            result_path="$.RunJobResult",
         )
         run_job.add_catch(sfn.Fail(scope=construct, id="Failed"))
 
+
+        delete_job = sfn_tasks.StepFunctionsStartExecution(
+            scope=construct,
+            id="DeleteJob",
+            state_machine=k8s_api_state_machine,
+            integration_pattern=sfn.IntegrationPattern.RUN_JOB,
+            input=sfn.TaskInput.from_object({
+                "ClusterName": sfn.JsonPath.string_at("$.ClusterName"),
+                "Method": "DELETE",
+                "Api": "batch",
+                "Path": "/jobs/{job}",
+                "PathArgs": {
+                    "job": sfn.JsonPath.string_at("$.RunJobResult.metadata.name")
+                }
+            }),
+            result_path="$.DeleteJobResult",
+        )
+
         definition = (
-            sfn.Chain.start(eks_describe_cluster_task).next(run_job).next(sfn.Succeed(scope=construct, id="Succeeded"))
+            sfn.Chain
+            .start(eks_describe_cluster_task)
+            .next(run_job)
+            .next(delete_job)
+            .next(sfn.Succeed(scope=construct, id="Succeeded"))
         )
 
         return sfn.StateMachine(
@@ -257,7 +281,6 @@ class StateMachineBuilder:
         scope: core.Construct,
         manifest: Manifest,
         team_manifest: TeamManifest,
-        role: iam.IRole,
     ) -> sfn.StateMachine:
         # We use a nested Construct to avoid collisions with Lambda and Task ids
         construct = core.Construct(scope, "eks_k8s_api_nested_construct")
@@ -303,5 +326,4 @@ class StateMachineBuilder:
             state_machine_name=f"orbit-{manifest.name}-{team_manifest.name}-eks-k8s-api",
             state_machine_type=sfn.StateMachineType.EXPRESS,
             definition=definition,
-            role=role,
         )
