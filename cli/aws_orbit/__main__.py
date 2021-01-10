@@ -304,7 +304,7 @@ def remote_cli(filename: str, command: str, args: Tuple[str]) -> None:
 def run_container() -> None:
     """Execute containers in the Orbit environment"""
     try:
-        import aws_orbit_sdk  # type: ignore  # noqa: F401
+        import aws_orbit_sdk  # noqa: F401
     except ImportError:
         raise click.ClickException('The "utils" submodule is required to use "run" commands')
     pass
