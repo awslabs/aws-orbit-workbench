@@ -23,8 +23,6 @@ from aws_orbit.commands.destroy import destroy
 from aws_orbit.commands.destroy_image import destroy_image
 from aws_orbit.commands.init import init
 from aws_orbit.commands.list import list_images
-from click.core import Option
-from click.types import File
 
 DEBUG_LOGGING_FORMAT = "[%(asctime)s][%(filename)-13s:%(lineno)3d] %(message)s"
 DEBUG_LOGGING_FORMAT_REMOTE = "[%(filename)-13s:%(lineno)3d] %(message)s"
@@ -306,23 +304,56 @@ def remote_cli(filename: str, command: str, args: Tuple[str]) -> None:
 def run_container() -> None:
     """Execute containers in the Orbit environment"""
     try:
-        import aws_orbit_sdk
+        import aws_orbit_sdk  # type: ignore  # noqa: F401
     except ImportError:
-        raise click.ClickException("The \"utils\" submodule is required to use \"run\" commands")
+        raise click.ClickException('The "utils" submodule is required to use "run" commands')
     pass
 
 
 @run_container.command(name="python", help="Run python script in a container")
 @click.option("--env", "-e", type=str, required=True, help="Orbit Environment to execute container in.")
 @click.option("--team", "-t", type=str, required=True, help="Orbit Team Space to execute container in.")
-@click.option("--user", "-u", type=str, default="jovyan", show_default=True, help="Jupyter user to execute container as.")
+@click.option(
+    "--user", "-u", type=str, default="jovyan", show_default=True, help="Jupyter user to execute container as."
+)
 @click.option("--wait/--no-wait", type=bool, default=False, show_default=True, help="Wait for execution to complete.")
-@click.option("--delay", type=int, required=False, help="If --wait, this is the number of seconds to sleep between container state checks.")
-@click.option("--max-attempts", type=int, required=False, help="If --wait, this is the number of times to check container state before failing.")
-@click.option("--tail-logs/--no-tail-logs", type=bool, default=False, show_default=True, help="If --wait, print a tail of container logs after execution completes.")
-@click.option("--debug/--no-debug", default=False, show_default=True, help="Enable detailed logging.",)
+@click.option(
+    "--delay",
+    type=int,
+    required=False,
+    help="If --wait, this is the number of seconds to sleep between container state checks.",
+)
+@click.option(
+    "--max-attempts",
+    type=int,
+    required=False,
+    help="If --wait, this is the number of times to check container state before failing.",
+)
+@click.option(
+    "--tail-logs/--no-tail-logs",
+    type=bool,
+    default=False,
+    show_default=True,
+    help="If --wait, print a tail of container logs after execution completes.",
+)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    show_default=True,
+    help="Enable detailed logging.",
+)
 @click.argument("input", type=click.File("r"))
-def run_python_container(env: str, team: str, user: str, wait: bool, delay: Optional[int], max_attempts: Optional[int], tail_logs: bool, debug: bool, input: TextIO) -> None:
+def run_python_container(
+    env: str,
+    team: str,
+    user: str,
+    wait: bool,
+    delay: Optional[int],
+    max_attempts: Optional[int],
+    tail_logs: bool,
+    debug: bool,
+    input: TextIO,
+) -> None:
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT_REMOTE)
 
@@ -334,20 +365,64 @@ def run_python_container(env: str, team: str, user: str, wait: bool, delay: Opti
     _logger.debug("tasks: %s", json.dumps(tasks))
 
     import aws_orbit.commands.run as run
-    run.run_python_container(env=env, team=team, user=user, tasks=tasks, wait=wait, delay=delay, max_attempts=max_attempts, tail_logs=tail_logs, debug=debug)
+
+    run.run_python_container(
+        env=env,
+        team=team,
+        user=user,
+        tasks=tasks,
+        wait=wait,
+        delay=delay,
+        max_attempts=max_attempts,
+        tail_logs=tail_logs,
+        debug=debug,
+    )
 
 
 @run_container.command(name="notebook", help="Run notebook in a container")
 @click.option("--env", "-e", type=str, required=True, help="Orbit Environment to execute container in.")
 @click.option("--team", "-t", type=str, required=True, help="Orbit Team Space to execute container in.")
-@click.option("--user", "-u", type=str, default="jovyan", show_default=True, help="Jupyter user to execute container as.")
+@click.option(
+    "--user", "-u", type=str, default="jovyan", show_default=True, help="Jupyter user to execute container as."
+)
 @click.option("--wait/--no-wait", type=bool, default=False, show_default=True, help="Wait for execution to complete.")
-@click.option("--delay", type=int, required=False, help="If --wait, this is the number of seconds to sleep between container state checks.")
-@click.option("--max-attempts", type=int, required=False, help="If --wait, this is the number of times to check container state before failing.")
-@click.option("--tail-logs/--no-tail-logs", type=bool, default=False, show_default=True, help="If --wait, print a tail of container logs after execution completes.")
-@click.option("--debug/--no-debug", default=False, show_default=True, help="Enable detailed logging.",)
+@click.option(
+    "--delay",
+    type=int,
+    required=False,
+    help="If --wait, this is the number of seconds to sleep between container state checks.",
+)
+@click.option(
+    "--max-attempts",
+    type=int,
+    required=False,
+    help="If --wait, this is the number of times to check container state before failing.",
+)
+@click.option(
+    "--tail-logs/--no-tail-logs",
+    type=bool,
+    default=False,
+    show_default=True,
+    help="If --wait, print a tail of container logs after execution completes.",
+)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    show_default=True,
+    help="Enable detailed logging.",
+)
 @click.argument("input", type=click.File("r"))
-def run_notebook_container(env: str, team: str, user: str, wait: bool, delay: Optional[int], max_attempts: Optional[int], tail_logs: bool, debug: bool, input: TextIO) -> None:
+def run_notebook_container(
+    env: str,
+    team: str,
+    user: str,
+    wait: bool,
+    delay: Optional[int],
+    max_attempts: Optional[int],
+    tail_logs: bool,
+    debug: bool,
+    input: TextIO,
+) -> None:
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT_REMOTE)
 
@@ -359,7 +434,18 @@ def run_notebook_container(env: str, team: str, user: str, wait: bool, delay: Op
     _logger.debug("tasks: %s", json.dumps(tasks))
 
     import aws_orbit.commands.run as run
-    run.run_notebook_container(env=env, team=team, user=user, tasks=tasks, wait=wait, delay=delay, max_attempts=max_attempts, tail_logs=tail_logs, debug=debug)
+
+    run.run_notebook_container(
+        env=env,
+        team=team,
+        user=user,
+        tasks=tasks,
+        wait=wait,
+        delay=delay,
+        max_attempts=max_attempts,
+        tail_logs=tail_logs,
+        debug=debug,
+    )
 
 
 def main() -> int:

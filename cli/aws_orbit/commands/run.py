@@ -17,9 +17,7 @@ import logging
 import os
 from typing import Any, Dict, Optional
 
-import aws_orbit_sdk.common as common
 import aws_orbit_sdk.controller as controller
-import click
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -32,10 +30,7 @@ def _set_environ(env: str, team: str, user: str) -> None:
 
 
 def _wait(tasks: Dict[str, Any], delay: Optional[int], max_attempts: Optional[int], tail_logs: bool) -> None:
-    params = {
-        "tasks": [tasks],
-        "tail_log": tail_logs
-    }
+    params = {"tasks": [tasks], "tail_log": tail_logs}
     if delay:
         params["delay"] = delay
     if max_attempts:
@@ -43,7 +38,17 @@ def _wait(tasks: Dict[str, Any], delay: Optional[int], max_attempts: Optional[in
     controller.wait_for_tasks_to_complete(**params)
 
 
-def run_python_container(env: str, team: str, user: str, tasks: Dict[str, Any], wait: bool, delay: Optional[int], max_attempts: Optional[int], tail_logs: bool, debug: bool) -> None:
+def run_python_container(
+    env: str,
+    team: str,
+    user: str,
+    tasks: Dict[str, Any],
+    wait: bool,
+    delay: Optional[int],
+    max_attempts: Optional[int],
+    tail_logs: bool,
+    debug: bool,
+) -> None:
     if debug:
         controller.logger.setLevel(logging.DEBUG)
     _set_environ(env, team, user)
@@ -53,7 +58,18 @@ def run_python_container(env: str, team: str, user: str, tasks: Dict[str, Any], 
     else:
         print(json.dumps(response))
 
-def run_notebook_container(env: str, team: str, user: str, tasks: Dict[str, Any], wait: bool, delay: Optional[int], max_attempts: Optional[int], tail_logs: bool, debug: bool) -> None:
+
+def run_notebook_container(
+    env: str,
+    team: str,
+    user: str,
+    tasks: Dict[str, Any],
+    wait: bool,
+    delay: Optional[int],
+    max_attempts: Optional[int],
+    tail_logs: bool,
+    debug: bool,
+) -> None:
     if debug:
         controller.logger.setLevel(logging.DEBUG)
     _set_environ(env, team, user)
