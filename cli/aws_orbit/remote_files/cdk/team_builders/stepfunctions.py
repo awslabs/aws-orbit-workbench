@@ -264,6 +264,7 @@ class StateMachineBuilder:
                     "Api": "batch",
                     "Path": "/jobs/{job}",
                     "PathArgs": {"job": sfn.JsonPath.string_at("$.RunJobResult.metadata.name")},
+                    "QueryParameters": {"propagationPolicy": ["Background"]},
                 }
             ),
             result_path="$.DeleteJobResult",
