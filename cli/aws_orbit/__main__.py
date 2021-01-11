@@ -355,7 +355,7 @@ def run_python_container(
     input: TextIO,
 ) -> None:
     if debug:
-        enable_debug(format=DEBUG_LOGGING_FORMAT_REMOTE)
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
 
     _logger.debug("env: %s", env)
     _logger.debug("team: %s", team)
@@ -424,7 +424,7 @@ def run_notebook_container(
     input: TextIO,
 ) -> None:
     if debug:
-        enable_debug(format=DEBUG_LOGGING_FORMAT_REMOTE)
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
 
     _logger.debug("env: %s", env)
     _logger.debug("team: %s", team)
