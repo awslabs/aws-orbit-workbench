@@ -45,6 +45,7 @@ setup(
         "aws_orbit": [
             "data/kubectl/apps/*.yaml",
             "data/kubectl/efs_driver/*/*.yaml",
+            "data/kubectl/ebs_driver/*/*.yaml",
             "data/toolkit/*.yaml",
             "data/init/*.yaml",
             "data/cms/schema/*.json",

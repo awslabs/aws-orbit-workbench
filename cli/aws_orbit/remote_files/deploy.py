@@ -90,6 +90,7 @@ def deploy_images_remotely(manifest: Manifest) -> None:
         if manifest.internet_accessible is False:
             images += [
                 ("aws-efs-csi-driver", None),
+                ("aws-ebs-csi-driver", None),
                 ("livenessprobe", None),
                 ("csi-node-driver-registrar", None),
             ]
