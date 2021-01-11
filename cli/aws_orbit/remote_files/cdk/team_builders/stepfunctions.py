@@ -237,11 +237,44 @@ class StateMachineBuilder:
             job=job,
             log_options=LogOptions(retrieve_logs=True, log_parameters={"tailLines": ["20"]}),
             timeout_path="$.Timeout",
+            result_path="$.RunJobResult",
         )
         run_job.add_catch(sfn.Fail(scope=construct, id="Failed"))
 
+        # We generate the arn of the k8s api state machine to eliminate a circular reference created
+        # when we attempt to use a StateMachine Construct. The reference occurs because both state
+        # machines use the same Role
+        k8s_api_state_machine = sfn.StateMachine.from_state_machine_arn(
+            scope=construct,
+            id="K8sApiStateMachine",
+            state_machine_arn=(
+                f"arn:{core.Aws.PARTITION}:states:{core.Aws.REGION}:"
+                f"{core.Aws.ACCOUNT_ID}:stateMachine:orbit-{manifest.name}-{team_manifest.name}-eks-k8s-api"
+            ),
+        )
+        delete_job = sfn_tasks.StepFunctionsStartExecution(
+            scope=construct,
+            id="DeleteJob",
+            state_machine=k8s_api_state_machine,
+            integration_pattern=sfn.IntegrationPattern.RUN_JOB,
+            input=sfn.TaskInput.from_object(
+                {
+                    "ClusterName": sfn.JsonPath.string_at("$.ClusterName"),
+                    "Method": "DELETE",
+                    "Api": "batch",
+                    "Path": "/jobs/{job}",
+                    "PathArgs": {"job": sfn.JsonPath.string_at("$.RunJobResult.metadata.name")},
+                    "QueryParameters": {"propagationPolicy": ["Background"]},
+                }
+            ),
+            result_path="$.DeleteJobResult",
+        )
+
         definition = (
-            sfn.Chain.start(eks_describe_cluster_task).next(run_job).next(sfn.Succeed(scope=construct, id="Succeeded"))
+            sfn.Chain.start(eks_describe_cluster_task)
+            .next(run_job)
+            .next(delete_job)
+            .next(sfn.Succeed(scope=construct, id="Succeeded"))
         )
 
         return sfn.StateMachine(
@@ -257,7 +290,7 @@ class StateMachineBuilder:
         scope: core.Construct,
         manifest: Manifest,
         team_manifest: TeamManifest,
-        role: iam.IRole,
+        role: iam.Role,
     ) -> sfn.StateMachine:
         # We use a nested Construct to avoid collisions with Lambda and Task ids
         construct = core.Construct(scope, "eks_k8s_api_nested_construct")

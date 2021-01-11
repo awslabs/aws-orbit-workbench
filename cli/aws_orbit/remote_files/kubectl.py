@@ -16,7 +16,7 @@ import logging
 import os
 import shutil
 from pprint import pformat
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import yaml
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, plugins, sh, utils
@@ -249,6 +249,15 @@ def _generate_aws_auth_config_map(
     return config_map_file
 
 
+def _update_elbs(manifest: Manifest) -> None:
+    elbs: Dict[str, Dict[str, Any]] = elb.get_elbs_by_service(manifest=manifest)
+    # Env ELBs
+    manifest.elbs = {k: v for k, v in elbs.items() if k.startswith("env/")}
+    # Teams ELBS
+    for team in manifest.teams:
+        team.elbs = {k: v for k, v in elbs.items() if k.startswith(f"{team.name}/")}
+
+
 def fetch_kubectl_data(manifest: Manifest, context: str, include_teams: bool) -> None:
     _logger.debug("Fetching Kubectl data...")
     manifest.fetch_ssm()
@@ -262,7 +271,7 @@ def fetch_kubectl_data(manifest: Manifest, context: str, include_teams: bool) ->
 
     landing_page_url: str = k8s.get_service_hostname(name="landing-page-public", context=context, namespace="env")
     manifest.landing_page_url = f"http://{landing_page_url}"
-    manifest.elbs = elb.get_elbs_by_service(manifest=manifest)
+    _update_elbs(manifest=manifest)
 
     manifest.write_manifest_ssm()
     _logger.debug("Kubectl data fetched successfully.")
