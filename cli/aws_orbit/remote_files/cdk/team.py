@@ -137,6 +137,12 @@ class Team(Stack):
             role=self.container_runner_role,
             scratch_bucket=self.scratch_bucket,
         )
+        self.eks_k8s_api = StateMachineBuilder.build_eks_k8s_api_state_machine(
+            scope=self,
+            manifest=manifest,
+            team_manifest=team_manifest,
+            role=self.container_runner_role,
+        )
         self.eks_fargate_runner = StateMachineBuilder.build_eks_run_container_state_machine(
             scope=self,
             manifest=manifest,
@@ -152,12 +158,6 @@ class Team(Stack):
             image=self.ecr_image,
             role=self.container_runner_role,
             node_type="ec2",
-        )
-        self.eks_k8s_api = StateMachineBuilder.build_eks_k8s_api_state_machine(
-            scope=self,
-            manifest=manifest,
-            team_manifest=team_manifest,
-            role=self.container_runner_role,
         )
 
         self.container_runner = LambdaBuilder.build_container_runner(
