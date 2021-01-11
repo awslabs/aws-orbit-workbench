@@ -45,8 +45,11 @@ class TeamManifest:
         grant_sudo: bool,
         jupyterhub_inbound_ranges: List[str],
         image: Optional[str] = None,
-        profiles: List[MANIFEST_PROPERTY_MAP_TYPE] = [],
+        profiles: Optional[List[MANIFEST_PROPERTY_MAP_TYPE]] = None,
+        elbs: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> None:
+        profiles = [] if profiles is None else profiles
+        elbs = {} if elbs is None else elbs
         self.manifest: "Manifest" = manifest
         self.name: str = name
         self.instance_type: str = instance_type
@@ -89,6 +92,7 @@ class TeamManifest:
         self.ecs_cluster_name: Optional[str] = None
         self.container_runner_arn: Optional[str] = None
         self.eks_k8s_api_arn: Optional[str] = None
+        self.elbs: Optional[Dict[str, Dict[str, Any]]] = elbs
 
     def write_manifest_ssm(self) -> None:
         client = self.manifest.boto3_client("ssm")

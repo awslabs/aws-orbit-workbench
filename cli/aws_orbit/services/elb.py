@@ -72,6 +72,20 @@ def _search_elb_by_name(elbs: List[Dict[str, Any]], name: str) -> Dict[str, Any]
 
 def get_elbs_by_service(manifest: "Manifest") -> Dict[str, Dict[str, Any]]:
     # Cleaning up CreatedTime cause datatime objects are not JSON serializable
-    elbs = [{k: v for k, v in x.items() if k != "CreatedTime"} for x in describe_load_balancers(manifest=manifest)]
+    elbs = [
+        {
+            k: v
+            for k, v in x.items()
+            if k
+            not in {
+                "CreatedTime",
+                "HealthCheck",
+                "CanonicalHostedZoneNameID",
+                "CanonicalHostedZoneName",
+                "BackendServerDescriptions",
+            }
+        }
+        for x in describe_load_balancers(manifest=manifest)
+    ]
     services = identify_services(manifest=manifest, names=[x["LoadBalancerName"] for x in elbs])
     return {s: _search_elb_by_name(elbs=elbs, name=a) for s, a in services.items()}
