@@ -16,7 +16,7 @@ import logging
 import os
 import shutil
 from pprint import pformat
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import yaml
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, plugins, sh, utils
@@ -181,7 +181,7 @@ def _generate_team_manifest(manifest: Manifest, team_manifest: "TeamManifest") -
 
 def _generate_aws_auth_config_map(
     manifest: Manifest, context: str, with_teams: bool, exclude_team: Optional[str] = None
-) -> str:
+) -> Optional[str]:
     output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "aws_auth_config_map")
     os.makedirs(output_path, exist_ok=True)
     _cleanup_output(output_path=output_path)
@@ -190,6 +190,9 @@ def _generate_aws_auth_config_map(
         Loader=yaml.SafeLoader,
     )
     _logger.debug("config_map:\n%s", pformat(config_map))
+    if "mapRoles" not in config_map.get("data", {}):
+        _logger.debug("Empty config_map!")
+        return None
     map_roles = yaml.load(config_map["data"]["mapRoles"], Loader=yaml.SafeLoader)
     _logger.debug("map_roles:\n%s", pformat(map_roles))
     team_usernames = {f"orbit-{manifest.name}-{t.name}-runner" for t in manifest.teams}
@@ -249,6 +252,15 @@ def _generate_aws_auth_config_map(
     return config_map_file
 
 
+def _update_elbs(manifest: Manifest) -> None:
+    elbs: Dict[str, Dict[str, Any]] = elb.get_elbs_by_service(manifest=manifest)
+    # Env ELBs
+    manifest.elbs = {k: v for k, v in elbs.items() if k.startswith("env/")}
+    # Teams ELBS
+    for team in manifest.teams:
+        team.elbs = {k: v for k, v in elbs.items() if k.startswith(f"{team.name}/")}
+
+
 def fetch_kubectl_data(manifest: Manifest, context: str, include_teams: bool) -> None:
     _logger.debug("Fetching Kubectl data...")
     manifest.fetch_ssm()
@@ -262,7 +274,7 @@ def fetch_kubectl_data(manifest: Manifest, context: str, include_teams: bool) ->
 
     landing_page_url: str = k8s.get_service_hostname(name="landing-page-public", context=context, namespace="env")
     manifest.landing_page_url = f"http://{landing_page_url}"
-    manifest.elbs = elb.get_elbs_by_service(manifest=manifest)
+    _update_elbs(manifest=manifest)
 
     manifest.write_manifest_ssm()
     _logger.debug("Kubectl data fetched successfully.")
@@ -333,11 +345,13 @@ def deploy_teams(manifest: Manifest, changes: List["PluginChangeset"]) -> None:
         output_path = _generate_teams_manifest(manifest=manifest)
         output_path = _generate_env_manifest(manifest=manifest, clean_up=False)
         sh.run(f"kubectl apply -f {output_path} --context {context} --wait")
-        output_path = _generate_aws_auth_config_map(
+        output_path_map = _generate_aws_auth_config_map(
             manifest=manifest, context=context, with_teams=True, exclude_team=None
         )
+        if not output_path_map:
+            raise RuntimeError("Empty configMap data!")
         _logger.debug("Updating aws-auth configMap")
-        sh.run(f"kubectl apply -f {output_path} --context {context} --wait")
+        sh.run(f"kubectl apply -f {output_path_map} --context {context} --wait")
         fetch_kubectl_data(manifest=manifest, context=context, include_teams=True)
         for team_manifest in manifest.teams:
             plugins.PLUGINS_REGISTRIES.deploy_team_plugins(
@@ -382,9 +396,12 @@ def destroy_teams(manifest: Manifest) -> None:
         except exceptions.FailedShellCommand as ex:
             _logger.debug("Skipping: %s", ex)
             pass  # Let's leave for eksctl, it will destroy everything anyway...
-        output_path = _generate_aws_auth_config_map(manifest=manifest, context=context, with_teams=False)
-        _logger.debug("Updating aws-auth configMap")
-        sh.run(f"kubectl apply -f {output_path} --context {context}")
+        output_path_map = _generate_aws_auth_config_map(manifest=manifest, context=context, with_teams=False)
+        if output_path_map:
+            _logger.debug("Updating aws-auth configMap")
+            sh.run(f"kubectl apply -f {output_path_map} --context {context}")
+        else:
+            _logger.debug("Skipping aws-auth configMap update")
 
 
 def destroy_team(manifest: Manifest, team_manifest: "TeamManifest") -> None:
@@ -399,8 +416,11 @@ def destroy_team(manifest: Manifest, team_manifest: "TeamManifest") -> None:
             f"kubectl delete -f {output_path} --grace-period=0 --force "
             f"--ignore-not-found --wait --context {context}"
         )
-        output_path = _generate_aws_auth_config_map(
+        output_path_map = _generate_aws_auth_config_map(
             manifest=manifest, context=context, with_teams=True, exclude_team=team_manifest.name
         )
-        _logger.debug("Updating aws-auth configMap")
-        sh.run(f"kubectl apply -f {output_path} --context {context} --wait")
+        if output_path_map:
+            _logger.debug("Updating aws-auth configMap")
+            sh.run(f"kubectl apply -f {output_path_map} --context {context} --wait")
+        else:
+            _logger.debug("Skipping aws-auth configMap update")

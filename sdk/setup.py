@@ -18,6 +18,15 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     include_package_data=True,
     python_requires=">=3.6",
+    install_requires=[
+        "boto3~=1.15.17",
+        "pyyaml~=5.3.1",
+        "ipython~=7.18.1",
+        "pandas~=1.1.3",
+        "qgrid~=1.3.1",
+        "sqlalchemy~=1.3.20",
+        "requests~=2.24.0",
+    ],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",

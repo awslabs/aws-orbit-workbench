@@ -141,7 +141,6 @@ class Manifest:
         self.eks_stack_name: str = f"eksctl-{self.env_stack_name}-cluster"
         self.toolkit_codebuild_project: str = f"orbit-{self.name}"
         self.account_id: str = utils.get_account_id(manifest=self)
-        self.available_eks_regions: List[str] = self._boto3_session().get_available_regions("eks")
         self.vpc: VpcManifest = parse_vpc(manifest=self)
         self.teams: List[TeamManifest] = parse_teams(
             manifest=self, raw_teams=cast(List[MANIFEST_FILE_TEAM_TYPE], self.raw_file["teams"])
