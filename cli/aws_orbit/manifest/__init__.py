@@ -93,6 +93,11 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
             "source": "ecr-external",
             "version": "v1.3.0",
         },
+        "code-build-image": {
+            "repository": "aws-orbit-code-build-base",
+            "source": "ecr",
+            "version": "latest",
+        }
     },
 )
 
