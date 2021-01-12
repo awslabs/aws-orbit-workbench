@@ -382,6 +382,3 @@ cdk.json
 cli/*.yaml
 cli/.orbit.out
 cli/conf/
-
-# Orbit Images
-images/landing-page/yarn.lock

@@ -33,7 +33,7 @@ def _list_self_files() -> List[str]:
 
 
 def _is_valid_image_file(file_path: str) -> bool:
-    for word in ("/node_modules/", "/build/", "/.mypy_cache/", "yarn.lock", ".egg-info", "__pycache__"):
+    for word in ("/node_modules/", "/build/", "/.mypy_cache/", ".egg-info", "__pycache__"):
         if word in file_path:
             return False
     return True

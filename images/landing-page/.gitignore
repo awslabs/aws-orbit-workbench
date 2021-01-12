@@ -24,4 +24,3 @@ yarn-error.log*
 
 # Custom
 public/config.js
-yarn.lock
