@@ -11,6 +11,7 @@ from IPython.core.magic import (
     magics_class,
     needs_local_scope,
 )
+import sql.connection
 from IPython.display import JSON
 
 
@@ -460,6 +461,26 @@ class AthenaMagics(DatabaseMagics):
         except Exception as e:
             print("Error!")
             print(str(e))
+
+    @line_magic
+    def close_athena(self, line: str) -> None:
+        """
+        Close all Athena connections opened in the notebook
+
+        Returns
+        -------
+        None
+            None.
+
+        Example
+        --------
+        >>> %close_athena
+        """
+        sqlmagic_connections = sql.connection.Connection.connection
+        for conn_key in list(sqlmagic_connections.keys()):
+            conn = sqlmagic_connections[conn_key]
+            conn.session.close()
+        print("Connections closed")
 
     @line_magic
     def catalog(self, line: str) -> IPython.core.display.JSON:
