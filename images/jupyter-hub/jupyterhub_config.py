@@ -60,9 +60,30 @@ c.KubeSpawner.environment = {
     "GRANT_SUDO": GRANT_SUDO,
 }
 c.KubeSpawner.image = IMAGE
+# TODO we want to remove this 'Always' from production code
 c.KubeSpawner.image_pull_policy = "Always"
-c.KubeSpawner.volumes = [{"name": "efs-volume", "persistentVolumeClaim": {"claimName": "jupyterhub"}}]
-c.KubeSpawner.volume_mounts = [{"mountPath": "/efs", "name": "efs-volume"}]
+c.KubeSpawner.storage_class = "gp2"
+c.KubeSpawner.storage_access_modes = ["ReadWriteOnce"]
+c.KubeSpawner.storage_capacity = "5Gi"
+c.KubeSpawner.storage_pvc_ensure = True
+pvc_name_template = "claim-{username}{servername}"
+c.KubeSpawner.pvc_name_template = pvc_name_template
+c.KubeSpawner.volumes = [
+    {"name": "efs-volume", "persistentVolumeClaim": {"claimName": "jupyterhub"}},
+    {"name": "ebs-volume", "persistentVolumeClaim": {"claimName": pvc_name_template}},
+]
+c.KubeSpawner.volume_mounts = [{"mountPath": "/efs", "name": "efs-volume"}, {"mountPath": "/ebs", "name": "ebs-volume"}]
+# This will allow Juvyan to write to the ebs volume
+c.KubeSpawner.init_containers = [
+    {
+        "name": "take-ebs-dir-ownership",
+        "image": IMAGE,
+        "command": ["sh", "-c", "sudo chmod -R 777 /ebs"],
+        "securityContext": {"runAsUser": 0},
+        "volumeMounts": [{"mountPath": "/ebs", "name": "ebs-volume"}],
+    }
+]
+
 c.KubeSpawner.lifecycle_hooks = {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh"]}}}
 c.KubeSpawner.node_selector = {"team": TEAM}
 c.KubeSpawner.service_account = "jupyter-user"
@@ -85,6 +106,7 @@ profile_list_default = [
             "cpu_limit": 1,
             "mem_guarantee": "1G",
             "mem_limit": "1G",
+            "storage_capacity": "2Gi",
         },
     },
     {
@@ -105,7 +127,7 @@ profile_list_default = [
 def per_user_profiles(spawner):
     team = spawner.environment["ORBIT_TEAM_SPACE"]
     env = spawner.environment["AWS_ORBIT_ENV"]
-    ssm = boto3.client("ssm")
+    ssm = boto3.Session().client("ssm")
     app_log.info("Getting profiles...")
     ssm_parameter_name: str = f"/orbit/{env}/teams/{team}/manifest"
     json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
