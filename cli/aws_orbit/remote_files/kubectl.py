@@ -30,8 +30,8 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 EFS_DRIVE = "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/ecr/?ref=release-1.0"
+EBS_DRIVE = "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-0.8"
 MODELS_PATH = os.path.join(ORBIT_CLI_ROOT, "data", "kubectl")
-
 
 def _commons(manifest: Manifest, output_path: str) -> None:
     filename = "00-commons.yaml"
@@ -214,6 +214,17 @@ def _efs_driver_base(output_path: str) -> None:
         _logger.debug("Copying efs driver base file: %s -> %s", input, output)
         shutil.copyfile(src=input, dst=output)
 
+def _ebs_driver_base(output_path: str) -> None:
+    os.makedirs(os.path.join(output_path, "base"), exist_ok=True)
+    filenames = ("csidriver.yaml", "kustomization.yaml", "node.yaml", "clusterrole-provisioner.yaml", "controller.yaml",
+                 "clusterrole-attacher.yaml", "clusterrolebinding-attacher.yaml", "clusterrolebinding-provisioner.yaml",
+                 "serviceaccount-csi-controller.yaml")
+
+    for filename in filenames:
+        input = os.path.join(MODELS_PATH, "ebs_driver", "base", filename)
+        output = os.path.join(output_path, "base", filename)
+        _logger.debug("Copying ebs driver base file: %s -> %s", input, output)
+        shutil.copyfile(src=input, dst=output)
 
 def _efs_driver_overlays(output_path: str, manifest: Manifest) -> None:
     filename = "kustomization.yaml"
@@ -230,6 +241,20 @@ def _efs_driver_overlays(output_path: str, manifest: Manifest) -> None:
     with open(output, "w") as file:
         file.write(content)
 
+def _ebs_driver_overlays(output_path: str, manifest: Manifest) -> None:
+    filename = "kustomization.yaml"
+    input = os.path.join(MODELS_PATH, "ebs_driver", "overlays", filename)
+    os.makedirs(os.path.join(output_path, "overlays"), exist_ok=True)
+    output = os.path.join(output_path, "overlays", filename)
+    with open(input, "r") as file:
+        content: str = file.read()
+    content = content.replace("$", "").format(
+        region=manifest.region,
+        account_id=manifest.account_id,
+        env_name=manifest.name,
+    )
+    with open(output, "w") as file:
+        file.write(content)
 
 def _generate_efs_driver_manifest(manifest: Manifest) -> str:
     output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "efs_driver")
@@ -243,6 +268,17 @@ def _generate_efs_driver_manifest(manifest: Manifest) -> str:
     _efs_driver_overlays(output_path=output_path, manifest=manifest)
     return os.path.join(output_path, "overlays")
 
+def _generate_ebs_driver_manifest(manifest: Manifest) -> str:
+    output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "ebs_driver")
+    os.makedirs(output_path, exist_ok=True)
+    _cleanup_output(output_path=output_path)
+    if manifest.account_id is None:
+        raise RuntimeError("manifest.account_id is None!")
+    if manifest.region is None:
+        raise RuntimeError("manifest.region is None!")
+    _ebs_driver_base(output_path=output_path)
+    _ebs_driver_overlays(output_path=output_path, manifest=manifest)
+    return os.path.join(output_path, "overlays")
 
 def deploy_env(manifest: Manifest) -> None:
     eks_stack_name: str = f"eksctl-orbit-{manifest.name}-cluster"
@@ -253,8 +289,11 @@ def deploy_env(manifest: Manifest) -> None:
         if manifest.internet_accessible is False:
             output_path = _generate_efs_driver_manifest(manifest=manifest)
             sh.run(f"kubectl apply -k {output_path} --context {context} --wait")
+            output_path = _generate_ebs_driver_manifest(manifest=manifest)
+            sh.run(f"kubectl apply -k {output_path} --context {context} --wait")
         else:
             sh.run(f"kubectl apply -k {EFS_DRIVE} --context {context} --wait")
+            sh.run(f"kubectl apply -k {EBS_DRIVE} --context {context} --wait")
         output_path = _generate_env_manifest(manifest=manifest)
         sh.run(f"kubectl apply -f {output_path} --context {context} --wait")
         fetch_kubectl_data(manifest=manifest, context=context, include_teams=False)

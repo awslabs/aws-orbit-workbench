@@ -24,7 +24,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 DEFAULT_IMAGES: List[str] = ["landing-page", "jupyter-hub", "jupyter-user"]
-DEFAULT_ISOLATED_IMAGES: List[str] = ["aws-efs-csi-driver", "livenessprobe", "csi-node-driver-registrar"]
+DEFAULT_ISOLATED_IMAGES: List[str] = ["aws-efs-csi-driver", "aws-ebs-csi-driver", "livenessprobe", "csi-node-driver-registrar"]
 
 
 def _filter_repos(manifest: Manifest, page: Dict[str, Any]) -> Iterator[str]:
