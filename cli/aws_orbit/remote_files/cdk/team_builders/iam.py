@@ -233,7 +233,7 @@ class IamBuilder:
                         "logs:ListLogDeliveries",
                     ],
                     resources=["*"],
-                )
+                ),
             ],
         )
 

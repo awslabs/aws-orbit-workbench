@@ -32,6 +32,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 EFS_DRIVE = "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/ecr/?ref=release-1.0"
 MODELS_PATH = os.path.join(ORBIT_CLI_ROOT, "data", "kubectl")
 
+
 def _commons(manifest: Manifest, output_path: str) -> None:
     filename = "00-commons.yaml"
     input = os.path.join(MODELS_PATH, "apps", filename)
@@ -213,6 +214,7 @@ def _efs_driver_base(output_path: str) -> None:
         _logger.debug("Copying efs driver base file: %s -> %s", input, output)
         shutil.copyfile(src=input, dst=output)
 
+
 def _efs_driver_overlays(output_path: str, manifest: Manifest) -> None:
     filename = "kustomization.yaml"
     input = os.path.join(MODELS_PATH, "efs_driver", "overlays", filename)
@@ -228,6 +230,7 @@ def _efs_driver_overlays(output_path: str, manifest: Manifest) -> None:
     with open(output, "w") as file:
         file.write(content)
 
+
 def _generate_efs_driver_manifest(manifest: Manifest) -> str:
     output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "efs_driver")
     os.makedirs(output_path, exist_ok=True)
@@ -239,6 +242,7 @@ def _generate_efs_driver_manifest(manifest: Manifest) -> str:
     _efs_driver_base(output_path=output_path)
     _efs_driver_overlays(output_path=output_path, manifest=manifest)
     return os.path.join(output_path, "overlays")
+
 
 def deploy_env(manifest: Manifest) -> None:
     eks_stack_name: str = f"eksctl-orbit-{manifest.name}-cluster"
