@@ -86,11 +86,6 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
             "source": "ecr-external",
             "version": "v1.3.0",
         },
-        "aws-ebs-csi-driver": {
-            "repository": "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/aws-ebs-csi-driver",
-            "source": "ecr-external",
-            "version": "v0.7.1",
-        },
     },
 )
 
