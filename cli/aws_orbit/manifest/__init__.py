@@ -97,7 +97,7 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
             "repository": "aws-orbit-code-build-base",
             "source": "ecr",
             "version": "latest",
-        }
+        },
     },
 )
 

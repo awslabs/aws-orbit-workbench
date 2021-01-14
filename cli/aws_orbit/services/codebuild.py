@@ -138,7 +138,7 @@ def start(
             },
             "s3Logs": {"status": "DISABLED"},
         },
-        imageOverride="aws-orbit-code-build-base" if manifest.images["code-build-image"]["source"] == "ecr" else None
+        imageOverride="aws-orbit-code-build-base" if manifest.images["code-build-image"]["source"] == "ecr" else None,
     )
     return str(response["build"]["id"])
 
