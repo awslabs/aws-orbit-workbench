@@ -138,7 +138,9 @@ def start(
             },
             "s3Logs": {"status": "DISABLED"},
         },
-        imageOverride=manifest.images["code-build-image"]["repository"] if manifest.images["code-build-image"]["source"] == "ecr" else None,
+        imageOverride=manifest.images["code-build-image"]["repository"]
+        if manifest.images["code-build-image"]["source"] == "ecr"
+        else None,
     )
     return str(response["build"]["id"])
 
