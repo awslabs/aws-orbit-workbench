@@ -94,7 +94,7 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
             "version": "v1.3.0",
         },
         "code-build-image": {
-            "repository": "aws-orbit-code-build-base",
+            "repository": "465538974520.dkr.ecr.us-east-2.amazonaws.com/aws-orbit-code-build-base",
             "source": "ecr",
             "version": "latest",
         },
