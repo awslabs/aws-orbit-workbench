@@ -62,7 +62,7 @@ c.KubeSpawner.environment = {
 c.KubeSpawner.image = IMAGE
 # TODO we want to remove this 'Always' from production code
 c.KubeSpawner.image_pull_policy = "Always"
-c.KubeSpawner.storage_class = "gp2"
+c.KubeSpawner.storage_class = f"ebs-{TEAM}-gp2"
 c.KubeSpawner.storage_access_modes = ["ReadWriteOnce"]
 c.KubeSpawner.storage_capacity = "5Gi"
 c.KubeSpawner.storage_pvc_ensure = True

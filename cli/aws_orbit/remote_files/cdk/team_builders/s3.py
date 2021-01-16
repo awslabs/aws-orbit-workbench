@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import aws_cdk.aws_kms as kms
 import aws_cdk.aws_s3 as s3
 import aws_cdk.core as core
 from aws_orbit.manifest import Manifest
@@ -21,9 +22,7 @@ from aws_orbit.manifest.team import TeamManifest
 class S3Builder:
     @staticmethod
     def build_scratch_bucket(
-        scope: core.Construct,
-        manifest: Manifest,
-        team_manifest: TeamManifest,
+        scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest, kms_key: kms.Key
     ) -> s3.Bucket:
         bucket_name: str = (
             f"orbit-{team_manifest.manifest.name}-{team_manifest.name}"
@@ -33,8 +32,10 @@ class S3Builder:
             scope=scope,
             id="scratch_bucket",
             bucket_name=bucket_name,
+            access_control=s3.BucketAccessControl.BUCKET_OWNER_FULL_CONTROL,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             removal_policy=core.RemovalPolicy.RETAIN,
-            encryption=s3.BucketEncryption.S3_MANAGED,
             lifecycle_rules=[s3.LifecycleRule(expiration=core.Duration.days(team_manifest.scratch_retention_days))],
+            encryption=s3.BucketEncryption.KMS,
+            encryption_key=kms_key,
         )

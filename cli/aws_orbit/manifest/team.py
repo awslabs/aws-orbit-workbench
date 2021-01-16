@@ -92,6 +92,7 @@ class TeamManifest:
         self.ecs_cluster_name: Optional[str] = None
         self.container_runner_arn: Optional[str] = None
         self.eks_k8s_api_arn: Optional[str] = None
+        self.team_kms_key_arn: Optional[str] = None
         self.elbs: Optional[Dict[str, Dict[str, Any]]] = elbs
 
     def write_manifest_ssm(self) -> None:
@@ -156,6 +157,8 @@ class TeamManifest:
             self.ecs_cluster_name = cast(str, raw.get("ecs-cluster-name"))
             self.container_runner_arn = cast(str, raw.get("container-runner-arn"))
             self.eks_k8s_api_arn = cast(str, raw.get("eks-k8s-api-arn"))
+            self.team_kms_key_arn = cast(str, raw.get("team-kms-key-arn"))
+
             _logger.debug("Team %s loaded successfully from SSM.", self.name)
 
     def construct_ecr_repository_name(self, env: str) -> str:

@@ -122,7 +122,23 @@ class Env(Stack):
                                 "iam:ListAttachedRolePolicies",
                             ],
                             resources=["*"],
-                        )
+                        ),
+                        # FIXME can this be moved to a service role and only be allowed to access the team key after chamcca@ changes
+                        iam.PolicyStatement(
+                            effect=iam.Effect.ALLOW,
+                            actions=[
+                                "kms:CreateGrant",
+                                "kms:ListGrants",
+                                "kms:RevokeGrant",
+                                "kms:DescribeKey",
+                                "kms:Encrypt",
+                                "kms:Decrypt",
+                                "kms:ReEncrypt*",
+                                "kms:GenerateDataKey*",
+                                "kms:DescribeKey",
+                            ],
+                            resources=["*"],
+                        ),
                     ]
                 )
             },
