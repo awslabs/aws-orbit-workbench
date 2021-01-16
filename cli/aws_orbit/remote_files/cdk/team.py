@@ -22,8 +22,11 @@ import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecr as ecr
 import aws_cdk.aws_efs as efs
+import aws_cdk.aws_iam as iam
+import aws_cdk.aws_kms as kms
 import aws_cdk.aws_s3 as s3
 import aws_cdk.aws_ssm as ssm
+import aws_cdk.core as core
 from aws_cdk.core import App, Construct, Environment, Stack, Tags
 from aws_orbit import changeset
 from aws_orbit.manifest import Manifest
@@ -68,6 +71,25 @@ class Team(Stack):
         self.i_private_subnets = Ec2Builder.build_subnets_from_kind(
             scope=self, subnet_manifests=manifest.vpc.subnets, subnet_kind=SubnetKind.private
         )
+        administrator_arns: List[str] = []  # A place to add other admins if needed for KMS
+        admin_principals = iam.CompositePrincipal(
+            *[iam.ArnPrincipal(arn) for arn in administrator_arns],
+            iam.ArnPrincipal(f"arn:aws:iam::{self.manifest.account_id}:root"),
+        )
+        self.team_kms_key: kms.Key = kms.Key(
+            self,
+            id="kms-key",
+            removal_policy=core.RemovalPolicy.RETAIN,
+            enabled=True,
+            enable_key_rotation=True,
+            policy=iam.PolicyDocument(
+                statements=[
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW, actions=["kms:*"], resources=["*"], principals=[admin_principals]
+                    )
+                ]
+            ),
+        )
 
         self.ecr_repo: ecr.Repository = ecr.Repository(
             scope=self,
@@ -78,7 +100,7 @@ class Team(Stack):
         self.policies: List[str] = self.team_manifest.policies
 
         self.scratch_bucket: s3.Bucket = S3Builder.build_scratch_bucket(
-            scope=self, manifest=manifest, team_manifest=team_manifest
+            scope=self, manifest=manifest, team_manifest=team_manifest, kms_key=self.team_kms_key
         )
 
         self.role_eks_nodegroup = IamBuilder.build_team_role(
@@ -87,6 +109,7 @@ class Team(Stack):
             team_manifest=self.team_manifest,
             policy_names=self.policies,
             scratch_bucket=self.scratch_bucket,
+            team_kms_key=self.team_kms_key,
         )
 
         self.sg_efs: ec2.SecurityGroup = Ec2Builder.build_efs_security_group(
@@ -103,6 +126,7 @@ class Team(Stack):
             vpc=self.i_vpc,
             efs_security_group=self.sg_efs,
             subnets=self.i_private_subnets if self.manifest.internet_accessible else self.i_isolated_subnets,
+            team_kms_key=self.team_kms_key,
         )
 
         self.user_pool_group: cognito.CfnUserPoolGroup = CognitoBuilder.build_user_pool_group(
@@ -175,6 +199,7 @@ class Team(Stack):
         self.team_manifest.ecs_cluster_name = self.ecs_cluster.cluster_name
         self.team_manifest.container_runner_arn = self.container_runner.function_arn
         self.team_manifest.eks_k8s_api_arn = self.eks_k8s_api.state_machine_arn
+        self.team_manifest.team_kms_key_arn = self.team_kms_key.key_arn
 
         self.manifest_parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,

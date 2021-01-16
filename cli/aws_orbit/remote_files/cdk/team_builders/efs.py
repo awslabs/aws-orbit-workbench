@@ -16,6 +16,7 @@ from typing import List
 
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_efs as efs
+import aws_cdk.aws_kms as kms
 import aws_cdk.core as core
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest
@@ -30,6 +31,7 @@ class EfsBuilder:
         vpc: ec2.Vpc,
         efs_security_group: ec2.ISecurityGroup,
         subnets: List[ec2.ISubnet],
+        team_kms_key: kms.Key,
     ) -> efs.FileSystem:
         name: str = f"orbit-{manifest.name}-{team_manifest.name}-fs"
         return efs.FileSystem(
@@ -45,4 +47,5 @@ class EfsBuilder:
             throughput_mode=efs.ThroughputMode.BURSTING,
             security_group=efs_security_group,
             vpc_subnets=ec2.SubnetSelection(subnets=subnets),
+            kms_key=team_kms_key,
         )

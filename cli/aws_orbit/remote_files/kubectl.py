@@ -71,6 +71,7 @@ def _team(manifest: Manifest, team_manifest: "TeamManifest", output_path: str) -
         grant_sudo='"yes"' if team_manifest.grant_sudo else '"no"',
         internal_load_balancer="false" if manifest.load_balancers_subnets else "true",
         jupyterhub_inbound_ranges=inbound_ranges,
+        team_kms_key_arn=team_manifest.team_kms_key_arn,
     )
     _logger.debug("Kubectl Team %s manifest:\n%s", team_manifest.name, content)
     with open(output, "w") as file:
