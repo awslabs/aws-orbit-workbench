@@ -71,7 +71,7 @@ class Team(Stack):
         self.i_private_subnets = Ec2Builder.build_subnets_from_kind(
             scope=self, subnet_manifests=manifest.vpc.subnets, subnet_kind=SubnetKind.private
         )
-        administrator_arns = []  # A place to add other admins if needed for KMS
+        administrator_arns: List[str] = []  # A place to add other admins if needed for KMS
         admin_principals = iam.CompositePrincipal(
             *[iam.ArnPrincipal(arn) for arn in administrator_arns],
             iam.ArnPrincipal(f"arn:aws:iam::{self.manifest.account_id}:root"),
