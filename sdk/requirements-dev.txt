@@ -7,3 +7,4 @@ check-manifest
 pip-tools
 wheel
 twine
+-e .

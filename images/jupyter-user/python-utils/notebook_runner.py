@@ -13,20 +13,15 @@
 #    limitations under the License.
 
 import json
-import sys
+import logging
 import os
-import json
+import shutil
 import time
+from multiprocessing import Pool
 
-import tempfile
-import requests
 import papermill as pm
 import yaml as yaml
-import logging
-import time
-import boto3
-import shutil
-from multiprocessing import *
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
@@ -35,22 +30,22 @@ logger = logging.getLogger()
 # https://stackoverflow.com/a/52312810
 NoDatesSafeLoader = yaml.SafeLoader
 NoDatesSafeLoader.yaml_implicit_resolvers = {
-    k: [r for r in v if r[0] != 'tag:yaml.org,2002:timestamp'] for
-    k, v in NoDatesSafeLoader.yaml_implicit_resolvers.items()
+    k: [r for r in v if r[0] != "tag:yaml.org,2002:timestamp"]
+    for k, v in NoDatesSafeLoader.yaml_implicit_resolvers.items()
 }
 
 
 def read_yaml_file(path):
-    with open(path, 'r') as f:
+    with open(path, "r") as f:
         return yaml.load(f, Loader=NoDatesSafeLoader)
 
 
 def run():
 
-    default_output_directory = os.environ.get('output', 'private/outputs')
+    default_output_directory = os.environ.get("output", "private/outputs")
 
-    notebooks = yaml.load(os.environ['tasks'], Loader=NoDatesSafeLoader)
-    compute = yaml.load(os.environ['compute'], Loader=NoDatesSafeLoader)
+    notebooks = yaml.load(os.environ["tasks"], Loader=NoDatesSafeLoader)
+    compute = yaml.load(os.environ["compute"], Loader=NoDatesSafeLoader)
 
     notebooksToRun = prepareAndValidateNotebooks(default_output_directory, notebooks)
 
@@ -65,11 +60,10 @@ def run():
             return "done notebook execution"
 
 
-
 def runNotebooks(reportsToRun, compute):
     errors = []
-    if ('container' in compute['compute'].keys() and 'p_concurrent' in compute['compute']['container']):
-        workers = int(compute['compute']['container']['p_concurrent'])
+    if "container" in compute["compute"].keys() and "p_concurrent" in compute["compute"]["container"]:
+        workers = int(compute["compute"]["container"]["p_concurrent"])
     else:
         workers = 1
 
@@ -90,30 +84,32 @@ def runNotebooks(reportsToRun, compute):
 
     return errors
 
+
 def runNotebook(parameters):
     errors = []
-    output_path = parameters.get('PAPERMILL_OUTPUT_PATH')
-    os_user = parameters.get('JUPYTER_USER_NAME', 'jovyan')
-    os_group = parameters.get('JUPYTER_USER_GROUP', 'users')
+    output_path = parameters.get("PAPERMILL_OUTPUT_PATH")
+    os_user = parameters.get("JUPYTER_USER_NAME", "jovyan")
+    os_group = parameters.get("JUPYTER_USER_GROUP", "users")
     try:
         logger.info("Starting notebook execution for %s", output_path)
         pm.execute_notebook(
-            input_path=parameters['PAPERMILL_INPUT_PATH'],
+            input_path=parameters["PAPERMILL_INPUT_PATH"],
             output_path=output_path,
             parameters=parameters,
-            cwd=parameters['PAPERMILL_WORK_DIR'],
-            log_output=True
+            cwd=parameters["PAPERMILL_WORK_DIR"],
+            log_output=True,
         )
     except Exception as e:
         logger.error("Error during notebook execution: %s", e)
-        pathToOutputNotebookError = os.path.join(parameters['PAPERMILL_OUTPUT_DIR_PATH'],
-                                                 "error@" + parameters['PAPERMILL_WORKBOOK_NAME'])
+        pathToOutputNotebookError = os.path.join(
+            parameters["PAPERMILL_OUTPUT_DIR_PATH"], "error@" + parameters["PAPERMILL_WORKBOOK_NAME"]
+        )
 
         logger.error("tagging error notebook with error %s->%s", output_path, pathToOutputNotebookError)
         errors.append(e)
         if output_path.startswith("s3:"):
             c = "aws s3 mv {} {}".format(output_path, pathToOutputNotebookError)
-            print (c)
+            print(c)
             os.system(c)
         else:
             shutil.move(output_path, pathToOutputNotebookError)
@@ -127,10 +123,11 @@ def runNotebook(parameters):
     logger.info("Completed notebook execution: %s", output_path)
     return errors
 
+
 def prepareAndValidateNotebooks(default_output_directory, notebooks):
     reportsToRun = []
     id = 1
-    for notebook in notebooks['tasks']:
+    for notebook in notebooks["tasks"]:
         key = "e{}".format(str(id))
         id += 1
         reportToRun = prepareNotebook(default_output_directory, notebook, key)
@@ -139,10 +136,10 @@ def prepareAndValidateNotebooks(default_output_directory, notebooks):
 
 
 def prepareNotebook(default_output_directory, notebook, key):
-    notebookName = notebook['notebookName']
-    sourcePath = notebook['sourcePath']
-    targetPath = notebook.get('targetPath', default_output_directory)
-    targetPrefix = notebook.get('targetPrefix', key)
+    notebookName = notebook["notebookName"]
+    sourcePath = notebook["sourcePath"]
+    targetPath = notebook.get("targetPath", default_output_directory)
+    targetPrefix = notebook.get("targetPrefix", key)
 
     timestamp = time.strftime("%Y%m%d-%H:%M")
     outputName = targetPrefix + "@" + timestamp + ".ipynb"
@@ -158,28 +155,27 @@ def prepareNotebook(default_output_directory, notebook, key):
 
     try:
         sm_notebook = json.loads(open(pathToNotebook).read())
-    except:
+    finally:
         logger.error("cannot find notebook file at: %s", pathToNotebook)
-        raise
 
-    if sm_notebook['metadata']['kernelspec']['name'] == 'sparkkernel':
-        sm_notebook['metadata']['kernelspec']['language'] = 'scala'
+    if sm_notebook["metadata"]["kernelspec"]["name"] == "sparkkernel":
+        sm_notebook["metadata"]["kernelspec"]["language"] = "scala"
     else:
-        sm_notebook['metadata']['kernelspec']['language'] = 'python'
+        sm_notebook["metadata"]["kernelspec"]["language"] = "python"
     # if sm_notebook['metadata']['kernelspec']['name'] == 'conda_python3':
     #     sm_notebook['metadata']['kernelspec']['name'] = 'python3'
-    with open(pathToNotebookFixed, 'w') as outfile:
+    with open(pathToNotebookFixed, "w") as outfile:
         json.dump(sm_notebook, outfile)
 
     logger.debug("fixed language in notebook: %s", pathToNotebook)
 
-    pathToOutputDir = targetPath # os.path.join(outputDirectory, targetPath)
+    pathToOutputDir = targetPath  # os.path.join(outputDirectory, targetPath)
 
     if not targetPath.startswith("s3:") and not os.path.exists(pathToOutputDir):
         pathToOutputDir = os.path.abspath(pathToOutputDir)
         os.mkdir(pathToOutputDir)
 
-    notebookNameWithoutSufix = notebookName.split('.')[0]
+    notebookNameWithoutSufix = notebookName.split(".")[0]
     pathToOutputNotebookDir = os.path.join(pathToOutputDir, notebookNameWithoutSufix)
 
     if not targetPath.startswith("s3:") and not os.path.exists(pathToOutputNotebookDir):
@@ -190,27 +186,25 @@ def prepareNotebook(default_output_directory, notebook, key):
 
     logger.debug("Target Notebook path: %s", pathToOutputNotebook)
     logger.debug("FOUND notebook: %s", notebook)
-    if 'paramPath' in notebook:
-        pathToParamPath = os.path.abspath(notebook['paramPath'])
+    if "paramPath" in notebook:
+        pathToParamPath = os.path.abspath(notebook["paramPath"])
         try:
             parameters = read_yaml_file(pathToParamPath)
-        except:
+        finally:
             logger.error("cannot find parameter file at: %s", pathToParamPath)
-            raise
-    elif 'params' in notebook:
+    elif "params" in notebook:
         try:
-            parameters = notebook['params']
-        except:
-            logger.error("fail to parse parameters: %s", notebook['params'])
-            raise
+            parameters = notebook["params"]
+        finally:
+            logger.error("fail to parse parameters: %s", notebook["params"])
     else:
         parameters = dict()
 
-    parameters['PAPERMILL_INPUT_PATH'] = os.path.abspath(pathToNotebookFixed)
-    parameters['PAPERMILL_OUTPUT_PATH'] = pathToOutputNotebook
-    parameters['PAPERMILL_OUTPUT_DIR_PATH'] = pathToOutputNotebookDir
-    parameters['PAPERMILL_WORKBOOK_NAME'] = outputName
-    parameters['PAPERMILL_WORK_DIR'] = os.path.abspath(workdir)
+    parameters["PAPERMILL_INPUT_PATH"] = os.path.abspath(pathToNotebookFixed)
+    parameters["PAPERMILL_OUTPUT_PATH"] = pathToOutputNotebook
+    parameters["PAPERMILL_OUTPUT_DIR_PATH"] = pathToOutputNotebookDir
+    parameters["PAPERMILL_WORKBOOK_NAME"] = outputName
+    parameters["PAPERMILL_WORK_DIR"] = os.path.abspath(workdir)
     logger.debug("runtime parameters: %s", parameters)
 
     return parameters

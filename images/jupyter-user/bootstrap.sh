@@ -17,9 +17,6 @@
 
 set -ex
 
-# EFS
-
-
 mkdir -p /efs/"$USERNAME"
 mkdir -p /efs/shared/scheduled/notebooks
 mkdir -p /efs/shared/scheduled/outputs

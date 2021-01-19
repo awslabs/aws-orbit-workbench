@@ -25,8 +25,8 @@ docker run \
     -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
     -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
     -e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} \
-    -e TEAM=data-engineering \
-    -e ENV_NAME=env \
+    -e TEAM=lake-creator \
+    -e ENV_NAME=dev-env \
     -p 8888:8888 \
     --rm \
     -it \

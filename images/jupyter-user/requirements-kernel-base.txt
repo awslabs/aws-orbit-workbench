@@ -1,0 +1,8 @@
+numpy==1.19.5
+ipykernel==5.4.3
+awswrangler==2.3.0
+matplotlib==3.3.3
+kubernetes==12.0.1
+sagemaker==1.72.1
+sqlalchemy==1.3.22
+pyathena==1.11.4
