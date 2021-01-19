@@ -24,7 +24,7 @@ from aws_orbit.services import ecr
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def destroy_image(filename: str, args: Tuple[str, ...]) -> None:
+def delete_image(filename: str, args: Tuple[str, ...]) -> None:
     manifest: Manifest = Manifest(filename=filename)
     _logger.debug("manifest.name %s", manifest.name)
     _logger.debug("args %s", args)
@@ -39,13 +39,15 @@ def destroy_image(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug("Docker Image Destroyed from ECR")
 
 
-def destroy(filename: str, args: Tuple[str, ...]) -> None:
+def destroy(args: Tuple[str, ...]) -> None:
+    _logger.debug("args %s", args)
+    filename: str = args[0]
     manifest: Manifest = Manifest(filename=filename)
     _logger.debug("manifest.name %s", manifest.name)
-    _logger.debug("args %s", args)
-    if len(args) == 1:
-        teams_only: bool = args[0] == "teams-stacks"
-        keep_demo: bool = args[0] == "keep-demo"
+
+    if len(args) == 2:
+        teams_only: bool = args[1] == "teams-stacks"
+        keep_demo: bool = args[1] == "keep-demo"
     else:
         raise ValueError("Unexpected number of values in args.")
 

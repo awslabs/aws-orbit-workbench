@@ -291,7 +291,7 @@ def extract_changeset(manifest: "Manifest", ctx: "MessagesContext") -> Changeset
 
 
 def _read_changeset_file(filename: str) -> CHANGESET_FILE_TYPE:
-    _logger.debug("reading changeset file (%s)", filename)
+    _logger.debug("reading changeset file (%s)", os.path.abspath(filename))
     with open(filename, "r") as file:
         return cast(CHANGESET_FILE_TYPE, json.load(fp=file))
 

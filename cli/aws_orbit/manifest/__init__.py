@@ -22,6 +22,8 @@ import botocore.config
 import botocore.exceptions
 import yaml
 from aws_orbit import utils
+from aws_orbit.manifest import team as manifest_team
+from aws_orbit.manifest.subnet import MANIFEST_SUBNET_TYPE, SubnetKind, SubnetManifest
 from aws_orbit.manifest.team import MANIFEST_FILE_TEAM_TYPE, TeamManifest, parse_teams
 from aws_orbit.manifest.vpc import MANIFEST_FILE_VPC_TYPE, MANIFEST_VPC_TYPE, VpcManifest, parse_vpc
 from aws_orbit.services import cognito
@@ -91,15 +93,18 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
 
 
 class Manifest:
-    def __init__(self, filename: str) -> None:
+    def load_manifest_from_ssm(self, env: str):
+        self.name = env
+        self.ssm_parameter_name: str = f"/orbit/{self.name}/manifest"
+
+        self.fetch_ssm()
+        _logger.debug("Loaded manifest from SSM %s", self.ssm_parameter_name)
+
+    def load_manifest_from_file(self, filename: str):
         self.filename: str = filename
         self.filename_dir: str = utils.path_from_filename(filename=filename)
         self.raw_file: MANIFEST_FILE_TYPE = self._read_manifest_file(filename=filename)
         self.name: str = cast(str, self.raw_file["name"])
-        if "region" in self.raw_file:
-            self.region: str = cast(str, self.raw_file["region"])
-        else:
-            self.region = utils.get_region()
         self.demo: bool = cast(bool, self.raw_file.get("demo", False))
         self.dev: bool = cast(bool, self.raw_file.get("dev", False))
 
@@ -131,16 +136,6 @@ class Manifest:
                 if k not in self.images:
                     self.images[k] = v
 
-        self.env_tag: str = f"orbit-{self.name}"
-        self.ssm_parameter_name: str = f"/orbit/{self.name}/manifest"
-        self.ssm_dockerhub_parameter_name: str = f"/orbit/{self.name}/dockerhub"
-        self.toolkit_stack_name: str = f"orbit-{self.name}-toolkit"
-        self.cdk_toolkit_stack_name: str = f"orbit-{self.name}-cdk-toolkit"
-        self.demo_stack_name: str = f"orbit-{self.name}-demo"
-        self.env_stack_name: str = f"orbit-{self.name}"
-        self.eks_stack_name: str = f"eksctl-{self.env_stack_name}-cluster"
-        self.toolkit_codebuild_project: str = f"orbit-{self.name}"
-        self.account_id: str = utils.get_account_id(manifest=self)
         self.vpc: VpcManifest = parse_vpc(manifest=self)
         self.teams: List[TeamManifest] = parse_teams(
             manifest=self, raw_teams=cast(List[MANIFEST_FILE_TEAM_TYPE], self.raw_file["teams"])
@@ -175,6 +170,30 @@ class Manifest:
 
         self.cognito_external_provider_domain: Optional[str] = None  # Cognito
         self.cognito_external_provider_redirect: Optional[str] = None  # Cognito
+
+    def __init__(self, filename: Optional[str], env: Optional[str], region: Optional[str]) -> None:
+        if filename and env:
+            raise RuntimeError("Must provide either a manifest file or environment name and neither were provided.")
+        if region:
+            self.region: str = cast(str, region)
+        else:
+            self.region = utils.get_region()
+        self.account_id: str = utils.get_account_id(manifest=self)
+
+        if filename == None:
+            self.load_manifest_from_ssm(env)
+        else:
+            self.load_manifest_from_file(filename)
+
+        self.env_tag: str = f"orbit-{self.name}"
+        self.ssm_parameter_name: str = f"/orbit/{self.name}/manifest"
+        self.ssm_dockerhub_parameter_name: str = f"/orbit/{self.name}/dockerhub"
+        self.toolkit_stack_name: str = f"orbit-{self.name}-toolkit"
+        self.cdk_toolkit_stack_name: str = f"orbit-{self.name}-cdk-toolkit"
+        self.demo_stack_name: str = f"orbit-{self.name}-demo"
+        self.env_stack_name: str = f"orbit-{self.name}"
+        self.eks_stack_name: str = f"eksctl-{self.env_stack_name}-cluster"
+        self.toolkit_codebuild_project: str = f"orbit-{self.name}"
 
     @staticmethod
     def _read_manifest_file(filename: str) -> MANIFEST_FILE_TYPE:
@@ -254,16 +273,47 @@ class Manifest:
             self.eks_oidc_provider = cast(Optional[str], raw.get("eks-oidc-provider"))
             self.user_pool_client_id = cast(Optional[str], raw.get("user-pool-client-id"))
             self.identity_pool_id = cast(Optional[str], raw.get("identity-pool-id"))
+            self.cognito_external_provider: Optional[str] = cast(
+                Optional[str], raw.get("cognito-external-provider", None)
+            )
+            self.cognito_external_provider_label: Optional[str] = cast(
+                Optional[str], raw.get("cognito-external-provider-label", None)
+            )
             self.cognito_external_provider_domain = cast(Optional[str], raw.get("cognito-external-provider-domain"))
             self.cognito_external_provider_redirect = cast(Optional[str], raw.get("cognito-external-provider-redirect"))
-
             self.user_pool_id = cast(Optional[str], raw.get("user-pool-id"))
+            self.dev: bool = cast(bool, raw.get("dev", False))
+            self.internet_accessible: bool = cast(bool, raw.get("internet-accessible", False))
+            self.demo: bool = cast(bool, raw.get("demo", False))
+            self.codeartifact_domain: Optional[str] = cast(Optional[str], raw.get("codeartifact-domain", None))
+            self.codeartifact_repository: Optional[str] = cast(Optional[str], raw.get("codeartifact-repository", None))
+            self.images: MANIFEST_FILE_IMAGES_TYPE = cast(MANIFEST_FILE_IMAGES_TYPE, raw.get("images"))
             if self.user_pool_id is not None:
                 self.cognito_users_urls = cognito.get_users_url(user_pool_id=self.user_pool_id, region=self.region)
+            if not hasattr(self, "vpc"):
+                raw_vpc = cast("MANIFEST_VPC_TYPE", raw.get("vpc"))
+                subnets: List[SubnetManifest] = [
+                    SubnetManifest(manifest=self, subnet_id=s.get("subnet-id"), kind=SubnetKind[s.get("kind")])
+                    for s in raw_vpc.get("subnets")
+                ]
+                self.vpc = VpcManifest(manifest=self, subnets=subnets)
 
             self.vpc.fillup_from_ssm()
-            for team in self.teams:
-                team.fetch_ssm()
+            if not hasattr(self, "teams"):
+                teams: List[str] = cast(List[str], raw.get("teams"))
+                raw_old_teams: List["MANIFEST_TEAM_TYPE"] = []
+                for name in teams:
+                    raw_team = manifest_team.read_raw_manifest_ssm(manifest=self, team_name=name)
+                    if raw_team is None:
+                        raise RuntimeError(f"Team {name} not found into SSM.")
+                    raw_old_teams.append(raw_team)
+
+                self.teams: [TeamManifest] = manifest_team.parse_teams(
+                    manifest=self, raw_teams=cast(List["MANIFEST_FILE_TEAM_TYPE"], raw_old_teams)
+                )
+            else:
+                for team in self.teams:
+                    team.fetch_ssm()
 
             _logger.debug("Env %s loaded successfully from SSM.", self.name)
             return True
@@ -407,11 +457,16 @@ class Manifest:
         obj: MANIFEST_TYPE = utils.replace_underscores(vars(self))
         obj["vpc"] = self.vpc.asdict()
         obj["teams"] = [t.name for t in self.teams]
-        del obj["filename"]
-        del obj["filename-dir"]
-        del obj["raw-ssm"]
-        del obj["raw-file"]
-        del obj["networking"]
+        if "filename" in obj:
+            del obj["filename"]
+        if "filename-dir" in obj:
+            del obj["filename-dir"]
+        if "raw-ssm" in obj:
+            del obj["raw-ssm"]
+        if "raw-file" in obj:
+            del obj["raw-file"]
+        if "networking" in obj:
+            del obj["networking"]
         return obj
 
     def asjson(self) -> str:

@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import click
 from aws_orbit.manifest import Manifest
@@ -21,8 +21,8 @@ def _fetch_repo_uri(names: List[str], manifest: Manifest) -> Dict[str, str]:
     return ret
 
 
-def list_images(filename: str) -> None:
-    manifest: Manifest = Manifest(filename=filename)
+def list_images(env: str, region: Optional[str]) -> None:
+    manifest: Manifest = Manifest(filename=None, env=env, region=region)
     names = extract_images_names(manifest=manifest)
     _logger.debug("names: %s", names)
     if names:
