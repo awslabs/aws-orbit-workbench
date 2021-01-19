@@ -141,6 +141,14 @@ def deploy_env(manifest: Manifest) -> None:
     if not cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name):
         _logger.debug("Deploying EKSCTL Environment resources")
         sh.run(f"eksctl create cluster -f {output_filename} --write-kubeconfig --verbose 4")
+
+        username = f"orbit-{manifest.name}-admin"
+        arn = f"arn:aws:iam::{manifest.account_id}:role/{username}"
+        _logger.debug(f"Adding IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters")
+        sh.run(
+            f"eksctl create iamidentitymapping --cluster {cluster_name} --arn {arn} "
+            f"--username {username} --group system:masters"
+        )
     else:
         sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{manifest.name} --set-kubeconfig-context")
 
@@ -165,6 +173,7 @@ def deploy_teams(manifest: Manifest) -> None:
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
     _logger.debug("Synthetizing the EKSCTL Teams manifest")
     output_filename = generate_manifest(manifest=manifest, name=stack_name, output_teams=True)
+    cluster_name = f"orbit-{manifest.name}"
     if cfn.does_stack_exist(manifest=manifest, stack_name=final_eks_stack_name) and manifest.teams:
         subnet_kind = SubnetKind.private if manifest.internet_accessible else SubnetKind.isolated
         subnets = [s.subnet_id for s in manifest.vpc.subnets if s.kind == subnet_kind]
@@ -178,6 +187,23 @@ def deploy_teams(manifest: Manifest) -> None:
                 namespace=team.name,
                 selector_labels={"team": team.name, "orbit/compute-type": "fargate"},
             )
+
+            username = f"orbit-{manifest.name}-{team.name}-runner"
+            arn = f"arn:aws:iam::{manifest.account_id}:role/{username}"
+            for line in sh.run_iterating(f"eksctl get iamidentitymapping --cluster {cluster_name} --arn {arn}"):
+                if line == f'Error: no iamidentitymapping with arn "{arn}" found':
+                    _logger.debug(
+                        f"Adding IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters"
+                    )
+                    sh.run(
+                        f"eksctl create iamidentitymapping --cluster {cluster_name} "
+                        f"--arn {arn} --username {username} --group system:masters"
+                    )
+                    break
+            else:
+                _logger.debug(
+                    f"Skipping existing IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters"
+                )
 
         teams = ",".join([t.name for t in manifest.teams])
         _logger.debug("Deploying EKSCTL Teams resources")
@@ -211,6 +237,16 @@ def destroy_teams(manifest: Manifest) -> None:
                 cluster_name=cluster_name,
             )
 
+            username = f"orbit-{manifest.name}-{team.name}-runner"
+            arn = f"arn:aws:iam::{manifest.account_id}:role/{username}"
+            for line in sh.run_iterating(f"eksctl get iamidentitymapping --cluster {cluster_name} --arn {arn}"):
+                if line == f'Error: no iamidentitymapping with arn "{arn}" found':
+                    _logger.debug(f"Skipping non-existent IAM Identity Mapping - Role: {arn}")
+                    break
+            else:
+                _logger.debug(f"Removing IAM Identity Mapping - Role: {arn}")
+                sh.run(f"eksctl delete iamidentitymapping --cluster {cluster_name} --arn {arn}")
+
         teams = ",".join(
             [
                 t.name
@@ -240,6 +276,17 @@ def destroy_team(manifest: Manifest, team_manifest: "TeamManifest") -> None:
             profile_name=f"orbit-{manifest.name}-{team_manifest.name}",
             cluster_name=cluster_name,
         )
+
+        username = f"orbit-{manifest.name}-{team_manifest.name}-runner"
+        arn = f"arn:aws:iam::{manifest.account_id}:role/{username}"
+        for line in sh.run_iterating(f"eksctl get iamidentitymapping --cluster {cluster_name} --arn {arn}"):
+            if line == f'Error: no iamidentitymapping with arn "{arn}" found':
+                _logger.debug(f"Skipping non-existent IAM Identity Mapping - Role: {arn}")
+                break
+        else:
+            _logger.debug(f"Removing IAM Identity Mapping - Role: {arn}")
+            sh.run(f"eksctl delete iamidentitymapping --cluster {cluster_name} --arn {arn}")
+
         if eks.describe_nodegroup(manifest=manifest, cluster_name=cluster_name, nodegroup_name=team_manifest.name):
             sh.run(
                 f"eksctl delete nodegroup --cluster {cluster_name} --name {team_manifest.name} "

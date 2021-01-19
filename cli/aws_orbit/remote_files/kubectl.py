@@ -15,10 +15,8 @@
 import logging
 import os
 import shutil
-from pprint import pformat
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-import yaml
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, plugins, sh, utils
 from aws_orbit.manifest import Manifest
 from aws_orbit.remote_files.utils import get_k8s_context
@@ -73,6 +71,7 @@ def _team(manifest: Manifest, team_manifest: "TeamManifest", output_path: str) -
         grant_sudo='"yes"' if team_manifest.grant_sudo else '"no"',
         internal_load_balancer="false" if manifest.load_balancers_subnets else "true",
         jupyterhub_inbound_ranges=inbound_ranges,
+        team_kms_key_arn=team_manifest.team_kms_key_arn,
     )
     _logger.debug("Kubectl Team %s manifest:\n%s", team_manifest.name, content)
     with open(output, "w") as file:
@@ -179,79 +178,6 @@ def _generate_team_manifest(manifest: Manifest, team_manifest: "TeamManifest") -
     return output_path
 
 
-def _generate_aws_auth_config_map(
-    manifest: Manifest, context: str, with_teams: bool, exclude_team: Optional[str] = None
-) -> Optional[str]:
-    output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "aws_auth_config_map")
-    os.makedirs(output_path, exist_ok=True)
-    _cleanup_output(output_path=output_path)
-    config_map = yaml.load(
-        "\n".join(sh.run_iterating(f"kubectl get configmap --context {context} -o yaml -n kube-system aws-auth")),
-        Loader=yaml.SafeLoader,
-    )
-    _logger.debug("config_map:\n%s", pformat(config_map))
-    if "mapRoles" not in config_map.get("data", {}):
-        _logger.debug("Empty config_map!")
-        return None
-    map_roles = yaml.load(config_map["data"]["mapRoles"], Loader=yaml.SafeLoader)
-    _logger.debug("map_roles:\n%s", pformat(map_roles))
-    team_usernames = {f"orbit-{manifest.name}-{t.name}-runner" for t in manifest.teams}
-    admin_usernames = {
-        f"orbit-{manifest.name}-admin",
-    }
-
-    map_roles = [
-        r
-        for r in map_roles
-        if "username" in r and r["username"] not in team_usernames and r["username"] not in admin_usernames
-    ]
-    _logger.debug("map_roles:\n%s", pformat(map_roles))
-    for username in admin_usernames:
-        map_roles.append(
-            {
-                "groups": ["system:masters"],
-                "rolearn": f"arn:aws:iam::{manifest.account_id}:role/{username}",
-                "username": username,
-            }
-        )
-
-    if with_teams:
-        for username in team_usernames:
-            if exclude_team is not None and f"orbit-{manifest.name}-{exclude_team}-runner" == username:
-                _logger.debug("Removing %s from config_map/map_roles.", username)
-            else:
-                map_roles.append(
-                    {
-                        "groups": ["system:masters"],
-                        "rolearn": f"arn:aws:iam::{manifest.account_id}:role/{username}",
-                        "username": username,
-                    }
-                )
-
-    config_map = {
-        "apiVersion": "v1",
-        "data": {
-            "mapRoles": yaml.dump(map_roles),
-        },
-        "kind": "ConfigMap",
-        "metadata": {
-            "name": "aws-auth",
-            "namespace": "kube-system",
-        },
-    }
-
-    config_map_yaml = yaml.dump(config_map)
-    config_map_file = os.path.join(output_path, "config_map.yaml")
-
-    _logger.debug(f"config_map: {config_map}")
-    _logger.debug(f"config_map_yaml: {config_map_yaml}")
-
-    with open(config_map_file, "w") as yaml_file:
-        yaml_file.write(config_map_yaml)
-
-    return config_map_file
-
-
 def _update_elbs(manifest: Manifest) -> None:
     elbs: Dict[str, Dict[str, Any]] = elb.get_elbs_by_service(manifest=manifest)
     # Env ELBs
@@ -345,13 +271,6 @@ def deploy_teams(manifest: Manifest, changes: List["PluginChangeset"]) -> None:
         output_path = _generate_teams_manifest(manifest=manifest)
         output_path = _generate_env_manifest(manifest=manifest, clean_up=False)
         sh.run(f"kubectl apply -f {output_path} --context {context} --wait")
-        output_path_map = _generate_aws_auth_config_map(
-            manifest=manifest, context=context, with_teams=True, exclude_team=None
-        )
-        if not output_path_map:
-            raise RuntimeError("Empty configMap data!")
-        _logger.debug("Updating aws-auth configMap")
-        sh.run(f"kubectl apply -f {output_path_map} --context {context} --wait")
         fetch_kubectl_data(manifest=manifest, context=context, include_teams=True)
         for team_manifest in manifest.teams:
             plugins.PLUGINS_REGISTRIES.deploy_team_plugins(
@@ -396,12 +315,6 @@ def destroy_teams(manifest: Manifest) -> None:
         except exceptions.FailedShellCommand as ex:
             _logger.debug("Skipping: %s", ex)
             pass  # Let's leave for eksctl, it will destroy everything anyway...
-        output_path_map = _generate_aws_auth_config_map(manifest=manifest, context=context, with_teams=False)
-        if output_path_map:
-            _logger.debug("Updating aws-auth configMap")
-            sh.run(f"kubectl apply -f {output_path_map} --context {context}")
-        else:
-            _logger.debug("Skipping aws-auth configMap update")
 
 
 def destroy_team(manifest: Manifest, team_manifest: "TeamManifest") -> None:
@@ -416,11 +329,3 @@ def destroy_team(manifest: Manifest, team_manifest: "TeamManifest") -> None:
             f"kubectl delete -f {output_path} --grace-period=0 --force "
             f"--ignore-not-found --wait --context {context}"
         )
-        output_path_map = _generate_aws_auth_config_map(
-            manifest=manifest, context=context, with_teams=True, exclude_team=team_manifest.name
-        )
-        if output_path_map:
-            _logger.debug("Updating aws-auth configMap")
-            sh.run(f"kubectl apply -f {output_path_map} --context {context} --wait")
-        else:
-            _logger.debug("Skipping aws-auth configMap update")

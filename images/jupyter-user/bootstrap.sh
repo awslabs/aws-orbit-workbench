@@ -26,6 +26,7 @@ mkdir -p /efs/shared/scheduled/outputs
 mkdir -p /home/jovyan/tmp
 
 ln -s /efs/"$USERNAME"/ /home/jovyan/private
+ln -s /ebs/ /home/jovyan/ebs
 ln -s /efs/shared/ /home/jovyan/shared
 
 # Bootstrap

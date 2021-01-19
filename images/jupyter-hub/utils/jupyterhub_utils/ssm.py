@@ -25,7 +25,7 @@ GRANT_SUDO: str = os.environ["GRANT_SUDO"]
 
 
 def read_manifest_ssm() -> Dict[str, Any]:
-    client = boto3.client(service_name="ssm")
+    client = boto3.Session().client(service_name="ssm")
     yaml_str: str = client.get_parameter(Name=f"/orbit/{ENV_NAME}/manifest")["Parameter"]["Value"]
     return cast(Dict[str, Any], yaml.safe_load(yaml_str))
 
