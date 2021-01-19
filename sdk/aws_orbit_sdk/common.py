@@ -10,6 +10,7 @@ from yaml import safe_load
 ORBIT_PRODUCT_KEY = "Product"
 ORBIT_SUBPRODUCT_KEY = "SubProduct"
 ORBIT_SUBPRODUCT_EMR = "EMR"
+ORBIT_SUBPRODUCT_REDSHIFT = "Redshift"
 ORBIT_PRODUCT_NAME = "Orbit Workbench"
 ORBIT_ENV = "Env"
 ORBIT_TEAM_SPACE = "TeamSpace"
