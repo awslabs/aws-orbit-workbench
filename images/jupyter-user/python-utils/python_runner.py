@@ -1,14 +1,10 @@
-import sys
-import os
-import time
-import tempfile
-import requests
-import yaml as yaml
 import logging
-import time
-import boto3
-from multiprocessing import *
+import os
+import sys
 from importlib import import_module
+from multiprocessing import Pool
+
+import yaml
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
@@ -18,18 +14,18 @@ logger = logging.getLogger()
 # https://stackoverflow.com/a/52312810
 NoDatesSafeLoader = yaml.SafeLoader
 NoDatesSafeLoader.yaml_implicit_resolvers = {
-    k: [r for r in v if r[0] != 'tag:yaml.org,2002:timestamp'] for
-    k, v in NoDatesSafeLoader.yaml_implicit_resolvers.items()
+    k: [r for r in v if r[0] != "tag:yaml.org,2002:timestamp"]
+    for k, v in NoDatesSafeLoader.yaml_implicit_resolvers.items()
 }
 
 
 def run():
-    tasks = yaml.load(os.environ['tasks'], Loader=NoDatesSafeLoader)
-    compute = yaml.load(os.environ['compute'], Loader=NoDatesSafeLoader)
+    tasks = yaml.load(os.environ["tasks"], Loader=NoDatesSafeLoader)
+    compute = yaml.load(os.environ["compute"], Loader=NoDatesSafeLoader)
 
     errors = []
     try:
-        errors = runTasks(tasks['tasks'], compute)
+        errors = runTasks(tasks["tasks"], compute)
 
     finally:
         if len(errors) > 0:
@@ -41,8 +37,8 @@ def run():
 
 def runTasks(tasks, compute):
     errors = []
-    if ('container' in compute['compute'].keys() and 'p_concurrent' in compute['compute']['container']):
-        workers = int(compute['compute']['container']['p_concurrent'])
+    if "container" in compute["compute"].keys() and "p_concurrent" in compute["compute"]["container"]:
+        workers = int(compute["compute"]["container"]["p_concurrent"])
     else:
         workers = 1
 
@@ -66,14 +62,14 @@ def runTasks(tasks, compute):
 
 
 def runTask(task):
-    parameters = task['params']
-    module = task['module']
-    functionName = task['functionName']
-    sourcePaths = task['sourcePaths']
+    parameters = task["params"]
+    module = task["module"]
+    functionName = task["functionName"]
+    sourcePaths = task["sourcePaths"]
     for p in sourcePaths:
         sys.path.insert(0, os.path.abspath(p))
 
-    logger.info("import paths: %s" , str(sys.path))
+    logger.info("import paths: %s", str(sys.path))
 
     mod = import_module(module)
     func = getattr(mod, functionName)

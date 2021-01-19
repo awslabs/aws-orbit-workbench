@@ -1,4 +1,4 @@
-FROM jupyterhub/jupyterhub:1.2
+FROM jupyterhub/jupyterhub:1.3.0
 
 # System packages
 RUN apt-get update -y
