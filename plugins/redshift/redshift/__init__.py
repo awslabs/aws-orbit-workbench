@@ -27,11 +27,6 @@ _logger: logging.Logger = logging.getLogger("aws_orbit")
 PLUGIN_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-def _lambda_path(path: str) -> str:
-    LAMBDA_DIR = os.path.abspath(os.path.join(PLUGIN_ROOT_PATH, "./lambda_sources/"))
-    return os.path.join(LAMBDA_DIR, path)
-
-
 @hooks.deploy
 def deploy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
     _logger.debug("Deploying Redshift plugin resources for team %s", team_manifest.name)

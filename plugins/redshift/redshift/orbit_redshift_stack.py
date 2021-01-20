@@ -12,9 +12,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import TYPE_CHECKING, Any, Dict, Optional, cast
-from aws_cdk.core import Construct, Environment, Stack, Tags
-from aws_orbit.plugins.helpers import cdk_handler
+import logging
+import os
+from typing import Any, Dict
 
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
@@ -22,27 +22,37 @@ from aws_cdk import aws_kms as kms
 from aws_cdk import aws_lambda
 from aws_cdk import aws_redshift as redshift
 from aws_cdk import aws_secretsmanager, core
+from aws_cdk.core import Construct, Environment, Stack, Tags
 
-if TYPE_CHECKING:
-    from aws_orbit.manifest import Manifest
-    from aws_orbit.manifest.team import MANIFEST_TEAM_TYPE, TeamManifest
+# if TYPE_CHECKING:
+from aws_orbit.manifest import Manifest
+from aws_orbit.manifest.team import TeamManifest
+from aws_orbit.plugins.helpers import cdk_handler
 
-import json
-import logging
+# from aws_orbit.manifest.team import MANIFEST_TEAM_TYPE
+
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
-def read_raw_manifest_ssm(manifest: "Manifest", team_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
-    parameter_name: str = f"/orbit/{manifest.name}/teams/{team_name}/manifest"
-    _logger.debug("Trying to read manifest from SSM parameter (%s).", parameter_name)
-    client = manifest.boto3_client(service_name="ssm")
-    try:
-        json_str: str = client.get_parameter(Name=parameter_name)["Parameter"]["Value"]
-    except client.exceptions.ParameterNotFound:
-        _logger.debug("Team %s Manifest SSM parameter not found: %s", team_name, parameter_name)
-        return None
-    _logger.debug("Team %s Manifest SSM parameter found.", team_name)
-    return cast(MANIFEST_TEAM_TYPE, json.loads(json_str))
+
+def _lambda_path(path: str) -> str:
+    PLUGIN_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
+    LAMBDA_DIR = os.path.abspath(os.path.join(PLUGIN_ROOT_PATH, "./lambda_sources/"))
+    return os.path.join(LAMBDA_DIR, path)
+
+
+# def read_raw_manifest_ssm(manifest: "Manifest", team_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
+#     parameter_name: str = f"/orbit/{manifest.name}/teams/{team_name}/manifest"
+#     _logger.debug("Trying to read manifest from SSM parameter (%s).", parameter_name)
+#     client = manifest.boto3_client(service_name="ssm")
+#     try:
+#         json_str: str = client.get_parameter(Name=parameter_name)["Parameter"]["Value"]
+#     except client.exceptions.ParameterNotFound:
+#         _logger.debug("Team %s Manifest SSM parameter not found: %s", team_name, parameter_name)
+#         return None
+#     _logger.debug("Team %s Manifest SSM parameter found.", team_name)
+#     return cast(MANIFEST_TEAM_TYPE, json.loads(json_str))
+
 
 class RedshiftClusters(core.Construct):
     def __init__(
@@ -235,6 +245,7 @@ class RedshiftFunctionStandard(core.Construct):
             },
         )
         standard_function.grant_invoke(lake_role)
+
 
 class RedshiftStack(Stack):
     def __init__(
