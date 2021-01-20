@@ -155,7 +155,9 @@ def deploy(
         buildspec = codebuild.generate_spec(
             manifest=manifest,
             plugins=True,
-            cmds_build=[f"orbit remote --command deploy {skip_images_remote_flag} {env_only_flag}"],
+            cmds_build=[
+                f"orbit remote --command deploy ./conf/manifest.yaml {skip_images_remote_flag} {env_only_flag}"
+            ],
             changeset=changes,
         )
         remote.run(
@@ -185,7 +187,7 @@ def deploy(
         ctx.progress(100)
 
 
-def build_image(env: str, dir: str, name: str, script: Optional[str], region: Optional[str], debug: bool) -> None:
+def _deploy_image(env: str, dir: str, name: str, script: Optional[str], region: Optional[str], debug: bool) -> None:
     with MessagesContext("Deploying Docker Image", debug=debug) as ctx:
         manifest = Manifest(filename=None, env=env, region=region)
 
@@ -214,7 +216,7 @@ def build_image(env: str, dir: str, name: str, script: Optional[str], region: Op
         buildspec = codebuild.generate_spec(
             manifest=manifest,
             plugins=True,
-            cmds_build=[f"orbit remote --command build_image {env} {name} {script_str}"],
+            cmds_build=[f"orbit remote --command _deploy_image {env} {name} {script_str}"],
             changeset=changes,
         )
         remote.run(

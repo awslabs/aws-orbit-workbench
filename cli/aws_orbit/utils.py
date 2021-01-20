@@ -166,14 +166,16 @@ def get_dns_ip_cidr(manifest: "Manifest") -> str:
     return cidr
 
 
-def print_dir(dir: str) -> None:
-    for dirname, dirnames, filenames in os.walk(dir):
+def print_dir(dir: str, exclude: List[str] = []) -> None:
+    for root, dirnames, filenames in os.walk(dir):
+        if exclude:
+            [dirnames.remove(d) for d in list(dirnames) if d in exclude]
         # print path to all subdirectories first.
         for subdirname in dirnames:
-            _logger.debug(os.path.join(dirname, subdirname))
+            _logger.debug(os.path.join(root, subdirname))
         # print path to all filenames.
         for filename in filenames:
-            _logger.debug((os.path.join(dirname, filename)))
+            _logger.debug((os.path.join(root, filename)))
 
 
 def resolve_parameters(template: str, parameters: Dict[str, str]) -> str:

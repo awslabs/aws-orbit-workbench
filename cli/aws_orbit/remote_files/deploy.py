@@ -30,10 +30,10 @@ if TYPE_CHECKING:
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def build_image(args: Tuple[str, ...]) -> None:
-    _logger.debug("args: %s", args)
-    env: str = args[0]
-    manifest: Manifest = Manifest(filename=None, env=env, region=None)
+def _deploy_image(args: Tuple[str, ...]) -> None:
+    _logger.debug("_deploy_image args: %s", args)
+    filename: str = args[0]
+    manifest: Manifest = Manifest(filename=filename, env=None, region=None)
     manifest.fetch_ssm()
     _logger.debug("manifest.name: %s", manifest.name)
     if len(args) == 2:
@@ -116,7 +116,7 @@ def deploy_images_remotely(manifest: Manifest) -> None:
             buildspec = codebuild.generate_spec(
                 manifest=manifest,
                 plugins=False,
-                cmds_build=[f"orbit remote --command deploy_image {name} {script_str}"],
+                cmds_build=[f"orbit remote --command _deploy_image ./conf/manifest.yaml {name} {script_str}"],
             )
             futures.append(executor.submit(deploy_image_remotely, manifest, name, bundle_path, buildspec))
 
@@ -150,9 +150,7 @@ def deploy(args: Tuple[str, ...]) -> None:
     _logger.debug("Manifest loaded")
     docker.login(manifest=manifest)
     _logger.debug("DockerHub and ECR Logged in")
-    changes: changeset.Changeset = changeset.read_changeset_file(
-        manifest=manifest, filename=os.path.join(manifest.filename_dir, "changeset.json")
-    )
+    changes: changeset.Changeset = changeset.read_changeset_file(manifest=manifest, filename="changeset.json")
     _logger.debug(f"Changeset: {changes.asdict()}")
     _logger.debug("Changeset loaded")
     plugins.PLUGINS_REGISTRIES.load_plugins(

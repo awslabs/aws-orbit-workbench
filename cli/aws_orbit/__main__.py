@@ -14,14 +14,16 @@
 
 import json
 import logging
+import os
 from typing import Optional, TextIO, Tuple
 
 import click
 from aws_orbit.commands.delete import delete_image
-from aws_orbit.commands.deploy import build_image, deploy
+from aws_orbit.commands.deploy import deploy
 from aws_orbit.commands.destroy import destroy
 from aws_orbit.commands.init import init
 from aws_orbit.commands.list import list_images
+from aws_orbit.utils import print_dir
 
 DEBUG_LOGGING_FORMAT = "[%(asctime)s][%(filename)-13s:%(lineno)3d] %(message)s"
 DEBUG_LOGGING_FORMAT_REMOTE = "[%(filename)-13s:%(lineno)3d] %(message)s"
@@ -290,6 +292,8 @@ def remote_cli(command: str, args: Tuple[str]) -> None:
     enable_debug(format=DEBUG_LOGGING_FORMAT_REMOTE)
     from aws_orbit.remote_files import REMOTE_FUNC_TYPE, RemoteCommands
 
+    _logger.debug("Remote bundle structure:")
+    print_dir(os.getcwd(), exclude=["__pycache__", "cdk"])
     remote_func: REMOTE_FUNC_TYPE = getattr(RemoteCommands, command)
     remote_func(args)
 
