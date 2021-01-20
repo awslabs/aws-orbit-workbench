@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 import logging
-import os
 from typing import Tuple
 
 from aws_orbit import changeset, plugins
@@ -54,9 +53,7 @@ def destroy(args: Tuple[str, ...]) -> None:
 
     manifest.fillup()
     _logger.debug("Manifest loaded")
-    changes: changeset.Changeset = changeset.read_changeset_file(
-        manifest=manifest, filename=os.path.join(manifest.filename_dir, "changeset.json")
-    )
+    changes: changeset.Changeset = changeset.read_changeset_file(manifest=manifest, filename="changeset.json")
     _logger.debug(f"Changeset: {changes.asdict()}")
     _logger.debug("Changeset loaded")
     plugins.PLUGINS_REGISTRIES.load_plugins(

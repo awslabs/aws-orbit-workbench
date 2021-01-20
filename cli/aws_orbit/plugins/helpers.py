@@ -54,9 +54,7 @@ def cdk_handler(stack_class: Type["Stack"]) -> None:
     manifest: Manifest = Manifest(filename=filename, env=None, region=None)
     manifest.fillup()
 
-    changes: changeset.Changeset = changeset.read_changeset_file(
-        manifest=manifest, filename=os.path.join(manifest.filename_dir, "changeset.json")
-    )
+    changes: changeset.Changeset = changeset.read_changeset_file(manifest=manifest, filename="changeset.json")
     if changes.teams_changeset and team_name in changes.teams_changeset.removed_teams_names:
         for team in changes.teams_changeset.old_teams:
             if team.name == team_name:

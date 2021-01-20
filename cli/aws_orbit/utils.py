@@ -169,7 +169,9 @@ def get_dns_ip_cidr(manifest: "Manifest") -> str:
 def print_dir(dir: str, exclude: List[str] = []) -> None:
     for root, dirnames, filenames in os.walk(dir):
         if exclude:
-            [dirnames.remove(d) for d in list(dirnames) if d in exclude]
+            for d in list(dirnames):
+                if d in exclude:
+                    dirnames.remove(d)
         # print path to all subdirectories first.
         for subdirname in dirnames:
             _logger.debug(os.path.join(root, subdirname))
