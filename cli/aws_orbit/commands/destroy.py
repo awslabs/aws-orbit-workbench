@@ -71,7 +71,7 @@ def destroy(env: str, teams_only: bool, keep_demo: bool, debug: bool) -> None:
             buildspec = codebuild.generate_spec(
                 manifest=manifest,
                 plugins=True,
-                cmds_build=[f"orbit remote --command destroy {flags}"],
+                cmds_build=[f"orbit remote --command destroy {env} {flags}"],
                 changeset=changes,
             )
             remote.run(

@@ -104,6 +104,7 @@ class Manifest:
         self.codeartifact_domain: Optional[str]
         self.images: MANIFEST_FILE_IMAGES_TYPE
         self.teams: List[TeamManifest]
+        self.load_balancers_subnets: List[str]
         if filename and env:
             raise RuntimeError("Must provide either a manifest file or environment name and neither were provided.")
         if region:
@@ -154,9 +155,7 @@ class Manifest:
             raise RuntimeError("Invalid manifest: Missing the 'frontend' attribute under 'networking'.")
         self.internet_accessible = cast(bool, self.networking["data"].get("internet-accessible", True))
         self.nodes_subnets: List[str] = cast(List[str], self.networking["data"].get("nodes-subnets", []))
-        self.load_balancers_subnets: List[str] = cast(
-            List[str], self.networking["frontend"].get("load-balancers-subnets", [])
-        )
+        self.load_balancers_subnets = cast(List[str], self.networking["frontend"].get("load-balancers-subnets", []))
 
         self.codeartifact_domain = cast(Optional[str], self.raw_file.get("codeartifact-domain", None))
         self.codeartifact_repository: Optional[str] = cast(
@@ -292,6 +291,7 @@ class Manifest:
             self.codeartifact_domain = cast(Optional[str], raw.get("codeartifact-domain", None))
             self.codeartifact_repository = cast(Optional[str], raw.get("codeartifact-repository", None))
             self.images = cast(MANIFEST_FILE_IMAGES_TYPE, raw.get("images"))
+            self.load_balancers_subnets = cast(List[str], raw.get("load-balancers-subnets"))
             if self.user_pool_id is not None:
                 self.cognito_users_urls = cognito.get_users_url(user_pool_id=self.user_pool_id, region=self.region)
             if not hasattr(self, "vpc"):

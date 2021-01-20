@@ -215,13 +215,20 @@ class Team(Stack):
 
 def main() -> None:
     _logger.debug("sys.argv: %s", sys.argv)
-    if len(sys.argv) == 3:
-        filename: str = sys.argv[1]
-        team_name: str = sys.argv[2]
+    if len(sys.argv) == 4:
+        manifest: Manifest
+        if sys.argv[1] == "manifest":
+            filename: str = sys.argv[2]
+            manifest = Manifest(filename=filename, env=None, region=None)
+        elif sys.argv[1] == "env":
+            env: str = sys.argv[2]
+            manifest = Manifest(filename=None, env=env, region=None)
+        else:
+            raise ValueError(f"Unexpected argv[1] ({len(sys.argv)}) - {sys.argv}.")
+        team_name: str = sys.argv[3]
     else:
         raise ValueError("Unexpected number of values in sys.argv.")
 
-    manifest: Manifest = Manifest(filename=filename, env=None, region=None)
     manifest.fillup()
 
     changes: changeset.Changeset = changeset.read_changeset_file(manifest=manifest, filename="changeset.json")
@@ -240,7 +247,7 @@ def main() -> None:
         else:
             raise ValueError(f"Team {team_name} not found in the manifest.")
 
-    outdir = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "cdk", team_manifest.stack_name)
+    outdir = os.path.join(".orbit.out", manifest.name, "cdk", team_manifest.stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
 

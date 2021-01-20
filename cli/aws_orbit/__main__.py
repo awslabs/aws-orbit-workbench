@@ -158,12 +158,7 @@ def deploy_cli(
 
 
 @click.command(name="destroy")
-@click.option(
-    "--filename",
-    "-f",
-    type=str,
-    help="The target Orbit Workbench manifest file (yaml).",
-)
+@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
 @click.option(
     "--team-stacks", is_flag=True, default=False, help="Destroy Team Stacks only or All Stacks", show_default=True
 )
@@ -192,12 +187,12 @@ def destroy_cli(env: str, team_stacks: bool, keep_demo: bool, debug: bool) -> No
 
 @click.group(name="build")
 def build() -> None:
-    """Build images for an Orbit team"""
+    """Build images,profiles,etc in your Orbit Workbench."""
     pass
 
 
 @build.command(name="image")
-@click.option("--env", "-e", type=str, required=True, help="Orbit Environment to execute container in.")
+@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
 @click.option("--dir", "-d", type=str, help="Dockerfile directory.", required=True)
 @click.option("--name", "-n", type=str, help="Image name.", required=True)
 @click.option(
@@ -238,12 +233,12 @@ def deploy_image_cli(env: str, dir: str, name: str, script: Optional[str], regio
 
 @click.group(name="delete")
 def delete() -> None:
-    """Build images for an Orbit team"""
+    """Delete images,profiles,etc in your Orbit Workbench."""
     pass
 
 
 @delete.command(name="image")
-@click.option("--env", "-e", type=str, required=True, help="Orbit Environment to execute container in.")
+@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
 @click.option("--name", "-n", type=str, help="Image name.", required=True)
 @click.option(
     "--debug/--no-debug",
@@ -261,8 +256,14 @@ def delete_image_cli(env: str, name: str, debug: bool) -> None:
     delete_image(name=name, env=env, debug=debug)
 
 
-@click.command(name="list-images")
-@click.option("--env", "-e", type=str, required=True, help="Orbit Environment to execute container in.")
+@click.group(name="list")
+def list() -> None:
+    """List images,profiles,etc in your Orbit Workbench."""
+    pass
+
+
+@list.command(name="image")
+@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
 @click.option(
     "--region",
     "-r",
@@ -452,10 +453,9 @@ def main() -> int:
     cli.add_command(deploy_cli)
     cli.add_command(destroy_cli)
     cli.add_command(remote_cli)
-    cli.add_command(deploy_image_cli)
-    cli.add_command(delete_image_cli)
-    cli.add_command(list_images_cli)
     cli.add_command(run_container)
     cli.add_command(build)
+    cli.add_command(delete)
+    cli.add_command(list)
     cli()
     return 0

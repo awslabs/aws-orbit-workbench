@@ -300,7 +300,7 @@ def main() -> None:
     manifest: Manifest = Manifest(filename=filename, env=None, region=None)
     manifest.fillup()
 
-    outdir = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "cdk", manifest.demo_stack_name)
+    outdir = os.path.join(".orbit.out", manifest.name, "cdk", manifest.demo_stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
 

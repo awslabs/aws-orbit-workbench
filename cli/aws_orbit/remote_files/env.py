@@ -68,11 +68,17 @@ def deploy(manifest: Manifest, add_images: List[str], remove_images: List[str]) 
     add_images_str, remove_images_str = _concat_images_into_args(
         manifest=manifest, add_images=add_images, remove_images=remove_images
     )
+    args: List[str]
+    if hasattr(manifest, "filename"):
+        args = ["manifest", manifest.filename, add_images_str, remove_images_str]
+    else:
+        args = ["env", manifest.name, add_images_str, remove_images_str]
+
     cdk.deploy(
         manifest=manifest,
         stack_name=manifest.env_stack_name,
         app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "env.py"),
-        args=[manifest.filename, add_images_str, remove_images_str],
+        args=args,
     )
     manifest.fetch_ssm()
     manifest.fetch_cognito_external_idp_data()
@@ -85,9 +91,13 @@ def destroy(manifest: Manifest) -> None:
         _logger.debug("DockerHub and ECR Logged in")
         _cleanup_remaining_resources(manifest=manifest)
         add_images_str, remove_images_str = _concat_images_into_args(manifest=manifest, add_images=[], remove_images=[])
+        if hasattr(manifest, "filename"):
+            args = ["manifest", manifest.filename, add_images_str, remove_images_str]
+        else:
+            args = ["env", manifest.name, add_images_str, remove_images_str]
         cdk.destroy(
             manifest=manifest,
             stack_name=manifest.env_stack_name,
             app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "env.py"),
-            args=[manifest.filename, add_images_str, remove_images_str],
+            args=args,
         )
