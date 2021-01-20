@@ -263,8 +263,8 @@ class RedshiftStack(Stack):
         # team_ssm_response_dict = read_raw_manifest_ssm(manifest=team_manifest.manifest, team_name=team_manifest.name)
         admin_role = iam.Role.from_role_arn(
             self,
-            f"{team_manifest.manifest.name}-{team_manifest.name}-role",
-            f"orbit-{team_manifest.manifest.name}-admin",
+            f"{team_manifest.manifest.name}-{team_manifest.name}-admn-role",
+            f"arn:{core.Aws.PARTITION}:iam::{team_manifest.manifest.account_id}:role/orbit-{team_manifest.manifest.name}-admin",  # noqa
             mutable=False,
         )
 
