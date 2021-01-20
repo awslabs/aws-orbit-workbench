@@ -35,7 +35,6 @@ class VpcManifest:
     ) -> None:
         self.manifest: "Manifest" = manifest
         self.subnets: List[SubnetManifest] = subnets
-
         # Need to fill up
 
         self.vpc_id: Optional[str] = None  # Demo

@@ -51,7 +51,7 @@ def cdk_handler(stack_class: Type["Stack"]) -> None:
     else:
         raise ValueError("Unexpected number of values in sys.argv.")
 
-    manifest: Manifest = Manifest(filename=filename)
+    manifest: Manifest = Manifest(filename=filename, env=None, region=None)
     manifest.fillup()
 
     changes: changeset.Changeset = changeset.read_changeset_file(

@@ -32,8 +32,8 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 def build_image(args: Tuple[str, ...]) -> None:
     _logger.debug("args: %s", args)
-    filename: str = args[0]
-    manifest: Manifest = Manifest(filename=filename)
+    env: str = args[0]
+    manifest: Manifest = Manifest(filename=None, env=env, region=None)
     manifest.fetch_ssm()
     _logger.debug("manifest.name: %s", manifest.name)
     if len(args) == 2:
@@ -145,7 +145,7 @@ def deploy(args: Tuple[str, ...]) -> None:
     else:
         raise ValueError("Unexpected number of values in args")
 
-    manifest: Manifest = Manifest(filename=filename)
+    manifest: Manifest = Manifest(filename=filename, env=None, region=None)
     manifest.fillup()
     _logger.debug("Manifest loaded")
     docker.login(manifest=manifest)

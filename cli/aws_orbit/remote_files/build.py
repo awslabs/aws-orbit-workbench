@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 import logging
-import os
 from typing import Optional, Tuple
 
 from aws_orbit import changeset, docker, plugins, sh
@@ -24,12 +23,15 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def build_image(args: Tuple[str, ...]) -> None:
+    env: str
+    image_name: str
+    script: Optional[str]
     if len(args) == 2:
-        env: str = args[0]
-        image_name: str = args[1]
-        script: Optional[str] = None
+        env = args[0]
+        image_name = args[1]
+        script = None
     elif len(args) == 3:
-        env: str = args[0]
+        env = args[0]
         image_name = args[1]
         script = args[2]
     else:

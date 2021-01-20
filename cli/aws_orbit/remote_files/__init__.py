@@ -20,7 +20,7 @@ from aws_orbit.remote_files import delete as delete_image_module
 from aws_orbit.remote_files import deploy as deploy_module
 from aws_orbit.remote_files import destroy as destroy_module
 
-REMOTE_FUNC_TYPE = Callable[[str, Tuple[str, ...]], None]
+REMOTE_FUNC_TYPE = Callable[[Tuple[str, ...]], None]
 
 
 class RemoteCommands(Enum):

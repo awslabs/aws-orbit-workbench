@@ -23,11 +23,11 @@ from aws_orbit.services import cfn, codebuild
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def delete_image(filename: str, name: str, debug: bool) -> None:
+def delete_image(env: str, name: str, debug: bool) -> None:
     with MessagesContext("Destroying Docker Image", debug=debug) as ctx:
-        manifest = Manifest(filename=filename)
+        manifest = Manifest(filename=None, env=env, region=None)
         manifest.fillup()
-        ctx.info(f"Manifest loaded: {filename}")
+        ctx.info("Manifest loaded")
         if cfn.does_stack_exist(manifest=manifest, stack_name=f"orbit-{manifest.name}") is False:
             ctx.error("Please, deploy your environment before deploy/destroy any docker image")
             return
@@ -52,7 +52,7 @@ def delete_image(filename: str, name: str, debug: bool) -> None:
         buildspec = codebuild.generate_spec(
             manifest=manifest,
             plugins=False,
-            cmds_build=[f"orbit remote --command delete_image {name}"],
+            cmds_build=[f"orbit remote --command delete_image {env} {name}"],
             changeset=changes,
         )
         remote.run(

@@ -177,15 +177,14 @@ def deploy_cli(
     help="Enable detailed logging.",
     show_default=True,
 )
-def destroy_cli(filename: str, team_stacks: bool, keep_demo: bool, debug: bool) -> None:
+def destroy_cli(env: str, team_stacks: bool, keep_demo: bool, debug: bool) -> None:
     """Destroy a Orbit Workbench environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
-    filename = filename if filename[0] in (".", "/") else f"./{filename}"
-    _logger.debug("filename: %s", filename)
+    _logger.debug("env: %s", env)
     _logger.debug("teams only: %s", str(team_stacks))
     _logger.debug("keep demo: %s", str(keep_demo))
-    destroy(filename=filename, teams_only=team_stacks, keep_demo=keep_demo, debug=debug)
+    destroy(env=env, teams_only=team_stacks, keep_demo=keep_demo, debug=debug)
 
 
 @click.group(name="build")
@@ -234,15 +233,14 @@ def deploy_image_cli(env: str, dir: str, name: str, script: Optional[str], regio
     build_image(dir=dir, name=name, env=env, script=script, region=region, debug=debug)
 
 
-@click.command(name="destroy-image")
-@click.option(
-    "--filename",
-    "-f",
-    type=str,
-    help="The target Orbit Workbench manifest file (yaml).",
-    show_default=False,
-    required=True,
-)
+@click.group(name="delete")
+def delete() -> None:
+    """Build images for an Orbit team"""
+    pass
+
+
+@delete.command(name="image")
+@click.option("--env", "-e", type=str, required=True, help="Orbit Environment to execute container in.")
 @click.option("--name", "-n", type=str, help="Image name.", required=True)
 @click.option(
     "--debug/--no-debug",
@@ -250,15 +248,14 @@ def deploy_image_cli(env: str, dir: str, name: str, script: Optional[str], regio
     help="Enable detailed logging.",
     show_default=True,
 )
-def destroy_image_cli(filename: str, name: str, debug: bool) -> None:
+def delete_image_cli(env: str, name: str, debug: bool) -> None:
     """Destroy a Docker image from ECR."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
-    filename = filename if filename[0] in (".", "/") else f"./{filename}"
-    _logger.debug("filename: %s", filename)
+    _logger.debug("env: %s", env)
     _logger.debug("name: %s", name)
     _logger.debug("debug: %s", debug)
-    delete_image(name=name, filename=filename, debug=debug)
+    delete_image(name=name, env=env, debug=debug)
 
 
 @click.command(name="list-images")
@@ -451,7 +448,7 @@ def main() -> int:
     cli.add_command(destroy_cli)
     cli.add_command(remote_cli)
     cli.add_command(deploy_image_cli)
-    cli.add_command(destroy_image_cli)
+    cli.add_command(delete_image_cli)
     cli.add_command(list_images_cli)
     cli.add_command(run_container)
     cli.add_command(build)

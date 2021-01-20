@@ -115,7 +115,7 @@ def deploy(
     with MessagesContext("Deploying", debug=debug) as ctx:
         ctx.progress(2)
 
-        manifest = Manifest(filename=filename)
+        manifest = Manifest(filename=filename, env=None, region=None)
         manifest.fillup()
         ctx.info(f"Manifest loaded: {filename}")
         ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
