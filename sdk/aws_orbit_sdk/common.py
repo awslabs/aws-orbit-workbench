@@ -36,14 +36,8 @@ def get_properties() -> Dict[str, str]:
     >>> props = get_properties()
     """
     if "AWS_ORBIT_ENV" in os.environ.keys():
-        if (
-            "ORBIT_TEAM_SPACE" not in os.environ.keys()
-            or "AWS_ORBIT_S3_BUCKET" not in os.environ.keys()
-        ):
-            raise Exception(
-                "if AWS_ORBIT_ENV then ORBIT_TEAM_SPACE, AWS_ORBIT_S3_BUCKET and "
-                "must be set"
-            )
+        if "ORBIT_TEAM_SPACE" not in os.environ.keys() or "AWS_ORBIT_S3_BUCKET" not in os.environ.keys():
+            raise Exception("if AWS_ORBIT_ENV then ORBIT_TEAM_SPACE, AWS_ORBIT_S3_BUCKET and " "must be set")
         else:
             prop = dict(
                 AWS_ORBIT_ENV=os.environ.get("AWS_ORBIT_ENV", ""),
@@ -57,9 +51,7 @@ def get_properties() -> Dict[str, str]:
         with open(propFilePath, "r") as f:
             prop = safe_load(f)["properties"]
 
-    prop[
-        "ecs_cluster"
-    ] = f"orbit-{prop['AWS_ORBIT_ENV']}-{prop['ORBIT_TEAM_SPACE']}-cluster"
+    prop["ecs_cluster"] = f"orbit-{prop['AWS_ORBIT_ENV']}-{prop['ORBIT_TEAM_SPACE']}-cluster"
     prop["eks_cluster"] = f"orbit-{prop['AWS_ORBIT_ENV']}"
     return prop
 
@@ -115,9 +107,7 @@ def get_workspace() -> Dict[str, str]:
     ssm = boto3.client("ssm")
     props = get_properties()
 
-    role_key = (
-        f"/orbit/{props['AWS_ORBIT_ENV']}/teams/{props['ORBIT_TEAM_SPACE']}/manifest"
-    )
+    role_key = f"/orbit/{props['AWS_ORBIT_ENV']}/teams/{props['ORBIT_TEAM_SPACE']}/manifest"
 
     role_config_str = ssm.get_parameter(Name=role_key)["Parameter"]["Value"]
 
@@ -153,11 +143,7 @@ def get_scratch_database() -> str:
     glue = boto3.client("glue")
     response = glue.get_databases()
     workspace = get_workspace()
-    scratch_db_name = (
-        f"scratch_db_{workspace['env_name']}_{workspace['team_space']}".lower().replace(
-            "-", "_"
-        )
-    )
+    scratch_db_name = f"scratch_db_{workspace['env_name']}_{workspace['team_space']}".lower().replace("-", "_")
     new_location = f"s3://{workspace['scratch-bucket']}/{workspace['team_space']}/{scratch_db_name}"
     for db in response["DatabaseList"]:
         if db["Name"].lower() == scratch_db_name:

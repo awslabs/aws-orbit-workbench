@@ -24,6 +24,7 @@ from typing import Any, Dict, List, Optional, Union
 import boto3
 import pandas as pd
 from botocore.waiter import WaiterModel, create_waiter_with_client
+
 from aws_orbit_sdk.common import get_properties, get_stepfunctions_waiter_config
 
 logging.basicConfig(
@@ -59,9 +60,7 @@ def get_execution_history(notebookDir: str, notebookName: str) -> pd.DataFrame:
     return _get_execution_history_from_local(notebookDir, notebookName, props)
 
 
-def _get_execution_history_from_local(
-    notebook_basedir: str, src_notebook: str, props: dict
-) -> pd.DataFrame:
+def _get_execution_history_from_local(notebook_basedir: str, src_notebook: str, props: dict) -> pd.DataFrame:
     """
     Get Notebook Execution History from EFS
     """
@@ -74,9 +73,7 @@ def _get_execution_history_from_local(
     for nb in Path(notebook_dir).glob("*.ipynb"):
         if not nb.is_file():
             continue
-        executions.append(
-            (str(nb), datetime.fromtimestamp(nb.stat().st_mtime), notebook_dir)
-        )
+        executions.append((str(nb), datetime.fromtimestamp(nb.stat().st_mtime), notebook_dir))
 
     if not executions:
         print(f"No output notebooks founds at: {notebook_dir}")
@@ -85,9 +82,7 @@ def _get_execution_history_from_local(
     return df
 
 
-def _get_execution_history_from_s3(
-    notebookBaseDir: str, srcNotebook: str, props: str
-) -> pd.DataFrame:
+def _get_execution_history_from_s3(notebookBaseDir: str, srcNotebook: str, props: str) -> pd.DataFrame:
     """
     Get Notebook Execution History from s3
     """
@@ -99,9 +94,7 @@ def _get_execution_history_from_s3(
     executions = []
     objects = s3.list_objects_v2(Bucket=props["AWS_ORBIT_S3_BUCKET"], Prefix=path)
     if "Contents" in objects.keys():
-        for key in s3.list_objects_v2(Bucket=props["AWS_ORBIT_S3_BUCKET"], Prefix=path)[
-            "Contents"
-        ]:
+        for key in s3.list_objects_v2(Bucket=props["AWS_ORBIT_S3_BUCKET"], Prefix=path)["Contents"]:
             if key["Key"][-1] == "/":
                 continue
             notebookName = os.path.basename(key["Key"])
@@ -112,11 +105,7 @@ def _get_execution_history_from_s3(
             timestamp = key["LastModified"]
             executions.append((notebookName, timestamp, s3path))
     else:
-        print(
-            "No output notebooks founds at: s3://{}/{}".format(
-                props["AWS_ORBIT_S3_BUCKET"], path
-            )
-        )
+        print("No output notebooks founds at: s3://{}/{}".format(props["AWS_ORBIT_S3_BUCKET"], path))
 
     df = pd.DataFrame(executions, columns=["relativePath", "timestamp", "s3path"])
     return df
@@ -131,9 +120,7 @@ def _get_invoke_function_name() -> Any:
     Function Name.
     """
     props = get_properties()
-    functionName = (
-        f"orbit-{props['AWS_ORBIT_ENV']}-{props['ORBIT_TEAM_SPACE']}-container-runner"
-    )
+    functionName = f"orbit-{props['AWS_ORBIT_ENV']}-{props['ORBIT_TEAM_SPACE']}-container-runner"
     return functionName
 
 
@@ -302,9 +289,7 @@ def _run_task(taskConfiguration: dict) -> Any:
     return response_payload
 
 
-def schedule_python(
-    triggerName: str, frequency: str, taskConfiguration: Dict[str, Any]
-) -> str:
+def schedule_python(triggerName: str, frequency: str, taskConfiguration: Dict[str, Any]) -> str:
     """
     Schedule Python Task
 
@@ -349,9 +334,7 @@ def schedule_python(
     return schedule_task(triggerName, frequency, taskConfiguration)
 
 
-def schedule_notebooks(
-    triggerName: str, frequency: str, taskConfiguration: dict
-) -> str:
+def schedule_notebooks(triggerName: str, frequency: str, taskConfiguration: dict) -> str:
     """
     Schedules Notebooks
     Parameters
@@ -510,17 +493,11 @@ def get_active_tasks(user_filter: Optional[Any]) -> Union[dict, List[Dict[str, A
         orbit_task = json.loads(vars["tasks"].replace("'", '"'))
         if "notebookName" in orbit_task["tasks"][0]:
             task_name = (
-                orbit_task["tasks"][0]["notebookName"].split(".")[0]
-                if "notebookName" in orbit_task["tasks"][0]
-                else ""
+                orbit_task["tasks"][0]["notebookName"].split(".")[0] if "notebookName" in orbit_task["tasks"][0] else ""
             )
         elif "module" in orbit_task["tasks"][0]:
             module = orbit_task["tasks"][0]["module"]
-            functionName = (
-                orbit_task["tasks"][0]["functionName"]
-                if "functionName" in orbit_task["tasks"][0]
-                else ""
-            )
+            functionName = orbit_task["tasks"][0]["functionName"] if "functionName" in orbit_task["tasks"][0] else ""
             task_name = f"{module}.{functionName}"
         else:
             task_name = "unknown"
@@ -603,9 +580,7 @@ def wait_for_tasks_to_complete(
 
     props = get_properties()
 
-    waiter_model = WaiterModel(
-        get_stepfunctions_waiter_config(delay=delay, max_attempts=maxAttempts)
-    )
+    waiter_model = WaiterModel(get_stepfunctions_waiter_config(delay=delay, max_attempts=maxAttempts))
     waiter = waiter_model.get_waiter("ExecutionComplete")
 
     completed_tasks = []
@@ -643,9 +618,7 @@ def wait_for_tasks_to_complete(
 
         tasks = incomplete_tasks
 
-        logger.info(
-            f"Running: {len(tasks)} Completed: {len(completed_tasks)} Errored: {len(errored_tasks)}"
-        )
+        logger.info(f"Running: {len(tasks)} Completed: {len(completed_tasks)} Errored: {len(errored_tasks)}")
 
         if not tasks:
             logger.info("All tasks stopped")
@@ -674,9 +647,7 @@ def wait_for_tasks_to_complete(
             elif task["ExecutionType"] == "eks":
                 log_group = f"/orbit/pods/{props['AWS_ORBIT_ENV']}"
                 prefix = f"fluent-bit-kube.var.log.containers.{task['Identifier']}-"
-                response = logs.describe_log_streams(
-                    logGroupName=log_group, logStreamNamePrefix=prefix
-                )
+                response = logs.describe_log_streams(logGroupName=log_group, logStreamNamePrefix=prefix)
                 log_streams = response.get("logStreams", [])
                 if log_streams:
                     config = {
@@ -712,9 +683,7 @@ def wait_for_tasks_to_complete(
 
                 for e in response.get("events", []):
                     print(
-                        datetime.fromtimestamp(e["timestamp"] / 1000).strftime(
-                            "%Y-%m-%d %H:%M:%S"
-                        ),
+                        datetime.fromtimestamp(e["timestamp"] / 1000).strftime("%Y-%m-%d %H:%M:%S"),
                         e["message"],
                     )
                 else:
@@ -740,9 +709,7 @@ def logEvents(paginator: Any, logGroupName: Any, logStreams: Any, fromTime: Any)
     Example
     -------
     """
-    logging.basicConfig(
-        format="%(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S"
-    )
+    logging.basicConfig(format="%(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
     event_logger = logging.getLogger("event")
 
     response_iterator = paginator.paginate(
@@ -756,9 +723,7 @@ def logEvents(paginator: Any, logGroupName: Any, logStreams: Any, fromTime: Any)
     while True:
         for page in response_iterator:
             for e in page["events"]:
-                t = datetime.fromtimestamp(e["timestamp"] / 1000).strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                )
+                t = datetime.fromtimestamp(e["timestamp"] / 1000).strftime("%Y-%m-%d %H:%M:%S")
                 m = e["message"]
                 print(t, m)
                 lastTime = e["timestamp"]
