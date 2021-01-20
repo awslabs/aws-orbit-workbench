@@ -5,6 +5,7 @@ import time
 from typing import Any, Dict, List
 
 import boto3
+
 import aws_orbit_sdk.controller as controller
 import aws_orbit_sdk.emr as sparkConnection
 from aws_orbit_sdk.common import get_workspace
@@ -173,17 +174,11 @@ def data_profile(parameters: Dict[str, str]) -> Dict[str, Any]:
         startCluster=parameters["start_cluster"],
         clusterArgs={"CoreInstanceCount": parameters["core_instance_count"]},
     )
-    logger.info(
-        f"Cluster is ready:{livy_url} livy_url:{cluster_id} cluster_id: started:{started}"
-    )
+    logger.info(f"Cluster is ready:{livy_url} livy_url:{cluster_id} cluster_id: started:{started}")
 
     # Get profiling data and print pretty json
-    response = glue.get_tables(
-        DatabaseName=parameters["database"], Expression=parameters["table_filter"]
-    )
-    logger.debug(
-        f"Glue response: {json.dumps(response, indent=4, sort_keys=True, default=str)}"
-    )
+    response = glue.get_tables(DatabaseName=parameters["database"], Expression=parameters["table_filter"])
+    logger.debug(f"Glue response: {json.dumps(response, indent=4, sort_keys=True, default=str)}")
 
     if len(response["TableList"]) == 0:
         assert False
@@ -218,12 +213,8 @@ def data_profile(parameters: Dict[str, str]) -> Dict[str, Any]:
 
     if "trigger_name" in parameters:
         if "frequency" not in parameters:
-            raise Exception(
-                "Missing frequency parameter while a trigger_name was given"
-            )
-        container = controller.schedule_notebooks(
-            parameters["trigger_name"], parameters["frequency"], notebooks_to_run
-        )
+            raise Exception("Missing frequency parameter while a trigger_name was given")
+        container = controller.schedule_notebooks(parameters["trigger_name"], parameters["frequency"], notebooks_to_run)
     else:
         container = controller.run_notebooks(notebooks_to_run)
 

@@ -4,6 +4,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 import boto3
+
 from aws_orbit_sdk.common import get_workspace
 
 logging.basicConfig(
@@ -38,9 +39,7 @@ def delete_crawler(crawler: str) -> None:
     logger.info("existing crawler deleted")
 
 
-def run_crawler(
-    crawler: str, target_db: str, target_path: str, wait: Optional[Any] = True
-) -> str:
+def run_crawler(crawler: str, target_db: str, target_path: str, wait: Optional[Any] = True) -> str:
     """
     This API starts a glue crawler for the given path and will create the tables base on data found in the provided
     database. The call can wait until the crawler is done and table created.
@@ -99,10 +98,7 @@ def run_crawler(
         time.sleep(60)
 
     response = glue.get_crawler_metrics(CrawlerNameList=[crawler])
-    if (
-        "CrawlerMetricsList" not in response
-        or "TablesCreated" not in response["CrawlerMetricsList"][0]
-    ):
+    if "CrawlerMetricsList" not in response or "TablesCreated" not in response["CrawlerMetricsList"][0]:
         raise Exception("Crawler failed to create table")
 
     stats = response["CrawlerMetricsList"][0]
@@ -159,9 +155,7 @@ def update_teamspace_lakeformation_permissions(db_name: Optional[str] = "*") -> 
     print("Lakeformation permissions have been updated")
 
 
-def _update_column_parameters(
-    table: Dict[str, Any], name: str, key: str, value: Optional[Any] = None
-) -> None:
+def _update_column_parameters(table: Dict[str, Any], name: str, key: str, value: Optional[Any] = None) -> None:
     """
     Updates the column parameters of a given table.
     """

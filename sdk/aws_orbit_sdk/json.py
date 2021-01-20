@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Union
 import boto3
 import IPython.display
 from IPython.display import JSON
+
 from aws_orbit_sdk.common import get_properties, get_workspace, split_s3_path
 
 logging.basicConfig(
@@ -21,9 +22,7 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 
-def display_json(
-    doc: Dict[str, Any], root: Optional[str] = "root"
-) -> IPython.core.display.JSON:
+def display_json(doc: Dict[str, Any], root: Optional[str] = "root") -> IPython.core.display.JSON:
     """
     Create a JSON display object given raw JSON data.
 
@@ -185,9 +184,7 @@ def run_process(args: Union[str, List[str]]) -> None:
             logger.error(err)
 
 
-def run_schema_induction_args(
-    user_args: Union[str, List[str]]
-) -> Dict[str, Dict[str, str]]:
+def run_schema_induction_args(user_args: Union[str, List[str]]) -> Dict[str, Dict[str, str]]:
     """
     Calls on run_process to run Schema Induction with given user arguments gets ddl and schema metadata for a specified
     table.
