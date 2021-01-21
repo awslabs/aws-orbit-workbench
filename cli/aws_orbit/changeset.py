@@ -186,7 +186,8 @@ def _check_teams(manifest: "Manifest", ctx: "MessagesContext") -> Optional[Teams
         for name in old_names:
             raw_team = manifest_team.read_raw_manifest_ssm(manifest=manifest, team_name=name)
             if raw_team is None:
-                raise RuntimeError(f"Removed team {name} not found into SSM.")
+                _logger.debug(f"Found {name} in main manifest but without its own SSM. Ignoring")
+                continue
             raw_old_teams.append(raw_team)
         teams_changeset: Optional[TeamsChangeset] = TeamsChangeset(
             old_teams=manifest_team.parse_teams(
