@@ -227,8 +227,8 @@ class Manifest:
         try:
             json_str: str = client.get_parameter(Name=self.ssm_parameter_name)["Parameter"]["Value"]
         except client.exceptions.ParameterNotFound:
-            _logger.debug("Manifest SSM parameter not found.")
-            return None
+            _logger.error(f"Manifest SSM parameter {self.ssm_parameter_name} not found.")
+            raise RuntimeError(f"environment {self.name} not found")
         _logger.debug("Manifest SSM parameter found.")
         return cast(MANIFEST_TYPE, json.loads(json_str))
 
@@ -421,7 +421,7 @@ class Manifest:
             _logger.debug("Cognito External IdP data fetched successfully.")
 
     def fillup(self) -> None:
-        if self.fetch_ssm() is False:
+        if self.fetch_ssm() is False and self.raw_ssm is not None:
             self.fetch_toolkit_data()
             self.fetch_demo_data()
             self.fetch_network_data()
