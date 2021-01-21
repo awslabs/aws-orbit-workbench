@@ -89,7 +89,7 @@ class RedshiftClustersCommon(core.Construct):
         self.lake_role_name = team_space_props["lake_role_name"]
         self.lake_role_arn = f"arn:{self.partition}:iam::{self.account}:role/{self.lake_role_name}"
 
-        vpc_id: str = team_space_props["vpc-id"]
+        vpc_id: str = team_space_props["vpc_id"]
         vpc: ec2.Vpc = ec2.Vpc.from_lookup(self, "Vpc", vpc_id=vpc_id)
 
         # Adding plugin parameters to redshift parameter group
@@ -308,14 +308,14 @@ class RedshiftStack(Stack):
             "teamspace_name": team_manifest.name,
             "lake_role_name": f"orbit-{team_manifest.manifest.name}-{team_manifest.name}-role",
             "vpc_id": manifest.vpc.asdict()["vpc-id"],
-            "subnet_ids": [],
+            "subnet_ids": [sm.subnet_id for sm in manifest.vpc.subnets]
         }
 
         # for sm in manifest.vpc.asdict()["subnets"]:
         #     print(sm["subnet-id"])
 
-        for sm in manifest.vpc.subnets:
-            print(sm.subnet_id)
+        # for sm in manifest.vpc.subnets:
+        #     print(sm.subnet_id)
 
         self._redshift_clusters = RedshiftClusters(
             self,

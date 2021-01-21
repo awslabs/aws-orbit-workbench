@@ -238,13 +238,37 @@ Resources:
       Description: ''
       ManagedPolicyName: orbit-${env_name}-admin
       Path: /
+  PluginManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - redshift:*
+            Resource:
+              - arn:aws:redshift:${region}:${account_id}:parametergroup:orbit-${env_name}-*
+              - arn:aws:redshift:${region}:${account_id}:securitygroup:orbit-${env_name}-*
+              - arn:aws:redshift:${region}:${account_id}:subnetgroup:orbit-${env_name}-*
+              - arn:aws:redshift:${region}:${account_id}:cluster:orbit-${env_name}-*
+          - Effect: Allow
+            Action:
+              - secretsmanager:*
+            Resource:
+              - arn:aws:secretsmanager:${region}:${account_id}:secret:*
+              - arn:aws:secretsmanager:${region}:${account_id}:secret:orbit*
+        Version: '2012-10-17'
+      Description: 'Managed policy for plugin specific resources'
+      ManagedPolicyName: orbit-${env_name}-plugin-admin
+      Path: /
   AdminRole:
     Type: AWS::IAM::Role
     Properties:
       Path: /
       ManagedPolicyArns:
         - Ref: ManagedPolicy
-        - arn:aws:iam::aws:policy/AWSServiceCatalogAdminFullAccess
+        - Ref: PluginManagedPolicy
+        #- arn:aws:iam::aws:policy/AWSServiceCatalogAdminFullAccess
       RoleName: orbit-${env_name}-admin
       MaxSessionDuration: 10000
       AssumeRolePolicyDocument:
