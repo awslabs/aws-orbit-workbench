@@ -229,7 +229,6 @@ def generate_spec(
             " --host=tcp://0.0.0.0:2375 --storage-driver=overlay&"
         ),
         'timeout 15 sh -c "until docker info; do echo .; sleep 1; done"',
-        "docker ps",
         "ls -la",
         "cd bundle",
         "ls -la",
