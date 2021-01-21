@@ -41,6 +41,11 @@ def destroy_toolkit(manifest: Manifest) -> None:
 def destroy(env: str, teams_only: bool, keep_demo: bool, debug: bool) -> None:
     with MessagesContext("Destroying", debug=debug) as ctx:
         manifest = Manifest(filename=None, env=env, region=None)
+        if manifest.raw_ssm is None:
+            ctx.info(f"Environment {env} not found")
+            ctx.progress(100)
+            return
+
         manifest.fillup()
         ctx.info("Manifest loaded")
         ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")

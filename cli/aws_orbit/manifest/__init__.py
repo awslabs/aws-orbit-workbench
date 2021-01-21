@@ -227,8 +227,8 @@ class Manifest:
         try:
             json_str: str = client.get_parameter(Name=self.ssm_parameter_name)["Parameter"]["Value"]
         except client.exceptions.ParameterNotFound:
-            _logger.error(f"Manifest SSM parameter {self.ssm_parameter_name} not found.")
-            raise RuntimeError(f"environment {self.name} not found")
+            _logger.debug("Manifest SSM parameter not found.")
+            return None
         _logger.debug("Manifest SSM parameter found.")
         return cast(MANIFEST_TYPE, json.loads(json_str))
 
