@@ -310,7 +310,9 @@ class Manifest:
                 for name in teams:
                     raw_team = manifest_team.read_raw_manifest_ssm(manifest=self, team_name=name)
                     if raw_team is None:
-                        raise RuntimeError(f"Team {name} not found into SSM.")
+                        # ignore this team because it was deleted but not yet updated in the main manifest
+                        _logger.debug(f"Found {name} in main manifest but without its own SSM. Ignoring")
+                        continue
                     raw_old_teams.append(raw_team)
 
                 self.teams = manifest_team.parse_teams(
