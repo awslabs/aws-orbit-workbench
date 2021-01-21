@@ -77,6 +77,17 @@ class TeamManifest:
             f"{self.manifest.account_id}.dkr.ecr.{self.manifest.region}.amazonaws.com/"
             f"orbit-{self.manifest.name}-{self.name}"
         )
+
+        # Apache Spark Image support
+        self.base_spark_image_address: str = (
+            f"{self.manifest.account_id}.dkr.ecr.{self.manifest.region}.amazonaws.com/"
+            f"orbit-{self.manifest.name}-jupyter-user-spark"
+        )
+        self.final_spark_image_address: str = (
+            f"{self.manifest.account_id}.dkr.ecr.{self.manifest.region}.amazonaws.com/"
+            f"orbit-{self.manifest.name}-{self.name}-spark"
+        )
+
         self.stack_name: str = f"orbit-{self.manifest.name}-{self.name}"
         self.ssm_parameter_name: str = f"/orbit/{self.manifest.name}/teams/{self.name}/manifest"
         self.bootstrap_s3_prefix: str = f"teams/{self.name}/bootstrap/"

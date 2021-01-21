@@ -347,7 +347,7 @@ class Env(Stack):
             entry=_lambda_path("token_validation"),
             index="index.py",
             handler="handler",
-            runtime=aws_lambda.Runtime.PYTHON_3_6,
+            runtime=aws_lambda.Runtime.PYTHON_3_8,
             timeout=Duration.seconds(5),
             environment={
                 "COGNITO_USER_POOL_ID": self.user_pool.user_pool_id,

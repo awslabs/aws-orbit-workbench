@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-_BUILD_WAIT_POLLING_DELAY: float = 2  # SECONDS
+_BUILD_WAIT_POLLING_DELAY: float = 5  # SECONDS
 
 CDK_VERSION = "~=1.67.0"
 CDK_MODULES = [
