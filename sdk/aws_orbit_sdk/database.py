@@ -12,13 +12,14 @@ import IPython.core.display
 import sqlalchemy as sa
 from IPython import get_ipython
 from IPython.display import JSON
+from pandas import DataFrame
+from sqlalchemy.engine import create_engine
+from sqlalchemy.orm import sessionmaker
+
 from aws_orbit_sdk.common import *
 from aws_orbit_sdk.glue_catalog import run_crawler
 from aws_orbit_sdk.json import display_json
 from aws_orbit_sdk.magics.database import AthenaMagics, RedshiftMagics
-from pandas import DataFrame
-from sqlalchemy.engine import create_engine
-from sqlalchemy.orm import sessionmaker
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -97,9 +98,7 @@ class DatabaseCommon:
     redshift_role = None
     db_class = None
 
-    def execute_ddl(
-        self, ddl: str, namespace: Optional[Dict[str, str]] = dict()
-    ) -> None:
+    def execute_ddl(self, ddl: str, namespace: Optional[Dict[str, str]] = dict()) -> None:
         """
         Executes a SQL ddl statement.
 
@@ -130,9 +129,7 @@ class DatabaseCommon:
             session.execute(ddl, namespace)
             conn.close()
 
-    def execute_query(
-        self, sql: str, namespace: Optional[Dict[str, str]] = dict()
-    ) -> sa.engine.result.ResultProxy:
+    def execute_query(self, sql: str, namespace: Optional[Dict[str, str]] = dict()) -> sa.engine.result.ResultProxy:
         """
         Executes a SQL query.
 
@@ -299,9 +296,7 @@ class RedshiftUtils(DatabaseCommon):
         hostName = clusterInfo["Clusters"][0]["Endpoint"]["Address"]
         port = clusterInfo["Clusters"][0]["Endpoint"]["Port"]
 
-        self.db_url = "redshift+psycopg2://{}:{}@{}:{}/{}".format(
-            DbUser, DbPassword, hostName, port, DbName
-        )
+        self.db_url = "redshift+psycopg2://{}:{}@{}:{}/{}".format(DbUser, DbPassword, hostName, port, DbName)
         if clusterInfo["Clusters"][0]["IamRoles"]:
             self.redshift_role = clusterInfo["Clusters"][0]["IamRoles"][0]["IamRoleArn"]
         else:
@@ -398,9 +393,7 @@ class RedshiftUtils(DatabaseCommon):
             if s3_location != None:
                 target_s3 = s3_location
             else:
-                raise Exception(
-                    "Database does not have a location , and location was not provided"
-                )
+                raise Exception("Database does not have a location , and location was not provided")
         bucket_name = target_s3[5:].split("/")[0]
         db_path = "/".join(target_s3[5:].split("/")[1:])
         s3_path = f"{target_s3}/{table_name}/"
@@ -430,9 +423,7 @@ class RedshiftUtils(DatabaseCommon):
         schema = response["Table"]["StorageDescriptor"]["Columns"]
         location = response["Table"]["StorageDescriptor"]["Location"]
         data_format = response["Table"]["Parameters"]["classification"]
-        logger.info(
-            f"Table {table_name} created: records: {recordCount}, format: {data_format}, location: {location}"
-        )
+        logger.info(f"Table {table_name} created: records: {recordCount}, format: {data_format}, location: {location}")
         s = {}
         for c in schema:
             s[c["Name"]] = c["Type"]
@@ -486,17 +477,9 @@ class RedshiftUtils(DatabaseCommon):
         props = get_properties()
 
         redshift = boto3.client("redshift")
-        cluster_identifier = (
-            props["AWS_ORBIT_ENV"]
-            + "-"
-            + props["ORBIT_TEAM_SPACE"]
-            + "-"
-            + cluster_name
-        ).lower()
+        cluster_identifier = (props["AWS_ORBIT_ENV"] + "-" + props["ORBIT_TEAM_SPACE"] + "-" + cluster_name).lower()
         try:
-            clusters = redshift.describe_clusters(ClusterIdentifier=cluster_identifier)[
-                "Clusters"
-            ]
+            clusters = redshift.describe_clusters(ClusterIdentifier=cluster_identifier)["Clusters"]
         except:
             clusters = []
 
@@ -504,9 +487,7 @@ class RedshiftUtils(DatabaseCommon):
         if reuseCluster:
             if not clusters:
                 if not startCluster:
-                    raise Exception(
-                        "cannot find running Redshift cluster: " + cluster_identifier
-                    )
+                    raise Exception("cannot find running Redshift cluster: " + cluster_identifier)
                 else:
                     (cluster_identifier, user) = self._start_and_wait_for_redshift(
                         redshift, cluster_identifier, props, clusterArgs
@@ -517,9 +498,7 @@ class RedshiftUtils(DatabaseCommon):
                 user = "master"
         else:
             if not startCluster:
-                raise Exception(
-                    "If reuseCluster is False , then startCluster must be True"
-                )
+                raise Exception("If reuseCluster is False , then startCluster must be True")
             else:
                 (cluster_identifier, user) = self._start_and_wait_for_redshift(
                     redshift, cluster_identifier, props, clusterArgs
@@ -595,13 +574,9 @@ class RedshiftUtils(DatabaseCommon):
         props = get_properties()
         redshift = boto3.client("redshift")
         namespace = props["AWS_ORBIT_ENV"] + "-" + props["ORBIT_TEAM_SPACE"] + "-"
-        cluster_identifier = (
-            cluster_name if namespace in cluster_name else cluster_name + cluster_name
-        )
+        cluster_identifier = cluster_name if namespace in cluster_name else cluster_name + cluster_name
 
-        res = redshift.delete_cluster(
-            ClusterIdentifier=cluster_identifier, SkipFinalClusterSnapshot=True
-        )
+        res = redshift.delete_cluster(ClusterIdentifier=cluster_identifier, SkipFinalClusterSnapshot=True)
 
         if "errorMessage" in res:
             logger.error(res["errorMessage"])
@@ -674,8 +649,7 @@ class RedshiftUtils(DatabaseCommon):
                     namespace in func["FunctionName"]
                     and "Environment" in func
                     and "Variables" in func["Environment"]
-                    and "RedshiftClusterParameterGroup"
-                    in func["Environment"]["Variables"]
+                    and "RedshiftClusterParameterGroup" in func["Environment"]["Variables"]
                     and "StartRedshift" in func["FunctionName"]
                 ):
                     funcs.append(func)
@@ -685,9 +659,7 @@ class RedshiftUtils(DatabaseCommon):
         func_descs = {}
 
         for f in funcs:
-            user_name = f["FunctionName"][
-                f["FunctionName"].index("StartRedshift") + len("StartRedshift-") :
-            ]
+            user_name = f["FunctionName"][f["FunctionName"].index("StartRedshift") + len("StartRedshift-") :]
             func_desc = f["Environment"]["Variables"]
             del func_desc["RedshiftClusterParameterGroup"]
             del func_desc["RedshiftClusterSubnetGroup"]
@@ -730,10 +702,7 @@ class RedshiftUtils(DatabaseCommon):
         )
 
         response_payload = json.loads(invoke_response["Payload"].read().decode("utf-8"))
-        if (
-            "statusCode" not in response_payload
-            or "200" != response_payload["statusCode"]
-        ):
+        if "statusCode" not in response_payload or "200" != response_payload["statusCode"]:
             logger.error(response_payload)
             raise Exception("could not start cluster")
 
@@ -742,9 +711,7 @@ class RedshiftUtils(DatabaseCommon):
         logger.info("cluster created: %s", cluster_id)
         logger.info("waiting for created cluster: %s", cluster_id)
         waiter = redshift.get_waiter("cluster_available")
-        waiter.wait(
-            ClusterIdentifier=cluster_id, WaiterConfig={"Delay": 60, "MaxAttempts": 15}
-        )
+        waiter.wait(ClusterIdentifier=cluster_id, WaiterConfig={"Delay": 60, "MaxAttempts": 15})
         time.sleep(60)  # allow DB to for another min
         return (cluster_id, user)
 
@@ -788,9 +755,7 @@ class RedshiftUtils(DatabaseCommon):
                     table["jschema"] = schema
                 except Exception as e:
                     logger.error(str(e))
-                    raise Exception(
-                        f"Cannot access {table_name} schema file at: {schema_path}"
-                    )
+                    raise Exception(f"Cannot access {table_name} schema file at: {schema_path}")
 
     def getCatalog(
         self, schema_name: Optional[str] = None, table_name: Optional[str] = None
@@ -894,9 +859,7 @@ class RedshiftUtils(DatabaseCommon):
         redshift = boto3.client("redshift")
         props = get_properties()
         if cluster_id == None:
-            clusters = redshift.describe_clusters(
-                TagValues=[props["ORBIT_TEAM_SPACE"]]
-            )["Clusters"]
+            clusters = redshift.describe_clusters(TagValues=[props["ORBIT_TEAM_SPACE"]])["Clusters"]
         else:
             clusters = redshift.describe_clusters(
                 ClusterIdentifier=cluster_id,
@@ -909,9 +872,7 @@ class RedshiftUtils(DatabaseCommon):
             cluster_model["Name"] = cluster_id
             cluster_model["State"] = cluster["ClusterStatus"]
             if "Endpoint" in cluster:
-                cluster_model[
-                    "ip"
-                ] = f"{cluster['Endpoint']['Address']}:{cluster['Endpoint']['Port']}"
+                cluster_model["ip"] = f"{cluster['Endpoint']['Address']}:{cluster['Endpoint']['Port']}"
 
             cluster_nodes_info = {
                 "node_type": cluster["NodeType"],
@@ -984,8 +945,7 @@ class AthenaUtils(DatabaseCommon):
             S3QueryResultsLocation = f"s3://{workspace['scratch-bucket']}/athena"
 
         template_con_str = (
-            "awsathena+rest://athena.{region_name}.amazonaws.com:443/"
-            "{schema_name}?s3_staging_dir={s3_staging_dir}"
+            "awsathena+rest://athena.{region_name}.amazonaws.com:443/" "{schema_name}?s3_staging_dir={s3_staging_dir}"
         )
         conn_str = template_con_str.format(
             region_name=region_name,

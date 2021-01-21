@@ -15,9 +15,7 @@
 #   limitations under the License.
 #
 
-# THIS SCRIPT IS ONLY NECESSARY WHILE WE DON'T HAVE A BETTER MECHANISM TO ADDRESS THAT (i.e. PLUGINS)
-
 set -ex
 
-aws codeartifact login --tool pip --domain aws-orbit --repository python-repository
-cp ~/.config/pip/pip.conf .
+isort .
+black .

@@ -63,7 +63,7 @@ def build_image(env: str, dir: str, name: str, script: Optional[str], region: Op
             bundle_path=bundle_path,
             buildspec=buildspec,
             codebuild_log_callback=ctx.progress_bar_callback,
-            timeout=10,
+            timeout=15,
         )
         ctx.info("Docker Image deploy into ECR")
         address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/orbit-{manifest.name}-{name}"
