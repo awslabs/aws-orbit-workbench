@@ -4,16 +4,20 @@ demo: ${demo}
 dev: ${dev}
 images:
     jupyter-hub:
-        repository: ${jupyter_hub_repository}
-        source: ${images_source}
+        repository: aws-orbit-jupyter-hub
+        source: dockerhub
         version: latest
     jupyter-user:
-        repository: ${jupyter_user_repository}
-        source: ${images_source}
+        repository: aws-orbit-jupyter-user
+        source: dockerhub
+        version: latest
+    jupyter-user-spark:
+        repository: aws-orbit-jupyter-user-spark
+        source: dockerhub
         version: latest
     landing-page:
-        repository: ${landing_page_repository}
-        source: ${images_source}
+        repository: aws-orbit-landing-page
+        source: dockerhub
         version: latest
 networking:
   data:

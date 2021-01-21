@@ -37,12 +37,7 @@ def create_manifest(
     content = content.replace("$", "").format(
         region=region_str,
         name=name,
-        demo="true" if demo else False,
-        dev="true" if dev else False,
-        images_source="code" if dev else "dockerhub",
-        jupyter_hub_repository="../images/jupyter-hub/" if dev else "aws-orbit-jupyter-hub",
-        jupyter_user_repository="../images/jupyter-user/" if dev else "aws-orbit-jupyter-user",
-        landing_page_repository="../images/landing-page/" if dev else "aws-orbit-landing-page",
+        demo="true" if demo else "false",
     )
 
     with open(filename, "w") as file:

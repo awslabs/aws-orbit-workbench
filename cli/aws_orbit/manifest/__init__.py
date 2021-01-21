@@ -68,6 +68,11 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
             "source": "dockerhub",
             "version": "latest",
         },
+        "jupyter-user-spark": {
+            "repository": "aws-orbit-jupyter-user-spark",
+            "source": "dockerhub",
+            "version": "latest",
+        },
         "landing-page": {
             "repository": "aws-orbit-landing-page",
             "source": "dockerhub",
