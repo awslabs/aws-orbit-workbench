@@ -36,6 +36,7 @@ MANIFEST_FILE_TYPE = Dict[
     Union[
         str,
         bool,
+        List[str],
         MANIFEST_FILE_VPC_TYPE,
         List[MANIFEST_FILE_TEAM_TYPE],
         MANIFEST_FILE_IMAGES_TYPE,
@@ -102,6 +103,7 @@ class Manifest:
             self.region = utils.get_region()
         self.demo: bool = cast(bool, self.raw_file.get("demo", False))
         self.dev: bool = cast(bool, self.raw_file.get("dev", False))
+        self.eks_system_masters_roles: List[str] = cast(List[str], self.raw_file.get("eks-system-masters-roles", []))
 
         # Networking
         if "networking" not in self.raw_file:
@@ -401,6 +403,7 @@ class Manifest:
 
         obj["images"] = self.images
         obj["teams"] = [t.asdict_file() for t in self.teams]
+        obj["eks-system-masters-roles"] = self.eks_system_masters_roles
         return obj
 
     def asdict(self) -> MANIFEST_TYPE:

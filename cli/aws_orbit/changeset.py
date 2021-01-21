@@ -33,6 +33,7 @@ CHANGESET_FILE_TEAMS_TYPE = Dict[str, Union[List["MANIFEST_FILE_TEAM_TYPE"], Lis
 CHANGESET_FILE_PLUGIN_TYPE = Dict[str, Union[str, List[str]]]
 CHANGESET_FILE_IMAGE_TYPE = Dict[str, Union[str, None]]
 CHANGESET_FILE_EXTERNAL_IDP_TYPE = Dict[str, Union[str, None]]
+CHANGESET_FILE_LIST_TYPE = Dict[str, List[Any]]
 CHANGESET_FILE_TYPE = Dict[
     str,
     Union[
@@ -40,6 +41,7 @@ CHANGESET_FILE_TYPE = Dict[
         List[CHANGESET_FILE_PLUGIN_TYPE],
         Optional[CHANGESET_FILE_EXTERNAL_IDP_TYPE],
         Optional[CHANGESET_FILE_TEAMS_TYPE],
+        Optional[CHANGESET_FILE_LIST_TYPE],
     ],
 ]
 
@@ -108,6 +110,15 @@ class ExternalIDPChangeset:
         return vars(self)
 
 
+class ListChangeset:
+    def __init__(self, removed_values: Optional[List[Any]] = None, added_values: Optional[List[Any]] = None) -> None:
+        self.removed_values: List[Any] = list(removed_values) if removed_values else []
+        self.added_values: List[Any] = list(added_values) if added_values else []
+
+    def asdict(self) -> CHANGESET_FILE_LIST_TYPE:
+        return vars(self)
+
+
 class Changeset:
     def __init__(
         self,
@@ -115,11 +126,13 @@ class Changeset:
         plugin_changesets: List[PluginChangeset],
         external_idp_changeset: Optional[ExternalIDPChangeset],
         teams_changeset: Optional[TeamsChangeset],
+        eks_system_masters_roles_changeset: Optional[ListChangeset],
     ) -> None:
         self.image_changesets: List[ImageChangeset] = image_changesets
         self.plugin_changesets: List[PluginChangeset] = plugin_changesets
         self.external_idp_changeset: Optional[ExternalIDPChangeset] = external_idp_changeset
         self.teams_changeset: Optional[TeamsChangeset] = teams_changeset
+        self.eks_system_masters_roles_changeset: Optional[ListChangeset] = eks_system_masters_roles_changeset
 
     def asdict(self) -> CHANGESET_FILE_TYPE:
         return {
@@ -129,6 +142,9 @@ class Changeset:
             if self.external_idp_changeset is None
             else self.external_idp_changeset.asdict(),
             "teams_changeset": None if self.teams_changeset is None else self.teams_changeset.asdict(),
+            "eks_system_masters_roles": None
+            if self.eks_system_masters_roles_changeset is None
+            else self.eks_system_masters_roles_changeset.asdict(),
         }
 
     def write_changeset_file(self, filename: str) -> None:
@@ -273,20 +289,54 @@ def _check_plugins(
     return plugin_changesets
 
 
+def _check_eks_system_masters_roles(manifest: "Manifest", ctx: "MessagesContext") -> Optional[ListChangeset]:
+    _logger.debug("Inpecting EKS system:masters Roles changes...")
+    if manifest.raw_ssm is None:
+        raise RuntimeError("Empty manifest.raw_ssm!")
+    old_roles = sorted(cast(List[str], manifest.raw_ssm.get("eks-system-masters-roles", [])))
+    new_roles: List[str] = manifest.eks_system_masters_roles
+
+    _logger.debug("Roles: %s -> %s", old_roles, new_roles)
+    removed_roles: List[str] = list(set(old_roles) - set(new_roles))
+    added_roles: List[str] = list(set(new_roles) - set(old_roles))
+    _logger.debug("removed_roles: %s", removed_roles)
+    _logger.debug("added_roles: %s", added_roles)
+    if removed_roles or added_roles:
+        list_changeset: Optional[ListChangeset] = ListChangeset(removed_values=removed_roles, added_values=added_roles)
+        ctx.info(f"Removed system:masters Roles: {list(removed_roles)}")
+        ctx.info(f"Added system:masters Roles: {list(added_roles)}")
+    else:
+        list_changeset = None
+    return list_changeset
+
+
 def extract_changeset(manifest: "Manifest", ctx: "MessagesContext") -> Changeset:
     if manifest.raw_ssm is None:
-        return Changeset(image_changesets=[], plugin_changesets=[], external_idp_changeset=None, teams_changeset=None)
+        # None for raw_ssm inidcates this is a new deployment of this environment
+        return Changeset(
+            image_changesets=[],
+            plugin_changesets=[],
+            external_idp_changeset=None,
+            teams_changeset=None,
+            eks_system_masters_roles_changeset=ListChangeset(
+                removed_values=None, added_values=manifest.eks_system_masters_roles
+            ),
+        )
     image_changesets: List[ImageChangeset] = _check_images(manifest=manifest, ctx=ctx)
     external_idp_changeset: Optional[ExternalIDPChangeset] = _check_external_idp(manifest=manifest, ctx=ctx)
     teams_changeset: Optional[TeamsChangeset] = _check_teams(manifest=manifest, ctx=ctx)
     plugin_changesets: List[PluginChangeset] = _check_plugins(
         manifest=manifest, ctx=ctx, teams_changeset=teams_changeset
     )
+    eks_system_masters_roles_changeset: Optional[ListChangeset] = _check_eks_system_masters_roles(
+        manifest=manifest, ctx=ctx
+    )
     return Changeset(
         image_changesets=image_changesets,
         plugin_changesets=plugin_changesets,
         external_idp_changeset=external_idp_changeset,
         teams_changeset=teams_changeset,
+        eks_system_masters_roles_changeset=eks_system_masters_roles_changeset,
     )
 
 
@@ -330,6 +380,20 @@ def read_changeset_file(manifest: "Manifest", filename: str) -> Changeset:
     else:
         teams_changeset = None
 
+    raw_eks_system_masters_roles_changeset: Optional[CHANGESET_FILE_LIST_TYPE] = cast(
+        Optional[CHANGESET_FILE_LIST_TYPE], raw.get("eks_system_masters_roles", None)
+    )
+    if raw_eks_system_masters_roles_changeset is None:
+        eks_system_masters_roles_changeset: ListChangeset = ListChangeset(
+            removed_values=[],
+            added_values=[],
+        )
+    else:
+        eks_system_masters_roles_changeset = ListChangeset(
+            removed_values=raw_eks_system_masters_roles_changeset["removed_values"],
+            added_values=raw_eks_system_masters_roles_changeset["added_values"],
+        )
+
     return Changeset(
         image_changesets=[
             ImageChangeset(team_name=cast(str, i["team_name"]), old_image=i["old_image"], new_image=i["new_image"])
@@ -348,4 +412,5 @@ def read_changeset_file(manifest: "Manifest", filename: str) -> Changeset:
         ],
         external_idp_changeset=external_idp_changeset,
         teams_changeset=teams_changeset,
+        eks_system_masters_roles_changeset=eks_system_masters_roles_changeset,
     )
