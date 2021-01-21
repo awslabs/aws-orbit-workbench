@@ -421,7 +421,7 @@ class Manifest:
             _logger.debug("Cognito External IdP data fetched successfully.")
 
     def fillup(self) -> None:
-        if self.fetch_ssm() is False and self.raw_ssm is not None:
+        if self.fetch_ssm() is False:
             self.fetch_toolkit_data()
             self.fetch_demo_data()
             self.fetch_network_data()
