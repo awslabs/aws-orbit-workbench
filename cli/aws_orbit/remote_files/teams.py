@@ -62,7 +62,7 @@ def _create_dockerfile(manifest: "Manifest", team_manifest: "TeamManifest") -> s
             if plugin_cmds is not None:
                 cmds += [f"# Commands for {plugin.plugin_id} plugin"] + plugin_cmds
     _logger.debug("cmds: %s", cmds)
-    outdir = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, team_manifest.name, "image")
+    outdir = os.path.join(".orbit.out", manifest.name, team_manifest.name, "image")
     output_filename = os.path.join(outdir, "Dockerfile")
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
@@ -108,11 +108,15 @@ def _deploy_team_bootstrap(manifest: "Manifest", team_manifest: "TeamManifest") 
 
 def deploy(manifest: "Manifest") -> None:
     for team_manifest in manifest.teams:
+        if hasattr(manifest, "filename"):
+            args = ["manifest", manifest.filename, team_manifest.name]
+        else:
+            args = ["env", manifest.name, team_manifest.name]
         cdk.deploy(
             manifest=manifest,
             stack_name=team_manifest.stack_name,
             app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
-            args=[manifest.filename, team_manifest.name],
+            args=args,
         )
         team_manifest.fetch_ssm()
     for team_manifest in manifest.teams:
@@ -140,11 +144,17 @@ def destroy(manifest: "Manifest", team_manifest: "TeamManifest") -> None:
         except Exception as ex:
             _logger.debug("Skipping Team ECR Repository deletion. Cause: %s", ex)
         if cfn.does_stack_exist(manifest=manifest, stack_name=team_manifest.stack_name):
+            args: List[str]
+            if hasattr(manifest, "filename"):
+                args = ["manifest", manifest.filename, team_manifest.name]
+            else:
+                args = ["env", manifest.name, team_manifest.name]
+
             cdk.destroy(
                 manifest=manifest,
                 stack_name=team_manifest.stack_name,
                 app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
-                args=[manifest.filename, team_manifest.name],
+                args=args,
             )
 
 

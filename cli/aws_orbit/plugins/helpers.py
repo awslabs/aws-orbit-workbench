@@ -43,20 +43,25 @@ def _deserialize_parameters(parameters: str) -> Dict[str, Any]:
 
 def cdk_handler(stack_class: Type["Stack"]) -> None:
     _logger.debug("sys.argv: %s", sys.argv)
-    if len(sys.argv) == 5:
+    if len(sys.argv) == 6:
         stack_name: str = sys.argv[1]
-        filename: str = sys.argv[2]
-        team_name: str = sys.argv[3]
-        parameters: Dict[str, Any] = _deserialize_parameters(parameters=sys.argv[4])
+        team_name: str = sys.argv[4]
+        parameters: Dict[str, Any] = _deserialize_parameters(parameters=sys.argv[5])
+        manifest: Manifest
+        if sys.argv[2] == "manifest":
+            filename = sys.argv[3]
+            manifest = Manifest(filename=filename, env=None, region=None)
+        elif sys.argv[2] == "env":
+            env = sys.argv[3]
+            manifest = Manifest(filename=None, env=env, region=None)
+        else:
+            raise ValueError(f"Unexpected argv[1] ({len(sys.argv)}) - {sys.argv}.")
     else:
-        raise ValueError("Unexpected number of values in sys.argv.")
+        raise ValueError(f"Unexpected number of values in sys.argv ({len(sys.argv)}) - {sys.argv}.")
 
-    manifest: Manifest = Manifest(filename=filename)
     manifest.fillup()
 
-    changes: changeset.Changeset = changeset.read_changeset_file(
-        manifest=manifest, filename=os.path.join(manifest.filename_dir, "changeset.json")
-    )
+    changes: changeset.Changeset = changeset.read_changeset_file(manifest=manifest, filename="changeset.json")
     if changes.teams_changeset and team_name in changes.teams_changeset.removed_teams_names:
         for team in changes.teams_changeset.old_teams:
             if team.name == team_name:
@@ -74,7 +79,6 @@ def cdk_handler(stack_class: Type["Stack"]) -> None:
             raise ValueError(f"Team {team_name} not found in the manifest.")
 
     outdir = os.path.join(
-        manifest.filename_dir,
         ".orbit.out",
         manifest.name,
         "cdk",
@@ -100,7 +104,17 @@ def cdk_deploy(
 ) -> None:
     if manifest.cdk_toolkit_stack_name is None:
         raise ValueError(f"manifest.cdk_toolkit_stack_name: {manifest.cdk_toolkit_stack_name}")
-    args: List[str] = [stack_name, manifest.filename, team_manifest.name, _serialize_parameters(parameters=parameters)]
+    args: List[str]
+    if hasattr(manifest, "filename"):
+        args = [
+            stack_name,
+            "manifest",
+            manifest.filename,
+            team_manifest.name,
+            _serialize_parameters(parameters=parameters),
+        ]
+    else:
+        args = [stack_name, "env", manifest.name, team_manifest.name, _serialize_parameters(parameters=parameters)]
     cmd: str = (
         "cdk deploy --require-approval never --progress events "
         f"--toolkit-stack-name {manifest.cdk_toolkit_stack_name} "
@@ -122,7 +136,18 @@ def cdk_destroy(
         return
     if manifest.cdk_toolkit_stack_name is None:
         raise ValueError(f"manifest.cdk_toolkit_stack_name: {manifest.cdk_toolkit_stack_name}")
-    args: List[str] = [stack_name, manifest.filename, team_manifest.name, _serialize_parameters(parameters=parameters)]
+    args: List[str]
+    if hasattr(manifest, "filename"):
+        args = [
+            stack_name,
+            "manifest",
+            manifest.filename,
+            team_manifest.name,
+            _serialize_parameters(parameters=parameters),
+        ]
+    else:
+        args = [stack_name, "env", manifest.name, team_manifest.name, _serialize_parameters(parameters=parameters)]
+
     cmd: str = (
         "cdk destroy --force "
         f"--toolkit-stack-name {manifest.cdk_toolkit_stack_name} "

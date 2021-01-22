@@ -24,11 +24,11 @@ from aws_orbit.services import cfn, codebuild
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def deploy_image(filename: str, dir: str, name: str, script: Optional[str], debug: bool) -> None:
+def build_image(env: str, dir: str, name: str, script: Optional[str], region: Optional[str], debug: bool) -> None:
     with MessagesContext("Deploying Docker Image", debug=debug) as ctx:
-        manifest = Manifest(filename=filename)
+        manifest = Manifest(filename=None, env=env, region=region)
         manifest.fillup()
-        ctx.info(f"Manifest loaded: {filename}")
+        ctx.info("Manifest loaded")
         if cfn.does_stack_exist(manifest=manifest, stack_name=f"orbit-{manifest.name}") is False:
             ctx.error("Please, deploy your environment before deploy any addicional docker image")
             return
@@ -54,7 +54,7 @@ def deploy_image(filename: str, dir: str, name: str, script: Optional[str], debu
         buildspec = codebuild.generate_spec(
             manifest=manifest,
             plugins=True,
-            cmds_build=[f"orbit remote --command deploy_image {name} {script_str}"],
+            cmds_build=[f"orbit remote --command build_image {env} {name} {script_str}"],
             changeset=changes,
         )
         remote.run(

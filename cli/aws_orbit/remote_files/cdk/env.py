@@ -386,17 +386,24 @@ class Env(Stack):
 
 def main() -> None:
     _logger.debug("sys.argv: %s", sys.argv)
-    if len(sys.argv) == 4:
-        filename: str = sys.argv[1]
-        add_images: List[str] = [] if sys.argv[2] == "null" else sys.argv[2].split(sep=",")
-        remove_images: List[str] = [] if sys.argv[3] == "null" else sys.argv[2].split(sep=",")
+    if len(sys.argv) == 5:
+        manifest: Manifest
+        if sys.argv[1] == "manifest":
+            filename = sys.argv[2]
+            manifest = Manifest(filename=filename, env=None, region=None)
+        elif sys.argv[1] == "env":
+            env = sys.argv[2]
+            manifest = Manifest(filename=None, env=env, region=None)
+        else:
+            raise ValueError(f"Unexpected argv[1] ({len(sys.argv)}) - {sys.argv}.")
+        add_images = [] if sys.argv[3] == "null" else sys.argv[3].split(sep=",")
+        remove_images = [] if sys.argv[4] == "null" else sys.argv[3].split(sep=",")
     else:
-        raise ValueError("Unexpected number of values in sys.argv.")
+        raise ValueError(f"Unexpected number of values in sys.argv ({len(sys.argv)}), {sys.argv}")
 
-    manifest: Manifest = Manifest(filename=filename)
     manifest.fillup()
 
-    outdir = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "cdk", manifest.env_stack_name)
+    outdir = os.path.join(".orbit.out", manifest.name, "cdk", manifest.env_stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
 

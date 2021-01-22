@@ -30,17 +30,18 @@ if TYPE_CHECKING:
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def _deploy_image(filename: str, args: Tuple[str, ...]) -> None:
-    manifest: Manifest = Manifest(filename=filename)
+def _deploy_image(args: Tuple[str, ...]) -> None:
+    _logger.debug("_deploy_image args: %s", args)
+    filename: str = args[0]
+    manifest: Manifest = Manifest(filename=filename, env=None, region=None)
     manifest.fetch_ssm()
     _logger.debug("manifest.name: %s", manifest.name)
-    _logger.debug("args: %s", args)
-    if len(args) == 1:
-        image_name: str = args[0]
+    if len(args) == 2:
+        image_name: str = args[1]
         script: Optional[str] = None
-    elif len(args) == 2:
-        image_name = args[0]
-        script = args[1]
+    elif len(args) == 3:
+        image_name = args[1]
+        script = args[2]
     else:
         raise ValueError("Unexpected number of values in args.")
 
@@ -115,7 +116,7 @@ def deploy_images_remotely(manifest: Manifest) -> None:
             buildspec = codebuild.generate_spec(
                 manifest=manifest,
                 plugins=False,
-                cmds_build=[f"orbit remote --command _deploy_image {name} {script_str}"],
+                cmds_build=[f"orbit remote --command _deploy_image ./conf/manifest.yaml {name} {script_str}"],
             )
             futures.append(executor.submit(deploy_image_remotely, manifest, name, bundle_path, buildspec))
 
@@ -135,22 +136,21 @@ def eval_teams_change(manifest: Manifest, teams_changeset: "TeamsChangeset") -> 
         _logger.debug("Team %s destroyed", name)
 
 
-def deploy(filename: str, args: Tuple[str, ...]) -> None:
+def deploy(args: Tuple[str, ...]) -> None:
     _logger.debug("args: %s", args)
-    if len(args) == 2:
-        skip_images_remote_flag: str = str(args[0])
-        env_only: bool = args[1] == "env-stacks"
+    filename: str = args[0]
+    if len(args) == 3:
+        skip_images_remote_flag: str = str(args[1])
+        env_only: bool = args[2] == "env-stacks"
     else:
         raise ValueError("Unexpected number of values in args")
 
-    manifest: Manifest = Manifest(filename=filename)
+    manifest: Manifest = Manifest(filename=filename, env=None, region=None)
     manifest.fillup()
     _logger.debug("Manifest loaded")
     docker.login(manifest=manifest)
     _logger.debug("DockerHub and ECR Logged in")
-    changes: changeset.Changeset = changeset.read_changeset_file(
-        manifest=manifest, filename=os.path.join(manifest.filename_dir, "changeset.json")
-    )
+    changes: changeset.Changeset = changeset.read_changeset_file(manifest=manifest, filename="changeset.json")
     _logger.debug(f"Changeset: {changes.asdict()}")
     _logger.debug("Changeset loaded")
     plugins.PLUGINS_REGISTRIES.load_plugins(

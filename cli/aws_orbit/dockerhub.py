@@ -13,6 +13,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 def get_credential(manifest: "Manifest") -> Tuple[str, str]:
     client_s3 = manifest.boto3_client(service_name="s3")
+    _logger.debug(f"TOOLKIT BUCKET: {manifest.toolkit_s3_bucket}")
     obj = client_s3.get_object(Bucket=manifest.toolkit_s3_bucket, Key="cli/dockerhub.json")
     obj_json: Dict[str, str] = json.loads(obj["Body"].read())
     return obj_json["username"], obj_json["password"]

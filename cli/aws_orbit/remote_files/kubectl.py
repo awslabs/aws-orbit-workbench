@@ -132,7 +132,7 @@ def _cleanup_output(output_path: str) -> None:
 
 
 def _generate_env_manifest(manifest: Manifest, clean_up: bool = True) -> str:
-    output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "apps")
+    output_path = os.path.join(".orbit.out", manifest.name, "kubectl", "apps")
     os.makedirs(output_path, exist_ok=True)
     if clean_up:
         _cleanup_output(output_path=output_path)
@@ -157,7 +157,7 @@ def _generate_env_manifest(manifest: Manifest, clean_up: bool = True) -> str:
 
 
 def _prepare_team_manifest_path(manifest: Manifest) -> str:
-    output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "apps")
+    output_path = os.path.join(".orbit.out", manifest.name, "kubectl", "apps")
     os.makedirs(output_path, exist_ok=True)
     _cleanup_output(output_path=output_path)
     if manifest.account_id is None:
@@ -233,7 +233,7 @@ def _efs_driver_overlays(output_path: str, manifest: Manifest) -> None:
 
 
 def _generate_efs_driver_manifest(manifest: Manifest) -> str:
-    output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "efs_driver")
+    output_path = os.path.join(".orbit.out", manifest.name, "kubectl", "efs_driver")
     os.makedirs(output_path, exist_ok=True)
     _cleanup_output(output_path=output_path)
     if manifest.account_id is None:

@@ -14,15 +14,17 @@
 
 import json
 import logging
+import os
 from typing import Optional, TextIO, Tuple
 
 import click
+from aws_orbit.commands.build import build_image
+from aws_orbit.commands.delete import delete_image
 from aws_orbit.commands.deploy import deploy
-from aws_orbit.commands.deploy_image import deploy_image
 from aws_orbit.commands.destroy import destroy
-from aws_orbit.commands.destroy_image import destroy_image
 from aws_orbit.commands.init import init
 from aws_orbit.commands.list import list_images
+from aws_orbit.utils import print_dir
 
 DEBUG_LOGGING_FORMAT = "[%(asctime)s][%(filename)-13s:%(lineno)3d] %(message)s"
 DEBUG_LOGGING_FORMAT_REMOTE = "[%(filename)-13s:%(lineno)3d] %(message)s"
@@ -156,12 +158,7 @@ def deploy_cli(
 
 
 @click.command(name="destroy")
-@click.option(
-    "--filename",
-    "-f",
-    type=str,
-    help="The target Orbit Workbench manifest file (yaml).",
-)
+@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
 @click.option(
     "--team-stacks", is_flag=True, default=False, help="Destroy Team Stacks only or All Stacks", show_default=True
 )
@@ -178,26 +175,24 @@ def deploy_cli(
     help="Enable detailed logging.",
     show_default=True,
 )
-def destroy_cli(filename: str, team_stacks: bool, keep_demo: bool, debug: bool) -> None:
+def destroy_cli(env: str, team_stacks: bool, keep_demo: bool, debug: bool) -> None:
     """Destroy a Orbit Workbench environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
-    filename = filename if filename[0] in (".", "/") else f"./{filename}"
-    _logger.debug("filename: %s", filename)
+    _logger.debug("env: %s", env)
     _logger.debug("teams only: %s", str(team_stacks))
     _logger.debug("keep demo: %s", str(keep_demo))
-    destroy(filename=filename, teams_only=team_stacks, keep_demo=keep_demo, debug=debug)
+    destroy(env=env, teams_only=team_stacks, keep_demo=keep_demo, debug=debug)
 
 
-@click.command(name="deploy-image")
-@click.option(
-    "--filename",
-    "-f",
-    type=str,
-    help="The target Orbit Workbench manifest file (yaml).",
-    show_default=False,
-    required=True,
-)
+@click.group(name="build")
+def build() -> None:
+    """Build images,profiles,etc in your Orbit Workbench."""
+    pass
+
+
+@build.command(name="image")
+@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
 @click.option("--dir", "-d", type=str, help="Dockerfile directory.", required=True)
 @click.option("--name", "-n", type=str, help="Image name.", required=True)
 @click.option(
@@ -209,33 +204,41 @@ def destroy_cli(filename: str, team_stacks: bool, keep_demo: bool, debug: bool) 
     required=False,
 )
 @click.option(
+    "--region",
+    "-r",
+    type=str,
+    default=None,
+    help="AWS Region name (e.g. us-east-1). If None, it will be infered.",
+    show_default=False,
+    required=False,
+)
+@click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
     show_default=True,
 )
-def deploy_image_cli(filename: str, dir: str, name: str, script: Optional[str], debug: bool) -> None:
+def deploy_image_cli(env: str, dir: str, name: str, script: Optional[str], region: Optional[str], debug: bool) -> None:
     """Build and Deploy a new Docker image into ECR."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
-    filename = filename if filename[0] in (".", "/") else f"./{filename}"
-    _logger.debug("filename: %s", filename)
+    _logger.debug("env: %s", env)
     _logger.debug("dir: %s", dir)
     _logger.debug("name: %s", name)
     _logger.debug("script: %s", script)
+    _logger.debug("region: %s", region)
     _logger.debug("debug: %s", debug)
-    deploy_image(dir=dir, name=name, filename=filename, script=script, debug=debug)
+    build_image(dir=dir, name=name, env=env, script=script, region=region, debug=debug)
 
 
-@click.command(name="destroy-image")
-@click.option(
-    "--filename",
-    "-f",
-    type=str,
-    help="The target Orbit Workbench manifest file (yaml).",
-    show_default=False,
-    required=True,
-)
+@click.group(name="delete")
+def delete() -> None:
+    """Delete images,profiles,etc in your Orbit Workbench."""
+    pass
+
+
+@delete.command(name="image")
+@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
 @click.option("--name", "-n", type=str, help="Image name.", required=True)
 @click.option(
     "--debug/--no-debug",
@@ -243,25 +246,32 @@ def deploy_image_cli(filename: str, dir: str, name: str, script: Optional[str], 
     help="Enable detailed logging.",
     show_default=True,
 )
-def destroy_image_cli(filename: str, name: str, debug: bool) -> None:
+def delete_image_cli(env: str, name: str, debug: bool) -> None:
     """Destroy a Docker image from ECR."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
-    filename = filename if filename[0] in (".", "/") else f"./{filename}"
-    _logger.debug("filename: %s", filename)
+    _logger.debug("env: %s", env)
     _logger.debug("name: %s", name)
     _logger.debug("debug: %s", debug)
-    destroy_image(name=name, filename=filename, debug=debug)
+    delete_image(name=name, env=env, debug=debug)
 
 
-@click.command(name="list-images")
+@click.group(name="list")
+def list() -> None:
+    """List images,profiles,etc in your Orbit Workbench."""
+    pass
+
+
+@list.command(name="image")
+@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
 @click.option(
-    "--filename",
-    "-f",
+    "--region",
+    "-r",
     type=str,
-    help="The target Orbit Workbench manifest file (yaml).",
+    default=None,
+    help="AWS Region name (e.g. us-east-1). If None, it will be infered.",
     show_default=False,
-    required=True,
+    required=False,
 )
 @click.option(
     "--debug/--no-debug",
@@ -269,35 +279,25 @@ def destroy_image_cli(filename: str, name: str, debug: bool) -> None:
     help="Enable detailed logging.",
     show_default=True,
 )
-def list_images_cli(filename: str, debug: bool) -> None:
+def list_images_cli(env: str, region: Optional[str], debug: bool) -> None:
     """List all Docker images available into the target environment."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
-    filename = filename if filename[0] in (".", "/") else f"./{filename}"
-    _logger.debug("filename: %s", filename)
-    list_images(filename=filename)
+    list_images(env=env, region=region)
 
 
 @click.command(name="remote", hidden=True)
-@click.option(
-    "--filename",
-    "-f",
-    default="./conf/manifest.yaml",
-    type=str,
-)
 @click.option("--command", "-c", type=str, required=True)
 @click.argument("args", nargs=-1)
-def remote_cli(filename: str, command: str, args: Tuple[str]) -> None:
+def remote_cli(command: str, args: Tuple[str]) -> None:
     """Run command remotely on CodeBuild"""
     enable_debug(format=DEBUG_LOGGING_FORMAT_REMOTE)
-    filename = filename if filename[0] in (".", "/") else f"./{filename}"
-    _logger.debug("filename: %s", filename)
-    _logger.debug("command: %s", command)
-    _logger.debug("args: %s", args)
     from aws_orbit.remote_files import REMOTE_FUNC_TYPE, RemoteCommands
 
+    _logger.debug("Remote bundle structure:")
+    print_dir(os.getcwd(), exclude=["__pycache__", "cdk"])
     remote_func: REMOTE_FUNC_TYPE = getattr(RemoteCommands, command)
-    remote_func(filename, args)
+    remote_func(args)
 
 
 @click.group(name="run")
@@ -453,9 +453,9 @@ def main() -> int:
     cli.add_command(deploy_cli)
     cli.add_command(destroy_cli)
     cli.add_command(remote_cli)
-    cli.add_command(deploy_image_cli)
-    cli.add_command(destroy_image_cli)
-    cli.add_command(list_images_cli)
     cli.add_command(run_container)
+    cli.add_command(build)
+    cli.add_command(delete)
+    cli.add_command(list)
     cli()
     return 0

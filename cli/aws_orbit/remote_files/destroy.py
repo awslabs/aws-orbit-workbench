@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 import logging
-import os
 from typing import Tuple
 
 from aws_orbit import changeset, plugins
@@ -24,12 +23,13 @@ from aws_orbit.services import ecr
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def destroy_image(filename: str, args: Tuple[str, ...]) -> None:
-    manifest: Manifest = Manifest(filename=filename)
-    _logger.debug("manifest.name %s", manifest.name)
+def delete_image(args: Tuple[str, ...]) -> None:
     _logger.debug("args %s", args)
-    if len(args) == 1:
-        image_name: str = args[0]
+    env_name: str = args[0]
+    manifest: Manifest = Manifest(filename=None, env=env_name, region=None)
+
+    if len(args) == 2:
+        image_name: str = args[1]
     else:
         raise ValueError("Unexpected number of values in args.")
 
@@ -39,21 +39,21 @@ def destroy_image(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug("Docker Image Destroyed from ECR")
 
 
-def destroy(filename: str, args: Tuple[str, ...]) -> None:
-    manifest: Manifest = Manifest(filename=filename)
-    _logger.debug("manifest.name %s", manifest.name)
+def destroy(args: Tuple[str, ...]) -> None:
     _logger.debug("args %s", args)
-    if len(args) == 1:
-        teams_only: bool = args[0] == "teams-stacks"
-        keep_demo: bool = args[0] == "keep-demo"
+    env_name: str = args[0]
+    manifest: Manifest = Manifest(filename=None, env=env_name, region=None)
+    _logger.debug("manifest.name %s", manifest.name)
+
+    if len(args) == 2:
+        teams_only: bool = args[1] == "teams-stacks"
+        keep_demo: bool = args[1] == "keep-demo"
     else:
         raise ValueError("Unexpected number of values in args.")
 
     manifest.fillup()
     _logger.debug("Manifest loaded")
-    changes: changeset.Changeset = changeset.read_changeset_file(
-        manifest=manifest, filename=os.path.join(manifest.filename_dir, "changeset.json")
-    )
+    changes: changeset.Changeset = changeset.read_changeset_file(manifest=manifest, filename="changeset.json")
     _logger.debug(f"Changeset: {changes.asdict()}")
     _logger.debug("Changeset loaded")
     plugins.PLUGINS_REGISTRIES.load_plugins(
