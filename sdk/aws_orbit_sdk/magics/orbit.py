@@ -6,14 +6,8 @@ from typing import Any, Dict, List, Optional, Union
 import IPython.core.display
 import qgrid
 from IPython import get_ipython
-from IPython.core.magic import (
-    Magics,
-    cell_magic,
-    line_cell_magic,
-    line_magic,
-    magics_class,
-    needs_local_scope,
-)
+from IPython.core.magic import Magics, cell_magic, line_cell_magic, line_magic, magics_class, needs_local_scope
+
 from aws_orbit_sdk.controller import controller
 from aws_orbit_sdk.json import display_json, run_schema_induction_args
 
@@ -73,9 +67,7 @@ class OrbitWorkbenchMagics(Magics):
 
     @needs_local_scope
     @line_magic
-    def display_grid(
-        self, line: str, local_ns: Optional[Dict[str, str]] = None
-    ) -> qgrid.QGridWidget:
+    def display_grid(self, line: str, local_ns: Optional[Dict[str, str]] = None) -> qgrid.QGridWidget:
         """
         Renders a DataFrame or Series as an interactive qgrid, represented by an instance of the QgridWidget class.
 
@@ -113,9 +105,7 @@ class OrbitWorkbenchMagics(Magics):
 
     @needs_local_scope
     @line_magic
-    def display_tree(
-        self, line: str, local_ns: Optional[Dict[str, str]] = None
-    ) -> IPython.core.display.JSON:
+    def display_tree(self, line: str, local_ns: Optional[Dict[str, str]] = None) -> IPython.core.display.JSON:
         """
 
         Parameters
@@ -145,9 +135,7 @@ class OrbitWorkbenchMagics(Magics):
         ip._showtraceback = exception_handler
 
     @cell_magic
-    def schedule_notebook(
-        self, line: str, cell: str, local_ns: Optional[Dict[str, str]] = None
-    ) -> str:
+    def schedule_notebook(self, line: str, cell: str, local_ns: Optional[Dict[str, str]] = None) -> str:
         """
         Schedule a notebook execution.
 
@@ -214,12 +202,8 @@ class OrbitWorkbenchMagics(Magics):
             print("must provide -cron and -id parameters")
             return
 
-        parser = ArgumentParserNoSysExit(
-            description="schedule a task to be executed on container"
-        )
-        parser.add_argument(
-            "-cron", required=True, nargs="+", help="specify cron-based schedule"
-        )
+        parser = ArgumentParserNoSysExit(description="schedule a task to be executed on container")
+        parser.add_argument("-cron", required=True, nargs="+", help="specify cron-based schedule")
 
         parser.add_argument(
             "-id",
@@ -240,9 +224,7 @@ class OrbitWorkbenchMagics(Magics):
             print(str(e))
 
     @cell_magic
-    def run_notebook(
-        self, line: Optional[str], cell: str, local_ns: Optional[Dict[str, str]] = None
-    ) -> List[str]:
+    def run_notebook(self, line: Optional[str], cell: str, local_ns: Optional[Dict[str, str]] = None) -> List[str]:
         """
         Run a notebook execution.
 
@@ -316,9 +298,7 @@ class OrbitWorkbenchMagics(Magics):
             print(str(e))
 
     @cell_magic
-    def run_python(
-        self, line: Optional[str], cell: str, local_ns: Optional[Dict[str, str]] = None
-    ) -> List[str]:
+    def run_python(self, line: Optional[str], cell: str, local_ns: Optional[Dict[str, str]] = None) -> List[str]:
         """
         Run some python code.
 

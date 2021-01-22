@@ -46,12 +46,13 @@ SPAWNER
 
 c.JupyterHub.spawner_class = "kubespawner.KubeSpawner"
 c.Spawner.default_url = "/lab"
+c.Spawner.cmd = ["jupyterhub-singleuser"]
 c.KubeSpawner.start_timeout = 360
 c.KubeSpawner.common_labels = {}
 c.KubeSpawner.namespace = TEAM
 c.KubeSpawner.environment = {
     "USERNAME": lambda spawner: str(spawner.user.name),
-    "JUPYTER_ENABLE_LAB": "true",
+    "JUPYTER_ENABLE_LAB": "yes",
     "ORBIT_TEAM_SPACE": TEAM,
     "AWS_ORBIT_ENV": ENV_NAME,
     "AWS_DEFAULT_REGION": REGION,
@@ -74,7 +75,7 @@ c.KubeSpawner.volumes = [
     {"name": "ebs-volume", "persistentVolumeClaim": {"claimName": pvc_name_template}},
 ]
 c.KubeSpawner.volume_mounts = [{"mountPath": "/efs", "name": "efs-volume"}, {"mountPath": "/ebs", "name": "ebs-volume"}]
-# This will allow Juvyan to write to the ebs volume
+# This will allow Jovyan to write to the ebs volume
 c.KubeSpawner.init_containers = [
     {
         "name": "take-ebs-dir-ownership",
