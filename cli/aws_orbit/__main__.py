@@ -18,7 +18,7 @@ import os
 from typing import Optional, TextIO, Tuple
 
 import click
-from aws_orbit.commands.build import build_image
+from aws_orbit.commands.build import build_image, build_profile
 from aws_orbit.commands.delete import delete_image
 from aws_orbit.commands.deploy import deploy
 from aws_orbit.commands.destroy import destroy
@@ -229,6 +229,28 @@ def deploy_image_cli(env: str, dir: str, name: str, script: Optional[str], regio
     _logger.debug("region: %s", region)
     _logger.debug("debug: %s", debug)
     build_image(dir=dir, name=name, env=env, script=script, region=region, debug=debug)
+
+
+@build.command(name="profile")
+@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
+@click.option("--team", "-t", type=str, help="Orbit Team.", required=True)
+@click.argument("profile", type=click.File("r"))
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def add_profile_cli(env: str, team: str, debug: bool, profile: TextIO) -> None:
+    """Build and Deploy a new Docker image into ECR."""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    _logger.debug("env: %s", env)
+    _logger.debug("team: %s", team)
+    profile_str = profile.read()
+    _logger.debug("profile: %s", profile_str)
+    _logger.debug("debug: %s", debug)
+    build_profile(env=env, team=team, profile=profile_str, debug=debug)
 
 
 @click.group(name="delete")
