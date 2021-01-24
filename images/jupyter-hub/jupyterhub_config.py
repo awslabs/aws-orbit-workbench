@@ -18,6 +18,7 @@ import json
 import os
 import sys
 from typing import Any, Dict, List, cast
+
 import boto3
 from tornado.log import app_log
 
@@ -146,9 +147,10 @@ def per_user_profiles(spawner):
     ssm_parameter_name: str = f"/orbit/{env}/teams/{team}/user/profiles"
     json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
 
-    user_profiles: PROFILES_TYPE  = cast(PROFILES_TYPE, json.loads(json_str))
+    user_profiles: PROFILES_TYPE = cast(PROFILES_TYPE, json.loads(json_str))
     default_profiles.extend(user_profiles)
     return default_profiles
+
 
 c.KubeSpawner.profile_list = per_user_profiles
 
