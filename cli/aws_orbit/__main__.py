@@ -18,10 +18,10 @@ import os
 from typing import Optional, TextIO, Tuple
 
 import click
-from aws_orbit.commands.build import build_image, build_profile
 from aws_orbit.commands.delete import delete_image
 from aws_orbit.commands.deploy import deploy
 from aws_orbit.commands.destroy import destroy
+from aws_orbit.commands.image import build_image, build_profile, delete_profile, list_profiles
 from aws_orbit.commands.init import init
 from aws_orbit.commands.list import list_images
 from aws_orbit.utils import print_dir
@@ -259,6 +259,27 @@ def delete() -> None:
     pass
 
 
+@delete.command(name="profile")
+@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
+@click.option("--team", "-t", type=str, help="Orbit Team.", required=True)
+@click.option("--profile", "-p", type=str, help="Profile name to delete", required=True)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def delete_profile_cli(env: str, team: str, profile: str, debug: bool) -> None:
+    """Build and Deploy a new Docker image into ECR."""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    _logger.debug("env: %s", env)
+    _logger.debug("team: %s", team)
+    _logger.debug("profile: %s", profile)
+    _logger.debug("debug: %s", debug)
+    delete_profile(env=env, team=team, profile_name=profile, debug=debug)
+
+
 @delete.command(name="image")
 @click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
 @click.option("--name", "-n", type=str, help="Image name.", required=True)
@@ -282,6 +303,25 @@ def delete_image_cli(env: str, name: str, debug: bool) -> None:
 def list() -> None:
     """List images,profiles,etc in your Orbit Workbench."""
     pass
+
+
+@list.command(name="profile")
+@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
+@click.option("--team", "-t", type=str, help="Orbit Team.", required=True)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def list_profiles_cli(env: str, team: str, debug: bool) -> None:
+    """Build and Deploy a new Docker image into ECR."""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    _logger.debug("env: %s", env)
+    _logger.debug("team: %s", team)
+    _logger.debug("debug: %s", debug)
+    list_profiles(env=env, team=team, debug=debug)
 
 
 @list.command(name="image")

@@ -14,35 +14,34 @@
 
 import json
 import logging
-from typing import Any, Dict, List, Optional, cast,TextIO
+from typing import Any, Dict, List, Optional, cast
 
-from aws_orbit import bundle, plugins, remote
+from aws_orbit import bundle, plugins, remote, utils
 from aws_orbit.changeset import Changeset, extract_changeset
 from aws_orbit.manifest import Manifest
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.services import cfn, codebuild
-from aws_orbit.utils import resolve_parameters
 
 _logger: logging.Logger = logging.getLogger(__name__)
 PROFILES_TYPE = List[Dict[str, Any]]
 
 
-def read_user_profiles_ssm(manifest: "Manifest", team_name: str) -> PROFILES_TYPE:
-    ssm_profile_name = f"/orbit/{manifest.name}/teams/{team_name}/user/profiles"
-    _logger.debug("Trying to read manifest from SSM parameter (%s).", ssm_profile_name)
-    client = manifest.boto3_client(service_name="ssm")
+def read_user_profiles_ssm(env_name: str, team_name: str) -> PROFILES_TYPE:
+    ssm_profile_name = f"/orbit/{env_name}/teams/{team_name}/user/profiles"
+    _logger.debug("Trying to read profiles from SSM parameter (%s).", ssm_profile_name)
+    client = utils.boto3_client(service_name="ssm")
     json_str: str = client.get_parameter(Name=ssm_profile_name)["Parameter"]["Value"]
     return cast(PROFILES_TYPE, json.loads(json_str))
 
 
-def write_manifest_ssm(profiles: PROFILES_TYPE, manifest: "Manifest", team_name: str) -> None:
-    ssm_profile_name = f"/orbit/{manifest.name}/teams/{team_name}/user/profiles"
-    client = manifest.boto3_client(service_name="ssm")
+def write_manifest_ssm(profiles: PROFILES_TYPE, env_name: str, team_name: str) -> None:
+    ssm_profile_name = f"/orbit/{env_name}/teams/{team_name}/user/profiles"
+    client = utils.boto3_client(service_name="ssm")
     _logger.debug("Writing team %s user profiles to SSM parameter.", team_name)
     json_str = str(json.dumps(obj=profiles, sort_keys=True))
     # resolve any parameters inside team manifest per context
-    json_str = resolve_parameters(
-        json_str, dict(region=manifest.region, account=manifest.account_id, env=manifest.name)
+    json_str = utils.resolve_parameters(
+        json_str, dict(region=utils.get_region(), account=utils.get_account_id(), env=env_name, team=team_name)
     )
     client.put_parameter(
         Name=ssm_profile_name,
@@ -52,12 +51,34 @@ def write_manifest_ssm(profiles: PROFILES_TYPE, manifest: "Manifest", team_name:
     )
 
 
-def build_profile(env: str, team: str, profile: TextIO, debug: bool) -> None:
+def delete_profile(env: str, team: str, profile_name: str, debug: bool) -> None:
+    with MessagesContext("Profile Deleted", debug=debug) as ctx:
+        ctx.info("Retrieving existing profiles")
+        profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
+        _logger.debug("Existing user profiles for team %s: %s", team, profiles)
+        for p in profiles:
+            if p["display_name"] == profile_name:
+                _logger.info("Profile exists, deleting...")
+                profiles.remove(p)
+                _logger.debug("Updated user profiles for team %s: %s", team, profiles)
+                write_manifest_ssm(profiles, env, team)
+                ctx.tip("Profile deleted")
+                ctx.progress(100)
+                return
+        raise Exception(f"Profile {profile_name} not found")
+
+
+def list_profiles(env: str, team: str, debug: bool) -> None:
+    profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
+    _logger.debug("Existing user profiles for team %s: %s", team, profiles)
+
+    print(json.dumps(profiles, indent=4, sort_keys=True))
+
+
+def build_profile(env: str, team: str, profile: str, debug: bool) -> None:
     with MessagesContext("Adding profile", debug=debug) as ctx:
         ctx.info("Retrieving existing profiles")
-        manifest = Manifest(filename=None, env=env, region=None)
-        manifest.fillup()
-        profiles: List[Dict[str, Any]] = read_user_profiles_ssm(manifest, team)
+        profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
         _logger.debug("Existing user profiles for team %s: %s", team, profiles)
         profile_json = cast(Dict[str, Any], json.loads(profile))
         if "display_name" not in profile_json:
@@ -74,7 +95,9 @@ def build_profile(env: str, team: str, profile: TextIO, debug: bool) -> None:
 
         profiles.append(profile_json)
         _logger.debug("Updated user profiles for team %s: %s", team, profiles)
-        write_manifest_ssm(profiles, manifest, team)
+        write_manifest_ssm(profiles, env, team)
+        ctx.tip("Profile added")
+        ctx.progress(100)
 
 
 def build_image(env: str, dir: str, name: str, script: Optional[str], region: Optional[str], debug: bool) -> None:
@@ -82,6 +105,7 @@ def build_image(env: str, dir: str, name: str, script: Optional[str], region: Op
         manifest = Manifest(filename=None, env=env, region=region)
         manifest.fillup()
         ctx.info("Manifest loaded")
+
         if cfn.does_stack_exist(manifest=manifest, stack_name=f"orbit-{manifest.name}") is False:
             ctx.error("Please, deploy your environment before deploy any addicional docker image")
             return
