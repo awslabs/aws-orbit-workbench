@@ -121,6 +121,7 @@ class StateMachineBuilder:
                         sfn_tasks.TaskEnvironmentVariable(name="ORBIT_TEAM_SPACE", value=team_manifest.name),
                         sfn_tasks.TaskEnvironmentVariable(name="AWS_ORBIT_ENV", value=manifest.name),
                         sfn_tasks.TaskEnvironmentVariable(name="AWS_ORBIT_S3_BUCKET", value=scratch_bucket.bucket_name),
+                        sfn_tasks.TaskEnvironmentVariable(name="AWS_STS_REGIONAL_ENDPOINTS", value="regional"),
                         sfn_tasks.TaskEnvironmentVariable(
                             name="JUPYTERHUB_USER", value=sfn.JsonPath.string_at("$.JupyterHubUser")
                         ),
@@ -216,15 +217,14 @@ class StateMachineBuilder:
                 },
             },
         }
-
+        job["spec"]["template"]["spec"]["serviceAccountName"] = team_manifest.name
+        job["spec"]["template"]["spec"]["securityContext"] = {"fsGroup": 1000}
         if node_type == "ec2":
             job["spec"]["template"]["spec"]["nodeSelector"] = {
                 "team": team_manifest.name,
                 "orbit/compute-type": "ec2",
             }
         elif node_type == "fargate":
-            job["spec"]["template"]["spec"]["serviceAccountName"] = team_manifest.name
-            job["spec"]["template"]["spec"]["securityContext"] = {"fsGroup": 1000}
             job["spec"]["template"]["metadata"]["labels"]["orbit/compute-type"] = "fargate"
 
         run_job = EksRunJob(

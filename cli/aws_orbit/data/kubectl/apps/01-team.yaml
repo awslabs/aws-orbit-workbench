@@ -54,6 +54,8 @@ metadata:
     app: orbit-jupyterhub
   name: jupyterhub
   namespace: ${team}
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::${account_id}:role/orbit-${env_name}-${team}-role
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -212,7 +214,7 @@ spec:
               memory: "3G"
       nodeSelector:
         team: ${team}
-      serviceAccountName: jupyterhub
+      serviceAccountName: ${team}
       volumes:
         - name: efs-volume
           persistentVolumeClaim:

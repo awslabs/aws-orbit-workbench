@@ -38,7 +38,7 @@ MANIFEST: Dict[str, Any] = {
 }
 
 
-def create_nodegroup_structure(team: "TeamManifest", env_name: str) -> Dict[str, Any]:
+def create_nodegroup_structure(manifest: "Manifest", team: "TeamManifest", env_name: str) -> Dict[str, Any]:
     if team.eks_nodegroup_role_arn is None:
         _logger.debug(f"ValueError: team.eks_nodegroup_role_arn: {team.eks_nodegroup_role_arn}")
         return {"name": team.name}
@@ -53,9 +53,8 @@ def create_nodegroup_structure(team: "TeamManifest", env_name: str) -> Dict[str,
         "ssh": {"allow": False},
         "labels": {"team": team.name, "orbit/compute-type": "ec2"},
         "tags": {"Env": f"orbit-{env_name}", "TeamSpace": team.name},
-        "iam": {"instanceRoleARN": team.eks_nodegroup_role_arn},
+        "iam": {"instanceRoleARN": manifest.eks_env_nodegroup_role_arn},
     }
-
 
 def generate_manifest(manifest: Manifest, name: str, output_teams: bool = True) -> str:
 
@@ -79,7 +78,7 @@ def generate_manifest(manifest: Manifest, name: str, output_teams: bool = True) 
     # Fill nodegroups configs
     if manifest.teams and output_teams:
         for team in manifest.teams:
-            MANIFEST["managedNodeGroups"].append(create_nodegroup_structure(team=team, env_name=manifest.name))
+            MANIFEST["managedNodeGroups"].append(create_nodegroup_structure(manifest=manifest, team=team, env_name=manifest.name))
 
     # Env
     MANIFEST["managedNodeGroups"].append(
