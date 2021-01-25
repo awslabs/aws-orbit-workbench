@@ -54,6 +54,7 @@ def create_nodegroup_structure(team: "TeamManifest", env_name: str) -> Dict[str,
         "labels": {"team": team.name, "orbit/compute-type": "ec2"},
         "tags": {"Env": f"orbit-{env_name}", "TeamSpace": team.name},
         "iam": {"instanceRoleARN": team.eks_nodegroup_role_arn},
+        "securityGroups": {"attachIDs": [team.team_security_group_id]},
     }
 
 
