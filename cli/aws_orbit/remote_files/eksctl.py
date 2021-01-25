@@ -55,8 +55,9 @@ def create_nodegroup_structure(manifest: "Manifest", team: "TeamManifest", env_n
         "labels": {"team": team.name, "orbit/compute-type": "ec2"},
         "tags": {"Env": f"orbit-{env_name}", "TeamSpace": team.name},
         "iam": {"instanceRoleARN": manifest.eks_env_nodegroup_role_arn},
-        "securityGroups": {"attachIDs": [team.team_security_group_id]}
+        "securityGroups": {"attachIDs": [team.team_security_group_id]},
     }
+
 
 def generate_manifest(manifest: Manifest, name: str, output_teams: bool = True) -> str:
 
@@ -80,7 +81,9 @@ def generate_manifest(manifest: Manifest, name: str, output_teams: bool = True) 
     # Fill nodegroups configs
     if manifest.teams and output_teams:
         for team in manifest.teams:
-            MANIFEST["managedNodeGroups"].append(create_nodegroup_structure(manifest=manifest, team=team, env_name=manifest.name))
+            MANIFEST["managedNodeGroups"].append(
+                create_nodegroup_structure(manifest=manifest, team=team, env_name=manifest.name)
+            )
 
     # Env
     MANIFEST["managedNodeGroups"].append(
