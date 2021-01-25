@@ -112,7 +112,7 @@ def generate_manifest(manifest: Manifest, name: str, output_teams: bool = True) 
     MANIFEST["cloudWatch"] = {"clusterLogging": {"enableTypes": ["*"]}}
 
     _logger.debug("eksctl manifest:\n%s", pprint.pformat(MANIFEST))
-    output_filename = f"{manifest.filename_dir}/.orbit.out/{manifest.name}/eksctl/cluster.yaml"
+    output_filename = f".orbit.out/{manifest.name}/eksctl/cluster.yaml"
     os.makedirs(os.path.dirname(output_filename), exist_ok=True)
     with open(output_filename, "w") as file:
         yaml.dump(MANIFEST, file, sort_keys=False)

@@ -97,6 +97,12 @@ class Team(Stack):
             repository_name=f"orbit-{self.manifest.name}-{self.team_manifest.name}",
         )
 
+        self.ecr_repo_spark: ecr.Repository = ecr.Repository(
+            scope=self,
+            id="repo-spark",
+            repository_name=f"orbit-{self.manifest.name}-{self.team_manifest.name}-spark",
+        )
+
         self.policies: List[str] = self.team_manifest.policies
 
         self.scratch_bucket: s3.Bucket = S3Builder.build_scratch_bucket(
@@ -137,6 +143,9 @@ class Team(Stack):
             scope=self, manifest=manifest, team_manifest=team_manifest, vpc=self.i_vpc
         )
         self.ecr_image = EcsBuilder.build_ecr_image(scope=self, manifest=manifest, team_manifest=team_manifest)
+        self.ecr_image_spark = EcsBuilder.build_ecr_image_spark(
+            scope=self, manifest=manifest, team_manifest=team_manifest
+        )
         self.ecs_execution_role = IamBuilder.build_ecs_role(scope=self)
         self.ecs_task_definition = EcsBuilder.build_task_definition(
             scope=self,
@@ -211,22 +220,38 @@ class Team(Stack):
             simple_name=False,
             tier=ssm.ParameterTier.INTELLIGENT_TIERING,
         )
+        ssm_profile_name = f"/orbit/{self.manifest.name}/teams/{self.team_manifest.name}/user/profiles"
+        self.user_profiles: ssm.StringParameter = ssm.StringParameter(
+            scope=self,
+            id=ssm_profile_name,
+            string_value="[]",
+            type=ssm.ParameterType.STRING,
+            description="Team additional profiles created by the team users",
+            parameter_name=ssm_profile_name,
+            simple_name=False,
+            tier=ssm.ParameterTier.INTELLIGENT_TIERING,
+        )
 
 
 def main() -> None:
     _logger.debug("sys.argv: %s", sys.argv)
-    if len(sys.argv) == 3:
-        filename: str = sys.argv[1]
-        team_name: str = sys.argv[2]
+    if len(sys.argv) == 4:
+        manifest: Manifest
+        if sys.argv[1] == "manifest":
+            filename: str = sys.argv[2]
+            manifest = Manifest(filename=filename, env=None, region=None)
+        elif sys.argv[1] == "env":
+            env: str = sys.argv[2]
+            manifest = Manifest(filename=None, env=env, region=None)
+        else:
+            raise ValueError(f"Unexpected argv[1] ({len(sys.argv)}) - {sys.argv}.")
+        team_name: str = sys.argv[3]
     else:
         raise ValueError("Unexpected number of values in sys.argv.")
 
-    manifest: Manifest = Manifest(filename=filename)
     manifest.fillup()
 
-    changes: changeset.Changeset = changeset.read_changeset_file(
-        manifest=manifest, filename=os.path.join(manifest.filename_dir, "changeset.json")
-    )
+    changes: changeset.Changeset = changeset.read_changeset_file(manifest=manifest, filename="changeset.json")
     if changes.teams_changeset and team_name in changes.teams_changeset.removed_teams_names:
         for team in changes.teams_changeset.old_teams:
             if team.name == team_name:
@@ -242,7 +267,7 @@ def main() -> None:
         else:
             raise ValueError(f"Team {team_name} not found in the manifest.")
 
-    outdir = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "cdk", team_manifest.stack_name)
+    outdir = os.path.join(".orbit.out", manifest.name, "cdk", team_manifest.stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
 

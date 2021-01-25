@@ -28,7 +28,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 def _list_self_files() -> List[str]:
     path = os.path.join(ORBIT_CLI_ROOT, "**")
-    extensions = (".py", ".yaml", ".typed", ".json")
+    extensions = (".py", ".yaml", ".typed", ".json", ".txt")
     return [f for f in glob.iglob(path, recursive=True) if os.path.isfile(f) and f.endswith(extensions)]
 
 
@@ -95,7 +95,7 @@ def generate_bundle(
     changeset: Optional[Changeset] = None,
     plugins: bool = True,
 ) -> str:
-    conf_dir = os.path.dirname(os.path.abspath(manifest.filename))
+    conf_dir = os.path.dirname(os.path.abspath(manifest.filename)) if hasattr(manifest, "filename") else os.getcwd()
     remote_dir = os.path.join(os.path.dirname(conf_dir), ".orbit.out", manifest.name, "remote", command_name)
     bundle_dir = os.path.join(remote_dir, "bundle")
     try:
@@ -103,19 +103,20 @@ def generate_bundle(
     except FileNotFoundError:
         pass
 
-    # manifest
-    bundled_manifest_path = os.path.join(bundle_dir, "conf", "manifest.yaml")
-    bundled_manifest_path_conf = os.path.join(bundle_dir, "conf")
     os.makedirs(bundle_dir, exist_ok=True)
 
-    _logger.debug(f"copy conf_dir={conf_dir} to {bundled_manifest_path_conf}")
-    shutil.copytree(src=conf_dir, dst=bundled_manifest_path_conf)
-    _logger.debug(f"copy manifest file={manifest.filename} to {bundled_manifest_path}")
-    shutil.copy(src=manifest.filename, dst=bundled_manifest_path)
+    # manifest
+    if hasattr(manifest, "filename"):
+        bundled_manifest_path = os.path.join(bundle_dir, "conf", "manifest.yaml")
+        bundled_manifest_path_conf = os.path.join(bundle_dir, "conf")
+        _logger.debug(f"copy conf_dir={conf_dir} to {bundled_manifest_path_conf}")
+        shutil.copytree(src=conf_dir, dst=bundled_manifest_path_conf)
+        _logger.debug(f"copy manifest file={manifest.filename} to {bundled_manifest_path}")
+        shutil.copy(src=manifest.filename, dst=bundled_manifest_path)
 
     # changeset
     if changeset is not None:
-        bundled_changeset_path = os.path.join(bundle_dir, "conf", "changeset.json")
+        bundled_changeset_path = os.path.join(bundle_dir, "changeset.json")
         changeset.write_changeset_file(filename=bundled_changeset_path)
 
     # Orbit Workbench CLI Source

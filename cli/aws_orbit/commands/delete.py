@@ -13,24 +13,23 @@
 #    limitations under the License.
 
 import logging
-from typing import Optional
 
 from aws_orbit import bundle, plugins, remote
 from aws_orbit.changeset import Changeset, extract_changeset
 from aws_orbit.manifest import Manifest
-from aws_orbit.messages import MessagesContext, stylize
+from aws_orbit.messages import MessagesContext
 from aws_orbit.services import cfn, codebuild
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def deploy_image(filename: str, dir: str, name: str, script: Optional[str], debug: bool) -> None:
-    with MessagesContext("Deploying Docker Image", debug=debug) as ctx:
-        manifest = Manifest(filename=filename)
+def delete_image(env: str, name: str, debug: bool) -> None:
+    with MessagesContext("Destroying Docker Image", debug=debug) as ctx:
+        manifest = Manifest(filename=None, env=env, region=None)
         manifest.fillup()
-        ctx.info(f"Manifest loaded: {filename}")
+        ctx.info("Manifest loaded")
         if cfn.does_stack_exist(manifest=manifest, stack_name=f"orbit-{manifest.name}") is False:
-            ctx.error("Please, deploy your environment before deploy any addicional docker image")
+            ctx.error("Please, deploy your environment before deploy/destroy any docker image")
             return
 
         _logger.debug("Inspecting possible manifest changes...")
@@ -47,25 +46,22 @@ def deploy_image(filename: str, dir: str, name: str, script: Optional[str], debu
         ctx.progress(3)
 
         bundle_path = bundle.generate_bundle(
-            command_name=f"deploy_image-{name}", manifest=manifest, dirs=[(dir, name)], changeset=changes
+            command_name=f"delete_image-{name}", manifest=manifest, dirs=[], changeset=changes
         )
         ctx.progress(4)
-        script_str = "" if script is None else script
         buildspec = codebuild.generate_spec(
             manifest=manifest,
-            plugins=True,
-            cmds_build=[f"orbit remote --command deploy_image {name} {script_str}"],
+            plugins=False,
+            cmds_build=[f"orbit remote --command delete_image {env} {name}"],
             changeset=changes,
         )
         remote.run(
-            command_name=f"deploy_image-{name}",
+            command_name=f"delete_image-{name}",
             manifest=manifest,
             bundle_path=bundle_path,
             buildspec=buildspec,
             codebuild_log_callback=ctx.progress_bar_callback,
-            timeout=15,
+            timeout=10,
         )
-        ctx.info("Docker Image deploy into ECR")
-        address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/orbit-{manifest.name}-{name}"
-        ctx.tip(f"ECR Image Address: {stylize(address, underline=True)}")
+        ctx.info("Docker Image destroyed from ECR")
         ctx.progress(100)

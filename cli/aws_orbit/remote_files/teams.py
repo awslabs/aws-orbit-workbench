@@ -46,8 +46,10 @@ def _delete_targets(manifest: Manifest, fs_id: str) -> None:
             _logger.warning(f"Ignoring MountTargetId {target} deletion cause it does not exist anymore.")
 
 
-def _create_dockerfile(manifest: "Manifest", team_manifest: "TeamManifest") -> str:
-    base_image_cmd: str = f"FROM {team_manifest.base_image_address}"
+def _create_dockerfile(manifest: "Manifest", team_manifest: "TeamManifest", spark: bool) -> str:
+    base_image_cmd: str = (
+        f"FROM {team_manifest.base_spark_image_address}" if spark else f"FROM {team_manifest.base_image_address}"
+    )
     _logger.debug("base_image_cmd: %s", base_image_cmd)
     cmds: List[str] = [base_image_cmd]
     for plugin in team_manifest.plugins:
@@ -62,7 +64,7 @@ def _create_dockerfile(manifest: "Manifest", team_manifest: "TeamManifest") -> s
             if plugin_cmds is not None:
                 cmds += [f"# Commands for {plugin.plugin_id} plugin"] + plugin_cmds
     _logger.debug("cmds: %s", cmds)
-    outdir = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, team_manifest.name, "image")
+    outdir = os.path.join(".orbit.out", manifest.name, team_manifest.name, "image")
     output_filename = os.path.join(outdir, "Dockerfile")
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
@@ -75,12 +77,20 @@ def _create_dockerfile(manifest: "Manifest", team_manifest: "TeamManifest") -> s
     return outdir
 
 
-def _deploy_team_image(manifest: "Manifest", team_manifest: "TeamManifest") -> None:
-    image_dir: str = _create_dockerfile(manifest=manifest, team_manifest=team_manifest)
+def _deploy_team_images(manifest: "Manifest", team_manifest: "TeamManifest") -> None:
+    # Jupyter User
+    image_dir: str = _create_dockerfile(manifest=manifest, team_manifest=team_manifest, spark=False)
     image_name: str = f"orbit-{manifest.name}-{team_manifest.name}"
     _logger.debug("Deploying the %s Docker image", image_name)
     docker.deploy_image_from_source(manifest=manifest, dir=image_dir, name=image_name)
-    _logger.debug("Docker Image Deployed to ECR")
+    _logger.debug("Docker Image Deployed to ECR (Jupyter User).")
+
+    # Jupyter User Spark
+    image_dir = _create_dockerfile(manifest=manifest, team_manifest=team_manifest, spark=True)
+    image_name = f"orbit-{manifest.name}-{team_manifest.name}-spark"
+    _logger.debug("Deploying the %s Docker image", image_name)
+    docker.deploy_image_from_source(manifest=manifest, dir=image_dir, name=image_name)
+    _logger.debug("Docker Image Deployed to ECR (Jupyter User Spark).")
 
 
 def _deploy_team_bootstrap(manifest: "Manifest", team_manifest: "TeamManifest") -> None:
@@ -108,15 +118,19 @@ def _deploy_team_bootstrap(manifest: "Manifest", team_manifest: "TeamManifest") 
 
 def deploy(manifest: "Manifest") -> None:
     for team_manifest in manifest.teams:
+        if hasattr(manifest, "filename"):
+            args = ["manifest", manifest.filename, team_manifest.name]
+        else:
+            args = ["env", manifest.name, team_manifest.name]
         cdk.deploy(
             manifest=manifest,
             stack_name=team_manifest.stack_name,
             app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
-            args=[manifest.filename, team_manifest.name],
+            args=args,
         )
         team_manifest.fetch_ssm()
     for team_manifest in manifest.teams:
-        _deploy_team_image(manifest=manifest, team_manifest=team_manifest)
+        _deploy_team_images(manifest=manifest, team_manifest=team_manifest)
         _deploy_team_bootstrap(manifest=manifest, team_manifest=team_manifest)
 
 
@@ -139,12 +153,22 @@ def destroy(manifest: "Manifest", team_manifest: "TeamManifest") -> None:
             ecr.delete_repo(manifest=manifest, repo=f"orbit-{manifest.name}-{team_manifest.name}")
         except Exception as ex:
             _logger.debug("Skipping Team ECR Repository deletion. Cause: %s", ex)
+        try:
+            ecr.delete_repo(manifest=manifest, repo=f"orbit-{manifest.name}-{team_manifest.name}-spark")
+        except Exception as ex:
+            _logger.debug("Skipping Team ECR Repository (Spark) deletion. Cause: %s", ex)
         if cfn.does_stack_exist(manifest=manifest, stack_name=team_manifest.stack_name):
+            args: List[str]
+            if hasattr(manifest, "filename"):
+                args = ["manifest", manifest.filename, team_manifest.name]
+            else:
+                args = ["env", manifest.name, team_manifest.name]
+
             cdk.destroy(
                 manifest=manifest,
                 stack_name=team_manifest.stack_name,
                 app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
-                args=[manifest.filename, team_manifest.name],
+                args=args,
             )
 
 

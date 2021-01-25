@@ -38,11 +38,16 @@ def destroy_toolkit(manifest: Manifest) -> None:
         cfn.destroy_stack(manifest=manifest, stack_name=manifest.toolkit_stack_name)
 
 
-def destroy(filename: str, teams_only: bool, keep_demo: bool, debug: bool) -> None:
+def destroy(env: str, teams_only: bool, keep_demo: bool, debug: bool) -> None:
     with MessagesContext("Destroying", debug=debug) as ctx:
-        manifest = Manifest(filename=filename)
+        manifest = Manifest(filename=None, env=env, region=None)
+        if manifest.raw_ssm is None:
+            ctx.info(f"Environment {env} not found")
+            ctx.progress(100)
+            return
+
         manifest.fillup()
-        ctx.info(f"Manifest loaded: {filename}")
+        ctx.info("Manifest loaded")
         ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
         ctx.progress(2)
 
@@ -71,7 +76,7 @@ def destroy(filename: str, teams_only: bool, keep_demo: bool, debug: bool) -> No
             buildspec = codebuild.generate_spec(
                 manifest=manifest,
                 plugins=True,
-                cmds_build=[f"orbit remote --command destroy {flags}"],
+                cmds_build=[f"orbit remote --command destroy {env} {flags}"],
                 changeset=changes,
             )
             remote.run(

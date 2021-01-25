@@ -44,8 +44,18 @@ def get_region() -> str:
     return str(session.region_name)
 
 
-def get_account_id(manifest: "Manifest") -> str:
-    return str(manifest.boto3_client(service_name="sts").get_caller_identity().get("Account"))
+def get_account_id() -> str:
+    return str(boto3_client(service_name="sts").get_caller_identity().get("Account"))
+
+
+def _botocore_config() -> botocore.config.Config:
+    return botocore.config.Config(retries={"max_attempts": 5}, connect_timeout=10, max_pool_connections=10)
+
+
+def boto3_client(service_name: str) -> boto3.client:
+    return boto3.Session(region_name=get_region()).client(
+        service_name=service_name, use_ssl=True, config=_botocore_config()
+    )
 
 
 def namedtuple_to_dict(obj: Any) -> Any:
@@ -166,14 +176,18 @@ def get_dns_ip_cidr(manifest: "Manifest") -> str:
     return cidr
 
 
-def print_dir(dir: str) -> None:
-    for dirname, dirnames, filenames in os.walk(dir):
+def print_dir(dir: str, exclude: List[str] = []) -> None:
+    for root, dirnames, filenames in os.walk(dir):
+        if exclude:
+            for d in list(dirnames):
+                if d in exclude:
+                    dirnames.remove(d)
         # print path to all subdirectories first.
         for subdirname in dirnames:
-            _logger.debug(os.path.join(dirname, subdirname))
+            _logger.debug(os.path.join(root, subdirname))
         # print path to all filenames.
         for filename in filenames:
-            _logger.debug((os.path.join(dirname, filename)))
+            _logger.debug((os.path.join(root, filename)))
 
 
 def resolve_parameters(template: str, parameters: Dict[str, str]) -> str:

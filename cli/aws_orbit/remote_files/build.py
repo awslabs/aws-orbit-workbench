@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 import logging
-import os
 from typing import Optional, Tuple
 
 from aws_orbit import changeset, docker, plugins, sh
@@ -23,29 +22,33 @@ from boto3 import client
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
-    manifest: Manifest = Manifest(filename=filename)
+def build_image(args: Tuple[str, ...]) -> None:
+    env: str
+    image_name: str
+    script: Optional[str]
+    if len(args) == 2:
+        env = args[0]
+        image_name = args[1]
+        script = None
+    elif len(args) == 3:
+        env = args[0]
+        image_name = args[1]
+        script = args[2]
+    else:
+        raise ValueError("Unexpected number of values in args.")
+
+    _logger.debug("args: %s", args)
+
+    manifest: Manifest = Manifest(filename=None, env=env, region=None)
     manifest.fillup()
     if manifest.demo:
         manifest.fetch_demo_data()
         manifest.fetch_network_data()
-    _logger.debug("manifest.name: %s", manifest.name)
-    _logger.debug("args: %s", args)
-    if len(args) == 1:
-        image_name: str = args[0]
-        script: Optional[str] = None
-    elif len(args) == 2:
-        image_name = args[0]
-        script = args[1]
-    else:
-        raise ValueError("Unexpected number of values in args.")
 
     docker.login(manifest=manifest)
     _logger.debug("DockerHub and ECR Logged in")
 
-    changes: changeset.Changeset = changeset.read_changeset_file(
-        manifest=manifest, filename=os.path.join(manifest.filename_dir, "changeset.json")
-    )
+    changes: changeset.Changeset = changeset.read_changeset_file(manifest=manifest, filename="changeset.json")
     _logger.debug(f"Changeset: {changes.asdict()}")
     _logger.debug("Changeset loaded")
 
@@ -58,10 +61,11 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     try:
         ecr.describe_repositories(repositoryNames=[ecr_repo])
     except ecr.exceptions.RepositoryNotFoundException:
-        createRepository(manifest, ecr, ecr_repo)
-
+        _create_repository(manifest, ecr, ecr_repo)
+    image_def = manifest.images.get(image_name)
+    _logger.debug(" image def: %s", image_def)
     if manifest.images.get(image_name, {"source": "code"}).get("source") == "code":
-        path = os.path.join(os.path.dirname(manifest.filename_dir), image_name)
+        path = image_name
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
@@ -71,7 +75,7 @@ def deploy_image(filename: str, args: Tuple[str, ...]) -> None:
     _logger.debug("Docker Image Deployed to ECR")
 
 
-def createRepository(manifest: Manifest, ecr: client, ecr_repo: str) -> None:
+def _create_repository(manifest: Manifest, ecr: client, ecr_repo: str) -> None:
     response = ecr.create_repository(
         repositoryName=ecr_repo,
         tags=[
