@@ -17,12 +17,15 @@
 import json
 import os
 import sys
+from typing import Any, Dict, List, cast
 
 import boto3
 from tornado.log import app_log
 
 from jupyterhub_utils.authenticator import OrbitWorkbenchAuthenticator
 from jupyterhub_utils.ssm import ACCOUNT_ID, ENV_NAME, GRANT_SUDO, IMAGE, IMAGE_SPARK, REGION, TEAM, TOOLKIT_S3_BUCKET
+
+PROFILES_TYPE = List[Dict[str, Any]]
 
 app_log.info("ACCOUNT_ID: %s", ACCOUNT_ID)
 app_log.info("ENV_NAME: %s", ENV_NAME)
@@ -164,10 +167,17 @@ def per_user_profiles(spawner):
 
     team_manifest_dic = json.loads(json_str)
     if team_manifest_dic.get("profiles"):
-        return team_manifest_dic["profiles"]
+        default_profiles = team_manifest_dic["profiles"]
     else:
-        app_log.info("No profiles found")
-        return profile_list_default
+        app_log.info("No default profiles found")
+        default_profiles = profile_list_default
+
+    ssm_parameter_name: str = f"/orbit/{env}/teams/{team}/user/profiles"
+    json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
+
+    user_profiles: PROFILES_TYPE = cast(PROFILES_TYPE, json.loads(json_str))
+    default_profiles.extend(user_profiles)
+    return default_profiles
 
 
 c.KubeSpawner.profile_list = per_user_profiles

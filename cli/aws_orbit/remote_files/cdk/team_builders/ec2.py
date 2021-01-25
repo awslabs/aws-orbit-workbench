@@ -60,3 +60,17 @@ class Ec2Builder:
                 )
         core.Tags.of(scope=sg).add(key="Name", value=name)
         return sg
+
+    @staticmethod
+    def build_team_security_group(
+        scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest, vpc: ec2.Vpc
+    ) -> ec2.SecurityGroup:
+        name: str = f"orbit-{manifest.name}-{team_manifest.name}-sg"
+        sg = ec2.SecurityGroup(scope=scope, id=name, security_group_name=name, vpc=vpc, allow_all_outbound=True)
+        sg.add_ingress_rule(
+            peer=sg,
+            connection=ec2.Port.all_traffic(),
+            description=f"Allow ingress from all resources utilizing the Team ({team_manifest.name}) security group",
+        )
+        core.Tags.of(scope=sg).add(key="Name", value=name)
+        return sg

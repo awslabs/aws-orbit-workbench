@@ -38,6 +38,7 @@ MANIFEST_FILE_TYPE = Dict[
     Union[
         str,
         bool,
+        List[str],
         MANIFEST_FILE_VPC_TYPE,
         List[MANIFEST_FILE_TEAM_TYPE],
         MANIFEST_FILE_IMAGES_TYPE,
@@ -93,6 +94,11 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
             "source": "ecr-external",
             "version": "v1.3.0",
         },
+        "code-build-image": {
+            "repository": "465538974520.dkr.ecr.us-east-2.amazonaws.com/aws-orbit-code-build-base",
+            "source": "ecr",
+            "version": "latest",
+        },
     },
 )
 
@@ -110,13 +116,16 @@ class Manifest:
         self.images: MANIFEST_FILE_IMAGES_TYPE
         self.teams: List[TeamManifest]
         self.load_balancers_subnets: List[str]
+        self.eks_system_masters_roles: List[str]
+
         if filename and env:
             raise RuntimeError("Must provide either a manifest file or environment name and neither were provided.")
         if region:
             self.region: str = region
         else:
             self.region = utils.get_region()
-        self.account_id: str = utils.get_account_id(manifest=self)
+
+        self.account_id: str = self.get_account_id()
 
         if filename:
             self.load_manifest_from_file(filename)
@@ -150,6 +159,7 @@ class Manifest:
         self.demo = cast(bool, self.raw_file.get("demo", False))
         self.dev = cast(bool, self.raw_file.get("dev", False))
         self.ssm_parameter_name = f"/orbit/{self.name}/manifest"
+        self.eks_system_masters_roles = cast(List[str], self.raw_file.get("eks-system-masters-roles", []))
         # Networking
         if "networking" not in self.raw_file:
             raise RuntimeError("Invalid manifest: Missing the 'networking' attribute.")
@@ -206,6 +216,9 @@ class Manifest:
 
         self.cognito_external_provider_domain: Optional[str] = None  # Cognito
         self.cognito_external_provider_redirect: Optional[str] = None  # Cognito
+
+    def get_account_id(self) -> str:
+        return str(self.boto3_client(service_name="sts").get_caller_identity().get("Account"))
 
     @staticmethod
     def _read_manifest_file(filename: str) -> MANIFEST_FILE_TYPE:
@@ -283,6 +296,7 @@ class Manifest:
             self.eks_fargate_profile_role_arn = cast(Optional[str], raw.get("eks-fargate-profile-role-arn"))
             self.eks_env_nodegroup_role_arn = cast(Optional[str], raw.get("eks-env-nodegroup-role-arn"))
             self.eks_oidc_provider = cast(Optional[str], raw.get("eks-oidc-provider"))
+            self.eks_system_masters_roles = cast(List[str], raw.get("eks-system-masters-roles", []))
             self.user_pool_client_id = cast(Optional[str], raw.get("user-pool-client-id"))
             self.identity_pool_id = cast(Optional[str], raw.get("identity-pool-id"))
             self.cognito_external_provider = cast(Optional[str], raw.get("cognito-external-provider", None))
@@ -463,6 +477,7 @@ class Manifest:
 
         obj["images"] = self.images
         obj["teams"] = [t.asdict_file() for t in self.teams]
+        obj["eks-system-masters-roles"] = self.eks_system_masters_roles
         return obj
 
     def asdict(self) -> MANIFEST_TYPE:

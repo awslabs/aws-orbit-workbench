@@ -44,8 +44,18 @@ def get_region() -> str:
     return str(session.region_name)
 
 
-def get_account_id(manifest: "Manifest") -> str:
-    return str(manifest.boto3_client(service_name="sts").get_caller_identity().get("Account"))
+def get_account_id() -> str:
+    return str(boto3_client(service_name="sts").get_caller_identity().get("Account"))
+
+
+def _botocore_config() -> botocore.config.Config:
+    return botocore.config.Config(retries={"max_attempts": 5}, connect_timeout=10, max_pool_connections=10)
+
+
+def boto3_client(service_name: str) -> boto3.client:
+    return boto3.Session(region_name=get_region()).client(
+        service_name=service_name, use_ssl=True, config=_botocore_config()
+    )
 
 
 def namedtuple_to_dict(obj: Any) -> Any:

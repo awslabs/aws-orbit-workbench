@@ -4,7 +4,7 @@ ARG CDK_VERSION=1.67.0
 
 RUN apt -y update && \
     # Install dependencies
-    apt -y install curl unzip && \
+    apt -y install curl unzip docker.io wget && \
     # Install NodeJS
     curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
     apt -y install nodejs && \

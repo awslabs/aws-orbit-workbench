@@ -15,10 +15,11 @@
 import logging
 import os
 import pprint
-from typing import TYPE_CHECKING, Any, Dict, cast
+from typing import TYPE_CHECKING, Any, Dict, Optional, cast
 
 import yaml
 from aws_orbit import sh
+from aws_orbit.changeset import ListChangeset
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.subnet import SubnetKind
 from aws_orbit.services import cfn, eks, iam
@@ -54,6 +55,7 @@ def create_nodegroup_structure(manifest: "Manifest", team: "TeamManifest", env_n
         "labels": {"team": team.name, "orbit/compute-type": "ec2"},
         "tags": {"Env": f"orbit-{env_name}", "TeamSpace": team.name},
         "iam": {"instanceRoleARN": manifest.eks_env_nodegroup_role_arn},
+        "securityGroups": {"attachIDs": [team.team_security_group_id]}
     }
 
 def generate_manifest(manifest: Manifest, name: str, output_teams: bool = True) -> str:
@@ -129,7 +131,7 @@ def fetch_cluster_data(manifest: Manifest, cluster_name: str) -> None:
     _logger.debug("Cluster data fetched successfully.")
 
 
-def deploy_env(manifest: Manifest) -> None:
+def deploy_env(manifest: Manifest, eks_system_masters_roles_changes: Optional[ListChangeset]) -> None:
     stack_name: str = f"orbit-{manifest.name}"
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
@@ -163,6 +165,22 @@ def deploy_env(manifest: Manifest) -> None:
         sh.run(f"eksctl utils associate-iam-oidc-provider --cluster {cluster_name} --approve")
     else:
         _logger.debug("OpenID Connect Provider already associated")
+
+    if eks_system_masters_roles_changes and eks_system_masters_roles_changes.added_values:
+        for role in eks_system_masters_roles_changes.added_values:
+            arn = f"arn:aws:iam::{manifest.account_id}:role/{role}"
+            _logger.debug(f"Adding IAM Identity Mapping - Role: {arn}, Username: {role}, Group: system:masters")
+            sh.run(
+                f"eksctl create iamidentitymapping --cluster {cluster_name} --arn {arn} "
+                f"--username {role} --group system:masters"
+            )
+
+    if eks_system_masters_roles_changes and eks_system_masters_roles_changes.removed_values:
+        for role in eks_system_masters_roles_changes.removed_values:
+            arn = f"arn:aws:iam::{manifest.account_id}:role/{role}"
+            _logger.debug(f"Removing IAM Identity Mapping - Role: {arn}")
+            sh.run(f"eksctl delete iamidentitymapping --cluster {cluster_name} --arn {arn} --all")
+
     _logger.debug("EKSCTL deployed")
 
 

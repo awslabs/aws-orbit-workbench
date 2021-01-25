@@ -118,6 +118,10 @@ class Team(Stack):
             team_kms_key=self.team_kms_key,
         )
 
+        self.sg: ec2.SecurityGroup = Ec2Builder.build_team_security_group(
+            scope=self, manifest=manifest, team_manifest=team_manifest, vpc=self.i_vpc
+        )
+
         self.sg_efs: ec2.SecurityGroup = Ec2Builder.build_efs_security_group(
             scope=self,
             manifest=manifest,
@@ -209,6 +213,7 @@ class Team(Stack):
         self.team_manifest.container_runner_arn = self.container_runner.function_arn
         self.team_manifest.eks_k8s_api_arn = self.eks_k8s_api.state_machine_arn
         self.team_manifest.team_kms_key_arn = self.team_kms_key.key_arn
+        self.team_manifest.team_security_group_id = self.sg.security_group_id
 
         self.manifest_parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,
@@ -217,6 +222,17 @@ class Team(Stack):
             type=ssm.ParameterType.STRING,
             description="Orbit Workbench Team Context.",
             parameter_name=self.team_manifest.ssm_parameter_name,
+            simple_name=False,
+            tier=ssm.ParameterTier.INTELLIGENT_TIERING,
+        )
+        ssm_profile_name = f"/orbit/{self.manifest.name}/teams/{self.team_manifest.name}/user/profiles"
+        self.user_profiles: ssm.StringParameter = ssm.StringParameter(
+            scope=self,
+            id=ssm_profile_name,
+            string_value="[]",
+            type=ssm.ParameterType.STRING,
+            description="Team additional profiles created by the team users",
+            parameter_name=ssm_profile_name,
             simple_name=False,
             tier=ssm.ParameterTier.INTELLIGENT_TIERING,
         )
