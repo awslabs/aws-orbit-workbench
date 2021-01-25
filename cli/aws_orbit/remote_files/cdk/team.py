@@ -97,6 +97,12 @@ class Team(Stack):
             repository_name=f"orbit-{self.manifest.name}-{self.team_manifest.name}",
         )
 
+        self.ecr_repo_spark: ecr.Repository = ecr.Repository(
+            scope=self,
+            id="repo-spark",
+            repository_name=f"orbit-{self.manifest.name}-{self.team_manifest.name}-spark",
+        )
+
         self.policies: List[str] = self.team_manifest.policies
 
         self.scratch_bucket: s3.Bucket = S3Builder.build_scratch_bucket(
@@ -141,6 +147,9 @@ class Team(Stack):
             scope=self, manifest=manifest, team_manifest=team_manifest, vpc=self.i_vpc
         )
         self.ecr_image = EcsBuilder.build_ecr_image(scope=self, manifest=manifest, team_manifest=team_manifest)
+        self.ecr_image_spark = EcsBuilder.build_ecr_image_spark(
+            scope=self, manifest=manifest, team_manifest=team_manifest
+        )
         self.ecs_execution_role = IamBuilder.build_ecs_role(scope=self)
         self.ecs_task_definition = EcsBuilder.build_task_definition(
             scope=self,
@@ -213,6 +222,17 @@ class Team(Stack):
             type=ssm.ParameterType.STRING,
             description="Orbit Workbench Team Context.",
             parameter_name=self.team_manifest.ssm_parameter_name,
+            simple_name=False,
+            tier=ssm.ParameterTier.INTELLIGENT_TIERING,
+        )
+        ssm_profile_name = f"/orbit/{self.manifest.name}/teams/{self.team_manifest.name}/user/profiles"
+        self.user_profiles: ssm.StringParameter = ssm.StringParameter(
+            scope=self,
+            id=ssm_profile_name,
+            string_value="[]",
+            type=ssm.ParameterType.STRING,
+            description="Team additional profiles created by the team users",
+            parameter_name=ssm_profile_name,
             simple_name=False,
             tier=ssm.ParameterTier.INTELLIGENT_TIERING,
         )

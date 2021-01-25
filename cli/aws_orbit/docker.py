@@ -95,6 +95,10 @@ def update_docker_file(manifest: "Manifest", dir: str) -> None:
         jupyter_user_base = (
             f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/orbit-{manifest.name}-jupyter-user"
         )
+        jupyter_user_spark_base = (
+            f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/"
+            f"orbit-{manifest.name}-jupyter-user-spark"
+        )
         with open(docker_file, "r") as file:
             content: str = file.read()
         content = utils.resolve_parameters(
@@ -104,6 +108,7 @@ def update_docker_file(manifest: "Manifest", dir: str) -> None:
                 account=manifest.account_id,
                 env=manifest.name,
                 jupyter_user_base=jupyter_user_base,
+                jupyter_user_spark_base=jupyter_user_spark_base,
             ),
         )
         with open(docker_file, "w") as file:
@@ -118,7 +123,7 @@ def deploy_image_from_source(
     use_cache: bool = True,
 ) -> None:
     _logger.debug("Building docker image from %s", os.path.abspath(dir))
-    update_docker_file(manifest, dir)
+    update_docker_file(manifest=manifest, dir=dir)
     build(manifest=manifest, dir=dir, name=name, tag=tag, use_cache=use_cache, pull=True)
     _logger.debug("Docker Image built")
     tag_image(manifest=manifest, remote_name=name, remote_source="local", name=name, tag=tag)

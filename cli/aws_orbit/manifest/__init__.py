@@ -68,6 +68,11 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
             "source": "dockerhub",
             "version": "latest",
         },
+        "jupyter-user-spark": {
+            "repository": "aws-orbit-jupyter-user-spark",
+            "source": "dockerhub",
+            "version": "latest",
+        },
         "landing-page": {
             "repository": "aws-orbit-landing-page",
             "source": "dockerhub",
@@ -87,6 +92,11 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
             "repository": "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/csi-node-driver-registrar",
             "source": "ecr-external",
             "version": "v1.3.0",
+        },
+        "code-build-image": {
+            "repository": "465538974520.dkr.ecr.us-east-2.amazonaws.com/aws-orbit-code-build-base",
+            "source": "ecr",
+            "version": "latest",
         },
     },
 )
@@ -111,7 +121,7 @@ class Manifest:
             self.region: str = region
         else:
             self.region = utils.get_region()
-        self.account_id: str = utils.get_account_id(manifest=self)
+        self.account_id: str = self.get_account_id()
 
         if filename:
             self.load_manifest_from_file(filename)
@@ -201,6 +211,9 @@ class Manifest:
 
         self.cognito_external_provider_domain: Optional[str] = None  # Cognito
         self.cognito_external_provider_redirect: Optional[str] = None  # Cognito
+
+    def get_account_id(self) -> str:
+        return str(self.boto3_client(service_name="sts").get_caller_identity().get("Account"))
 
     @staticmethod
     def _read_manifest_file(filename: str) -> MANIFEST_FILE_TYPE:
