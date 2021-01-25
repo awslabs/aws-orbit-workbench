@@ -116,7 +116,7 @@ class Manifest:
             self.region: str = region
         else:
             self.region = utils.get_region()
-        self.account_id: str = utils.get_account_id(manifest=self)
+        self.account_id: str = self.get_account_id()
 
         if filename:
             self.load_manifest_from_file(filename)
@@ -206,6 +206,9 @@ class Manifest:
 
         self.cognito_external_provider_domain: Optional[str] = None  # Cognito
         self.cognito_external_provider_redirect: Optional[str] = None  # Cognito
+
+    def get_account_id(self) -> str:
+        return str(self.boto3_client(service_name="sts").get_caller_identity().get("Account"))
 
     @staticmethod
     def _read_manifest_file(filename: str) -> MANIFEST_FILE_TYPE:
