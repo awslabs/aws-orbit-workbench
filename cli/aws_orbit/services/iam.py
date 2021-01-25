@@ -12,8 +12,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import logging
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 from aws_orbit.manifest import Manifest
 
@@ -32,3 +33,47 @@ def get_open_id_connect_provider(manifest: Manifest, open_id_connect_provider_id
         )
     except iam_client.exceptions.NoSuchEntityException:
         return None
+
+
+def update_assume_role_roles(
+    manifest: Manifest,
+    role_name: str,
+    roles_to_add: Optional[List[str]] = None,
+    roles_to_remove: Optional[List[str]] = None,
+) -> None:
+    if not roles_to_add and not roles_to_remove:
+        raise Exception("One of roles_to_add or roles_to_remove is required")
+
+    _logger.debug(f"Updating AssumeRolePolicy for {role_name}, Adding: {roles_to_add}, Removing: {roles_to_remove}")
+
+    iam_client = manifest.boto3_client("iam")
+    assume_role_policy = iam_client.get_role(RoleName=role_name)["Role"]["AssumeRolePolicyDocument"]
+
+    statements = []
+    roles_to_add_set = (
+        set() if roles_to_add is None else {f"arn:aws:iam::{manifest.account_id}:role/{role}" for role in roles_to_add}
+    )
+    roles_to_remove_set = (
+        set()
+        if roles_to_remove is None
+        else {f"arn:aws:iam::{manifest.account_id}:role/{role}" for role in roles_to_remove}
+    )
+
+    for statement in assume_role_policy["Statement"]:
+        arn = statement.get("Principal", {}).get("AWS", None)
+        if arn in roles_to_remove_set:
+            _logger.debug("Removing %s from AssumeRolePolicy", arn)
+            continue
+        elif arn in roles_to_add_set:
+            _logger.debug("AssumeRolePolicy already contains %s", arn)
+            roles_to_add_set.remove(arn)
+        else:
+            _logger.debug("Keeping %s in AssumeRolePolicy", statement)
+            statements.append(statement)
+
+    for arn in roles_to_add_set:
+        _logger.debug("Adding %s to AssumeRolePolicy")
+        statements.append({"Effect": "Allow", "Action": "sts:AssumeRole", "Principal": {"AWS": arn}})
+
+    assume_role_policy["Statement"] = statements
+    iam_client.update_assume_role_policy(RoleName=role_name, PolicyDocument=json.dumps(assume_role_policy))
