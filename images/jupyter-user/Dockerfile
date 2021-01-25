@@ -33,7 +33,6 @@ ADD python-utils/ /opt/python-utils/
 RUN chmod -R 755 /opt/python-utils/
 ADD transformations/ /opt/transformations/
 RUN chmod -R 755 /opt/transformations/
-RUN chmod -R 755
 USER $NB_UID
 
 ######################################

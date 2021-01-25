@@ -130,7 +130,7 @@ class IamBuilder:
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
-                        "s3:ListAllMyBuckets"
+                        "s3:ListAllMyBuckets",
                         "lambda:List*",
                         "lambda:Get*",
                         "iam:List*",
