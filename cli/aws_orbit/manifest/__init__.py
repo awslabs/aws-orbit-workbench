@@ -159,7 +159,7 @@ class Manifest:
         self.demo = cast(bool, self.raw_file.get("demo", False))
         self.dev = cast(bool, self.raw_file.get("dev", False))
         self.ssm_parameter_name = f"/orbit/{self.name}/manifest"
-        self.eks_system_masters_roles  = cast(List[str], self.raw_file.get("eks-system-masters-roles", []))
+        self.eks_system_masters_roles = cast(List[str], self.raw_file.get("eks-system-masters-roles", []))
         # Networking
         if "networking" not in self.raw_file:
             raise RuntimeError("Invalid manifest: Missing the 'networking' attribute.")
@@ -296,7 +296,7 @@ class Manifest:
             self.eks_fargate_profile_role_arn = cast(Optional[str], raw.get("eks-fargate-profile-role-arn"))
             self.eks_env_nodegroup_role_arn = cast(Optional[str], raw.get("eks-env-nodegroup-role-arn"))
             self.eks_oidc_provider = cast(Optional[str], raw.get("eks-oidc-provider"))
-            self.eks_system_masters_roles  = cast(List[str], raw.get("eks-system-masters-roles", []))
+            self.eks_system_masters_roles = cast(List[str], raw.get("eks-system-masters-roles", []))
             self.user_pool_client_id = cast(Optional[str], raw.get("user-pool-client-id"))
             self.identity_pool_id = cast(Optional[str], raw.get("identity-pool-id"))
             self.cognito_external_provider = cast(Optional[str], raw.get("cognito-external-provider", None))
