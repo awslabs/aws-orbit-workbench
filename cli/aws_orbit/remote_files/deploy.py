@@ -79,12 +79,13 @@ def deploy_image_remotely(manifest: Manifest, name: str, bundle_path: str, build
 
 
 def deploy_images_remotely(manifest: Manifest) -> None:
-    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=7) as executor:
         futures: List[Future[Any]] = []
 
         images: List[Tuple[str, Optional[str]]] = [
             ("jupyter-hub", None),
             ("jupyter-user", "build.sh"),
+            ("jupyter-user-spark", None),
             ("landing-page", "build.sh"),
         ]
 
