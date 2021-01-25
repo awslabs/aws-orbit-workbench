@@ -167,6 +167,7 @@ def deploy(args: Tuple[str, ...]) -> None:
         manifest=manifest,
         add_images=[],
         remove_images=[],
+        eks_system_masters_roles_changes=changes.eks_system_masters_roles_changeset,
     )
     _logger.debug("Env Stack deployed")
     if skip_images_remote_flag == "skip-images":
@@ -174,7 +175,7 @@ def deploy(args: Tuple[str, ...]) -> None:
     else:
         deploy_images_remotely(manifest=manifest)
         _logger.debug("Docker Images deployed")
-    eksctl.deploy_env(manifest=manifest)
+    eksctl.deploy_env(manifest=manifest, eks_system_masters_roles_changes=changes.eks_system_masters_roles_changeset)
     _logger.debug("EKS Environment Stack deployed")
     kubectl.deploy_env(manifest=manifest)
     _logger.debug("Kubernetes Environment components deployed")
