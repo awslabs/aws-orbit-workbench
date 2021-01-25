@@ -89,3 +89,9 @@ def get_elbs_by_service(manifest: "Manifest") -> Dict[str, Dict[str, Any]]:
     ]
     services = identify_services(manifest=manifest, names=[x["LoadBalancerName"] for x in elbs])
     return {s: _search_elb_by_name(elbs=elbs, name=a) for s, a in services.items()}
+
+
+def delete_load_balancers(manifest: "Manifest") -> None:
+    client = manifest.boto3_client("elb")
+    for elb in describe_load_balancers(manifest=manifest):
+        client.delete_load_balancer(LoadBalancerName=elb["LoadBalancerName"])

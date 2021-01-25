@@ -85,3 +85,10 @@ def list_s3_objects(manifest: "Manifest", bucket: str, key: str) -> Dict[str, An
     client_s3 = manifest.boto3_client("s3")
     response = client_s3.list_objects_v2(Bucket=bucket, Prefix=key)
     return cast(Dict[str, Any], response)
+
+
+def delete_bucket_by_prefix(manifest: "Manifest", prefix: str) -> None:
+    client_s3 = manifest.boto3_client("s3")
+    for bucket in client_s3.list_buckets()["Buckets"]:
+        if bucket["Name"].startswith(prefix):
+            delete_bucket(manifest=manifest, bucket=bucket["Name"])
