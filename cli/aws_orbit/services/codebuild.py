@@ -249,16 +249,13 @@ def generate_spec(
     ]
 
     # Orbit Workbench CLI
-    if manifest.dev:
-        install.append("pip install -e cli/")
-    else:
-        if manifest.codeartifact_domain and manifest.codeartifact_repository:
-            install.append(
-                "aws codeartifact login --tool pip "
-                f"--domain {manifest.codeartifact_domain} "
-                f"--repository {manifest.codeartifact_repository}"
-            )
-        install.append("pip install aws-orbit")
+    if manifest.codeartifact_domain and manifest.codeartifact_repository:
+        install.append(
+            "aws codeartifact login --tool pip "
+            f"--domain {manifest.codeartifact_domain} "
+            f"--repository {manifest.codeartifact_repository}"
+        )
+    install.append("pip install aws-orbit")
 
     # Plugins
     if plugins:

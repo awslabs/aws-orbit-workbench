@@ -1,7 +1,6 @@
 name: ${name}
 region: ${region}
 demo: ${demo}
-dev: ${dev}
 images:
     jupyter-hub:
         repository: aws-orbit-jupyter-hub

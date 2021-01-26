@@ -19,17 +19,10 @@ import shutil
 from pprint import pformat
 from typing import List, Optional, Tuple
 
-from aws_orbit import ORBIT_CLI_ROOT
 from aws_orbit.changeset import Changeset
 from aws_orbit.manifest import Manifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
-
-
-def _list_self_files() -> List[str]:
-    path = os.path.join(ORBIT_CLI_ROOT, "**")
-    extensions = (".py", ".yaml", ".typed", ".json", ".txt")
-    return [f for f in glob.iglob(path, recursive=True) if os.path.isfile(f) and f.endswith(extensions)]
 
 
 def _is_valid_image_file(file_path: str) -> bool:
@@ -42,28 +35,6 @@ def _is_valid_image_file(file_path: str) -> bool:
 def _list_files(path: str) -> List[str]:
     path = os.path.join(path, "**")
     return [f for f in glob.iglob(path, recursive=True) if os.path.isfile(f) and _is_valid_image_file(file_path=f)]
-
-
-def _generate_self_dir(bundle_dir: str) -> str:
-    cli_dir = os.path.join(bundle_dir, "cli")
-    module_dir = os.path.join(cli_dir, "aws_orbit")
-    os.makedirs(module_dir, exist_ok=True)
-    shutil.rmtree(cli_dir)
-
-    _logger.debug("Copying files to %s", module_dir)
-    for file in _list_self_files():
-        relpath = os.path.relpath(file, ORBIT_CLI_ROOT)
-        new_file = os.path.join(module_dir, relpath)
-        os.makedirs(os.path.dirname(new_file), exist_ok=True)
-        _logger.debug("Copying file to %s", new_file)
-        shutil.copy(src=file, dst=new_file)
-
-    for filename in ("setup.py", "VERSION", "requirements.txt"):
-        src_file = os.path.join(ORBIT_CLI_ROOT, "..", filename)
-        dst_file = os.path.join(cli_dir, filename)
-        shutil.copy(src=src_file, dst=dst_file)
-
-    return cli_dir
 
 
 def _generate_dir(bundle_dir: str, dir: str, name: str) -> str:
@@ -118,10 +89,6 @@ def generate_bundle(
     if changeset is not None:
         bundled_changeset_path = os.path.join(bundle_dir, "changeset.json")
         changeset.write_changeset_file(filename=bundled_changeset_path)
-
-    # Orbit Workbench CLI Source
-    if manifest.dev:
-        _generate_self_dir(bundle_dir=bundle_dir)
 
     # Plugins
     if plugins:
