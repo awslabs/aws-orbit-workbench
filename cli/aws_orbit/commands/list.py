@@ -49,15 +49,15 @@ def list_env() -> None:
         _logger.debug(f"found env: {env_name}")
         manifest: Manifest = Manifest(filename=None, env=env_name, region=None)
         manifest.fillup()
-        if hasattr(manifest,"teams") and len(manifest.teams) > 0:
+        if hasattr(manifest, "teams") and len(manifest.teams) > 0:
             env_info[env_name] = f'URL={manifest.landing_page_url}, Teams: {",".join([x.name for x in manifest.teams])}'
         else:
-            env_info[env_name] = f'URL={manifest.landing_page_url}, No Teams Defined.'
+            env_info[env_name] = f"URL={manifest.landing_page_url}, No Teams Defined."
     if len(env_info) == 0:
         click.echo("There are no Orbit environments available")
         return
 
     print_list(
         tittle="Available Orbit environments:",
-        items=[f"Name={k}{stylize(',')},{v}" for k, v in env_info.items()],
+        items=[f"Name={k}{stylize(',')}{v}" for k, v in env_info.items()],
     )
