@@ -128,10 +128,11 @@ class RedshiftClustersCommon(core.Construct):
             description=f"OrbitTeamSpace Redshift Security Group for {self.env_name}-{self.teamspace_name}",
         )
 
-        self._security_group.add_ingress_rule(
-            self.team_security_group_id,
-            ec2.Port.tcp(5439)
+        self._team_security_group = ec2.SecurityGroup.from_security_group_id(
+            self, f"{self.env_name}-{self.teamspace_name}-sg", self.team_security_group_id, mutable=False
         )
+
+        self._security_group.add_ingress_rule(self._team_security_group, ec2.Port.tcp(5439))
 
         self._security_group.add_ingress_rule(self._security_group, ec2.Port.all_tcp())
 
@@ -307,7 +308,7 @@ class RedshiftStack(Stack):
             "lake_role_name": f"orbit-{team_manifest.manifest.name}-{team_manifest.name}-role",
             "vpc_id": manifest.vpc.asdict()["vpc-id"],
             "subnet_ids": [sm.subnet_id for sm in manifest.vpc.subnets],
-            "team_security_group_id": team_manifest.team_security_group_id
+            "team_security_group_id": team_manifest.team_security_group_id,
         }
 
         # for sm in manifest.vpc.asdict()["subnets"]:
