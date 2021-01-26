@@ -77,6 +77,17 @@ class TeamManifest:
             f"{self.manifest.account_id}.dkr.ecr.{self.manifest.region}.amazonaws.com/"
             f"orbit-{self.manifest.name}-{self.name}"
         )
+
+        # Apache Spark Image support
+        self.base_spark_image_address: str = (
+            f"{self.manifest.account_id}.dkr.ecr.{self.manifest.region}.amazonaws.com/"
+            f"orbit-{self.manifest.name}-jupyter-user-spark"
+        )
+        self.final_spark_image_address: str = (
+            f"{self.manifest.account_id}.dkr.ecr.{self.manifest.region}.amazonaws.com/"
+            f"orbit-{self.manifest.name}-{self.name}-spark"
+        )
+
         self.stack_name: str = f"orbit-{self.manifest.name}-{self.name}"
         self.ssm_parameter_name: str = f"/orbit/{self.manifest.name}/teams/{self.name}/manifest"
         self.bootstrap_s3_prefix: str = f"teams/{self.name}/bootstrap/"
@@ -94,6 +105,7 @@ class TeamManifest:
         self.eks_k8s_api_arn: Optional[str] = None
         self.team_kms_key_arn: Optional[str] = None
         self.elbs: Optional[Dict[str, Dict[str, Any]]] = elbs
+        self.team_security_group_id: Optional[str] = None
 
     def write_manifest_ssm(self) -> None:
         client = self.manifest.boto3_client("ssm")
@@ -158,6 +170,7 @@ class TeamManifest:
             self.container_runner_arn = cast(str, raw.get("container-runner-arn"))
             self.eks_k8s_api_arn = cast(str, raw.get("eks-k8s-api-arn"))
             self.team_kms_key_arn = cast(str, raw.get("team-kms-key-arn"))
+            self.team_security_group_id = cast(str, raw.get("team-security-group-id"))
 
             _logger.debug("Team %s loaded successfully from SSM.", self.name)
 

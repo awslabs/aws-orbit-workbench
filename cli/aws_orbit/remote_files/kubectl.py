@@ -69,7 +69,7 @@ def _team(manifest: Manifest, team_manifest: "TeamManifest", output_path: str) -
         env_name=manifest.name,
         tag=team_manifest.manifest.images["jupyter-hub"]["version"],
         grant_sudo='"yes"' if team_manifest.grant_sudo else '"no"',
-        internal_load_balancer="false" if manifest.load_balancers_subnets else "true",
+        internal_load_balancer='"false"' if manifest.load_balancers_subnets else '"true"',
         jupyterhub_inbound_ranges=inbound_ranges,
         team_kms_key_arn=team_manifest.team_kms_key_arn,
     )
@@ -118,7 +118,7 @@ def _landing_page(output_path: str, manifest: Manifest) -> None:
         cognito_external_provider_label=label,
         cognito_external_provider_domain=domain,
         cognito_external_provider_redirect=redirect,
-        internal_load_balancer="false" if manifest.load_balancers_subnets else "true",
+        internal_load_balancer='"false"' if manifest.load_balancers_subnets else '"true"',
     )
     with open(output, "w") as file:
         file.write(content)
@@ -132,7 +132,7 @@ def _cleanup_output(output_path: str) -> None:
 
 
 def _generate_env_manifest(manifest: Manifest, clean_up: bool = True) -> str:
-    output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "apps")
+    output_path = os.path.join(".orbit.out", manifest.name, "kubectl", "apps")
     os.makedirs(output_path, exist_ok=True)
     if clean_up:
         _cleanup_output(output_path=output_path)
@@ -157,7 +157,7 @@ def _generate_env_manifest(manifest: Manifest, clean_up: bool = True) -> str:
 
 
 def _prepare_team_manifest_path(manifest: Manifest) -> str:
-    output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "apps")
+    output_path = os.path.join(".orbit.out", manifest.name, "kubectl", "apps")
     os.makedirs(output_path, exist_ok=True)
     _cleanup_output(output_path=output_path)
     if manifest.account_id is None:
@@ -233,7 +233,7 @@ def _efs_driver_overlays(output_path: str, manifest: Manifest) -> None:
 
 
 def _generate_efs_driver_manifest(manifest: Manifest) -> str:
-    output_path = os.path.join(manifest.filename_dir, ".orbit.out", manifest.name, "kubectl", "efs_driver")
+    output_path = os.path.join(".orbit.out", manifest.name, "kubectl", "efs_driver")
     os.makedirs(output_path, exist_ok=True)
     _cleanup_output(output_path=output_path)
     if manifest.account_id is None:

@@ -17,16 +17,20 @@
 import json
 import os
 import sys
+from typing import Any, Dict, List, cast
 
 import boto3
 from tornado.log import app_log
 
 from jupyterhub_utils.authenticator import OrbitWorkbenchAuthenticator
-from jupyterhub_utils.ssm import ACCOUNT_ID, ENV_NAME, GRANT_SUDO, IMAGE, REGION, TEAM, TOOLKIT_S3_BUCKET
+from jupyterhub_utils.ssm import ACCOUNT_ID, ENV_NAME, GRANT_SUDO, IMAGE, IMAGE_SPARK, REGION, TEAM, TOOLKIT_S3_BUCKET
+
+PROFILES_TYPE = List[Dict[str, Any]]
 
 app_log.info("ACCOUNT_ID: %s", ACCOUNT_ID)
 app_log.info("ENV_NAME: %s", ENV_NAME)
 app_log.info("IMAGE: %s", IMAGE)
+app_log.info("IMAGE_SPARK: %s", IMAGE_SPARK)
 app_log.info("REGION: %s", REGION)
 app_log.info("TEAM: %s", TEAM)
 app_log.info("TOOLKIT_S3_BUCKET: %s", TOOLKIT_S3_BUCKET)
@@ -46,7 +50,10 @@ SPAWNER
 
 c.JupyterHub.spawner_class = "kubespawner.KubeSpawner"
 c.Spawner.default_url = "/lab"
-c.Spawner.cmd = ["jupyterhub-singleuser"]
+c.Spawner.cmd = ["/usr/local/bin/start-singleuser.sh"]
+c.Spawner.args = [
+    "--SingleUserServerApp.default_url=/lab",
+]
 c.KubeSpawner.start_timeout = 360
 c.KubeSpawner.common_labels = {}
 c.KubeSpawner.namespace = TEAM
@@ -123,6 +130,29 @@ profile_list_default = [
         },
         "default": True,
     },
+    {
+        "display_name": "Small",
+        "slug": "small",
+        "description": "4 CPU + 8G MEM",
+        "kubespawner_override": {
+            "cpu_guarantee": 4,
+            "cpu_limit": 4,
+            "mem_guarantee": "8G",
+            "mem_limit": "8G",
+        },
+    },
+    {
+        "display_name": "Small (Apache Spark)",
+        "slug": "small-spark",
+        "description": "4 CPU + 8G MEM",
+        "kubespawner_override": {
+            "image": IMAGE_SPARK,
+            "cpu_guarantee": 4,
+            "cpu_limit": 4,
+            "mem_guarantee": "8G",
+            "mem_limit": "8G",
+        },
+    },
 ]
 
 
@@ -136,10 +166,17 @@ def per_user_profiles(spawner):
 
     team_manifest_dic = json.loads(json_str)
     if team_manifest_dic.get("profiles"):
-        return team_manifest_dic["profiles"]
+        default_profiles = team_manifest_dic["profiles"]
     else:
-        app_log.info("No profiles found")
-        return profile_list_default
+        app_log.info("No default profiles found")
+        default_profiles = profile_list_default
+
+    ssm_parameter_name: str = f"/orbit/{env}/teams/{team}/user/profiles"
+    json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
+
+    user_profiles: PROFILES_TYPE = cast(PROFILES_TYPE, json.loads(json_str))
+    default_profiles.extend(user_profiles)
+    return default_profiles
 
 
 c.KubeSpawner.profile_list = per_user_profiles

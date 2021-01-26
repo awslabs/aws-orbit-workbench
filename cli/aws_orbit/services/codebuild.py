@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-_BUILD_WAIT_POLLING_DELAY: float = 2  # SECONDS
+_BUILD_WAIT_POLLING_DELAY: float = 5  # SECONDS
 
 CDK_VERSION = "~=1.67.0"
 CDK_MODULES = [
@@ -123,6 +123,15 @@ def start(
     timeout: int,
 ) -> str:
     client = manifest.boto3_client("codebuild")
+    repo: Optional[str] = None
+    credentials: Optional[str] = None
+    if manifest.images["code-build-image"]["source"] == "ecr":
+        repo = manifest.images["code-build-image"]["repository"]
+        if ".amazonaws.com/" not in repo:
+            repo = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/{repo}"
+        credentials = "SERVICE_ROLE"
+    _logger.debug("Repository: %s", repo)
+    _logger.debug("Credentials: %s", credentials)
     response: Dict[str, Any] = client.start_build(
         projectName=project_name,
         sourceTypeOverride="S3",
@@ -138,6 +147,8 @@ def start(
             },
             "s3Logs": {"status": "DISABLED"},
         },
+        imageOverride=repo,
+        imagePullCredentialsTypeOverride=credentials,
     )
     return str(response["build"]["id"])
 
@@ -221,6 +232,11 @@ def generate_spec(
     build: List[str] = [] if cmds_build is None else cmds_build
     post: List[str] = [] if cmds_post is None else cmds_post
     install = [
+        (
+            "nohup /usr/sbin/dockerd --host=unix:///var/run/docker.sock"
+            " --host=tcp://0.0.0.0:2375 --storage-driver=overlay&"
+        ),
+        'timeout 15 sh -c "until docker info; do echo .; sleep 1; done"',
         "ls -la",
         "cd bundle",
         "ls -la",

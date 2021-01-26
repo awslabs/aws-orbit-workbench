@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
     from aws_orbit.manifest import Manifest
@@ -34,3 +34,13 @@ def modify_vpc_endpoint(manifest: "Manifest", service_name: str, private_dns_ena
             _logger.debug(f"ep_s_name={ep_s_name}")
             if service_name in ep["ServiceName"]:
                 ec2_client.modify_vpc_endpoint(VpcEndpointId=ep["VpcEndpointId"], PrivateDnsEnabled=private_dns_enabled)
+
+
+def get_env_vpc_id(manifest: "Manifest") -> str:
+    ec2_client = manifest.boto3_client("ec2")
+    paginator = ec2_client.get_paginator("describe_vpcs")
+    response_iterator = paginator.paginate(Filters=[{"Name": "tag:Env", "Values": [f"orbit-{manifest.name}"]}])
+    for response in response_iterator:
+        for vpc in response["Vpcs"]:
+            return cast(str, vpc["VpcId"])
+    raise ValueError(f"VPC not found for env {manifest.name}")

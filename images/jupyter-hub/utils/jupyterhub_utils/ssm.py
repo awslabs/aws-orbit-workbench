@@ -37,3 +37,4 @@ COGNITO_USER_POOL_ID: str = MANIFEST["user-pool-id"]
 TOOLKIT_S3_BUCKET: str = MANIFEST["toolkit-s3-bucket"]
 TAG: str = MANIFEST["images"]["jupyter-user"]["version"]
 IMAGE: Optional[str] = f"{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/orbit-{ENV_NAME}-{TEAM}:latest"
+IMAGE_SPARK: Optional[str] = f"{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/orbit-{ENV_NAME}-{TEAM}-spark:latest"

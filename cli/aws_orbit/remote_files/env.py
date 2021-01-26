@@ -14,16 +14,17 @@
 
 import logging
 import os
-from typing import Any, Dict, Iterator, List, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 from aws_orbit import ORBIT_CLI_ROOT, cdk, docker
+from aws_orbit.changeset import ListChangeset
 from aws_orbit.manifest import Manifest
-from aws_orbit.services import cfn, ecr, efs
+from aws_orbit.services import cfn, ecr, efs, iam
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-DEFAULT_IMAGES: List[str] = ["landing-page", "jupyter-hub", "jupyter-user"]
+DEFAULT_IMAGES: List[str] = ["landing-page", "jupyter-hub", "jupyter-user", "jupyter-user-spark"]
 DEFAULT_ISOLATED_IMAGES: List[str] = ["aws-efs-csi-driver", "livenessprobe", "csi-node-driver-registrar"]
 
 
@@ -63,16 +64,36 @@ def _concat_images_into_args(manifest: Manifest, add_images: List[str], remove_i
     return add_images_str, remove_images_str
 
 
-def deploy(manifest: Manifest, add_images: List[str], remove_images: List[str]) -> None:
+def deploy(
+    manifest: Manifest,
+    add_images: List[str],
+    remove_images: List[str],
+    eks_system_masters_roles_changes: Optional[ListChangeset],
+) -> None:
     _logger.debug("Stack name: %s", manifest.env_stack_name)
     add_images_str, remove_images_str = _concat_images_into_args(
         manifest=manifest, add_images=add_images, remove_images=remove_images
     )
+    args: List[str]
+    if hasattr(manifest, "filename"):
+        args = ["manifest", manifest.filename, add_images_str, remove_images_str]
+    else:
+        args = ["env", manifest.name, add_images_str, remove_images_str]
+
+    if eks_system_masters_roles_changes and (
+        eks_system_masters_roles_changes.added_values or eks_system_masters_roles_changes.removed_values
+    ):
+        iam.update_assume_role_roles(
+            manifest=manifest,
+            role_name=f"orbit-{manifest.name}-admin",
+            roles_to_add=eks_system_masters_roles_changes.added_values,
+            roles_to_remove=eks_system_masters_roles_changes.removed_values,
+        )
     cdk.deploy(
         manifest=manifest,
         stack_name=manifest.env_stack_name,
         app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "env.py"),
-        args=[manifest.filename, add_images_str, remove_images_str],
+        args=args,
     )
     manifest.fetch_ssm()
     manifest.fetch_cognito_external_idp_data()
@@ -85,9 +106,13 @@ def destroy(manifest: Manifest) -> None:
         _logger.debug("DockerHub and ECR Logged in")
         _cleanup_remaining_resources(manifest=manifest)
         add_images_str, remove_images_str = _concat_images_into_args(manifest=manifest, add_images=[], remove_images=[])
+        if hasattr(manifest, "filename"):
+            args = ["manifest", manifest.filename, add_images_str, remove_images_str]
+        else:
+            args = ["env", manifest.name, add_images_str, remove_images_str]
         cdk.destroy(
             manifest=manifest,
             stack_name=manifest.env_stack_name,
             app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "env.py"),
-            args=[manifest.filename, add_images_str, remove_images_str],
+            args=args,
         )

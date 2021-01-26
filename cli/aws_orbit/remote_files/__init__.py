@@ -15,17 +15,17 @@
 from enum import Enum
 from typing import Callable, Tuple
 
+from aws_orbit.remote_files import build as build_image_module
+from aws_orbit.remote_files import delete as delete_image_module
 from aws_orbit.remote_files import deploy as deploy_module
-from aws_orbit.remote_files import deploy_image as deploy_image_module
 from aws_orbit.remote_files import destroy as destroy_module
-from aws_orbit.remote_files import destroy_image as destroy_image_module
 
-REMOTE_FUNC_TYPE = Callable[[str, Tuple[str, ...]], None]
+REMOTE_FUNC_TYPE = Callable[[Tuple[str, ...]], None]
 
 
 class RemoteCommands(Enum):
     deploy: REMOTE_FUNC_TYPE = deploy_module.deploy
     _deploy_image: REMOTE_FUNC_TYPE = deploy_module._deploy_image
     destroy: REMOTE_FUNC_TYPE = destroy_module.destroy
-    deploy_image: REMOTE_FUNC_TYPE = deploy_image_module.deploy_image
-    destroy_image: REMOTE_FUNC_TYPE = destroy_image_module.destroy_image
+    build_image: REMOTE_FUNC_TYPE = build_image_module.build_image
+    delete_image: REMOTE_FUNC_TYPE = delete_image_module.delete_image

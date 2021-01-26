@@ -48,6 +48,17 @@ class EcsBuilder:
         return cast(ecs.EcrImage, ecs.ContainerImage.from_ecr_repository(repository=repository, tag=tag))
 
     @staticmethod
+    def build_ecr_image_spark(scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest) -> ecs.EcrImage:
+        repository_name, tag = team_manifest.construct_ecr_repository_name(manifest.name).split(":")
+        repository_name += "-spark"
+        repository = ecr.Repository.from_repository_name(
+            scope,
+            "ecr_repository_spark",
+            repository_name=repository_name,
+        )
+        return cast(ecs.EcrImage, ecs.ContainerImage.from_ecr_repository(repository=repository, tag=tag))
+
+    @staticmethod
     def build_task_definition(
         scope: core.Construct,
         manifest: Manifest,

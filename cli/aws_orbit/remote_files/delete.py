@@ -22,16 +22,17 @@ from aws_orbit.services import ecr
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def destroy_image(filename: str, args: Tuple[str, ...]) -> None:
-    manifest: Manifest = Manifest(filename=filename)
-    _logger.debug("manifest.name %s", manifest.name)
+def delete_image(args: Tuple[str, ...]) -> None:
     _logger.debug("args %s", args)
-    if len(args) == 1:
-        image_name: str = args[0]
+    env_name: str = args[0]
+    manifest: Manifest = Manifest(filename=None, env=env_name, region=None)
+    _logger.debug("manifest.name %s", manifest.name)
+    if len(args) == 2:
+        image_name: str = args[1]
     else:
         raise ValueError("Unexpected number of values in args.")
 
-    env.deploy(manifest=manifest, add_images=[], remove_images=[image_name])
+    env.deploy(manifest=manifest, add_images=[], remove_images=[image_name], eks_system_masters_roles_changes=None)
     _logger.debug("Env changes deployed")
     ecr.delete_repo(manifest=manifest, repo=f"orbit-{manifest.name}-{image_name}")
     _logger.debug("Docker Image Destroyed from ECR")
