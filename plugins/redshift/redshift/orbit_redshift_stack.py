@@ -88,6 +88,7 @@ class RedshiftClustersCommon(core.Construct):
         self.teamspace_name = team_space_props["teamspace_name"]
         self.lake_role_name = team_space_props["lake_role_name"]
         self.lake_role_arn = f"arn:{self.partition}:iam::{self.account}:role/{self.lake_role_name}"
+        self.team_security_group_id = team_space_props["team_security_group_id"]
 
         vpc_id: str = team_space_props["vpc_id"]
         vpc: ec2.Vpc = ec2.Vpc.from_lookup(self, "Vpc", vpc_id=vpc_id)
@@ -118,8 +119,6 @@ class RedshiftClustersCommon(core.Construct):
             # subnet_ids=[subnet.subnet_id for subnet in vpc.private_subnets]
             subnet_ids=team_space_props["subnet_ids"],
         )
-        # TODO - Check if required
-        # smSecurityGroup = datamaker_team_space_props.sagemaker_security_group
 
         self._security_group = ec2.SecurityGroup(
             self,
@@ -129,11 +128,10 @@ class RedshiftClustersCommon(core.Construct):
             description=f"OrbitTeamSpace Redshift Security Group for {self.env_name}-{self.teamspace_name}",
         )
 
-        # TODO - Check if required
-        # self._security_group.add_ingress_rule(
-        #     smSecurityGroup,
-        #     ec2.Port.tcp(5439)
-        # )
+        self._security_group.add_ingress_rule(
+            self.team_security_group_id,
+            ec2.Port.tcp(5439)
+        )
 
         self._security_group.add_ingress_rule(self._security_group, ec2.Port.all_tcp())
 
@@ -308,7 +306,8 @@ class RedshiftStack(Stack):
             "teamspace_name": team_manifest.name,
             "lake_role_name": f"orbit-{team_manifest.manifest.name}-{team_manifest.name}-role",
             "vpc_id": manifest.vpc.asdict()["vpc-id"],
-            "subnet_ids": [sm.subnet_id for sm in manifest.vpc.subnets]
+            "subnet_ids": [sm.subnet_id for sm in manifest.vpc.subnets],
+            "team_security_group_id": team_manifest.team_security_group_id
         }
 
         # for sm in manifest.vpc.asdict()["subnets"]:
