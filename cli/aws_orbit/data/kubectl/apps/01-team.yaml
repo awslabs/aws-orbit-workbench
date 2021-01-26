@@ -98,7 +98,7 @@ roleRef:
   name: jupyterhub
 subjects:
   - kind: ServiceAccount
-    name: jupyterhub
+    name: ${team}
     namespace: ${team}
 ---
 apiVersion: v1
@@ -177,8 +177,6 @@ spec:
     spec:
       containers:
         - image: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-jupyter-hub:${tag}
-          securityContext:
-            fsGroup: 65534
           env:
             - name: AWS_DEFAULT_REGION
               value: ${region}
@@ -209,6 +207,8 @@ spec:
       nodeSelector:
         team: ${team}
       serviceAccountName: ${team}
+      securityContext:
+        fsGroup: 65534
       volumes:
         - name: efs-volume
           persistentVolumeClaim:
