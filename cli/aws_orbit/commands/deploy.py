@@ -99,7 +99,6 @@ def deploy_toolkit(
     source_location = os.getenv("CODEBUILD_SRC_DIR_CodeSource")
     sh.run(f"aws s3 cp --recursive {source_location}/samples s3://{manifest.toolkit_s3_bucket}/samples/")
 
-
     if credential_exist is False:
         dockerhub.store_credential(
             manifest=manifest,
