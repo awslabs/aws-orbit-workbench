@@ -28,7 +28,6 @@ def create_manifest(
     filename: str,
     region: Optional[str],
     demo: bool,
-    dev: bool,
 ) -> None:
     region_str: str = region if region is not None else utils.get_region()
     input = os.path.join(ORBIT_CLI_ROOT, "data", "init", "default-manifest.yaml")
@@ -44,7 +43,7 @@ def create_manifest(
         file.write(content)
 
 
-def init(name: str, region: Optional[str], demo: bool, dev: bool, debug: bool) -> None:
+def init(name: str, region: Optional[str], demo: bool, debug: bool) -> None:
     conf_dir = "conf"
     with MessagesContext("Initializing", debug=debug) as ctx:
         conf_dir_src = os.path.join(ORBIT_CLI_ROOT, "data", "init")
@@ -54,7 +53,7 @@ def init(name: str, region: Optional[str], demo: bool, dev: bool, debug: bool) -
         ctx.progress(50)
         name = name.lower()
         filename: str = os.path.join(conf_dir, f"{name}.yaml")
-        create_manifest(name=name, filename=filename, demo=demo, dev=dev, region=region)
+        create_manifest(name=name, filename=filename, demo=demo, region=region)
         ctx.info(f"Manifest generated as {filename}")
         ctx.progress(100)
         if demo:

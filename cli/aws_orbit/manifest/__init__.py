@@ -109,7 +109,6 @@ class Manifest:
         self.ssm_parameter_name: str
         self.cognito_external_provider_label: Optional[str]
         self.cognito_external_provider: Optional[str]
-        self.dev: bool
         self.demo: bool
         self.internet_accessible: bool
         self.codeartifact_domain: Optional[str]
@@ -171,7 +170,6 @@ class Manifest:
     def load_manifest_from_ssm(self, env: str) -> None:
         self.name = env
         self.ssm_parameter_name = f"/orbit/{self.name}/manifest"
-
         self.fetch_ssm()
         _logger.debug("Loaded manifest from SSM %s", self.ssm_parameter_name)
 
@@ -181,7 +179,6 @@ class Manifest:
         self.raw_file: MANIFEST_FILE_TYPE = self._read_manifest_file(filename=filename)
         self.name = cast(str, self.raw_file["name"])
         self.demo = cast(bool, self.raw_file.get("demo", False))
-        self.dev = cast(bool, self.raw_file.get("dev", False))
         self.ssm_parameter_name = f"/orbit/{self.name}/manifest"
         self.eks_system_masters_roles = cast(List[str], self.raw_file.get("eks-system-masters-roles", []))
         # Networking
@@ -350,7 +347,6 @@ class Manifest:
             self.cognito_external_provider_domain = cast(Optional[str], raw.get("cognito-external-provider-domain"))
             self.cognito_external_provider_redirect = cast(Optional[str], raw.get("cognito-external-provider-redirect"))
             self.user_pool_id = cast(Optional[str], raw.get("user-pool-id"))
-            self.dev = cast(bool, raw.get("dev", False))
             self.internet_accessible = cast(bool, raw.get("internet-accessible", False))
             self.demo = cast(bool, raw.get("demo", False))
             self.codeartifact_domain = cast(Optional[str], raw.get("codeartifact-domain", None))
@@ -510,8 +506,6 @@ class Manifest:
         }
         if self.demo:
             obj["demo"] = True
-        if self.dev:
-            obj["dev"] = True
         if self.codeartifact_domain is not None:
             obj["codeartifact-domain"] = self.codeartifact_domain
         if self.codeartifact_repository is not None:
