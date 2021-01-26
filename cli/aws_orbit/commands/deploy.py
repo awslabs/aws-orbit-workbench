@@ -96,8 +96,11 @@ def deploy_toolkit(
     sleep(15)  # Avoiding eventual consistency issues
     manifest.fetch_toolkit_data()
 
-    source_location = os.getenv("CODEBUILD_SRC_DIR_CodeSource")
-    sh.run(f"aws s3 cp --recursive {source_location}/samples s3://{manifest.toolkit_s3_bucket}/samples/")
+    source_location: Optional[str] = os.getenv("CODEBUILD_SRC_DIR_CodeSource")
+    if source_location:
+        sh.run(f"aws s3 cp --recursive {source_location}/samples s3://{manifest.toolkit_s3_bucket}/samples/")
+    else:
+        _logger.debug("Skipping samples copy to s3...")
 
     if credential_exist is False:
         dockerhub.store_credential(
