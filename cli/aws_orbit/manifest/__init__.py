@@ -144,6 +144,30 @@ class Manifest:
         self.eks_stack_name: str = f"eksctl-{self.env_stack_name}-cluster"
         self.toolkit_codebuild_project: str = f"orbit-{self.name}"
 
+        # Need to fill up
+
+        self.deploy_id: Optional[str] = None  # toolkit
+        self.toolkit_kms_arn: Optional[str] = None  # toolkit
+        self.toolkit_kms_alias: Optional[str] = None  # toolkit
+        self.toolkit_s3_bucket: Optional[str] = None  # toolkit
+        self.cdk_toolkit_s3_bucket: Optional[str] = None  # toolkit
+
+        self.raw_ssm: Optional[MANIFEST_TYPE] = None  # Env
+        self.eks_cluster_role_arn: Optional[str] = None  # Env
+        self.eks_fargate_profile_role_arn: Optional[str] = None  # Env
+        self.eks_env_nodegroup_role_arn: Optional[str] = None  # Env
+        self.eks_oidc_provider: Optional[str] = None  # Env
+        self.user_pool_client_id: Optional[str] = None  # Env
+        self.identity_pool_id: Optional[str] = None  # Env
+        self.user_pool_id: Optional[str] = None  # Env
+        self.cognito_users_urls: Optional[str] = None  # Env
+
+        self.landing_page_url: Optional[str] = None  # Kubectl
+        self.elbs: Optional[Dict[str, Dict[str, Any]]] = None  # Kubectl
+
+        self.cognito_external_provider_domain: Optional[str] = None  # Cognito
+        self.cognito_external_provider_redirect: Optional[str] = None  # Cognito
+
     def load_manifest_from_ssm(self, env: str) -> None:
         self.name = env
         self.ssm_parameter_name = f"/orbit/{self.name}/manifest"
@@ -192,30 +216,6 @@ class Manifest:
 
         self.cognito_external_provider = cast(Optional[str], self.raw_file.get("external-idp", None))
         self.cognito_external_provider_label = cast(Optional[str], self.raw_file.get("external-idp-label", None))
-
-        # Need to fill up
-
-        self.deploy_id: Optional[str] = None  # toolkit
-        self.toolkit_kms_arn: Optional[str] = None  # toolkit
-        self.toolkit_kms_alias: Optional[str] = None  # toolkit
-        self.toolkit_s3_bucket: Optional[str] = None  # toolkit
-        self.cdk_toolkit_s3_bucket: Optional[str] = None  # toolkit
-
-        self.raw_ssm: Optional[MANIFEST_TYPE] = None  # Env
-        self.eks_cluster_role_arn: Optional[str] = None  # Env
-        self.eks_fargate_profile_role_arn: Optional[str] = None  # Env
-        self.eks_env_nodegroup_role_arn: Optional[str] = None  # Env
-        self.eks_oidc_provider: Optional[str] = None  # Env
-        self.user_pool_client_id: Optional[str] = None  # Env
-        self.identity_pool_id: Optional[str] = None  # Env
-        self.user_pool_id: Optional[str] = None  # Env
-        self.cognito_users_urls: Optional[str] = None  # Env
-
-        self.landing_page_url: Optional[str] = None  # Kubectl
-        self.elbs: Optional[Dict[str, Dict[str, Any]]] = None  # Kubectl
-
-        self.cognito_external_provider_domain: Optional[str] = None  # Cognito
-        self.cognito_external_provider_redirect: Optional[str] = None  # Cognito
 
     def get_account_id(self) -> str:
         return str(self.boto3_client(service_name="sts").get_caller_identity().get("Account"))
