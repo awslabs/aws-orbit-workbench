@@ -123,25 +123,7 @@ class Manifest:
             self.region: str = region
         else:
             self.region = utils.get_region()
-
         self.account_id: str = self.get_account_id()
-
-        if filename:
-            self.load_manifest_from_file(filename)
-        elif env:
-            self.load_manifest_from_ssm(env)
-        else:
-            raise RuntimeError("Must provide either a manifest file or environment name and neither were provided.")
-
-        self.env_tag: str = f"orbit-{self.name}"
-
-        self.ssm_dockerhub_parameter_name: str = f"/orbit/{self.name}/dockerhub"
-        self.toolkit_stack_name: str = f"orbit-{self.name}-toolkit"
-        self.cdk_toolkit_stack_name: str = f"orbit-{self.name}-cdk-toolkit"
-        self.demo_stack_name: str = f"orbit-{self.name}-demo"
-        self.env_stack_name: str = f"orbit-{self.name}"
-        self.eks_stack_name: str = f"eksctl-{self.env_stack_name}-cluster"
-        self.toolkit_codebuild_project: str = f"orbit-{self.name}"
 
         # Need to fill up
 
@@ -166,6 +148,22 @@ class Manifest:
 
         self.cognito_external_provider_domain: Optional[str] = None  # Cognito
         self.cognito_external_provider_redirect: Optional[str] = None  # Cognito
+
+        if filename:
+            self.load_manifest_from_file(filename)
+        elif env:
+            self.load_manifest_from_ssm(env)
+        else:
+            raise RuntimeError("Must provide either a manifest file or environment name and neither were provided.")
+
+        self.env_tag: str = f"orbit-{self.name}"
+        self.ssm_dockerhub_parameter_name: str = f"/orbit/{self.name}/dockerhub"
+        self.toolkit_stack_name: str = f"orbit-{self.name}-toolkit"
+        self.cdk_toolkit_stack_name: str = f"orbit-{self.name}-cdk-toolkit"
+        self.demo_stack_name: str = f"orbit-{self.name}-demo"
+        self.env_stack_name: str = f"orbit-{self.name}"
+        self.eks_stack_name: str = f"eksctl-{self.env_stack_name}-cluster"
+        self.toolkit_codebuild_project: str = f"orbit-{self.name}"
 
     def load_manifest_from_ssm(self, env: str) -> None:
         self.name = env
@@ -540,8 +538,8 @@ class Manifest:
         return str(json.dumps(obj=self.asdict(), sort_keys=True))
 
 
-def get_team_by_name(teams: List["TeamManifest"], name: str) -> "TeamManifest":
+def get_team_by_name(teams: List["TeamManifest"], name: str) -> Optional["TeamManifest"]:
     for t in teams:
         if t.name == name:
             return t
-    raise RuntimeError(f"Team {name} not found!")
+    return None

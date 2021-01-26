@@ -278,7 +278,10 @@ def _check_plugins(
     removed_list: List[str] = teams_changeset.removed_teams_names if teams_changeset else []
     _logger.debug("removed_list: %s", removed_list)
     if teams_changeset and removed_list:  # Removed teams
-        teams_manifests += [get_team_by_name(teams=teams_changeset.old_teams, name=x) for x in removed_list]
+        removed: List[Optional["TeamManifest"]] = [
+            get_team_by_name(teams=teams_changeset.old_teams, name=x) for x in removed_list
+        ]
+        teams_manifests += [t for t in removed if t is not None]
 
     for team_manifest in teams_manifests:
         plugin_changeset: Optional[PluginChangeset] = _check_team_plugins(
