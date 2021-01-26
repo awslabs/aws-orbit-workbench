@@ -123,6 +123,15 @@ def start(
     timeout: int,
 ) -> str:
     client = manifest.boto3_client("codebuild")
+    repo: Optional[str] = None
+    credentials: Optional[str] = None
+    if manifest.images["code-build-image"]["source"] == "ecr":
+        repo = manifest.images["code-build-image"]["repository"]
+        if ".amazonaws.com/" not in repo:
+            repo = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/{repo}"
+        credentials = "SERVICE_ROLE"
+    _logger.debug("Repository: %s", repo)
+    _logger.debug("Credentials: %s", credentials)
     response: Dict[str, Any] = client.start_build(
         projectName=project_name,
         sourceTypeOverride="S3",
@@ -138,9 +147,8 @@ def start(
             },
             "s3Logs": {"status": "DISABLED"},
         },
-        imageOverride=manifest.images["code-build-image"]["repository"]
-        if manifest.images["code-build-image"]["source"] == "ecr"
-        else None,
+        imageOverride=repo,
+        imagePullCredentialsTypeOverride=credentials,
     )
     return str(response["build"]["id"])
 
@@ -241,16 +249,13 @@ def generate_spec(
     ]
 
     # Orbit Workbench CLI
-    if manifest.dev:
-        install.append("pip install -e cli/")
-    else:
-        if manifest.codeartifact_domain and manifest.codeartifact_repository:
-            install.append(
-                "aws codeartifact login --tool pip "
-                f"--domain {manifest.codeartifact_domain} "
-                f"--repository {manifest.codeartifact_repository}"
-            )
-        install.append("pip install aws-orbit")
+    if manifest.codeartifact_domain and manifest.codeartifact_repository:
+        install.append(
+            "aws codeartifact login --tool pip "
+            f"--domain {manifest.codeartifact_domain} "
+            f"--repository {manifest.codeartifact_repository}"
+        )
+    install.append("pip install aws-orbit")
 
     # Plugins
     if plugins:

@@ -127,6 +127,7 @@ Resources:
               - ecr:*
             Resource:
               - arn:aws:ecr:${region}:${account_id}:repository/orbit-${env_name}-*
+              - arn:aws:ecr:${region}:${account_id}:repository/aws-orbit-code-build-base
           - Effect: Allow
             Action:
               - states:*
