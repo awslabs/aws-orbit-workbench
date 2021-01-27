@@ -109,7 +109,6 @@ class Manifest:
         self.ssm_parameter_name: str
         self.cognito_external_provider_label: Optional[str]
         self.cognito_external_provider: Optional[str]
-        self.dev: bool
         self.demo: bool
         self.internet_accessible: bool
         self.codeartifact_domain: Optional[str]
@@ -124,25 +123,7 @@ class Manifest:
             self.region: str = region
         else:
             self.region = utils.get_region()
-
         self.account_id: str = self.get_account_id()
-
-        if filename:
-            self.load_manifest_from_file(filename)
-        elif env:
-            self.load_manifest_from_ssm(env)
-        else:
-            raise RuntimeError("Must provide either a manifest file or environment name and neither were provided.")
-
-        self.env_tag: str = f"orbit-{self.name}"
-
-        self.ssm_dockerhub_parameter_name: str = f"/orbit/{self.name}/dockerhub"
-        self.toolkit_stack_name: str = f"orbit-{self.name}-toolkit"
-        self.cdk_toolkit_stack_name: str = f"orbit-{self.name}-cdk-toolkit"
-        self.demo_stack_name: str = f"orbit-{self.name}-demo"
-        self.env_stack_name: str = f"orbit-{self.name}"
-        self.eks_stack_name: str = f"eksctl-{self.env_stack_name}-cluster"
-        self.toolkit_codebuild_project: str = f"orbit-{self.name}"
 
         # Need to fill up
 
@@ -168,10 +149,25 @@ class Manifest:
         self.cognito_external_provider_domain: Optional[str] = None  # Cognito
         self.cognito_external_provider_redirect: Optional[str] = None  # Cognito
 
+        if filename:
+            self.load_manifest_from_file(filename)
+        elif env:
+            self.load_manifest_from_ssm(env)
+        else:
+            raise RuntimeError("Must provide either a manifest file or environment name and neither were provided.")
+
+        self.env_tag: str = f"orbit-{self.name}"
+        self.ssm_dockerhub_parameter_name: str = f"/orbit/{self.name}/dockerhub"
+        self.toolkit_stack_name: str = f"orbit-{self.name}-toolkit"
+        self.cdk_toolkit_stack_name: str = f"orbit-{self.name}-cdk-toolkit"
+        self.demo_stack_name: str = f"orbit-{self.name}-demo"
+        self.env_stack_name: str = f"orbit-{self.name}"
+        self.eks_stack_name: str = f"eksctl-{self.env_stack_name}-cluster"
+        self.toolkit_codebuild_project: str = f"orbit-{self.name}"
+
     def load_manifest_from_ssm(self, env: str) -> None:
         self.name = env
         self.ssm_parameter_name = f"/orbit/{self.name}/manifest"
-
         self.fetch_ssm()
         _logger.debug("Loaded manifest from SSM %s", self.ssm_parameter_name)
 
@@ -181,7 +177,6 @@ class Manifest:
         self.raw_file: MANIFEST_FILE_TYPE = self._read_manifest_file(filename=filename)
         self.name = cast(str, self.raw_file["name"])
         self.demo = cast(bool, self.raw_file.get("demo", False))
-        self.dev = cast(bool, self.raw_file.get("dev", False))
         self.ssm_parameter_name = f"/orbit/{self.name}/manifest"
         self.eks_system_masters_roles = cast(List[str], self.raw_file.get("eks-system-masters-roles", []))
         # Networking
@@ -304,7 +299,6 @@ class Manifest:
             self.cognito_external_provider_domain = cast(Optional[str], raw.get("cognito-external-provider-domain"))
             self.cognito_external_provider_redirect = cast(Optional[str], raw.get("cognito-external-provider-redirect"))
             self.user_pool_id = cast(Optional[str], raw.get("user-pool-id"))
-            self.dev = cast(bool, raw.get("dev", False))
             self.internet_accessible = cast(bool, raw.get("internet-accessible", False))
             self.demo = cast(bool, raw.get("demo", False))
             self.codeartifact_domain = cast(Optional[str], raw.get("codeartifact-domain", None))
@@ -464,8 +458,6 @@ class Manifest:
         }
         if self.demo:
             obj["demo"] = True
-        if self.dev:
-            obj["dev"] = True
         if self.codeartifact_domain is not None:
             obj["codeartifact-domain"] = self.codeartifact_domain
         if self.codeartifact_repository is not None:
@@ -500,8 +492,8 @@ class Manifest:
         return str(json.dumps(obj=self.asdict(), sort_keys=True))
 
 
-def get_team_by_name(teams: List["TeamManifest"], name: str) -> "TeamManifest":
+def get_team_by_name(teams: List["TeamManifest"], name: str) -> Optional["TeamManifest"]:
     for t in teams:
         if t.name == name:
             return t
-    raise RuntimeError(f"Team {name} not found!")
+    return None

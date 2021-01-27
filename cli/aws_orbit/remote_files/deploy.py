@@ -65,7 +65,7 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
     _logger.debug("Docker Image Deployed to ECR")
 
 
-def deploy_image_remotely(manifest: Manifest, name: str, bundle_path: str, buildspec: codebuild.SPEC_TYPE) -> None:
+def _deploy_image_remotely(manifest: Manifest, name: str, bundle_path: str, buildspec: codebuild.SPEC_TYPE) -> None:
     _logger.debug("Deploying %s Docker Image remotely into ECR", name)
     remote.run(
         command_name=f"deploy_image-{name}",
@@ -78,25 +78,11 @@ def deploy_image_remotely(manifest: Manifest, name: str, bundle_path: str, build
     _logger.debug("%s Docker Image deployed into ECR", name)
 
 
-def deploy_images_remotely(manifest: Manifest) -> None:
-    with concurrent.futures.ThreadPoolExecutor(max_workers=7) as executor:
+def _deploy_images_batch(manifest: Manifest, images: List[Tuple[str, Optional[str]]]) -> None:
+    _logger.debug("images:\n%s", images)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(images)) as executor:
         futures: List[Future[Any]] = []
-
-        images: List[Tuple[str, Optional[str]]] = [
-            ("jupyter-hub", None),
-            ("jupyter-user", "build.sh"),
-            ("jupyter-user-spark", None),
-            ("landing-page", "build.sh"),
-        ]
-
-        if manifest.internet_accessible is False:
-            images += [
-                ("aws-efs-csi-driver", None),
-                ("livenessprobe", None),
-                ("csi-node-driver-registrar", None),
-            ]
-
-        _logger.debug("images:\n%s", images)
 
         for name, script in images:
             _logger.debug("name: %s | script: %s", name, script)
@@ -119,16 +105,42 @@ def deploy_images_remotely(manifest: Manifest) -> None:
                 plugins=False,
                 cmds_build=[f"orbit remote --command _deploy_image ./conf/manifest.yaml {name} {script_str}"],
             )
-            futures.append(executor.submit(deploy_image_remotely, manifest, name, bundle_path, buildspec))
+            futures.append(executor.submit(_deploy_image_remotely, manifest, name, bundle_path, buildspec))
 
         for f in futures:
             f.result()
 
 
+def deploy_images_remotely(manifest: Manifest) -> None:
+    # First batch
+    images: List[Tuple[str, Optional[str]]] = [
+        ("jupyter-hub", None),
+        ("jupyter-user", "build.sh"),
+        ("landing-page", "build.sh"),
+    ]
+    _logger.debug("Building the first images batch")
+    _deploy_images_batch(manifest=manifest, images=images)
+
+    # Second Batch
+    images = [
+        ("jupyter-user-spark", None),
+    ]
+    if manifest.internet_accessible is False:
+        images += [
+            ("aws-efs-csi-driver", None),
+            ("livenessprobe", None),
+            ("csi-node-driver-registrar", None),
+        ]
+    _logger.debug("Building the second images batch")
+    _deploy_images_batch(manifest=manifest, images=images)
+
+
 def eval_teams_change(manifest: Manifest, teams_changeset: "TeamsChangeset") -> None:
     _logger.debug("Teams %s must be deleted.", teams_changeset.removed_teams_names)
     for name in teams_changeset.removed_teams_names:
-        team_manifest: "TeamManifest" = get_team_by_name(teams=teams_changeset.old_teams, name=name)
+        team_manifest: Optional["TeamManifest"] = get_team_by_name(teams=teams_changeset.old_teams, name=name)
+        if team_manifest is None:
+            raise RuntimeError(f"Team {name} not found!")
         _logger.debug("Destroying team %s", name)
         plugins.PLUGINS_REGISTRIES.destroy_team_plugins(manifest=manifest, team_manifest=team_manifest)
         kubectl.destroy_team(manifest=manifest, team_manifest=team_manifest)
