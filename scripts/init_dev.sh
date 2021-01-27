@@ -13,6 +13,6 @@ aws codeartifact create-repository \
     --repository $REPOSITORY
 
 aws codeartifact associate-external-connection \
-    --doman $DOMAIN \
+    --domain $DOMAIN \
     --repository $REPOSITORY \
     --external-connection "public:pypi"
