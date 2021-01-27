@@ -116,7 +116,8 @@ class Manifest:
         self.teams: List[TeamManifest]
         self.load_balancers_subnets: List[str]
         self.eks_system_masters_roles: List[str]
-
+        self.scratch_bucket_arn: Optional[str]
+        self.shared_efs_fs_id: Optional[str]
         if filename and env:
             raise RuntimeError("Must provide either a manifest file or environment name and neither were provided.")
         if region:
@@ -142,7 +143,6 @@ class Manifest:
         self.identity_pool_id: Optional[str] = None  # Env
         self.user_pool_id: Optional[str] = None  # Env
         self.cognito_users_urls: Optional[str] = None  # Env
-
         self.landing_page_url: Optional[str] = None  # Kubectl
         self.elbs: Optional[Dict[str, Dict[str, Any]]] = None  # Kubectl
 
@@ -179,6 +179,8 @@ class Manifest:
         self.demo = cast(bool, self.raw_file.get("demo", False))
         self.ssm_parameter_name = f"/orbit/{self.name}/manifest"
         self.eks_system_masters_roles = cast(List[str], self.raw_file.get("eks-system-masters-roles", []))
+        self.scratch_bucket_arn = cast(str, self.raw_file.get("scratch-bucket-arn"))
+        self.shared_efs_fs_id = cast(Optional[str], self.raw_file.get("efs-fs-id"))
         # Networking
         if "networking" not in self.raw_file:
             raise RuntimeError("Invalid manifest: Missing the 'networking' attribute.")
@@ -339,20 +341,26 @@ class Manifest:
             self.eks_oidc_provider = cast(Optional[str], raw.get("eks-oidc-provider"))
             self.eks_system_masters_roles = cast(List[str], raw.get("eks-system-masters-roles", []))
             self.user_pool_client_id = cast(Optional[str], raw.get("user-pool-client-id"))
+            self.scratch_bucket_arn = cast(Optional[str], raw.get("scratch-bucket-arn"))
             self.identity_pool_id = cast(Optional[str], raw.get("identity-pool-id"))
             self.cognito_external_provider = cast(Optional[str], raw.get("cognito-external-provider", None))
             self.cognito_external_provider_label = cast(Optional[str], raw.get("cognito-external-provider-label", None))
             self.cognito_external_provider_domain = cast(Optional[str], raw.get("cognito-external-provider-domain"))
             self.cognito_external_provider_redirect = cast(Optional[str], raw.get("cognito-external-provider-redirect"))
-            self.user_pool_id = cast(Optional[str], raw.get("user-pool-id"))
+            self.shared_efs_fs_id = cast(Optional[str], raw.get("efs-fs-id"))
             self.internet_accessible = cast(bool, raw.get("internet-accessible", False))
             self.demo = cast(bool, raw.get("demo", False))
             self.codeartifact_domain = cast(Optional[str], raw.get("codeartifact-domain", None))
             self.codeartifact_repository = cast(Optional[str], raw.get("codeartifact-repository", None))
             self.images = cast(MANIFEST_FILE_IMAGES_TYPE, raw.get("images"))
             self.load_balancers_subnets = cast(List[str], raw.get("load-balancers-subnets"))
+            self.user_pool_id = cast(Optional[str], raw.get("user-pool-id"))
             if self.user_pool_id is not None:
                 self.cognito_users_urls = cognito.get_users_url(user_pool_id=self.user_pool_id, region=self.region)
+                self.cognito_pool_arn = cognito.get_pool_arn(
+                    user_pool_id=self.user_pool_id, region=self.region, account=self.account_id
+                )
+
             if not hasattr(self, "vpc"):
                 raw_vpc = cast("MANIFEST_VPC_TYPE", raw.get("vpc"))
                 subnets_raw: List[Dict[str, str]] = cast(List[Dict[str, str]], raw_vpc.get("subnets"))

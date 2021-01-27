@@ -57,6 +57,10 @@ def init(name: str, region: Optional[str], demo: bool, debug: bool) -> None:
         ctx.info(f"Manifest generated as {filename}")
         ctx.progress(100)
         if demo:
-            ctx.tip(f"Recommended next step: {stylize(f'orbit deploy -f {filename}')}")
+            ctx.tip(f"Recommended next step: {stylize(f'orbit deploy_env_and_teams -f {filename}')}")
         else:
-            ctx.tip(f"Fill up the manifest file ({filename}) " f"and run: " f"{stylize(f'orbit deploy -f {filename}')}")
+            ctx.tip(
+                f"Fill up the manifest file ({filename}) "
+                f"and run: "
+                f"{stylize(f'orbit deploy_env_and_teams -f {filename}')}"
+            )

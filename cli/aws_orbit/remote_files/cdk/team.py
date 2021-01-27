@@ -18,7 +18,6 @@ import shutil
 import sys
 from typing import List
 
-import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecr as ecr
 import aws_cdk.aws_efs as efs
@@ -33,12 +32,10 @@ from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.subnet import SubnetKind
 from aws_orbit.manifest.team import TeamManifest
 from aws_orbit.remote_files.cdk.team_builders._lambda import LambdaBuilder
-from aws_orbit.remote_files.cdk.team_builders.cognito import CognitoBuilder
 from aws_orbit.remote_files.cdk.team_builders.ec2 import Ec2Builder
 from aws_orbit.remote_files.cdk.team_builders.ecs import EcsBuilder
 from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
 from aws_orbit.remote_files.cdk.team_builders.iam import IamBuilder
-from aws_orbit.remote_files.cdk.team_builders.s3 import S3Builder
 from aws_orbit.remote_files.cdk.team_builders.stepfunctions import StateMachineBuilder
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -90,7 +87,9 @@ class Team(Stack):
                 ]
             ),
         )
-
+        self.team_security_group: ec2.SecurityGroup = Ec2Builder.build_team_security_group(
+            scope=self, manifest=manifest, team_manifest=team_manifest, vpc=self.i_vpc
+        )
         self.ecr_repo: ecr.Repository = ecr.Repository(
             scope=self,
             id="repo",
@@ -104,11 +103,9 @@ class Team(Stack):
         )
 
         self.policies: List[str] = self.team_manifest.policies
-
-        self.scratch_bucket: s3.Bucket = S3Builder.build_scratch_bucket(
-            scope=self, manifest=manifest, team_manifest=team_manifest, kms_key=self.team_kms_key
+        self.scratch_bucket = s3.Bucket.from_bucket_arn(
+            scope=self, id="scratch_bucket", bucket_arn=self.manifest.scratch_bucket_arn
         )
-
         self.role_eks_nodegroup = IamBuilder.build_team_role(
             scope=self,
             manifest=self.manifest,
@@ -117,30 +114,13 @@ class Team(Stack):
             scratch_bucket=self.scratch_bucket,
             team_kms_key=self.team_kms_key,
         )
-
-        self.sg: ec2.SecurityGroup = Ec2Builder.build_team_security_group(
-            scope=self, manifest=manifest, team_manifest=team_manifest, vpc=self.i_vpc
+        shared_fs_name: str = f"orbit-{manifest.name}-{team_manifest.name}-shared-fs"
+        self.shared_fs: efs.FileSystem = efs.FileSystem.from_file_system_attributes(
+            scope=scope, id=shared_fs_name, file_system_id=manifest.shared_efs_fs_id
         )
 
-        self.sg_efs: ec2.SecurityGroup = Ec2Builder.build_efs_security_group(
-            scope=self,
-            manifest=manifest,
-            team_manifest=team_manifest,
-            vpc=self.i_vpc,
-            subnet_kind=SubnetKind.private if manifest.internet_accessible else SubnetKind.isolated,
-        )
-        self.efs: efs.FileSystem = EfsBuilder.build_file_system(
-            scope=self,
-            manifest=manifest,
-            team_manifest=team_manifest,
-            vpc=self.i_vpc,
-            efs_security_group=self.sg_efs,
-            subnets=self.i_private_subnets if self.manifest.internet_accessible else self.i_isolated_subnets,
-            team_kms_key=self.team_kms_key,
-        )
-
-        self.user_pool_group: cognito.CfnUserPoolGroup = CognitoBuilder.build_user_pool_group(
-            scope=self, manifest=manifest, team_manifest=team_manifest
+        self.efs_ap: efs.AccessPoint = EfsBuilder.build_file_system_access_point(
+            scope=self, team_manifest=team_manifest, shared_fs=self.shared_fs
         )
 
         self.ecs_cluster = EcsBuilder.build_cluster(
@@ -157,7 +137,8 @@ class Team(Stack):
             team_manifest=team_manifest,
             ecs_execution_role=self.ecs_execution_role,
             ecs_task_role=self.role_eks_nodegroup,
-            file_system=self.efs,
+            file_system=self.shared_fs,
+            fs_accesspoint=self.efs_ap,
             image=self.ecr_image,
         )
         self.container_runner_role = IamBuilder.build_container_runner_role(
@@ -169,7 +150,7 @@ class Team(Stack):
             team_manifest=team_manifest,
             cluster=self.ecs_cluster,
             task_definition=self.ecs_task_definition,
-            efs_security_group=self.sg_efs,
+            team_security_group=self.team_security_group,
             subnets=self.i_private_subnets if self.manifest.internet_accessible else self.i_isolated_subnets,
             role=self.container_runner_role,
             scratch_bucket=self.scratch_bucket,
@@ -206,14 +187,14 @@ class Team(Stack):
             eks_ec2_runner=self.eks_ec2_runner,
         )
 
-        self.team_manifest.efs_id = self.efs.file_system_id
+        self.team_manifest.efs_id = self.shared_fs.file_system_id
         self.team_manifest.eks_nodegroup_role_arn = self.role_eks_nodegroup.role_arn
         self.team_manifest.scratch_bucket = self.scratch_bucket.bucket_name
         self.team_manifest.ecs_cluster_name = self.ecs_cluster.cluster_name
         self.team_manifest.container_runner_arn = self.container_runner.function_arn
         self.team_manifest.eks_k8s_api_arn = self.eks_k8s_api.state_machine_arn
         self.team_manifest.team_kms_key_arn = self.team_kms_key.key_arn
-        self.team_manifest.team_security_group_id = self.sg.security_group_id
+        self.team_manifest.team_security_group_id = self.team_security_group.security_group_id
 
         self.manifest_parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,

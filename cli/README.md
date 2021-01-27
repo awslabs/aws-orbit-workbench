@@ -60,7 +60,7 @@
 
 ### Deploying
 
-* `orbit deploy -f my-env.yaml`
+* `orbit deploy_env_and_teams -f my-env.yaml`
 
 ### Destroying
 

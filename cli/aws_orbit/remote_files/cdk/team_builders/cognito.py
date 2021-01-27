@@ -14,21 +14,15 @@
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.core as core
-from aws_orbit.manifest import Manifest
-from aws_orbit.manifest.team import TeamManifest
 
 
 class CognitoBuilder:
     @staticmethod
-    def build_user_pool_group(
-        scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest
-    ) -> cognito.CfnUserPoolGroup:
-        if manifest.user_pool_id is None:
-            raise RuntimeError("Empty manifest.user_pool_id")
+    def build_user_pool_group(scope: core.Construct, user_pool_id: str, team_name: str) -> cognito.CfnUserPoolGroup:
         return cognito.CfnUserPoolGroup(
             scope=scope,
-            id=f"{team_manifest.name}_group",
-            user_pool_id=manifest.user_pool_id,
-            group_name=team_manifest.name,
-            description=f"{team_manifest.name} users group.",
+            id=f"{team_name}_group",
+            user_pool_id=user_pool_id,
+            group_name=team_name,
+            description=f"{team_name} users group.",
         )
