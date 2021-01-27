@@ -62,7 +62,7 @@ def destroy_remaining_resources(manifest: Manifest, keep_demo: bool) -> None:
 def destroy(env: str, teams_only: bool, keep_demo: bool, debug: bool) -> None:
     with MessagesContext("Destroying", debug=debug) as ctx:
         manifest = Manifest(filename=None, env=env, region=None)
-        if manifest.raw_ssm is None and teams_only is False:
+        if manifest.raw_ssm is None:
             ctx.info(f"Environment {env} not found")
             destroy_remaining_resources(manifest=manifest, keep_demo=keep_demo)
             ctx.progress(100)
