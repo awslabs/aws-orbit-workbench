@@ -1,0 +1,25 @@
+name: dev-env
+demo: true
+dev: false
+codeartifact-domain: aws-orbit
+codeartifact-repository: python-repository
+images:
+    jupyter-hub:
+        repository: aws-orbit-jupyter-hub
+        source: ecr
+        version: latest
+    jupyter-user:
+        repository: aws-orbit-jupyter-user
+        source: ecr
+        version: latest
+    landing-page:
+        repository: aws-orbit-landing-page
+        source: ecr
+        version: latest
+networking:
+    data:
+        internet-accessible: false
+        nodes-subnets: []
+    frontend:
+        load-balancers-subnets: []
+teams: []
