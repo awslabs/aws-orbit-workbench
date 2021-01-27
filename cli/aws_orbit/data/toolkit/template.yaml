@@ -71,7 +71,7 @@ Resources:
               - cognito-idp:DeleteUserPoolClient
               - cognito-idp:CreateGroup
               - cognito-idp:DeleteGroup
-              - cognito-identity:TagResource
+              - cognito-idp:TagResource
               - cognito-identity:CreateIdentityPool
               - cognito-identity:DeleteIdentityPool
               - cognito-identity:UntagResource
