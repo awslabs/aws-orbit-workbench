@@ -147,7 +147,7 @@ def destroy(manifest: Manifest) -> None:
             time.sleep(60)  # Given extra 60 seconds if the EKS stack was just delete
         cleanup.demo_remaining_dependencies(manifest=manifest)
         _logger.debug("Destroying DEMO...")
-        if manifest.filename:
+        if hasattr(manifest, "filename") and manifest.filename:
             cdk.destroy(
                 manifest=manifest,
                 stack_name=manifest.demo_stack_name,
