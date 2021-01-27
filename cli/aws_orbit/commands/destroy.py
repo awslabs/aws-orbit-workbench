@@ -26,15 +26,12 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 def destroy_toolkit(manifest: Manifest) -> None:
     if manifest.toolkit_s3_bucket is None:
-        if manifest.toolkit_s3_bucket is None:
-            s3.delete_bucket_by_prefix(
-                manifest=manifest, prefix=f"orbit-{manifest.name}-toolkit-{manifest.account_id}-"
-            )
-        else:
-            try:
-                s3.delete_bucket(manifest=manifest, bucket=manifest.toolkit_s3_bucket)
-            except Exception as ex:
-                _logger.debug("Skipping Toolkit bucket deletion. Cause: %s", ex)
+        s3.delete_bucket_by_prefix(manifest=manifest, prefix=f"orbit-{manifest.name}-toolkit-{manifest.account_id}-")
+    else:
+        try:
+            s3.delete_bucket(manifest=manifest, bucket=manifest.toolkit_s3_bucket)
+        except Exception as ex:
+            _logger.debug("Skipping Toolkit bucket deletion. Cause: %s", ex)
     if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.toolkit_stack_name):
         cfn.destroy_stack(manifest=manifest, stack_name=manifest.toolkit_stack_name)
 
