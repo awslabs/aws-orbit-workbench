@@ -29,7 +29,7 @@ Resources:
               DaysAfterInitiation: 1
             NoncurrentVersionExpirationInDays: 1
             Prefix: cli/remote/
-  ManagedPolicy:
+  OrbitAdminPolicyOther:
     Type: AWS::IAM::ManagedPolicy
     Properties:
       PolicyDocument:
@@ -58,6 +58,9 @@ Resources:
               - elasticfilesystem:DeleteFileSystem
               - elasticfilesystem:PutLifecycleConfiguration
               - elasticfilesystem:ListTagsForResource
+              - elasticfilesystem:CreateAccessPoint
+              - elasticfilesystem:DescribeAccessPoints
+              - elasticfilesystem:DeleteAccessPoint
               - iam:ListAttachedRolePolicies
               - iam:GetPolicy
               - iam:ListPolicyVersions
@@ -85,28 +88,6 @@ Resources:
               - cognito-idp:DescribeUserPool
               - cognito-idp:DescribeUserPoolClient
             Resource: '*'
-          - Effect: Allow
-            Action:
-              - s3:List*
-              - s3:Describe*
-              - s3:Get*
-              - s3:CreateBucket
-              - s3:PutLifecycleConfiguration
-              - s3:PutBucketTagging
-              - s3:PutEncryptionConfiguration
-              - s3:PutBucketPublicAccessBlock
-              - s3:PutBucketPolicy
-              - s3:PutObject
-              - s3:DeleteObject
-              - s3:DeleteObjectVersion
-              - s3:DeleteBucket
-            Resource:
-              - arn:aws:s3:::orbit-${env_name}-scratch-${account_id}-${deploy_id}/*
-              - arn:aws:s3:::orbit-${env_name}-scratch-${account_id}-${deploy_id}
-              - arn:aws:s3:::orbit-${env_name}-toolkit-${account_id}-${deploy_id}/*
-              - arn:aws:s3:::orbit-${env_name}-toolkit-${account_id}-${deploy_id}
-              - arn:aws:s3:::orbit-${env_name}-cdk-toolkit-${account_id}-${deploy_id}/*
-              - arn:aws:s3:::orbit-${env_name}-cdk-toolkit-${account_id}-${deploy_id}
           - Effect: Allow
             Action:
               - codebuild:CreateReportGroup
@@ -139,47 +120,6 @@ Resources:
             Resource:
               - arn:aws:cloudformation:${region}:${account_id}:stack/orbit-${env_name}*
               - arn:aws:cloudformation:${region}:${account_id}:stack/eksctl-orbit-${env_name}*
-          - Effect: Allow
-            Action:
-              - iam:CreateRole
-              - iam:AttachRolePolicy
-              - iam:PutRolePolicy
-              - iam:DetachRolePolicy
-              - iam:DeleteRolePolicy
-              - iam:DeleteRole
-              - iam:TagRole
-              - iam:UntagRole
-              - iam:ListRoleTags
-              - iam:PassRole
-              - iam:ListAttachedRolePolicies
-              - iam:UpdateAssumeRolePolicy
-            Resource:
-              - arn:aws:iam::${account_id}:role/orbit-${env_name}-*
-              - arn:aws:iam::${account_id}:role/eksctl-orbit-${env_name}-*
-          - Effect: Allow
-            Action:
-              - iam:CreateServiceLinkedRole
-            Resource:
-              - arn:aws:iam::${account_id}:role/aws-service-role/eks-nodegroup.amazonaws.com/AWSServiceRoleForAmazonEKSNodegroup
-              - arn:aws:iam::${account_id}:role/aws-service-role/eks-fargate.amazonaws.com/AWSServiceRoleForAmazonEKSForFargate
-          - Effect: Allow
-            Action:
-              - iam:AddClientIDToOpenIDConnectProvider
-              - iam:CreateOpenIDConnectProvider
-              - iam:DeleteOpenIDConnectProvider
-              - iam:GetOpenIDConnectProvider
-              - iam:ListOpenIDConnectProviders
-              - iam:UpdateOpenIDConnectProviderThumbprint
-            Resource:
-              - arn:aws:iam::${account_id}:oidc-provider/oidc.eks.${region}.amazonaws.com*
-          - Effect: Allow
-            Action:
-              - iam:CreatePolicy
-              - iam:DeletePolicy
-              - iam:CreatePolicyVersion
-              - iam:DeletePolicyVersion
-            Resource:
-              - arn:aws:iam::${account_id}:policy/orbit-${env_name}-*
           - Effect: Allow
             Action:
               - ssm:GetParameters
@@ -237,14 +177,87 @@ Resources:
               - arn:aws:codecommit:${region}:${account_id}:orbit-${env_name}-*
         Version: '2012-10-17'
       Description: ''
-      ManagedPolicyName: orbit-${env_name}-admin
+      ManagedPolicyName: orbit-${env_name}-admin-other
+      Path: /
+  OrbitAdminPolicyIAMS3:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:List*
+              - s3:Describe*
+              - s3:Get*
+              - s3:CreateBucket
+              - s3:PutLifecycleConfiguration
+              - s3:PutBucketTagging
+              - s3:PutEncryptionConfiguration
+              - s3:PutBucketPublicAccessBlock
+              - s3:PutBucketPolicy
+              - s3:PutObject
+              - s3:DeleteObject
+              - s3:DeleteObjectVersion
+              - s3:DeleteBucket
+            Resource:
+              - arn:aws:s3:::orbit-${env_name}-scratch-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::orbit-${env_name}-scratch-${account_id}-${deploy_id}
+              - arn:aws:s3:::orbit-${env_name}-toolkit-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::orbit-${env_name}-toolkit-${account_id}-${deploy_id}
+              - arn:aws:s3:::orbit-${env_name}-cdk-toolkit-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::orbit-${env_name}-cdk-toolkit-${account_id}-${deploy_id}
+          - Effect: Allow
+            Action:
+              - iam:CreateRole
+              - iam:AttachRolePolicy
+              - iam:PutRolePolicy
+              - iam:DetachRolePolicy
+              - iam:DeleteRolePolicy
+              - iam:DeleteRole
+              - iam:TagRole
+              - iam:UntagRole
+              - iam:ListRoleTags
+              - iam:PassRole
+              - iam:ListAttachedRolePolicies
+              - iam:UpdateAssumeRolePolicy
+            Resource:
+              - arn:aws:iam::${account_id}:role/orbit-${env_name}-*
+              - arn:aws:iam::${account_id}:role/eksctl-orbit-${env_name}-*
+          - Effect: Allow
+            Action:
+              - iam:CreateServiceLinkedRole
+            Resource:
+              - arn:aws:iam::${account_id}:role/aws-service-role/eks-nodegroup.amazonaws.com/AWSServiceRoleForAmazonEKSNodegroup
+              - arn:aws:iam::${account_id}:role/aws-service-role/eks-fargate.amazonaws.com/AWSServiceRoleForAmazonEKSForFargate
+          - Effect: Allow
+            Action:
+              - iam:AddClientIDToOpenIDConnectProvider
+              - iam:CreateOpenIDConnectProvider
+              - iam:DeleteOpenIDConnectProvider
+              - iam:GetOpenIDConnectProvider
+              - iam:ListOpenIDConnectProviders
+              - iam:UpdateOpenIDConnectProviderThumbprint
+            Resource:
+              - arn:aws:iam::${account_id}:oidc-provider/oidc.eks.${region}.amazonaws.com*
+          - Effect: Allow
+            Action:
+              - iam:CreatePolicy
+              - iam:DeletePolicy
+              - iam:CreatePolicyVersion
+              - iam:DeletePolicyVersion
+            Resource:
+              - arn:aws:iam::${account_id}:policy/orbit-${env_name}-*
+        Version: '2012-10-17'
+      Description: ''
+      ManagedPolicyName: orbit-${env_name}-admin-iam-s3
       Path: /
   AdminRole:
     Type: AWS::IAM::Role
     Properties:
       Path: /
       ManagedPolicyArns:
-        - Ref: ManagedPolicy
+        - Ref: OrbitAdminPolicyOther
+        - Ref: OrbitAdminPolicyIAMS3
         - arn:aws:iam::aws:policy/AWSServiceCatalogAdminFullAccess
       RoleName: orbit-${env_name}-admin
       MaxSessionDuration: 10000

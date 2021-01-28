@@ -116,7 +116,7 @@ class Team(Stack):
         )
         shared_fs_name: str = f"orbit-{manifest.name}-{team_manifest.name}-shared-fs"
         self.shared_fs: efs.FileSystem = efs.FileSystem.from_file_system_attributes(
-            scope=scope, id=shared_fs_name, file_system_id=manifest.shared_efs_fs_id,
+            scope=self, id=shared_fs_name, file_system_id=manifest.shared_efs_fs_id,
                 security_group=ec2.SecurityGroup.from_security_group_id(scope=self,id='team_sec_group',
                                                                         security_group_id=manifest.shared_efs_sg_id)
         )

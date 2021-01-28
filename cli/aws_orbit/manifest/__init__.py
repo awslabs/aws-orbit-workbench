@@ -183,7 +183,7 @@ class Manifest:
         self.eks_system_masters_roles = cast(List[str], self.raw_file.get("eks-system-masters-roles", []))
         self.scratch_bucket_arn = cast(str, self.raw_file.get("scratch-bucket-arn"))
         self.shared_efs_fs_id = cast(Optional[str], self.raw_file.get("shared-efs-fs-id"))
-        self.shared_efs_sg_id = cast(Optional[str], self.raw_file.get("shared_efs_sg_id"))
+        self.shared_efs_sg_id = cast(Optional[str], self.raw_file.get("shared-efs-sg-id"))
 
         self.user_pool_id = cast(Optional[str], self.raw_file.get("user-pool-id"))
         # Networking
