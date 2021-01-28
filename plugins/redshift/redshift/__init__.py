@@ -39,14 +39,6 @@ def deploy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, para
         parameters=parameters,
     )
 
-    # cdk_deploy(
-    #     stack_name=f"orbit-{manifest.name}-{team_manifest.name}-redshift-cw-alarams-stack",
-    #     app_filename=os.path.join(PLUGIN_ROOT_PATH, "orbit_redshift_cw_alarms_stack.py"),
-    #     manifest=manifest,
-    #     team_manifest=team_manifest,
-    #     parameters=parameters,
-    # )
-
 
 @hooks.destroy
 def destroy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
@@ -59,33 +51,3 @@ def destroy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, par
         team_manifest=team_manifest,
         parameters=parameters,
     )
-
-    # cdk_destroy(
-    #     stack_name=f"orbit-{manifest.name}-{team_manifest.name}-redshift-cw-alarams-stack",
-    #     app_filename=os.path.join(PLUGIN_ROOT_PATH, "orbit_redshift_cw_alarms_stack.py"),
-    #     manifest=manifest,
-    #     team_manifest=team_manifest,
-    #     parameters=parameters,
-    # )
-
-
-# @hooks.dockerfile_injection
-# def dockerfile_injection(
-#     plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]
-# ) -> List[str]:
-#     _logger.debug("Team Env: %s | Team: %s | Image: %s", manifest.name, team_manifest.name, team_manifest.image)
-#     return ["RUN echo 'Hello World!' > /home/jovyan/hello-world-plugin.txt"]
-#
-#
-# @hooks.bootstrap_injection
-# def bootstrap_injection(
-#     plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]
-# ) -> str:
-#     _logger.debug("Injecting CodeCommit plugin commands for team %s Bootstrap", team_manifest.name)
-#     return """
-# #!/usr/bin/env bash
-# set -ex
-#
-# echo 'Hello World 2!' > /home/jovyan/hello-world-plugin-2.txt
-#
-# """
