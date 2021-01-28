@@ -34,8 +34,6 @@ jobs:
         run: flake8 .
       - name: Black Check
         run: black --check .
-      - name: Isort Check
-        run: isort --check .
       - name: CloudFormation Lint
         run: cfn-lint -i E1029,E3031 -- aws_orbit/data/toolkit/template.yaml
 

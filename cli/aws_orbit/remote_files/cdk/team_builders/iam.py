@@ -86,11 +86,6 @@ class IamBuilder:
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=["s3:CreateBucket"],
-                    resources=[f"arn:{partition}:s3:::sagemaker*"],
-                ),
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
                     actions=["ssm:Describe*", "ssm:Get*"],
                     resources=[
                         f"arn:{partition}:ssm:{region}:{account}:parameter/orbit*",
@@ -135,6 +130,7 @@ class IamBuilder:
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
+                        "s3:ListAllMyBuckets",
                         "lambda:List*",
                         "lambda:Get*",
                         "iam:List*",
@@ -262,7 +258,6 @@ class IamBuilder:
             ],
         )
 
-        glue_policy = iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSGlueServiceRole")
         ssm_manage_policy = iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMManagedInstanceCore")
         eks_policies = [
             iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSWorkerNodePolicy"),
@@ -274,7 +269,6 @@ class IamBuilder:
             lake_operational_policy,
             lambda_access_policy,
             code_artifact_user_policy,
-            glue_policy,
             ssm_manage_policy,
         ] + eks_policies
 

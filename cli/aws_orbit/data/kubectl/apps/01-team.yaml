@@ -51,14 +51,6 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    app: orbit-jupyterhub
-  name: jupyterhub
-  namespace: ${team}
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
     team: ${team}
   name: ${team}
   namespace: ${team}
@@ -106,7 +98,7 @@ roleRef:
   name: jupyterhub
 subjects:
   - kind: ServiceAccount
-    name: jupyterhub
+    name: ${team}
     namespace: ${team}
 ---
 apiVersion: v1
@@ -194,6 +186,8 @@ spec:
               value: ${team}
             - name: GRANT_SUDO
               value: ${grant_sudo}
+            - name: AWS_STS_REGIONAL_ENDPOINTS
+              value: regional
           imagePullPolicy: Always
           name: container
           ports:
@@ -212,7 +206,9 @@ spec:
               memory: "3G"
       nodeSelector:
         team: ${team}
-      serviceAccountName: jupyterhub
+      serviceAccountName: ${team}
+      securityContext:
+        fsGroup: 65534
       volumes:
         - name: efs-volume
           persistentVolumeClaim:

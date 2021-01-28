@@ -66,6 +66,7 @@ c.KubeSpawner.environment = {
     "ACCOUNT_ID": ACCOUNT_ID,
     "AWS_ORBIT_S3_BUCKET": TOOLKIT_S3_BUCKET,
     "GRANT_SUDO": GRANT_SUDO,
+    "AWS_STS_REGIONAL_ENDPOINTS": "regional",
 }
 c.KubeSpawner.image = IMAGE
 # TODO we want to remove this 'Always' from production code
@@ -92,10 +93,10 @@ c.KubeSpawner.init_containers = [
         "volumeMounts": [{"mountPath": "/ebs", "name": "ebs-volume"}],
     }
 ]
-
+c.KubeSpawner.fs_gid = 65534
 c.KubeSpawner.lifecycle_hooks = {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh"]}}}
 c.KubeSpawner.node_selector = {"team": TEAM}
-c.KubeSpawner.service_account = "jupyter-user"
+c.KubeSpawner.service_account = f"{TEAM}"
 c.JupyterHub.allow_named_servers = True
 c.JupyterHub.named_server_limit_per_user = 5
 c.JupyterHub.services = [
