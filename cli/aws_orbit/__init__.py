@@ -15,6 +15,7 @@
 import os
 
 import pkg_resources
+
 from aws_orbit.__metadata__ import __description__, __license__, __title__  # noqa
 
 __version__: str = pkg_resources.get_distribution(__title__).version
