@@ -29,7 +29,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
       - name: Mypy Check
-        run: mypy .
+        run: |
+          mypy --version
+          mypy .
       - name: Flake8 Check
         run: flake8 .
       - name: Black Check
@@ -38,7 +40,7 @@ jobs:
         run: isort --check .
       - name: CloudFormation Lint
         run: cfn-lint -i E1029,E3031 -- aws_orbit/data/toolkit/template.yaml
-  
+
   SDK:
     runs-on: ubuntu-latest
     strategy:
