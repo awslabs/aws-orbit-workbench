@@ -1,0 +1,39 @@
+name: dev-env
+demo: true
+codeartifact-domain: aws-orbit
+codeartifact-repository: python-repository
+eks-system-masters-roles:
+-   Admin
+images:
+    jupyter-hub:
+        repository: aws-orbit-jupyter-hub
+        version: latest
+        source: code
+        path: ../images/jupyter-hub/
+    jupyter-user:
+        repository: aws-orbit-jupyter-user
+        version: latest
+        source: code
+        path: ../images/jupyter-user/
+    jupyter-user-spark:
+        repository: aws-orbit-jupyter-user
+        version: latest
+        source: code
+        path: ../images/jupyter-user-spark/
+    landing-page:
+        repository: aws-orbit-landing-page
+        version: latest
+        source: code
+        path: ../images/landing-page/
+    code-build-image:
+        repository: aws-orbit-code-build-base
+        version: latest
+        source: code
+        path: ../images/code-build-image/
+networking:
+    data:
+        internet-accessible: false
+        nodes-subnets: []
+    frontend:
+        load-balancers-subnets: []
+teams: []

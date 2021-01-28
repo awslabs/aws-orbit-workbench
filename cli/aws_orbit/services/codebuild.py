@@ -132,14 +132,14 @@ def start(
         credentials = "SERVICE_ROLE"
     _logger.debug("Repository: %s", repo)
     _logger.debug("Credentials: %s", credentials)
-    response: Dict[str, Any] = client.start_build(
-        projectName=project_name,
-        sourceTypeOverride="S3",
-        sourceLocationOverride=bundle_location,
-        buildspecOverride=yaml.safe_dump(data=buildspec, sort_keys=False, indent=4),
-        timeoutInMinutesOverride=timeout,
-        privilegedModeOverride=True,
-        logsConfigOverride={
+    build_params = {
+        "projectName": project_name,
+        "sourceTypeOverride": "S3",
+        "sourceLocationOverride": bundle_location,
+        "buildspecOverride": yaml.safe_dump(data=buildspec, sort_keys=False, indent=4),
+        "timeoutInMinutesOverride": timeout,
+        "privilegedModeOverride": True,
+        "logsConfigOverride": {
             "cloudWatchLogs": {
                 "status": "ENABLED",
                 "groupName": f"/aws/codebuild/{project_name}",
@@ -147,9 +147,12 @@ def start(
             },
             "s3Logs": {"status": "DISABLED"},
         },
-        imageOverride=repo,
-        imagePullCredentialsTypeOverride=credentials,
-    )
+    }
+    if repo:
+        build_params["imageOverride"] = repo
+    if credentials:
+        build_params["imagePullCredentialsTypeOverride"] = credentials
+    response: Dict[str, Any] = client.start_build(**build_params)
     return str(response["build"]["id"])
 
 
