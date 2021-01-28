@@ -15,19 +15,21 @@
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional, Union, cast
 import re
+from typing import Any, Dict, List, Optional, Union, cast
+
 import boto3
 import botocore.config
 import botocore.exceptions
 import yaml
+from yamlinclude import YamlIncludeConstructor
+
 from aws_orbit import utils
 from aws_orbit.manifest import team as manifest_team
 from aws_orbit.manifest.subnet import SubnetKind, SubnetManifest
 from aws_orbit.manifest.team import MANIFEST_FILE_TEAM_TYPE, MANIFEST_TEAM_TYPE, TeamManifest, parse_teams
 from aws_orbit.manifest.vpc import MANIFEST_FILE_VPC_TYPE, MANIFEST_VPC_TYPE, VpcManifest, parse_vpc
 from aws_orbit.services import cognito
-from yamlinclude import YamlIncludeConstructor
 
 _logger: logging.Logger = logging.getLogger(__name__)
 MANIFEST_PROPERTY_MAP_TYPE = Dict[str, Union[str, Dict[str, Any]]]
