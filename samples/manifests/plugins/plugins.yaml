@@ -1,0 +1,24 @@
+-   id: code_commit
+    module: code_commit
+    path: ../plugins/code_commit/
+-   id: hello_world
+    module: hello_world
+    path: ../plugins/hello_world/
+    parameters:
+        foo: boo
+        xoo: 123
+-   id: team_script_launcher
+    module: team_script_launcher
+    path: ../plugins/team_script_launcher/
+    parameters:
+        script: |
+            echo "START LOOP"
+            i=0
+            while [ $i -lt 1 ];
+            do
+              mkdir -p /home/jovyan/shared/test1
+              aws s3 sync s3://${toolkit_s3_bucket}/assets/ /home/jovyan/shared/test1
+              sleep 60
+            done
+            echo "DONE LOOP"
+        restartPolicy: Never

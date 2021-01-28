@@ -2,16 +2,6 @@
 
 set -x
 
-VERSION=$(cat VERSION)
-rm dist/*
-aws codeartifact login --tool twine --domain aws-orbit --repository python-repository
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-aws codeartifact delete-package-versions \
-    --domain aws-orbit \
-    --repository python-repository \
-    --package aws-orbit-sdk \
-    --versions $VERSION \
-    --format pypi
-
-python setup.py bdist_wheel
-twine upload --repository codeartifact dist/*
+$DIR/../scripts/update_repo.sh sdk aws-orbit-sdk
