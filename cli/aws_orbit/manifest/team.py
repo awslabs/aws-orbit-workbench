@@ -95,6 +95,7 @@ class TeamManifest:
         # Need to fill up
         self.raw_ssm: Optional[MANIFEST_TEAM_TYPE] = None
         self.efs_id: Optional[str] = None
+        self.efs_ap_id: Optional[str] = None
         self.eks_nodegroup_role_arn: Optional[str] = None
         self.jupyter_url: Optional[str] = None
         self.ecs_cluster_name: Optional[str] = None
@@ -158,6 +159,7 @@ class TeamManifest:
         if self.raw_ssm is not None:
             raw: MANIFEST_TEAM_TYPE = self.raw_ssm
             self.efs_id = cast(Optional[str], raw.get("efs-id"))
+            self.efs_ap_id = cast(Optional[str], raw.get("efs-ap-id"))
             self.eks_nodegroup_role_arn = cast(Optional[str], raw.get("eks-nodegroup-role-arn"))
             self.jupyter_url = cast(Optional[str], raw.get("jupyter-url"))
             self.scratch_bucket = cast(str, raw.get("scratch-bucket"))

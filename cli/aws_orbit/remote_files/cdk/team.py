@@ -116,7 +116,9 @@ class Team(Stack):
         )
         shared_fs_name: str = f"orbit-{manifest.name}-{team_manifest.name}-shared-fs"
         self.shared_fs: efs.FileSystem = efs.FileSystem.from_file_system_attributes(
-            scope=scope, id=shared_fs_name, file_system_id=manifest.shared_efs_fs_id
+            scope=scope, id=shared_fs_name, file_system_id=manifest.shared_efs_fs_id,
+                security_group=ec2.SecurityGroup.from_security_group_id(scope=self,id='team_sec_group',
+                                                                        security_group_id=manifest.shared_efs_sg_id)
         )
 
         self.efs_ap: efs.AccessPoint = EfsBuilder.build_file_system_access_point(
@@ -188,6 +190,7 @@ class Team(Stack):
         )
 
         self.team_manifest.efs_id = self.shared_fs.file_system_id
+        self.team_manifest.efs_ap_id = self.efs_ap.access_point_id
         self.team_manifest.eks_nodegroup_role_arn = self.role_eks_nodegroup.role_arn
         self.team_manifest.scratch_bucket = self.scratch_bucket.bucket_name
         self.team_manifest.ecs_cluster_name = self.ecs_cluster.cluster_name

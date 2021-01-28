@@ -101,8 +101,8 @@ Resources:
               - s3:DeleteObjectVersion
               - s3:DeleteBucket
             Resource:
-              - arn:aws:s3:::orbit-${env_name}-*-scratch-${account_id}-${deploy_id}/*
-              - arn:aws:s3:::orbit-${env_name}-*-scratch-${account_id}-${deploy_id}
+              - arn:aws:s3:::orbit-${env_name}-scratch-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::orbit-${env_name}-scratch-${account_id}-${deploy_id}
               - arn:aws:s3:::orbit-${env_name}-toolkit-${account_id}-${deploy_id}/*
               - arn:aws:s3:::orbit-${env_name}-toolkit-${account_id}-${deploy_id}
               - arn:aws:s3:::orbit-${env_name}-cdk-toolkit-${account_id}-${deploy_id}/*

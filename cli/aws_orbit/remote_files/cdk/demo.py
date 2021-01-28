@@ -76,15 +76,19 @@ class DemoStack(Stack):
         )
 
         self.scratch_bucket: s3.Bucket = S3Builder.build_scratch_bucket(
-            scope=self, manifest=manifest, scratch_retention_days=30, kms_key=self.env_kms_key
+            scope=self,
+            name=self.env_name,
+            deploy_id=manifest.deploy_id,
+            scratch_retention_days=30,
+            kms_key=self.env_kms_key,
         )
-        user_pool: cognito.UserPool = self._create_user_pool()
+        self.user_pool: cognito.UserPool = self._create_user_pool()
 
         self.user_pool_lake_creator: cognito.CfnUserPoolGroup = CognitoBuilder.build_user_pool_group(
-            scope=self, user_pool_id=user_pool.user_pool_id, team_name="lake-creator"
+            scope=self, user_pool_id=self.user_pool.user_pool_id, team_name="lake-creator"
         )
         self.user_pool_lake_user: cognito.CfnUserPoolGroup = CognitoBuilder.build_user_pool_group(
-            scope=self, user_pool_id=user_pool.user_pool_id, team_name="lake-user"
+            scope=self, user_pool_id=self.user_pool.user_pool_id, team_name="lake-user"
         )
 
         self._ssm_parameter = ssm.StringParameter(
@@ -100,9 +104,12 @@ class DemoStack(Stack):
                     "UserAccessPolicy": self.lake_bucket_read_only_access.managed_policy_name,
                     "KMSKey": self.env_kms_key.key_arn,
                     "EFSFilesystemID": self.efs_fs.file_system_id,
-                    "ScratchBucket": self.scratch_bucket.bucket_name,
-                    "user_pool_lake_creator": self.user_pool_lake_creator.user_pool_id,
-                    "user_pool_lake_user": self.user_pool_lake_user.user_pool_id,
+                    "ScratchBucketArn": self.scratch_bucket.bucket_arn,
+                    "ScratchBucketName": self.scratch_bucket.bucket_name,
+                    "user_pool_id": self.user_pool.user_pool_id,
+                    "user_pool_lake_creator": self.user_pool_lake_creator.ref,
+                    "user_pool_lake_user": self.user_pool_lake_user.ref,
+                    "SharedEFSSecurityGroup": self._vpc_security_group.security_group_id,
                 }
             ),
             type=ssm.ParameterType.STRING,
@@ -223,7 +230,7 @@ class DemoStack(Stack):
                 "Temporary password: {####}<br/><br/>"
                 "Regards",
             ),
-            user_pool_name="orbit-user-pool",
+            user_pool_name=f"orbit-{self.env_name}-user-pool",
         )
         return pool
 

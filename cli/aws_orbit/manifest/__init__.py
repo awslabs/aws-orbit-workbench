@@ -118,6 +118,8 @@ class Manifest:
         self.eks_system_masters_roles: List[str]
         self.scratch_bucket_arn: Optional[str]
         self.shared_efs_fs_id: Optional[str]
+        self.shared_efs_sg_id: Optional[str]
+
         if filename and env:
             raise RuntimeError("Must provide either a manifest file or environment name and neither were provided.")
         if region:
@@ -180,7 +182,10 @@ class Manifest:
         self.ssm_parameter_name = f"/orbit/{self.name}/manifest"
         self.eks_system_masters_roles = cast(List[str], self.raw_file.get("eks-system-masters-roles", []))
         self.scratch_bucket_arn = cast(str, self.raw_file.get("scratch-bucket-arn"))
-        self.shared_efs_fs_id = cast(Optional[str], self.raw_file.get("efs-fs-id"))
+        self.shared_efs_fs_id = cast(Optional[str], self.raw_file.get("shared-efs-fs-id"))
+        self.shared_efs_sg_id = cast(Optional[str], self.raw_file.get("shared_efs_sg_id"))
+
+        self.user_pool_id = cast(Optional[str], self.raw_file.get("user-pool-id"))
         # Networking
         if "networking" not in self.raw_file:
             raise RuntimeError("Invalid manifest: Missing the 'networking' attribute.")
@@ -282,6 +287,17 @@ class Manifest:
     def _boto3_session(self) -> boto3.Session:
         return boto3.Session(region_name=self.region)
 
+    def _read_demo_ssm(self) -> Optional[MANIFEST_PROPERTY_MAP_TYPE]:
+        _logger.debug("Trying to read demo configuration from SSM parameter.")
+        client = self.boto3_client(service_name="ssm")
+        try:
+            json_str: str = client.get_parameter(Name=f"/orbit/{self.name}/demo")["Parameter"]["Value"]
+        except client.exceptions.ParameterNotFound:
+            _logger.debug("Manifest SSM parameter not found.")
+            return None
+        _logger.debug("Manifest SSM parameter found.")
+        return cast(MANIFEST_PROPERTY_MAP_TYPE, json.loads(json_str))
+
     def _read_manifest_ssm(self) -> Optional[MANIFEST_TYPE]:
         _logger.debug("Trying to read manifest from SSM parameter.")
         client = self.boto3_client(service_name="ssm")
@@ -347,7 +363,9 @@ class Manifest:
             self.cognito_external_provider_label = cast(Optional[str], raw.get("cognito-external-provider-label", None))
             self.cognito_external_provider_domain = cast(Optional[str], raw.get("cognito-external-provider-domain"))
             self.cognito_external_provider_redirect = cast(Optional[str], raw.get("cognito-external-provider-redirect"))
-            self.shared_efs_fs_id = cast(Optional[str], raw.get("efs-fs-id"))
+            self.shared_efs_fs_id = cast(Optional[str], raw.get("shared-efs-fs-id"))
+            self.shared_efs_sg_id = cast(Optional[str], raw.get("shared-efs-sg-id"))
+
             self.internet_accessible = cast(bool, raw.get("internet-accessible", False))
             self.demo = cast(bool, raw.get("demo", False))
             self.codeartifact_domain = cast(Optional[str], raw.get("codeartifact-domain", None))
@@ -355,12 +373,6 @@ class Manifest:
             self.images = cast(MANIFEST_FILE_IMAGES_TYPE, raw.get("images"))
             self.load_balancers_subnets = cast(List[str], raw.get("load-balancers-subnets"))
             self.user_pool_id = cast(Optional[str], raw.get("user-pool-id"))
-            if self.user_pool_id is not None:
-                self.cognito_users_urls = cognito.get_users_url(user_pool_id=self.user_pool_id, region=self.region)
-                self.cognito_pool_arn = cognito.get_pool_arn(
-                    user_pool_id=self.user_pool_id, region=self.region, account=self.account_id
-                )
-
             if not hasattr(self, "vpc"):
                 raw_vpc = cast("MANIFEST_VPC_TYPE", raw.get("vpc"))
                 subnets_raw: List[Dict[str, str]] = cast(List[Dict[str, str]], raw_vpc.get("subnets"))
@@ -463,6 +475,11 @@ class Manifest:
 
         self.vpc = parse_vpc(manifest=self)
 
+        demo: MANIFEST_PROPERTY_MAP_TYPE = cast(MANIFEST_PROPERTY_MAP_TYPE, self._read_demo_ssm())
+        self.user_pool_id = cast(str, demo["user_pool_id"])
+        self.scratch_bucket_arn = cast(str, demo["ScratchBucketArn"])
+        self.shared_efs_fs_id = cast(str, demo["EFSFilesystemID"])
+        self.shared_efs_sg_id = cast(str, demo["SharedEFSSecurityGroup"])
         self.fetch_ssm()
         self.write_manifest_ssm()
         _logger.debug("DEMO data fetched successfully.")
@@ -520,7 +537,14 @@ class Manifest:
             obj["external-idp"] = self.cognito_external_provider
         if self.cognito_external_provider_label is not None:
             obj["external-idp-label"] = self.cognito_external_provider_label
-
+        if self.user_pool_id is not None:
+            obj["user-pool-id"] = self.user_pool_id
+        if self.shared_efs_fs_id is not None:
+            obj["shared-efs-fs-id"] = self.shared_efs_fs_id
+        if self.shared_efs_sg_id is not None:
+            obj["shared-efs-sg-id"] = self.shared_efs_sg_id
+        if self.scratch_bucket_arn is not None:
+            obj["scratch-bucket-arn"] = self.scratch_bucket_arn
         obj["images"] = self.images
         obj["teams"] = [t.asdict_file() for t in self.teams]
         obj["eks-system-masters-roles"] = self.eks_system_masters_roles

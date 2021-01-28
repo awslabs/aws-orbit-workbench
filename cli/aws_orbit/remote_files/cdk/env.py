@@ -28,6 +28,7 @@ from aws_cdk import aws_lambda
 from aws_cdk.core import App, CfnOutput, Construct, Duration, Environment, Stack, Tags
 from aws_orbit.manifest import Manifest
 from aws_orbit.remote_files.cdk import _lambda_path
+from aws_orbit.services import cognito as orbit_cognito
 from aws_orbit.utils import extract_images_names
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -64,8 +65,14 @@ class Env(Stack):
         self.role_eks_cluster = self._create_role_cluster()
         self.role_eks_env_nodegroup = self._create_env_nodegroup_role()
         self.role_fargate_profile = self._create_role_fargate_profile()
-        if self.manifest.cognito_pool_arn:
-            self.user_pool: cognito.UserPool = self._get_user_pool(user_pool_arn=self.manifest.cognito_pool_arn)
+        if hasattr(self.manifest, "user_pool_id") and self.manifest.user_pool_id:
+            self.manifest.cognito_users_urls = orbit_cognito.get_users_url(
+                user_pool_id=self.manifest.user_pool_id, region=self.manifest.region
+            )
+            cognito_pool_arn: str = orbit_cognito.get_pool_arn(
+                user_pool_id=self.manifest.user_pool_id, region=self.manifest.region, account=self.manifest.account_id
+            )
+            self.user_pool: cognito.UserPool = self._get_user_pool(user_pool_arn=cognito_pool_arn)
         else:
             raise Exception("Missing Cognito User Pool ID ('user_pool_id') ")
         self.user_pool_client = self._create_user_pool_client()
@@ -226,12 +233,11 @@ class Env(Stack):
             identity_pool_name=self.id.replace("-", "_"),
             allow_unauthenticated_identities=False,
             allow_classic_flow=False,
-            cognito_identity_providers=[
-                cognito.CfnIdentityPool.CognitoIdentityProviderProperty(
+            cognito_identity_providers= [ cognito.CfnIdentityPool.CognitoIdentityProviderProperty(
                     provider_name=self.user_pool.user_pool_provider_name,
                     client_id=self.user_pool_client.user_pool_client_id,
-                )
-            ],
+                )] if hasattr(self.user_pool,"user_pool_provider_name") else None
+        ,
         )
         name = f"{self.id}-cognito-authenticated-identity-role"
         authenticated_role = iam.Role(
