@@ -1,0 +1,22 @@
+Metadata-Version: 2.1
+Name: redshift
+Version: 0.0b0
+Summary: Orbit Workbench Redshift Plugin.
+Home-page: UNKNOWN
+License: Apache License 2.0
+Platform: UNKNOWN
+Requires-Python: >=3.6, <3.9
+Requires-Dist: aws-cdk.core (~=1.67.0)
+Requires-Dist: aws-cdk.aws-s3 (~=1.67.0)
+Requires-Dist: aws-cdk-aws-lambda (~=1.67.0)
+Requires-Dist: aws-cdk-aws-redshift (~=1.67.0)
+Requires-Dist: aws-cdk-aws-events (~=1.67.0)
+Requires-Dist: aws-cdk-aws-events-targets (~=1.67.0)
+Requires-Dist: aws-cdk-aws-iam (~=1.67.0)
+Requires-Dist: aws-cdk-aws-kms (~=1.67.0)
+Requires-Dist: aws-cdk-aws-sns (~=1.67.0)
+Requires-Dist: aws-cdk-aws-sns-subscriptions (~=1.67.0)
+
+UNKNOWN
+
+
