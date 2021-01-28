@@ -26,6 +26,7 @@ import aws_cdk.aws_lambda_python as lambda_python
 import aws_cdk.aws_ssm as ssm
 from aws_cdk import aws_lambda
 from aws_cdk.core import App, CfnOutput, Construct, Duration, Environment, Stack, Tags
+
 from aws_orbit.manifest import Manifest
 from aws_orbit.remote_files.cdk import _lambda_path
 from aws_orbit.utils import extract_images_names
