@@ -126,9 +126,7 @@ class Manifest:
         else:
             self.region = utils.get_region()
         self.account_id: str = self.get_account_id()
-
         # Need to fill up
-
         self.deploy_id: Optional[str] = None  # toolkit
         self.toolkit_kms_arn: Optional[str] = None  # toolkit
         self.toolkit_kms_alias: Optional[str] = None  # toolkit
@@ -197,7 +195,6 @@ class Manifest:
         self.codeartifact_repository: Optional[str] = cast(
             Optional[str], self.raw_file.get("codeartifact-repository", None)
         )
-
         # Images
         if self.raw_file.get("images") is None:
             self.images = MANIFEST_FILE_IMAGES_DEFAULTS
