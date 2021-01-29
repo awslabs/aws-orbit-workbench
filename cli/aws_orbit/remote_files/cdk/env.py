@@ -242,10 +242,10 @@ class Env(Stack):
             if hasattr(self.user_pool, "user_pool_provider_name")
             else [
                 cognito.CfnIdentityPool.CognitoIdentityProviderProperty(
-                    provider_name=f'cognito-idp.{self.manifest.region}.amazonaws.com/{self.manifest.user_pool_id}',
+                    provider_name=f"cognito-idp.{self.manifest.region}.amazonaws.com/{self.manifest.user_pool_id}",
                     client_id=self.user_pool_client.user_pool_client_id,
                 )
-            ]
+            ],
         )
         name = f"{self.id}-cognito-authenticated-identity-role"
         authenticated_role = iam.Role(

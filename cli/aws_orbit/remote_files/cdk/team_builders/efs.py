@@ -59,5 +59,5 @@ class EfsBuilder:
             file_system=shared_fs,
             path=f"/{team_manifest.name}",
             posix_user=efs.PosixUser(gid="100", uid="1000"),
-            create_acl=efs.Acl(owner_gid="100", owner_uid="1000", permissions="755"),
+            create_acl=efs.Acl(owner_gid="100", owner_uid="1000", permissions="770"),
         )

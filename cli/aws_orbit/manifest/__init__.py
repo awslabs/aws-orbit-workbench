@@ -26,8 +26,8 @@ from aws_orbit.manifest import team as manifest_team
 from aws_orbit.manifest.subnet import SubnetKind, SubnetManifest
 from aws_orbit.manifest.team import MANIFEST_FILE_TEAM_TYPE, MANIFEST_TEAM_TYPE, TeamManifest, parse_teams
 from aws_orbit.manifest.vpc import MANIFEST_FILE_VPC_TYPE, MANIFEST_VPC_TYPE, VpcManifest, parse_vpc
-from aws_orbit.services import cognito
 from yamlinclude import YamlIncludeConstructor
+import jsonpath_ng as jsonpath_ng
 
 _logger: logging.Logger = logging.getLogger(__name__)
 MANIFEST_PROPERTY_MAP_TYPE = Dict[str, Union[str, Dict[str, Any]]]
@@ -101,6 +101,8 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
         },
     },
 )
+
+ssm_context: Dict[str, str] = {}
 
 
 class Manifest:
@@ -231,8 +233,66 @@ class Manifest:
         _logger.debug("manifest: %s", manifest_path)
         YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.SafeLoader, base_dir=conf_dir)
         Manifest._add_env_var_injector()
+        Manifest._add_ssm_param_injector()
         with open(manifest_path, "r") as f:
             return cast(MANIFEST_FILE_TYPE, yaml.safe_load(f))
+
+    @staticmethod
+    def _add_ssm_param_injector(tag: str = "!SSM") -> None:
+        """
+        Load a yaml configuration file and resolve any SSM parameters
+        The SSM parameters must have !SSM before them and be in this format
+        to be parsed: ${SSM_PARAMETER_PATH::JSONPATH}.
+        E.g.:
+        database:
+            host: !SSM ${/orbit/dev-env/demo::/UserAccessPolicy}
+            port: !SSM ${/orbit/dev-env/demo::/PublicSubnet/*}
+        """
+        # pattern for global vars: look for ${word}
+        pattern = re.compile(".*?\${(\w+)}.*?")  # noqa: W605
+        loader = yaml.SafeLoader
+
+        # the tag will be used to mark where to start searching for the pattern
+        # e.g. somekey: !SSM somestring${MYENVVAR}blah blah blah
+        loader.add_implicit_resolver(tag, pattern, None)  # type: ignore
+
+        def constructor_ssm_parameter(loader, node) -> Any:  # type: ignore
+            """
+            Extracts the environment variable from the node's value
+            :param yaml.Loader loader: the yaml loader
+            :param node: the current node in the yaml
+            :return: the parsed string that contains the value of the environment
+            variable
+            """
+            value = loader.construct_scalar(node)
+            match = pattern.findall(value)  # to find all env variables in line
+            if match:
+                full_value = value
+                for g in match:
+                    (ssm_param_name, jsonpath) = g.split("::")
+                    if ssm_param_name not in ssm_context:
+                        ssm = utils.boto3_client("ssm")
+                        try:
+                            parsed = ssm.get_parameter(Name=ssm_param_name)["Parameter"]["Value"]
+                        except Exception as e:
+                            _logger.error(f"Error resolving injected parameter {g}: {e}")
+                            pass
+                        ssm_context[ssm_param_name] = jsonpath_ng.parse(parsed)
+
+                    json_expr = jsonpath_ng.parse(jsonpath)
+                    json_match = json_expr.find(ssm_context[ssm_param_name])
+                    if len(json_match) > 1:
+                        raise Exception(f"Injected parameter {g} is ambiguous")
+                    elif len(json_match) == 0:
+                        raise Exception(f"Injected parameter {g} not found in SSM {ssm_param_name}")
+
+                    param_value: str = json_match[0]
+                    _logger.debug(f"injected parameter {g} resolved to {param_value}")
+                    full_value = full_value.replace(f"${{{g}}}", param_value)
+                return full_value
+            return value
+
+        loader.add_constructor(tag, constructor_ssm_parameter)  # type: ignore
 
     @staticmethod
     def _add_env_var_injector(tag: str = "!ENV") -> None:
@@ -247,11 +307,6 @@ class Manifest:
         app:
             log_path: !ENV '/var/${LOG_PATH}'
             something_else: !ENV '${AWESOME_ENV_VAR}/var/${A_SECOND_AWESOME_VAR}'
-        :param str path: the path to the yaml file
-        :param str data: the yaml data itself as a stream
-        :param str tag: the tag to look for
-        :return: the dict configuration
-        :rtype: dict[str, T]
         """
         # pattern for global vars: look for ${word}
         pattern = re.compile(".*?\${(\w+)}.*?")  # noqa: W605
