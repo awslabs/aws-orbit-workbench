@@ -19,7 +19,7 @@ from typing import Optional, TextIO, Tuple
 
 import click
 from aws_orbit.commands.delete import delete_image
-from aws_orbit.commands.deploy import deploy
+from aws_orbit.commands.deploy import deploy, deploy_foundation
 from aws_orbit.commands.destroy import destroy
 from aws_orbit.commands.image import build_image, build_profile, delete_profile, list_profiles
 from aws_orbit.commands.init import init
@@ -145,6 +145,51 @@ def deploy_cli(
         password=password,
         skip_images=skip_images,
         env_only=env_stacks,
+        debug=debug,
+    )
+
+
+@click.command(name="deploy-foundation")
+@click.option(
+    "--filename",
+    "-f",
+    type=str,
+    help="The target Orbit Workbench manifest file (yaml).",
+)
+@click.option(
+    "--username",
+    "-u",
+    type=str,
+    help="Dockerhub username (Required only for the first deploy).",
+)
+@click.option(
+    "--password",
+    "-p",
+    type=str,
+    help="Dockerhub password (Required only for the first deploy).",
+)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def deploy_foundation_cli(
+    filename: str,
+    debug: bool,
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+) -> None:
+    """Deploy a Orbit Workbench foundation based on a manisfest file (yaml)."""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    filename = filename if filename[0] in (".", "/") else f"./{filename}"
+    _logger.debug("filename: %s", filename)
+    _logger.debug("username: %s", username)
+    deploy_foundation(
+        filename=filename,
+        username=username,
+        password=password,
         debug=debug,
     )
 
@@ -520,6 +565,7 @@ def main() -> int:
     cli.add_command(init_cli)
     cli.add_command(deploy_cli)
     cli.add_command(destroy_cli)
+    cli.add_command(deploy_foundation_cli)
     cli.add_command(remote_cli)
     cli.add_command(run_container)
     cli.add_command(build)

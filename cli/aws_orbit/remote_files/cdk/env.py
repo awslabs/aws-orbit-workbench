@@ -233,11 +233,19 @@ class Env(Stack):
             identity_pool_name=self.id.replace("-", "_"),
             allow_unauthenticated_identities=False,
             allow_classic_flow=False,
-            cognito_identity_providers= [ cognito.CfnIdentityPool.CognitoIdentityProviderProperty(
+            cognito_identity_providers=[
+                cognito.CfnIdentityPool.CognitoIdentityProviderProperty(
                     provider_name=self.user_pool.user_pool_provider_name,
                     client_id=self.user_pool_client.user_pool_client_id,
-                )] if hasattr(self.user_pool,"user_pool_provider_name") else None
-        ,
+                )
+            ]
+            if hasattr(self.user_pool, "user_pool_provider_name")
+            else [
+                cognito.CfnIdentityPool.CognitoIdentityProviderProperty(
+                    provider_name=f'cognito-idp.{self.manifest.region}.amazonaws.com/{self.manifest.user_pool_id}',
+                    client_id=self.user_pool_client.user_pool_client_id,
+                )
+            ]
         )
         name = f"{self.id}-cognito-authenticated-identity-role"
         authenticated_role = iam.Role(

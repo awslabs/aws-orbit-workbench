@@ -110,6 +110,67 @@ def deploy_toolkit(
         )
 
 
+def deploy_foundation(
+    filename: str,
+    debug: bool,
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+) -> None:
+    with MessagesContext("Deploying", debug=debug) as ctx:
+        ctx.progress(2)
+
+        manifest = Manifest(filename=filename, env=None, region=None)
+        manifest.fillup()
+        ctx.info(f"Manifest loaded: {filename}")
+        ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
+        ctx.progress(3)
+
+        _logger.debug("Inspecting possible manifest changes...")
+        changes: Changeset = extract_changeset(manifest=manifest, ctx=ctx)
+        _logger.debug(f"Changeset: {changes.asdict()}")
+        ctx.progress(4)
+
+        plugins.PLUGINS_REGISTRIES.load_plugins(
+            manifest=manifest,
+            ctx=ctx,
+            plugin_changesets=changes.plugin_changesets,
+            teams_changeset=changes.teams_changeset,
+        )
+        ctx.progress(5)
+
+        deploy_toolkit(
+            manifest=manifest,
+            username=username,
+            password=password,
+            ctx=ctx,
+        )
+        ctx.info("Toolkit deployed")
+        ctx.progress(10)
+
+        bundle_path = bundle.generate_bundle(
+            command_name="deploy",
+            manifest=manifest,
+            changeset=changes,
+        )
+        ctx.progress(15)
+        buildspec = codebuild.generate_spec(
+            manifest=manifest,
+            plugins=True,
+            cmds_build=["orbit remote --command deploy_foundation ./conf/manifest.yaml"],
+            changeset=changes,
+        )
+        remote.run(
+            command_name="deploy_foundation",
+            manifest=manifest,
+            bundle_path=bundle_path,
+            buildspec=buildspec,
+            codebuild_log_callback=ctx.progress_bar_callback,
+            timeout=90,
+        )
+        ctx.info("Orbit Foundation deployed")
+        ctx.progress(100)
+
+
 def deploy(
     filename: str,
     skip_images: bool,

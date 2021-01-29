@@ -110,6 +110,7 @@ class DemoStack(Stack):
                     "user_pool_lake_creator": self.user_pool_lake_creator.ref,
                     "user_pool_lake_user": self.user_pool_lake_user.ref,
                     "SharedEFSSecurityGroup": self._vpc_security_group.security_group_id,
+                    "UserPoolProviderName": self.user_pool.user_pool_provider_name,
                 }
             ),
             type=ssm.ParameterType.STRING,

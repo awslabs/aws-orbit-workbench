@@ -149,6 +149,22 @@ def eval_teams_change(manifest: Manifest, teams_changeset: "TeamsChangeset") -> 
         _logger.debug("Team %s destroyed", name)
 
 
+def deploy_foundation(args: Tuple[str, ...]) -> None:
+    _logger.debug("args: %s", args)
+    if len(args) != 1:
+        raise ValueError("Unexpected number of values in args")
+    filename: str = args[0]
+
+    manifest: Manifest = Manifest(filename=filename, env=None, region=None)
+    manifest.fillup()
+    _logger.debug("Manifest loaded")
+    docker.login(manifest=manifest)
+    cdk_toolkit.deploy(manifest=manifest)
+    _logger.debug("CDK Toolkit Stack deployed")
+    demo.deploy(manifest=manifest)
+    _logger.debug("Demo Stack deployed")
+
+
 def deploy(args: Tuple[str, ...]) -> None:
     _logger.debug("args: %s", args)
     filename: str = args[0]
