@@ -130,9 +130,7 @@ Resources:
               - ssm:AddTagsToResource
               - ssm:DeleteParameter
             Resource:
-              - arn:aws:ssm:${region}:${account_id}:parameter/orbit/${env_name}/manifest
-              - arn:aws:ssm:${region}:${account_id}:parameter/orbit/${env_name}/teams/*
-              - arn:aws:ssm:${region}:${account_id}:parameter/orbit/${env_name}/demo
+              - arn:aws:ssm:${region}:${account_id}:parameter/orbit/${env_name}/*
           - Effect: Allow
             Action:
               - kms:*

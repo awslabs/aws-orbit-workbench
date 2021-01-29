@@ -12,14 +12,16 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import logging
 from typing import Any, Dict
 
-import aws_cdk.aws_s3 as s3
-import aws_cdk.core as core
+import aws_cdk.aws_ssm as ssm
 from aws_cdk.core import Construct, Environment, Stack, Tags
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest
 from aws_orbit.plugins.helpers import cdk_handler
+
+_logger: logging.Logger = logging.getLogger("aws_orbit")
 
 
 class MyStack(Stack):
@@ -34,20 +36,12 @@ class MyStack(Stack):
             env=Environment(account=manifest.account_id, region=manifest.region),
         )
         Tags.of(scope=self).add(key="Env", value=f"orbit-{manifest.name}")
-
-        suffix: str = parameters.get("BucketNameInjection", "foo")
-        bucket_name: str = (
-            f"orbit-{team_manifest.manifest.name}-{team_manifest.name}"
-            f"-{suffix}-scratch-{core.Aws.ACCOUNT_ID}-{manifest.deploy_id}"
-        )
-
-        s3.Bucket(
-            scope=self,
-            id="hello_bucket",
-            bucket_name=bucket_name,
-            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            removal_policy=core.RemovalPolicy.DESTROY,
-            encryption=s3.BucketEncryption.S3_MANAGED,
+        _logger.info(f"Plugin parameters: {parameters}")
+        # just showing how to create resource.  Do not forget to update the IAM policy or make sure the attached policy
+        # for the team is allowing the creation and destruction of the resource.
+        ssm_parameter: str = f"/orbit/{team_manifest.manifest.name}/{team_manifest.name}/hello-plugin"
+        ssm.StringParameter(
+            scope=self, id="param", string_value="testing plugin hello world", parameter_name=ssm_parameter
         )
 
 
