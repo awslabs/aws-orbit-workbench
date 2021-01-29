@@ -26,9 +26,8 @@ import aws_cdk.core as core
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_ssm as ssm
-from aws_cdk.core import App, CfnOutput, Construct, Stack, Tags
-
 from aws_cdk.core import App, CfnOutput, Construct, Duration, Stack, Tags
+
 from aws_orbit.manifest import Manifest
 from aws_orbit.remote_files.cdk.team_builders.cognito import CognitoBuilder
 from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
