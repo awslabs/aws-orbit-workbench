@@ -27,4 +27,4 @@ ensure_newline_before_comments = true
 line_length = 120
 src_paths = ["setup.py", "aws_orbit_sdk"]
 py_version = 36
-skip_gitignore = true
+skip_gitignore = false
