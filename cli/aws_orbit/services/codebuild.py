@@ -130,26 +130,47 @@ def start(
         if ".amazonaws.com/" not in repo:
             repo = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/{repo}"
         credentials = "SERVICE_ROLE"
-    _logger.debug("Repository: %s", repo)
-    _logger.debug("Credentials: %s", credentials)
-    response: Dict[str, Any] = client.start_build(
-        projectName=project_name,
-        sourceTypeOverride="S3",
-        sourceLocationOverride=bundle_location,
-        buildspecOverride=yaml.safe_dump(data=buildspec, sort_keys=False, indent=4),
-        timeoutInMinutesOverride=timeout,
-        privilegedModeOverride=True,
-        logsConfigOverride={
-            "cloudWatchLogs": {
-                "status": "ENABLED",
-                "groupName": f"/aws/codebuild/{project_name}",
-                "streamName": stream_name,
+        _logger.debug("Repository: %s", repo)
+        _logger.debug("Credentials: %s", credentials)
+        response: Dict[str, Any] = client.start_build(
+            projectName=project_name,
+            sourceTypeOverride="S3",
+            sourceLocationOverride=bundle_location,
+            buildspecOverride=yaml.safe_dump(data=buildspec, sort_keys=False, indent=4),
+            timeoutInMinutesOverride=timeout,
+            privilegedModeOverride=True,
+            logsConfigOverride={
+                "cloudWatchLogs": {
+                    "status": "ENABLED",
+                    "groupName": f"/aws/codebuild/{project_name}",
+                    "streamName": stream_name,
+                },
+                "s3Logs": {"status": "DISABLED"},
             },
-            "s3Logs": {"status": "DISABLED"},
-        },
-        imageOverride=repo,
-        imagePullCredentialsTypeOverride=credentials,
-    )
+            imageOverride=repo,
+            imagePullCredentialsTypeOverride=credentials,
+        )
+    else:
+        _logger.debug("Repository: %s", repo)
+        _logger.debug("Credentials: %s", credentials)
+        response: Dict[str, Any] = client.start_build(
+            projectName=project_name,
+            sourceTypeOverride="S3",
+            sourceLocationOverride=bundle_location,
+            buildspecOverride=yaml.safe_dump(data=buildspec, sort_keys=False, indent=4),
+            timeoutInMinutesOverride=timeout,
+            privilegedModeOverride=True,
+            logsConfigOverride={
+                "cloudWatchLogs": {
+                    "status": "ENABLED",
+                    "groupName": f"/aws/codebuild/{project_name}",
+                    "streamName": stream_name,
+                },
+                "s3Logs": {"status": "DISABLED"},
+            }
+        )
+
+
     return str(response["build"]["id"])
 
 

@@ -125,11 +125,12 @@ def deploy(manifest: Manifest) -> None:
                 cdk.deploy(**deploy_args)
             else:
                 raise
-        manifest.fetch_demo_data()
+        # manifest.fetch_demo_data()
         manifest.write_manifest_file()
         _logger.debug("Adding demo data")
         _prepare_demo_data(manifest)
         _logger.debug("Enabling private dns for codeartifact vpc endpoints")
+        manifest.fetch_demo_data()
         vpc.modify_vpc_endpoint(manifest=manifest, service_name="codeartifact.repositories", private_dns_enabled=True)
         vpc.modify_vpc_endpoint(manifest=manifest, service_name="codeartifact.api", private_dns_enabled=True)
 

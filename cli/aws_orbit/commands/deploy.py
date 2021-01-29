@@ -129,15 +129,6 @@ def deploy_foundation(
         changes: Changeset = extract_changeset(manifest=manifest, ctx=ctx)
         _logger.debug(f"Changeset: {changes.asdict()}")
         ctx.progress(4)
-
-        plugins.PLUGINS_REGISTRIES.load_plugins(
-            manifest=manifest,
-            ctx=ctx,
-            plugin_changesets=changes.plugin_changesets,
-            teams_changeset=changes.teams_changeset,
-        )
-        ctx.progress(5)
-
         deploy_toolkit(
             manifest=manifest,
             username=username,
@@ -238,10 +229,10 @@ def deploy(
         ctx.info("Orbit Workbench deployed")
         ctx.progress(98)
 
-        if manifest.demo and cfn.does_stack_exist(manifest=manifest, stack_name=manifest.demo_stack_name):
-            manifest.fetch_demo_data()
-            ctx.info(f"Manifest updated: {filename}")
-        ctx.progress(99)
+        # if manifest.demo and cfn.does_stack_exist(manifest=manifest, stack_name=manifest.demo_stack_name):
+        #     manifest.fetch_demo_data()
+        #     ctx.info(f"Manifest updated: {filename}")
+        # ctx.progress(99)
 
         if manifest.cognito_users_urls:
             ctx.tip(f"Add users: {stylize(manifest.cognito_users_urls, underline=True)}")
