@@ -18,12 +18,13 @@ import os
 from typing import Optional, TextIO, Tuple
 
 import click
+
 from aws_orbit.commands.delete import delete_image
 from aws_orbit.commands.deploy import deploy
 from aws_orbit.commands.destroy import destroy
 from aws_orbit.commands.image import build_image, build_profile, delete_profile, list_profiles
 from aws_orbit.commands.init import init
-from aws_orbit.commands.list import list_images
+from aws_orbit.commands.list import list_env, list_images
 from aws_orbit.utils import print_dir
 
 DEBUG_LOGGING_FORMAT = "[%(asctime)s][%(filename)-13s:%(lineno)3d] %(message)s"
@@ -338,6 +339,20 @@ def list_images_cli(env: str, region: Optional[str], debug: bool) -> None:
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     list_images(env=env, region=region)
+
+
+@list.command(name="env")
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def list_env_cli(debug: bool) -> None:
+    """List all Docker images available into the target environment."""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    list_env()
 
 
 @click.command(name="remote", hidden=True)
