@@ -257,8 +257,7 @@ Resources:
             Action:
               - secretsmanager:*
             Resource:
-              - arn:aws:secretsmanager:${region}:${account_id}:secret:*
-              - arn:aws:secretsmanager:${region}:${account_id}:secret:orbit*
+              - arn:aws:secretsmanager:${region}:${account_id}:secret:orbit-redshift-master-${env_name}*
         Version: '2012-10-17'
       Description: 'Managed policy for plugin specific resources'
       ManagedPolicyName: orbit-${env_name}-plugin-admin

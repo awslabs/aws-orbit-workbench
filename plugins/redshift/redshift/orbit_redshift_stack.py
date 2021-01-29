@@ -16,9 +16,9 @@ import logging
 import os
 from typing import Any, Dict
 
+# from aws_cdk import aws_kms as kms
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
-from aws_cdk import aws_kms as kms
 from aws_cdk import aws_lambda
 from aws_cdk import aws_redshift as redshift
 from aws_cdk import aws_secretsmanager, core
@@ -41,15 +41,14 @@ class RedshiftClusters(core.Construct):
         self,
         scope: core.Construct,
         id: str,
-        kms_key: kms.Key,
         team_space_props: Dict[str, Any],
         plugin_params: Dict[str, Any],
     ):
         super().__init__(scope, id)
 
-        redshift_common = RedshiftClustersCommon(self, "redshift-common", kms_key, team_space_props, plugin_params)
+        redshift_common = RedshiftClustersCommon(self, "redshift-common", team_space_props, plugin_params)
 
-        RedshiftFunctionStandard(self, "redshift-standard", redshift_common, kms_key)
+        RedshiftFunctionStandard(self, "redshift-standard", redshift_common, plugin_params)
 
 
 class RedshiftClustersCommon(core.Construct):
@@ -57,7 +56,6 @@ class RedshiftClustersCommon(core.Construct):
         self,
         scope: core.Construct,
         id: str,
-        kms_key: kms.Key,
         team_space_props: Dict[str, Any],
         plugin_params: Dict[str, Any],
     ):
@@ -71,9 +69,10 @@ class RedshiftClustersCommon(core.Construct):
         self.lake_role_name = team_space_props["lake_role_name"]
         self.lake_role_arn = f"arn:{self.partition}:iam::{self.account}:role/{self.lake_role_name}"
         self.team_security_group_id = team_space_props["team_security_group_id"]
+        self.team_kms_key_arn = team_space_props["team_kms_key_arn"]
 
-        vpc_id: str = team_space_props["vpc_id"]
-        vpc: ec2.Vpc = ec2.Vpc.from_lookup(self, "Vpc", vpc_id=vpc_id)
+        # vpc_id: str = team_space_props["vpc_id"]
+        # vpc: ec2.Vpc = ec2.Vpc.from_lookup(self, "Vpc", vpc_id=vpc_id)
 
         # Adding plugin parameters to redshift parameter group
         self._parameter_group = redshift.CfnClusterParameterGroup(
@@ -101,21 +100,24 @@ class RedshiftClustersCommon(core.Construct):
             subnet_ids=team_space_props["subnet_ids"],
         )
 
-        self._security_group = ec2.SecurityGroup(
-            self,
-            "orbit-redshift-sg",
-            vpc=vpc,
-            allow_all_outbound=False,
-            description=f"OrbitTeamSpace Redshift Security Group for {self.env_name}-{self.teamspace_name}",
-        )
+        # self._security_group = ec2.SecurityGroup(
+        #     self,
+        #     "orbit-redshift-sg",
+        #     vpc=vpc,
+        #     allow_all_outbound=False,
+        #     description=f"OrbitTeamSpace Redshift Security Group for {self.env_name}-{self.teamspace_name}",
+        # )
 
         self._team_security_group = ec2.SecurityGroup.from_security_group_id(
-            self, f"{self.env_name}-{self.teamspace_name}-sg", self.team_security_group_id, mutable=False
+            self,
+            id=f"{self.env_name}-{self.teamspace_name}-sg",
+            security_group_id=self.team_security_group_id,
+            mutable=False,
         )
 
-        self._security_group.add_ingress_rule(self._team_security_group, ec2.Port.tcp(5439))
+        # self._team_security_group.add_ingress_rule(self._team_security_group, ec2.Port.tcp(5439))
 
-        self._security_group.add_ingress_rule(self._security_group, ec2.Port.all_tcp())
+        # self._team_security_group.add_ingress_rule(self._team_security_group, ec2.Port.all_tcp())
 
         self._secret = aws_secretsmanager.Secret(
             self,
@@ -162,7 +164,9 @@ class RedshiftClustersCommon(core.Construct):
                                 f"arn:{self.partition}:redshift:{self.region}:{self.account}:cluster:{self.env_name}-{self.teamspace_name}*",  # noqa
                             ],
                         ),
-                        iam.PolicyStatement(effect=iam.Effect.ALLOW, actions=["kms:*"], resources=[kms_key.key_arn]),
+                        iam.PolicyStatement(
+                            effect=iam.Effect.ALLOW, actions=["kms:*"], resources=[self.team_kms_key_arn]
+                        ),
                         iam.PolicyStatement(
                             effect=iam.Effect.ALLOW,
                             actions=[
@@ -186,7 +190,13 @@ class RedshiftClustersCommon(core.Construct):
 
 
 class RedshiftFunctionStandard(core.Construct):
-    def __init__(self, scope: core.Construct, id: str, redshift_common: RedshiftClustersCommon, kms_key: kms.Key):
+    def __init__(
+        self,
+        scope: core.Construct,
+        id: str,
+        redshift_common: RedshiftClustersCommon,
+        plugin_params: Dict[str, Any],
+    ):
         super().__init__(scope, id)
         env_name: str = redshift_common.env_name
         teamspace_name: str = redshift_common.teamspace_name
@@ -198,7 +208,7 @@ class RedshiftFunctionStandard(core.Construct):
             mutable=False,
         )
         launch_name = "Standard"
-
+        kms_key_id = redshift_common.team_kms_key_arn.split("/")[-1]
         standard_function = aws_lambda.Function(
             self,
             f"orbit-{env_name}-{teamspace_name}-StartRedshift-Standard",
@@ -210,16 +220,16 @@ class RedshiftFunctionStandard(core.Construct):
             role=redshift_common._lambda_role,
             environment={
                 "ClusterType": "multi-node",
-                "NodeType": "DC2.large",
-                "Nodes": "2",
+                "NodeType": plugin_params.get("node_type", "DC2.large"),
+                "Nodes": plugin_params.get("number_of_nodes", "2"),
                 "Database": "defaultdb",
                 "RedshiftClusterParameterGroup": redshift_common._parameter_group.ref,
                 "RedshiftClusterSubnetGroup": redshift_common._subnet_group.ref,
-                "RedshiftClusterSecurityGroup": redshift_common._security_group.security_group_id,
+                "RedshiftClusterSecurityGroup": redshift_common._team_security_group.security_group_id,
                 "PortNumber": "5439",
                 "SecretId": redshift_common._secret.secret_arn,
                 "Role": redshift_common.lake_role_arn,
-                "kms_key": kms_key.key_id,
+                "kms_key": kms_key_id,
                 "Env": env_name,
                 "TeamSpace": teamspace_name,
             },
@@ -240,45 +250,48 @@ class RedshiftStack(Stack):
         )
         Tags.of(scope=self).add(key="Env", value=f"orbit-{manifest.name}")
 
-        admin_role = iam.Role.from_role_arn(
-            self,
-            f"{team_manifest.manifest.name}-{team_manifest.name}-admn-role",
-            f"arn:{core.Aws.PARTITION}:iam::{team_manifest.manifest.account_id}:role/orbit-{team_manifest.manifest.name}-admin",  # noqa
-            mutable=False,
-        )
+        # admin_role = iam.Role.from_role_arn(
+        #     self,
+        #     f"{team_manifest.manifest.name}-{team_manifest.name}-admn-role",
+        #     f"arn:{core.Aws.PARTITION}:iam::{team_manifest.manifest.account_id}:role/orbit-{team_manifest.manifest.name}-admin",  # noqa
+        #     mutable=False,
+        # )
 
-        kms_key: kms.Key = kms.Key(
-            self,
-            "team-kms-key",
-            description=f"Key for TeamSpace {team_manifest.manifest.name}.{team_manifest.name}",
-            trust_account_identities=True,
-            removal_policy=core.RemovalPolicy.DESTROY,
-            enable_key_rotation=True,
-            policy=iam.PolicyDocument(
-                statements=[
-                    iam.PolicyStatement(
-                        principals=[admin_role],
-                        effect=iam.Effect.ALLOW,
-                        actions=[
-                            "kms:Create*",
-                            "kms:Describe*",
-                            "kms:Enable*",
-                            "kms:List*",
-                            "kms:Put*",
-                            "kms:Update*",
-                            "kms:Revoke*",
-                            "kms:Disable*",
-                            "kms:Get*",
-                            "kms:Delete*",
-                            "kms:ScheduleKeyDeletion",
-                            "kms:CancelKeyDeletion",
-                        ],
-                        resources=["*"],
-                    )
-                ]
-            ),
-        )
+        # kms_key: kms.Key = kms.Key.from_key_arn(self, id="team-kms", key_arn=team_manifest.team_kms_key_arn)
+
+        # kms_key: kms.Key = kms.Key(
+        #     self,
+        #     "team-kms-key",
+        #     description=f"Key for TeamSpace {team_manifest.manifest.name}.{team_manifest.name}",
+        #     trust_account_identities=True,
+        #     removal_policy=core.RemovalPolicy.DESTROY,
+        #     enable_key_rotation=True,
+        #     policy=iam.PolicyDocument(
+        #         statements=[
+        #             iam.PolicyStatement(
+        #                 principals=[admin_role],
+        #                 effect=iam.Effect.ALLOW,
+        #                 actions=[
+        #                     "kms:Create*",
+        #                     "kms:Describe*",
+        #                     "kms:Enable*",
+        #                     "kms:List*",
+        #                     "kms:Put*",
+        #                     "kms:Update*",
+        #                     "kms:Revoke*",
+        #                     "kms:Disable*",
+        #                     "kms:Get*",
+        #                     "kms:Delete*",
+        #                     "kms:ScheduleKeyDeletion",
+        #                     "kms:CancelKeyDeletion",
+        #                 ],
+        #                 resources=["*"],
+        #             )
+        #         ]
+        #     ),
+        # )
         # Collecting required parameters
+
         team_space_props: Dict[str, Any] = {
             "account_id": team_manifest.manifest.account_id,
             "region": team_manifest.manifest.region,
@@ -289,12 +302,12 @@ class RedshiftStack(Stack):
             "vpc_id": manifest.vpc.asdict()["vpc-id"],
             "subnet_ids": [sm.subnet_id for sm in manifest.vpc.subnets],
             "team_security_group_id": team_manifest.team_security_group_id,
+            "team_kms_key_arn": team_manifest.team_kms_key_arn,
         }
 
         self._redshift_clusters = RedshiftClusters(
             self,
             id="redshift-clusters-for-teamspace",
-            kms_key=kms_key,
             team_space_props=team_space_props,
             plugin_params=parameters,
         )

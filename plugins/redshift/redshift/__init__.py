@@ -32,7 +32,7 @@ def deploy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, para
     _logger.debug("Deploying Redshift plugin resources for team %s", team_manifest.name)
     sh.run(f"echo 'Team name: {team_manifest.name} | Plugin ID: {plugin_id}'")
     cdk_deploy(
-        stack_name=f"orbit-{manifest.name}-{team_manifest.name}-redshift-sdk-stack",
+        stack_name=f"orbit-{manifest.name}-{team_manifest.name}-{plugin_id}-redshift",
         app_filename=os.path.join(PLUGIN_ROOT_PATH, "orbit_redshift_stack.py"),
         manifest=manifest,
         team_manifest=team_manifest,
@@ -45,7 +45,7 @@ def destroy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, par
     _logger.debug("Destroying Redshift plugin resources for team %s", team_manifest.name)
     sh.run(f"echo 'Team name: {team_manifest.name} | Plugin ID: {plugin_id}'")
     cdk_destroy(
-        stack_name=f"orbit-{manifest.name}-{team_manifest.name}-redshift-sdk-stack",
+        stack_name=f"orbit-{manifest.name}-{team_manifest.name}-{plugin_id}-redshift",
         app_filename=os.path.join(PLUGIN_ROOT_PATH, "orbit_redshift_stack.py"),
         manifest=manifest,
         team_manifest=team_manifest,
