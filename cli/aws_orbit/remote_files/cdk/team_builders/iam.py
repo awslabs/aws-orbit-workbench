@@ -18,6 +18,7 @@ import aws_cdk.aws_iam as iam
 import aws_cdk.aws_kms as kms
 import aws_cdk.aws_s3 as s3
 import aws_cdk.core as core
+
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest
 

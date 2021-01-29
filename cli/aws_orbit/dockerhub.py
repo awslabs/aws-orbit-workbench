@@ -3,6 +3,7 @@ import logging
 from typing import TYPE_CHECKING, Dict, Tuple
 
 import botocore
+
 from aws_orbit.services import s3
 
 if TYPE_CHECKING:

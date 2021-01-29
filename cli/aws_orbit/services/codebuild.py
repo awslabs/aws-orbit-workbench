@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Any, Dict, Iterable, List, NamedTuple, Optiona
 
 import botocore.exceptions
 import yaml
+
 from aws_orbit.utils import try_it
 
 if TYPE_CHECKING:
@@ -130,47 +131,29 @@ def start(
         if ".amazonaws.com/" not in repo:
             repo = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/{repo}"
         credentials = "SERVICE_ROLE"
-        _logger.debug("Repository: %s", repo)
-        _logger.debug("Credentials: %s", credentials)
-        response: Dict[str, Any] = client.start_build(
-            projectName=project_name,
-            sourceTypeOverride="S3",
-            sourceLocationOverride=bundle_location,
-            buildspecOverride=yaml.safe_dump(data=buildspec, sort_keys=False, indent=4),
-            timeoutInMinutesOverride=timeout,
-            privilegedModeOverride=True,
-            logsConfigOverride={
-                "cloudWatchLogs": {
-                    "status": "ENABLED",
-                    "groupName": f"/aws/codebuild/{project_name}",
-                    "streamName": stream_name,
-                },
-                "s3Logs": {"status": "DISABLED"},
+    _logger.debug("Repository: %s", repo)
+    _logger.debug("Credentials: %s", credentials)
+    build_params = {
+        "projectName": project_name,
+        "sourceTypeOverride": "S3",
+        "sourceLocationOverride": bundle_location,
+        "buildspecOverride": yaml.safe_dump(data=buildspec, sort_keys=False, indent=4),
+        "timeoutInMinutesOverride": timeout,
+        "privilegedModeOverride": True,
+        "logsConfigOverride": {
+            "cloudWatchLogs": {
+                "status": "ENABLED",
+                "groupName": f"/aws/codebuild/{project_name}",
+                "streamName": stream_name,
             },
-            imageOverride=repo,
-            imagePullCredentialsTypeOverride=credentials,
-        )
-    else:
-        _logger.debug("Repository: %s", repo)
-        _logger.debug("Credentials: %s", credentials)
-        response: Dict[str, Any] = client.start_build(
-            projectName=project_name,
-            sourceTypeOverride="S3",
-            sourceLocationOverride=bundle_location,
-            buildspecOverride=yaml.safe_dump(data=buildspec, sort_keys=False, indent=4),
-            timeoutInMinutesOverride=timeout,
-            privilegedModeOverride=True,
-            logsConfigOverride={
-                "cloudWatchLogs": {
-                    "status": "ENABLED",
-                    "groupName": f"/aws/codebuild/{project_name}",
-                    "streamName": stream_name,
-                },
-                "s3Logs": {"status": "DISABLED"},
-            }
-        )
-
-
+            "s3Logs": {"status": "DISABLED"},
+        },
+    }
+    if repo:
+        build_params["imageOverride"] = repo
+    if credentials:
+        build_params["imagePullCredentialsTypeOverride"] = credentials
+    response: Dict[str, Any] = client.start_build(**build_params)
     return str(response["build"]["id"])
 
 

@@ -26,6 +26,7 @@ from aws_orbit.manifest import team as manifest_team
 from aws_orbit.manifest.subnet import SubnetKind, SubnetManifest
 from aws_orbit.manifest.team import MANIFEST_FILE_TEAM_TYPE, MANIFEST_TEAM_TYPE, TeamManifest, parse_teams
 from aws_orbit.manifest.vpc import MANIFEST_FILE_VPC_TYPE, MANIFEST_VPC_TYPE, VpcManifest, parse_vpc
+from aws_orbit.services import cognito
 from yamlinclude import YamlIncludeConstructor
 import jsonpath_ng as jsonpath_ng
 
@@ -129,9 +130,7 @@ class Manifest:
         else:
             self.region = utils.get_region()
         self.account_id: str = self.get_account_id()
-
         # Need to fill up
-
         self.deploy_id: Optional[str] = None  # toolkit
         self.toolkit_kms_arn: Optional[str] = None  # toolkit
         self.toolkit_kms_alias: Optional[str] = None  # toolkit
@@ -203,7 +202,6 @@ class Manifest:
         self.codeartifact_repository: Optional[str] = cast(
             Optional[str], self.raw_file.get("codeartifact-repository", None)
         )
-
         # Images
         if self.raw_file.get("images") is None:
             self.images = MANIFEST_FILE_IMAGES_DEFAULTS
@@ -314,6 +312,52 @@ class Manifest:
         app:
             log_path: !ENV '/var/${LOG_PATH}'
             something_else: !ENV '${AWESOME_ENV_VAR}/var/${A_SECOND_AWESOME_VAR}'
+        """
+        # pattern for global vars: look for ${word}
+        pattern = re.compile(".*?\${(\w+)}.*?")  # noqa: W605
+        loader = yaml.SafeLoader
+
+        # the tag will be used to mark where to start searching for the pattern
+        # e.g. somekey: !ENV somestring${MYENVVAR}blah blah blah
+        loader.add_implicit_resolver(tag, pattern, None)  # type: ignore
+
+        def constructor_env_variables(loader, node) -> Any:  # type: ignore
+            """
+            Extracts the environment variable from the node's value
+            :param yaml.Loader loader: the yaml loader
+            :param node: the current node in the yaml
+            :return: the parsed string that contains the value of the environment
+            variable
+            """
+            value = loader.construct_scalar(node)
+            match = pattern.findall(value)  # to find all env variables in line
+            if match:
+                full_value = value
+                for g in match:
+                    full_value = full_value.replace(f"${{{g}}}", os.environ.get(g, g))
+                return full_value
+            return value
+
+        loader.add_constructor(tag, constructor_env_variables)  # type: ignore
+
+    @staticmethod
+    def _add_env_var_injector(tag: str = "!ENV") -> None:
+        """
+        Load a yaml configuration file and resolve any environment variables
+        The environment variables must have !ENV before them and be in this format
+        to be parsed: ${VAR_NAME}.
+        E.g.:
+        database:
+            host: !ENV ${HOST}
+            port: !ENV ${PORT}
+        app:
+            log_path: !ENV '/var/${LOG_PATH}'
+            something_else: !ENV '${AWESOME_ENV_VAR}/var/${A_SECOND_AWESOME_VAR}'
+        :param str path: the path to the yaml file
+        :param str data: the yaml data itself as a stream
+        :param str tag: the tag to look for
+        :return: the dict configuration
+        :rtype: dict[str, T]
         """
         # pattern for global vars: look for ${word}
         pattern = re.compile(".*?\${(\w+)}.*?")  # noqa: W605

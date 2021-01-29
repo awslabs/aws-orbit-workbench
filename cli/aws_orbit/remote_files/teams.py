@@ -18,6 +18,7 @@ import shutil
 from typing import TYPE_CHECKING, Iterator, List, Optional, cast
 
 import boto3
+
 from aws_orbit import ORBIT_CLI_ROOT, cdk, docker, plugins
 from aws_orbit.manifest import Manifest
 from aws_orbit.services import cfn, ecr, efs, s3
@@ -163,7 +164,6 @@ def destroy(manifest: "Manifest", team_manifest: "TeamManifest") -> None:
                 args = ["manifest", manifest.filename, team_manifest.name]
             else:
                 args = ["env", manifest.name, team_manifest.name]
-
             cdk.destroy(
                 manifest=manifest,
                 stack_name=team_manifest.stack_name,
@@ -175,3 +175,5 @@ def destroy(manifest: "Manifest", team_manifest: "TeamManifest") -> None:
 def destroy_all(manifest: "Manifest") -> None:
     for team_manifest in manifest.teams:
         destroy(manifest=manifest, team_manifest=team_manifest)
+    manifest.teams = []
+    manifest.write_manifest_ssm()

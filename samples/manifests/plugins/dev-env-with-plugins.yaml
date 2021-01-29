@@ -1,0 +1,66 @@
+name: dev-env
+demo: true
+codeartifact-domain: aws-orbit
+codeartifact-repository: python-repository
+eks-system-masters-roles:
+-   Admin
+images:
+    jupyter-hub:
+        repository: aws-orbit-jupyter-hub
+        version: latest
+        source: code
+        path: ../images/jupyter-hub/
+    jupyter-user:
+        repository: aws-orbit-jupyter-user
+        version: latest
+        source: code
+        path: ../images/jupyter-user/
+    jupyter-user-spark:
+        repository: aws-orbit-jupyter-user
+        version: latest
+        source: code
+        path: ../images/jupyter-user-spark/
+    landing-page:
+        repository: aws-orbit-landing-page
+        version: latest
+        source: code
+        path: ../images/landing-page/
+    code-build-image:
+        repository: aws-orbit-code-build-base
+        version: latest
+        source: code
+        path: ../images/code-build-image/
+networking:
+    data:
+        internet-accessible: false
+        nodes-subnets: []
+    frontend:
+        load-balancers-subnets: []
+teams:
+-   name: lake-creator
+    instance-type: m5.4xlarge
+    local-storage-size: 128
+    nodes-num-desired: 2
+    nodes-num-max: 3
+    nodes-num-min: 1
+    policies:
+    - orbit-dev-env-demo-lake-bucket-fullaccess
+    grant-sudo: false
+    jupyterhub-inbound-ranges:
+    - 0.0.0.0/0
+    plugins: !include plugins.yaml
+    efs-life-cycle: AFTER_7_DAYS
+-   name: lake-user
+    instance-type: m5.4xlarge
+    local-storage-size: 128
+    nodes-num-desired: 2
+    nodes-num-max: 3
+    nodes-num-min: 1
+    policies:
+    - orbit-dev-env-demo-lake-bucket-readonlyaccess
+    jupyterhub-inbound-ranges:
+    - 0.0.0.0/0
+    grant-sudo: true
+    profiles: !include lake-user-profiles.json
+    plugins: !include plugins.yaml
+    efs-life-cycle: AFTER_7_DAYS
