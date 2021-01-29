@@ -38,7 +38,7 @@ jobs:
         run: isort --check .
       - name: CloudFormation Lint
         run: cfn-lint -i E1029,E3031 -- aws_orbit/data/toolkit/template.yaml
-  
+
   SDK:
     runs-on: ubuntu-latest
     strategy:

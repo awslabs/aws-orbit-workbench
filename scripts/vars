@@ -1,0 +1,9 @@
+export DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+export CONF_DIR="$(cd "$(dirname "${DIR}/../conf")"; pwd -P)/$(basename "${DIR}/../conf")"
+export SAMPLES_DIR="$(cd "$(dirname "${DIR}/../samples")"; pwd -P)/$(basename "${DIR}/../samples")"
+export IMAGES_DIR="$(cd "$(dirname "${DIR}/../images")"; pwd -P)/$(basename "${DIR}/../images")"
+
+export DOMAIN="aws-orbit"
+export REPOSITORY="python-repository"
+
