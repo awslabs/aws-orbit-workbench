@@ -92,10 +92,12 @@ def init_cli(
     _logger.debug("debug: %s", debug)
     init(name=name, region=region, demo=demo, debug=debug)
 
+
 @click.group(name="deploy")
 def deploy() -> None:
     """Deploy foundation,env,teams in your Orbit Workbench."""
     pass
+
 
 @deploy.command(name="env")
 @click.option(
@@ -197,10 +199,13 @@ def deploy_foundation_cli(
         password=password,
         debug=debug,
     )
+
+
 @click.group(name="destroy")
 def destroy() -> None:
     """Destroy foundation,env,etc in your Orbit Workbench."""
     pass
+
 
 @destroy.command(name="env")
 @click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
@@ -229,6 +234,7 @@ def destroy_cli_env(env: str, team_stacks: bool, keep_demo: bool, debug: bool) -
     _logger.debug("keep demo: %s", str(keep_demo))
     destroy_all(env=env, teams_only=team_stacks, keep_demo=keep_demo, debug=debug)
 
+
 @destroy.command(name="foundation")
 @click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
 @click.option(
@@ -243,6 +249,7 @@ def destroy_cli_foundation(env: str, debug: bool) -> None:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     _logger.debug("env: %s", env)
     destroy_all(env=env, teams_only=False, keep_demo=False, debug=debug)
+
 
 @click.group(name="build")
 def build() -> None:
@@ -337,7 +344,6 @@ def delete_profile_cli(env: str, team: str, profile: str, debug: bool) -> None:
     _logger.debug("profile: %s", profile)
     _logger.debug("debug: %s", debug)
     delete_profile(env=env, team=team, profile_name=profile, debug=debug)
-
 
 
 @delete.command(name="image")

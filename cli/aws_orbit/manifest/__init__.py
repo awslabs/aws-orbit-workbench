@@ -113,7 +113,6 @@ class Manifest:
         self.ssm_parameter_name: str
         self.cognito_external_provider_label: Optional[str]
         self.cognito_external_provider: Optional[str]
-        self.demo: bool
         self.internet_accessible: bool
         self.codeartifact_domain: Optional[str]
         self.images: MANIFEST_FILE_IMAGES_TYPE
@@ -179,7 +178,6 @@ class Manifest:
         self.filename_dir: str = utils.path_from_filename(filename=filename)
         self.raw_file: MANIFEST_FILE_TYPE = self._read_manifest_file(filename=filename)
         self.name = cast(str, self.raw_file["name"])
-        self.demo = cast(bool, self.raw_file.get("demo", False))
         self.ssm_parameter_name = f"/orbit/{self.name}/manifest"
         self.eks_system_masters_roles = cast(List[str], self.raw_file.get("eks-system-masters-roles", []))
         self.scratch_bucket_arn = cast(str, self.raw_file.get("scratch-bucket-arn"))
@@ -418,9 +416,7 @@ class Manifest:
             self.cognito_external_provider_redirect = cast(Optional[str], raw.get("cognito-external-provider-redirect"))
             self.shared_efs_fs_id = cast(Optional[str], raw.get("shared-efs-fs-id"))
             self.shared_efs_sg_id = cast(Optional[str], raw.get("shared-efs-sg-id"))
-
             self.internet_accessible = cast(bool, raw.get("internet-accessible", False))
-            self.demo = cast(bool, raw.get("demo", False))
             self.codeartifact_domain = cast(Optional[str], raw.get("codeartifact-domain", None))
             self.codeartifact_repository = cast(Optional[str], raw.get("codeartifact-repository", None))
             self.images = cast(MANIFEST_FILE_IMAGES_TYPE, raw.get("images"))
@@ -575,8 +571,6 @@ class Manifest:
                 ),
             },
         }
-        if self.demo:
-            obj["demo"] = True
         if self.codeartifact_domain is not None:
             obj["codeartifact-domain"] = self.codeartifact_domain
         if self.codeartifact_repository is not None:
