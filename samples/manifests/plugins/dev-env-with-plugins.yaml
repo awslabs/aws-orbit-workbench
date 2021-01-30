@@ -1,5 +1,4 @@
 name: dev-env
-demo: true
 codeartifact-domain: aws-orbit
 codeartifact-repository: python-repository
 eks-system-masters-roles:
