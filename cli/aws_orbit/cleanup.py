@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional, cast
 import botocore.exceptions
 
 from aws_orbit.manifest import Manifest
-from aws_orbit.services import elb
+from aws_orbit.services import efs, elb, s3
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -131,6 +131,14 @@ def _endpoints(manifest: Manifest, vpc_id: str) -> None:
 
 
 def demo_remaining_dependencies(manifest: Manifest, vpc_id: Optional[str] = None) -> None:
+    efs.delete_env_filesystems(manifest=manifest)
+    if manifest.scratch_bucket_arn:
+        scratch_bucket: str = manifest.scratch_bucket_arn.split(":::")[1]
+        try:
+            s3.delete_bucket(manifest=manifest, bucket=scratch_bucket)
+        except Exception as ex:
+            _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
+
     if vpc_id is None:
         if manifest.vpc.vpc_id is None:
             manifest.fetch_ssm()

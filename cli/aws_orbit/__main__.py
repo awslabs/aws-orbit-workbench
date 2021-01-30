@@ -20,8 +20,8 @@ from typing import Optional, TextIO, Tuple
 import click
 
 from aws_orbit.commands.delete import delete_image
-from aws_orbit.commands.deploy import deploy, deploy_foundation
-from aws_orbit.commands.destroy import destroy
+from aws_orbit.commands.deploy import deploy_env, deploy_foundation
+from aws_orbit.commands.destroy import destroy_all
 from aws_orbit.commands.image import build_image, build_profile, delete_profile, list_profiles
 from aws_orbit.commands.init import init
 from aws_orbit.commands.list import list_env, list_images
@@ -92,8 +92,12 @@ def init_cli(
     _logger.debug("debug: %s", debug)
     init(name=name, region=region, demo=demo, debug=debug)
 
+@click.group(name="deploy")
+def deploy() -> None:
+    """Deploy foundation,env,teams in your Orbit Workbench."""
+    pass
 
-@click.command(name="deploy")
+@deploy.command(name="env")
 @click.option(
     "--filename",
     "-f",
@@ -140,7 +144,7 @@ def deploy_cli(
     _logger.debug("filename: %s", filename)
     _logger.debug("username: %s", username)
     _logger.debug("skip_images: %s", skip_images)
-    deploy(
+    deploy_env(
         filename=filename,
         username=username,
         password=password,
@@ -150,7 +154,7 @@ def deploy_cli(
     )
 
 
-@click.command(name="deploy-foundation")
+@deploy.command(name="foundation")
 @click.option(
     "--filename",
     "-f",
@@ -193,9 +197,12 @@ def deploy_foundation_cli(
         password=password,
         debug=debug,
     )
+@click.group(name="destroy")
+def destroy() -> None:
+    """Destroy foundation,env,etc in your Orbit Workbench."""
+    pass
 
-
-@click.command(name="destroy")
+@destroy.command(name="env")
 @click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
 @click.option(
     "--team-stacks", is_flag=True, default=False, help="Destroy Team Stacks only or All Stacks", show_default=True
@@ -203,7 +210,7 @@ def deploy_foundation_cli(
 @click.option(
     "--keep-demo",
     is_flag=True,
-    default=False,
+    default=True,
     help="Destroy Env and Team, but keeps Demo env if one was used",
     show_default=True,
 )
@@ -213,15 +220,29 @@ def deploy_foundation_cli(
     help="Enable detailed logging.",
     show_default=True,
 )
-def destroy_cli(env: str, team_stacks: bool, keep_demo: bool, debug: bool) -> None:
+def destroy_cli_env(env: str, team_stacks: bool, keep_demo: bool, debug: bool) -> None:
     """Destroy a Orbit Workbench environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     _logger.debug("env: %s", env)
     _logger.debug("teams only: %s", str(team_stacks))
     _logger.debug("keep demo: %s", str(keep_demo))
-    destroy(env=env, teams_only=team_stacks, keep_demo=keep_demo, debug=debug)
+    destroy_all(env=env, teams_only=team_stacks, keep_demo=keep_demo, debug=debug)
 
+@destroy.command(name="foundation")
+@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def destroy_cli_foundation(env: str, debug: bool) -> None:
+    """Destroy a Orbit Workbench environment based on a manisfest file (yaml)."""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    _logger.debug("env: %s", env)
+    destroy_all(env=env, teams_only=False, keep_demo=False, debug=debug)
 
 @click.group(name="build")
 def build() -> None:
@@ -316,6 +337,7 @@ def delete_profile_cli(env: str, team: str, profile: str, debug: bool) -> None:
     _logger.debug("profile: %s", profile)
     _logger.debug("debug: %s", debug)
     delete_profile(env=env, team=team, profile_name=profile, debug=debug)
+
 
 
 @delete.command(name="image")
@@ -564,9 +586,8 @@ def run_notebook_container(
 
 def main() -> int:
     cli.add_command(init_cli)
-    cli.add_command(deploy_cli)
-    cli.add_command(destroy_cli)
-    cli.add_command(deploy_foundation_cli)
+    cli.add_command(deploy)
+    cli.add_command(destroy)
     cli.add_command(remote_cli)
     cli.add_command(run_container)
     cli.add_command(build)

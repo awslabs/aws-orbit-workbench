@@ -163,7 +163,7 @@ def deploy_foundation(
         ctx.progress(100)
 
 
-def deploy(
+def deploy_env(
     filename: str,
     skip_images: bool,
     env_only: bool,
