@@ -236,19 +236,19 @@ def destroy_cli_env(env: str, team_stacks: bool, keep_demo: bool, debug: bool) -
 
 
 @destroy.command(name="foundation")
-@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
+@click.option("--name", "-n", type=str, required=True, help="Destroy Orbit Foundation.")
 @click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
     show_default=True,
 )
-def destroy_cli_foundation(env: str, debug: bool) -> None:
+def destroy_cli_foundation(name: str, debug: bool) -> None:
     """Destroy a Orbit Workbench environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     _logger.debug("env: %s", env)
-    destroy_all(env=env, teams_only=False, keep_demo=False, debug=debug)
+    destroy_all(env=name, teams_only=False, keep_demo=False, debug=debug)
 
 
 @click.group(name="build")
