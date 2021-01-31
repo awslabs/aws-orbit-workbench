@@ -247,7 +247,7 @@ def destroy_cli_foundation(name: str, debug: bool) -> None:
     """Destroy a Orbit Workbench environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
-    _logger.debug("env: %s", env)
+    _logger.debug("name: %s", name)
     destroy_all(env=name, teams_only=False, keep_demo=False, debug=debug)
 
 
