@@ -303,22 +303,23 @@ class IamBuilder:
             ),
             managed_policies=managed_policies,
         )
-        role.assume_role_policy.add_statements(
-            iam.PolicyStatement(
-                effect=iam.Effect.ALLOW,
-                actions=["sts:AssumeRoleWithWebIdentity"],
-                principals=[
-                    iam.FederatedPrincipal(
-                        federated=f"arn:{partition}:iam::{account}:oidc-provider/{manifest.eks_oidc_provider}",
-                        conditions={
-                            "StringLike": {
-                                f"{manifest.eks_oidc_provider}:sub": f"system:serviceaccount:{team_manifest.name}:*"
-                            }
-                        },
-                    )
-                ],
-            ),
-        )
+        if role.assume_role_policy:
+            role.assume_role_policy.add_statements(
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["sts:AssumeRoleWithWebIdentity"],
+                    principals=[
+                        iam.FederatedPrincipal(
+                            federated=f"arn:{partition}:iam::{account}:oidc-provider/{manifest.eks_oidc_provider}",
+                            conditions={
+                                "StringLike": {
+                                    f"{manifest.eks_oidc_provider}:sub": f"system:serviceaccount:{team_manifest.name}:*"
+                                }
+                            },
+                        )
+                    ],
+                ),
+            )
         return role
 
     @staticmethod
