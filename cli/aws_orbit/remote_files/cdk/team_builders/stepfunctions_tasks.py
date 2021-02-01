@@ -116,7 +116,7 @@ class BaseTask(sfn.TaskStateBase):
 
     def _when_bound_to_graph(self, graph: sfn.StateGraph) -> None:
         super()._when_bound_to_graph(graph)
-        for policy_statement in self._task_policies(): # type: ignore
+        for policy_statement in self._task_policies():  # type: ignore
             graph.register_policy_statement(policy_statement)
 
 
