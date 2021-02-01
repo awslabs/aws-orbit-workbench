@@ -228,6 +228,12 @@ class Env(Stack):
         )
 
     def _create_identity_pool(self) -> cognito.CfnIdentityPool:
+        provider_name = (
+            self.user_pool.user_pool_provider_name
+            if hasattr(self.user_pool, "user_pool_provider_name")
+            else f"cognito-idp.{self.manifest.region}.amazonaws.com/{self.manifest.user_pool_id}"
+        )
+
         pool = cognito.CfnIdentityPool(
             scope=self,
             id="identity-pool",
@@ -236,14 +242,7 @@ class Env(Stack):
             allow_classic_flow=False,
             cognito_identity_providers=[
                 cognito.CfnIdentityPool.CognitoIdentityProviderProperty(
-                    provider_name=self.user_pool.user_pool_provider_name,
-                    client_id=self.user_pool_client.user_pool_client_id,
-                )
-            ]
-            if hasattr(self.user_pool, "user_pool_provider_name")
-            else [
-                cognito.CfnIdentityPool.CognitoIdentityProviderProperty(
-                    provider_name=f"cognito-idp.{self.manifest.region}.amazonaws.com/{self.manifest.user_pool_id}",
+                    provider_name=provider_name,
                     client_id=self.user_pool_client.user_pool_client_id,
                 )
             ],

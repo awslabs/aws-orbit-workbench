@@ -55,6 +55,6 @@ class OrbitWorkbenchAuthenticator(Authenticator):  # type: ignore
         app_log.info("url: %s", url)
         parts: Tuple[str, ...] = tuple(url.split(sep="/login?next=%2Fhub%2Fhome&token=", maxsplit=1))
         if len(parts) != 2:
-            app_log.error(f"url:\n{url}")
+            app_log.error("url:\n%s", url)
             raise HTTPError(500, f"url: {url}")
         return parts[1]
