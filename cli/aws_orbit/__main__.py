@@ -69,7 +69,7 @@ def cli() -> None:
     required=False,
 )
 @click.option(
-    "--demo/--no-demo", default=True, help="Increment the deployment with demostration components.", show_default=True
+    "--foundation/--no-foundation", default=True, help="Create Orbit foundation default manifest.", show_default=True
 )
 @click.option(
     "--debug/--no-debug",
@@ -80,7 +80,7 @@ def cli() -> None:
 def init_cli(
     name: str,
     region: Optional[str],
-    demo: bool,
+    foundation: bool,
     debug: bool,
 ) -> None:
     """Creates a Orbit Workbench manifest model file (yaml) where all your deployment settings will rest."""
@@ -88,9 +88,9 @@ def init_cli(
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     _logger.debug("name: %s", name)
     _logger.debug("region: %s", region)
-    _logger.debug("demo: %s", demo)
+    _logger.debug("foundation: %s", foundation)
     _logger.debug("debug: %s", debug)
-    init(name=name, region=region, demo=demo, debug=debug)
+    init(name=name, region=region, foundation=foundation, debug=debug)
 
 
 @click.group(name="deploy")
