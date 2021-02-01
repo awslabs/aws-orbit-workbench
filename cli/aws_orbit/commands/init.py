@@ -23,7 +23,7 @@ from aws_orbit.messages import MessagesContext, stylize
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def resolve_parameters(
+def write_resolve_parameters(
     manifest_name: str,
     name: str,
     filename: str,
@@ -33,10 +33,7 @@ def resolve_parameters(
     input = os.path.join(ORBIT_CLI_ROOT, "data", "init", manifest_name)
     with open(input, "r") as file:
         content: str = file.read()
-    content = content.replace("$", "").format(
-        region=region_str,
-        name=name,
-    )
+    content = utils.resolve_parameters(content, dict(region=region_str, name=name))
 
     with open(filename, "w") as file:
         file.write(content)
@@ -50,13 +47,20 @@ def init(name: str, region: Optional[str], foundation: bool, debug: bool) -> Non
             shutil.rmtree(conf_dir)
         foundation_manifest = "default-foundation.yaml"
         env_manifest = "default-env-manifest.yaml"
-        shutil.copytree(src=conf_dir_src, dst=conf_dir, ignore=shutil.ignore_patterns(foundation_manifest,env_manifest))
+        shutil.copytree(src=conf_dir_src, dst=conf_dir)
         ctx.progress(50)
         name = name.lower()
-        filename: str = os.path.join(conf_dir, f"{name}.yaml")
-        resolve_parameters(name=name, filename=foundation_manifest, region=region, manifest_name=foundation_manifest)
-        resolve_parameters(name=name, filename=env_manifest, region=region, manifest_name=env_manifest)
-        ctx.info(f"Env Manifest generated as {filename}")
+
+        write_resolve_parameters(
+            name=name,
+            filename=os.path.join(conf_dir, foundation_manifest),
+            region=region,
+            manifest_name=foundation_manifest,
+        )
+        write_resolve_parameters(
+            name=name, filename=os.path.join(conf_dir, env_manifest), region=region, manifest_name=env_manifest
+        )
+        ctx.info("Env Manifest generated into conf folder")
 
         ctx.progress(100)
         if foundation:
