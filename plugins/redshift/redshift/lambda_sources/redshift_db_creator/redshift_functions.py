@@ -1,13 +1,8 @@
-# TODO - Add pause and resume boto3 calls
 import json
 import logging
 import os
 
 import boto3
-
-LOGGER = logging.getLogger()
-LOGGER.setLevel(logging.INFO)
-ssm = boto3.client("ssm")
 
 LOGGER = logging.getLogger()
 LOGGER.setLevel(logging.INFO)

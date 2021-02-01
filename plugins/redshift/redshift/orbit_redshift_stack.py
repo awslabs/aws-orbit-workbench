@@ -16,7 +16,6 @@ import logging
 import os
 from typing import Any, Dict
 
-# from aws_cdk import aws_kms as kms
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda
@@ -71,9 +70,6 @@ class RedshiftClustersCommon(core.Construct):
         self.team_security_group_id = team_space_props["team_security_group_id"]
         self.team_kms_key_arn = team_space_props["team_kms_key_arn"]
 
-        # vpc_id: str = team_space_props["vpc_id"]
-        # vpc: ec2.Vpc = ec2.Vpc.from_lookup(self, "Vpc", vpc_id=vpc_id)
-
         # Adding plugin parameters to redshift parameter group
         self._parameter_group = redshift.CfnClusterParameterGroup(
             self,
@@ -100,24 +96,12 @@ class RedshiftClustersCommon(core.Construct):
             subnet_ids=team_space_props["subnet_ids"],
         )
 
-        # self._security_group = ec2.SecurityGroup(
-        #     self,
-        #     "orbit-redshift-sg",
-        #     vpc=vpc,
-        #     allow_all_outbound=False,
-        #     description=f"OrbitTeamSpace Redshift Security Group for {self.env_name}-{self.teamspace_name}",
-        # )
-
         self._team_security_group = ec2.SecurityGroup.from_security_group_id(
             self,
             id=f"{self.env_name}-{self.teamspace_name}-sg",
             security_group_id=self.team_security_group_id,
             mutable=False,
         )
-
-        # self._team_security_group.add_ingress_rule(self._team_security_group, ec2.Port.tcp(5439))
-
-        # self._team_security_group.add_ingress_rule(self._team_security_group, ec2.Port.all_tcp())
 
         self._secret = aws_secretsmanager.Secret(
             self,
@@ -250,48 +234,7 @@ class RedshiftStack(Stack):
         )
         Tags.of(scope=self).add(key="Env", value=f"orbit-{manifest.name}")
 
-        # admin_role = iam.Role.from_role_arn(
-        #     self,
-        #     f"{team_manifest.manifest.name}-{team_manifest.name}-admn-role",
-        #     f"arn:{core.Aws.PARTITION}:iam::{team_manifest.manifest.account_id}:role/orbit-{team_manifest.manifest.name}-admin",  # noqa
-        #     mutable=False,
-        # )
-
-        # kms_key: kms.Key = kms.Key.from_key_arn(self, id="team-kms", key_arn=team_manifest.team_kms_key_arn)
-
-        # kms_key: kms.Key = kms.Key(
-        #     self,
-        #     "team-kms-key",
-        #     description=f"Key for TeamSpace {team_manifest.manifest.name}.{team_manifest.name}",
-        #     trust_account_identities=True,
-        #     removal_policy=core.RemovalPolicy.DESTROY,
-        #     enable_key_rotation=True,
-        #     policy=iam.PolicyDocument(
-        #         statements=[
-        #             iam.PolicyStatement(
-        #                 principals=[admin_role],
-        #                 effect=iam.Effect.ALLOW,
-        #                 actions=[
-        #                     "kms:Create*",
-        #                     "kms:Describe*",
-        #                     "kms:Enable*",
-        #                     "kms:List*",
-        #                     "kms:Put*",
-        #                     "kms:Update*",
-        #                     "kms:Revoke*",
-        #                     "kms:Disable*",
-        #                     "kms:Get*",
-        #                     "kms:Delete*",
-        #                     "kms:ScheduleKeyDeletion",
-        #                     "kms:CancelKeyDeletion",
-        #                 ],
-        #                 resources=["*"],
-        #             )
-        #         ]
-        #     ),
-        # )
         # Collecting required parameters
-
         team_space_props: Dict[str, Any] = {
             "account_id": team_manifest.manifest.account_id,
             "region": team_manifest.manifest.region,
