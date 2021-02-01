@@ -66,7 +66,7 @@ c.KubeSpawner.environment = {
     "ACCOUNT_ID": ACCOUNT_ID,
     "AWS_ORBIT_S3_BUCKET": TOOLKIT_S3_BUCKET,
     "GRANT_SUDO": GRANT_SUDO,
-    "AWS_STS_REGIONAL_ENDPOINTS": "regional"
+    "AWS_STS_REGIONAL_ENDPOINTS": "regional",
 }
 c.KubeSpawner.image = IMAGE
 # TODO we want to remove this 'Always' from production code
