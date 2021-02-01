@@ -104,9 +104,14 @@ class Team(Stack):
         )
 
         self.policies: List[str] = self.team_manifest.policies
-        self.scratch_bucket = s3.Bucket.from_bucket_arn(
-            scope=self, id="scratch_bucket", bucket_arn=self.manifest.scratch_bucket_arn
-        )
+        if self.manifest.scratch_bucket_arn:
+            self.scratch_bucket: s3.Bucket = cast(
+                s3.Bucket,
+                s3.Bucket.from_bucket_arn(scope=self, id="scratch_bucket", bucket_arn=self.manifest.scratch_bucket_arn),
+            )
+        else:
+            raise Exception("Scratch bucket was not provided in Manifest ('scratch-bucket-arn')")
+
         self.role_eks_nodegroup = IamBuilder.build_team_role(
             scope=self,
             manifest=self.manifest,
@@ -116,12 +121,23 @@ class Team(Stack):
             team_kms_key=self.team_kms_key,
         )
         shared_fs_name: str = f"orbit-{manifest.name}-{team_manifest.name}-shared-fs"
-        self.shared_fs: efs.FileSystem = efs.FileSystem.from_file_system_attributes(
-            scope=self,
-            id=shared_fs_name,
-            file_system_id=manifest.shared_efs_fs_id,
-            security_group=ec2.SecurityGroup.from_security_group_id(
-                scope=self, id="team_sec_group", security_group_id=manifest.shared_efs_sg_id
+        if not manifest.shared_efs_fs_id:
+            raise Exception("Shared EFS File system ID was not provided in Manifest ('shared-efs-fs-id')")
+
+        if not manifest.shared_efs_sg_id:
+            raise Exception(
+                "Shared EFS File system security group ID was not provided in Manifest ('shared-efs-sg-id')"
+            )
+
+        self.shared_fs: efs.FileSystem = cast(
+            efs.FileSystem,
+            efs.FileSystem.from_file_system_attributes(
+                scope=self,
+                id=shared_fs_name,
+                file_system_id=manifest.shared_efs_fs_id,
+                security_group=ec2.SecurityGroup.from_security_group_id(
+                    scope=self, id="team_sec_group", security_group_id=manifest.shared_efs_sg_id
+                ),
             ),
         )
 

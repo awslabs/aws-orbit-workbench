@@ -12,8 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import cast
-
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecr as ecr
 import aws_cdk.aws_ecs as ecs
@@ -46,7 +44,7 @@ class EcsBuilder:
             "ecr_repository",
             repository_name=repository_name,
         )
-        return cast(ecs.EcrImage, ecs.ContainerImage.from_ecr_repository(repository=repository, tag=tag))
+        return ecs.ContainerImage.from_ecr_repository(repository=repository, tag=tag)
 
     @staticmethod
     def build_ecr_image_spark(scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest) -> ecs.EcrImage:
@@ -57,7 +55,7 @@ class EcsBuilder:
             "ecr_repository_spark",
             repository_name=repository_name,
         )
-        return cast(ecs.EcrImage, ecs.ContainerImage.from_ecr_repository(repository=repository, tag=tag))
+        return ecs.ContainerImage.from_ecr_repository(repository=repository, tag=tag)
 
     @staticmethod
     def build_task_definition(
