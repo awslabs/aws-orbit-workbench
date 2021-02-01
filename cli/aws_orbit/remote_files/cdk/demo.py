@@ -17,7 +17,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_kms as kms
@@ -41,7 +41,7 @@ class DemoStack(Stack):
         self.env_name = manifest.name
         self.manifest = manifest
         super().__init__(scope, id, **kwargs)
-        Tags.of(scope=self).add(key="Env", value=f"orbit-{self.env_name}")
+        Tags.of(scope=cast(core.IConstruct, self)).add(key="Env", value=f"orbit-{self.env_name}")
         self.vpc: ec2.Vpc = self._create_vpc()
         self.public_subnets_ids: Tuple[str, ...] = tuple(x.subnet_id for x in self.vpc.public_subnets)
         self.private_subnets_ids: Tuple[str, ...] = tuple(x.subnet_id for x in self.vpc.private_subnets)
@@ -306,12 +306,14 @@ class DemoStack(Stack):
         # Adding CodeArtifact VPC endpoints
         self.vpc.add_interface_endpoint(
             id="code_artifact_repo_endpoint",
-            service=ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories"),
+            service=cast(
+                ec2.IInterfaceVpcEndpointService, ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories")
+            ),
             private_dns_enabled=False,
         )
         self.vpc.add_interface_endpoint(
             id="code_artifact_api_endpoint",
-            service=ec2.InterfaceVpcEndpointAwsService("codeartifact.api"),
+            service=cast(ec2.IInterfaceVpcEndpointService, ec2.InterfaceVpcEndpointAwsService("codeartifact.api")),
             private_dns_enabled=False,
         )
 

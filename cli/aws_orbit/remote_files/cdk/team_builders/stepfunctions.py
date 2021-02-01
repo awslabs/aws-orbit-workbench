@@ -113,7 +113,7 @@ class StateMachineBuilder:
             ),
             container_overrides=[
                 sfn_tasks.ContainerOverride(
-                    container_definition=task_definition.default_container,
+                    container_definition=cast(ecs.ContainerDefinition, task_definition.default_container),
                     command=COMMAND,
                     environment=[
                         sfn_tasks.TaskEnvironmentVariable(name="task_type", value=sfn.JsonPath.string_at("$.TaskType")),
@@ -138,7 +138,7 @@ class StateMachineBuilder:
             scope=construct,
             id="ecs_run_container_state_machine",
             state_machine_name=f"orbit-{manifest.name}-{team_manifest.name}-ecs-container-runner",
-            definition=definition,
+            definition=cast(sfn.IChainable, definition),
             role=role,
         )
 
@@ -282,7 +282,7 @@ class StateMachineBuilder:
             scope=construct,
             id="eks_run_container_state_machine",
             state_machine_name=f"orbit-{manifest.name}-{team_manifest.name}-eks-{node_type}-container-runner",
-            definition=definition,
+            definition=cast(sfn.IChainable, definition),
             role=role,
         )
 
@@ -320,7 +320,7 @@ class StateMachineBuilder:
             endpoint=sfn.JsonPath.string_at("$.DescribeResult.Endpoint"),
             method=sfn.JsonPath.string_at("$.RequestResult.Method"),
             path=sfn.JsonPath.string_at("$.RequestResult.Path"),
-            query_parameters=sfn.JsonPath.string_at("$.RequestResult.QueryParameters"),
+            query_parameters=sfn.TaskInput.from_data_at("$.RequestResult.QueryParameters").value,
             request_body=sfn.TaskInput.from_data_at("$.RequestResult.RequestBody").value,
         )
 
@@ -336,6 +336,6 @@ class StateMachineBuilder:
             id="eks_k8s_api_state_machine",
             state_machine_name=f"orbit-{manifest.name}-{team_manifest.name}-eks-k8s-api",
             state_machine_type=sfn.StateMachineType.EXPRESS,
-            definition=definition,
+            definition=cast(sfn.IChainable, definition),
             role=role,
         )

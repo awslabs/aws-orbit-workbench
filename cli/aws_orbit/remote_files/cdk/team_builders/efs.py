@@ -28,7 +28,7 @@ class EfsBuilder:
         scope: core.Construct,
         name: str,
         efs_life_cycle: str,
-        vpc: ec2.Vpc,
+        vpc: ec2.IVpc,
         efs_security_group: ec2.ISecurityGroup,
         subnets: List[ec2.ISubnet],
         team_kms_key: kms.Key,

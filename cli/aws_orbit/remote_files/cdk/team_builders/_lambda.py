@@ -90,7 +90,7 @@ class LambdaBuilder:
         manifest: Manifest,
         team_manifest: TeamManifest,
     ) -> aws_lambda.Function:
-        stack = core.Stack.of(scope)
+        stack = core.Stack.of(cast(core.IConstruct, scope))
         lambda_function = cast(aws_lambda.Function, stack.node.try_find_child("eks_describe_cluster"))
         if lambda_function is None:
             lambda_function = aws_lambda.Function(
@@ -117,7 +117,7 @@ class LambdaBuilder:
         manifest: Manifest,
         team_manifest: TeamManifest,
     ) -> aws_lambda.Function:
-        stack = core.Stack.of(scope)
+        stack = core.Stack.of(cast(core.IConstruct, scope))
         lambda_function = cast(aws_lambda.Function, stack.node.try_find_child("construct_request"))
         if lambda_function is None:
             lambda_function = aws_lambda.Function(
