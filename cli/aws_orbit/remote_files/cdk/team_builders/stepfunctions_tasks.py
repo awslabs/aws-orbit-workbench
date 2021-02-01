@@ -107,17 +107,18 @@ class BaseTask(sfn.TaskStateBase):
             "TimeoutSecondsPath": self.render_json_path(cast(str, self._timeout_path)),
             "HeartbeatSeconds": self._heartbeat.to_seconds() if self._heartbeat else None,
             "HeartbeatSecondsPath": self.render_json_path(cast(str, self._heartbeat_path)),
-            "InputPath": self.render_json_path(self._input_path),
-            "OutputPath": self.render_json_path(self._output_path),
-            "ResultPath": self.render_json_path(self._result_path),
+            "InputPath": self.render_json_path(cast(str, self._input_path)),
+            "OutputPath": self.render_json_path(cast(str, self._output_path)),
+            "ResultPath": self.render_json_path(cast(str, self._result_path)),
             "ResultSelector": self._result_selector,
         }
         return {k: v for k, v in task.items() if v is not None}
 
     def _when_bound_to_graph(self, graph: sfn.StateGraph) -> None:
         super()._when_bound_to_graph(graph)
-        for policy_statement in self._task_policies():
-            graph.register_policy_statement(policy_statement)
+        if self._task_policies:
+            for policy_statement in self._task_policies:
+                graph.register_policy_statement(policy_statement)
 
 
 class EksRunJob(BaseTask):
