@@ -1,6 +1,12 @@
 name: ${name}
 region: ${region}
-demo: ${demo}
+codeartifact-domain: aws-orbit
+codeartifact-repository: python-repository
+scratch-bucket-arn: !SSM ${/orbit/dev-env/demo::ScratchBucketArn}
+user-pool-id: !SSM ${/orbit/dev-env/demo::UserPoolId}
+shared-efs-fs-id: !SSM ${/orbit/dev-env/demo::EFSFilesystemID}
+shared-efs-sg-id: !SSM ${/orbit/dev-env/demo::SharedEFSSecurityGroup}
+vpc-id: !SSM ${/orbit/dev-env/demo::VpcId}
 images:
     jupyter-hub:
         repository: aws-orbit-jupyter-hub

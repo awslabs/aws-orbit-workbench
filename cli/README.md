@@ -58,13 +58,15 @@
 
 * `orbit init --demo --dev`
 
-### Deploying
+### Deploying Foundation or Environment
 
-* `orbit deploy -f my-env.yaml`
+* `orbit deploy foundation -f my-foundation.yaml`
+* `orbit deploy env -f my-env.yaml`
 
-### Destroying
+### Destroying Foundation or Environment
 
-* `orbit destroy -f my-env.yaml`
+* `orbit destroy foundation --name my-foundation`
+* `orbit destroy env --env my-env`
 
 ## 4 - Assuming Admin Role to Access EKS
 

@@ -40,7 +40,6 @@ class TeamManifest:
         nodes_num_max: int,
         nodes_num_min: int,
         policies: List[str],
-        efs_life_cycle: str,
         plugins: List[PluginManifest],
         grant_sudo: bool,
         jupyterhub_inbound_ranges: List[str],
@@ -92,12 +91,11 @@ class TeamManifest:
         self.ssm_parameter_name: str = f"/orbit/{self.manifest.name}/teams/{self.name}/manifest"
         self.bootstrap_s3_prefix: str = f"teams/{self.name}/bootstrap/"
         self.scratch_bucket: Optional[str] = None
-        self.scratch_retention_days: int = 30
         self.container_defaults = {"cpu": 4, "memory": 16384}
-        self.efs_life_cycle = efs_life_cycle
         # Need to fill up
         self.raw_ssm: Optional[MANIFEST_TEAM_TYPE] = None
         self.efs_id: Optional[str] = None
+        self.efs_ap_id: Optional[str] = None
         self.eks_nodegroup_role_arn: Optional[str] = None
         self.jupyter_url: Optional[str] = None
         self.ecs_cluster_name: Optional[str] = None
@@ -142,7 +140,6 @@ class TeamManifest:
             "image": self.image,
             "jupyterhub-inbound-ranges": self.jupyterhub_inbound_ranges,
             "profiles": self.profiles,
-            "efs-life-cycle": self.efs_life_cycle,
             "plugins": [p.asdict_file() for p in self.plugins],
         }
 
@@ -162,10 +159,10 @@ class TeamManifest:
         if self.raw_ssm is not None:
             raw: MANIFEST_TEAM_TYPE = self.raw_ssm
             self.efs_id = cast(Optional[str], raw.get("efs-id"))
+            self.efs_ap_id = cast(Optional[str], raw.get("efs-ap-id"))
             self.eks_nodegroup_role_arn = cast(Optional[str], raw.get("eks-nodegroup-role-arn"))
             self.jupyter_url = cast(Optional[str], raw.get("jupyter-url"))
             self.scratch_bucket = cast(str, raw.get("scratch-bucket"))
-            self.scratch_retention_days = cast(int, raw.get("scratch-retention-days"))
             self.ecs_cluster_name = cast(str, raw.get("ecs-cluster-name"))
             self.container_runner_arn = cast(str, raw.get("container-runner-arn"))
             self.eks_k8s_api_arn = cast(str, raw.get("eks-k8s-api-arn"))
@@ -197,7 +194,6 @@ def parse_teams(manifest: "Manifest", raw_teams: List[MANIFEST_FILE_TEAM_TYPE]) 
             nodes_num_desired=cast(int, t["nodes-num-desired"]),
             nodes_num_max=cast(int, t["nodes-num-max"]),
             nodes_num_min=cast(int, t["nodes-num-min"]),
-            efs_life_cycle=cast(str, t["efs-life-cycle"]) if "efs-life-cycle" in t else "",
             policies=cast(List[str], t.get("policies", [])),
             grant_sudo=cast(bool, t.get("grant-sudo", False)),
             jupyterhub_inbound_ranges=cast(List[str], t.get("jupyterhub-inbound-ranges", [])),

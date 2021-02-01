@@ -57,7 +57,7 @@ def destroy_remaining_resources(manifest: Manifest, keep_demo: bool) -> None:
         destroy_toolkit(manifest=manifest)
 
 
-def destroy(env: str, teams_only: bool, keep_demo: bool, debug: bool) -> None:
+def destroy_all(env: str, teams_only: bool, keep_demo: bool, debug: bool) -> None:
     with MessagesContext("Destroying", debug=debug) as ctx:
         manifest = Manifest(filename=None, env=env, region=None)
         if manifest.raw_ssm is None:

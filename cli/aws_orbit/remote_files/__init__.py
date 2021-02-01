@@ -29,3 +29,4 @@ class RemoteCommands(Enum):
     destroy: REMOTE_FUNC_TYPE = destroy_module.destroy
     build_image: REMOTE_FUNC_TYPE = build_image_module.build_image
     delete_image: REMOTE_FUNC_TYPE = delete_image_module.delete_image
+    deploy_foundation: REMOTE_FUNC_TYPE = deploy_module.deploy_foundation

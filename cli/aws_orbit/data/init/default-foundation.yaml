@@ -1,0 +1,14 @@
+name: ${name}
+codeartifact-domain: aws-orbit
+codeartifact-repository: python-repository
+networking:
+    data:
+        internet-accessible: false
+        nodes-subnets: []
+    frontend:
+        load-balancers-subnets: []
+images:
+    code-build-image:
+        repository: aws-orbit-code-build-base
+        source: ecr
+        version: latest

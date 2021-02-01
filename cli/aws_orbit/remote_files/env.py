@@ -19,7 +19,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 from aws_orbit import ORBIT_CLI_ROOT, cdk, docker
 from aws_orbit.changeset import ListChangeset
 from aws_orbit.manifest import Manifest
-from aws_orbit.services import cfn, ecr, efs, iam
+from aws_orbit.services import cfn, ecr, iam
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -52,7 +52,6 @@ def _ecr(manifest: Manifest) -> None:
 
 def _cleanup_remaining_resources(manifest: Manifest) -> None:
     _ecr(manifest=manifest)
-    efs.delete_env_filesystems(manifest=manifest)
 
 
 def _concat_images_into_args(manifest: Manifest, add_images: List[str], remove_images: List[str]) -> Tuple[str, str]:

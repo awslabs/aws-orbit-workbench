@@ -89,7 +89,7 @@ class StateMachineBuilder:
         team_manifest: TeamManifest,
         cluster: ecs.Cluster,
         task_definition: ecs.TaskDefinition,
-        efs_security_group: ec2.SecurityGroup,
+        team_security_group: ec2.SecurityGroup,
         subnets: List[ec2.ISubnet],
         scratch_bucket: s3.Bucket,
         role: iam.IRole,
@@ -104,7 +104,7 @@ class StateMachineBuilder:
             timeout_path="$.Timeout",
             cluster=cluster,
             task_definition=task_definition,
-            security_groups=[efs_security_group],
+            security_groups=[team_security_group],
             subnets=ec2.SubnetSelection(subnets=subnets),
             assign_public_ip=True,
             launch_target=cast(

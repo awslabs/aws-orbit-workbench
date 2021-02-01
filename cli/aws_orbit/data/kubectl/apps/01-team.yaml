@@ -23,7 +23,7 @@ spec:
     storage: 5Gi
   csi:
     driver: efs.csi.aws.com
-    volumeHandle: ${efsid}
+    volumeHandle: ${efsid}::${efsapid}
   persistentVolumeReclaimPolicy: Retain
   storageClassName: efs-storage-class
   volumeMode: Filesystem
