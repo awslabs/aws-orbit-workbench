@@ -25,7 +25,7 @@ import aws_cdk.aws_iam as iam
 import aws_cdk.aws_lambda_python as lambda_python
 import aws_cdk.aws_ssm as ssm
 from aws_cdk import aws_lambda
-from aws_cdk.core import App, CfnOutput, Construct, Duration, Environment, Stack, Tags
+from aws_cdk.core import App, CfnOutput, Construct, Duration, Environment, IConstruct, Stack, Tags
 
 from aws_orbit.manifest import Manifest
 from aws_orbit.remote_files.cdk import _lambda_path
@@ -54,12 +54,12 @@ class Env(Stack):
             stack_name=id,
             env=Environment(account=self.manifest.account_id, region=self.manifest.region),
         )
-        Tags.of(scope=self).add(key="Env", value=f"orbit-{self.manifest.name}")
+        Tags.of(scope=cast(IConstruct, self)).add(key="Env", value=f"orbit-{self.manifest.name}")
         self.i_vpc = ec2.Vpc.from_vpc_attributes(
             scope=self,
             id="vpc",
-            vpc_id=self.manifest.vpc.vpc_id,
-            availability_zones=self.manifest.vpc.availability_zones,
+            vpc_id=cast(str, self.manifest.vpc.vpc_id),
+            availability_zones=cast(List[str], self.manifest.vpc.availability_zones),
         )
         self.repos = self._create_ecr_repos()
         self.role_eks_cluster = self._create_role_cluster()

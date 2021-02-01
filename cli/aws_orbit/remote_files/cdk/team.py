@@ -16,7 +16,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import List
+from typing import List, cast
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2
@@ -27,7 +27,7 @@ import aws_cdk.aws_kms as kms
 import aws_cdk.aws_s3 as s3
 import aws_cdk.aws_ssm as ssm
 import aws_cdk.core as core
-from aws_cdk.core import App, Construct, Environment, Stack, Tags
+from aws_cdk.core import App, Construct, Environment, IConstruct, Stack, Tags
 
 from aws_orbit import changeset
 from aws_orbit.manifest import Manifest
@@ -57,14 +57,14 @@ class Team(Stack):
             stack_name=id,
             env=Environment(account=self.manifest.account_id, region=self.manifest.region),
         )
-        Tags.of(scope=self).add(key="Env", value=f"orbit-{self.manifest.name}")
-        Tags.of(scope=self).add(key="TeamSpace", value=self.team_manifest.name)
+        Tags.of(scope=cast(IConstruct, self)).add(key="Env", value=f"orbit-{self.manifest.name}")
+        Tags.of(scope=cast(IConstruct, self)).add(key="TeamSpace", value=self.team_manifest.name)
 
         self.i_vpc = ec2.Vpc.from_vpc_attributes(
             scope=self,
             id="vpc",
-            vpc_id=self.manifest.vpc.vpc_id,
-            availability_zones=self.manifest.vpc.availability_zones,
+            vpc_id=cast(str, self.manifest.vpc.vpc_id),
+            availability_zones=cast(List[str], self.manifest.vpc.availability_zones),
         )
         self.i_isolated_subnets = Ec2Builder.build_subnets_from_kind(
             scope=self, subnet_manifests=manifest.vpc.subnets, subnet_kind=SubnetKind.isolated

@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import List
+from typing import List, cast
 
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.core as core
@@ -41,7 +41,7 @@ class Ec2Builder:
 
     @staticmethod
     def build_efs_security_group(
-        scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest, vpc: ec2.Vpc, subnet_kind: SubnetKind
+        scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest, vpc: ec2.IVpc, subnet_kind: SubnetKind
     ) -> ec2.SecurityGroup:
         name: str = f"orbit-{manifest.name}-{team_manifest.name}-efs-sg"
         sg = ec2.SecurityGroup(
@@ -55,7 +55,7 @@ class Ec2Builder:
         for subnet in manifest.vpc.subnets:
             if subnet.kind is subnet_kind:
                 sg.add_ingress_rule(
-                    peer=ec2.Peer.ipv4(subnet.cidr_block),
+                    peer=ec2.Peer.ipv4(cast(str, subnet.cidr_block)),
                     connection=ec2.Port.tcp(port=2049),
                     description=f"Allowing internal access from subnet {subnet.subnet_id}.",
                 )
@@ -64,7 +64,7 @@ class Ec2Builder:
 
     @staticmethod
     def build_team_security_group(
-        scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest, vpc: ec2.Vpc
+        scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest, vpc: ec2.IVpc
     ) -> ec2.SecurityGroup:
         name: str = f"orbit-{manifest.name}-{team_manifest.name}-sg"
         sg = ec2.SecurityGroup(scope=scope, id=name, security_group_name=name, vpc=vpc, allow_all_outbound=True)
