@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional, Union, cast
 import boto3
 import botocore.config
 import botocore.exceptions
+import jsonpath_ng as jsonpath_ng
 import yaml
 from yamlinclude import YamlIncludeConstructor
 
@@ -29,7 +30,6 @@ from aws_orbit.manifest import team as manifest_team
 from aws_orbit.manifest.subnet import SubnetKind, SubnetManifest
 from aws_orbit.manifest.team import MANIFEST_FILE_TEAM_TYPE, MANIFEST_TEAM_TYPE, TeamManifest, parse_teams
 from aws_orbit.manifest.vpc import MANIFEST_FILE_VPC_TYPE, MANIFEST_VPC_TYPE, VpcManifest, parse_vpc
-from aws_orbit.services import cognito
 
 _logger: logging.Logger = logging.getLogger(__name__)
 MANIFEST_PROPERTY_MAP_TYPE = Dict[str, Union[str, Dict[str, Any]]]
@@ -104,6 +104,8 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
     },
 )
 
+ssm_context: Dict[str, str] = {}
+
 
 class Manifest:
     def __init__(self, filename: Optional[str], env: Optional[str], region: Optional[str]) -> None:
@@ -111,14 +113,16 @@ class Manifest:
         self.ssm_parameter_name: str
         self.cognito_external_provider_label: Optional[str]
         self.cognito_external_provider: Optional[str]
-        self.demo: bool
         self.internet_accessible: bool
         self.codeartifact_domain: Optional[str]
         self.images: MANIFEST_FILE_IMAGES_TYPE
         self.teams: List[TeamManifest]
         self.load_balancers_subnets: List[str]
         self.eks_system_masters_roles: List[str]
-
+        self.scratch_bucket_arn: Optional[str]
+        self.shared_efs_fs_id: Optional[str]
+        self.shared_efs_sg_id: Optional[str]
+        self.user_pool_id: Optional[str]
         if filename and env:
             raise RuntimeError("Must provide either a manifest file or environment name and neither were provided.")
         if region:
@@ -140,9 +144,7 @@ class Manifest:
         self.eks_oidc_provider: Optional[str] = None  # Env
         self.user_pool_client_id: Optional[str] = None  # Env
         self.identity_pool_id: Optional[str] = None  # Env
-        self.user_pool_id: Optional[str] = None  # Env
         self.cognito_users_urls: Optional[str] = None  # Env
-
         self.landing_page_url: Optional[str] = None  # Kubectl
         self.elbs: Optional[Dict[str, Dict[str, Any]]] = None  # Kubectl
 
@@ -176,9 +178,13 @@ class Manifest:
         self.filename_dir: str = utils.path_from_filename(filename=filename)
         self.raw_file: MANIFEST_FILE_TYPE = self._read_manifest_file(filename=filename)
         self.name = cast(str, self.raw_file["name"])
-        self.demo = cast(bool, self.raw_file.get("demo", False))
         self.ssm_parameter_name = f"/orbit/{self.name}/manifest"
         self.eks_system_masters_roles = cast(List[str], self.raw_file.get("eks-system-masters-roles", []))
+        self.scratch_bucket_arn = cast(str, self.raw_file.get("scratch-bucket-arn"))
+        self.shared_efs_fs_id = cast(Optional[str], self.raw_file.get("shared-efs-fs-id"))
+        self.shared_efs_sg_id = cast(Optional[str], self.raw_file.get("shared-efs-sg-id"))
+
+        self.user_pool_id = cast(Optional[str], self.raw_file.get("user-pool-id"))
         # Networking
         if "networking" not in self.raw_file:
             raise RuntimeError("Invalid manifest: Missing the 'networking' attribute.")
@@ -205,8 +211,13 @@ class Manifest:
                     self.images[k] = v
 
         self.vpc: VpcManifest = parse_vpc(manifest=self)
-        self.teams = parse_teams(manifest=self, raw_teams=cast(List[MANIFEST_FILE_TEAM_TYPE], self.raw_file["teams"]))
-        _logger.debug("Teams loaded: %s", [t.name for t in self.teams])
+        if "teams" in self.raw_file and hasattr(self, "raw_file"):
+            self.teams = parse_teams(
+                manifest=self, raw_teams=cast(List[MANIFEST_FILE_TEAM_TYPE], self.raw_file["teams"])
+            )
+            _logger.debug("Teams loaded: %s", [t.name for t in self.teams])
+        else:
+            self.teams = []
 
         self.cognito_external_provider = cast(Optional[str], self.raw_file.get("external-idp", None))
         self.cognito_external_provider_label = cast(Optional[str], self.raw_file.get("external-idp-label", None))
@@ -223,8 +234,72 @@ class Manifest:
         _logger.debug("manifest: %s", manifest_path)
         YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.SafeLoader, base_dir=conf_dir)
         Manifest._add_env_var_injector()
+        Manifest._add_ssm_param_injector()
         with open(manifest_path, "r") as f:
             return cast(MANIFEST_FILE_TYPE, yaml.safe_load(f))
+
+    @staticmethod
+    def _add_ssm_param_injector(tag: str = "!SSM") -> None:
+        """
+        Load a yaml configuration file and resolve any SSM parameters
+        The SSM parameters must have !SSM before them and be in this format
+        to be parsed: ${SSM_PARAMETER_PATH::JSONPATH}.
+        E.g.:
+        database:
+            host: !SSM ${/orbit/dev-env/demo::/UserAccessPolicy}
+            port: !SSM ${/orbit/dev-env/demo::/PublicSubnet/*}
+        """
+        # pattern for global vars: look for ${word}
+        pattern = re.compile(".*?\${(.*)}.*?")  # noqa: W605
+        loader = yaml.SafeLoader
+
+        # the tag will be used to mark where to start searching for the pattern
+        # e.g. somekey: !SSM somestring${MYENVVAR}blah blah blah
+        loader.add_implicit_resolver(tag, pattern, None)  # type: ignore
+
+        def constructor_ssm_parameter(loader, node) -> Any:  # type: ignore
+            """
+            Extracts the environment variable from the node's value
+            :param yaml.Loader loader: the yaml loader
+            :param node: the current node in the yaml
+            :return: the parsed string that contains the value of the environment
+            variable
+            """
+            value = loader.construct_scalar(node)
+            match = pattern.findall(value)  # to find all env variables in line
+            if match:
+                full_value = value
+                for g in match:
+                    (ssm_param_name, jsonpath) = g.split("::")
+                    _logger.debug(f"found injected parameter {(ssm_param_name, jsonpath)}")
+                    if ssm_param_name not in ssm_context:
+                        ssm = utils.boto3_client("ssm")
+                        try:
+                            ssm_context[ssm_param_name] = json.loads(
+                                ssm.get_parameter(Name=ssm_param_name)["Parameter"]["Value"]
+                            )
+                            print(ssm_context[ssm_param_name])
+                        except Exception as e:
+                            _logger.error(f"Error resolving injected parameter {g}: {e}")
+                            pass
+
+                    json_expr = jsonpath_ng.parse(jsonpath)
+                    json_data = ssm_context[ssm_param_name]
+                    json_match = json_expr.find(json_data)
+
+                    if len(json_match) > 1:
+                        raise Exception(f"Injected parameter {g} is ambiguous")
+                    elif len(json_match) == 0:
+                        raise Exception(f"Injected parameter {jsonpath} not found in SSM {ssm_param_name}")
+
+                    param_value: str = json_match[0].value
+                    _logger.debug(f"injected parameter {g} resolved to {param_value}")
+                    # full_value = full_value.replace(f"${{{g}}}", str(param_value))
+                    return param_value
+                return full_value
+            return value
+
+        loader.add_constructor(tag, constructor_ssm_parameter)  # type: ignore
 
     @staticmethod
     def _add_env_var_injector(tag: str = "!ENV") -> None:
@@ -239,11 +314,6 @@ class Manifest:
         app:
             log_path: !ENV '/var/${LOG_PATH}'
             something_else: !ENV '${AWESOME_ENV_VAR}/var/${A_SECOND_AWESOME_VAR}'
-        :param str path: the path to the yaml file
-        :param str data: the yaml data itself as a stream
-        :param str tag: the tag to look for
-        :return: the dict configuration
-        :rtype: dict[str, T]
         """
         # pattern for global vars: look for ${word}
         pattern = re.compile(".*?\${(\w+)}.*?")  # noqa: W605
@@ -338,20 +408,20 @@ class Manifest:
             self.eks_oidc_provider = cast(Optional[str], raw.get("eks-oidc-provider"))
             self.eks_system_masters_roles = cast(List[str], raw.get("eks-system-masters-roles", []))
             self.user_pool_client_id = cast(Optional[str], raw.get("user-pool-client-id"))
+            self.scratch_bucket_arn = cast(Optional[str], raw.get("scratch-bucket-arn"))
             self.identity_pool_id = cast(Optional[str], raw.get("identity-pool-id"))
             self.cognito_external_provider = cast(Optional[str], raw.get("cognito-external-provider", None))
             self.cognito_external_provider_label = cast(Optional[str], raw.get("cognito-external-provider-label", None))
             self.cognito_external_provider_domain = cast(Optional[str], raw.get("cognito-external-provider-domain"))
             self.cognito_external_provider_redirect = cast(Optional[str], raw.get("cognito-external-provider-redirect"))
-            self.user_pool_id = cast(Optional[str], raw.get("user-pool-id"))
+            self.shared_efs_fs_id = cast(Optional[str], raw.get("shared-efs-fs-id"))
+            self.shared_efs_sg_id = cast(Optional[str], raw.get("shared-efs-sg-id"))
             self.internet_accessible = cast(bool, raw.get("internet-accessible", False))
-            self.demo = cast(bool, raw.get("demo", False))
             self.codeartifact_domain = cast(Optional[str], raw.get("codeartifact-domain", None))
             self.codeartifact_repository = cast(Optional[str], raw.get("codeartifact-repository", None))
             self.images = cast(MANIFEST_FILE_IMAGES_TYPE, raw.get("images"))
             self.load_balancers_subnets = cast(List[str], raw.get("load-balancers-subnets"))
-            if self.user_pool_id is not None:
-                self.cognito_users_urls = cognito.get_users_url(user_pool_id=self.user_pool_id, region=self.region)
+            self.user_pool_id = cast(Optional[str], raw.get("user-pool-id"))
             if not hasattr(self, "vpc"):
                 raw_vpc = cast("MANIFEST_VPC_TYPE", raw.get("vpc"))
                 subnets_raw: List[Dict[str, str]] = cast(List[Dict[str, str]], raw_vpc.get("subnets"))
@@ -454,8 +524,8 @@ class Manifest:
 
         self.vpc = parse_vpc(manifest=self)
 
-        self.fetch_ssm()
-        self.write_manifest_ssm()
+        # self.fetch_ssm()
+        # self.write_manifest_ssm()
         _logger.debug("DEMO data fetched successfully.")
 
     def fetch_network_data(self) -> None:
@@ -483,7 +553,7 @@ class Manifest:
     def fillup(self) -> None:
         if self.fetch_ssm() is False:
             self.fetch_toolkit_data()
-            self.fetch_demo_data()
+            # self.fetch_demo_data()
             self.fetch_network_data()
             self.fetch_cognito_external_idp_data()
 
@@ -501,8 +571,6 @@ class Manifest:
                 ),
             },
         }
-        if self.demo:
-            obj["demo"] = True
         if self.codeartifact_domain is not None:
             obj["codeartifact-domain"] = self.codeartifact_domain
         if self.codeartifact_repository is not None:
@@ -511,7 +579,14 @@ class Manifest:
             obj["external-idp"] = self.cognito_external_provider
         if self.cognito_external_provider_label is not None:
             obj["external-idp-label"] = self.cognito_external_provider_label
-
+        if self.user_pool_id is not None:
+            obj["user-pool-id"] = self.user_pool_id
+        if self.shared_efs_fs_id is not None:
+            obj["shared-efs-fs-id"] = self.shared_efs_fs_id
+        if self.shared_efs_sg_id is not None:
+            obj["shared-efs-sg-id"] = self.shared_efs_sg_id
+        if self.scratch_bucket_arn is not None:
+            obj["scratch-bucket-arn"] = self.scratch_bucket_arn
         obj["images"] = self.images
         obj["teams"] = [t.asdict_file() for t in self.teams]
         obj["eks-system-masters-roles"] = self.eks_system_masters_roles

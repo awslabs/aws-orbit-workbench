@@ -55,7 +55,6 @@ def _team(manifest: Manifest, team_manifest: "TeamManifest", output_path: str) -
     with open(input, "r") as file:
         content: str = file.read()
 
-    _logger.debug("team.efs_id: %s", team_manifest.efs_id)
     inbound_ranges: List[str] = (
         team_manifest.jupyterhub_inbound_ranges
         if team_manifest.jupyterhub_inbound_ranges
@@ -63,7 +62,8 @@ def _team(manifest: Manifest, team_manifest: "TeamManifest", output_path: str) -
     )
     content = content.replace("$", "").format(
         team=team_manifest.name,
-        efsid=team_manifest.efs_id,
+        efsid=manifest.shared_efs_fs_id,
+        efsapid=team_manifest.efs_ap_id,
         region=manifest.region,
         account_id=manifest.account_id,
         env_name=manifest.name,

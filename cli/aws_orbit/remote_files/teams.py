@@ -21,7 +21,7 @@ import boto3
 
 from aws_orbit import ORBIT_CLI_ROOT, cdk, docker, plugins
 from aws_orbit.manifest import Manifest
-from aws_orbit.services import cfn, ecr, efs, s3
+from aws_orbit.services import cfn, ecr
 
 if TYPE_CHECKING:
     from aws_orbit.manifest.team import TeamManifest
@@ -138,18 +138,6 @@ def deploy(manifest: "Manifest") -> None:
 def destroy(manifest: "Manifest", team_manifest: "TeamManifest") -> None:
     _logger.debug("Stack name: %s", team_manifest.stack_name)
     if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.toolkit_stack_name):
-        scratch_bucket: str = (
-            f"orbit-{team_manifest.manifest.name}-{team_manifest.name}"
-            f"-scratch-{manifest.account_id}-{manifest.deploy_id}"
-        )
-        try:
-            s3.delete_bucket(manifest=manifest, bucket=scratch_bucket)
-        except Exception as ex:
-            _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
-        try:
-            efs.delete_filesystems_by_team(manifest=manifest, team_name=team_manifest.name)
-        except Exception as ex:
-            _logger.debug("Skipping Team EFS Target deletion. Cause: %s", ex)
         try:
             ecr.delete_repo(manifest=manifest, repo=f"orbit-{manifest.name}-{team_manifest.name}")
         except Exception as ex:

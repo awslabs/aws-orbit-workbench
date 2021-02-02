@@ -30,7 +30,7 @@ class IamBuilder:
         manifest: Manifest,
         team_manifest: TeamManifest,
         policy_names: List[str],
-        scratch_bucket: s3.Bucket,
+        scratch_bucket: s3.IBucket,
         team_kms_key: kms.Key,
     ) -> iam.Role:
         env_name = manifest.name

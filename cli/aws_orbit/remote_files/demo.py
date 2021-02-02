@@ -107,35 +107,35 @@ def _prepare_demo_data(manifest: Manifest) -> None:
 def deploy(manifest: Manifest) -> None:
     stack_name: str = manifest.demo_stack_name
     _logger.debug("Deploying %s DEMO...", stack_name)
-    if manifest.demo:
-        deploy_args: Dict[str, Any] = {
-            "manifest": manifest,
-            "stack_name": stack_name,
-            "app_filename": os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "demo.py"),
-            "args": [manifest.filename],
-        }
-        try:
+    deploy_args: Dict[str, Any] = {
+        "manifest": manifest,
+        "stack_name": stack_name,
+        "app_filename": os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "demo.py"),
+        "args": [manifest.filename],
+    }
+    try:
+        cdk.deploy(**deploy_args)
+    except exceptions.FailedShellCommand:
+        if cfn.get_eventual_consistency_event(manifest=manifest, stack_name=stack_name) is not None:
+            destroy(manifest=manifest)
+            _logger.debug("Sleeping for 5 minutes waiting for DEMO eventual consistency issue...")
+            time.sleep(300)
+            _logger.debug("Retrying DEMO deploy...")
             cdk.deploy(**deploy_args)
-        except exceptions.FailedShellCommand:
-            if cfn.get_eventual_consistency_event(manifest=manifest, stack_name=stack_name) is not None:
-                destroy(manifest=manifest)
-                _logger.debug("Sleeping for 5 minutes waiting for DEMO eventual consistency issue...")
-                time.sleep(300)
-                _logger.debug("Retrying DEMO deploy...")
-                cdk.deploy(**deploy_args)
-            else:
-                raise
-        manifest.fetch_demo_data()
-        manifest.write_manifest_file()
-        _logger.debug("Adding demo data")
-        _prepare_demo_data(manifest)
-        _logger.debug("Enabling private dns for codeartifact vpc endpoints")
-        vpc.modify_vpc_endpoint(manifest=manifest, service_name="codeartifact.repositories", private_dns_enabled=True)
-        vpc.modify_vpc_endpoint(manifest=manifest, service_name="codeartifact.api", private_dns_enabled=True)
+        else:
+            raise
+    # manifest.fetch_demo_data()
+    manifest.write_manifest_file()
+    _logger.debug("Adding demo data")
+    _prepare_demo_data(manifest)
+    _logger.debug("Enabling private dns for codeartifact vpc endpoints")
+    manifest.fetch_demo_data()
+    vpc.modify_vpc_endpoint(manifest=manifest, service_name="codeartifact.repositories", private_dns_enabled=True)
+    vpc.modify_vpc_endpoint(manifest=manifest, service_name="codeartifact.api", private_dns_enabled=True)
 
 
 def destroy(manifest: Manifest) -> None:
-    if manifest.demo and cfn.does_stack_exist(manifest=manifest, stack_name=manifest.demo_stack_name):
+    if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.demo_stack_name):
         waited: bool = False
         while cfn.does_stack_exist(manifest=manifest, stack_name=manifest.eks_stack_name):
             waited = True

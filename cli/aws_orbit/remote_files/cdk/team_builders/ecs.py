@@ -65,6 +65,7 @@ class EcsBuilder:
         ecs_execution_role: iam.Role,
         ecs_task_role: iam.Role,
         file_system: efs.FileSystem,
+        fs_accesspoint: efs.AccessPoint,
         image: ecs.EcrImage,
     ) -> ecs.TaskDefinition:
         ecs_log_group = logs.LogGroup(
@@ -88,7 +89,9 @@ class EcsBuilder:
                 ecs.Volume(
                     name="team_efs_volume",
                     efs_volume_configuration=ecs.EfsVolumeConfiguration(
-                        file_system_id=file_system.file_system_id, transit_encryption="ENABLED"
+                        file_system_id=file_system.file_system_id,
+                        transit_encryption="ENABLED",
+                        authorization_config=ecs.AuthorizationConfig(access_point_id=fs_accesspoint.access_point_id),
                     ),
                 )
             ],

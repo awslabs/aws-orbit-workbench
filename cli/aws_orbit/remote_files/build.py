@@ -42,9 +42,9 @@ def build_image(args: Tuple[str, ...]) -> None:
 
     manifest: Manifest = Manifest(filename=None, env=env, region=None)
     manifest.fillup()
-    if manifest.demo:
-        manifest.fetch_demo_data()
-        manifest.fetch_network_data()
+    # if manifest.demo:
+    #     manifest.fetch_demo_data()
+    #     manifest.fetch_network_data()
 
     docker.login(manifest=manifest)
     _logger.debug("DockerHub and ECR Logged in")

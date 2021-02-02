@@ -17,15 +17,21 @@ import logging
 import os
 import shutil
 import sys
-from typing import Any, Dict, Tuple, cast
+from typing import Any, Dict, List, Tuple, cast
 
+import aws_cdk.aws_cognito as cognito
+import aws_cdk.aws_kms as kms
+import aws_cdk.aws_s3 as s3
 import aws_cdk.core as core
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_ssm as ssm
-from aws_cdk.core import App, CfnOutput, Construct, Stack, Tags
+from aws_cdk.core import App, CfnOutput, Construct, Duration, Stack, Tags
 
 from aws_orbit.manifest import Manifest
+from aws_orbit.remote_files.cdk.team_builders.cognito import CognitoBuilder
+from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
+from aws_orbit.remote_files.cdk.team_builders.s3 import S3Builder
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -59,6 +65,32 @@ class DemoStack(Stack):
         }
         self.lake_bucket_full_access = self._create_fullaccess_managed_policies()
         self.lake_bucket_read_only_access = self._create_readonlyaccess_managed_policies()
+        self._build_kms_key_for_env()
+        self.efs_fs = EfsBuilder.build_file_system(
+            scope=self,
+            name="orbit-fs",
+            efs_life_cycle="AFTER_7_DAYS",
+            vpc=self.vpc,
+            efs_security_group=self._vpc_security_group,
+            subnets=self.isolated_subnets.subnets,
+            team_kms_key=self.env_kms_key,
+        )
+
+        self.scratch_bucket: s3.Bucket = S3Builder.build_scratch_bucket(
+            scope=self,
+            name=self.env_name,
+            deploy_id=manifest.deploy_id,
+            scratch_retention_days=30,
+            kms_key=self.env_kms_key,
+        )
+        self.user_pool: cognito.UserPool = self._create_user_pool()
+
+        self.user_pool_lake_creator: cognito.CfnUserPoolGroup = CognitoBuilder.build_user_pool_group(
+            scope=self, user_pool_id=self.user_pool.user_pool_id, team_name="lake-creator"
+        )
+        self.user_pool_lake_user: cognito.CfnUserPoolGroup = CognitoBuilder.build_user_pool_group(
+            scope=self, user_pool_id=self.user_pool.user_pool_id, team_name="lake-user"
+        )
 
         self._ssm_parameter = ssm.StringParameter(
             self,
@@ -68,9 +100,19 @@ class DemoStack(Stack):
                     "VpcId": self.vpc.vpc_id,
                     "PublicSubnet": self.public_subnets_ids,
                     "PrivateSubnet": self.private_subnets_ids,
+                    "IsolatedSubnet": self.isolated_subnets_ids,
+                    "NodeSubnets": self.isolated_subnets_ids,
+                    "LoadBalancersSubnets": self.public_subnets_ids,
                     "LakeBucket": self.bucket_names["lake-bucket"],
                     "CreatorAaccessPolicy": self.lake_bucket_full_access.managed_policy_name,
                     "UserAccessPolicy": self.lake_bucket_read_only_access.managed_policy_name,
+                    "KMSKey": self.env_kms_key.key_arn,
+                    "EFSFilesystemID": self.efs_fs.file_system_id,
+                    "ScratchBucketArn": self.scratch_bucket.bucket_arn,
+                    "ScratchBucketName": self.scratch_bucket.bucket_name,
+                    "UserPoolId": self.user_pool.user_pool_id,
+                    "SharedEFSSecurityGroup": self._vpc_security_group.security_group_id,
+                    "UserPoolProviderName": self.user_pool.user_pool_provider_name,
                 }
             ),
             type=ssm.ParameterType.STRING,
@@ -113,6 +155,27 @@ class DemoStack(Stack):
             value=self.lake_bucket_read_only_access.managed_policy_name,
         )
 
+    def _build_kms_key_for_env(self) -> None:
+        administrator_arns: List[str] = []  # A place to add other admins if needed for KMS
+        admin_principals = iam.CompositePrincipal(
+            *[iam.ArnPrincipal(arn) for arn in administrator_arns],
+            iam.ArnPrincipal(f"arn:aws:iam::{self.manifest.account_id}:root"),
+        )
+        self.env_kms_key: kms.Key = kms.Key(
+            self,
+            id="kms-key",
+            removal_policy=core.RemovalPolicy.RETAIN,
+            enabled=True,
+            enable_key_rotation=True,
+            policy=iam.PolicyDocument(
+                statements=[
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW, actions=["kms:*"], resources=["*"], principals=[admin_principals]
+                    )
+                ]
+            ),
+        )
+
     def _create_vpc(self) -> ec2.Vpc:
         vpc = ec2.Vpc(
             scope=self,
@@ -135,6 +198,44 @@ class DemoStack(Stack):
             },
         )
         return vpc
+
+    def _create_user_pool(self) -> cognito.UserPool:
+        pool = cognito.UserPool(
+            scope=self,
+            id="orbit-user-pool",
+            account_recovery=cognito.AccountRecovery.EMAIL_ONLY,
+            auto_verify=cognito.AutoVerifiedAttrs(email=True, phone=False),
+            custom_attributes=None,
+            email_settings=None,
+            lambda_triggers=None,
+            mfa=cognito.Mfa.OFF,
+            mfa_second_factor=None,
+            password_policy=cognito.PasswordPolicy(
+                min_length=8,
+                require_digits=True,
+                require_lowercase=True,
+                require_symbols=True,
+                require_uppercase=True,
+                temp_password_validity=Duration.days(5),
+            ),
+            self_sign_up_enabled=False,
+            sign_in_aliases=cognito.SignInAliases(email=True, phone=False, preferred_username=False, username=True),
+            sign_in_case_sensitive=True,
+            sms_role=None,
+            sms_role_external_id=None,
+            standard_attributes=cognito.StandardAttributes(
+                email=cognito.StandardAttribute(required=True, mutable=True)
+            ),
+            user_invitation=cognito.UserInvitationConfig(
+                email_subject="Invite to join Orbit Workbench!",
+                email_body="Hello, you have been invited to join Orbit Workbench!<br/><br/>"
+                "Username: {username}<br/>"
+                "Temporary password: {####}<br/><br/>"
+                "Regards",
+            ),
+            user_pool_name=f"orbit-{self.env_name}-user-pool",
+        )
+        return pool
 
     def _create_vpc_endpoints(self) -> None:
         vpc_gateway_endpoints = {
@@ -218,9 +319,11 @@ class DemoStack(Stack):
 
         # Adding Lambda and Redshift endpoints with CDK low level APIs
         endpoint_url_template = "com.amazonaws.{}.{}"
-        vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
+        self._vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
         # Adding ingress rule to VPC CIDR
-        vpc_security_group.add_ingress_rule(peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block), connection=ec2.Port.all_tcp())
+        self._vpc_security_group.add_ingress_rule(
+            peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block), connection=ec2.Port.all_tcp()
+        )
         isolated_subnet_ids = [t.subnet_id for t in self.vpc.isolated_subnets]
 
         ec2.CfnVPCEndpoint(
@@ -229,7 +332,7 @@ class DemoStack(Stack):
             vpc_endpoint_type="Interface",
             service_name=endpoint_url_template.format(self.region, "redshift"),
             vpc_id=self.vpc.vpc_id,
-            security_group_ids=[vpc_security_group.security_group_id],
+            security_group_ids=[self._vpc_security_group.security_group_id],
             subnet_ids=isolated_subnet_ids,
             private_dns_enabled=True,
         )
@@ -239,7 +342,7 @@ class DemoStack(Stack):
             vpc_endpoint_type="Interface",
             service_name=endpoint_url_template.format(self.region, "lambda"),
             vpc_id=self.vpc.vpc_id,
-            security_group_ids=[vpc_security_group.security_group_id],
+            security_group_ids=[self._vpc_security_group.security_group_id],
             subnet_ids=isolated_subnet_ids,
             private_dns_enabled=True,
         )

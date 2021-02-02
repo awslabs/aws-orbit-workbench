@@ -29,6 +29,7 @@ from aws_cdk.core import App, CfnOutput, Construct, Duration, Environment, ICons
 
 from aws_orbit.manifest import Manifest
 from aws_orbit.remote_files.cdk import _lambda_path
+from aws_orbit.services import cognito as orbit_cognito
 from aws_orbit.utils import extract_images_names
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -65,7 +66,16 @@ class Env(Stack):
         self.role_eks_cluster = self._create_role_cluster()
         self.role_eks_env_nodegroup = self._create_env_nodegroup_role()
         self.role_fargate_profile = self._create_role_fargate_profile()
-        self.user_pool = self._create_user_pool()
+        if hasattr(self.manifest, "user_pool_id") and self.manifest.user_pool_id:
+            self.manifest.cognito_users_urls = orbit_cognito.get_users_url(
+                user_pool_id=self.manifest.user_pool_id, region=self.manifest.region
+            )
+            cognito_pool_arn: str = orbit_cognito.get_pool_arn(
+                user_pool_id=self.manifest.user_pool_id, region=self.manifest.region, account=self.manifest.account_id
+            )
+            self.user_pool: cognito.UserPool = self._get_user_pool(user_pool_arn=cognito_pool_arn)
+        else:
+            raise Exception("Missing Cognito User Pool ID ('user_pool_id') ")
         self.user_pool_client = self._create_user_pool_client()
         self.identity_pool = self._create_identity_pool()
         self.token_validation_lambda = self._create_token_validation_lambda()
@@ -200,49 +210,17 @@ class Env(Stack):
         )
         return role
 
-    def _create_user_pool(self) -> cognito.UserPool:
-        pool = cognito.UserPool(
-            scope=self,
-            id="user-pool",
-            account_recovery=cognito.AccountRecovery.EMAIL_ONLY,
-            auto_verify=cognito.AutoVerifiedAttrs(email=True, phone=False),
-            custom_attributes=None,
-            email_settings=None,
-            lambda_triggers=None,
-            mfa=cognito.Mfa.OFF,
-            mfa_second_factor=None,
-            password_policy=cognito.PasswordPolicy(
-                min_length=8,
-                require_digits=True,
-                require_lowercase=True,
-                require_symbols=True,
-                require_uppercase=True,
-                temp_password_validity=Duration.days(5),
-            ),
-            self_sign_up_enabled=False,
-            sign_in_aliases=cognito.SignInAliases(email=True, phone=False, preferred_username=False, username=True),
-            sign_in_case_sensitive=True,
-            sms_role=None,
-            sms_role_external_id=None,
-            standard_attributes=cognito.StandardAttributes(
-                email=cognito.StandardAttribute(required=True, mutable=True)
-            ),
-            user_invitation=cognito.UserInvitationConfig(
-                email_subject="Invite to join Orbit Workbench!",
-                email_body="Hello, you have been invited to join Orbit Workbench!<br/><br/>"
-                "Username: {username}<br/>"
-                "Temporary password: {####}<br/><br/>"
-                "Regards",
-            ),
-            user_pool_name=self.id,
+    def _get_user_pool(self, user_pool_arn: str) -> cognito.UserPool:
+        return cast(
+            cognito.UserPool,
+            cognito.UserPool.from_user_pool_arn(scope=self, id="orbit-user-pool", user_pool_arn=user_pool_arn),
         )
-        return pool
 
     def _create_user_pool_client(self) -> cognito.UserPoolClient:
         return cognito.UserPoolClient(
             scope=self,
             id="user-pool-client",
-            user_pool=cast(cognito.IUserPool, self.user_pool),
+            user_pool=self.user_pool,
             auth_flows=cognito.AuthFlow(user_srp=True, admin_user_password=False, custom=False),
             generate_secret=False,
             prevent_user_existence_errors=True,
@@ -250,6 +228,12 @@ class Env(Stack):
         )
 
     def _create_identity_pool(self) -> cognito.CfnIdentityPool:
+        provider_name = (
+            self.user_pool.user_pool_provider_name
+            if hasattr(self.user_pool, "user_pool_provider_name")
+            else f"cognito-idp.{self.manifest.region}.amazonaws.com/{self.manifest.user_pool_id}"
+        )
+
         pool = cognito.CfnIdentityPool(
             scope=self,
             id="identity-pool",
@@ -258,7 +242,7 @@ class Env(Stack):
             allow_classic_flow=False,
             cognito_identity_providers=[
                 cognito.CfnIdentityPool.CognitoIdentityProviderProperty(
-                    provider_name=self.user_pool.user_pool_provider_name,
+                    provider_name=provider_name,
                     client_id=self.user_pool_client.user_pool_client_id,
                 )
             ],
@@ -341,6 +325,7 @@ class Env(Stack):
         return pool
 
     def _create_token_validation_lambda(self) -> aws_lambda.Function:
+
         return lambda_python.PythonFunction(
             scope=self,
             id="token_validation_lambda",

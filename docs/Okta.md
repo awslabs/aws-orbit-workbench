@@ -154,7 +154,7 @@ external-idp-label: OKTA
 
 * Deploy:
 
-`datamaket deploy -f YOUR_FILE.yaml`
+`datamaket deploy_env_and_teams -f YOUR_FILE.yaml`
 
 ![Landing Page](_static/okta/landing-page.png?raw=true "Landing Page")
 
