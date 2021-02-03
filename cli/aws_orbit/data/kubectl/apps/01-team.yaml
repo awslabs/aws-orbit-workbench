@@ -228,6 +228,7 @@ spec:
     spec:
       nodeSelector:
         team: ${team}
+      serviceAccountName: ${team}
       containers:
       - name: run-efs-init
         securityContext:

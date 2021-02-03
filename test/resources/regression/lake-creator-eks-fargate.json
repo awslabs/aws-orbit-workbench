@@ -9,20 +9,10 @@
     "tasks":  [
         {
             "notebookName": "Example-1-Build-Lake.ipynb",
-            "sourcePath": "shared/samples/notebooks/A-LakeCreator",
+            "sourcePath": "~/shared/samples/notebooks/A-LakeCreator",
             "targetPath": "private/samples/notebooks/A-LakeCreator/output",
             "params": {
             }
-        }
-    ],
-    "env_vars": [
-        {
-            "name": "AWS_ORBIT_S3_BUCKET",
-            "value": "s3://"
-        },
-        {
-            "name": "ORBIT_TEAM_SPACE",
-            "value": "lake-creator"
         }
     ]
 }

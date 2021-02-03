@@ -31,7 +31,7 @@ def writeOrbitYaml():
     data = dict(
         properties=dict(
             AWS_ORBIT_ENV=os.environ["AWS_ORBIT_ENV"],
-            ORBIT_TEAM_SPACE=os.environ["ORBIT_TEAM_SPACE"],
+            AWS_ORBIT_TEAM_SPACE=os.environ["AWS_ORBIT_TEAM_SPACE"],
         )
     )
     home = expanduser("~")

@@ -12,7 +12,7 @@ ORBIT_SUBPRODUCT_KEY = "SubProduct"
 ORBIT_SUBPRODUCT_EMR = "EMR"
 ORBIT_PRODUCT_NAME = "Orbit Workbench"
 ORBIT_ENV = "Env"
-ORBIT_TEAM_SPACE = "TeamSpace"
+AWS_ORBIT_TEAM_SPACE = "TeamSpace"
 
 
 def get_properties() -> Dict[str, str]:
@@ -36,12 +36,12 @@ def get_properties() -> Dict[str, str]:
     >>> props = get_properties()
     """
     if "AWS_ORBIT_ENV" in os.environ.keys():
-        if "ORBIT_TEAM_SPACE" not in os.environ.keys() or "AWS_ORBIT_S3_BUCKET" not in os.environ.keys():
-            raise Exception("if AWS_ORBIT_ENV then ORBIT_TEAM_SPACE, AWS_ORBIT_S3_BUCKET and " "must be set")
+        if "AWS_ORBIT_TEAM_SPACE" not in os.environ.keys() or "AWS_ORBIT_S3_BUCKET" not in os.environ.keys():
+            raise Exception("if AWS_ORBIT_ENV then AWS_ORBIT_TEAM_SPACE, AWS_ORBIT_S3_BUCKET and " "must be set")
         else:
             prop = dict(
                 AWS_ORBIT_ENV=os.environ.get("AWS_ORBIT_ENV", ""),
-                ORBIT_TEAM_SPACE=os.environ.get("ORBIT_TEAM_SPACE", ""),
+                AWS_ORBIT_TEAM_SPACE=os.environ.get("AWS_ORBIT_TEAM_SPACE", ""),
                 AWS_ORBIT_S3_BUCKET=os.environ.get("AWS_ORBIT_S3_BUCKET", ""),
             )
     else:
@@ -51,7 +51,7 @@ def get_properties() -> Dict[str, str]:
         with open(propFilePath, "r") as f:
             prop = safe_load(f)["properties"]
 
-    prop["ecs_cluster"] = f"orbit-{prop['AWS_ORBIT_ENV']}-{prop['ORBIT_TEAM_SPACE']}-cluster"
+    prop["ecs_cluster"] = f"orbit-{prop['AWS_ORBIT_ENV']}-{prop['AWS_ORBIT_TEAM_SPACE']}-cluster"
     prop["eks_cluster"] = f"orbit-{prop['AWS_ORBIT_ENV']}"
     return prop
 
@@ -107,7 +107,7 @@ def get_workspace() -> Dict[str, str]:
     ssm = boto3.client("ssm")
     props = get_properties()
 
-    role_key = f"/orbit/{props['AWS_ORBIT_ENV']}/teams/{props['ORBIT_TEAM_SPACE']}/manifest"
+    role_key = f"/orbit/{props['AWS_ORBIT_ENV']}/teams/{props['AWS_ORBIT_TEAM_SPACE']}/manifest"
 
     role_config_str = ssm.get_parameter(Name=role_key)["Parameter"]["Value"]
 
@@ -116,7 +116,7 @@ def get_workspace() -> Dict[str, str]:
     my_region = my_session.region_name
     config["region"] = my_region
     config["env_name"] = props["AWS_ORBIT_ENV"]
-    config["team_space"] = props["ORBIT_TEAM_SPACE"]
+    config["team_space"] = props["AWS_ORBIT_TEAM_SPACE"]
 
     return config
 
@@ -161,7 +161,7 @@ def get_scratch_database() -> str:
             "Parameters": {
                 ORBIT_PRODUCT_KEY: ORBIT_PRODUCT_NAME,
                 ORBIT_ENV: workspace["env_name"],
-                ORBIT_TEAM_SPACE: workspace["team_space"],
+                AWS_ORBIT_TEAM_SPACE: workspace["team_space"],
             },
         }
     )

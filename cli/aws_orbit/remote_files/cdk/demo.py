@@ -386,8 +386,6 @@ class DemoStack(Stack):
                     resources=[
                         f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}",
                         f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}/*",
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}",
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}/*",
                     ],
                 ),
             ],
