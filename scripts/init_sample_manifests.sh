@@ -15,3 +15,6 @@ cp ${SAMPLES_DIR}/manifests/minimal/* ${CONF_DIR}/ \
 cp ${SAMPLES_DIR}/manifests/plugins/* ${CONF_DIR}/ \
     && echo "Copied ${SAMPLES_DIR}/manifests/plugins/* ${CONF_DIR}/" \
     || (echo "ERROR: Failed to copy ${SAMPLES_DIR}/manifests/plugins/* ${CONF_DIR}/"; exit 1)
+cp ${SAMPLES_DIR}/manifests/foundation/* ${CONF_DIR}/ \
+    && echo "Copied ${SAMPLES_DIR}/manifests/foundation/* ${CONF_DIR}/" \
+    || (echo "ERROR: Failed to copy ${SAMPLES_DIR}/manifests/foundation/* ${CONF_DIR}/"; exit 1)
