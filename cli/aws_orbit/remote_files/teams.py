@@ -47,10 +47,14 @@ def _delete_targets(manifest: Manifest, fs_id: str) -> None:
             _logger.warning(f"Ignoring MountTargetId {target} deletion cause it does not exist anymore.")
 
 
-def _create_dockerfile(manifest: "Manifest", team_manifest: "TeamManifest", spark: bool) -> str:
-    base_image_cmd: str = (
-        f"FROM {team_manifest.base_spark_image_address}" if spark else f"FROM {team_manifest.base_image_address}"
-    )
+def _create_dockerfile(manifest: "Manifest", team_manifest: "TeamManifest", image_name: str) -> str:
+    if image_name == "jupyter-user":
+        base_image_cmd = f"FROM {team_manifest.base_image_address}"
+    elif image_name == "jupyter-user-spark":
+        base_image_cmd = f"FROM {team_manifest.base_spark_image_address}"
+    else:
+        raise Exception(f"The image {image_name} is not deployable to individual Teams.")
+
     _logger.debug("base_image_cmd: %s", base_image_cmd)
     cmds: List[str] = [base_image_cmd]
     for plugin in team_manifest.plugins:
@@ -78,20 +82,12 @@ def _create_dockerfile(manifest: "Manifest", team_manifest: "TeamManifest", spar
     return outdir
 
 
-def _deploy_team_images(manifest: "Manifest", team_manifest: "TeamManifest") -> None:
-    # Jupyter User
-    image_dir: str = _create_dockerfile(manifest=manifest, team_manifest=team_manifest, spark=False)
+def _deploy_team_image(manifest: "Manifest", team_manifest: "TeamManifest", image: str) -> None:
+    image_dir: str = _create_dockerfile(manifest=manifest, team_manifest=team_manifest, image_name=image)
     image_name: str = f"orbit-{manifest.name}-{team_manifest.name}"
     _logger.debug("Deploying the %s Docker image", image_name)
     docker.deploy_image_from_source(manifest=manifest, dir=image_dir, name=image_name)
-    _logger.debug("Docker Image Deployed to ECR (Jupyter User).")
-
-    # Jupyter User Spark
-    image_dir = _create_dockerfile(manifest=manifest, team_manifest=team_manifest, spark=True)
-    image_name = f"orbit-{manifest.name}-{team_manifest.name}-spark"
-    _logger.debug("Deploying the %s Docker image", image_name)
-    docker.deploy_image_from_source(manifest=manifest, dir=image_dir, name=image_name)
-    _logger.debug("Docker Image Deployed to ECR (Jupyter User Spark).")
+    _logger.debug("Docker Image Deployed to ECR (%s).", image_name)
 
 
 def _deploy_team_bootstrap(manifest: "Manifest", team_manifest: "TeamManifest") -> None:
@@ -131,7 +127,8 @@ def deploy(manifest: "Manifest") -> None:
         )
         team_manifest.fetch_ssm()
     for team_manifest in manifest.teams:
-        _deploy_team_images(manifest=manifest, team_manifest=team_manifest)
+        _deploy_team_image(manifest=manifest, team_manifest=team_manifest, image="jupyter-user")
+        _deploy_team_image(manifest=manifest, team_manifest=team_manifest, image="jupyter-user-spark")
         _deploy_team_bootstrap(manifest=manifest, team_manifest=team_manifest)
 
 
