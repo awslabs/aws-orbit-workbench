@@ -9,7 +9,7 @@
     "tasks":  [
         {
             "notebookName": "Example-1-Build-Lake.ipynb",
-            "sourcePath": "~/shared/samples/notebooks/A-LakeCreator",
+            "sourcePath": "/efs/shared/samples/notebooks/A-LakeCreator",
             "targetPath": "private/samples/notebooks/A-LakeCreator/output",
             "params": {
             }
