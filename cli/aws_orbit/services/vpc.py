@@ -27,6 +27,7 @@ def modify_vpc_endpoint(manifest: "Manifest", service_name: str, private_dns_ena
     vpc_id = manifest.vpc.vpc_id
     ec2_client = manifest.boto3_client("ec2")
     paginator = ec2_client.get_paginator("describe_vpc_endpoints")
+    _logger.debug("Modifying VPC Endpoints for VPC: %s", vpc_id)
     response_iterator = paginator.paginate(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}], MaxResults=50)
     for response in response_iterator:
         for ep in response["VpcEndpoints"]:
