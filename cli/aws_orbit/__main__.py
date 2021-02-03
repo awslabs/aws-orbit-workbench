@@ -15,7 +15,7 @@
 import json
 import logging
 import os
-from typing import Optional, TextIO, Tuple
+from typing import List, Optional, TextIO, Tuple
 
 import click
 
@@ -270,6 +270,15 @@ def build() -> None:
     required=False,
 )
 @click.option(
+    "--team",
+    "-t",
+    type=str,
+    multiple=True,
+    default=[],
+    help="One or more Teams to deploy the image to (can de declared multiple times).",
+    required=False,
+)
+@click.option(
     "--region",
     "-r",
     type=str,
@@ -284,7 +293,9 @@ def build() -> None:
     help="Enable detailed logging.",
     show_default=True,
 )
-def deploy_image_cli(env: str, dir: str, name: str, script: Optional[str], region: Optional[str], debug: bool) -> None:
+def deploy_image_cli(
+    env: str, dir: str, name: str, script: Optional[str], team: Optional[List[str]], region: Optional[str], debug: bool
+) -> None:
     """Build and Deploy a new Docker image into ECR."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
@@ -292,9 +303,10 @@ def deploy_image_cli(env: str, dir: str, name: str, script: Optional[str], regio
     _logger.debug("dir: %s", dir)
     _logger.debug("name: %s", name)
     _logger.debug("script: %s", script)
+    _logger.debug("teams: %s", team)
     _logger.debug("region: %s", region)
     _logger.debug("debug: %s", debug)
-    build_image(dir=dir, name=name, env=env, script=script, region=region, debug=debug)
+    build_image(dir=dir, name=name, env=env, script=script, teams=team, region=region, debug=debug)
 
 
 @build.command(name="profile")

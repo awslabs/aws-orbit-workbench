@@ -100,7 +100,9 @@ def build_profile(env: str, team: str, profile: str, debug: bool) -> None:
         ctx.progress(100)
 
 
-def build_image(env: str, dir: str, name: str, script: Optional[str], region: Optional[str], debug: bool) -> None:
+def build_image(
+    env: str, dir: str, name: str, script: Optional[str], teams: Optional[List[str]], region: Optional[str], debug: bool
+) -> None:
     with MessagesContext("Deploying Docker Image", debug=debug) as ctx:
         manifest = Manifest(filename=None, env=env, region=region)
         manifest.fillup()
@@ -127,11 +129,12 @@ def build_image(env: str, dir: str, name: str, script: Optional[str], region: Op
             command_name=f"deploy_image-{name}", manifest=manifest, dirs=[(dir, name)], changeset=changes
         )
         ctx.progress(4)
-        script_str = "" if script is None else script
+        script_str = "NO_SCRIPT" if script is None else script
+        teams_str = "NO_TEAMS" if not teams else ",".join(teams)
         buildspec = codebuild.generate_spec(
             manifest=manifest,
             plugins=True,
-            cmds_build=[f"orbit remote --command build_image {env} {name} {script_str}"],
+            cmds_build=[f"orbit remote --command build_image {env} {name} {script_str} {teams_str}"],
             changeset=changes,
         )
         remote.run(
