@@ -514,15 +514,17 @@ class Manifest:
             logging.debug("DEMO stack with empty outputs")
             return
 
+        vpc_id = None
         for output in response["Stacks"][0]["Outputs"]:
-            if self.internet_accessible and output["ExportName"] == f"orbit-{self.name}-private-subnets-ids":
+            if output["ExportName"] == f"orbit-{self.name}-nodes-subnet-ids":
                 self.nodes_subnets = output["OutputValue"].split(",")
-            elif not self.internet_accessible and output["ExportName"] == f"orbit-{self.name}-isolated-subnets-ids":
-                self.nodes_subnets = output["OutputValue"].split(",")
-            elif output["ExportName"] == f"orbit-{self.name}-public-subnets-ids":
+            elif output["ExportName"] == f"orbit-{self.name}-public-subnet-ids":
                 self.load_balancers_subnets = output["OutputValue"].split(",")
+            elif output["ExportName"] == f"orbit-{self.name}-vpc-id":
+                vpc_id = output["OutputValue"]
 
         self.vpc = parse_vpc(manifest=self)
+        self.vpc.vpc_id = vpc_id
 
         # self.fetch_ssm()
         # self.write_manifest_ssm()

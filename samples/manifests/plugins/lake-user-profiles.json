@@ -32,5 +32,17 @@
 			"mem_guarantee": "1G",
 			"mem_limit": "1G"
 		}
-	}
+    },
+    {
+        "display_name": "Small (Apache Spark)",
+        "slug": "small-spark",
+        "description": "4 CPU + 8G MEM",
+        "kubespawner_override": {
+            "image": "${account}.dkr.ecr.${region}.amazonaws.com/orbit-${env}-lake-user-spark",
+            "cpu_guarantee": 4,
+            "cpu_limit": 4,
+            "mem_guarantee": "8G",
+            "mem_limit": "8G"
+        }
+    }
 ]
