@@ -17,7 +17,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, Dict, List, cast
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_kms as kms
