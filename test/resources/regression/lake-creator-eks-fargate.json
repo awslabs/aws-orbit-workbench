@@ -10,7 +10,7 @@
         {
             "notebookName": "Example-1-Build-Lake.ipynb",
             "sourcePath": "/efs/shared/samples/notebooks/A-LakeCreator",
-            "targetPath": "/efs/regressiontest/samples/notebooks/A-LakeCreator/output",
+            "targetPath": "/efs/shared/regression/notebooks/A-LakeCreator/output",
             "params": {
             }
         }

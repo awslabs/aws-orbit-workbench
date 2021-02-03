@@ -10,7 +10,7 @@ import yaml
 import notebook_runner as nr
 import python_runner as pr
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
 # Hack to make YAML loader not auto-convert datetimes

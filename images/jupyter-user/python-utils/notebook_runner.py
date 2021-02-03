@@ -22,7 +22,7 @@ from typing import List
 import papermill as pm
 import yaml as yaml
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
 
