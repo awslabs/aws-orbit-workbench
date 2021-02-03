@@ -10,7 +10,7 @@ import yaml
 import notebook_runner as nr
 import python_runner as pr
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
 # Hack to make YAML loader not auto-convert datetimes
@@ -60,7 +60,7 @@ def notifyOnTasksCompletion(subject, msg, compute):
 
 def run_tasks():
     logger.debug("starting task execution with following arguments: ")
-
+    logging.debug("ENV VARS: %s",os.environ.keys())
     env_params = ""
     for param in os.environ.keys():
         env_params += param + " = " + os.environ[param] + "\n"
@@ -86,6 +86,7 @@ def run_tasks():
 def symlink_efs():
     jupyter_user = os.environ.get("JUPYTERHUB_USER", None)
     if jupyter_user:
+        os.makedirs(f"/efs/{jupyter_user}",exist_ok=True)
         logger.info(f"Symlinking /efs/{jupyter_user} to /home/jovyan/private")
         subprocess.check_call(["ln", "-s", f"/efs/{jupyter_user}", "/home/jovyan/private"])
     logger.info("Symlinking /efs/shared /home/jovyan/shared")

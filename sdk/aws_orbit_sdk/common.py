@@ -1,10 +1,14 @@
 import json
+import logging
 import os
 from os.path import expanduser
 from typing import Any, Dict, Tuple
 
 import boto3
 from yaml import safe_load
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger()
 
 # Tags
 ORBIT_PRODUCT_KEY = "Product"
@@ -36,14 +40,16 @@ def get_properties() -> Dict[str, str]:
     >>> props = get_properties()
     """
     if "AWS_ORBIT_ENV" in os.environ.keys():
-        if "AWS_ORBIT_TEAM_SPACE" not in os.environ.keys() or "AWS_ORBIT_S3_BUCKET" not in os.environ.keys():
-            raise Exception("if AWS_ORBIT_ENV then AWS_ORBIT_TEAM_SPACE, AWS_ORBIT_S3_BUCKET and " "must be set")
+        if "AWS_ORBIT_TEAM_SPACE" not in os.environ.keys():
+            logger.error("current env vars: %s", os.environ.keys())
+            raise Exception("if AWS_ORBIT_ENV then AWS_ORBIT_TEAM_SPACE must be set")
         else:
             prop = dict(
                 AWS_ORBIT_ENV=os.environ.get("AWS_ORBIT_ENV", ""),
-                AWS_ORBIT_TEAM_SPACE=os.environ.get("AWS_ORBIT_TEAM_SPACE", ""),
-                AWS_ORBIT_S3_BUCKET=os.environ.get("AWS_ORBIT_S3_BUCKET", ""),
+                AWS_ORBIT_TEAM_SPACE=os.environ.get("AWS_ORBIT_TEAM_SPACE", "")
             )
+            if "AWS_ORBIT_S3_BUCKET" in os.environ.keys():
+                prop["AWS_ORBIT_S3_BUCKET"]=os.environ.get("AWS_ORBIT_S3_BUCKET")
     else:
         # this path is used by the sagemaker notebooks where we cannot create the env variable in the context of the notebook
         home = expanduser("~")
