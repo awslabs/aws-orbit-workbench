@@ -85,9 +85,9 @@ class VpcManifest:
 
     def asdict_file(self) -> MANIFEST_FILE_VPC_TYPE:
         return {
-            "private-subnets-ids": [s.subnet_id for s in self.subnets if s.kind is SubnetKind.private],
-            "public-subnets-ids": [s.subnet_id for s in self.subnets if s.kind is SubnetKind.public],
-            "isolated-subnets-ids": [s.subnet_id for s in self.subnets if s.kind is SubnetKind.isolated],
+            "private-subnet-ids": [s.subnet_id for s in self.subnets if s.kind is SubnetKind.private],
+            "public-subnet-ids": [s.subnet_id for s in self.subnets if s.kind is SubnetKind.public],
+            "isolated-subnet-ids": [s.subnet_id for s in self.subnets if s.kind is SubnetKind.isolated],
         }
 
     def asdict(self) -> MANIFEST_VPC_TYPE:

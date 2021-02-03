@@ -29,4 +29,5 @@ python-jose~=3.2.0
 -e ../plugins/hello_world
 -e ../plugins/code_commit
 -e ../plugins/team_script_launcher
+-e ../plugins/redshift
 -e ../sdk

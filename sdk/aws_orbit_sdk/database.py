@@ -574,7 +574,7 @@ class RedshiftUtils(DatabaseCommon):
         props = get_properties()
         redshift = boto3.client("redshift")
         namespace = props["AWS_ORBIT_ENV"] + "-" + props["AWS_ORBIT_TEAM_SPACE"] + "-"
-        cluster_identifier = cluster_name if namespace in cluster_name else cluster_name + cluster_name
+        cluster_identifier = cluster_name if namespace in cluster_name else namespace + cluster_name
 
         res = redshift.delete_cluster(ClusterIdentifier=cluster_identifier, SkipFinalClusterSnapshot=True)
 

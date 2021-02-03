@@ -14,6 +14,7 @@ logger = logging.getLogger()
 ORBIT_PRODUCT_KEY = "Product"
 ORBIT_SUBPRODUCT_KEY = "SubProduct"
 ORBIT_SUBPRODUCT_EMR = "EMR"
+ORBIT_SUBPRODUCT_REDSHIFT = "Redshift"
 ORBIT_PRODUCT_NAME = "Orbit Workbench"
 ORBIT_ENV = "Env"
 AWS_ORBIT_TEAM_SPACE = "TeamSpace"
