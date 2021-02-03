@@ -207,7 +207,9 @@ class StateMachineBuilder:
                                     {"name": "compute", "value": sfn.JsonPath.string_at("$.Compute")},
                                     {"name": "AWS_ORBIT_TEAM_SPACE", "value": team_manifest.name},
                                     {"name": "AWS_ORBIT_ENV", "value": manifest.name},
+                                    {"name": "AWS_STS_REGIONAL_ENDPOINTS", "value": "regional"},
                                     {"name": "JUPYTERHUB_USER", "value": sfn.JsonPath.string_at("$.JupyterHubUser")},
+
                                 ],
                                 "volumeMounts": [{"name": "efs-volume", "mountPath": "/efs"}],
                             }

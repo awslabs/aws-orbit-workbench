@@ -7,7 +7,7 @@ from typing import Any, Dict, Tuple
 import boto3
 from yaml import safe_load
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
 # Tags
