@@ -43,8 +43,11 @@ def dockerhub_pull(name: str, tag: str = "latest") -> None:
 
 
 def ecr_pull(manifest: "Manifest", name: str, tag: str = "latest") -> None:
-    ecr_address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com"
-    sh.run(f"docker pull {ecr_address}/{name}:{tag}")
+    if name.startswith("public.ecr.aws"):
+        repository = f"{name}"
+    else:
+        repository = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/{name}"
+    sh.run(f"docker pull {repository}:{tag}")
 
 
 def ecr_pull_external(manifest: "Manifest", repository: str, tag: str = "latest") -> None:
