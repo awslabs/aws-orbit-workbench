@@ -6,12 +6,6 @@
             "p_concurrent" :1
         }
     },
-   "env_vars": [
-       {
-                "name": "AWS_STS_REGIONAL_ENDPOINTS",
-                "value": "regional"
-       }
-   ],
     "tasks":  [
         {
             "notebookName": "Example-1-Build-Lake.ipynb",
