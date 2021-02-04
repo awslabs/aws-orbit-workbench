@@ -396,7 +396,7 @@ class DemoStack(Stack):
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=["glue:CreateDatabase", "glue:DeleteDatabase"],
+                    actions=["glue:*"],
                     resources=["*"],
                 ),
             ],
@@ -419,7 +419,7 @@ class DemoStack(Stack):
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=["glue:CreateDatabase", "glue:DeleteDatabase"],
+                    actions=["glue:*"],
                     resources=["*"],
                 ),
             ],
