@@ -104,15 +104,15 @@ def runNotebook(parameters):
             parameters["PAPERMILL_OUTPUT_DIR_PATH"], "error@" + parameters["PAPERMILL_WORKBOOK_NAME"]
         )
 
-        logger.error("tagging error notebook with error %s->%s", output_path, pathToOutputNotebookError)
+        logger.error("marking error notebook with error %s->%s", output_path, pathToOutputNotebookError)
         errors.append(e)
         if output_path.startswith("s3:"):
             c = "aws s3 mv {} {}".format(output_path, pathToOutputNotebookError)
             print(c)
             os.system(c)
         else:
-            os.makedirs(os.path.dirname(pathToOutputNotebookError),exist_ok=True)
-            shutil.move(output_path, pathToOutputNotebookError)
+            logger.error(f"rename {output_path} to {pathToOutputNotebookError}")
+            os.rename(output_path, pathToOutputNotebookError)
             output_path = pathToOutputNotebookError
 
     if not output_path.startswith("s3:"):
