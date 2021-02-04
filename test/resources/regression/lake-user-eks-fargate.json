@@ -9,8 +9,8 @@
     "tasks":  [
         {
             "notebookName": "run-analyst-notebooks.ipynb",
-            "sourcePath": "/home/jovyan/shared/samples/notebooks/Z-Tests",
-            "targetPath": "/home/jovyan/shared/regression/notebooks/Z-Tests/output",
+            "sourcePath": "shared/samples/notebooks/Z-Tests",
+            "targetPath": "shared/regression/notebooks/Z-Tests/output",
             "params": {
             }
         }
