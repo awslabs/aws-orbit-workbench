@@ -48,10 +48,9 @@ def run():
     compute = yaml.load(os.environ["compute"], Loader=NoDatesSafeLoader)
 
     notebooksToRun = prepareAndValidateNotebooks(default_output_directory, notebooks)
-
+    errors = []
     try:
         errors = runNotebooks(notebooksToRun, compute)
-
     finally:
         if len(errors) > 0:
             logger.error("Execution had errors : %s", errors)
@@ -112,6 +111,7 @@ def runNotebook(parameters):
             print(c)
             os.system(c)
         else:
+            os.makedirs(os.path.dirname(pathToOutputNotebookError),exist_ok=True)
             shutil.move(output_path, pathToOutputNotebookError)
             output_path = pathToOutputNotebookError
 
