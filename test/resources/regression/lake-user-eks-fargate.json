@@ -9,8 +9,8 @@
     "tasks":  [
         {
             "notebookName": "run-analyst-notebooks.ipynb",
-            "sourcePath": "shared/samples/notebooks/Z-Tests",
-            "targetPath": "private/samples/notebooks/Z-Tests/output",
+            "sourcePath": "~/shared/samples/notebooks/Z-Tests",
+            "targetPath": "~/shared/samples/notebooks/Z-Tests/output",
             "params": {
             }
         }

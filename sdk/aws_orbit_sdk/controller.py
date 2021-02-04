@@ -616,7 +616,7 @@ def wait_for_tasks_to_complete(
                     logger.debug(f"Execution error: {task['State']}")
                     errored_tasks.append(task)
                 else:
-                    logger.debug("Execution incomplete")
+                    logger.debug("Tasks are running...")
                     incomplete_tasks.append(task)
 
         tasks = incomplete_tasks
