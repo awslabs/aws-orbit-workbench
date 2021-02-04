@@ -9,8 +9,8 @@
     "tasks":  [
         {
             "notebookName": "Example-1-Build-Lake.ipynb",
-            "sourcePath": "~/shared/samples/notebooks/A-LakeCreator",
-            "targetPath": "~/shared/regression/notebooks/A-LakeCreator/output",
+            "sourcePath": "/home/jovyan/shared/samples/notebooks/A-LakeCreator",
+            "targetPath": "/home/jovyan/shared/regression/notebooks/A-LakeCreator/output",
             "params": {
             }
         }
