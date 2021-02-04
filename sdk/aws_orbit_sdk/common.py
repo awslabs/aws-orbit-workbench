@@ -47,10 +47,10 @@ def get_properties() -> Dict[str, str]:
         else:
             prop = dict(
                 AWS_ORBIT_ENV=os.environ.get("AWS_ORBIT_ENV", ""),
-                AWS_ORBIT_TEAM_SPACE=os.environ.get("AWS_ORBIT_TEAM_SPACE", "")
+                AWS_ORBIT_TEAM_SPACE=os.environ.get("AWS_ORBIT_TEAM_SPACE", ""),
             )
             if "AWS_ORBIT_S3_BUCKET" in os.environ.keys():
-                prop["AWS_ORBIT_S3_BUCKET"]=os.environ.get("AWS_ORBIT_S3_BUCKET")
+                prop["AWS_ORBIT_S3_BUCKET"] = os.environ.get("AWS_ORBIT_S3_BUCKET")
     else:
         # this path is used by the sagemaker notebooks where we cannot create the env variable in the context of the notebook
         home = expanduser("~")

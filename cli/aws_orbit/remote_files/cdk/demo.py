@@ -427,7 +427,6 @@ class DemoStack(Stack):
                     actions=["kms:*"],
                     resources=[self.env_kms_key.key_arn],
                 ),
-
             ],
             managed_policy_name=f"orbit-{self.env_name}-demo-lake-bucket-readonlyaccess",
         )
