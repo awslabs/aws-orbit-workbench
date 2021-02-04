@@ -62,7 +62,7 @@ def ecr_pull_external(manifest: "Manifest", repository: str, tag: str = "latest"
 
 def tag_image(manifest: "Manifest", remote_name: str, remote_source: str, name: str, tag: str = "latest") -> None:
     ecr_address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com"
-    if remote_source == "ecr":
+    if remote_source == "ecr" and not remote_name.startswith("public.ecr.aws"):
         remote_name = f"{ecr_address}/{remote_name}"
     sh.run(f"docker tag {remote_name}:{tag} {ecr_address}/{name}:{tag}")
 
