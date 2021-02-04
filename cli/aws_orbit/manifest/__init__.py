@@ -62,23 +62,23 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
     MANIFEST_FILE_IMAGES_TYPE,
     {
         "jupyter-hub": {
-            "repository": "aws-orbit-jupyter-hub",
-            "source": "dockerhub",
+            "repository": "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-hub",
+            "source": "ecr",
             "version": "latest",
         },
         "jupyter-user": {
-            "repository": "aws-orbit-jupyter-user",
-            "source": "dockerhub",
+            "repository": "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user",
+            "source": "ecr",
             "version": "latest",
         },
         "jupyter-user-spark": {
-            "repository": "aws-orbit-jupyter-user-spark",
-            "source": "dockerhub",
+            "repository": "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user-spark",
+            "source": "ecr",
             "version": "latest",
         },
         "landing-page": {
-            "repository": "aws-orbit-landing-page",
-            "source": "dockerhub",
+            "repository": "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/landing-page",
+            "source": "ecr",
             "version": "latest",
         },
         "aws-efs-csi-driver": {
@@ -97,7 +97,7 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
             "version": "v1.3.0",
         },
         "code-build-image": {
-            "repository": "465538974520.dkr.ecr.us-east-2.amazonaws.com/aws-orbit-code-build-base",
+            "repository": "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base",
             "source": "ecr",
             "version": "latest",
         },
