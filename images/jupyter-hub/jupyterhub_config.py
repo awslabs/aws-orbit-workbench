@@ -68,6 +68,9 @@ c.KubeSpawner.environment = {
     "GRANT_SUDO": GRANT_SUDO,
     "AWS_STS_REGIONAL_ENDPOINTS": "regional",
 }
+if GRANT_SUDO == "yes":
+    c.KubeSpawner.uid = 0
+
 c.KubeSpawner.image = IMAGE
 # TODO we want to remove this 'Always' from production code
 c.KubeSpawner.image_pull_policy = "Always"
