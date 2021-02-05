@@ -8,7 +8,14 @@
     },
     "tasks":  [
         {
-            "notebookName": "Example-1-Build-Lake.ipynb",
+            "notebookName": "sanity-good.ipynb",
+            "sourcePath": "/efs/shared/samples/notebooks/A-LakeCreator",
+            "targetPath": "/efs/shared/regression/notebooks/A-LakeCreator/output",
+            "params": {
+            }
+        },
+        {
+            "notebookName": "sanity-bad.ipynb",
             "sourcePath": "/efs/shared/samples/notebooks/A-LakeCreator",
             "targetPath": "/efs/shared/regression/notebooks/A-LakeCreator/output",
             "params": {
