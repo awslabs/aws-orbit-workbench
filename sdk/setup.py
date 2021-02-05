@@ -18,7 +18,16 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     include_package_data=True,
     python_requires=">=3.6",
-    install_requires=open("requirements.txt").read().strip().split("\n"),
+    install_requires=[
+        "boto3>=1.12.49,<2.0.0",
+        "pyyaml~=5.3.0",
+        "ipython>=7.16.0,<7.20.0",
+        "pandas>=1.1.0,<=1.2.0",
+        "psycopg2-binary~=2.8.4",
+        "SQLAlchemy>=1.3.10,<1.3.16",
+        "sqlalchemy-redshift~=0.7.5",
+        "requests>=2.24.0,<2.26.0"
+    ],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
