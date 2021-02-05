@@ -19,6 +19,7 @@ import shutil
 import time
 from multiprocessing import Pool
 from typing import List
+
 import papermill as pm
 import yaml as yaml
 
@@ -134,6 +135,7 @@ def prepareAndValidateNotebooks(default_output_directory, notebooks):
         reportsToRun.append(reportToRun)
     return reportsToRun
 
+
 def print_dir(dir: str, exclude: List[str] = []) -> None:
     logger.debug("Tree structure of %s", dir)
     for root, dirnames, filenames in os.walk(dir):
@@ -147,6 +149,7 @@ def print_dir(dir: str, exclude: List[str] = []) -> None:
         # print path to all filenames.
         for filename in filenames:
             logger.info((os.path.join(root, filename)))
+
 
 def prepareNotebook(default_output_directory, notebook, key):
     notebookName = notebook["notebookName"]
@@ -189,7 +192,7 @@ def prepareNotebook(default_output_directory, notebook, key):
     if not targetPath.startswith("s3:") and not os.path.exists(pathToOutputDir):
         pathToOutputDir = os.path.abspath(pathToOutputDir)
         logger.info(f"creating dirs pathToOutputDir={pathToOutputDir}")
-        os.makedirs(pathToOutputDir,exist_ok=True)
+        os.makedirs(pathToOutputDir, exist_ok=True)
 
     notebookNameWithoutSufix = notebookName.split(".")[0]
     pathToOutputNotebookDir = os.path.join(pathToOutputDir, notebookNameWithoutSufix)
