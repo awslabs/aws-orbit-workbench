@@ -10,7 +10,7 @@
         {
             "notebookName": "run-analyst-notebooks.ipynb",
             "sourcePath": "shared/samples/notebooks/Z-Tests",
-            "targetPath": "shared/regression/notebooks/Z-Tests/output",
+            "targetPath": "shared/regression/notebooks/Z-Tests/",
             "params": {
             }
         }
