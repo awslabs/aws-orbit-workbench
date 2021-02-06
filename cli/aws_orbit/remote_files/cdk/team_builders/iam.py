@@ -47,7 +47,7 @@ class IamBuilder:
         kms_keys = [team_kms_key.key_arn]
         scratch_bucket_kms_key = IamBuilder.get_kms_key_scratch_bucket(manifest)
         if scratch_bucket_kms_key:
-            kms_keys += scratch_bucket_kms_key
+            kms_keys.append(scratch_bucket_kms_key)
 
         lake_operational_policy = iam.ManagedPolicy(
             scope=scope,
