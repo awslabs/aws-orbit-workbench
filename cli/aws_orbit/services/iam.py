@@ -34,7 +34,6 @@ def get_open_id_connect_provider(manifest: Manifest, open_id_connect_provider_id
     except iam_client.exceptions.NoSuchEntityException:
         return None
 
-
 def update_assume_role_roles(
     manifest: Manifest,
     role_name: str,
