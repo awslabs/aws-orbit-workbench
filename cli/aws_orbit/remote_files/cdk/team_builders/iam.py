@@ -12,16 +12,18 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import List,Dict,cast,Optional,Any
+import logging
+from typing import Any, Dict, List, Optional, cast
 
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_kms as kms
 import aws_cdk.aws_s3 as s3
 import aws_cdk.core as core
 import botocore
+
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest
-import logging
+
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
@@ -43,7 +45,7 @@ class IamBuilder:
 
         lake_role_name: str = f"orbit-{env_name}-{team_name}-role"
         kms_keys = [team_kms_key.key_arn]
-        scratch_bucket_kms_key = IamBuilder.get_kms_key_scratch_bucket(manifest.scratch_bucket_arn)
+        scratch_bucket_kms_key = IamBuilder.get_kms_key_scratch_bucket(manifest)
         if scratch_bucket_kms_key:
             kms_keys += scratch_bucket_kms_key
 
@@ -309,17 +311,21 @@ class IamBuilder:
                 Dict[str, Any],
                 s3_client.get_bucket_encryption(Bucket=bucket_name),
             )
-            if 'ServerSideEncryptionConfiguration' not in encryption or 'Rules' not in encryption[
-                'ServerSideEncryptionConfiguration']:
+            if (
+                "ServerSideEncryptionConfiguration" not in encryption
+                or "Rules" not in encryption["ServerSideEncryptionConfiguration"]
+            ):
                 return None
-            for r in encryption['ServerSideEncryptionConfiguration']['Rules']:
-                if 'ApplyServerSideEncryptionByDefault' in r and 'SSEAlgorithm' in r[
-                    'ApplyServerSideEncryptionByDefault'] and \
-                        r['ApplyServerSideEncryptionByDefault']['SSEAlgorithm'] == 'aws:kms':
-                    return r['ApplyServerSideEncryptionByDefault']['KMSMasterKeyID']
+            for r in encryption["ServerSideEncryptionConfiguration"]["Rules"]:
+                if (
+                    "ApplyServerSideEncryptionByDefault" in r
+                    and "SSEAlgorithm" in r["ApplyServerSideEncryptionByDefault"]
+                    and r["ApplyServerSideEncryptionByDefault"]["SSEAlgorithm"] == "aws:kms"
+                ):
+                    return cast(str, r["ApplyServerSideEncryptionByDefault"]["KMSMasterKeyID"])
             return None
         except botocore.exceptions.ClientError as e:
-            if 'ServerSideEncryptionConfigurationNotFoundError' in str(e):
+            if "ServerSideEncryptionConfigurationNotFoundError" in str(e):
                 return None
             raise e
 
