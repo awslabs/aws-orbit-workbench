@@ -433,11 +433,17 @@ def list_images_cli(env: str, region: Optional[str], debug: bool) -> None:
     help="Enable detailed logging.",
     show_default=True,
 )
-def list_env_cli(debug: bool) -> None:
+@click.option(
+    "--variable",
+    type=click.Choice(["all", "landing-page", "teams", "toolkitbucket"], case_sensitive=False),
+    show_default=True,
+    default="all",
+)
+def list_env_cli(debug: bool, variable: str) -> None:
     """List all Docker images available into the target environment."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
-    list_env()
+    list_env(variable)
 
 
 @click.command(name="remote", hidden=True)

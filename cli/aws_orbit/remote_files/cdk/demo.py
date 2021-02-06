@@ -72,14 +72,38 @@ class DemoStack(Stack):
         if manifest.toolkit_s3_bucket is None:
             raise ValueError("manifest.toolkit_s3_bucket is not defined")
         toolkit_s3_bucket_name: str = manifest.toolkit_s3_bucket
-
+        acct: str = core.Aws.ACCOUNT_ID
         self.bucket_names: Dict[str, Any] = {
-            "lake-bucket": f"orbit-{self.env_name}-demo-lake-{self.manifest.account_id}-{self.manifest.deploy_id}",
+            "lake-bucket": f"orbit-{self.env_name}-demo-lake-{acct}-{manifest.deploy_id}",
+            "secured-lake-bucket": f"orbit-{self.env_name}-secured-demo-lake-{acct}-{manifest.deploy_id}",
+            "scratch-bucket": f"orbit-{self.env_name}-scratch-{acct}-{manifest.deploy_id}",
             "toolkit-bucket": toolkit_s3_bucket_name,
         }
+        self._build_kms_key_for_env()
+        self.scratch_bucket: s3.Bucket = S3Builder.build_s3_bucket(
+            scope=self,
+            id="scratch_bucket",
+            name=self.bucket_names["scratch-bucket"],
+            scratch_retention_days=30,
+            kms_key=self.env_kms_key,
+        )
+        self.lake_bucket: s3.Bucket = S3Builder.build_s3_bucket(
+            scope=self,
+            id="lake_bucket",
+            name=self.bucket_names["lake-bucket"],
+            scratch_retention_days=90,
+            kms_key=self.env_kms_key,
+        )
+        self.secured_lake_bucket: s3.Bucket = S3Builder.build_s3_bucket(
+            scope=self,
+            id="secured_lake_bucket",
+            name=self.bucket_names["secured-lake-bucket"],
+            scratch_retention_days=90,
+            kms_key=self.env_kms_key,
+        )
         self.lake_bucket_full_access = self._create_fullaccess_managed_policies()
         self.lake_bucket_read_only_access = self._create_readonlyaccess_managed_policies()
-        self._build_kms_key_for_env()
+
         self.efs_fs = EfsBuilder.build_file_system(
             scope=self,
             name="orbit-fs",
@@ -90,13 +114,6 @@ class DemoStack(Stack):
             team_kms_key=self.env_kms_key,
         )
 
-        self.scratch_bucket: s3.Bucket = S3Builder.build_scratch_bucket(
-            scope=self,
-            name=self.env_name,
-            deploy_id=manifest.deploy_id,
-            scratch_retention_days=30,
-            kms_key=self.env_kms_key,
-        )
         self.user_pool: cognito.UserPool = self._create_user_pool()
 
         self.user_pool_lake_creator: cognito.CfnUserPoolGroup = CognitoBuilder.build_user_pool_group(
@@ -118,6 +135,7 @@ class DemoStack(Stack):
                     "NodesSubnets": self.nodes_subnets.subnet_ids,
                     "LoadBalancersSubnets": self.public_subnets.subnet_ids,
                     "LakeBucket": self.bucket_names["lake-bucket"],
+                    "SecuredLakeBucket": self.bucket_names["secured-lake-bucket"],
                     "CreatorAaccessPolicy": self.lake_bucket_full_access.managed_policy_name,
                     "UserAccessPolicy": self.lake_bucket_read_only_access.managed_policy_name,
                     "KMSKey": self.env_kms_key.key_arn,
@@ -372,17 +390,14 @@ class DemoStack(Stack):
                         "s3:*",
                     ],
                     resources=[
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}",
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}/*",
+                        self.lake_bucket.bucket_arn,
+                        f"{self.lake_bucket.bucket_arn}*",
                     ],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=["s3:Get*", "s3:List*"],
-                    resources=[
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}",
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}/*",
-                    ],
+                    actions=["glue:*"],
+                    resources=["*"],
                 ),
             ],
             managed_policy_name=f"orbit-{self.env_name}-demo-lake-bucket-fullaccess",
@@ -398,11 +413,19 @@ class DemoStack(Stack):
                     effect=iam.Effect.ALLOW,
                     actions=["s3:Get*", "s3:List*"],
                     resources=[
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}",
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}/*",
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}",
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}/*",
+                        self.lake_bucket.bucket_arn,
+                        f"{self.lake_bucket.bucket_arn}*",
                     ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["glue:*"],
+                    resources=["*"],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["kms:*"],
+                    resources=[self.env_kms_key.key_arn],
                 ),
             ],
             managed_policy_name=f"orbit-{self.env_name}-demo-lake-bucket-readonlyaccess",

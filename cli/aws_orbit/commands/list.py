@@ -36,7 +36,7 @@ def list_images(env: str, region: Optional[str]) -> None:
         click.echo(f"Thre is no docker images into the {stylize(manifest.name)} env.")
 
 
-def list_env() -> None:
+def list_env(variable: str) -> None:
     ssm = utils.boto3_client("ssm")
     params = ssm.get_parameters_by_path(Path="/orbit", Recursive=True)["Parameters"]
 
@@ -50,15 +50,30 @@ def list_env() -> None:
         _logger.debug(f"found env: {env_name}")
         manifest: Manifest = Manifest(filename=None, env=env_name, region=None)
         manifest.fillup()
-        if hasattr(manifest, "teams") and len(manifest.teams) > 0:
-            env_info[env_name] = f'URL={manifest.landing_page_url}, Teams: {",".join([x.name for x in manifest.teams])}'
-        else:
-            env_info[env_name] = f"URL={manifest.landing_page_url}, No Teams Defined."
-    if len(env_info) == 0:
-        click.echo("There are no Orbit environments available")
-        return
+        teams_list: str = ",".join([x.name for x in manifest.teams])
+        if variable == "landing-page":
+            print(manifest.landing_page_url)
+            return
+        elif variable == "toolkitbucket":
+            print(manifest.toolkit_s3_bucket)
+            return
+        elif variable == "teams":
+            print(f"[{teams_list}]")
+            return
+        elif variable == "all":
+            if hasattr(manifest, "teams") and len(manifest.teams) > 0:
+                env_info[
+                    env_name
+                ] = f"URL={manifest.landing_page_url}, Teams=[{teams_list}], ToolkitBucket={manifest.toolkit_s3_bucket}"
+            else:
+                env_info[env_name] = f"URL={manifest.landing_page_url}, No Teams Defined."
+            if len(env_info) == 0:
+                click.echo("There are no Orbit environments available")
+                return
 
-    print_list(
-        tittle="Available Orbit environments:",
-        items=[f"Name={k}{stylize(',')}{v}" for k, v in env_info.items()],
-    )
+            print_list(
+                tittle="Available Orbit environments:",
+                items=[f"Name={k}{stylize(',')}{v}" for k, v in env_info.items()],
+            )
+        else:
+            raise Exception(f"Unknown --variable option {variable}")

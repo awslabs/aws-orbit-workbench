@@ -107,7 +107,12 @@ class Team(Stack):
         if self.manifest.scratch_bucket_arn:
             self.scratch_bucket: s3.Bucket = cast(
                 s3.Bucket,
-                s3.Bucket.from_bucket_arn(scope=self, id="scratch_bucket", bucket_arn=self.manifest.scratch_bucket_arn),
+                s3.Bucket.from_bucket_attributes(
+                    scope=self,
+                    id="scratch_bucket",
+                    bucket_arn=self.manifest.scratch_bucket_arn,
+                    bucket_name=self.manifest.scratch_bucket_arn.split(":::")[1],
+                ),
             )
         else:
             raise Exception("Scratch bucket was not provided in Manifest ('scratch-bucket-arn')")

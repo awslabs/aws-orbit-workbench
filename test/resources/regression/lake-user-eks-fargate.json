@@ -8,21 +8,11 @@
     },
     "tasks":  [
         {
-            "notebookName": "Example-1-SQL-Analysis-Athena.ipynb",
-            "sourcePath": "shared/samples/notebooks/B-DataAnalyst",
-            "targetPath": "private/samples/notebooks/B-DataAnalyst/output",
+            "notebookName": "run-analyst-notebooks.ipynb",
+            "sourcePath": "shared/samples/notebooks/Z-Tests",
+            "targetPath": "shared/regression/notebooks/Z-Tests/",
             "params": {
             }
-        }
-    ],
-    "env_vars": [
-        {
-            "name": "AWS_ORBIT_S3_BUCKET",
-            "value": "s3://"
-        },
-        {
-            "name": "ORBIT_TEAM_SPACE",
-            "value": "lake-user"
         }
     ]
 }

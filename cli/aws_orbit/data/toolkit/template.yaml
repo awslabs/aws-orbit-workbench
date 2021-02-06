@@ -205,6 +205,10 @@ Resources:
               - arn:aws:s3:::orbit-${env_name}-toolkit-${account_id}-${deploy_id}
               - arn:aws:s3:::orbit-${env_name}-cdk-toolkit-${account_id}-${deploy_id}/*
               - arn:aws:s3:::orbit-${env_name}-cdk-toolkit-${account_id}-${deploy_id}
+              - arn:aws:s3:::orbit-${env_name}-demo-lake-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::orbit-${env_name}-demo-lake-${account_id}-${deploy_id}
+              - arn:aws:s3:::orbit-${env_name}-secured-demo-lake-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::orbit-${env_name}-secured-demo-lake-${account_id}-${deploy_id}
           - Effect: Allow
             Action:
               - iam:CreateRole

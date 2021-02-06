@@ -375,7 +375,7 @@ def _get_emr_functions() -> List[str]:
     """
     props = get_properties()
     env_name = props["AWS_ORBIT_ENV"]
-    team_space = props["ORBIT_TEAM_SPACE"]
+    team_space = props["AWS_ORBIT_TEAM_SPACE"]
     namespace = f"orbit-{env_name}-{team_space}"
     res = _get_functions(namespace)
     functionList = _get_functions(namespace=namespace)["EMRLaunchFunctions"]
@@ -506,7 +506,7 @@ def spark_submit(job: Dict[str, Any]) -> Dict[str, Any]:
 
     s3WorkspaceDir = "s3://{}/{}/workspaces/{}".format(
         props["AWS_ORBIT_S3_BUCKET"],
-        props["ORBIT_TEAM_SPACE"],
+        props["AWS_ORBIT_TEAM_SPACE"],
         notebookInstanceName,
     )
     cmd = 'aws s3 sync --delete --exclude "*.git/*" {} {}'.format(workspaceDir, s3WorkspaceDir)
@@ -598,7 +598,7 @@ def get_team_clusters(cluster_id: Optional[str] = None) -> Dict[str, Dict[str, s
         if ORBIT_PRODUCT_KEY not in tags or tags[ORBIT_PRODUCT_KEY] != ORBIT_PRODUCT_NAME:
             continue
 
-        if tags[ORBIT_ENV] != props["AWS_ORBIT_ENV"] or tags[ORBIT_TEAM_SPACE] != props["ORBIT_TEAM_SPACE"]:
+        if tags[ORBIT_ENV] != props["AWS_ORBIT_ENV"] or tags[AWS_ORBIT_TEAM_SPACE] != props["AWS_ORBIT_TEAM_SPACE"]:
             continue
 
         cluster_nodes_info = get_cluster_info(cluster_id)

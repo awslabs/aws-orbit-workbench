@@ -477,7 +477,7 @@ class RedshiftUtils(DatabaseCommon):
         props = get_properties()
 
         redshift = boto3.client("redshift")
-        cluster_identifier = (props["AWS_ORBIT_ENV"] + "-" + props["ORBIT_TEAM_SPACE"] + "-" + cluster_name).lower()
+        cluster_identifier = (props["AWS_ORBIT_ENV"] + "-" + props["AWS_ORBIT_TEAM_SPACE"] + "-" + cluster_name).lower()
         try:
             clusters = redshift.describe_clusters(ClusterIdentifier=cluster_identifier)["Clusters"]
         except:
@@ -528,7 +528,7 @@ class RedshiftUtils(DatabaseCommon):
         funcName = "ConnectToRedshiftFunction"
 
         orbit = props["AWS_ORBIT_ENV"]
-        team_space = props["ORBIT_TEAM_SPACE"]
+        team_space = props["AWS_ORBIT_TEAM_SPACE"]
         functionName = "{}-{}-{}".format(orbit, team_space, funcName)
         lambda_client = boto3.client("lambda")
 
@@ -573,7 +573,7 @@ class RedshiftUtils(DatabaseCommon):
 
         props = get_properties()
         redshift = boto3.client("redshift")
-        namespace = props["AWS_ORBIT_ENV"] + "-" + props["ORBIT_TEAM_SPACE"] + "-"
+        namespace = props["AWS_ORBIT_ENV"] + "-" + props["AWS_ORBIT_TEAM_SPACE"] + "-"
         cluster_identifier = cluster_name if namespace in cluster_name else namespace + cluster_name
 
         res = redshift.delete_cluster(ClusterIdentifier=cluster_identifier, SkipFinalClusterSnapshot=True)
@@ -638,7 +638,7 @@ class RedshiftUtils(DatabaseCommon):
         lambda_client = boto3.client("lambda")
         props = get_properties()
         env_name = props["AWS_ORBIT_ENV"]
-        team_space = props["ORBIT_TEAM_SPACE"]
+        team_space = props["AWS_ORBIT_TEAM_SPACE"]
         namespace = f"{env_name}-{team_space}"
         funcs = []
         while True:
@@ -665,7 +665,7 @@ class RedshiftUtils(DatabaseCommon):
             del func_desc["RedshiftClusterSubnetGroup"]
             del func_desc["RedshiftClusterSecurityGroup"]
             del func_desc[ORBIT_ENV]
-            del func_desc[ORBIT_TEAM_SPACE]
+            del func_desc[AWS_ORBIT_TEAM_SPACE]
             del func_desc["SecretId"]
             del func_desc["PortNumber"]
             del func_desc["Role"]
@@ -685,7 +685,7 @@ class RedshiftUtils(DatabaseCommon):
 
         """
         env = props["AWS_ORBIT_ENV"]
-        team_space = props["ORBIT_TEAM_SPACE"]
+        team_space = props["AWS_ORBIT_TEAM_SPACE"]
         funcName = f"Standard"
         if "redshift_start_function" in clusterArgs.keys():
             funcName = clusterArgs["redshift_start_function"]
@@ -841,7 +841,7 @@ class RedshiftUtils(DatabaseCommon):
         Parameters
         ----------
         cluster_id : str, optional
-            Gets information for a specific cluster Id. Default looks at cluster tagged with 'ORBIT_TEAM_SPACE'
+            Gets information for a specific cluster Id. Default looks at cluster tagged with 'AWS_ORBIT_TEAM_SPACE'
 
         Returns
         -------
@@ -859,7 +859,7 @@ class RedshiftUtils(DatabaseCommon):
         redshift = boto3.client("redshift")
         props = get_properties()
         if cluster_id == None:
-            clusters = redshift.describe_clusters(TagValues=[props["ORBIT_TEAM_SPACE"]])["Clusters"]
+            clusters = redshift.describe_clusters(TagValues=[props["AWS_ORBIT_TEAM_SPACE"]])["Clusters"]
         else:
             clusters = redshift.describe_clusters(
                 ClusterIdentifier=cluster_id,
