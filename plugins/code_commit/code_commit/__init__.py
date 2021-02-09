@@ -81,7 +81,7 @@ configs='
 echo "$configs" > /home/jovyan/.gitconfig
 
 REPO_LOCAL_PATH="/efs/"${USERNAME}"/codecommit"
-REPO_ADDRESS="https://git-codecommit.${AWS_DEFAULT_REGION}.amazonaws.com/v1/repos/orbit-${AWS_ORBIT_ENV}-${ORBIT_TEAM_SPACE}"
+REPO_ADDRESS="https://git-codecommit.${AWS_DEFAULT_REGION}.amazonaws.com/v1/repos/orbit-${AWS_ORBIT_ENV}-${AWS_ORBIT_TEAM_SPACE}"
 
 if [ ! -d "${REPO_LOCAL_PATH}" ] ; then
     git clone "${REPO_ADDRESS}" "${REPO_LOCAL_PATH}"

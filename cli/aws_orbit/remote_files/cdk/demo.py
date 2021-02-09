@@ -17,7 +17,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, Dict, List, cast
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_kms as kms
@@ -43,9 +43,24 @@ class DemoStack(Stack):
         super().__init__(scope, id, **kwargs)
         Tags.of(scope=cast(core.IConstruct, self)).add(key="Env", value=f"orbit-{self.env_name}")
         self.vpc: ec2.Vpc = self._create_vpc()
-        self.public_subnets_ids: Tuple[str, ...] = tuple(x.subnet_id for x in self.vpc.public_subnets)
-        self.private_subnets_ids: Tuple[str, ...] = tuple(x.subnet_id for x in self.vpc.private_subnets)
-        self.isolated_subnets_ids: Tuple[str, ...] = tuple(x.subnet_id for x in self.vpc.isolated_subnets)
+
+        self.public_subnets = (
+            self.vpc.select_subnets(subnet_type=ec2.SubnetType.PUBLIC)
+            if self.vpc.public_subnets
+            else self.vpc.select_subnets(subnet_name="")
+        )
+        self.private_subnets = (
+            self.vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE)
+            if self.vpc.private_subnets
+            else self.vpc.select_subnets(subnet_name="")
+        )
+        self.isolated_subnets = (
+            self.vpc.select_subnets(subnet_type=ec2.SubnetType.ISOLATED)
+            if self.vpc.isolated_subnets
+            else self.vpc.select_subnets(subnet_name="")
+        )
+        self.nodes_subnets = self.private_subnets if manifest.internet_accessible else self.isolated_subnets
+
         self._create_vpc_endpoints()
 
         if manifest.toolkit_s3_bucket is None:
@@ -57,32 +72,48 @@ class DemoStack(Stack):
         if manifest.toolkit_s3_bucket is None:
             raise ValueError("manifest.toolkit_s3_bucket is not defined")
         toolkit_s3_bucket_name: str = manifest.toolkit_s3_bucket
-
-        # self.lake_bucket = self._create_lake_bucket()
+        acct: str = core.Aws.ACCOUNT_ID
         self.bucket_names: Dict[str, Any] = {
-            "lake-bucket": f"orbit-{self.env_name}-demo-lake-{self.manifest.account_id}-{self.manifest.deploy_id}",
+            "lake-bucket": f"orbit-{self.env_name}-demo-lake-{acct}-{manifest.deploy_id}",
+            "secured-lake-bucket": f"orbit-{self.env_name}-secured-demo-lake-{acct}-{manifest.deploy_id}",
+            "scratch-bucket": f"orbit-{self.env_name}-scratch-{acct}-{manifest.deploy_id}",
             "toolkit-bucket": toolkit_s3_bucket_name,
         }
+        self._build_kms_key_for_env()
+        self.scratch_bucket: s3.Bucket = S3Builder.build_s3_bucket(
+            scope=self,
+            id="scratch_bucket",
+            name=self.bucket_names["scratch-bucket"],
+            scratch_retention_days=30,
+            kms_key=self.env_kms_key,
+        )
+        self.lake_bucket: s3.Bucket = S3Builder.build_s3_bucket(
+            scope=self,
+            id="lake_bucket",
+            name=self.bucket_names["lake-bucket"],
+            scratch_retention_days=90,
+            kms_key=self.env_kms_key,
+        )
+        self.secured_lake_bucket: s3.Bucket = S3Builder.build_s3_bucket(
+            scope=self,
+            id="secured_lake_bucket",
+            name=self.bucket_names["secured-lake-bucket"],
+            scratch_retention_days=90,
+            kms_key=self.env_kms_key,
+        )
         self.lake_bucket_full_access = self._create_fullaccess_managed_policies()
         self.lake_bucket_read_only_access = self._create_readonlyaccess_managed_policies()
-        self._build_kms_key_for_env()
+
         self.efs_fs = EfsBuilder.build_file_system(
             scope=self,
             name="orbit-fs",
             efs_life_cycle="AFTER_7_DAYS",
             vpc=self.vpc,
             efs_security_group=self._vpc_security_group,
-            subnets=self.isolated_subnets.subnets,
+            subnets=self.nodes_subnets.subnets,
             team_kms_key=self.env_kms_key,
         )
 
-        self.scratch_bucket: s3.Bucket = S3Builder.build_scratch_bucket(
-            scope=self,
-            name=self.env_name,
-            deploy_id=manifest.deploy_id,
-            scratch_retention_days=30,
-            kms_key=self.env_kms_key,
-        )
         self.user_pool: cognito.UserPool = self._create_user_pool()
 
         self.user_pool_lake_creator: cognito.CfnUserPoolGroup = CognitoBuilder.build_user_pool_group(
@@ -98,12 +129,13 @@ class DemoStack(Stack):
             string_value=json.dumps(
                 {
                     "VpcId": self.vpc.vpc_id,
-                    "PublicSubnet": self.public_subnets_ids,
-                    "PrivateSubnet": self.private_subnets_ids,
-                    "IsolatedSubnet": self.isolated_subnets_ids,
-                    "NodeSubnets": self.isolated_subnets_ids,
-                    "LoadBalancersSubnets": self.public_subnets_ids,
+                    "PublicSubnets": self.public_subnets.subnet_ids,
+                    "PrivateSubnets": self.private_subnets.subnet_ids,
+                    "IsolatedSubnets": self.isolated_subnets.subnet_ids,
+                    "NodesSubnets": self.nodes_subnets.subnet_ids,
+                    "LoadBalancersSubnets": self.public_subnets.subnet_ids,
                     "LakeBucket": self.bucket_names["lake-bucket"],
+                    "SecuredLakeBucket": self.bucket_names["secured-lake-bucket"],
                     "CreatorAaccessPolicy": self.lake_bucket_full_access.managed_policy_name,
                     "UserAccessPolicy": self.lake_bucket_read_only_access.managed_policy_name,
                     "KMSKey": self.env_kms_key.key_arn,
@@ -124,21 +156,34 @@ class DemoStack(Stack):
 
         CfnOutput(
             scope=self,
+            id=f"{id}vpcid",
+            export_name=f"orbit-{self.env_name}-vpc-id",
+            value=self.vpc.vpc_id,
+        )
+
+        CfnOutput(
+            scope=self,
             id=f"{id}publicsubnetsids",
-            export_name=f"orbit-{self.env_name}-public-subnets-ids",
-            value=",".join(self.public_subnets_ids),
+            export_name=f"orbit-{self.env_name}-public-subnet-ids",
+            value=",".join(self.public_subnets.subnet_ids),
         )
         CfnOutput(
             scope=self,
             id=f"{id}privatesubnetsids",
-            export_name=f"orbit-{self.env_name}-private-subnets-ids",
-            value=",".join(self.private_subnets_ids),
+            export_name=f"orbit-{self.env_name}-private-subnet-ids",
+            value=",".join(self.private_subnets.subnet_ids),
         )
         CfnOutput(
             scope=self,
             id=f"{id}isolatedsubnetsids",
-            export_name=f"orbit-{self.env_name}-isolated-subnets-ids",
-            value=",".join(self.isolated_subnets_ids),
+            export_name=f"orbit-{self.env_name}-isolated-subnet-ids",
+            value=",".join(self.isolated_subnets.subnet_ids),
+        )
+        CfnOutput(
+            scope=self,
+            id=f"{id}nodesubnetsids",
+            export_name=f"orbit-{self.env_name}-nodes-subnet-ids",
+            value=",".join(self.nodes_subnets.subnet_ids),
         )
 
         CfnOutput(
@@ -273,34 +318,20 @@ class DemoStack(Stack):
             "autoscaling": ec2.InterfaceVpcEndpointAwsService("autoscaling"),
         }
 
-        self.public_subnets = (
-            self.vpc.select_subnets(subnet_type=ec2.SubnetType.PUBLIC)
-            if self.vpc.public_subnets
-            else self.vpc.select_subnets(subnet_name="")
-        )
-        self.private_subnets = (
-            self.vpc.select_subnets(subnet_type=ec2.SubnetType.PRIVATE)
-            if self.vpc.private_subnets
-            else self.vpc.select_subnets(subnet_name="")
-        )
-        self.isolated_subnets = (
-            self.vpc.select_subnets(subnet_type=ec2.SubnetType.ISOLATED)
-            if self.vpc.isolated_subnets
-            else self.vpc.select_subnets(subnet_name="")
-        )
-
         for name, gateway_vpc_endpoint_service in vpc_gateway_endpoints.items():
             self.vpc.add_gateway_endpoint(
                 id=name,
                 service=gateway_vpc_endpoint_service,
-                subnets=[ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED)],
+                subnets=[
+                    ec2.SubnetSelection(subnets=self.nodes_subnets.subnets),
+                ],
             )
 
         for name, interface_service in vpc_interface_endpoints.items():
             self.vpc.add_interface_endpoint(
                 id=name,
                 service=interface_service,
-                subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.ISOLATED),
+                subnets=ec2.SubnetSelection(subnets=self.nodes_subnets.subnets),
                 private_dns_enabled=True,
             )
         # Adding CodeArtifact VPC endpoints
@@ -309,11 +340,13 @@ class DemoStack(Stack):
             service=cast(
                 ec2.IInterfaceVpcEndpointService, ec2.InterfaceVpcEndpointAwsService("codeartifact.repositories")
             ),
+            subnets=ec2.SubnetSelection(subnets=self.nodes_subnets.subnets),
             private_dns_enabled=False,
         )
         self.vpc.add_interface_endpoint(
             id="code_artifact_api_endpoint",
             service=cast(ec2.IInterfaceVpcEndpointService, ec2.InterfaceVpcEndpointAwsService("codeartifact.api")),
+            subnets=ec2.SubnetSelection(subnets=self.nodes_subnets.subnets),
             private_dns_enabled=False,
         )
 
@@ -324,7 +357,6 @@ class DemoStack(Stack):
         self._vpc_security_group.add_ingress_rule(
             peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block), connection=ec2.Port.all_tcp()
         )
-        isolated_subnet_ids = [t.subnet_id for t in self.vpc.isolated_subnets]
 
         ec2.CfnVPCEndpoint(
             self,
@@ -333,7 +365,7 @@ class DemoStack(Stack):
             service_name=endpoint_url_template.format(self.region, "redshift"),
             vpc_id=self.vpc.vpc_id,
             security_group_ids=[self._vpc_security_group.security_group_id],
-            subnet_ids=isolated_subnet_ids,
+            subnet_ids=self.nodes_subnets.subnet_ids,
             private_dns_enabled=True,
         )
         ec2.CfnVPCEndpoint(
@@ -343,7 +375,7 @@ class DemoStack(Stack):
             service_name=endpoint_url_template.format(self.region, "lambda"),
             vpc_id=self.vpc.vpc_id,
             security_group_ids=[self._vpc_security_group.security_group_id],
-            subnet_ids=isolated_subnet_ids,
+            subnet_ids=self.nodes_subnets.subnet_ids,
             private_dns_enabled=True,
         )
 
@@ -358,17 +390,14 @@ class DemoStack(Stack):
                         "s3:*",
                     ],
                     resources=[
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}",
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}/*",
+                        self.lake_bucket.bucket_arn,
+                        f"{self.lake_bucket.bucket_arn}*",
                     ],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=["s3:Get*", "s3:List*"],
-                    resources=[
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}",
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}/*",
-                    ],
+                    actions=["glue:*"],
+                    resources=["*"],
                 ),
             ],
             managed_policy_name=f"orbit-{self.env_name}-demo-lake-bucket-fullaccess",
@@ -384,11 +413,19 @@ class DemoStack(Stack):
                     effect=iam.Effect.ALLOW,
                     actions=["s3:Get*", "s3:List*"],
                     resources=[
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}",
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['lake-bucket']}/*",
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}",
-                        f"arn:{core.Aws.PARTITION}:s3:::{self.bucket_names['toolkit-bucket']}/*",
+                        self.lake_bucket.bucket_arn,
+                        f"{self.lake_bucket.bucket_arn}*",
                     ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["glue:*"],
+                    resources=["*"],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["kms:*"],
+                    resources=[self.env_kms_key.key_arn],
                 ),
             ],
             managed_policy_name=f"orbit-{self.env_name}-demo-lake-bucket-readonlyaccess",

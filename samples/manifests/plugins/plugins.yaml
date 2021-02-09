@@ -6,7 +6,7 @@
     path: ../plugins/hello_world/
     parameters:
         foo: boo
-        xoo: 123
+        xoo: 1234
 -   id: team_script_launcher
     module: team_script_launcher
     path: ../plugins/team_script_launcher/
@@ -16,8 +16,7 @@
             i=0
             while [ $i -lt 1 ];
             do
-              mkdir -p /home/jovyan/shared/test1
-              aws s3 sync s3://${toolkit_s3_bucket}/assets/ /home/jovyan/shared/test1
+              aws s3 sync s3://${toolkit_s3_bucket}/samples/ /home/jovyan/shared/samples
               sleep 60
             done
             echo "DONE LOOP"

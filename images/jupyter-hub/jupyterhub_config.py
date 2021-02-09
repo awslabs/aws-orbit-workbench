@@ -60,7 +60,7 @@ c.KubeSpawner.namespace = TEAM
 c.KubeSpawner.environment = {
     "USERNAME": lambda spawner: str(spawner.user.name),
     "JUPYTER_ENABLE_LAB": "yes",
-    "ORBIT_TEAM_SPACE": TEAM,
+    "AWS_ORBIT_TEAM_SPACE": TEAM,
     "AWS_ORBIT_ENV": ENV_NAME,
     "AWS_DEFAULT_REGION": REGION,
     "ACCOUNT_ID": ACCOUNT_ID,
@@ -68,6 +68,9 @@ c.KubeSpawner.environment = {
     "GRANT_SUDO": GRANT_SUDO,
     "AWS_STS_REGIONAL_ENDPOINTS": "regional",
 }
+if GRANT_SUDO == "yes":
+    c.KubeSpawner.uid = 0
+
 c.KubeSpawner.image = IMAGE
 # TODO we want to remove this 'Always' from production code
 c.KubeSpawner.image_pull_policy = "Always"
@@ -75,7 +78,7 @@ c.KubeSpawner.storage_class = f"ebs-{TEAM}-gp2"
 c.KubeSpawner.storage_access_modes = ["ReadWriteOnce"]
 c.KubeSpawner.storage_capacity = "5Gi"
 c.KubeSpawner.storage_pvc_ensure = True
-c.KubeSpawner.extra_annotations = {"ORBIT_TEAM_SPACE": TEAM, "AWS_ORBIT_ENV": ENV_NAME}
+c.KubeSpawner.extra_annotations = {"AWS_ORBIT_TEAM_SPACE": TEAM, "AWS_ORBIT_ENV": ENV_NAME}
 pvc_name_template = "claim-{username}{servername}"
 c.KubeSpawner.pvc_name_template = pvc_name_template
 c.KubeSpawner.volumes = [
@@ -158,7 +161,7 @@ profile_list_default = [
 
 
 def per_user_profiles(spawner):
-    team = spawner.environment["ORBIT_TEAM_SPACE"]
+    team = spawner.environment["AWS_ORBIT_TEAM_SPACE"]
     env = spawner.environment["AWS_ORBIT_ENV"]
     ssm = boto3.Session().client("ssm")
     app_log.info("Getting profiles...")

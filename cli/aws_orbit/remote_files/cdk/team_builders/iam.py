@@ -12,15 +12,19 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import List
+import logging
+from typing import Any, Dict, List, Optional, cast
 
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_kms as kms
 import aws_cdk.aws_s3 as s3
 import aws_cdk.core as core
+import botocore
 
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest
+
+_logger: logging.Logger = logging.getLogger(__name__)
 
 
 class IamBuilder:
@@ -40,34 +44,11 @@ class IamBuilder:
         region = core.Aws.REGION
 
         lake_role_name: str = f"orbit-{env_name}-{team_name}-role"
-        code_artifact_user_policy = iam.ManagedPolicy(
-            scope=scope,
-            id="code_artifact_user",
-            managed_policy_name=f"orbit-{env_name}-{team_name}-ca-access",
-            statements=[
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        "codeartifact:DescribePackageVersion",
-                        "codeartifact:DescribeRepository",
-                        "codeartifact:GetPackageVersionReadme",
-                        "codeartifact:GetRepositoryEndpoint",
-                        "codeartifact:ListPackages",
-                        "codeartifact:ListPackageVersions",
-                        "codeartifact:ListPackageVersionAssets",
-                        "codeartifact:ListPackageVersionDependencies",
-                        "codeartifact:ReadFromRepository",
-                        "codeartifact:GetDomainPermissionsPolicy",
-                        "codeartifact:ListRepositoriesInDomain",
-                        "codeartifact:GetAuthorizationToken",
-                        "codeartifact:DescribeDomain",
-                        "codeartifact:CreateRepository",
-                        "sts:GetServiceBearerToken",
-                    ],
-                    resources=["*"],
-                )
-            ],
-        )
+        kms_keys = [team_kms_key.key_arn]
+        scratch_bucket_kms_key = IamBuilder.get_kms_key_scratch_bucket(manifest)
+        if scratch_bucket_kms_key:
+            kms_keys.append(scratch_bucket_kms_key)
+
         lake_operational_policy = iam.ManagedPolicy(
             scope=scope,
             id="lake_operational_policy",
@@ -87,10 +68,25 @@ class IamBuilder:
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
+                    actions=["s3:List*", "s3:Get*"],
+                    resources=[
+                        f"arn:{partition}:s3:::{manifest.toolkit_s3_bucket}",
+                        f"arn:{partition}:s3:::{manifest.toolkit_s3_bucket}/*",
+                    ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
                     actions=["ssm:Describe*", "ssm:Get*"],
                     resources=[
                         f"arn:{partition}:ssm:{region}:{account}:parameter/orbit*",
                         f"arn:{partition}:ssm:{region}:{account}:parameter/emr_launch/",
+                    ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["ssm:PutParameter"],
+                    resources=[
+                        f"arn:{partition}:ssm:{region}:{account}:parameter/orbit/{env_name}/teams/{team_name}/user*",
                     ],
                 ),
                 iam.PolicyStatement(
@@ -124,15 +120,11 @@ class IamBuilder:
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=["sagemaker:StopNotebookInstance"],
-                    resources=[
-                        f"arn:{partition}:sagemaker:{region}:{account}:notebook-instance/"
-                        f"orbit-{env_name}-{team_name}*"
-                    ],
-                ),
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
                     actions=[
+                        "codeartifact:Describe*",
+                        "codeartifact:Get*",
+                        "codeartifact:List*",
+                        "codeartifact:Read*",
                         "s3:ListAllMyBuckets",
                         "lambda:List*",
                         "lambda:Get*",
@@ -148,14 +140,10 @@ class IamBuilder:
                         "states:List*",
                         "states:Get*",
                         "states:Describe*",
-                        "logs:*",
                         "glue:Get*",
-                        "glue:CreateDatabase",
-                        "glue:DeleteDatabase",
                         "glue:List*",
                         "glue:Search*",
                         "athena:*",
-                        "events:*",
                         "ecs:Describe*",
                         "ecs:ListTasks",
                         "ec2:Describe*",
@@ -175,7 +163,6 @@ class IamBuilder:
                         "sagemaker:DeleteAlgorithm",
                         "sagemaker:Search",
                         "sagemaker:UpdateWorkteam",
-                        "sagemaker:UpdateNotebookInstanceLifecycleConfig",
                         "sagemaker:DeleteModel",
                         "sagemaker:CreateModelPackage",
                         "sagemaker:DeleteWorkteam",
@@ -204,41 +191,25 @@ class IamBuilder:
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
-                        "logs:ListTagsLogGroup",
-                        "logs:DescribeLogGroups",
-                        "logs:DescribeLogStreams",
-                        "logs:DescribeSubscriptionFilters",
+                        "logs:List*",
+                        "logs:Describe*",
                         "logs:StartQuery",
-                        "logs:GetLogEvents",
-                        "logs:DescribeMetricFilters",
-                        "logs:FilterLogEvents",
-                        "logs:GetLogGroupFields",
+                        "logs:StopQuery",
+                        "logs:Get*",
+                        "logs:Filter*",
+                        "events:*",
                     ],
                     resources=[
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/sagemaker/*",
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/sagemaker/*:log-stream:*",
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/eks/orbit*",
+                        f"arn:{partition}:events:{region}:{account}:rule/orbit-{env_name}-{team_name}-*",
                     ],
-                ),
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=[
-                        "logs:DescribeQueries",
-                        "logs:DescribeExportTasks",
-                        "logs:GetLogRecord",
-                        "logs:GetQueryResults",
-                        "logs:StopQuery",
-                        "logs:TestMetricFilter",
-                        "logs:DescribeResourcePolicies",
-                        "logs:GetLogDelivery",
-                        "logs:DescribeDestinations",
-                        "logs:ListLogDeliveries",
-                    ],
-                    resources=["*"],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=["kms:Encrypt", "kms:Decrypt", "kms:ReEncrypt", "kms:GenerateDataKey", "kms:DescribeKey"],
-                    resources=[team_kms_key.key_arn],
+                    resources=kms_keys,
                 ),
             ],
         )
@@ -261,19 +232,12 @@ class IamBuilder:
             ],
         )
 
-        ssm_manage_policy = iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMManagedInstanceCore")
-        eks_policies = [
-            iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSWorkerNodePolicy"),
-            iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKS_CNI_Policy"),
-            iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEC2ContainerRegistryReadOnly"),
-        ]
-
         managed_policies = [
             lake_operational_policy,
             lambda_access_policy,
-            code_artifact_user_policy,
-            ssm_manage_policy,
-        ] + eks_policies
+            # For EKS
+            iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKS_CNI_Policy"),
+        ]
 
         # Parse list to IAM policies
         aws_managed_user_policies = [
@@ -334,6 +298,36 @@ class IamBuilder:
                 iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AmazonECSTaskExecutionRolePolicy")
             ],
         )
+
+    @staticmethod
+    def get_kms_key_scratch_bucket(manifest: Manifest) -> Optional[str]:
+        if not manifest.scratch_bucket_arn:
+            return None
+        bucket_name = manifest.scratch_bucket_arn.split(":::")[1]
+        _logger.debug(f"Getting KMS Key for scratch bucket: {bucket_name}")
+        try:
+            s3_client = manifest.boto3_client("s3")
+            encryption = cast(
+                Dict[str, Any],
+                s3_client.get_bucket_encryption(Bucket=bucket_name),
+            )
+            if (
+                "ServerSideEncryptionConfiguration" not in encryption
+                or "Rules" not in encryption["ServerSideEncryptionConfiguration"]
+            ):
+                return None
+            for r in encryption["ServerSideEncryptionConfiguration"]["Rules"]:
+                if (
+                    "ApplyServerSideEncryptionByDefault" in r
+                    and "SSEAlgorithm" in r["ApplyServerSideEncryptionByDefault"]
+                    and r["ApplyServerSideEncryptionByDefault"]["SSEAlgorithm"] == "aws:kms"
+                ):
+                    return cast(str, r["ApplyServerSideEncryptionByDefault"]["KMSMasterKeyID"])
+            return None
+        except botocore.exceptions.ClientError as e:
+            if "ServerSideEncryptionConfigurationNotFoundError" in str(e):
+                return None
+            raise e
 
     @staticmethod
     def build_container_runner_role(scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest) -> iam.Role:

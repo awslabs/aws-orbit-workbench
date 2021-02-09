@@ -188,8 +188,6 @@ def deploy(args: Tuple[str, ...]) -> None:
     _logger.debug("Plugins loaded")
     cdk_toolkit.deploy(manifest=manifest)
     _logger.debug("CDK Toolkit Stack deployed")
-    demo.deploy(manifest=manifest)
-    _logger.debug("Demo Stack deployed")
     manifest.fetch_network_data()
     env.deploy(
         manifest=manifest,

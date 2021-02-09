@@ -1,38 +1,41 @@
 name: dev-env
 codeartifact-domain: aws-orbit
 codeartifact-repository: python-repository
-eks-system-masters-roles:
--   Admin
+scratch-bucket-arn: !SSM ${/orbit/dev-env/demo::ScratchBucketArn}
+user-pool-id: !SSM ${/orbit/dev-env/demo::UserPoolId}
+shared-efs-fs-id: !SSM ${/orbit/dev-env/demo::EFSFilesystemID}
+shared-efs-sg-id: !SSM ${/orbit/dev-env/demo::SharedEFSSecurityGroup}
+vpc-id: !SSM ${/orbit/dev-env/demo::VpcId}
 images:
     jupyter-hub:
         repository: aws-orbit-jupyter-hub
-        version: latest
         source: code
-        path: ../images/jupyter-hub/
+        path: ../images/jupyter-hub
+        version: latest
     jupyter-user:
         repository: aws-orbit-jupyter-user
-        version: latest
         source: code
-        path: ../images/jupyter-user/
+        path: ../images/jupyter-user
+        version: latest
     jupyter-user-spark:
-        repository: aws-orbit-jupyter-user
-        version: latest
+        repository: aws-orbit-jupyter-user-spark
         source: code
-        path: ../images/jupyter-user-spark/
+        path: ../images/jupyter-user-spark
+        version: latest
     landing-page:
         repository: aws-orbit-landing-page
-        version: latest
         source: code
-        path: ../images/landing-page/
+        path: ../images/landing-page
+        version: latest
     code-build-image:
         repository: aws-orbit-code-build-base
-        version: latest
         source: code
-        path: ../images/code-build-image/
+        path: ../images/code-build-image
+        version: latest
 networking:
     data:
         internet-accessible: false
-        nodes-subnets: []
+        nodes-subnets: !SSM ${/orbit/dev-env/demo::NodesSubnets}
     frontend:
-        load-balancers-subnets: []
+        load-balancers-subnets: !SSM ${/orbit/dev-env/demo::LoadBalancersSubnets}
 teams: []

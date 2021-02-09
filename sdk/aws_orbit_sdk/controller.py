@@ -90,7 +90,7 @@ def _get_execution_history_from_s3(notebookBaseDir: str, srcNotebook: str, props
 
     notebookDir = os.path.join(notebookBaseDir, srcNotebook.split(".")[0])
 
-    path = "{}/output/notebooks/{}/".format(props["ORBIT_TEAM_SPACE"], notebookDir)
+    path = "{}/output/notebooks/{}/".format(props["AWS_ORBIT_TEAM_SPACE"], notebookDir)
     executions = []
     objects = s3.list_objects_v2(Bucket=props["AWS_ORBIT_S3_BUCKET"], Prefix=path)
     if "Contents" in objects.keys():
@@ -120,7 +120,7 @@ def _get_invoke_function_name() -> Any:
     Function Name.
     """
     props = get_properties()
-    functionName = f"orbit-{props['AWS_ORBIT_ENV']}-{props['ORBIT_TEAM_SPACE']}-container-runner"
+    functionName = f"orbit-{props['AWS_ORBIT_ENV']}-{props['AWS_ORBIT_TEAM_SPACE']}-container-runner"
     return functionName
 
 
@@ -400,7 +400,8 @@ def schedule_task(triggerName: str, frequency: str, notebookConfiguration: dict)
     lambda_client = boto3.client("lambda")
     events_client = boto3.client("events")
     fn_response = lambda_client.get_function(FunctionName=_get_invoke_function_name())
-
+    props = get_properties()
+    triggerName = f"orbit-{props['AWS_ORBIT_ENV']}-{props['AWS_ORBIT_TEAM_SPACE']}-{triggerName}"
     fn_arn = fn_response["Configuration"]["FunctionArn"]
 
     try:
@@ -446,6 +447,8 @@ def delete_task_schedule(triggerName: str) -> None:
     >>> controller.delete_scheduled_task(triggerName = 'arn:aws:events:...')
     """
     events_client = boto3.client("events")
+    props = get_properties()
+    triggerName = f"orbit-{props['AWS_ORBIT_ENV']}-{props['AWS_ORBIT_TEAM_SPACE']}-{triggerName}"
     response = events_client.remove_targets(Rule=triggerName, Ids=["1"], Force=True)
 
     events_client.delete_rule(Name=triggerName, Force=True)
@@ -613,7 +616,7 @@ def wait_for_tasks_to_complete(
                     logger.debug(f"Execution error: {task['State']}")
                     errored_tasks.append(task)
                 else:
-                    logger.debug("Execution incomplete")
+                    logger.debug("Tasks are running...")
                     incomplete_tasks.append(task)
 
         tasks = incomplete_tasks
@@ -639,8 +642,8 @@ def wait_for_tasks_to_complete(
                 id = task["Identifier"].split("/")[2]
                 config = {
                     "Identifier": task["Identifier"],
-                    "LogGroupName": f"/orbit/tasks/{props['AWS_ORBIT_ENV']}/{props['ORBIT_TEAM_SPACE']}/containers",
-                    "LogStreamName": f"orbit-{props['AWS_ORBIT_ENV']}-{props['ORBIT_TEAM_SPACE']}/orbit-runner/{id}",
+                    "LogGroupName": f"/orbit/tasks/{props['AWS_ORBIT_ENV']}/{props['AWS_ORBIT_TEAM_SPACE']}/containers",
+                    "LogStreamName": f"orbit-{props['AWS_ORBIT_ENV']}-{props['AWS_ORBIT_TEAM_SPACE']}/orbit-runner/{id}",
                 }
                 logger.debug(f"Found LogConfig: {config}")
                 return config

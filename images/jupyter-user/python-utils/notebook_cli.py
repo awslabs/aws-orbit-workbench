@@ -31,7 +31,7 @@ def writeOrbitYaml():
     data = dict(
         properties=dict(
             AWS_ORBIT_ENV=os.environ["AWS_ORBIT_ENV"],
-            ORBIT_TEAM_SPACE=os.environ["ORBIT_TEAM_SPACE"],
+            AWS_ORBIT_TEAM_SPACE=os.environ["AWS_ORBIT_TEAM_SPACE"],
         )
     )
     home = expanduser("~")
@@ -58,9 +58,9 @@ def notifyOnTasksCompletion(subject, msg, compute):
     logger.info(f"done task notifications to {topic_name}")
 
 
-def run_tasks():
+def run_tasks() -> int:
     logger.debug("starting task execution with following arguments: ")
-
+    logging.debug("ENV VARS: %s", os.environ.keys())
     env_params = ""
     for param in os.environ.keys():
         env_params += param + " = " + os.environ[param] + "\n"
@@ -76,16 +76,21 @@ def run_tasks():
             pr.run()
         logger.info("Done task execution")
         notifyOnTasksCompletion("finished executing tasks", "Tasks:\n" + os.environ["tasks"], compute)
+        return 0
     except Exception as e:
         logger.exception(f"Done task execution with errors, {str(e)}")
         notifyOnTasksCompletion(
             "Error while executing tasks. Errors: \n", str(e) + "\n\n Tasks:\n" + os.environ["tasks"], compute
         )
+        return 1000
+    finally:
+        logger.info("Exiting Container Main()")
 
 
 def symlink_efs():
     jupyter_user = os.environ.get("JUPYTERHUB_USER", None)
     if jupyter_user:
+        os.makedirs(f"/efs/{jupyter_user}", exist_ok=True)
         logger.info(f"Symlinking /efs/{jupyter_user} to /home/jovyan/private")
         subprocess.check_call(["ln", "-s", f"/efs/{jupyter_user}", "/home/jovyan/private"])
     logger.info("Symlinking /efs/shared /home/jovyan/shared")
@@ -96,5 +101,9 @@ if __name__ == "__main__":
     logger.info("Starting Container Main")
     symlink_efs()
     logger.info("Running tasks...")
-    run_tasks()
-    logger.info("Exiting Container Main()")
+    try:
+        ret = run_tasks()
+        sys.exit(ret)
+    except Exception as e:
+        logger.info("Exception %s", e)
+        sys.exit(1001)

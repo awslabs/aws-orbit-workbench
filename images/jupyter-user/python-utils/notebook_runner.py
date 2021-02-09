@@ -18,6 +18,7 @@ import os
 import shutil
 import time
 from multiprocessing import Pool
+from typing import List
 
 import papermill as pm
 import yaml as yaml
@@ -48,10 +49,9 @@ def run():
     compute = yaml.load(os.environ["compute"], Loader=NoDatesSafeLoader)
 
     notebooksToRun = prepareAndValidateNotebooks(default_output_directory, notebooks)
-
+    errors = []
     try:
         errors = runNotebooks(notebooksToRun, compute)
-
     finally:
         if len(errors) > 0:
             logger.error("Execution had errors : %s", errors)
@@ -105,14 +105,15 @@ def runNotebook(parameters):
             parameters["PAPERMILL_OUTPUT_DIR_PATH"], "error@" + parameters["PAPERMILL_WORKBOOK_NAME"]
         )
 
-        logger.error("tagging error notebook with error %s->%s", output_path, pathToOutputNotebookError)
+        logger.error("marking error notebook with error %s->%s", output_path, pathToOutputNotebookError)
         errors.append(e)
         if output_path.startswith("s3:"):
             c = "aws s3 mv {} {}".format(output_path, pathToOutputNotebookError)
             print(c)
             os.system(c)
         else:
-            shutil.move(output_path, pathToOutputNotebookError)
+            logger.error(f"rename {output_path} to {pathToOutputNotebookError}")
+            os.rename(output_path, pathToOutputNotebookError)
             output_path = pathToOutputNotebookError
 
     if not output_path.startswith("s3:"):
@@ -135,6 +136,21 @@ def prepareAndValidateNotebooks(default_output_directory, notebooks):
     return reportsToRun
 
 
+def print_dir(dir: str, exclude: List[str] = []) -> None:
+    logger.debug("Tree structure of %s", dir)
+    for root, dirnames, filenames in os.walk(dir):
+        if exclude:
+            for d in list(dirnames):
+                if d in exclude:
+                    dirnames.remove(d)
+        # print path to all subdirectories first.
+        for subdirname in dirnames:
+            logger.info(os.path.join(root, subdirname))
+        # print path to all filenames.
+        for filename in filenames:
+            logger.info((os.path.join(root, filename)))
+
+
 def prepareNotebook(default_output_directory, notebook, key):
     notebookName = notebook["notebookName"]
     sourcePath = notebook["sourcePath"]
@@ -155,8 +171,10 @@ def prepareNotebook(default_output_directory, notebook, key):
 
     try:
         sm_notebook = json.loads(open(pathToNotebook).read())
-    finally:
-        logger.error("cannot find notebook file at: %s", pathToNotebook)
+    except Exception as e:
+        logger.error("error opening notebook file at: %s", pathToNotebook)
+        logger.error(e)
+        raise
 
     if sm_notebook["metadata"]["kernelspec"]["name"] == "sparkkernel":
         sm_notebook["metadata"]["kernelspec"]["language"] = "scala"
@@ -170,17 +188,19 @@ def prepareNotebook(default_output_directory, notebook, key):
     logger.debug("fixed language in notebook: %s", pathToNotebook)
 
     pathToOutputDir = targetPath  # os.path.join(outputDirectory, targetPath)
-
+    logger.info(f"pathToOutputDir={pathToOutputDir}")
     if not targetPath.startswith("s3:") and not os.path.exists(pathToOutputDir):
         pathToOutputDir = os.path.abspath(pathToOutputDir)
-        os.mkdir(pathToOutputDir)
+        logger.info(f"creating dirs pathToOutputDir={pathToOutputDir}")
+        os.makedirs(pathToOutputDir, exist_ok=True)
 
     notebookNameWithoutSufix = notebookName.split(".")[0]
     pathToOutputNotebookDir = os.path.join(pathToOutputDir, notebookNameWithoutSufix)
 
     if not targetPath.startswith("s3:") and not os.path.exists(pathToOutputNotebookDir):
         pathToOutputNotebookDir = os.path.abspath(pathToOutputNotebookDir)
-        os.mkdir(pathToOutputNotebookDir)
+        logger.info(f"creating dirs pathToOutputNotebookDir={pathToOutputDir}")
+        os.makedirs(pathToOutputNotebookDir, exist_ok=True)
 
     pathToOutputNotebook = os.path.join(pathToOutputNotebookDir, outputName)
 

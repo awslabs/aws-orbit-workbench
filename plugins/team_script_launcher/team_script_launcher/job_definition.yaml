@@ -7,6 +7,9 @@ spec:
     spec:
       nodeSelector:
         team: ${team}
+      serviceAccountName: ${team}
+      securityContext:
+        fsGroup: 65534
       containers:
       - name: kubectl-aws
         securityContext:
@@ -20,7 +23,8 @@ spec:
             value: ${env_name}
           - name: TEAM
             value: ${team}
-
+          - name: AWS_STS_REGIONAL_ENDPOINTS
+            value: regional
         command: ["/bin/bash"]
         args:
           - -c

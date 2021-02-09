@@ -62,23 +62,23 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
     MANIFEST_FILE_IMAGES_TYPE,
     {
         "jupyter-hub": {
-            "repository": "aws-orbit-jupyter-hub",
-            "source": "dockerhub",
+            "repository": "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-hub",
+            "source": "ecr",
             "version": "latest",
         },
         "jupyter-user": {
-            "repository": "aws-orbit-jupyter-user",
-            "source": "dockerhub",
+            "repository": "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user",
+            "source": "ecr",
             "version": "latest",
         },
         "jupyter-user-spark": {
-            "repository": "aws-orbit-jupyter-user-spark",
-            "source": "dockerhub",
+            "repository": "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user-spark",
+            "source": "ecr",
             "version": "latest",
         },
         "landing-page": {
-            "repository": "aws-orbit-landing-page",
-            "source": "dockerhub",
+            "repository": "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/landing-page",
+            "source": "ecr",
             "version": "latest",
         },
         "aws-efs-csi-driver": {
@@ -97,7 +97,7 @@ MANIFEST_FILE_IMAGES_DEFAULTS: MANIFEST_FILE_IMAGES_TYPE = cast(
             "version": "v1.3.0",
         },
         "code-build-image": {
-            "repository": "465538974520.dkr.ecr.us-east-2.amazonaws.com/aws-orbit-code-build-base",
+            "repository": "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base",
             "source": "ecr",
             "version": "latest",
         },
@@ -514,15 +514,17 @@ class Manifest:
             logging.debug("DEMO stack with empty outputs")
             return
 
+        vpc_id = None
         for output in response["Stacks"][0]["Outputs"]:
-            if self.internet_accessible and output["ExportName"] == f"orbit-{self.name}-private-subnets-ids":
+            if output["ExportName"] == f"orbit-{self.name}-nodes-subnet-ids":
                 self.nodes_subnets = output["OutputValue"].split(",")
-            elif not self.internet_accessible and output["ExportName"] == f"orbit-{self.name}-isolated-subnets-ids":
-                self.nodes_subnets = output["OutputValue"].split(",")
-            elif output["ExportName"] == f"orbit-{self.name}-public-subnets-ids":
+            elif output["ExportName"] == f"orbit-{self.name}-public-subnet-ids":
                 self.load_balancers_subnets = output["OutputValue"].split(",")
+            elif output["ExportName"] == f"orbit-{self.name}-vpc-id":
+                vpc_id = output["OutputValue"]
 
         self.vpc = parse_vpc(manifest=self)
+        self.vpc.vpc_id = vpc_id
 
         # self.fetch_ssm()
         # self.write_manifest_ssm()

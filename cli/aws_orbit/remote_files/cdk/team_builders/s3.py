@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 import logging
-from typing import Optional
 
 import aws_cdk.aws_kms as kms
 import aws_cdk.aws_s3 as s3
@@ -24,16 +23,15 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 class S3Builder:
     @staticmethod
-    def build_scratch_bucket(
-        scope: core.Construct, name: str, deploy_id: Optional[str], scratch_retention_days: int, kms_key: kms.Key
+    def build_s3_bucket(
+        scope: core.Construct, id: str, name: str, scratch_retention_days: int, kms_key: kms.Key
     ) -> s3.Bucket:
-        bucket_name: str = f"orbit-{name}-scratch-{core.Aws.ACCOUNT_ID}-{deploy_id}"
-        _logger.debug(f"Creating scratch bucket {bucket_name}")
+        _logger.debug(f"Creating scratch bucket {name}")
 
         return s3.Bucket(
             scope=scope,
-            id="scratch_bucket",
-            bucket_name=bucket_name,
+            id=id,
+            bucket_name=name,
             access_control=s3.BucketAccessControl.BUCKET_OWNER_FULL_CONTROL,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             removal_policy=core.RemovalPolicy.RETAIN,

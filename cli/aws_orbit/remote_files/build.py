@@ -13,30 +13,24 @@
 #    limitations under the License.
 
 import logging
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 from boto3 import client
 
 from aws_orbit import changeset, docker, plugins, sh
 from aws_orbit.manifest import Manifest
+from aws_orbit.remote_files import teams as team_utils
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def build_image(args: Tuple[str, ...]) -> None:
-    env: str
-    image_name: str
-    script: Optional[str]
-    if len(args) == 2:
-        env = args[0]
-        image_name = args[1]
-        script = None
-    elif len(args) == 3:
-        env = args[0]
-        image_name = args[1]
-        script = args[2]
-    else:
+    if len(args) != 4:
         raise ValueError("Unexpected number of values in args.")
+    env: str = args[0]
+    image_name: str = args[1]
+    script: Optional[str] = args[2] if args[2] != "NO_SCRIPT" else None
+    teams: Optional[List[str]] = args[3].split(",") if args[3] != "NO_TEAMS" else None
 
     _logger.debug("args: %s", args)
 
@@ -74,6 +68,16 @@ def build_image(args: Tuple[str, ...]) -> None:
     else:
         docker.replicate_image(manifest=manifest, image_name=image_name, deployed_name=ecr_repo)
     _logger.debug("Docker Image Deployed to ECR")
+
+    if teams:
+        _logger.debug(f"Building and Deploying Team images: {teams}")
+        for team in teams:
+            for team_manifest in manifest.teams:
+                if team == team_manifest.name:
+                    team_utils._deploy_team_image(manifest=manifest, team_manifest=team_manifest, image=image_name)
+                    break
+            else:
+                _logger.debug(f"Skipped unknown Team: {team}")
 
 
 def _create_repository(manifest: Manifest, ecr: client, ecr_repo: str) -> None:
