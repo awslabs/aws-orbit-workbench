@@ -173,6 +173,7 @@ spec:
     metadata:
       labels:
         app: orbit-jupyterhub
+        orbit/compute-type: ec2
       name: jupyterhub
     spec:
       containers:
@@ -225,6 +226,9 @@ metadata:
     job-name: efs-init-${team}
 spec:
   template:
+    metadata:
+      labels:
+        orbit/compute-type: ec2
     spec:
       nodeSelector:
         team: ${team}
@@ -249,3 +253,17 @@ spec:
           persistentVolumeClaim:
             claimName: jupyterhub
       restartPolicy: Never
+---
+apiVersion: vpcresources.k8s.aws/v1beta1
+kind: SecurityGroupPolicy
+metadata:
+  name: ${team}-security-group-policy
+  namespace: ${team}
+spec:
+  podSelector:
+    matchLabels:
+      orbit/compute-type: ec2
+  securityGroups:
+    groupIds:
+      - ${security_group_id}
+      - sg-0f33ad085fe283552

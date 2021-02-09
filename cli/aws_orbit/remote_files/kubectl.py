@@ -72,6 +72,7 @@ def _team(manifest: Manifest, team_manifest: "TeamManifest", output_path: str) -
         internal_load_balancer='"false"' if manifest.load_balancers_subnets else '"true"',
         jupyterhub_inbound_ranges=inbound_ranges,
         team_kms_key_arn=team_manifest.team_kms_key_arn,
+        security_group_id=team_manifest.team_security_group_id,
     )
     _logger.debug("Kubectl Team %s manifest:\n%s", team_manifest.name, content)
     with open(output, "w") as file:
@@ -258,6 +259,7 @@ def deploy_env(manifest: Manifest) -> None:
             sh.run(f"kubectl apply -k {EFS_DRIVE} --context {context} --wait")
         output_path = _generate_env_manifest(manifest=manifest)
         sh.run(f"kubectl apply -f {output_path} --context {context} --wait")
+        sh.run(f"kubectl set env daemonset aws-node -n kube-system --context {context} ENABLE_POD_ENI=true")
         fetch_kubectl_data(manifest=manifest, context=context, include_teams=False)
 
 
