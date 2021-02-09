@@ -41,7 +41,7 @@ setup(
         "click~=7.1.0",
         "tqdm~=4.56.0",
         "pyyaml-include~=1.2",
-        "jsonpath-ng~=1.5.2"
+        "jsonpath-ng~=1.5.2",
     ],
     entry_points={"console_scripts": ["orbit = aws_orbit.__main__:main"]},
     classifiers=[
