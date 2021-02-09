@@ -4,9 +4,9 @@
 #
 #    pip-compile requirements-dev.in
 #
--e file:///home/ANT.AMAZON.COM/bautramo/Git/aws-orbit-workbench/cli
+-e ../../cli
     # via -r requirements-dev.in
--e file:///home/ANT.AMAZON.COM/bautramo/Git/aws-orbit-workbench/plugins/code_commit
+-e .
     # via -r requirements-dev.in
 appdirs==1.4.4
     # via black
@@ -307,20 +307,20 @@ aws-cdk.region-info==1.67.0
     #   aws-cdk.core
 black==20.8b1
     # via -r requirements-dev.in
-boto3==1.17.2
+boto3==1.17.4
     # via aws-orbit
-botocore==1.20.2
+botocore==1.20.4
     # via
     #   aws-orbit
     #   boto3
     #   s3transfer
-cattrs==1.0.0
+cattrs==1.1.2
     # via jsii
 click==7.1.2
     # via
     #   aws-orbit
     #   black
-constructs==3.3.11
+constructs==3.3.16
     # via
     #   aws-cdk.assets
     #   aws-cdk.aws-apigateway
@@ -360,23 +360,19 @@ constructs==3.3.11
     #   aws-cdk.aws-ssm
     #   aws-cdk.core
     #   aws-cdk.custom-resources
-dataclasses==0.8
-    # via black
 decorator==4.4.2
     # via jsonpath-ng
 flake8==3.8.4
     # via -r requirements-dev.in
 importlib-metadata==3.4.0
     # via flake8
-importlib-resources==5.1.0
-    # via jsii
 isort==5.6.4
     # via -r requirements-dev.in
 jmespath==0.10.0
     # via
     #   boto3
     #   botocore
-jsii==1.20.0
+jsii==1.20.1
     # via
     #   aws-cdk.assets
     #   aws-cdk.aws-apigateway
@@ -502,7 +498,7 @@ six==1.15.0
     #   python-dateutil
 toml==0.10.2
     # via black
-tqdm==4.56.0
+tqdm==4.56.1
     # via aws-orbit
 typed-ast==1.4.2
     # via
@@ -517,6 +513,4 @@ typing-extensions==3.7.4.3
 urllib3==1.26.3
     # via botocore
 zipp==3.4.0
-    # via
-    #   importlib-metadata
-    #   importlib-resources
+    # via importlib-metadata

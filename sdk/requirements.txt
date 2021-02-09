@@ -6,9 +6,9 @@
 #
 backcall==0.2.0
     # via ipython
-boto3==1.17.1
+boto3==1.17.4
     # via aws-orbit-sdk (setup.py)
-botocore==1.20.1
+botocore==1.20.4
     # via
     #   boto3
     #   s3transfer
@@ -17,14 +17,12 @@ certifi==2020.12.5
 chardet==4.0.0
     # via requests
 decorator==4.4.2
-    # via
-    #   ipython
-    #   traitlets
+    # via ipython
 idna==2.10
     # via requests
 ipython-genutils==0.2.0
     # via traitlets
-ipython==7.16.1
+ipython==7.19.0
     # via aws-orbit-sdk (setup.py)
 jedi==0.18.0
     # via ipython
@@ -32,9 +30,9 @@ jmespath==0.10.0
     # via
     #   boto3
     #   botocore
-numpy==1.19.5
+numpy==1.20.1
     # via pandas
-pandas==1.1.5
+pandas==1.2.0
     # via aws-orbit-sdk (setup.py)
 parso==0.8.1
     # via jedi
@@ -63,16 +61,14 @@ requests==2.25.1
 s3transfer==0.3.4
     # via boto3
 six==1.15.0
-    # via
-    #   python-dateutil
-    #   traitlets
+    # via python-dateutil
 sqlalchemy-redshift==0.7.9
     # via aws-orbit-sdk (setup.py)
 sqlalchemy==1.3.15
     # via
     #   aws-orbit-sdk (setup.py)
     #   sqlalchemy-redshift
-traitlets==4.3.3
+traitlets==5.0.5
     # via ipython
 urllib3==1.26.3
     # via

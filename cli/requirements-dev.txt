@@ -480,21 +480,21 @@ black==20.8b1
     # via -r requirements-dev.in
 bleach==3.3.0
     # via readme-renderer
-boto3==1.17.1
+boto3==1.17.4
     # via
     #   aws-orbit
     #   aws-orbit-sdk
     #   aws-sam-translator
-botocore==1.20.1
+botocore==1.20.4
     # via
     #   aws-orbit
     #   boto3
     #   s3transfer
-build==0.1.0
+build==0.2.1
     # via check-manifest
 cachetools==4.2.1
     # via google-auth
-cattrs==1.0.0
+cattrs==1.1.2
     # via jsii
 certifi==2020.12.5
     # via
@@ -502,7 +502,7 @@ certifi==2020.12.5
     #   requests
 cffi==1.14.4
     # via cryptography
-cfn-lint==0.44.6
+cfn-lint==0.44.7
     # via -r requirements-dev.in
 chardet==4.0.0
     # via requests
@@ -515,7 +515,7 @@ click==7.1.2
     #   pip-tools
 colorama==0.4.4
     # via twine
-constructs==3.3.11
+constructs==3.3.16
     # via
     #   aws-cdk-aws-events
     #   aws-cdk-aws-events-targets
@@ -572,16 +572,13 @@ constructs==3.3.11
     #   aws-cdk.aws-stepfunctions-tasks
     #   aws-cdk.core
     #   aws-cdk.custom-resources
-cryptography==3.3.1
+cryptography==3.4.3
     # via secretstorage
-dataclasses==0.8
-    # via black
 decorator==4.4.2
     # via
     #   ipython
     #   jsonpath-ng
     #   networkx
-    #   traitlets
 docutils==0.16
     # via
     #   pyroma
@@ -602,13 +599,9 @@ importlib-metadata==3.4.0
     #   keyring
     #   pep517
     #   twine
-importlib-resources==3.3.1
-    # via
-    #   cfn-lint
-    #   jsii
 ipython-genutils==0.2.0
     # via traitlets
-ipython==7.16.1
+ipython==7.19.0
     # via aws-orbit-sdk
 isort==5.7.0
     # via -r requirements-dev.in
@@ -622,7 +615,7 @@ jmespath==0.10.0
     # via
     #   boto3
     #   botocore
-jsii==1.20.0
+jsii==1.20.1
     # via
     #   aws-cdk-aws-events
     #   aws-cdk-aws-events-targets
@@ -709,7 +702,7 @@ mypy==0.800
     # via -r requirements-dev.in
 networkx==2.5
     # via cfn-lint
-numpy==1.19.5
+numpy==1.20.1
     # via pandas
 oauthlib==3.1.0
     # via requests-oauthlib
@@ -717,7 +710,7 @@ packaging==20.9
     # via
     #   bleach
     #   build
-pandas==1.1.5
+pandas==1.2.0
     # via aws-orbit-sdk
 parso==0.8.1
     # via jedi
@@ -872,14 +865,13 @@ rsa==4.7
     #   python-jose
 s3transfer==0.3.4
     # via boto3
-secretstorage==3.3.0
+secretstorage==3.3.1
     # via keyring
 six==1.15.0
     # via
     #   aws-sam-translator
     #   bleach
     #   cfn-lint
-    #   cryptography
     #   ecdsa
     #   google-auth
     #   jsonpath-ng
@@ -889,7 +881,6 @@ six==1.15.0
     #   python-dateutil
     #   python-jose
     #   readme-renderer
-    #   traitlets
     #   websocket-client
 sqlalchemy-redshift==0.7.9
     # via aws-orbit-sdk
@@ -903,11 +894,11 @@ toml==0.10.2
     #   build
     #   check-manifest
     #   pep517
-tqdm==4.56.0
+tqdm==4.56.1
     # via
     #   aws-orbit
     #   twine
-traitlets==4.3.3
+traitlets==5.0.5
     # via ipython
 twine==3.3.0
     # via -r requirements-dev.in
@@ -937,7 +928,6 @@ wheel==0.36.2
 zipp==3.4.0
     # via
     #   importlib-metadata
-    #   importlib-resources
     #   pep517
 
 # The following packages are considered to be unsafe in a requirements file:

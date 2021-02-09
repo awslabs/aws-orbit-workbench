@@ -31,17 +31,15 @@ aws-cdk.region-info==1.67.0
     # via
     #   aws-cdk.aws-iam
     #   aws-cdk.core
-cattrs==1.0.0
+cattrs==1.1.2
     # via jsii
-constructs==3.3.11
+constructs==3.3.16
     # via
     #   aws-cdk.aws-codecommit
     #   aws-cdk.aws-events
     #   aws-cdk.aws-iam
     #   aws-cdk.core
-importlib-resources==5.1.0
-    # via jsii
-jsii==1.20.0
+jsii==1.20.1
     # via
     #   aws-cdk.aws-codecommit
     #   aws-cdk.aws-events
@@ -67,5 +65,3 @@ six==1.15.0
     # via python-dateutil
 typing-extensions==3.7.4.3
     # via jsii
-zipp==3.4.0
-    # via importlib-resources
