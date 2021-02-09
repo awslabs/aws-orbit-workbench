@@ -44,7 +44,7 @@ def list_env(variable: str) -> None:
 
     env_info: Dict[str, str] = {}
     for p in params:
-        if not p["Name"].endswith("manifest"):
+        if not p["Name"].endswith("manifest") or "teams" in p["Name"]:
             continue
         env_name = p["Name"].split("/")[2]
         _logger.debug(f"found env: {env_name}")
