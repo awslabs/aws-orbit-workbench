@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+      - 84-issue-pip-compile-to-lock-pkgs-dep
 
 jobs:
 
