@@ -224,7 +224,6 @@ class IamBuilder:
             ],
         )
 
-
         managed_policies = [
             lake_operational_policy,
             # For EKS

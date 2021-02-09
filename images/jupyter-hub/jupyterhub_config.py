@@ -50,7 +50,7 @@ SPAWNER
 
 c.JupyterHub.spawner_class = "kubespawner.KubeSpawner"
 c.Spawner.default_url = "/lab"
-c.Spawner.cmd = ['/usr/local/bin/start-singleuser.sh','-e','CHOWN_EXTRA=/home/jovyan/.aws/cache']
+c.Spawner.cmd = ["/usr/local/bin/start-singleuser.sh", "-e", "CHOWN_EXTRA=/home/jovyan/.aws/cache"]
 c.Spawner.args = [
     "--SingleUserServerApp.default_url=/lab",
 ]
