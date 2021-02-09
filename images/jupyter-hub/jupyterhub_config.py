@@ -50,7 +50,7 @@ SPAWNER
 
 c.JupyterHub.spawner_class = "kubespawner.KubeSpawner"
 c.Spawner.default_url = "/lab"
-c.Spawner.cmd = ["/usr/local/bin/start-singleuser.sh"]
+c.Spawner.cmd = ['/usr/local/bin/start-singleuser.sh','-e','CHOWN_EXTRA=/home/jovyan/.aws/cache']
 c.Spawner.args = [
     "--SingleUserServerApp.default_url=/lab",
 ]
@@ -96,8 +96,8 @@ c.KubeSpawner.init_containers = [
         "volumeMounts": [{"mountPath": "/ebs", "name": "ebs-volume"}],
     }
 ]
-c.KubeSpawner.fs_gid = 65534
-c.KubeSpawner.lifecycle_hooks = {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh"]}}}
+c.KubeSpawner.fs_gid = 100
+# c.KubeSpawner.lifecycle_hooks = {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh"]}}}
 c.KubeSpawner.node_selector = {"team": TEAM}
 c.KubeSpawner.service_account = f"{TEAM}"
 c.JupyterHub.allow_named_servers = True

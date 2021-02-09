@@ -208,7 +208,7 @@ spec:
         team: ${team}
       serviceAccountName: ${team}
       securityContext:
-        fsGroup: 65534
+        fsGroup: 100
       volumes:
         - name: efs-volume
           persistentVolumeClaim:
