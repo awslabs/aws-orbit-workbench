@@ -22,7 +22,7 @@ setup(
     packages=["code_commit"],
     python_requires=">=3.6, <3.9",
     install_requires=[
-        "aws-cdk.aws-codecommit~=1.67.0"
+        "aws-cdk.aws-codecommit~=1.67.0",
     ],
     include_package_data=True,
 )

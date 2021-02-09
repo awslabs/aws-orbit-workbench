@@ -26,7 +26,7 @@ setuptools.setup(
         "psycopg2-binary~=2.8.4",
         "SQLAlchemy>=1.3.10,<1.3.16",
         "sqlalchemy-redshift~=0.7.5",
-        "requests>=2.24.0,<2.26.0"
+        "requests>=2.24.0,<2.26.0",
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
