@@ -16,10 +16,13 @@ import json
 import logging
 from typing import Any, Dict, List, Optional, cast
 
-from aws_orbit import bundle, plugins, remote, utils
+from kubernetes import config
+
+from aws_orbit import bundle, plugins, remote, sh, utils
 from aws_orbit.changeset import Changeset, extract_changeset
 from aws_orbit.manifest import Manifest
 from aws_orbit.messages import MessagesContext, stylize
+from aws_orbit.remote_files.utils import get_k8s_context
 from aws_orbit.services import cfn, codebuild
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -51,6 +54,27 @@ def write_manifest_ssm(profiles: PROFILES_TYPE, env_name: str, team_name: str) -
     )
 
 
+def restart_jupyterhub(env: str, team: str, ctx: MessagesContext) -> None:
+    manifest = Manifest(filename=None, env=env, region=None)
+    manifest.fillup()
+    ctx.tip("JupyterHub update...")
+    try:
+        context = get_k8s_context(manifest=manifest)
+        has_context = True
+    except config.config_exception.ConfigException:
+        # no context , use kubectl without context
+        has_context = False
+
+    ctx.tip("JupyterHub and notebooks in your namespace will be restarted. Please close notebook and login again")
+
+    if has_context:
+        sh.run(f"kubectl rollout restart deployment jupyterhub  --namespace {team} --context {context}")
+    else:
+        sh.run(f"kubectl rollout restart deployment jupyterhub  --namespace {team}")
+
+    ctx.tip("JupyterHub restarted")
+
+
 def delete_profile(env: str, team: str, profile_name: str, debug: bool) -> None:
     with MessagesContext("Profile Deleted", debug=debug) as ctx:
         ctx.info("Retrieving existing profiles")
@@ -63,7 +87,10 @@ def delete_profile(env: str, team: str, profile_name: str, debug: bool) -> None:
                 _logger.debug("Updated user profiles for team %s: %s", team, profiles)
                 write_manifest_ssm(profiles, env, team)
                 ctx.tip("Profile deleted")
+                ctx.progress(90)
+                restart_jupyterhub(env, team, ctx)
                 ctx.progress(100)
+
                 return
         raise Exception(f"Profile {profile_name} not found")
 
@@ -78,6 +105,9 @@ def list_profiles(env: str, team: str, debug: bool) -> None:
 def build_profile(env: str, team: str, profile: str, debug: bool) -> None:
     with MessagesContext("Adding profile", debug=debug) as ctx:
         ctx.info("Retrieving existing profiles")
+        manifest = Manifest(filename=None, env=env, region=None)
+        manifest.fillup()
+        ctx.info("Manifest loaded")
         profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
         _logger.debug("Existing user profiles for team %s: %s", team, profiles)
         profile_json = cast(Dict[str, Any], json.loads(profile))
@@ -96,6 +126,7 @@ def build_profile(env: str, team: str, profile: str, debug: bool) -> None:
         profiles.append(profile_json)
         _logger.debug("Updated user profiles for team %s: %s", team, profiles)
         write_manifest_ssm(profiles, env, team)
+        restart_jupyterhub(env, team, ctx)
         ctx.tip("Profile added")
         ctx.progress(100)
 

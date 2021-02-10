@@ -63,7 +63,7 @@ class IamBuilder:
                         f"arn:{partition}:s3:::sagemaker-{region}-{account}",
                         f"arn:{partition}:s3:::sagemaker-{region}-{account}/*",
                         scratch_bucket.bucket_arn,
-                        f"{scratch_bucket.bucket_arn}/*",
+                        f"{scratch_bucket.bucket_arn}/{team_name}/*",
                     ],
                 ),
                 iam.PolicyStatement(
@@ -125,6 +125,7 @@ class IamBuilder:
                         "codeartifact:Get*",
                         "codeartifact:List*",
                         "codeartifact:Read*",
+                        "sts:GetServiceBearerToken",
                         "s3:ListAllMyBuckets",
                         "lambda:List*",
                         "lambda:Get*",
@@ -155,7 +156,6 @@ class IamBuilder:
                         "elasticmapreduce:AddJobFlowSteps",
                         "sagemaker:List*",
                         "sagemaker:Get*",
-                        "personalize:*",
                         "sagemaker:Describe*",
                         "sagemaker:CreateModel",
                         "sagemaker:DeleteModelPackage",
@@ -211,14 +211,6 @@ class IamBuilder:
                     actions=["kms:Encrypt", "kms:Decrypt", "kms:ReEncrypt", "kms:GenerateDataKey", "kms:DescribeKey"],
                     resources=kms_keys,
                 ),
-            ],
-        )
-
-        lambda_access_policy = iam.ManagedPolicy(
-            scope=scope,
-            id="lambda_policy",
-            managed_policy_name=f"orbit-{env_name}-{team_name}-lambda-policy",
-            statements=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
@@ -234,7 +226,6 @@ class IamBuilder:
 
         managed_policies = [
             lake_operational_policy,
-            lambda_access_policy,
             # For EKS
             iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKS_CNI_Policy"),
         ]
