@@ -53,3 +53,4 @@ if [ ! -d $LOCAL_PATH ]; then
     echo aws s3 cp $S3_PATH $LOCAL_PATH --recursive
 fi
 
+rm -fR /home/jovyan/.aws

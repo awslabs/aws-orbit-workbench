@@ -9,7 +9,7 @@ spec:
         team: ${team}
       serviceAccountName: ${team}
       securityContext:
-        fsGroup: 65534
+        fsGroup: 100
       containers:
       - name: kubectl-aws
         securityContext:

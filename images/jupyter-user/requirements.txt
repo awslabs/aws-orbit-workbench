@@ -13,3 +13,4 @@ kubernetes==12.0.1
 sagemaker==2.23.6
 sqlalchemy==1.3.22
 pyathena==2.1.1
+kubernetes==12.0.1

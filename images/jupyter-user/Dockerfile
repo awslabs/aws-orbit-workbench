@@ -26,6 +26,13 @@ RUN apt-get update && apt-get install -yq --no-install-recommends \
 RUN update-alternatives --install /usr/bin/nano nano /bin/nano-tiny 10
 
 ######################################
+# Kubectl installation
+######################################
+RUN cd /usr/local/bin \
+    && sudo curl -k -sS -O https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.9/2020-11-02/bin/linux/amd64/kubectl \
+    && sudo chmod 755 /usr/local/bin/kubectl
+
+######################################
 # Container Run
 ######################################
 
