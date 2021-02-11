@@ -392,8 +392,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
         profile = team_constants.default_profile()
         _logger.info(f"using default profile %s", profile)
 
-
-    if  profile and "image" in profile:
+    if profile and "image" in profile:
         image = profile["image"]
     else:
         repository = __CURRENT_TEAM_MANIFEST__["final-image-address"]
@@ -637,9 +636,7 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     job = V1beta1CronJob(
         api_version="batch/v1beta1",
         kind="CronJob",
-        metadata=V1ObjectMeta(
-            name=f"orbit-{team_name}-{triggerName}", labels=labels, namespace=team_name
-        ),
+        metadata=V1ObjectMeta(name=f"orbit-{team_name}-{triggerName}", labels=labels, namespace=team_name),
         status=V1beta1CronJobStatus(),
         spec=cron_job_spec,
     )
@@ -967,7 +964,6 @@ def tail_logs(team_name, tasks) -> None:
                             _logger.info(line)
                     else:
                         _logger.info("task not started yet for %s", task_id)
-
 
 
 def wait_for_tasks_to_complete_ecs(
