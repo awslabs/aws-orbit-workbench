@@ -15,29 +15,32 @@
 import json
 import logging
 import os
-from typing import Any, Dict, List, Union,cast
+from typing import Any, Dict, List, Union, cast
+
 import boto3
 from dataclasses import dataclass
-PROFILE_TYPE = Dict[str,Union[str,Dict[str,Any]]]
+
+PROFILE_TYPE = Dict[str, Union[str, Dict[str, Any]]]
 PROFILES_TYPE = List[PROFILE_TYPE]
 
-class TeamConstants:
-    def __init__(
-        self
-    )-> None:
-        self.env_name = os.environ['AWS_ORBIT_ENV']
-        self.team_name = os.environ['AWS_ORBIT_TEAM_SPACE']
-        self.account_id = os.environ['ACCOUNT_ID']
-        self.region = os.environ['AWS_DEFAULT_REGION']
 
-    def volumes(self) -> List[Dict[str,Any]]:
+class TeamConstants:
+    def __init__(self) -> None:
+        self.env_name = os.environ["AWS_ORBIT_ENV"]
+        self.team_name = os.environ["AWS_ORBIT_TEAM_SPACE"]
+        self.account_id = os.environ["ACCOUNT_ID"]
+        self.region = os.environ["AWS_DEFAULT_REGION"]
+
+    def volumes(self) -> List[Dict[str, Any]]:
         return [{"name": "efs-volume", "persistentVolumeClaim": {"claimName": "jupyterhub"}}]
 
     def default_image(self) -> str:
         return f"{self.account_id}.dkr.ecr.{self.region}.amazonaws.com/orbit-{self.env_name}-{self.team_name}:latest"
 
     def default_spark_image(self) -> str:
-        return f"{self.account_id}.dkr.ecr.{self.region}.amazonaws.com/orbit-{self.env_name}-{self.team_name}-spark:latest"
+        return (
+            f"{self.account_id}.dkr.ecr.{self.region}.amazonaws.com/orbit-{self.env_name}-{self.team_name}-spark:latest"
+        )
 
     def default_profiles(self) -> PROFILES_TYPE:
         return [
@@ -95,7 +98,7 @@ class TeamConstants:
         ssm_parameter_name: str = f"/orbit/{self.env_name}/teams/{self.team_name}/manifest"
         json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
 
-        team_manifest_dic = cast(PROFILES_TYPE,json.loads(json_str))
+        team_manifest_dic = cast(PROFILES_TYPE, json.loads(json_str))
         if team_manifest_dic.get("profiles"):
             default_profiles = team_manifest_dic["profiles"]
         else:

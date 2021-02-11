@@ -21,3 +21,5 @@ cat <<EOF |  orbit run notebook --env dev-env --team lake-creator --user testing
         }]
  }
 EOF
+
+echo $?
