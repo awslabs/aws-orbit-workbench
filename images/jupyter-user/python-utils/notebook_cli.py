@@ -101,9 +101,7 @@ if __name__ == "__main__":
     logger.info("Starting Container Main")
     symlink_efs()
     logger.info("Running tasks...")
-    try:
-        ret = run_tasks()
-        sys.exit(ret)
-    except Exception as e:
-        logger.info("Exception %s", e)
-        sys.exit(1001)
+
+    ret = run_tasks()
+    sys.exit(ret)
+

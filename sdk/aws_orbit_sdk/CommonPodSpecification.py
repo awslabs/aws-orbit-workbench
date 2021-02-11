@@ -18,7 +18,8 @@ import os
 from typing import Any, Dict, List, Union, cast
 
 import boto3
-from dataclasses import dataclass
+
+_logger = logging.getLogger()
 
 PROFILE_TYPE = Dict[str, Union[str, Dict[str, Any]]]
 PROFILES_TYPE = List[PROFILE_TYPE]
@@ -28,8 +29,8 @@ class TeamConstants:
     def __init__(self) -> None:
         self.env_name = os.environ["AWS_ORBIT_ENV"]
         self.team_name = os.environ["AWS_ORBIT_TEAM_SPACE"]
-        self.account_id = os.environ["ACCOUNT_ID"]
         self.region = os.environ["AWS_DEFAULT_REGION"]
+        self.account_id = str(boto3.client("sts").get_caller_identity().get("Account"))
 
     def volumes(self) -> List[Dict[str, Any]]:
         return [{"name": "efs-volume", "persistentVolumeClaim": {"claimName": "jupyterhub"}}]
@@ -99,9 +100,10 @@ class TeamConstants:
         json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
 
         team_manifest_dic = cast(PROFILES_TYPE, json.loads(json_str))
+        default_profiles: PROFILES_TYPE = []
         if team_manifest_dic.get("profiles"):
             default_profiles = team_manifest_dic["profiles"]
-        else:
+        if len(default_profiles) == 0:
             default_profiles = self.default_profiles()
 
         ssm_parameter_name: str = f"/orbit/{self.env_name}/teams/{self.team_name}/user/profiles"
@@ -109,10 +111,11 @@ class TeamConstants:
 
         user_profiles: PROFILES_TYPE = cast(PROFILES_TYPE, json.loads(json_str))
         default_profiles.extend(user_profiles)
+        _logger.debug("profiles:%s", default_profiles)
         return default_profiles
 
     def default_profile(self) -> PROFILE_TYPE:
         for p in self.team_profiles():
-            if "default" in p and p["default"] == True:
+            if "default" in p and (p["default"] == "True" or p["default"] == True):
                 return p
         return None

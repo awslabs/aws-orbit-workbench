@@ -544,7 +544,6 @@ def run_python_container(
         sys.exit(1)
 
 
-
 @run_container.command(name="notebook", help="Run notebook in a container")
 @click.option("--env", "-e", type=str, required=True, help="Orbit Environment to execute container in.")
 @click.option("--team", "-t", type=str, required=True, help="Orbit Team Space to execute container in.")
@@ -616,6 +615,7 @@ def run_notebook_container(
         sys.exit(0)
     else:
         sys.exit(1)
+
 
 def main() -> int:
     cli.add_command(init_cli)
