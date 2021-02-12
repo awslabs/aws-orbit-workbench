@@ -27,11 +27,7 @@ setuptools.setup(
         "SQLAlchemy>=1.3.10,<1.3.16",
         "sqlalchemy-redshift~=0.7.5",
         "requests>=2.24.0,<2.26.0",
-<<<<<<< HEAD
         "kubernetes==12.0.1",
-=======
-        "kubernetes~=12.0.1",
->>>>>>> Moved requirements.txt into install_require; generated requirements.txt and requirements-dev.txt
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
