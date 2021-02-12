@@ -21,6 +21,9 @@ setup(
     license="Apache License 2.0",
     packages=["hello_world"],
     python_requires=">=3.6, <3.9",
-    install_requires=open("requirements.txt").read().strip().split("\n"),
+    install_requires=[
+        "aws_cdk.core~=1.67.0",
+        "aws-cdk.aws-s3~=1.67.0",
+    ],
     include_package_data=True,
 )

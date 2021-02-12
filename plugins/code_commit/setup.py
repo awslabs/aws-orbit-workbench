@@ -21,6 +21,8 @@ setup(
     license="Apache License 2.0",
     packages=["code_commit"],
     python_requires=">=3.6, <3.9",
-    install_requires=open("requirements.txt").read().strip().split("\n"),
+    install_requires=[
+        "aws-cdk.aws-codecommit~=1.67.0",
+    ],
     include_package_data=True,
 )
