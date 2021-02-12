@@ -14,14 +14,14 @@
 
 import logging
 import os
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda
 from aws_cdk import aws_redshift as redshift
 from aws_cdk import aws_secretsmanager, core
-from aws_cdk.core import Construct, Environment, Stack, Tags
+from aws_cdk.core import Construct, Environment, IConstruct, Stack, Tags
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest
 from aws_orbit.plugins.helpers import cdk_handler
@@ -185,7 +185,11 @@ class RedshiftFunctionStandard(core.Construct):
         env_name: str = redshift_common.env_name
         teamspace_name: str = redshift_common.teamspace_name
         code = aws_lambda.Code.asset(_lambda_path(path="redshift_db_creator"))
-        lake_role: iam.Role = iam.Role.from_role_arn(
+
+        if redshift_common.lake_role_arn is None:
+            raise ValueError("Orbit lake role arn required")
+
+        lake_role = iam.Role.from_role_arn(
             self,
             f"{env_name}-{teamspace_name}-role",
             redshift_common.lake_role_arn,
@@ -232,7 +236,7 @@ class RedshiftStack(Stack):
             stack_name=id,
             env=Environment(account=manifest.account_id, region=manifest.region),
         )
-        Tags.of(scope=self).add(key="Env", value=f"orbit-{manifest.name}")
+        Tags.of(scope=cast(IConstruct, self)).add(key="Env", value=f"orbit-{manifest.name}")
 
         # Collecting required parameters
         team_space_props: Dict[str, Any] = {
