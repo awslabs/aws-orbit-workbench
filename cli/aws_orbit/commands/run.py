@@ -51,7 +51,7 @@ def run_python_container(
     debug: bool,
 ) -> bool:
     if debug:
-        controller.logger.setLevel(logging.DEBUG)
+        controller._logger.setLevel(logging.DEBUG)
     _set_environ(env, team, user)
     response = controller.run_python(tasks)
     if wait:
@@ -73,7 +73,7 @@ def run_notebook_container(
     debug: bool,
 ) -> bool:
     if debug:
-        controller.logger.setLevel(logging.DEBUG)
+        controller._logger.setLevel(logging.DEBUG)
     _set_environ(env, team, user)
     response = controller.run_notebooks(tasks)
     if wait:
