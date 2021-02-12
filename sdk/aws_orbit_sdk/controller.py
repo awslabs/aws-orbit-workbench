@@ -29,6 +29,7 @@ from kubernetes import client as k8_client
 from kubernetes import config as k8_config
 from kubernetes import watch as k8_watch
 from kubernetes.client import *
+from kubespawner.objects import make_pod, make_pvc
 
 from aws_orbit_sdk.common import get_properties, get_stepfunctions_waiter_config
 from aws_orbit_sdk.CommonPodSpecification import TeamConstants
@@ -294,70 +295,17 @@ def run_notebooks(taskConfiguration: dict) -> Any:
         raise RuntimeError("Unsupported compute_type '%s'", taskConfiguration["compute_type"])
 
 
-def make_pvc(
-    pvc_name,
-    team_name,
-    storage_class,
-    access_modes,
-    selector,
-    storage,
-    labels=None,
-) -> V1PersistentVolumeClaim:
-    """
-    Make a k8s pvc specification for running a user notebook.
+def _make_create_pvc_request(team_constants: TeamConstants, labels):
+    pvc_name = f"orbit-{team_constants.username}"
 
-    Parameters
-    ----------
-    name:
-        Name of persistent volume claim. Must be unique within the namespace the object is
-        going to be created in. Must be a valid DNS label.
-    storage_class:
-        String of the name of the k8s Storage Class to use.
-    access_modes:
-        A list of specifying what access mode the pod should have towards the pvc
-    selector:
-        Dictionary Selector to match pvc to pv.
-    storage:
-        The ammount of storage needed for the pvc
-
-    """
-    pvc = V1PersistentVolumeClaim()
-    pvc.kind = "PersistentVolumeClaim"
-    pvc.api_version = "v1"
-    user_name = os.environ["USERNAME"]
-    pvc.metadata = V1ObjectMeta(
+    pvc = make_pvc(
         name=pvc_name,
         labels=labels,
-        namespace=team_name,
-        annotations={
-            "AWS_ORBIT_TEAM_SPACE": team_name,
-            "USERNAME": user_name,
-            "volume.beta.kubernetes.io/storage-class": storage_class,
-        },
-    )
-    pvc.spec = V1PersistentVolumeClaimSpec()
-    pvc.spec.access_modes = access_modes
-    pvc.spec.resources = V1ResourceRequirements()
-    pvc.spec.resources.requests = {"storage": storage}
-    pvc.spec.storage_class_name = storage_class
-
-    if selector:
-        pvc.spec.selector = selector
-
-    return pvc
-
-
-def _make_create_pvc_request(team_name, labels):
-    user_name = os.environ["USERNAME"]
-    pvc_name = f"orbit-{user_name}"
-    pvc = make_pvc(
-        pvc_name=pvc_name,
-        team_name=team_name,
-        labels=labels,
-        storage_class=f"ebs-{team_name}-gp2",
-        access_modes=["ReadWriteOnce"],
+        storage_class=team_constants.storage_class(),
+        access_modes=team_constants.ebs_access_mode(),
         storage="5Gi",
         selector={},
+        annotations=None,
     )
     # Try and create the pvc. If it succeeds we are good. If
     # returns a 409 indicating it already exists we are good. If
@@ -367,7 +315,10 @@ def _make_create_pvc_request(team_name, labels):
     # checked before determining if the PVC needed to be
     # created.
     try:
-        pvc_instance = CoreV1Api().create_namespaced_persistent_volume_claim(namespace=team_name, body=pvc)
+        pvc_instance = CoreV1Api().create_namespaced_persistent_volume_claim(
+            namespace=team_constants.team_name, body=pvc
+        )
+        _logger.info("Created PVC: %s", pvc)
         metadata: V1ObjectMeta = pvc_instance.metadata
         return True
     except ApiException as e:
@@ -377,7 +328,9 @@ def _make_create_pvc_request(team_name, labels):
         elif e.status == 403:
             t, v, tb = sys.exc_info()
             try:
-                CoreV1Api().read_namespaced_persistent_volume_claim_status(namespace=team_name, name=metadata.name)
+                CoreV1Api().read_namespaced_persistent_volume_claim_status(
+                    namespace=team_constants.team_name, name=metadata.name
+                )
             except ApiException as e:
                 raise v.with_traceback(tb)
             _logger.info("PVC " + pvc_name + " already exists, possibly have reached quota though.")
@@ -385,68 +338,7 @@ def _make_create_pvc_request(team_name, labels):
         else:
             raise
 
-
-def _get_job_spec(
-    job_name: str,
-    team_name: str,
-    cmds: List[str],
-    env_vars: Dict[str, Any],
-    image: str,
-    node_type: str,
-    labels: Dict[str, str],
-    team_constants: TeamConstants = TeamConstants(),
-) -> V1JobSpec:
-    container = V1Container(
-        name=job_name,
-        image=image,
-        command=cmds,
-        env=[V1EnvVar(name=k, value=v) for k, v in env_vars.items()],
-        volume_mounts=[
-            V1VolumeMount(name="efs-volume", mount_path="/efs"),
-            V1VolumeMount(name="ebs-volume", mount_path="/ebs"),
-        ],
-        resources=V1ResourceRequirements(limits={"cpu": 1, "memory": "2G"}, requests={"cpu": 1, "memory": "2G"}),
-        security_context=V1SecurityContext(run_as_user=1000),
-        lifecycle=team_constants.life_cycle_hooks(),
-    )
-    user_name = os.environ["USERNAME"]
-    volumes = [
-        V1Volume(
-            name="efs-volume",
-            persistent_volume_claim=V1PersistentVolumeClaimVolumeSource(claim_name="jupyterhub"),
-        ),
-        V1Volume(
-            name="ebs-volume",
-            persistent_volume_claim=V1PersistentVolumeClaimVolumeSource(claim_name=f"orbit-{user_name}"),
-        ),
-    ]
-    init_containers = team_constants.init_containers(image)
-    pod_spec = V1PodSpec(
-        restart_policy="Never",
-        containers=[container],
-        volumes=volumes,
-        node_selector={"team": team_name},
-        service_account=team_name,
-        security_context=V1PodSecurityContext(fs_group=1000),
-        init_containers=init_containers,
-    )
-    if node_type == "ec2":
-        pod_spec.node_selector = {
-            "team": team_name,
-            "orbit/compute-type": "ec2",
-        }
-    pod = V1PodTemplateSpec(metadata=V1ObjectMeta(labels=labels, namespace=team_name), spec=pod_spec)
-
-    job_spec = V1JobSpec(
-        backoff_limit=0,
-        template=pod,
-        ttl_seconds_after_finished=120,
-    )
-
-    return job_spec
-
-
-def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1JobSpec:
+def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_constants: TeamConstants) -> V1JobSpec:
     """
     Runs Task in Python in a notebook using lambda.
 
@@ -460,15 +352,12 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
     Response Payload
     """
     props = get_properties()
-    team_constants: TeamConstants = TeamConstants()
 
-    env = dict()
-
-    env_name = env["AWS_ORBIT_ENV"] = props["AWS_ORBIT_ENV"]
-    team_name = env["AWS_ORBIT_TEAM_SPACE"] = props["AWS_ORBIT_TEAM_SPACE"]
-    env["JUPYTERHUB_USER"] = os.environ["JUPYTERHUB_USER"] if os.environ["JUPYTERHUB_USER"] else os.environ["USERNAME"]
-    env["USERNAME"] = env["JUPYTERHUB_USER"]
-    env["AWS_STS_REGIONAL_ENDPOINTS"] = "regional"
+    env = team_constants.env()
+    env_name = env["AWS_ORBIT_ENV"]
+    team_name = env["AWS_ORBIT_TEAM_SPACE"]
+    env["JUPYTERHUB_USER"] = team_constants.username
+    env["USERNAME"] = team_constants.username
     env["task_type"] = taskConfiguration["task_type"]
     env["tasks"] = json.dumps({"tasks": taskConfiguration["tasks"]})
     if "compute" in taskConfiguration:
@@ -497,18 +386,62 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
     node_type = get_node_type(taskConfiguration)
 
     job_name: str = f'run-{taskConfiguration["task_type"]}'
-    job = _get_job_spec(
-        job_name=job_name,
-        team_name=team_name,
-        cmds=["python", "/opt/python-utils/notebook_cli.py"],
-        env_vars=env,
+    grant_sudo = False
+    add_ebs = True
+    node_selector = team_constants.node_selector()
+    if node_type == "ec2":
+        node_selector["orbit/compute-type"] = "ec2"
+
+    pod: V1Pod = make_pod(
+        name=job_name,
+        cmd=["python", "/opt/python-utils/notebook_cli.py"],
+        port=22,
         image=image,
-        node_type=node_type,
+        image_pull_policy=team_constants.image_pull_policy(),
+        image_pull_secrets=None,
+        node_selector=node_selector,
+        run_as_uid=team_constants.uid(grant_sudo),
+        run_as_gid=team_constants.gid(),
+        fs_gid=team_constants.gid(),
+        supplemental_gids=None,
+        run_privileged=False,
+        allow_privilege_escalation=True,
+        env=env,
+        working_dir=None,
+        volumes=team_constants.volumes(add_ebs),
+        volume_mounts=team_constants.volume_mounts(add_ebs),
         labels=labels,
-        team_constants=team_constants,
+        annotations=team_constants.annotations(),
+        cpu_limit=None,
+        cpu_guarantee=None,
+        mem_limit=None,
+        mem_guarantee=None,
+        extra_resource_limits=None,
+        extra_resource_guarantees=None,
+        lifecycle_hooks=team_constants.life_cycle_hooks(),
+        init_containers=team_constants.init_containers(image) if add_ebs else [],
+        service_account=team_name,
+        extra_container_config=None,
+        extra_pod_config=None,
+        extra_containers=None,
+        scheduler_name=None,
+        tolerations=None,
+        node_affinity_preferred=None,
+        node_affinity_required=None,
+        pod_affinity_preferred=None,
+        pod_affinity_required=None,
+        pod_anti_affinity_preferred=None,
+        pod_anti_affinity_required=None,
+        priority_class_name=None,
+        logger=_logger,
+    )
+    job_spec = V1JobSpec(
+        backoff_limit=0,
+        template=pod,
+        ttl_seconds_after_finished=120,
     )
 
-    return job
+    return job_spec
 
 
 def _run_task_eks(taskConfiguration: dict) -> Any:
@@ -532,15 +465,16 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
         "app": f"orbit-runner",
         "orbit/node-type": node_type,
     }
+    team_constants: TeamConstants = TeamConstants()
 
-    job_spec = _create_eks_job_spec(taskConfiguration, labels)
+    job_spec = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
 
     if "AWS_WEB_IDENTITY_TOKEN_FILE" in os.environ and "eks.amazonaws.com" in os.environ["AWS_WEB_IDENTITY_TOKEN_FILE"]:
         k8_config.load_incluster_config()
     else:
         k8_config.load_kube_config()
 
-    _make_create_pvc_request(team_name=team_name, labels=labels)
+    _make_create_pvc_request(team_constants=team_constants, labels=labels)
 
     job = V1Job(
         api_version="batch/v1",
@@ -726,13 +660,15 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     node_type = get_node_type(taskConfiguration)
-
+    team_constants: TeamConstants = TeamConstants()
     labels = {
         "app": f"orbit-runner",
         "orbit/node-type": node_type,
     }
 
-    job_spec = _create_eks_job_spec(taskConfiguration, labels=labels)
+    username = os.environ["JUPYTERHUB_USER"] if os.environ["JUPYTERHUB_USER"] else os.environ["USERNAME"]
+    team_constants: TeamConstants = TeamConstants(username)
+    job_spec = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
     cron_job_template: V1beta1JobTemplateSpec = V1beta1JobTemplateSpec(spec=job_spec)
     cron_job_spec: V1beta1CronJobSpec = V1beta1CronJobSpec(job_template=cron_job_template, schedule=frequency)
 
@@ -749,7 +685,7 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     else:
         k8_config.load_kube_config()
 
-    _make_create_pvc_request(team_name=team_name, labels=labels, request_timeout=120)
+    _make_create_pvc_request(team_constants=team_constants, labels=labels, request_timeout=120)
 
     job_instance: V1beta1CronJob = BatchV1beta1Api().create_namespaced_cron_job(namespace=team_name, body=job)
 

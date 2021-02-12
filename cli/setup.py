@@ -52,5 +52,6 @@ setup(
         ]
     },
     include_package_data=True,
-    extras_require={"utils": [f"aws-orbit-sdk~={version}"]},
+    extras_require={"utils": [f"aws-orbit-sdk~={version}"],
+                    "kubespawner": [f"jupyterhub-kubespawner~=0.15.0"]},
 )

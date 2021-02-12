@@ -65,6 +65,7 @@ RUN conda run pip install -r /etc/jupyter/requirements.txt && \
 
 ADD pip.conf /etc/pip.conf
 RUN conda run pip install --upgrade aws-orbit aws-orbit-sdk
+RUN conda run pip install --no-deps jupyterhub-kubespawner~=0.15.0
 USER root
 RUN rm /etc/pip.conf
 USER $NB_UID
