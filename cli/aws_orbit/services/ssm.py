@@ -14,7 +14,7 @@
 
 import json
 import logging
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List, Optional, cast
 
 from aws_orbit.utils import boto3_client
 
@@ -35,6 +35,15 @@ def put_parameter(name: str, obj: Dict[str, Any]) -> None:
 def get_parameter(name: str) -> Dict[str, Any]:
     client = boto3_client(service_name="ssm")
     json_str: str = client.get_parameter(Name=name)["Parameter"]["Value"]
+    return cast(Dict[str, Any], json.loads(json_str))
+
+
+def get_parameter_if_exists(name: str) -> Optional[Dict[str, Any]]:
+    client = boto3_client(service_name="ssm")
+    try:
+        json_str: str = client.get_parameter(Name=name)["Parameter"]["Value"]
+    except client.exceptions.ParameterNotFound:
+        return None
     return cast(Dict[str, Any], json.loads(json_str))
 
 

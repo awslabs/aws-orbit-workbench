@@ -21,14 +21,12 @@ import sys
 from typing import TYPE_CHECKING, Any, Dict, List, Type, cast
 
 from aws_orbit import cdk, sh
-from aws_orbit.models.changeset import load_changeset_from_ssm
 from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.services import cfn
 
 if TYPE_CHECKING:
     from aws_cdk.core import Stack
 
-    from aws_orbit.models.changeset import Changeset
     from aws_orbit.models.context import Context, TeamContext
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -46,29 +44,16 @@ def _deserialize_parameters(parameters: str) -> Dict[str, Any]:
 
 def cdk_handler(stack_class: Type["Stack"]) -> None:
     _logger.debug("sys.argv: %s", sys.argv)
-    if len(sys.argv) == 5:
-        stack_name: str = sys.argv[1]
-        team_name: str = sys.argv[3]
-        parameters: Dict[str, Any] = _deserialize_parameters(parameters=sys.argv[4])
-        context: "Context" = load_context_from_ssm(env_name=sys.argv[2])
-    else:
+    if len(sys.argv) != 5:
         raise ValueError(f"Unexpected number of values in sys.argv ({len(sys.argv)}) - {sys.argv}.")
 
-    changeset: "Changeset" = load_changeset_from_ssm(env_name=context.name)
-    if changeset.teams_changeset and team_name in changeset.teams_changeset.removed_teams_names:
-        for team in changeset.teams_changeset.old_teams:
-            if team.name == team_name:
-                team_context: "TeamContext" = team
-                break
-        else:
-            raise ValueError(f"Team {team_name} not found in the teams_changeset.old_teams list.")
-    else:
-        for team in context.teams:
-            if team.name == team_name:
-                team_context = team
-                break
-        else:
-            raise ValueError(f"Team {team_name} not found in the context.")
+    stack_name: str = sys.argv[1]
+    team_name: str = sys.argv[3]
+    parameters: Dict[str, Any] = _deserialize_parameters(parameters=sys.argv[4])
+    context: "Context" = load_context_from_ssm(env_name=sys.argv[2])
+    team_context = context.get_team_by_name(name=team_name)
+    if team_context is None:
+        raise ValueError(f"Team {team_name} not found in the context.")
 
     outdir = os.path.join(
         ".orbit.out",

@@ -270,9 +270,18 @@ def generate_spec(
                     install.append(f"pip install -e ./{team_context.name}/{plugin.module}/")
         if changeset is not None:
             for plugin_changeset in changeset.plugin_changesets:
+
+                # OLD
                 for plugin_name in plugin_changeset.old:
                     module: str = plugin_changeset.old_modules[plugin_name]
                     if plugin_name not in plugin_changeset.new and module is not None:
+                        install.append(f"ls -la ./{plugin_changeset.team_name}/{module}/")
+                        install.append(f"pip install -e ./{plugin_changeset.team_name}/{module}/")
+
+                # OLD
+                for plugin_name in plugin_changeset.new:
+                    module = plugin_changeset.new_modules[plugin_name]
+                    if plugin_name not in plugin_changeset.old and module is not None:
                         install.append(f"ls -la ./{plugin_changeset.team_name}/{module}/")
                         install.append(f"pip install -e ./{plugin_changeset.team_name}/{module}/")
 

@@ -20,6 +20,7 @@ from copy import deepcopy
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Set, Type, cast
 
 import yaml
+from dataclasses import field
 from marshmallow import Schema
 from marshmallow_dataclass import dataclass
 
@@ -37,8 +38,6 @@ _logger: logging.Logger = logging.getLogger(__name__)
 @dataclass(base_schema=BaseSchema)
 class TeamsChangeset:
     Schema: ClassVar[Type[Schema]] = Schema
-    old_teams: List["TeamContext"]
-    new_teams: List["TeamManifest"]
     removed_teams_names: List[str]
     added_teams_names: List[str]
 
@@ -47,11 +46,14 @@ class TeamsChangeset:
 class PluginChangeset:
     Schema: ClassVar[Type[Schema]] = Schema
     team_name: str
-    old: List[str]
-    new: List[str]
-    old_paths: Dict[str, Optional[str]]
-    old_parameters: Dict[str, Dict[str, Any]]
-    old_modules: Dict[str, str]
+    old: List[str] = field(default_factory=list)
+    old_paths: Dict[str, Optional[str]] = field(default_factory=dict)
+    old_parameters: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    old_modules: Dict[str, str] = field(default_factory=dict)
+    new: List[str] = field(default_factory=list)
+    new_paths: Dict[str, Optional[str]] = field(default_factory=dict)
+    new_parameters: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    new_modules: Dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(base_schema=BaseSchema)
@@ -134,8 +136,6 @@ def _check_teams(manifest: "Manifest", context: "Context", msg_ctx: "MessagesCon
     _logger.debug("added_teams: %s", added_teams)
     if removed_teams or added_teams:
         teams_changeset: Optional[TeamsChangeset] = TeamsChangeset(  # type: ignore
-            old_teams=old_teams,
-            new_teams=new_teams,
             removed_teams_names=list(removed_teams),
             added_teams_names=list(added_teams),
         )
@@ -162,10 +162,13 @@ def _check_team_plugins(
         return PluginChangeset(  # type: ignore
             team_name=team_manifest.name,
             old=old_names,
-            new=new_names,
             old_paths={p.plugin_id: p.path for p in old_team.plugins} if old_team else {},
             old_parameters={p.plugin_id: p.parameters for p in old_team.plugins} if old_team else {},
             old_modules={p.plugin_id: p.module for p in old_team.plugins} if old_team else {},
+            new=new_names,
+            new_paths={p.plugin_id: p.path for p in team_manifest.plugins},
+            new_parameters={p.plugin_id: p.parameters for p in team_manifest.plugins},
+            new_modules={p.plugin_id: p.module for p in team_manifest.plugins},
         )
     return None
 
@@ -185,9 +188,7 @@ def _check_plugins(
     removed_list: List[str] = teams_changeset.removed_teams_names if teams_changeset else []
     _logger.debug("removed_list: %s", removed_list)
     if teams_changeset and removed_list:  # Removed teams
-        removed_teams: List[Optional["TeamContext"]] = [
-            _get_team_by_name(teams=teams_changeset.old_teams, name=x) for x in removed_list
-        ]
+        removed_teams: List[Optional["TeamContext"]] = [context.get_team_by_name(name=x) for x in removed_list]
         for team in [x for x in removed_teams if x is not None]:
             old_names: List[str] = [p.plugin_id for p in team.plugins]
             if not old_names:
@@ -196,7 +197,6 @@ def _check_plugins(
                 PluginChangeset(  # type: ignore
                     team_name=team.name,
                     old=old_names,
-                    new=[],
                     old_paths={p.plugin_id: p.path for p in team.plugins},
                     old_parameters={p.plugin_id: p.parameters for p in team.plugins},
                     old_modules={p.plugin_id: p.module for p in team.plugins},

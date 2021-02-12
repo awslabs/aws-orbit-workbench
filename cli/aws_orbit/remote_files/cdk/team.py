@@ -31,6 +31,7 @@ from aws_cdk.core import App, Construct, Environment, IConstruct, Stack, Tags
 
 from aws_orbit.models.changeset import load_changeset_from_ssm
 from aws_orbit.models.context import load_context_from_ssm
+from aws_orbit.models.manifest import load_manifest_from_ssm
 from aws_orbit.remote_files.cdk.team_builders._lambda import LambdaBuilder
 from aws_orbit.remote_files.cdk.team_builders.ec2 import Ec2Builder
 from aws_orbit.remote_files.cdk.team_builders.ecs import EcsBuilder
@@ -40,7 +41,8 @@ from aws_orbit.remote_files.cdk.team_builders.stepfunctions import StateMachineB
 
 if TYPE_CHECKING:
     from aws_orbit.models.changeset import Changeset
-    from aws_orbit.models.context import Context
+    from aws_orbit.models.context import Context, TeamContext
+    from aws_orbit.models.manifest import Manifest, TeamManifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -130,7 +132,7 @@ class Team(Stack):
                 ),
             )
         else:
-            raise Exception("Scratch bucket was not provided in Manifest ('scratch-bucket-arn')")
+            raise Exception("Scratch bucket was not provided in Manifest ('ScratchBucketArn')")
 
         self.role_eks_nodegroup = IamBuilder.build_team_role(
             scope=self,
@@ -271,30 +273,23 @@ def main() -> None:
 
     team_policies: Optional[List[str]] = None
     image: Optional[str] = None
-    if changeset.teams_changeset and team_name in changeset.teams_changeset.removed_teams_names:
-        for team_context in changeset.teams_changeset.old_teams:
-            if team_context.name == team_name:
-                team_policies = team_context.policies
-                image = team_context.image
-                break
+
+    if changeset.teams_changeset and team_name in changeset.teams_changeset.added_teams_names:
+        manifest: "Manifest" = load_manifest_from_ssm(env_name=sys.argv[1])
+        team_manifest: Optional["TeamManifest"] = manifest.get_team_by_name(name=team_name)
+        if team_manifest:
+            team_policies = team_manifest.policies
+            image = team_manifest.image
         else:
-            raise ValueError(f"Team {team_name} not found in the teams_changeset.old_teams list.")
-    elif changeset.teams_changeset and team_name in changeset.teams_changeset.added_teams_names:
-        for team_manifest in changeset.teams_changeset.new_teams:
-            if team_manifest.name == team_name:
-                team_policies = team_manifest.policies
-                image = team_manifest.image
-                break
-        else:
-            raise ValueError(f"Team {team_name} not found in the teams_changeset.new_teams list.")
+            raise ValueError(f"{team_name} not found in manifest!")
     else:
-        for team_context in context.teams:
-            if team_context.name == team_name:
-                team_policies = team_context.policies
-                image = team_context.image
-                break
+        team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_name)
+        if team_context:
+            team_policies = team_context.policies
+            image = team_context.image
         else:
             raise ValueError(f"Team {team_name} not found in the context.")
+
     if team_policies is None:
         raise ValueError("team_policies is None!")
 

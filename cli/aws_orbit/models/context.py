@@ -384,6 +384,7 @@ def load_context_from_manifest(manifest: "Manifest") -> Context:
         context.user_pool_id = manifest.user_pool_id
         context.shared_efs_fs_id = manifest.shared_efs_fs_id
         context.shared_efs_sg_id = manifest.shared_efs_sg_id
+        context.scratch_bucket_arn = manifest.scratch_bucket_arn
     else:
         context = Context(  # type: ignore
             name=manifest.name,
@@ -442,9 +443,9 @@ def load_context_from_ssm(env_name: str) -> Context:
     context_parameter_name: str = f"/orbit/{env_name}/context"
     teams_parameters = ssm.list_parameters(prefix=f"/orbit/{env_name}/teams/")
     _logger.debug("teams_parameters: %s", teams_parameters)
-    teams = [ssm.get_parameter(name=p) for p in teams_parameters if p.endswith("/context")]
+    teams = [ssm.get_parameter_if_exists(name=p) for p in teams_parameters if p.endswith("/context")]
     main = ssm.get_parameter(name=context_parameter_name)
-    main["Teams"] = teams
+    main["Teams"] = [t for t in teams if t]
     return cast(Context, Context.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
 
 

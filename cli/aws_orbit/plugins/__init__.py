@@ -151,13 +151,18 @@ class PluginRegistries:
         self._plugin_changesets = plugin_changesets
         self._teams_changeset = teams_changeset
         imports_names: Set[Optional[str]] = set()
+        _logger.debug("Loading Plugins...")
 
+        # CURRENT
         for team_context in context.teams:
             if team_context.name not in self._registries:
                 self._registries[team_context.name] = {}
             for plugin in team_context.plugins:
                 if msg_ctx is not None:
                     msg_ctx.info(f"Loading plugin {plugin.plugin_id} for the {team_context.name} team")
+                _logger.debug(
+                    f"Loading plugin {plugin.plugin_id} for the {team_context.name} team (changeset) [CURRENT]"
+                )
                 self._registries[team_context.name][plugin.plugin_id] = PluginRegistry(
                     plugin_id=plugin.plugin_id,
                     team_name=team_context.name,
@@ -165,12 +170,16 @@ class PluginRegistries:
                     module=plugin.module,
                 )
                 imports_names.add(plugin.module)
+
         for change in plugin_changesets:
             if change.team_name not in self._registries:
                 self._registries[change.team_name] = {}
+
+            # OLD
             for plugin_id in change.old:
                 if msg_ctx is not None:
                     msg_ctx.info(f"Loading plugin {plugin_id} for the {change.team_name} team (changeset)")
+                _logger.debug(f"Loading plugin {plugin_id} for the {change.team_name} team (changeset) [OLD]")
                 self._registries[change.team_name][plugin_id] = PluginRegistry(
                     plugin_id=plugin_id,
                     team_name=change.team_name,
@@ -179,11 +188,26 @@ class PluginRegistries:
                 )
                 imports_names.add(change.old_modules[plugin_id])
 
+            # NEW
+            for plugin_id in change.new:
+                if msg_ctx is not None:
+                    msg_ctx.info(f"Loading plugin {plugin_id} for the {change.team_name} team (changeset)")
+                _logger.debug(f"Loading plugin {plugin_id} for the {change.team_name} team (changeset) [NEW]")
+                self._registries[change.team_name][plugin_id] = PluginRegistry(
+                    plugin_id=plugin_id,
+                    team_name=change.team_name,
+                    parameters=change.new_parameters[plugin_id],
+                    module=change.new_modules[plugin_id],
+                )
+                imports_names.add(change.new_modules[plugin_id])
+
         _logger.debug("imports_names: %s", imports_names)
         for name in imports_names:
             if name is not None:
                 _logger.debug("Importing %s", name)
                 importlib.import_module(name)
+
+        _logger.debug("Plugins Loaded.")
 
     def add_hook(self, hook_name: str, func: HOOK_FUNC_TYPE) -> None:
         if self._context is None:
