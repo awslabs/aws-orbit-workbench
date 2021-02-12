@@ -119,3 +119,17 @@ class TeamConstants:
             if "default" in p and (p["default"] == "True" or p["default"] == True):
                 return p
         return None
+
+    def init_containers(self, image):
+        [
+            {
+                "name": "take-ebs-dir-ownership",
+                "image": image,
+                "command": ["sh", "-c", "sudo chmod -R 777 /ebs"],
+                "securityContext": {"runAsUser": 0},
+                "volumeMounts": [{"mountPath": "/ebs", "name": "ebs-volume"}],
+            }
+        ]
+
+    def life_cycle_hooks(self):
+        return {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh"]}}}
