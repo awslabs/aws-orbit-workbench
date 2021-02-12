@@ -15,7 +15,6 @@
 import json
 import logging
 import os
-import shutil
 import time
 from multiprocessing import Pool
 from typing import List
@@ -88,8 +87,6 @@ def runNotebooks(reportsToRun, compute):
 def runNotebook(parameters):
     errors = []
     output_path = parameters.get("PAPERMILL_OUTPUT_PATH")
-    os_user = parameters.get("JUPYTER_USER_NAME", "jovyan")
-    os_group = parameters.get("JUPYTER_USER_GROUP", "users")
     try:
         logger.info("Starting notebook execution for %s", output_path)
         pm.execute_notebook(
@@ -115,11 +112,6 @@ def runNotebook(parameters):
             logger.error(f"rename {output_path} to {pathToOutputNotebookError}")
             os.rename(output_path, pathToOutputNotebookError)
             output_path = pathToOutputNotebookError
-
-    if not output_path.startswith("s3:"):
-        logger.info(f"Changing ownership of output file:  `chown {os_user}:{os_group} {output_path}`")
-        shutil.chown(output_path, os_user, os_group)
-        os.chmod(output_path, 0o664)
 
     logger.info("Completed notebook execution: %s", output_path)
     return errors

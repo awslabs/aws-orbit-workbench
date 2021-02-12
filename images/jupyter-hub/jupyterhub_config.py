@@ -79,7 +79,7 @@ c.KubeSpawner.storage_access_modes = ["ReadWriteOnce"]
 c.KubeSpawner.storage_capacity = "5Gi"
 c.KubeSpawner.storage_pvc_ensure = True
 c.KubeSpawner.extra_annotations = {"AWS_ORBIT_TEAM_SPACE": TEAM, "AWS_ORBIT_ENV": ENV_NAME}
-pvc_name_template = "claim-{username}{servername}"
+pvc_name_template = "claim-{username}"
 c.KubeSpawner.pvc_name_template = pvc_name_template
 c.KubeSpawner.volumes = [
     {"name": "efs-volume", "persistentVolumeClaim": {"claimName": "jupyterhub"}},

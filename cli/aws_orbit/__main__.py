@@ -15,6 +15,7 @@
 import json
 import logging
 import os
+import sys
 from typing import List, Optional, TextIO, Tuple
 
 import click
@@ -526,7 +527,7 @@ def run_python_container(
 
     import aws_orbit.commands.run as run
 
-    run.run_python_container(
+    no_error_flag = run.run_python_container(
         env=env,
         team=team,
         user=user,
@@ -537,6 +538,10 @@ def run_python_container(
         tail_logs=tail_logs,
         debug=debug,
     )
+    if no_error_flag:
+        sys.exit(0)
+    else:
+        sys.exit(1)
 
 
 @run_container.command(name="notebook", help="Run notebook in a container")
@@ -595,7 +600,7 @@ def run_notebook_container(
 
     import aws_orbit.commands.run as run
 
-    run.run_notebook_container(
+    no_error_flag = run.run_notebook_container(
         env=env,
         team=team,
         user=user,
@@ -606,6 +611,10 @@ def run_notebook_container(
         tail_logs=tail_logs,
         debug=debug,
     )
+    if no_error_flag:
+        sys.exit(0)
+    else:
+        sys.exit(1)
 
 
 def main() -> int:
