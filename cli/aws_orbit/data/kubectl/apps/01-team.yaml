@@ -266,4 +266,3 @@ spec:
   securityGroups:
     groupIds:
       - ${security_group_id}
-      - sg-0f33ad085fe283552

@@ -55,7 +55,7 @@ c.Spawner.args = [
     "--SingleUserServerApp.default_url=/lab",
 ]
 c.KubeSpawner.start_timeout = 360
-c.KubeSpawner.common_labels = {}
+c.KubeSpawner.common_labels = {"orbit/compute-type": "ec2"}
 c.KubeSpawner.namespace = TEAM
 c.KubeSpawner.environment = {
     "USERNAME": lambda spawner: str(spawner.user.name),
