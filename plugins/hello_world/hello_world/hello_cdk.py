@@ -13,10 +13,10 @@
 #    limitations under the License.
 
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 import aws_cdk.aws_ssm as ssm
-from aws_cdk.core import Construct, Environment, Stack, Tags
+from aws_cdk.core import Construct, Environment, IConstruct, Stack, Tags
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest
 from aws_orbit.plugins.helpers import cdk_handler
@@ -35,7 +35,7 @@ class MyStack(Stack):
             stack_name=id,
             env=Environment(account=manifest.account_id, region=manifest.region),
         )
-        Tags.of(scope=self).add(key="Env", value=f"orbit-{manifest.name}")
+        Tags.of(scope=cast(IConstruct, self)).add(key="Env", value=f"orbit-{manifest.name}")
         _logger.info(f"Plugin parameters: {parameters}")
         # just showing how to create resource.  Do not forget to update the IAM policy or make sure the attached policy
         # for the team is allowing the creation and destruction of the resource.

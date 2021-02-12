@@ -1,8 +1,7 @@
 isort~=5.6.0
 black~=20.8b1
 flake8~=3.8.4
-jsii==1.17.1
-mypy~=0.782
+mypy~=0.790
 aws_cdk.core~=1.67.0
 aws-cdk.aws-ec2~=1.67.0
 aws-cdk.aws-iam~=1.67.0
