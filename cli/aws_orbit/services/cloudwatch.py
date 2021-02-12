@@ -13,10 +13,9 @@
 #    limitations under the License.
 
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Dict, List, NamedTuple, Optional, Union, cast
+from typing import Dict, List, NamedTuple, Optional, Union, cast
 
-if TYPE_CHECKING:
-    from aws_orbit.manifest import Manifest
+from aws_orbit.utils import boto3_client
 
 
 class CloudWatchEvent(NamedTuple):
@@ -32,8 +31,8 @@ class CloudWatchEvents(NamedTuple):
     last_timestamp: Optional[datetime]
 
 
-def get_stream_name_by_prefix(manifest: "Manifest", group_name: str, prefix: str) -> Optional[str]:
-    client = manifest.boto3_client("logs")
+def get_stream_name_by_prefix(group_name: str, prefix: str) -> Optional[str]:
+    client = boto3_client("logs")
     response: Dict[str, Union[str, List[Dict[str, Union[float, str]]]]] = client.describe_log_streams(
         logGroupName=group_name,
         logStreamNamePrefix=prefix,
@@ -48,12 +47,11 @@ def get_stream_name_by_prefix(manifest: "Manifest", group_name: str, prefix: str
 
 
 def get_log_events(
-    manifest: "Manifest",
     group_name: str,
     stream_name: str,
     start_time: Optional[datetime],
 ) -> CloudWatchEvents:
-    client = manifest.boto3_client("logs")
+    client = boto3_client("logs")
     args = {
         "logGroupName": group_name,
         "logStreamName": stream_name,

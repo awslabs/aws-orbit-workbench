@@ -1,2 +1,3 @@
 aws_cdk.core~=1.67.0
 aws-cdk.aws-s3~=1.67.0
+aws-cdk.aws-ssm~=1.67.0

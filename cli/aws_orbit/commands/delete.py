@@ -13,55 +13,52 @@
 #    limitations under the License.
 
 import logging
+from typing import TYPE_CHECKING
 
 from aws_orbit import bundle, plugins, remote
-from aws_orbit.changeset import Changeset, extract_changeset
-from aws_orbit.manifest import Manifest
 from aws_orbit.messages import MessagesContext
+from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.services import cfn, codebuild
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def delete_image(env: str, name: str, debug: bool) -> None:
-    with MessagesContext("Destroying Docker Image", debug=debug) as ctx:
-        manifest = Manifest(filename=None, env=env, region=None)
-        manifest.fillup()
-        ctx.info("Manifest loaded")
-        if cfn.does_stack_exist(manifest=manifest, stack_name=f"orbit-{manifest.name}") is False:
-            ctx.error("Please, deploy your environment before deploy/destroy any docker image")
+    with MessagesContext("Destroying Docker Image", debug=debug) as msg_ctx:
+        context: "Context" = load_context_from_ssm(env_name=env)
+        msg_ctx.info("Manifest loaded")
+        if cfn.does_stack_exist(stack_name=f"orbit-{context.name}") is False:
+            msg_ctx.error("Please, deploy your environment before deploy/destroy any docker image")
             return
 
-        _logger.debug("Inspecting possible manifest changes...")
-        changes: Changeset = extract_changeset(manifest=manifest, ctx=ctx)
-        _logger.debug(f"Changeset: {changes.asdict()}")
-        ctx.progress(2)
-
         plugins.PLUGINS_REGISTRIES.load_plugins(
-            manifest=manifest,
-            ctx=ctx,
-            plugin_changesets=changes.plugin_changesets,
-            teams_changeset=changes.teams_changeset,
+            context=context,
+            msg_ctx=msg_ctx,
+            plugin_changesets=[],
+            teams_changeset=None,
         )
-        ctx.progress(3)
+        msg_ctx.progress(3)
 
         bundle_path = bundle.generate_bundle(
-            command_name=f"delete_image-{name}", manifest=manifest, dirs=[], changeset=changes
+            command_name=f"delete_image-{name}", context=context, dirs=[], changeset=None
         )
-        ctx.progress(4)
+        msg_ctx.progress(4)
         buildspec = codebuild.generate_spec(
-            manifest=manifest,
+            context=context,
             plugins=False,
             cmds_build=[f"orbit remote --command delete_image {env} {name}"],
-            changeset=changes,
+            changeset=None,
         )
         remote.run(
             command_name=f"delete_image-{name}",
-            manifest=manifest,
+            context=context,
             bundle_path=bundle_path,
             buildspec=buildspec,
-            codebuild_log_callback=ctx.progress_bar_callback,
+            codebuild_log_callback=msg_ctx.progress_bar_callback,
             timeout=10,
         )
-        ctx.info("Docker Image destroyed from ECR")
-        ctx.progress(100)
+        msg_ctx.info("Docker Image destroyed from ECR")
+        msg_ctx.progress(100)

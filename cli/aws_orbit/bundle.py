@@ -17,10 +17,11 @@ import logging
 import os
 import shutil
 from pprint import pformat
-from typing import List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
-from aws_orbit.changeset import Changeset
-from aws_orbit.manifest import Manifest
+if TYPE_CHECKING:
+    from aws_orbit.models.changeset import Changeset
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -61,41 +62,25 @@ def _generate_dir(bundle_dir: str, dir: str, name: str) -> str:
 
 def generate_bundle(
     command_name: str,
-    manifest: Manifest,
+    context: "Context",
     dirs: Optional[List[Tuple[str, str]]] = None,
-    changeset: Optional[Changeset] = None,
+    changeset: Optional["Changeset"] = None,
     plugins: bool = True,
 ) -> str:
-    conf_dir = os.path.dirname(os.path.abspath(manifest.filename)) if hasattr(manifest, "filename") else os.getcwd()
-    remote_dir = os.path.join(os.path.dirname(conf_dir), ".orbit.out", manifest.name, "remote", command_name)
+    remote_dir = os.path.join(os.getcwd(), ".orbit.out", context.name, "remote", command_name)
     bundle_dir = os.path.join(remote_dir, "bundle")
     try:
         shutil.rmtree(bundle_dir)
     except FileNotFoundError:
         pass
-
     os.makedirs(bundle_dir, exist_ok=True)
-
-    # manifest
-    if hasattr(manifest, "filename"):
-        bundled_manifest_path = os.path.join(bundle_dir, "conf", "manifest.yaml")
-        bundled_manifest_path_conf = os.path.join(bundle_dir, "conf")
-        _logger.debug(f"copy conf_dir={conf_dir} to {bundled_manifest_path_conf}")
-        shutil.copytree(src=conf_dir, dst=bundled_manifest_path_conf)
-        _logger.debug(f"copy manifest file={manifest.filename} to {bundled_manifest_path}")
-        shutil.copy(src=manifest.filename, dst=bundled_manifest_path)
-
-    # changeset
-    if changeset is not None:
-        bundled_changeset_path = os.path.join(bundle_dir, "changeset.json")
-        changeset.write_changeset_file(filename=bundled_changeset_path)
 
     # Plugins
     if plugins:
-        for team_manifest in manifest.teams:
-            plugin_bundle_dir = os.path.join(bundle_dir, team_manifest.name)
+        for team_context in context.teams:
+            plugin_bundle_dir = os.path.join(bundle_dir, team_context.name)
             _logger.debug("plugin_bundle_dir: %s", plugin_bundle_dir)
-            for plugin in team_manifest.plugins:
+            for plugin in team_context.plugins:
                 if plugin.path is not None and plugin.module is not None:
                     _logger.debug("Bundling plugin %s (%s)...", plugin.plugin_id, plugin.path)
                     _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin.path, name=plugin.module)

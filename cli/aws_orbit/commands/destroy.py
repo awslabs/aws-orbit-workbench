@@ -13,116 +13,106 @@
 #    limitations under the License.
 
 import logging
+from typing import TYPE_CHECKING
 
 import botocore.exceptions
 
 from aws_orbit import bundle, cleanup, plugins, remote
-from aws_orbit.changeset import Changeset, extract_changeset
-from aws_orbit.manifest import Manifest
 from aws_orbit.messages import MessagesContext
-from aws_orbit.services import cfn, codebuild, elb, s3, vpc
+from aws_orbit.models.context import load_context_from_ssm
+from aws_orbit.services import cfn, codebuild, elb, s3, ssm, vpc
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def destroy_toolkit(manifest: Manifest) -> None:
-    if manifest.toolkit_s3_bucket is None:
-        s3.delete_bucket_by_prefix(manifest=manifest, prefix=f"orbit-{manifest.name}-toolkit-{manifest.account_id}-")
+def destroy_toolkit(context: "Context") -> None:
+    if context.toolkit.s3_bucket is None:
+        s3.delete_bucket_by_prefix(prefix=f"orbit-{context.name}-toolkit-{context.account_id}-")
     else:
         try:
-            s3.delete_bucket(manifest=manifest, bucket=manifest.toolkit_s3_bucket)
+            s3.delete_bucket(bucket=context.toolkit.s3_bucket)
         except Exception as ex:
             _logger.debug("Skipping Toolkit bucket deletion. Cause: %s", ex)
-    if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.toolkit_stack_name):
-        cfn.destroy_stack(manifest=manifest, stack_name=manifest.toolkit_stack_name)
+    if cfn.does_stack_exist(stack_name=context.toolkit.stack_name):
+        cfn.destroy_stack(stack_name=context.toolkit.stack_name)
+    ssm.cleanup_env(env_name=context.name)
 
 
-def destroy_remaining_resources(manifest: Manifest, keep_demo: bool) -> None:
+def destroy_remaining_resources(context: "Context", keep_demo: bool) -> None:
     if keep_demo:
-        elb.delete_load_balancers(manifest=manifest)
+        elb.delete_load_balancers(env_name=context.name)
     else:
-        if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.demo_stack_name):
+        if cfn.does_stack_exist(stack_name=context.demo_stack_name):
             try:
-                vpc_id: str = vpc.get_env_vpc_id(manifest=manifest)
-                cleanup.demo_remaining_dependencies(manifest=manifest, vpc_id=vpc_id)
+                vpc_id: str = vpc.get_env_vpc_id(env_name=context.name)
+                cleanup.demo_remaining_dependencies(context=context, vpc_id=vpc_id)
             except:  # noqa
                 _logger.debug("VPC not found.")
-            cfn.destroy_stack(manifest=manifest, stack_name=manifest.demo_stack_name)
-        s3.delete_bucket_by_prefix(
-            manifest=manifest, prefix=f"orbit-{manifest.name}-cdk-toolkit-{manifest.account_id}-"
-        )
-        env_cdk_toolkit: str = f"orbit-{manifest.name}-cdk-toolkit"
-        if cfn.does_stack_exist(manifest=manifest, stack_name=env_cdk_toolkit):
-            cfn.destroy_stack(manifest=manifest, stack_name=env_cdk_toolkit)
-        destroy_toolkit(manifest=manifest)
+            cfn.destroy_stack(stack_name=context.demo_stack_name)
+        s3.delete_bucket_by_prefix(prefix=f"orbit-{context.name}-cdk-toolkit-{context.account_id}-")
+        env_cdk_toolkit: str = f"orbit-{context.name}-cdk-toolkit"
+        if cfn.does_stack_exist(stack_name=env_cdk_toolkit):
+            cfn.destroy_stack(stack_name=env_cdk_toolkit)
+        destroy_toolkit(context=context)
 
 
 def destroy_all(env: str, teams_only: bool, keep_demo: bool, debug: bool) -> None:
-    with MessagesContext("Destroying", debug=debug) as ctx:
-        manifest = Manifest(filename=None, env=env, region=None)
-        if manifest.raw_ssm is None:
-            ctx.info(f"Environment {env} not found")
-            destroy_remaining_resources(manifest=manifest, keep_demo=keep_demo)
-            ctx.progress(100)
-            return
-
-        manifest.fillup()
-        ctx.info("Manifest loaded")
-        ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
-        ctx.progress(2)
-
-        _logger.debug("Inspecting possible manifest changes...")
-        changes: Changeset = extract_changeset(manifest=manifest, ctx=ctx)
-        _logger.debug(f"Changeset: {changes.asdict()}")
-        ctx.progress(3)
+    with MessagesContext("Destroying", debug=debug) as msg_ctx:
+        context: "Context" = load_context_from_ssm(env_name=env)
+        msg_ctx.info("Context loaded")
+        msg_ctx.info(f"Teams: {','.join([t.name for t in context.teams])}")
+        msg_ctx.progress(2)
 
         plugins.PLUGINS_REGISTRIES.load_plugins(
-            manifest=manifest,
-            ctx=ctx,
-            plugin_changesets=changes.plugin_changesets,
-            teams_changeset=changes.teams_changeset,
+            context=context,
+            msg_ctx=msg_ctx,
+            plugin_changesets=[],
+            teams_changeset=None,
         )
-        ctx.progress(4)
+        msg_ctx.progress(4)
 
         if (
-            cfn.does_stack_exist(manifest=manifest, stack_name=manifest.demo_stack_name)
-            or cfn.does_stack_exist(manifest=manifest, stack_name=manifest.env_stack_name)
-            or cfn.does_stack_exist(manifest=manifest, stack_name=manifest.cdk_toolkit_stack_name)
+            cfn.does_stack_exist(stack_name=context.demo_stack_name)
+            or cfn.does_stack_exist(stack_name=context.env_stack_name)
+            or cfn.does_stack_exist(stack_name=context.cdk_toolkit.stack_name)
         ):
-            bundle_path = bundle.generate_bundle(command_name="destroy", manifest=manifest, changeset=changes)
-            ctx.progress(5)
+            bundle_path = bundle.generate_bundle(command_name="destroy", context=context, changeset=None)
+            msg_ctx.progress(5)
             flags = "teams-stacks" if teams_only else "keep-demo" if keep_demo else "all-stacks"
 
             buildspec = codebuild.generate_spec(
-                manifest=manifest,
+                context=context,
                 plugins=True,
                 cmds_build=[f"orbit remote --command destroy {env} {flags}"],
-                changeset=changes,
+                changeset=None,
             )
             remote.run(
                 command_name="destroy",
-                manifest=manifest,
+                context=context,
                 bundle_path=bundle_path,
                 buildspec=buildspec,
-                codebuild_log_callback=ctx.progress_bar_callback,
+                codebuild_log_callback=msg_ctx.progress_bar_callback,
                 timeout=45,
             )
         if teams_only:
-            ctx.info("Env Skipped")
+            msg_ctx.info("Env Skipped")
         else:
-            ctx.info("Env destroyed")
-        ctx.progress(95)
+            msg_ctx.info("Env destroyed")
+        msg_ctx.progress(95)
 
         try:
             if not teams_only and not keep_demo:
-                destroy_toolkit(manifest=manifest)
+                destroy_toolkit(context=context)
         except botocore.exceptions.ClientError as ex:
             error = ex.response["Error"]
             if "does not exist" not in error["Message"]:
                 raise
             _logger.debug(f"Skipping toolkit destroy: {error['Message']}")
         if teams_only:
-            ctx.info("Toolkit skipped")
+            msg_ctx.info("Toolkit skipped")
         else:
-            ctx.info("Toolkit destroyed")
-        ctx.progress(100)
+            msg_ctx.info("Toolkit destroyed")
+        msg_ctx.progress(100)

@@ -14,16 +14,18 @@
 
 import json
 import logging
-from typing import Any, Dict, List, Optional, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
 from kubernetes import config
 
 from aws_orbit import bundle, plugins, remote, sh, utils
-from aws_orbit.changeset import Changeset, extract_changeset
-from aws_orbit.manifest import Manifest
 from aws_orbit.messages import MessagesContext, stylize
+from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.remote_files.utils import get_k8s_context
 from aws_orbit.services import cfn, codebuild
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 PROFILES_TYPE = List[Dict[str, Any]]
@@ -37,12 +39,12 @@ def read_user_profiles_ssm(env_name: str, team_name: str) -> PROFILES_TYPE:
     return cast(PROFILES_TYPE, json.loads(json_str))
 
 
-def write_manifest_ssm(profiles: PROFILES_TYPE, env_name: str, team_name: str) -> None:
+def write_context_ssm(profiles: PROFILES_TYPE, env_name: str, team_name: str) -> None:
     ssm_profile_name = f"/orbit/{env_name}/teams/{team_name}/user/profiles"
     client = utils.boto3_client(service_name="ssm")
     _logger.debug("Writing team %s user profiles to SSM parameter.", team_name)
     json_str = str(json.dumps(obj=profiles, sort_keys=True))
-    # resolve any parameters inside team manifest per context
+    # resolve any parameters inside team context per context
     json_str = utils.resolve_parameters(
         json_str, dict(region=utils.get_region(), account=utils.get_account_id(), env=env_name, team=team_name)
     )
@@ -54,30 +56,22 @@ def write_manifest_ssm(profiles: PROFILES_TYPE, env_name: str, team_name: str) -
     )
 
 
-def restart_jupyterhub(env: str, team: str, ctx: MessagesContext) -> None:
-    manifest = Manifest(filename=None, env=env, region=None)
-    manifest.fillup()
-    ctx.tip("JupyterHub update...")
+def restart_jupyterhub(env: str, team: str, msg_ctx: MessagesContext) -> None:
+    context: "Context" = load_context_from_ssm(env_name=env)
+    msg_ctx.tip("JupyterHub update...")
+    msg_ctx.tip("JupyterHub and notebooks in your namespace will be restarted. Please close notebook and login again")
     try:
-        context = get_k8s_context(manifest=manifest)
-        has_context = True
+        k8s_context = get_k8s_context(context=context)
+        sh.run(f"kubectl rollout restart deployment jupyterhub  --namespace {team} --context {k8s_context}")
     except config.config_exception.ConfigException:
         # no context , use kubectl without context
-        has_context = False
-
-    ctx.tip("JupyterHub and notebooks in your namespace will be restarted. Please close notebook and login again")
-
-    if has_context:
-        sh.run(f"kubectl rollout restart deployment jupyterhub  --namespace {team} --context {context}")
-    else:
         sh.run(f"kubectl rollout restart deployment jupyterhub  --namespace {team}")
-
-    ctx.tip("JupyterHub restarted")
+    msg_ctx.tip("JupyterHub restarted")
 
 
 def delete_profile(env: str, team: str, profile_name: str, debug: bool) -> None:
-    with MessagesContext("Profile Deleted", debug=debug) as ctx:
-        ctx.info("Retrieving existing profiles")
+    with MessagesContext("Profile Deleted", debug=debug) as msg_ctx:
+        msg_ctx.info("Retrieving existing profiles")
         profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
         _logger.debug("Existing user profiles for team %s: %s", team, profiles)
         for p in profiles:
@@ -85,11 +79,11 @@ def delete_profile(env: str, team: str, profile_name: str, debug: bool) -> None:
                 _logger.info("Profile exists, deleting...")
                 profiles.remove(p)
                 _logger.debug("Updated user profiles for team %s: %s", team, profiles)
-                write_manifest_ssm(profiles, env, team)
-                ctx.tip("Profile deleted")
-                ctx.progress(90)
-                restart_jupyterhub(env, team, ctx)
-                ctx.progress(100)
+                write_context_ssm(profiles, env, team)
+                msg_ctx.tip("Profile deleted")
+                msg_ctx.progress(90)
+                restart_jupyterhub(env, team, msg_ctx)
+                msg_ctx.progress(100)
 
                 return
         raise Exception(f"Profile {profile_name} not found")
@@ -98,16 +92,12 @@ def delete_profile(env: str, team: str, profile_name: str, debug: bool) -> None:
 def list_profiles(env: str, team: str, debug: bool) -> None:
     profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
     _logger.debug("Existing user profiles for team %s: %s", team, profiles)
-
     print(json.dumps(profiles, indent=4, sort_keys=True))
 
 
 def build_profile(env: str, team: str, profile: str, debug: bool) -> None:
-    with MessagesContext("Adding profile", debug=debug) as ctx:
-        ctx.info("Retrieving existing profiles")
-        manifest = Manifest(filename=None, env=env, region=None)
-        manifest.fillup()
-        ctx.info("Manifest loaded")
+    with MessagesContext("Adding profile", debug=debug) as msg_ctx:
+        msg_ctx.info("Retrieving existing profiles")
         profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
         _logger.debug("Existing user profiles for team %s: %s", team, profiles)
         profile_json = cast(Dict[str, Any], json.loads(profile))
@@ -125,58 +115,52 @@ def build_profile(env: str, team: str, profile: str, debug: bool) -> None:
 
         profiles.append(profile_json)
         _logger.debug("Updated user profiles for team %s: %s", team, profiles)
-        write_manifest_ssm(profiles, env, team)
-        restart_jupyterhub(env, team, ctx)
-        ctx.tip("Profile added")
-        ctx.progress(100)
+        write_context_ssm(profiles, env, team)
+        restart_jupyterhub(env, team, msg_ctx)
+        msg_ctx.tip("Profile added")
+        msg_ctx.progress(100)
 
 
 def build_image(
     env: str, dir: str, name: str, script: Optional[str], teams: Optional[List[str]], region: Optional[str], debug: bool
 ) -> None:
-    with MessagesContext("Deploying Docker Image", debug=debug) as ctx:
-        manifest = Manifest(filename=None, env=env, region=region)
-        manifest.fillup()
-        ctx.info("Manifest loaded")
+    with MessagesContext("Deploying Docker Image", debug=debug) as msg_ctx:
+        context: "Context" = load_context_from_ssm(env_name=env)
+        msg_ctx.info("Manifest loaded")
 
-        if cfn.does_stack_exist(manifest=manifest, stack_name=f"orbit-{manifest.name}") is False:
-            ctx.error("Please, deploy your environment before deploy any addicional docker image")
+        if cfn.does_stack_exist(stack_name=f"orbit-{context.name}") is False:
+            msg_ctx.error("Please, deploy your environment before deploy any addicional docker image")
             return
 
-        _logger.debug("Inspecting possible manifest changes...")
-        changes: Changeset = extract_changeset(manifest=manifest, ctx=ctx)
-        _logger.debug(f"Changeset: {changes.asdict()}")
-        ctx.progress(2)
-
         plugins.PLUGINS_REGISTRIES.load_plugins(
-            manifest=manifest,
-            ctx=ctx,
-            plugin_changesets=changes.plugin_changesets,
-            teams_changeset=changes.teams_changeset,
+            context=context,
+            msg_ctx=msg_ctx,
+            plugin_changesets=[],
+            teams_changeset=None,
         )
-        ctx.progress(3)
+        msg_ctx.progress(3)
 
         bundle_path = bundle.generate_bundle(
-            command_name=f"deploy_image-{name}", manifest=manifest, dirs=[(dir, name)], changeset=changes
+            command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)], changeset=None
         )
-        ctx.progress(4)
+        msg_ctx.progress(4)
         script_str = "NO_SCRIPT" if script is None else script
         teams_str = "NO_TEAMS" if not teams else ",".join(teams)
         buildspec = codebuild.generate_spec(
-            manifest=manifest,
+            context=context,
             plugins=True,
             cmds_build=[f"orbit remote --command build_image {env} {name} {script_str} {teams_str}"],
-            changeset=changes,
+            changeset=None,
         )
         remote.run(
             command_name=f"deploy_image-{name}",
-            manifest=manifest,
+            context=context,
             bundle_path=bundle_path,
             buildspec=buildspec,
-            codebuild_log_callback=ctx.progress_bar_callback,
+            codebuild_log_callback=msg_ctx.progress_bar_callback,
             timeout=15,
         )
-        ctx.info("Docker Image deploy into ECR")
-        address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/orbit-{manifest.name}-{name}"
-        ctx.tip(f"ECR Image Address: {stylize(address, underline=True)}")
-        ctx.progress(100)
+        msg_ctx.info("Docker Image deploy into ECR")
+        address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}-{name}"
+        msg_ctx.tip(f"ECR Image Address: {stylize(address, underline=True)}")
+        msg_ctx.progress(100)

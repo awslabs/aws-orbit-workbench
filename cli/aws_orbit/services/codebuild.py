@@ -21,11 +21,11 @@ from typing import TYPE_CHECKING, Any, Dict, Iterable, List, NamedTuple, Optiona
 import botocore.exceptions
 import yaml
 
-from aws_orbit.utils import try_it
+from aws_orbit.utils import boto3_client, try_it
 
 if TYPE_CHECKING:
-    from aws_orbit.changeset import Changeset
-    from aws_orbit.manifest import Manifest
+    from aws_orbit.models.changeset import Changeset
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -116,20 +116,20 @@ class BuildInfo(NamedTuple):
 
 
 def start(
-    manifest: "Manifest",
+    context: "Context",
     project_name: str,
     stream_name: str,
     bundle_location: str,
     buildspec: Dict[str, Any],
     timeout: int,
 ) -> str:
-    client = manifest.boto3_client("codebuild")
+    client = boto3_client("codebuild")
     repo: Optional[str] = None
     credentials: Optional[str] = None
-    if manifest.images["code-build-image"]["source"] == "ecr":
-        repo = manifest.images["code-build-image"]["repository"]
+    if context.images.code_build.source == "ecr":
+        repo = context.images.code_build.repository
         if not any(match in repo for match in [".amazonaws.com/", "public.ecr.aws"]):
-            repo = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/{repo}"
+            repo = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/{repo}"
         credentials = "SERVICE_ROLE"
     _logger.debug("Repository: %s", repo)
     _logger.debug("Credentials: %s", credentials)
@@ -157,8 +157,8 @@ def start(
     return str(response["build"]["id"])
 
 
-def fetch_build_info(manifest: "Manifest", build_id: str) -> BuildInfo:
-    client = manifest.boto3_client("codebuild")
+def fetch_build_info(build_id: str) -> BuildInfo:
+    client = boto3_client("codebuild")
     response: Dict[str, List[Dict[str, Any]]] = try_it(
         f=client.batch_get_builds, ex=botocore.exceptions.ClientError, ids=[build_id], max_num_tries=5
     )
@@ -196,14 +196,14 @@ def fetch_build_info(manifest: "Manifest", build_id: str) -> BuildInfo:
     )
 
 
-def wait(manifest: "Manifest", build_id: str) -> Iterable[BuildInfo]:
-    build = fetch_build_info(manifest=manifest, build_id=build_id)
+def wait(build_id: str) -> Iterable[BuildInfo]:
+    build = fetch_build_info(build_id=build_id)
     while build.status is BuildStatus.in_progress:
         time.sleep(_BUILD_WAIT_POLLING_DELAY)
 
         last_phase = build.current_phase
         last_status = build.status
-        build = fetch_build_info(manifest=manifest, build_id=build_id)
+        build = fetch_build_info(build_id=build_id)
 
         if build.current_phase is not last_phase or build.status is not last_status:
             _logger.debug("phase: %s (%s)", build.current_phase.value, build.status.value)
@@ -224,13 +224,13 @@ SPEC_TYPE = Dict[str, Union[float, Dict[str, Dict[str, Union[List[str], Dict[str
 
 
 def generate_spec(
-    manifest: "Manifest",
+    context: "Context",
+    changeset: Optional["Changeset"] = None,
     plugins: bool = True,
     cmds_install: Optional[List[str]] = None,
     cmds_pre: Optional[List[str]] = None,
     cmds_build: Optional[List[str]] = None,
     cmds_post: Optional[List[str]] = None,
-    changeset: Optional["Changeset"] = None,
 ) -> SPEC_TYPE:
     pre: List[str] = [] if cmds_pre is None else cmds_pre
     build: List[str] = [] if cmds_build is None else cmds_build
@@ -244,7 +244,7 @@ def generate_spec(
         "ls -la",
         "cd bundle",
         "ls -la",
-        f"pip install kubernetes~=11.0.0 {' '.join([f'{m}{CDK_VERSION}' for m in CDK_MODULES])}",
+        f"pip install kubernetes~=12.0.1 {' '.join([f'{m}{CDK_VERSION}' for m in CDK_MODULES])}",
         "npm -g install yarn",
         "npm install -g aws-cdk@1.67.0",
         'curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp',  # noqa
@@ -253,21 +253,21 @@ def generate_spec(
     ]
 
     # Orbit Workbench CLI
-    if manifest.codeartifact_domain and manifest.codeartifact_repository:
+    if context.codeartifact_domain and context.codeartifact_repository:
         install.append(
             "aws codeartifact login --tool pip "
-            f"--domain {manifest.codeartifact_domain} "
-            f"--repository {manifest.codeartifact_repository}"
+            f"--domain {context.codeartifact_domain} "
+            f"--repository {context.codeartifact_repository}"
         )
     install.append("pip install aws-orbit")
 
     # Plugins
     if plugins:
-        for team_manifest in manifest.teams:
-            for plugin in team_manifest.plugins:
+        for team_context in context.teams:
+            for plugin in team_context.plugins:
                 if plugin.path is not None and plugin.module is not None:
-                    install.append(f"ls -la ./{team_manifest.name}/{plugin.module}/")
-                    install.append(f"pip install -e ./{team_manifest.name}/{plugin.module}/")
+                    install.append(f"ls -la ./{team_context.name}/{plugin.module}/")
+                    install.append(f"pip install -e ./{team_context.name}/{plugin.module}/")
         if changeset is not None:
             for plugin_changeset in changeset.plugin_changesets:
                 for plugin_name in plugin_changeset.old:

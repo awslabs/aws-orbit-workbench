@@ -45,7 +45,7 @@ LOCAL_PATH="/home/jovyan/private/samples"
 
 if [ ! -d $LOCAL_PATH ]; then
     mkdir -p $LOCAL_PATH
-    TEAM_BUCKET=`aws ssm get-parameter --name /orbit/dev-env/teams/$ORBIT_TEAM_SPACE/manifest | jq -r '.Parameter' | jq -r '.Value' | jq -r '.["scratch-bucket"]'`
+    TEAM_BUCKET=`aws ssm get-parameter --name /orbit/dev-env/teams/$ORBIT_TEAM_SPACE/context | jq -r '.Parameter' | jq -r '.Value' | jq -r '.["ScratchBucket"]'`
 
     S3_PATH="s3://$TEAM_BUCKET/source/samples"
 

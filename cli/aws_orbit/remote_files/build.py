@@ -13,13 +13,20 @@
 #    limitations under the License.
 
 import logging
-from typing import List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from boto3 import client
 
-from aws_orbit import changeset, docker, plugins, sh
-from aws_orbit.manifest import Manifest
+from aws_orbit import docker, plugins, sh
+from aws_orbit.models.changeset import load_changeset_from_ssm
+from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.remote_files import teams as team_utils
+from aws_orbit.utils import boto3_client
+
+if TYPE_CHECKING:
+    from aws_orbit.models.changeset import Changeset
+    from aws_orbit.models.context import Context
+    from aws_orbit.models.manifest import ImageManifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -33,58 +40,52 @@ def build_image(args: Tuple[str, ...]) -> None:
     teams: Optional[List[str]] = args[3].split(",") if args[3] != "NO_TEAMS" else None
 
     _logger.debug("args: %s", args)
+    context: "Context" = load_context_from_ssm(env_name=env)
 
-    manifest: Manifest = Manifest(filename=None, env=env, region=None)
-    manifest.fillup()
-    # if manifest.demo:
-    #     manifest.fetch_demo_data()
-    #     manifest.fetch_network_data()
-
-    docker.login(manifest=manifest)
+    docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
 
-    changes: changeset.Changeset = changeset.read_changeset_file(manifest=manifest, filename="changeset.json")
-    _logger.debug(f"Changeset: {changes.asdict()}")
+    changeset: "Changeset" = load_changeset_from_ssm(env_name=context.name)
     _logger.debug("Changeset loaded")
 
     plugins.PLUGINS_REGISTRIES.load_plugins(
-        manifest=manifest, plugin_changesets=changes.plugin_changesets, teams_changeset=changes.teams_changeset
+        context=context, plugin_changesets=changeset.plugin_changesets, teams_changeset=changeset.teams_changeset
     )
     _logger.debug("Plugins loaded")
-    ecr = manifest.boto3_client("ecr")
-    ecr_repo = f"orbit-{manifest.name}-{image_name}"
+    ecr = boto3_client("ecr")
+    ecr_repo = f"orbit-{context.name}-{image_name}"
     try:
         ecr.describe_repositories(repositoryNames=[ecr_repo])
     except ecr.exceptions.RepositoryNotFoundException:
-        _create_repository(manifest, ecr, ecr_repo)
-    image_def = manifest.images.get(image_name)
+        _create_repository(context.name, ecr, ecr_repo)
+    image_def: "ImageManifest" = getattr(context.images, image_name)
     _logger.debug(" image def: %s", image_def)
-    if manifest.images.get(image_name, {"source": "code"}).get("source") == "code":
+    if getattr(context.images, image_name).source == "code":
         path = image_name
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
-        docker.deploy_image_from_source(manifest=manifest, dir=path, name=ecr_repo)
+        docker.deploy_image_from_source(context=context, dir=path, name=ecr_repo)
     else:
-        docker.replicate_image(manifest=manifest, image_name=image_name, deployed_name=ecr_repo)
+        docker.replicate_image(context=context, image_name=image_name, deployed_name=ecr_repo)
     _logger.debug("Docker Image Deployed to ECR")
 
     if teams:
         _logger.debug(f"Building and Deploying Team images: {teams}")
         for team in teams:
-            for team_manifest in manifest.teams:
-                if team == team_manifest.name:
-                    team_utils._deploy_team_image(manifest=manifest, team_manifest=team_manifest, image=image_name)
+            for team_context in context.teams:
+                if team == team_context.name:
+                    team_utils._deploy_team_image(context=context, team_context=team_context, image=image_name)
                     break
             else:
                 _logger.debug(f"Skipped unknown Team: {team}")
 
 
-def _create_repository(manifest: Manifest, ecr: client, ecr_repo: str) -> None:
+def _create_repository(env_name: str, ecr: client, ecr_repo: str) -> None:
     response = ecr.create_repository(
         repositoryName=ecr_repo,
         tags=[
-            {"Key": "Env", "Value": manifest.name},
+            {"Key": "Env", "Value": env_name},
         ],
     )
     if "repository" in response and "repositoryName" in response["repository"]:

@@ -20,13 +20,16 @@ import shutil
 import sys
 from typing import TYPE_CHECKING, Any, Dict, List, Type, cast
 
-from aws_orbit import cdk, changeset, sh
-from aws_orbit.manifest import Manifest
-from aws_orbit.manifest.team import TeamManifest
+from aws_orbit import cdk, sh
+from aws_orbit.models.changeset import load_changeset_from_ssm
+from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.services import cfn
 
 if TYPE_CHECKING:
     from aws_cdk.core import Stack
+
+    from aws_orbit.models.changeset import Changeset
+    from aws_orbit.models.context import Context, TeamContext
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -43,44 +46,33 @@ def _deserialize_parameters(parameters: str) -> Dict[str, Any]:
 
 def cdk_handler(stack_class: Type["Stack"]) -> None:
     _logger.debug("sys.argv: %s", sys.argv)
-    if len(sys.argv) == 6:
+    if len(sys.argv) == 5:
         stack_name: str = sys.argv[1]
-        team_name: str = sys.argv[4]
-        parameters: Dict[str, Any] = _deserialize_parameters(parameters=sys.argv[5])
-        manifest: Manifest
-        if sys.argv[2] == "manifest":
-            filename = sys.argv[3]
-            manifest = Manifest(filename=filename, env=None, region=None)
-        elif sys.argv[2] == "env":
-            env = sys.argv[3]
-            manifest = Manifest(filename=None, env=env, region=None)
-        else:
-            raise ValueError(f"Unexpected argv[1] ({len(sys.argv)}) - {sys.argv}.")
+        team_name: str = sys.argv[3]
+        parameters: Dict[str, Any] = _deserialize_parameters(parameters=sys.argv[4])
+        context: "Context" = load_context_from_ssm(env_name=sys.argv[2])
     else:
         raise ValueError(f"Unexpected number of values in sys.argv ({len(sys.argv)}) - {sys.argv}.")
 
-    manifest.fillup()
-
-    changes: changeset.Changeset = changeset.read_changeset_file(manifest=manifest, filename="changeset.json")
-    if changes.teams_changeset and team_name in changes.teams_changeset.removed_teams_names:
-        for team in changes.teams_changeset.old_teams:
+    changeset: "Changeset" = load_changeset_from_ssm(env_name=context.name)
+    if changeset.teams_changeset and team_name in changeset.teams_changeset.removed_teams_names:
+        for team in changeset.teams_changeset.old_teams:
             if team.name == team_name:
-                team_manifest: TeamManifest = team
-                team_manifest.fetch_ssm()
+                team_context: "TeamContext" = team
                 break
         else:
             raise ValueError(f"Team {team_name} not found in the teams_changeset.old_teams list.")
     else:
-        for team in manifest.teams:
+        for team in context.teams:
             if team.name == team_name:
-                team_manifest = team
+                team_context = team
                 break
         else:
-            raise ValueError(f"Team {team_name} not found in the manifest.")
+            raise ValueError(f"Team {team_name} not found in the context.")
 
     outdir = os.path.join(
         ".orbit.out",
-        manifest.name,
+        context.name,
         "cdk",
         stack_name,
     )
@@ -91,35 +83,25 @@ def cdk_handler(stack_class: Type["Stack"]) -> None:
     from aws_cdk.core import App
 
     app = App(outdir=outdir)
-    stack_class(app, stack_name, manifest, team_manifest, parameters)  # type: ignore
+    stack_class(app, stack_name, context, team_context, parameters)  # type: ignore
     app.synth(force=True)
 
 
 def cdk_deploy(
     stack_name: str,
     app_filename: str,
-    manifest: "Manifest",
-    team_manifest: "TeamManifest",
+    context: "Context",
+    team_context: "TeamContext",
     parameters: Dict[str, Any],
 ) -> None:
-    if manifest.cdk_toolkit_stack_name is None:
-        raise ValueError(f"manifest.cdk_toolkit_stack_name: {manifest.cdk_toolkit_stack_name}")
-    args: List[str]
-    if hasattr(manifest, "filename"):
-        args = [
-            stack_name,
-            "manifest",
-            manifest.filename,
-            team_manifest.name,
-            _serialize_parameters(parameters=parameters),
-        ]
-    else:
-        args = [stack_name, "env", manifest.name, team_manifest.name, _serialize_parameters(parameters=parameters)]
+    if context.cdk_toolkit.stack_name is None:
+        raise ValueError(f"context.cdk_toolkit_stack_name: {context.cdk_toolkit.stack_name}")
+    args: List[str] = [stack_name, context.name, team_context.name, _serialize_parameters(parameters=parameters)]
     cmd: str = (
         "cdk deploy --require-approval never --progress events "
-        f"--toolkit-stack-name {manifest.cdk_toolkit_stack_name} "
+        f"--toolkit-stack-name {context.cdk_toolkit.stack_name} "
         f"{cdk.get_app_argument(app_filename, args)} "
-        f"{cdk.get_output_argument(manifest, stack_name)}"
+        f"{cdk.get_output_argument(context, stack_name)}"
     )
     sh.run(cmd=cmd)
 
@@ -127,31 +109,20 @@ def cdk_deploy(
 def cdk_destroy(
     stack_name: str,
     app_filename: str,
-    manifest: "Manifest",
-    team_manifest: "TeamManifest",
+    context: "Context",
+    team_context: "TeamContext",
     parameters: Dict[str, Any],
 ) -> None:
-    if cfn.does_stack_exist(manifest=manifest, stack_name=stack_name) is False:
+    if cfn.does_stack_exist(stack_name=stack_name) is False:
         _logger.debug("Skipping CDK destroy for %s, because the stack was not found.", stack_name)
         return
-    if manifest.cdk_toolkit_stack_name is None:
-        raise ValueError(f"manifest.cdk_toolkit_stack_name: {manifest.cdk_toolkit_stack_name}")
-    args: List[str]
-    if hasattr(manifest, "filename"):
-        args = [
-            stack_name,
-            "manifest",
-            manifest.filename,
-            team_manifest.name,
-            _serialize_parameters(parameters=parameters),
-        ]
-    else:
-        args = [stack_name, "env", manifest.name, team_manifest.name, _serialize_parameters(parameters=parameters)]
-
+    if context.cdk_toolkit.stack_name is None:
+        raise ValueError(f"context.cdk_toolkit_stack_name: {context.cdk_toolkit.stack_name}")
+    args: List[str] = [stack_name, context.name, team_context.name, _serialize_parameters(parameters=parameters)]
     cmd: str = (
         "cdk destroy --force "
-        f"--toolkit-stack-name {manifest.cdk_toolkit_stack_name} "
+        f"--toolkit-stack-name {context.cdk_toolkit.stack_name} "
         f"{cdk.get_app_argument(app_filename, args)} "
-        f"{cdk.get_output_argument(manifest, stack_name)}"
+        f"{cdk.get_output_argument(context, stack_name)}"
     )
     sh.run(cmd=cmd)

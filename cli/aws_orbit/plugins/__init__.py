@@ -20,12 +20,11 @@ from aws_orbit import utils
 from aws_orbit.services import s3
 
 if TYPE_CHECKING:
-    from aws_orbit.changeset import PluginChangeset, TeamsChangeset
-    from aws_orbit.manifest import Manifest
-    from aws_orbit.manifest.team import TeamManifest
     from aws_orbit.messages import MessagesContext
+    from aws_orbit.models.changeset import PluginChangeset, TeamsChangeset
+    from aws_orbit.models.context import Context, TeamContext
 
-HOOK_FUNC_TYPE = Callable[[str, "Manifest", "TeamManifest", Dict[str, Any]], Union[None, List[str], str]]
+HOOK_FUNC_TYPE = Callable[[str, "Context", "TeamContext", Dict[str, Any]], Union[None, List[str], str]]
 HOOK_TYPE = Optional[HOOK_FUNC_TYPE]
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -52,30 +51,30 @@ class PluginRegistry:
         self._dockerfile_injection_hook: HOOK_TYPE = dockerfile_injection_hook
         self._bootstrap_injection_hook: HOOK_TYPE = bootstrap_injection_hook
 
-    def destroy(self, manifest: "Manifest", team_manifest: "TeamManifest") -> None:
+    def destroy(self, context: "Context", team_context: "TeamContext") -> None:
         if self.bootstrap_injection_hook is not None:
-            if manifest.toolkit_s3_bucket is None:
-                raise ValueError(f"manifest.toolkit_s3_bucket: {manifest.toolkit_s3_bucket}")
-            key: str = f"{team_manifest.bootstrap_s3_prefix}{self.plugin_id}.sh"
-            s3.delete_objects(manifest=manifest, bucket=manifest.toolkit_s3_bucket, keys=[key])
-            _logger.debug(f"s3://{manifest.toolkit_s3_bucket}/{key} deleted")
+            if context.toolkit.s3_bucket is None:
+                raise ValueError("manifest.toolkit_s3_bucket is None!")
+            key: str = f"{team_context.bootstrap_s3_prefix}{self.plugin_id}.sh"
+            s3.delete_objects(bucket=context.toolkit.s3_bucket, keys=[key])
+            _logger.debug(f"s3://{context.toolkit.s3_bucket}/{key} deleted")
         else:
             _logger.debug(
                 (
-                    f"Skipping {self.plugin_id} bootstrap deletion for team {team_manifest.name} "
+                    f"Skipping {self.plugin_id} bootstrap deletion for team {team_context.name} "
                     "because it does not have bootstrap_injection hook registered."
                 )
             )
         if self.destroy_hook is None:
             _logger.debug(
                 (
-                    f"Skipping {self.plugin_id} destroy for team {team_manifest.name} "
+                    f"Skipping {self.plugin_id} destroy for team {team_context.name} "
                     "because it does not have destroy hook registered."
                 )
             )
             return None
-        _logger.debug(f"Destroying plugin {self.plugin_id} for team {team_manifest.name}")
-        self.destroy_hook(self.plugin_id, manifest, team_manifest, self.parameters)
+        _logger.debug(f"Destroying plugin {self.plugin_id} for team {team_context.name}")
+        self.destroy_hook(self.plugin_id, context, team_context, self.parameters)
 
     """
     Deploy / Destroy
@@ -136,32 +135,32 @@ class PluginRegistry:
 
 class PluginRegistries:
     def __init__(self) -> None:
-        self._manifest: Optional["Manifest"] = None
+        self._context: Optional["Context"] = None
         self._registries: Dict[str, Dict[str, "PluginRegistry"]] = {}
         self._plugin_changesets: List["PluginChangeset"] = []
         self._teams_changeset: Optional["TeamsChangeset"] = None
 
     def load_plugins(
         self,
-        manifest: "Manifest",
+        context: "Context",
         plugin_changesets: List["PluginChangeset"],
         teams_changeset: Optional["TeamsChangeset"],
-        ctx: Optional["MessagesContext"] = None,
+        msg_ctx: Optional["MessagesContext"] = None,
     ) -> None:
-        self._manifest = manifest
+        self._context = context
         self._plugin_changesets = plugin_changesets
         self._teams_changeset = teams_changeset
         imports_names: Set[Optional[str]] = set()
 
-        for team_manifest in manifest.teams:
-            if team_manifest.name not in self._registries:
-                self._registries[team_manifest.name] = {}
-            for plugin in team_manifest.plugins:
-                if ctx is not None:
-                    ctx.info(f"Loading plugin {plugin.plugin_id} for the {team_manifest.name} team")
-                self._registries[team_manifest.name][plugin.plugin_id] = PluginRegistry(
+        for team_context in context.teams:
+            if team_context.name not in self._registries:
+                self._registries[team_context.name] = {}
+            for plugin in team_context.plugins:
+                if msg_ctx is not None:
+                    msg_ctx.info(f"Loading plugin {plugin.plugin_id} for the {team_context.name} team")
+                self._registries[team_context.name][plugin.plugin_id] = PluginRegistry(
                     plugin_id=plugin.plugin_id,
-                    team_name=team_manifest.name,
+                    team_name=team_context.name,
                     parameters=plugin.parameters,
                     module=plugin.module,
                 )
@@ -170,8 +169,8 @@ class PluginRegistries:
             if change.team_name not in self._registries:
                 self._registries[change.team_name] = {}
             for plugin_id in change.old:
-                if ctx is not None:
-                    ctx.info(f"Loading plugin {plugin_id} for the {change.team_name} team (changeset)")
+                if msg_ctx is not None:
+                    msg_ctx.info(f"Loading plugin {plugin_id} for the {change.team_name} team (changeset)")
                 self._registries[change.team_name][plugin_id] = PluginRegistry(
                     plugin_id=plugin_id,
                     team_name=change.team_name,
@@ -187,11 +186,11 @@ class PluginRegistries:
                 importlib.import_module(name)
 
     def add_hook(self, hook_name: str, func: HOOK_FUNC_TYPE) -> None:
-        if self._manifest is None:
+        if self._context is None:
             raise RuntimeError("Empty PLUGINS_REGISTRIES. Please, run load_plugins() before try to add hooks.")
         plugin_module_name: str = utils.extract_plugin_module_name(func=func)
 
-        teams_names: List[str] = [t.name for t in self._manifest.teams]
+        teams_names: List[str] = [t.name for t in self._context.teams]
         if self._teams_changeset is not None:
             for removed in self._teams_changeset.removed_teams_names:
                 if removed not in teams_names:
@@ -209,55 +208,55 @@ class PluginRegistries:
                         hook_name,
                     )
 
-    def get_hook(self, manifest: "Manifest", team_name: str, plugin_name: str, hook_name: str) -> HOOK_TYPE:
-        self._manifest = manifest
+    def get_hook(self, context: "Context", team_name: str, plugin_name: str, hook_name: str) -> HOOK_TYPE:
+        self._context = context
         return cast(HOOK_TYPE, self._registries[team_name][plugin_name].__getattribute__(hook_name))
 
-    def destroy_plugin(self, manifest: "Manifest", team_manifest: "TeamManifest", plugin_id: str) -> None:
-        self._manifest = manifest
-        if plugin_id not in self._registries[team_manifest.name]:
+    def destroy_plugin(self, context: "Context", team_context: "TeamContext", plugin_id: str) -> None:
+        self._context = context
+        if plugin_id not in self._registries[team_context.name]:
             _logger.debug(
-                ("Skipping %s deletion for team %s because it is not registered.", plugin_id, team_manifest.name)
+                ("Skipping %s deletion for team %s because it is not registered.", plugin_id, team_context.name)
             )
-        _logger.debug("Destroying %s for team %s.", plugin_id, team_manifest.name)
-        self._registries[team_manifest.name][plugin_id].destroy(manifest=manifest, team_manifest=team_manifest)
-        del self._registries[team_manifest.name][plugin_id]
+        _logger.debug("Destroying %s for team %s.", plugin_id, team_context.name)
+        self._registries[team_context.name][plugin_id].destroy(context=context, team_context=team_context)
+        del self._registries[team_context.name][plugin_id]
 
-    def destroy_team_plugins(self, manifest: "Manifest", team_manifest: "TeamManifest") -> None:
-        self._manifest = manifest
-        if team_manifest.name in self._registries:
-            plugins_ids: List[str] = list(self._registries[team_manifest.name].keys())
+    def destroy_team_plugins(self, context: "Context", team_context: "TeamContext") -> None:
+        self._context = context
+        if team_context.name in self._registries:
+            plugins_ids: List[str] = list(self._registries[team_context.name].keys())
             for plugin_id in plugins_ids:
-                self.destroy_plugin(manifest=manifest, team_manifest=team_manifest, plugin_id=plugin_id)
+                self.destroy_plugin(context=context, team_context=team_context, plugin_id=plugin_id)
         else:
             _logger.debug(
-                "Skipping destroy_team_plugins for %s because there is no plugins registered.", team_manifest.name
+                "Skipping destroy_team_plugins for %s because there is no plugins registered.", team_context.name
             )
 
-    def deploy_plugin(self, manifest: "Manifest", team_manifest: "TeamManifest", plugin_id: str) -> None:
-        self._manifest = manifest
-        if team_manifest.name in self._registries:
-            if plugin_id not in self._registries[team_manifest.name]:
+    def deploy_plugin(self, context: "Context", team_context: "TeamContext", plugin_id: str) -> None:
+        self._context = context
+        if team_context.name in self._registries:
+            if plugin_id not in self._registries[team_context.name]:
                 _logger.debug(
-                    (f"Skipping {plugin_id} deploy for team {team_manifest.name} because it is not registered.")
+                    (f"Skipping {plugin_id} deploy for team {team_context.name} because it is not registered.")
                 )
                 return None
-            hook: HOOK_TYPE = self._registries[team_manifest.name][plugin_id].deploy_hook
-            parameters: Dict[str, Any] = self._registries[team_manifest.name][plugin_id].parameters
+            hook: HOOK_TYPE = self._registries[team_context.name][plugin_id].deploy_hook
+            parameters: Dict[str, Any] = self._registries[team_context.name][plugin_id].parameters
             if hook is None:
                 _logger.debug(
                     (
-                        f"Skipping {plugin_id} deploy for team {team_manifest.name} "
+                        f"Skipping {plugin_id} deploy for team {team_context.name} "
                         "because it does not have deploy hook registered."
                     )
                 )
                 return None
-            _logger.debug(f"Deploying {plugin_id} for team {team_manifest.name}.")
-            hook(plugin_id, manifest, team_manifest, parameters)
+            _logger.debug(f"Deploying {plugin_id} for team {team_context.name}.")
+            hook(plugin_id, context, team_context, parameters)
         else:
             _logger.debug(
                 "Skipping deploy_plugin for %s/%s because there is no plugins registered.",
-                team_manifest.name,
+                team_context.name,
                 plugin_id,
             )
 
@@ -270,20 +269,20 @@ class PluginRegistries:
         return False
 
     def deploy_team_plugins(
-        self, manifest: "Manifest", team_manifest: "TeamManifest", changes: List["PluginChangeset"]
+        self, context: "Context", team_context: "TeamContext", changes: List["PluginChangeset"]
     ) -> None:
-        self._manifest = manifest
-        if team_manifest.name in self._registries:
-            plugins_ids: List[str] = list(self._registries[team_manifest.name].keys())
+        self._context = context
+        if team_context.name in self._registries:
+            plugins_ids: List[str] = list(self._registries[team_context.name].keys())
             for plugin_id in plugins_ids:
-                if self._is_plugin_removed(changes=changes, plugin_id=plugin_id, team_name=team_manifest.name):
-                    self.destroy_plugin(manifest=manifest, team_manifest=team_manifest, plugin_id=plugin_id)
+                if self._is_plugin_removed(changes=changes, plugin_id=plugin_id, team_name=team_context.name):
+                    self.destroy_plugin(context=context, team_context=team_context, plugin_id=plugin_id)
                 else:
-                    _logger.debug("Deploying plugin %s for team %s", plugin_id, team_manifest.name)
-                    self.deploy_plugin(manifest=manifest, team_manifest=team_manifest, plugin_id=plugin_id)
+                    _logger.debug("Deploying plugin %s for team %s", plugin_id, team_context.name)
+                    self.deploy_plugin(context=context, team_context=team_context, plugin_id=plugin_id)
         else:
             _logger.debug(
-                "Skipping deploy_team_plugins for %s because there is no plugins registered.", team_manifest.name
+                "Skipping deploy_team_plugins for %s because there is no plugins registered.", team_context.name
             )
 
 

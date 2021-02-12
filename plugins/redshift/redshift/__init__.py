@@ -14,13 +14,14 @@
 
 import logging
 import os
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
 from aws_orbit import sh
-from aws_orbit.manifest import Manifest
-from aws_orbit.manifest.team import TeamManifest
 from aws_orbit.plugins import hooks
 from aws_orbit.plugins.helpers import cdk_deploy, cdk_destroy
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context, TeamContext
 
 _logger: logging.Logger = logging.getLogger("aws_orbit")
 
@@ -28,26 +29,26 @@ PLUGIN_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 @hooks.deploy
-def deploy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
-    _logger.debug("Deploying Redshift plugin resources for team %s", team_manifest.name)
-    sh.run(f"echo 'Team name: {team_manifest.name} | Plugin ID: {plugin_id}'")
+def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+    _logger.debug("Deploying Redshift plugin resources for team %s", team_context.name)
+    sh.run(f"echo 'Team name: {team_context.name} | Plugin ID: {plugin_id}'")
     cdk_deploy(
-        stack_name=f"orbit-{manifest.name}-{team_manifest.name}-{plugin_id}-redshift",
+        stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-redshift",
         app_filename=os.path.join(PLUGIN_ROOT_PATH, "orbit_redshift_stack.py"),
-        manifest=manifest,
-        team_manifest=team_manifest,
+        context=context,
+        team_context=team_context,
         parameters=parameters,
     )
 
 
 @hooks.destroy
-def destroy(plugin_id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]) -> None:
-    _logger.debug("Destroying Redshift plugin resources for team %s", team_manifest.name)
-    sh.run(f"echo 'Team name: {team_manifest.name} | Plugin ID: {plugin_id}'")
+def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+    _logger.debug("Destroying Redshift plugin resources for team %s", team_context.name)
+    sh.run(f"echo 'Team name: {team_context.name} | Plugin ID: {plugin_id}'")
     cdk_destroy(
-        stack_name=f"orbit-{manifest.name}-{team_manifest.name}-{plugin_id}-redshift",
+        stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-redshift",
         app_filename=os.path.join(PLUGIN_ROOT_PATH, "orbit_redshift_stack.py"),
-        manifest=manifest,
-        team_manifest=team_manifest,
+        context=context,
+        team_context=team_context,
         parameters=parameters,
     )

@@ -17,18 +17,15 @@ import logging
 import random
 import time
 from itertools import repeat
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
-from aws_orbit.utils import chunkify
-
-if TYPE_CHECKING:
-    from aws_orbit.manifest import Manifest
+from aws_orbit.utils import boto3_client, chunkify
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def list_keys(manifest: "Manifest", bucket: str) -> List[Dict[str, str]]:
-    client_s3 = manifest.boto3_client("s3")
+def list_keys(bucket: str) -> List[Dict[str, str]]:
+    client_s3 = boto3_client("s3")
     paginator = client_s3.get_paginator("list_object_versions")
     response_iterator = paginator.paginate(Bucket=bucket, PaginationConfig={"PageSize": 1000})
     keys: List[Dict[str, str]] = []
@@ -47,8 +44,8 @@ def list_keys(manifest: "Manifest", bucket: str) -> List[Dict[str, str]]:
     return keys
 
 
-def _delete_objects(manifest: "Manifest", bucket: str, chunk: List[Dict[str, str]]) -> None:
-    client_s3 = manifest.boto3_client("s3")
+def _delete_objects(bucket: str, chunk: List[Dict[str, str]]) -> None:
+    client_s3 = boto3_client("s3")
     try:
         client_s3.delete_objects(Bucket=bucket, Delete={"Objects": chunk})
     except client_s3.exceptions.ClientError as ex:
@@ -57,38 +54,38 @@ def _delete_objects(manifest: "Manifest", bucket: str, chunk: List[Dict[str, str
             client_s3.delete_objects(Bucket=bucket, Delete={"Objects": chunk})
 
 
-def delete_objects(manifest: "Manifest", bucket: str, keys: Optional[List[str]] = None) -> None:
+def delete_objects(bucket: str, keys: Optional[List[str]] = None) -> None:
     if keys is None:
-        keys_pairs: List[Dict[str, str]] = list_keys(manifest=manifest, bucket=bucket)
+        keys_pairs: List[Dict[str, str]] = list_keys(bucket=bucket)
     else:
         keys_pairs = [{"Key": k} for k in keys]
     if keys_pairs:
         chunks: List[List[Dict[str, str]]] = chunkify(lst=keys_pairs, max_length=1_000)
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(chunks)) as executor:
-            list(executor.map(_delete_objects, repeat(manifest), repeat(bucket), chunks))
+            list(executor.map(_delete_objects, repeat(bucket), chunks))
 
 
-def delete_bucket(manifest: "Manifest", bucket: str) -> None:
-    client_s3 = manifest.boto3_client("s3")
+def delete_bucket(bucket: str) -> None:
+    client_s3 = boto3_client("s3")
     _logger.debug("Cleaning up bucket: %s", bucket)
-    delete_objects(manifest=manifest, bucket=bucket)
+    delete_objects(bucket=bucket)
     _logger.debug("Deleting bucket: %s", bucket)
     client_s3.delete_bucket(Bucket=bucket)
 
 
-def upload_file(manifest: "Manifest", src: str, bucket: str, key: str) -> None:
-    client_s3 = manifest.boto3_client("s3")
+def upload_file(src: str, bucket: str, key: str) -> None:
+    client_s3 = boto3_client("s3")
     client_s3.upload_file(Filename=src, Bucket=bucket, Key=key)
 
 
-def list_s3_objects(manifest: "Manifest", bucket: str, key: str) -> Dict[str, Any]:
-    client_s3 = manifest.boto3_client("s3")
+def list_s3_objects(bucket: str, key: str) -> Dict[str, Any]:
+    client_s3 = boto3_client("s3")
     response = client_s3.list_objects_v2(Bucket=bucket, Prefix=key)
     return cast(Dict[str, Any], response)
 
 
-def delete_bucket_by_prefix(manifest: "Manifest", prefix: str) -> None:
-    client_s3 = manifest.boto3_client("s3")
+def delete_bucket_by_prefix(prefix: str) -> None:
+    client_s3 = boto3_client("s3")
     for bucket in client_s3.list_buckets()["Buckets"]:
         if bucket["Name"].startswith(prefix):
-            delete_bucket(manifest=manifest, bucket=bucket["Name"])
+            delete_bucket(bucket=bucket["Name"])

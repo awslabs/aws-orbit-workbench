@@ -12,6 +12,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-__title__: str = "aws-orbit"
-__description__: str = "Data & ML Unified Development and Production Environment."
-__license__: str = "Apache License 2.0"
+from marshmallow import Schema, fields
+
+
+class BaseSchema(Schema):
+    @staticmethod
+    def _from_snake_to_camel(name: str) -> str:
+        return "".join(map(str.title, name.split("_")))
+
+    def on_bind_field(self, field_name: str, field_obj: fields.Field) -> None:
+        field_obj.data_key = BaseSchema._from_snake_to_camel(field_obj.data_key or field_name)
