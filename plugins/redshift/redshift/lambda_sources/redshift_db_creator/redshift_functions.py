@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from typing import Any, Dict, Optional
 
 import boto3
 
@@ -8,7 +9,7 @@ LOGGER = logging.getLogger()
 LOGGER.setLevel(logging.INFO)
 
 
-def lambda_handler(event, context):
+def lambda_handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Dict[str, str]:
     redshift = boto3.client("redshift")
     secretsmanager = boto3.client("secretsmanager")
     response = secretsmanager.get_secret_value(SecretId=os.environ["SecretId"])

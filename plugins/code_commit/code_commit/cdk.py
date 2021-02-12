@@ -13,11 +13,11 @@
 #    limitations under the License.
 
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 import aws_cdk.aws_codecommit as codecommit
 import aws_cdk.aws_iam as iam
-from aws_cdk.core import Construct, Environment, Stack, Tags
+from aws_cdk.core import Construct, Environment, IConstruct, Stack, Tags
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.team import TeamManifest
 from aws_orbit.plugins.helpers import cdk_handler
@@ -36,7 +36,7 @@ class Team(Stack):
             stack_name=id,
             env=Environment(account=manifest.account_id, region=manifest.region),
         )
-        Tags.of(scope=self).add(key="Env", value=f"orbit-{manifest.name}")
+        Tags.of(scope=cast(IConstruct, self)).add(key="Env", value=f"orbit-{manifest.name}")
 
         repo: codecommit.Repository = codecommit.Repository(
             scope=self,
@@ -44,7 +44,9 @@ class Team(Stack):
             repository_name=f"orbit-{manifest.name}-{team_manifest.name}",
         )
 
-        team_role: iam.Role = iam.Role.from_role_arn(
+        if team_manifest.eks_nodegroup_role_arn is None:
+            raise ValueError("Node group role arn required")
+        team_role = iam.Role.from_role_arn(
             scope=self, id="team-role", role_arn=team_manifest.eks_nodegroup_role_arn, mutable=True
         )
         team_role.attach_inline_policy(
