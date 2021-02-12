@@ -394,6 +394,7 @@ def _get_job_spec(
     image: str,
     node_type: str,
     labels: Dict[str, str],
+    team_constants: TeamConstants = TeamConstants(),
 ) -> V1JobSpec:
     container = V1Container(
         name=job_name,
@@ -406,6 +407,7 @@ def _get_job_spec(
         ],
         resources=V1ResourceRequirements(limits={"cpu": 1, "memory": "2G"}, requests={"cpu": 1, "memory": "2G"}),
         security_context=V1SecurityContext(run_as_user=1000),
+        lifecycle=team_constants.life_cycle_hooks(),
     )
     user_name = os.environ["USERNAME"]
     volumes = [
@@ -418,7 +420,7 @@ def _get_job_spec(
             persistent_volume_claim=V1PersistentVolumeClaimVolumeSource(claim_name=f"orbit-{user_name}"),
         ),
     ]
-
+    init_containers = team_constants.init_containers(image)
     pod_spec = V1PodSpec(
         restart_policy="Never",
         containers=[container],
@@ -426,6 +428,7 @@ def _get_job_spec(
         node_selector={"team": team_name},
         service_account=team_name,
         security_context=V1PodSecurityContext(fs_group=1000),
+        init_containers=init_containers,
     )
     if node_type == "ec2":
         pod_spec.node_selector = {
@@ -463,7 +466,8 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
 
     env_name = env["AWS_ORBIT_ENV"] = props["AWS_ORBIT_ENV"]
     team_name = env["AWS_ORBIT_TEAM_SPACE"] = props["AWS_ORBIT_TEAM_SPACE"]
-    env["JUPYTERHUB_USER"] = os.environ["JUPYTERHUB_USER"]
+    env["JUPYTERHUB_USER"] = os.environ["JUPYTERHUB_USER"] if os.environ["JUPYTERHUB_USER"] else os.environ["USERNAME"]
+    env["USERNAME"] = env["JUPYTERHUB_USER"]
     env["AWS_STS_REGIONAL_ENDPOINTS"] = "regional"
     env["task_type"] = taskConfiguration["task_type"]
     env["tasks"] = json.dumps({"tasks": taskConfiguration["tasks"]})
@@ -501,6 +505,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
         image=image,
         node_type=node_type,
         labels=labels,
+        team_constants=team_constants,
     )
 
     return job
@@ -553,7 +558,12 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
     metadata: V1ObjectMeta = job_instance.metadata
 
     _logger.debug(f"started job {metadata.name}")
-    return {"ExecutionType": "eks", "Identifier": metadata.name, "NodeType": node_type}
+    return {
+        "ExecutionType": "eks",
+        "Identifier": metadata.name,
+        "NodeType": node_type,
+        "tasks": taskConfiguration["tasks"],
+    }
 
 
 def _run_task_ecs(taskConfiguration: dict) -> Any:

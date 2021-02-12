@@ -119,6 +119,7 @@ def deploy(manifest: "Manifest") -> None:
             args = ["manifest", manifest.filename, team_manifest.name]
         else:
             args = ["env", manifest.name, team_manifest.name]
+
         cdk.deploy(
             manifest=manifest,
             stack_name=team_manifest.stack_name,
