@@ -7,8 +7,8 @@ import IPython.core.display
 from IPython import get_ipython
 from IPython.core.magic import Magics, cell_magic, line_cell_magic, line_magic, magics_class, needs_local_scope
 
-from .. import controller
-from ..json import display_json, run_schema_induction_args
+from aws_orbit_sdk import controller
+from aws_orbit_sdk.json import display_json, run_schema_induction_args
 
 
 def exception_handler(exception_type, exception, traceback):
