@@ -15,6 +15,7 @@
 import json
 import logging
 import os
+import sys
 import time
 import urllib
 from datetime import datetime
@@ -293,9 +294,100 @@ def run_notebooks(taskConfiguration: dict) -> Any:
         raise RuntimeError("Unsupported compute_type '%s'", taskConfiguration["compute_type"])
 
 
+def make_pvc(
+    pvc_name,
+    team_name,
+    storage_class,
+    access_modes,
+    selector,
+    storage,
+    labels=None,
+) -> V1PersistentVolumeClaim:
+    """
+    Make a k8s pvc specification for running a user notebook.
+
+    Parameters
+    ----------
+    name:
+        Name of persistent volume claim. Must be unique within the namespace the object is
+        going to be created in. Must be a valid DNS label.
+    storage_class:
+        String of the name of the k8s Storage Class to use.
+    access_modes:
+        A list of specifying what access mode the pod should have towards the pvc
+    selector:
+        Dictionary Selector to match pvc to pv.
+    storage:
+        The ammount of storage needed for the pvc
+
+    """
+    pvc = V1PersistentVolumeClaim()
+    pvc.kind = "PersistentVolumeClaim"
+    pvc.api_version = "v1"
+    user_name = os.environ["USERNAME"]
+    pvc.metadata = V1ObjectMeta(
+        name=pvc_name,
+        labels=labels,
+        namespace=team_name,
+        annotations={
+            "AWS_ORBIT_TEAM_SPACE": team_name,
+            "USERNAME": user_name,
+            "volume.beta.kubernetes.io/storage-class": storage_class,
+        },
+    )
+    pvc.spec = V1PersistentVolumeClaimSpec()
+    pvc.spec.access_modes = access_modes
+    pvc.spec.resources = V1ResourceRequirements()
+    pvc.spec.resources.requests = {"storage": storage}
+    pvc.spec.storage_class_name = storage_class
+
+    if selector:
+        pvc.spec.selector = selector
+
+    return pvc
+
+
+def _make_create_pvc_request(team_name, labels):
+    user_name = os.environ["USERNAME"]
+    pvc_name = f"orbit-{user_name}"
+    pvc = make_pvc(
+        pvc_name=pvc_name,
+        team_name=team_name,
+        labels=labels,
+        storage_class=f"ebs-{team_name}-gp2",
+        access_modes=["ReadWriteOnce"],
+        storage="5Gi",
+        selector={},
+    )
+    # Try and create the pvc. If it succeeds we are good. If
+    # returns a 409 indicating it already exists we are good. If
+    # it returns a 403, indicating potential quota issue we need
+    # to see if pvc already exists before we decide to raise the
+    # error for quota being exceeded. This is because quota is
+    # checked before determining if the PVC needed to be
+    # created.
+    try:
+        pvc_instance = CoreV1Api().create_namespaced_persistent_volume_claim(namespace=team_name, body=pvc)
+        metadata: V1ObjectMeta = pvc_instance.metadata
+        return True
+    except ApiException as e:
+        if e.status == 409:
+            _logger.info("PVC " + pvc_name + " already exists, so did not create new pvc.")
+            return True
+        elif e.status == 403:
+            t, v, tb = sys.exc_info()
+            try:
+                CoreV1Api().read_namespaced_persistent_volume_claim_status(namespace=team_name, name=metadata.name)
+            except ApiException as e:
+                raise v.with_traceback(tb)
+            _logger.info("PVC " + pvc_name + " already exists, possibly have reached quota though.")
+            return True
+        else:
+            raise
+
+
 def _get_job_spec(
     job_name: str,
-    user_name: str,
     team_name: str,
     cmds: List[str],
     env_vars: Dict[str, Any],
@@ -310,21 +402,21 @@ def _get_job_spec(
         env=[V1EnvVar(name=k, value=v) for k, v in env_vars.items()],
         volume_mounts=[
             V1VolumeMount(name="efs-volume", mount_path="/efs"),
-            # V1VolumeMount(name="ebs-volume", mount_path="/ebs")
+            V1VolumeMount(name="ebs-volume", mount_path="/ebs"),
         ],
         resources=V1ResourceRequirements(limits={"cpu": 1, "memory": "2G"}, requests={"cpu": 1, "memory": "2G"}),
         security_context=V1SecurityContext(run_as_user=1000),
     )
-
+    user_name = os.environ["USERNAME"]
     volumes = [
         V1Volume(
             name="efs-volume",
             persistent_volume_claim=V1PersistentVolumeClaimVolumeSource(claim_name="jupyterhub"),
         ),
-        # V1Volume(
-        #     name="ebs-volume",
-        #     persistent_volume_claim=V1PersistentVolumeClaimVolumeSource(claim_name=f"claim-{user_name}"),
-        # ),
+        V1Volume(
+            name="ebs-volume",
+            persistent_volume_claim=V1PersistentVolumeClaimVolumeSource(claim_name=f"orbit-{user_name}"),
+        ),
     ]
 
     pod_spec = V1PodSpec(
@@ -403,7 +495,6 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
     job_name: str = f'run-{taskConfiguration["task_type"]}'
     job = _get_job_spec(
         job_name=job_name,
-        user_name=env_name,
         team_name=team_name,
         cmds=["python", "/opt/python-utils/notebook_cli.py"],
         env_vars=env,
@@ -443,6 +534,8 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
         k8_config.load_incluster_config()
     else:
         k8_config.load_kube_config()
+
+    _make_create_pvc_request(team_name=team_name, labels=labels)
 
     job = V1Job(
         api_version="batch/v1",
@@ -645,6 +738,8 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
         k8_config.load_incluster_config()
     else:
         k8_config.load_kube_config()
+
+    _make_create_pvc_request(team_name=team_name, labels=labels, request_timeout=120)
 
     job_instance: V1beta1CronJob = BatchV1beta1Api().create_namespaced_cron_job(namespace=team_name, body=job)
 
