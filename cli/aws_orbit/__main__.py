@@ -470,7 +470,7 @@ def run_container() -> None:
         raise click.ClickException('The "utils" submodule is required to use "run" commands')
     pass
     try:
-        import kubespawner  # noqa: F401
+        from kubespawner.objects import make_pod # noqa: F401
     except ImportError:
         raise click.ClickException("""The "jupyterhub-kubespawner" package is required to use "run" commands.
         please install it with "pip install --no-deps jupyterhub-kubespawner~=0.15.0" command or install our "kubespawner" submodule """)

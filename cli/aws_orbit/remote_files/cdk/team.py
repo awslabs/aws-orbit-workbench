@@ -34,10 +34,9 @@ from aws_orbit.manifest.subnet import SubnetKind
 from aws_orbit.manifest.team import TeamManifest
 from aws_orbit.remote_files.cdk.team_builders._lambda import LambdaBuilder
 from aws_orbit.remote_files.cdk.team_builders.ec2 import Ec2Builder
-from aws_orbit.remote_files.cdk.team_builders.ecs import EcsBuilder
+from aws_orbit.remote_files.cdk.team_builders.ecr import EcrBuilder
 from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
 from aws_orbit.remote_files.cdk.team_builders.iam import IamBuilder
-from aws_orbit.remote_files.cdk.team_builders.stepfunctions import StateMachineBuilder
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -150,76 +149,15 @@ class Team(Stack):
             scope=self, team_manifest=team_manifest, shared_fs=self.shared_fs
         )
 
-        self.ecs_cluster = EcsBuilder.build_cluster(
-            scope=self, manifest=manifest, team_manifest=team_manifest, vpc=self.i_vpc
-        )
-        self.ecr_image = EcsBuilder.build_ecr_image(scope=self, manifest=manifest, team_manifest=team_manifest)
-        self.ecr_image_spark = EcsBuilder.build_ecr_image_spark(
+        self.ecr_image = EcrBuilder.build_ecr_image(scope=self, manifest=manifest, team_manifest=team_manifest)
+        self.ecr_image_spark = EcrBuilder.build_ecr_image_spark(
             scope=self, manifest=manifest, team_manifest=team_manifest
-        )
-        self.ecs_execution_role = IamBuilder.build_ecs_role(scope=self)
-        self.ecs_task_definition = EcsBuilder.build_task_definition(
-            scope=self,
-            manifest=manifest,
-            team_manifest=team_manifest,
-            ecs_execution_role=self.ecs_execution_role,
-            ecs_task_role=self.role_eks_nodegroup,
-            file_system=self.shared_fs,
-            fs_accesspoint=self.efs_ap,
-            image=self.ecr_image,
-        )
-        self.container_runner_role = IamBuilder.build_container_runner_role(
-            scope=self, manifest=manifest, team_manifest=team_manifest
-        )
-        self.ecs_fargate_runner = StateMachineBuilder.build_ecs_run_container_state_machine(
-            scope=self,
-            manifest=manifest,
-            team_manifest=team_manifest,
-            cluster=self.ecs_cluster,
-            task_definition=self.ecs_task_definition,
-            team_security_group=self.team_security_group,
-            subnets=self.i_private_subnets if self.manifest.internet_accessible else self.i_isolated_subnets,
-            role=self.container_runner_role,
-            scratch_bucket=self.scratch_bucket,
-        )
-        self.eks_k8s_api = StateMachineBuilder.build_eks_k8s_api_state_machine(
-            scope=self,
-            manifest=manifest,
-            team_manifest=team_manifest,
-            role=self.container_runner_role,
-        )
-        self.eks_fargate_runner = StateMachineBuilder.build_eks_run_container_state_machine(
-            scope=self,
-            manifest=manifest,
-            team_manifest=team_manifest,
-            image=self.ecr_image,
-            role=self.container_runner_role,
-            node_type="fargate",
-        )
-        self.eks_ec2_runner = StateMachineBuilder.build_eks_run_container_state_machine(
-            scope=self,
-            manifest=manifest,
-            team_manifest=team_manifest,
-            image=self.ecr_image,
-            role=self.container_runner_role,
-            node_type="ec2",
-        )
-
-        self.container_runner = LambdaBuilder.build_container_runner(
-            scope=self,
-            manifest=manifest,
-            team_manifest=team_manifest,
-            ecs_fargate_runner=self.ecs_fargate_runner,
-            eks_fargate_runner=self.eks_fargate_runner,
-            eks_ec2_runner=self.eks_ec2_runner,
         )
 
         self.team_manifest.efs_id = self.shared_fs.file_system_id
         self.team_manifest.efs_ap_id = self.efs_ap.access_point_id
         self.team_manifest.eks_nodegroup_role_arn = self.role_eks_nodegroup.role_arn
         self.team_manifest.scratch_bucket = self.scratch_bucket.bucket_name
-        self.team_manifest.ecs_cluster_name = self.ecs_cluster.cluster_name
-        self.team_manifest.container_runner_arn = self.container_runner.function_arn
         self.team_manifest.eks_k8s_api_arn = self.eks_k8s_api.state_machine_arn
         self.team_manifest.team_kms_key_arn = self.team_kms_key.key_arn
         self.team_manifest.team_security_group_id = self.team_security_group.security_group_id

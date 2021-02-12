@@ -24,8 +24,6 @@ from typing import Any, Dict, List, Optional, Union, cast
 
 import boto3
 import pandas as pd
-from botocore.waiter import WaiterModel, create_waiter_with_client
-from kubernetes import client as k8_client
 from kubernetes import config as k8_config
 from kubernetes import watch as k8_watch
 from kubernetes.client import *
@@ -216,8 +214,6 @@ def run_python(taskConfiguration: dict) -> Any:
     taskConfiguration["task_type"] = "python"
     if "compute_type" not in taskConfiguration or taskConfiguration["compute_type"] == "eks":
         return _run_task_eks(taskConfiguration)
-    elif taskConfiguration["compute_type"] == "ecs":
-        return _run_task_ecs(taskConfiguration)
     else:
         raise RuntimeError("Unsupported compute_type '%s'", taskConfiguration["compute_type"])
 
@@ -289,8 +285,6 @@ def run_notebooks(taskConfiguration: dict) -> Any:
     taskConfiguration["task_type"] = "jupyter"
     if "compute_type" not in taskConfiguration or taskConfiguration["compute_type"] == "eks":
         return _run_task_eks(taskConfiguration)
-    elif taskConfiguration["compute_type"] == "ecs":
-        return _run_task_ecs(taskConfiguration)
     else:
         raise RuntimeError("Unsupported compute_type '%s'", taskConfiguration["compute_type"])
 
@@ -499,39 +493,6 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
         "tasks": taskConfiguration["tasks"],
     }
 
-
-def _run_task_ecs(taskConfiguration: dict) -> Any:
-    """
-    Runs Task in Python in a notebook using lambda.
-
-    Parameters
-    ----------
-    taskConfiguration: dict
-        A task definition to execute.
-
-    Returns
-    -------
-    Response Payload
-    """
-    lambda_client = boto3.client("lambda")
-    taskConfiguration["jupyterhub_user"] = os.environ.get("JUPYTERHUB_USER", None)
-    payload = json.dumps(taskConfiguration)
-    _logger.debug(f"Execution Payload: {payload}")
-    response = lambda_client.invoke(
-        FunctionName=_get_invoke_function_name(),
-        InvocationType="RequestResponse",
-        LogType="Tail",
-        Payload=bytes(payload, "utf-8"),
-    )
-    if response["ResponseMetadata"]["HTTPStatusCode"] == 200:
-        response_payload = json.loads(response["Payload"].read().decode("utf-8"))
-    else:
-        response_payload = None
-
-    _logger.debug(f"Execution Response: {response_payload}")
-    return response_payload
-
-
 def schedule_python(triggerName: str, frequency: str, taskConfiguration: Dict[str, Any]) -> str:
     """
     Schedule Python Task
@@ -576,8 +537,6 @@ def schedule_python(triggerName: str, frequency: str, taskConfiguration: Dict[st
     taskConfiguration["task_type"] = "python"
     if "compute_type" not in taskConfiguration or taskConfiguration["compute_type"] == "eks":
         return schedule_task_eks(triggerName, frequency, taskConfiguration)
-    elif taskConfiguration["compute_type"] == "ecs":
-        return schedule_task_ecs(triggerName, frequency, taskConfiguration)
     else:
         raise RuntimeError("Unsupported compute_type '%s'", taskConfiguration["compute_type"])
 
@@ -625,8 +584,6 @@ def schedule_notebooks(triggerName: str, frequency: str, taskConfiguration: dict
     taskConfiguration["task_type"] = "jupyter"
     if "compute_type" not in taskConfiguration or taskConfiguration["compute_type"] == "eks":
         return schedule_task_eks(triggerName, frequency, taskConfiguration)
-    elif taskConfiguration["compute_type"] == "ecs":
-        return schedule_task_ecs(triggerName, frequency, taskConfiguration)
     else:
         raise RuntimeError("Unsupported compute_type '%s'", taskConfiguration["compute_type"])
 
@@ -703,38 +660,8 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
 def delete_task_schedule(triggerName: str, compute_type: str = "eks") -> None:
     if compute_type == "eks":
         return delete_task_schedule_eks(triggerName)
-    elif compute_type == "ecs":
-        return delete_task_schedule_ecs(triggerName)
     else:
         raise RuntimeError("Unsupported compute_type '%s'", compute_type)
-
-
-def delete_task_schedule_ecs(triggerName: str) -> None:
-    """
-    Delete Task Schedule
-
-    Parameters
-    ----------
-    triggerName: str
-        The arn of the event rule
-
-    Returns
-    -------
-    None
-        None.
-
-    Example
-    --------
-    >>> import aws_orbit_sdk.controller as controller
-    >>> controller.delete_scheduled_task(triggerName = 'arn:aws:events:...')
-    """
-    events_client = boto3.client("events")
-    props = get_properties()
-    triggerName = f"orbit-{props['AWS_ORBIT_ENV']}-{props['AWS_ORBIT_TEAM_SPACE']}-{triggerName}"
-    response = events_client.remove_targets(Rule=triggerName, Ids=["1"], Force=True)
-
-    events_client.delete_rule(Name=triggerName, Force=True)
-    print("notebook schedule deleted: ", triggerName)
 
 
 def delete_task_schedule_eks(triggerName: str) -> None:
@@ -746,131 +673,6 @@ def delete_task_schedule_eks(triggerName: str) -> None:
         k8_config.load_kube_config()
 
     BatchV1beta1Api().delete_namespaced_cron_job(name=f"orbit-{team_name}-{triggerName}", namespace=team_name)
-
-
-def schedule_task_ecs(triggerName: str, frequency: str, notebookConfiguration: dict) -> Any:
-    """
-    Parameters
-    ----------
-    triggerName: str
-        A unique name of the time trigger that will start this exec
-    frequency: str
-        A cron string e.g., cron(0/15 * 1/1 * ? *) to define the starting times of the execution
-    notebookConfiguration: Any
-
-    Return
-    ------
-    arn : str
-        The response will be ARN of the event rule created to start this execution:'arn:aws:events:us-east-2:...'
-
-    Example
-    -------
-    Example for schedule_task similar to run_python and run_notebook tasks (refer to 'run_python').
-    """
-    lambda_client = boto3.client("lambda")
-    events_client = boto3.client("events")
-    fn_response = lambda_client.get_function(FunctionName=_get_invoke_function_name())
-    props = get_properties()
-    triggerName = f"orbit-{props['AWS_ORBIT_ENV']}-{props['AWS_ORBIT_TEAM_SPACE']}-{triggerName}"
-    fn_arn = fn_response["Configuration"]["FunctionArn"]
-
-    try:
-        events_client.delete_rule(Name=triggerName)
-    except:
-        print("Rule created first time")
-    else:
-        print("Deleted previous rule " + triggerName)
-
-    rule_response = events_client.put_rule(
-        Name=triggerName,
-        ScheduleExpression=frequency.strip(),
-        State="ENABLED",
-    )
-
-    target_response = events_client.put_targets(
-        Rule=triggerName,
-        Targets=[
-            {"Id": "1", "Arn": fn_arn, "Input": json.dumps(notebookConfiguration)},
-        ],
-    )
-
-    return rule_response["RuleArn"]
-
-
-def get_active_tasks(user_filter: Optional[Any]) -> Union[dict, List[Dict[str, Any]]]:
-    """
-    Get Active Tasks
-
-    Parameters
-    -----------
-    user_filter: Any
-
-    returns
-    -------
-    taskdef: dict
-        Describes a list of Active Task Definitions
-
-    Example
-    --------
-    >>> import aws_orbit_sdk.controller as controller
-    >>> controller.get_active_tasks()
-    """
-    ecs = boto3.client("ecs")
-    props = get_properties()
-    clusterName = props["ecs_cluster"]
-
-    task_definitions = []
-    tasks = ecs.list_tasks(
-        cluster=clusterName,
-    )["taskArns"]
-
-    if len(tasks) == 0:
-        return {}
-    task_descs = ecs.describe_tasks(cluster=clusterName, tasks=tasks)["tasks"]
-    for t in task_descs:
-        task_definition = {}
-        task_definition["lastStatus"] = t["lastStatus"]
-        #         task_definition['container'] = t
-        vars = {}
-
-        for k in t["overrides"]["containerOverrides"][0]["environment"]:
-            vars[k["name"]] = k["value"]
-        orbit_task = json.loads(vars["tasks"].replace("'", '"'))
-        if "notebookName" in orbit_task["tasks"][0]:
-            task_name = (
-                orbit_task["tasks"][0]["notebookName"].split(".")[0] if "notebookName" in orbit_task["tasks"][0] else ""
-            )
-        elif "module" in orbit_task["tasks"][0]:
-            module = orbit_task["tasks"][0]["module"]
-            functionName = orbit_task["tasks"][0]["functionName"] if "functionName" in orbit_task["tasks"][0] else ""
-            task_name = f"{module}.{functionName}"
-        else:
-            task_name = "unknown"
-
-        task_definition["task_name"] = task_name
-        task_definition["taskArn"] = t["taskArn"]
-        task_definition["taskID"] = t["taskArn"]
-
-        if "startedAt" in t:
-            start_at = t["startedAt"]
-            task_definition["epoch"] = start_at.timestamp()
-            start_time = start_at.strftime("%Y-%m-%d %H:%M:%S")
-            task_definition["start_time"] = start_time
-            if "stoppedAt" in t:
-                duration = t["stoppedAt"] - start_at
-                task_definition["stop_time"] = t["stoppedAt"]
-            else:
-                now = datetime.now()
-                start_at = start_at.replace(tzinfo=None)
-                duration = now - start_at
-
-            task_definition["duration"] = str(duration).split(".")[0]
-
-        task_definitions.append(task_definition)
-
-    task_definitions.sort(key=order_def)
-    return task_definitions
-
 
 def order_def(task_definition: Any) -> datetime:
     """
@@ -1005,155 +807,6 @@ def tail_logs(team_name, tasks) -> None:
                             _logger.info(line)
                     else:
                         _logger.info("task not started yet for %s", task_id)
-
-
-def wait_for_tasks_to_complete_ecs(
-    tasks: List[Dict[str, str]],
-    delay: Optional[int] = 60,
-    maxAttempts: Optional[int] = 10,
-    tail_log: Optional[bool] = False,
-) -> None:
-    """
-    Parameters
-    ----------
-    tasks: lst
-       A list of structures with container type, execution arn, and job arn.
-    delay: int
-       Number of seconds to wait until checking containers state again (default = 60).
-    maxAttempts: str
-        Number of attempts to check if containers stopped before returning a failure (default = 10).
-    tail_log: bool
-       if True, will tail the log of the containers until they are stopped (default = false).
-
-    Returns
-    -------
-    None
-        None.
-
-    Example
-    --------
-    >>> from aws_orbit_sdk.controller import wait_for_tasks_to_complete
-
-
-    """
-    sfn = boto3.client("stepfunctions")
-    logs = boto3.client("logs")
-
-    props = get_properties()
-
-    waiter_model = WaiterModel(get_stepfunctions_waiter_config(delay=delay, max_attempts=maxAttempts))
-    waiter = waiter_model.get_waiter("ExecutionComplete")
-
-    completed_tasks = []
-    errored_tasks = []
-    attempts = 0
-
-    while True:
-        incomplete_tasks = []
-        attempts += 1
-
-        while tasks:
-            task = tasks.pop(0)
-            _logger.debug(f"Checking execution state of: {task}")
-            response = sfn.describe_execution(executionArn=task["ExecutionArn"])
-
-            for acceptor in waiter.acceptors:
-                if acceptor.matcher_func(response):
-                    task["State"] = acceptor.state
-                    if acceptor.state == "success":
-                        _logger.debug("Execution success")
-                        completed_tasks.append(task)
-                        break
-                    elif acceptor.state == "failure":
-                        _logger.debug("Execution failure")
-                        errored_tasks.append(task)
-                        break
-            else:
-                if "Error" in response:
-                    task["State"] = response["Error"].get("Message", "Unknown")
-                    _logger.debug(f"Execution error: {task['State']}")
-                    errored_tasks.append(task)
-                else:
-                    _logger.debug("Tasks are running...")
-                    incomplete_tasks.append(task)
-
-        tasks = incomplete_tasks
-
-        _logger.info(f"Running: {len(tasks)} Completed: {len(completed_tasks)} Errored: {len(errored_tasks)}")
-
-        if not tasks:
-            _logger.info("All tasks stopped")
-            break
-
-        if attempts >= maxAttempts:
-            _logger.info("Stopped waiting as maxAttempts reached")
-            break
-
-        time.sleep(delay)
-
-    if tail_log:
-        _logger.debug("Tailing Logs")
-
-        def log_config(task):
-            _logger.debug(f"Getting Log Config for Task: {task}")
-            if task["ExecutionType"] == "ecs":
-                id = task["Identifier"].split("/")[2]
-                config = {
-                    "Identifier": task["Identifier"],
-                    "LogGroupName": f"/orbit/tasks/{props['AWS_ORBIT_ENV']}/{props['AWS_ORBIT_TEAM_SPACE']}/containers",
-                    "LogStreamName": f"orbit-{props['AWS_ORBIT_ENV']}-{props['AWS_ORBIT_TEAM_SPACE']}/orbit-runner/{id}",
-                }
-                _logger.debug(f"Found LogConfig: {config}")
-                return config
-            elif task["ExecutionType"] == "eks":
-                log_group = f"/orbit/pods/{props['AWS_ORBIT_ENV']}"
-                prefix = f"fluent-bit-kube.var.log.containers.{task['Identifier']}-"
-                response = logs.describe_log_streams(logGroupName=log_group, logStreamNamePrefix=prefix)
-                log_streams = response.get("logStreams", [])
-                if log_streams:
-                    config = {
-                        "Identifier": task["Identifier"],
-                        "LogGroupName": log_group,
-                        "LogStreamName": log_streams[0]["logStreamName"],
-                    }
-                    _logger.debug(f"Found LogConfig: {config}")
-                    return config
-                else:
-                    _logger.debug("No LogConfig found")
-                    return None
-            else:
-                _logger.debug("No LogConfig found")
-                return None
-
-        def print_logs(type, log_configs):
-            if not log_configs:
-                return
-
-            print("-" * 20 + f" {type} " + "-" * 20)
-            for log_config in log_configs:
-                _logger.debug(f"Retrieving Logs for: {log_config}")
-                if log_config is None:
-                    continue
-
-                print(f"Identifier: {log_config['Identifier']}")
-                response = logs.get_log_events(
-                    logGroupName=log_config["LogGroupName"],
-                    logStreamName=log_config["LogStreamName"],
-                    limit=20,
-                )
-
-                for e in response.get("events", []):
-                    print(
-                        datetime.fromtimestamp(e["timestamp"] / 1000).strftime("%Y-%m-%d %H:%M:%S"),
-                        e["message"],
-                    )
-                else:
-                    print()
-
-        print_logs("Completed", [log_config(t) for t in completed_tasks])
-        print_logs("Errored", [log_config(t) for t in errored_tasks])
-        print_logs("Running", [log_config(t) for t in tasks])
-
 
 def logEvents(paginator: Any, logGroupName: Any, logStreams: Any, fromTime: Any) -> int:
     """

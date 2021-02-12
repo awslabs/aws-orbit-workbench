@@ -33,7 +33,7 @@ def get_properties() -> Dict[str, str]:
     -------
     prop : dict
         Dictionary containing pathnames for the Orbit Workbench Enviornment, Team Space, S3 Bucket Path, Orbit Workbench Source
-        Repository and ECS Cluster.
+        Repository.
 
     Example
     -------
