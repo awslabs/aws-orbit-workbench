@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 import botocore.exceptions
 
 from aws_orbit import utils
-from aws_orbit.services import efs, elb, s3
+from aws_orbit.services import efs, elb, s3, ssm
 from aws_orbit.utils import boto3_client, boto3_resource
 
 if TYPE_CHECKING:
@@ -163,3 +163,23 @@ def demo_remaining_dependencies(context: "Context", vpc_id: Optional[str] = None
     _endpoints(vpc_id=vpc_id)
     _network_interface(vpc_id=vpc_id)
     _security_group(vpc_id=vpc_id)
+
+
+def demo_remaining_dependencies_contextless(env_name: str, vpc_id: Optional[str] = None) -> None:
+    efs.delete_env_filesystems(env_name=env_name)
+    ssm_param_name = f"/orbit/{env_name}/demo"
+    demo_config: Optional[Dict[str, Any]] = ssm.get_parameter_if_exists(name=ssm_param_name)
+    if demo_config:
+        try:
+            s3.delete_bucket(bucket=demo_config["LakeBucket"])
+        except Exception as ex:
+            _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
+        try:
+            s3.delete_bucket(bucket=demo_config["SecuredLakeBucket"])
+        except Exception as ex:
+            _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
+    if vpc_id:
+        elb.delete_load_balancers(env_name=env_name)
+        _endpoints(vpc_id=vpc_id)
+        _network_interface(vpc_id=vpc_id)
+        _security_group(vpc_id=vpc_id)
