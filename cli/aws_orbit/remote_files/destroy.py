@@ -63,7 +63,9 @@ def destroy(args: Tuple[str, ...]) -> None:
         plugins.PLUGINS_REGISTRIES.load_plugins(
             context=context, plugin_changesets=changeset.plugin_changesets, teams_changeset=changeset.teams_changeset
         )
-        _logger.debug("Plugins loaded")
+    else:
+        plugins.PLUGINS_REGISTRIES.load_plugins(context=context, plugin_changesets=[], teams_changeset=None)
+    _logger.debug("Plugins loaded")
 
     kubectl.destroy_teams(context=context)
     _logger.debug("Kubernetes Team components destroyed")
