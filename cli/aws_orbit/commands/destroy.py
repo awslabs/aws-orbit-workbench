@@ -61,6 +61,8 @@ def destroy_remaining_resources(context: "Context", keep_demo: bool) -> None:
 
 def destroy_all(env: str, teams_only: bool, keep_demo: bool, debug: bool) -> None:
     with MessagesContext("Destroying", debug=debug) as msg_ctx:
+        ssm.cleanup_changeset(env_name=env)
+        ssm.cleanup_manifest(env_name=env)
         context: "Context" = load_context_from_ssm(env_name=env)
         msg_ctx.info("Context loaded")
         msg_ctx.info(f"Teams: {','.join([t.name for t in context.teams])}")

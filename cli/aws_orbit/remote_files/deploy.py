@@ -160,13 +160,15 @@ def deploy(args: Tuple[str, ...]) -> None:
 
     context: "Context" = load_context_from_ssm(env_name=env_name)
     _logger.debug("Context loaded.")
-    changeset: "Changeset" = load_changeset_from_ssm(env_name=env_name)
+    changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=env_name)
     _logger.debug("Changeset loaded.")
 
-    plugins.PLUGINS_REGISTRIES.load_plugins(
-        context=context, plugin_changesets=changeset.plugin_changesets, teams_changeset=changeset.teams_changeset
-    )
-    _logger.debug("Plugins loaded")
+    if changeset:
+        plugins.PLUGINS_REGISTRIES.load_plugins(
+            context=context, plugin_changesets=changeset.plugin_changesets, teams_changeset=changeset.teams_changeset
+        )
+        _logger.debug("Plugins loaded")
+
     docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
     cdk_toolkit.deploy(context=context)
@@ -177,7 +179,7 @@ def deploy(args: Tuple[str, ...]) -> None:
         context=context,
         add_images=[],
         remove_images=[],
-        eks_system_masters_roles_changes=changeset.eks_system_masters_roles_changeset,
+        eks_system_masters_roles_changes=changeset.eks_system_masters_roles_changeset if changeset else None,
     )
     _logger.debug("Env Stack deployed")
     if skip_images_remote_flag == "skip-images":
@@ -185,17 +187,20 @@ def deploy(args: Tuple[str, ...]) -> None:
     else:
         deploy_images_remotely(context=context)
         _logger.debug("Docker Images deployed")
-    eksctl.deploy_env(context=context, eks_system_masters_roles_changes=changeset.eks_system_masters_roles_changeset)
+    eksctl.deploy_env(
+        context=context,
+        eks_system_masters_roles_changes=changeset.eks_system_masters_roles_changeset if changeset else None,
+    )
     _logger.debug("EKS Environment Stack deployed")
     kubectl.deploy_env(context=context)
     _logger.debug("Kubernetes Environment components deployed")
 
     if not env_only:
-        teams.deploy(context=context, teams_changeset=changeset.teams_changeset)
+        teams.deploy(context=context, teams_changeset=changeset.teams_changeset if changeset else None)
         _logger.debug("Team Stacks deployed")
         eksctl.deploy_teams(context=context)
         _logger.debug("EKS Team Stacks deployed")
-        kubectl.deploy_teams(context=context, changes=changeset.plugin_changesets)
+        kubectl.deploy_teams(context=context, changes=changeset.plugin_changesets if changeset else [])
         _logger.debug("Kubernetes Team components deployed")
     else:
         _logger.debug("Skipping Team Stacks")

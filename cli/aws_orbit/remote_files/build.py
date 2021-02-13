@@ -17,15 +17,13 @@ from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from boto3 import client
 
-from aws_orbit import docker, plugins, sh
-from aws_orbit.models.changeset import load_changeset_from_ssm
+from aws_orbit import docker, sh
 from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.remote_files import teams as team_utils
 from aws_orbit.utils import boto3_client
 
 if TYPE_CHECKING:
-    from aws_orbit.models.changeset import Changeset
-    from aws_orbit.models.context import Context
+    from aws_orbit.models.context import Context, TeamContext
     from aws_orbit.models.manifest import ImageManifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -45,22 +43,17 @@ def build_image(args: Tuple[str, ...]) -> None:
     docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
 
-    changeset: "Changeset" = load_changeset_from_ssm(env_name=context.name)
-    _logger.debug("Changeset loaded")
-
-    plugins.PLUGINS_REGISTRIES.load_plugins(
-        context=context, plugin_changesets=changeset.plugin_changesets, teams_changeset=changeset.teams_changeset
-    )
-    _logger.debug("Plugins loaded")
     ecr = boto3_client("ecr")
     ecr_repo = f"orbit-{context.name}-{image_name}"
     try:
         ecr.describe_repositories(repositoryNames=[ecr_repo])
     except ecr.exceptions.RepositoryNotFoundException:
         _create_repository(context.name, ecr, ecr_repo)
-    image_def: "ImageManifest" = getattr(context.images, image_name)
-    _logger.debug(" image def: %s", image_def)
-    if getattr(context.images, image_name).source == "code":
+
+    image_def: Optional["ImageManifest"] = getattr(context.images, image_name, None)
+    _logger.debug("image def: %s", image_def)
+
+    if image_def is None or getattr(context.images, image_name).source == "code":
         path = image_name
         _logger.debug("path: %s", path)
         if script is not None:
@@ -72,13 +65,12 @@ def build_image(args: Tuple[str, ...]) -> None:
 
     if teams:
         _logger.debug(f"Building and Deploying Team images: {teams}")
-        for team in teams:
-            for team_context in context.teams:
-                if team == team_context.name:
-                    team_utils._deploy_team_image(context=context, team_context=team_context, image=image_name)
-                    break
+        for team_name in teams:
+            team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_name)
+            if team_context:
+                team_utils._deploy_team_image(context=context, team_context=team_context, image=image_name)
             else:
-                _logger.debug(f"Skipped unknown Team: {team}")
+                _logger.debug(f"Skipped unknown Team: {team_name}")
 
 
 def _create_repository(env_name: str, ecr: client, ecr_repo: str) -> None:

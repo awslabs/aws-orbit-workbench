@@ -27,6 +27,7 @@ from marshmallow import Schema
 from marshmallow_dataclass import dataclass
 from yamlinclude import YamlIncludeConstructor
 
+from aws_orbit import utils
 from aws_orbit.models.common import BaseSchema
 from aws_orbit.services import ssm
 from aws_orbit.utils import boto3_client
@@ -302,11 +303,13 @@ def load_manifest_from_file(filename: str) -> Manifest:
     filepath = os.path.abspath(filename)
     _logger.debug("filepath: %s", filepath)
     filedir: str = os.path.dirname(filepath)
+    utils.print_dir(dir=filedir)
     YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.SafeLoader, base_dir=filedir)
     _add_ssm_param_injector()
     _add_env_var_injector()
     with open(filepath, "r") as f:
         raw: Dict[str, Any] = cast(Dict[str, Any], yaml.safe_load(f))
+    _logger.debug("raw: %s", raw)
     manifest: Manifest = cast(Manifest, Manifest.Schema().load(data=raw, many=False, partial=False, unknown="RAISE"))
     dump_manifest_to_ssm(manifest=manifest)
     return manifest
@@ -334,11 +337,13 @@ def dump_manifest_to_ssm(manifest: Manifest) -> None:
     ssm.put_parameter(name=manifest_parameter_name, obj=content)
 
 
-def load_manifest_from_ssm(env_name: str) -> Manifest:
+def load_manifest_from_ssm(env_name: str) -> Optional[Manifest]:
     context_parameter_name: str = f"/orbit/{env_name}/manifest"
+    main = ssm.get_parameter_if_exists(name=context_parameter_name)
+    if main is None:
+        return None
     teams_parameters = ssm.list_parameters(prefix=f"/orbit/{env_name}/teams/")
     _logger.debug("teams_parameters: %s", teams_parameters)
     teams = [ssm.get_parameter(name=p) for p in teams_parameters if p.endswith("/manifest")]
-    main = ssm.get_parameter(name=context_parameter_name)
     main["Teams"] = teams
     return cast(Manifest, Manifest.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))

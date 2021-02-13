@@ -18,11 +18,11 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
 from kubernetes import config
 
-from aws_orbit import bundle, plugins, remote, sh, utils
+from aws_orbit import bundle, remote, sh, utils
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.remote_files.utils import get_k8s_context
-from aws_orbit.services import cfn, codebuild
+from aws_orbit.services import cfn, codebuild, ssm
 
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context
@@ -57,6 +57,7 @@ def write_context_ssm(profiles: PROFILES_TYPE, env_name: str, team_name: str) ->
 
 
 def restart_jupyterhub(env: str, team: str, msg_ctx: MessagesContext) -> None:
+    ssm.cleanup_manifest(env_name=env)
     context: "Context" = load_context_from_ssm(env_name=env)
     msg_ctx.tip("JupyterHub update...")
     msg_ctx.tip("JupyterHub and notebooks in your namespace will be restarted. Please close notebook and login again")
@@ -71,6 +72,8 @@ def restart_jupyterhub(env: str, team: str, msg_ctx: MessagesContext) -> None:
 
 def delete_profile(env: str, team: str, profile_name: str, debug: bool) -> None:
     with MessagesContext("Profile Deleted", debug=debug) as msg_ctx:
+        ssm.cleanup_changeset(env_name=env)
+        ssm.cleanup_manifest(env_name=env)
         msg_ctx.info("Retrieving existing profiles")
         profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
         _logger.debug("Existing user profiles for team %s: %s", team, profiles)
@@ -90,6 +93,8 @@ def delete_profile(env: str, team: str, profile_name: str, debug: bool) -> None:
 
 
 def list_profiles(env: str, team: str, debug: bool) -> None:
+    ssm.cleanup_changeset(env_name=env)
+    ssm.cleanup_manifest(env_name=env)
     profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
     _logger.debug("Existing user profiles for team %s: %s", team, profiles)
     print(json.dumps(profiles, indent=4, sort_keys=True))
@@ -97,6 +102,8 @@ def list_profiles(env: str, team: str, debug: bool) -> None:
 
 def build_profile(env: str, team: str, profile: str, debug: bool) -> None:
     with MessagesContext("Adding profile", debug=debug) as msg_ctx:
+        ssm.cleanup_changeset(env_name=env)
+        ssm.cleanup_manifest(env_name=env)
         msg_ctx.info("Retrieving existing profiles")
         profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
         _logger.debug("Existing user profiles for team %s: %s", team, profiles)
@@ -125,33 +132,30 @@ def build_image(
     env: str, dir: str, name: str, script: Optional[str], teams: Optional[List[str]], region: Optional[str], debug: bool
 ) -> None:
     with MessagesContext("Deploying Docker Image", debug=debug) as msg_ctx:
+        ssm.cleanup_changeset(env_name=env)
+        ssm.cleanup_manifest(env_name=env)
         context: "Context" = load_context_from_ssm(env_name=env)
         msg_ctx.info("Manifest loaded")
-
         if cfn.does_stack_exist(stack_name=f"orbit-{context.name}") is False:
             msg_ctx.error("Please, deploy your environment before deploy any addicional docker image")
             return
-
-        plugins.PLUGINS_REGISTRIES.load_plugins(
-            context=context,
-            msg_ctx=msg_ctx,
-            plugin_changesets=[],
-            teams_changeset=None,
-        )
         msg_ctx.progress(3)
 
         bundle_path = bundle.generate_bundle(
-            command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)], changeset=None
+            command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)], changeset=None, plugins=False
         )
         msg_ctx.progress(4)
+
         script_str = "NO_SCRIPT" if script is None else script
         teams_str = "NO_TEAMS" if not teams else ",".join(teams)
         buildspec = codebuild.generate_spec(
             context=context,
-            plugins=True,
+            plugins=False,
             cmds_build=[f"orbit remote --command build_image {env} {name} {script_str} {teams_str}"],
             changeset=None,
         )
+        msg_ctx.progress(5)
+
         remote.run(
             command_name=f"deploy_image-{name}",
             context=context,
@@ -161,6 +165,7 @@ def build_image(
             timeout=15,
         )
         msg_ctx.info("Docker Image deploy into ECR")
+        msg_ctx.progress(98)
         address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}-{name}"
         msg_ctx.tip(f"ECR Image Address: {stylize(address, underline=True)}")
         msg_ctx.progress(100)

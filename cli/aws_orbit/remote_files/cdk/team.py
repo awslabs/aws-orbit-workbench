@@ -269,13 +269,17 @@ def main() -> None:
         team_name: str = sys.argv[2]
     else:
         raise ValueError("Unexpected number of values in sys.argv.")
-    changeset: "Changeset" = load_changeset_from_ssm(env_name=context.name)
+
+    changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=context.name)
+    _logger.debug("Changeset loaded.")
 
     team_policies: Optional[List[str]] = None
     image: Optional[str] = None
 
-    if changeset.teams_changeset and team_name in changeset.teams_changeset.added_teams_names:
-        manifest: "Manifest" = load_manifest_from_ssm(env_name=sys.argv[1])
+    if changeset and changeset.teams_changeset and team_name in changeset.teams_changeset.added_teams_names:
+        manifest: Optional["Manifest"] = load_manifest_from_ssm(env_name=sys.argv[1])
+        if manifest is None:
+            raise ValueError("manifest is None!")
         team_manifest: Optional["TeamManifest"] = manifest.get_team_by_name(name=team_name)
         if team_manifest:
             team_policies = team_manifest.policies

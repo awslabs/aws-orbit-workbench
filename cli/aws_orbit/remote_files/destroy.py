@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import logging
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple
 
 from aws_orbit import plugins
 from aws_orbit.models.changeset import load_changeset_from_ssm
@@ -56,14 +56,15 @@ def destroy(args: Tuple[str, ...]) -> None:
     else:
         raise ValueError("Unexpected number of values in args.")
 
-    _logger.debug("Manifest loaded")
-    changeset: "Changeset" = load_changeset_from_ssm(env_name=env_name)
+    changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=env_name)
     _logger.debug("Changeset loaded.")
 
-    plugins.PLUGINS_REGISTRIES.load_plugins(
-        context=context, plugin_changesets=changeset.plugin_changesets, teams_changeset=changeset.teams_changeset
-    )
-    _logger.debug("Plugins loaded")
+    if changeset:
+        plugins.PLUGINS_REGISTRIES.load_plugins(
+            context=context, plugin_changesets=changeset.plugin_changesets, teams_changeset=changeset.teams_changeset
+        )
+        _logger.debug("Plugins loaded")
+
     kubectl.destroy_teams(context=context)
     _logger.debug("Kubernetes Team components destroyed")
     eksctl.destroy_teams(context=context)

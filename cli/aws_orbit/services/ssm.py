@@ -102,5 +102,9 @@ def cleanup_context(env_name: str) -> None:
     cleanup_by_suffix(env_name=env_name, suffix="/context")
 
 
+def cleanup_changeset(env_name: str) -> None:
+    cleanup_by_suffix(env_name=env_name, suffix="/changeset")
+
+
 def list_teams_contexts(env_name: str) -> List[str]:
     return [p for p in list_parameters(prefix=f"/orbit/{env_name}/teams/") if p.endswith("/context")]

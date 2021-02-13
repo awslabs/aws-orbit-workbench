@@ -213,13 +213,15 @@ class PluginRegistries:
         if self._context is None:
             raise RuntimeError("Empty PLUGINS_REGISTRIES. Please, run load_plugins() before try to add hooks.")
         plugin_module_name: str = utils.extract_plugin_module_name(func=func)
+        _logger.debug("Adding hook %s for %s", hook_name, plugin_module_name)
 
         teams_names: List[str] = [t.name for t in self._context.teams]
         if self._teams_changeset is not None:
-            for removed in self._teams_changeset.removed_teams_names:
-                if removed not in teams_names:
-                    teams_names.append(removed)
+            for team_name in self._teams_changeset.removed_teams_names + self._teams_changeset.added_teams_names:
+                if team_name not in teams_names:
+                    teams_names.append(team_name)
 
+        _logger.debug("teams_names: %s", teams_names)
         for team_name in teams_names:
             for plugin_name, registry in self._registries[team_name].items():
                 if registry.module_name == plugin_module_name:

@@ -267,6 +267,8 @@ def dump_changeset_to_str(changeset: Changeset) -> str:
     return cast(str, yaml.dump(content, sort_keys=False))
 
 
-def load_changeset_from_ssm(env_name: str) -> Changeset:
-    content = ssm.get_parameter(name=f"/orbit/{env_name}/changeset")
+def load_changeset_from_ssm(env_name: str) -> Optional[Changeset]:
+    content = ssm.get_parameter_if_exists(name=f"/orbit/{env_name}/changeset")
+    if content is None:
+        return None
     return cast(Changeset, Changeset.Schema().load(data=content, many=False, partial=False, unknown="RAISE"))

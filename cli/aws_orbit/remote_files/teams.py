@@ -139,7 +139,9 @@ def eval_removed_teams(context: "Context", teams_changeset: Optional["TeamsChang
 
 
 def deploy(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> None:
-    manifest: "Manifest" = load_manifest_from_ssm(env_name=context.name)
+    manifest: Optional["Manifest"] = load_manifest_from_ssm(env_name=context.name)
+    if manifest is None:
+        raise ValueError("manifest is None!")
     eval_removed_teams(context=context, teams_changeset=teams_changeset)
     for team_manifest in manifest.teams:
         args = [context.name, team_manifest.name]
