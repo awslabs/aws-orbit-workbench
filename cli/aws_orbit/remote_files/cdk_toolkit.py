@@ -13,25 +13,28 @@
 #    limitations under the License.
 
 import logging
+from typing import TYPE_CHECKING
 
 from aws_orbit import cdk
-from aws_orbit.manifest import Manifest
 from aws_orbit.services import cfn, s3
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def deploy(manifest: Manifest) -> None:
-    _logger.debug("Deploying %s CDK Toolkit...", manifest.cdk_toolkit_stack_name)
-    cdk.deploy_toolkit(manifest=manifest)
+def deploy(context: "Context") -> None:
+    _logger.debug("Deploying %s CDK Toolkit...", context.cdk_toolkit.stack_name)
+    cdk.deploy_toolkit(context=context)
 
 
-def destroy(manifest: Manifest) -> None:
-    _logger.debug("Destroying %s CDK Toolkit...", manifest.cdk_toolkit_stack_name)
-    if manifest.cdk_toolkit_stack_name and manifest.cdk_toolkit_s3_bucket:
-        if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.cdk_toolkit_stack_name):
+def destroy(context: "Context") -> None:
+    _logger.debug("Destroying %s CDK Toolkit...", context.cdk_toolkit.stack_name)
+    if context.cdk_toolkit.s3_bucket:
+        if cfn.does_stack_exist(stack_name=context.cdk_toolkit.stack_name):
             try:
-                s3.delete_bucket(manifest=manifest, bucket=manifest.cdk_toolkit_s3_bucket)
+                s3.delete_bucket(bucket=context.cdk_toolkit.s3_bucket)
             except Exception as ex:
                 _logger.debug("Skipping Toolkit bucket deletion. Cause: %s", ex)
-            cfn.destroy_stack(manifest=manifest, stack_name=manifest.cdk_toolkit_stack_name)
+            cfn.destroy_stack(stack_name=context.cdk_toolkit.stack_name)

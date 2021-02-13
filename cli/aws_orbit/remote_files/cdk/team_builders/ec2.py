@@ -12,21 +12,18 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import List, cast
+from typing import TYPE_CHECKING, List, cast
 
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.core as core
 
-from aws_orbit.manifest import Manifest
-from aws_orbit.manifest.subnet import SubnetKind, SubnetManifest
-from aws_orbit.manifest.team import TeamManifest
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context, SubnetContext, SubnetKind
 
 
 class Ec2Builder:
     @staticmethod
-    def build_subnets_from_kind(
-        scope: core.Construct, subnet_manifests: List[SubnetManifest], subnet_kind: SubnetKind
-    ) -> List[ec2.ISubnet]:
+    def build_subnets(scope: core.Construct, subnet_manifests: List["SubnetContext"]) -> List[ec2.ISubnet]:
         return [
             ec2.PrivateSubnet.from_subnet_attributes(
                 scope=scope,
@@ -36,14 +33,13 @@ class Ec2Builder:
                 route_table_id=s.route_table_id,
             )
             for s in subnet_manifests
-            if s.kind == subnet_kind
         ]
 
     @staticmethod
     def build_efs_security_group(
-        scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest, vpc: ec2.IVpc, subnet_kind: SubnetKind
+        scope: core.Construct, context: "Context", team_name: str, vpc: ec2.IVpc, subnet_kind: "SubnetKind"
     ) -> ec2.SecurityGroup:
-        name: str = f"orbit-{manifest.name}-{team_manifest.name}-efs-sg"
+        name: str = f"orbit-{context.name}-{team_name}-efs-sg"
         sg = ec2.SecurityGroup(
             scope=scope,
             id=name,
@@ -51,8 +47,10 @@ class Ec2Builder:
             vpc=vpc,
             allow_all_outbound=True,
         )
-
-        for subnet in manifest.vpc.subnets:
+        subnets = (
+            context.networking.private_subnets + context.networking.public_subnets + context.networking.isolated_subnets
+        )
+        for subnet in subnets:
             if subnet.kind is subnet_kind:
                 sg.add_ingress_rule(
                     peer=ec2.Peer.ipv4(cast(str, subnet.cidr_block)),
@@ -64,14 +62,14 @@ class Ec2Builder:
 
     @staticmethod
     def build_team_security_group(
-        scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest, vpc: ec2.IVpc
+        scope: core.Construct, context: "Context", team_name: str, vpc: ec2.IVpc
     ) -> ec2.SecurityGroup:
-        name: str = f"orbit-{manifest.name}-{team_manifest.name}-sg"
+        name: str = f"orbit-{context.name}-{team_name}-sg"
         sg = ec2.SecurityGroup(scope=scope, id=name, security_group_name=name, vpc=vpc, allow_all_outbound=True)
         sg.add_ingress_rule(
             peer=sg,
             connection=ec2.Port.all_traffic(),
-            description=f"Allow ingress from all resources utilizing the Team ({team_manifest.name}) security group",
+            description=f"Allow ingress from all resources utilizing the Team ({team_name}) security group",
         )
         core.Tags.of(scope=sg).add(key="Name", value=name)
         return sg

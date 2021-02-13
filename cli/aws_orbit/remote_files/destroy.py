@@ -13,12 +13,17 @@
 #    limitations under the License.
 
 import logging
-from typing import Tuple
+from typing import TYPE_CHECKING, Optional, Tuple
 
-from aws_orbit import changeset, plugins
-from aws_orbit.manifest import Manifest
+from aws_orbit import plugins
+from aws_orbit.models.changeset import load_changeset_from_ssm
+from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.remote_files import cdk_toolkit, demo, eksctl, env, kubectl, teams
 from aws_orbit.services import ecr
+
+if TYPE_CHECKING:
+    from aws_orbit.models.changeset import Changeset
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -26,24 +31,24 @@ _logger: logging.Logger = logging.getLogger(__name__)
 def delete_image(args: Tuple[str, ...]) -> None:
     _logger.debug("args %s", args)
     env_name: str = args[0]
-    manifest: Manifest = Manifest(filename=None, env=env_name, region=None)
+    context: "Context" = load_context_from_ssm(env_name=env_name)
 
     if len(args) == 2:
         image_name: str = args[1]
     else:
         raise ValueError("Unexpected number of values in args.")
 
-    env.deploy(manifest=manifest, add_images=[], remove_images=[image_name], eks_system_masters_roles_changes=None)
+    env.deploy(context=context, add_images=[], remove_images=[image_name], eks_system_masters_roles_changes=None)
     _logger.debug("Env changes deployed")
-    ecr.delete_repo(manifest=manifest, repo=f"orbit-{manifest.name}-{image_name}")
+    ecr.delete_repo(repo=f"orbit-{context.name}-{image_name}")
     _logger.debug("Docker Image Destroyed from ECR")
 
 
 def destroy(args: Tuple[str, ...]) -> None:
     _logger.debug("args %s", args)
     env_name: str = args[0]
-    manifest: Manifest = Manifest(filename=None, env=env_name, region=None)
-    _logger.debug("manifest.name %s", manifest.name)
+    context: "Context" = load_context_from_ssm(env_name=env_name)
+    _logger.debug("context.name %s", context.name)
 
     if len(args) == 2:
         teams_only: bool = args[1] == "teams-stacks"
@@ -51,33 +56,33 @@ def destroy(args: Tuple[str, ...]) -> None:
     else:
         raise ValueError("Unexpected number of values in args.")
 
-    manifest.fillup()
-    _logger.debug("Manifest loaded")
-    changes: changeset.Changeset = changeset.read_changeset_file(manifest=manifest, filename="changeset.json")
-    _logger.debug(f"Changeset: {changes.asdict()}")
-    _logger.debug("Changeset loaded")
-    plugins.PLUGINS_REGISTRIES.load_plugins(
-        manifest=manifest, plugin_changesets=changes.plugin_changesets, teams_changeset=changes.teams_changeset
-    )
-    _logger.debug("Plugins loaded")
-    kubectl.destroy_teams(manifest=manifest)
+    changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=env_name)
+    _logger.debug("Changeset loaded.")
+
+    if changeset:
+        plugins.PLUGINS_REGISTRIES.load_plugins(
+            context=context, plugin_changesets=changeset.plugin_changesets, teams_changeset=changeset.teams_changeset
+        )
+        _logger.debug("Plugins loaded")
+
+    kubectl.destroy_teams(context=context)
     _logger.debug("Kubernetes Team components destroyed")
-    eksctl.destroy_teams(manifest=manifest)
+    eksctl.destroy_teams(context=context)
     _logger.debug("EKS Team Stacks destroyed")
-    teams.destroy_all(manifest=manifest)
+    teams.destroy_all(context=context)
     _logger.debug("Teams Stacks destroyed")
 
     if not teams_only:
-        kubectl.destroy_env(manifest=manifest)
+        kubectl.destroy_env(context=context)
         _logger.debug("Kubernetes Environment components destroyed")
-        eksctl.destroy_env(manifest=manifest)
+        eksctl.destroy_env(context=context)
         _logger.debug("EKS Environment Stacks destroyed")
-        env.destroy(manifest=manifest)
+        env.destroy(context=context)
         _logger.debug("Env Stack destroyed")
         if not keep_demo:
-            demo.destroy(manifest=manifest)
+            demo.destroy(context=context)
             _logger.debug("Demo Stack destroyed")
-            cdk_toolkit.destroy(manifest=manifest)
+            cdk_toolkit.destroy(context=context)
             _logger.debug("CDK Toolkit Stack destroyed")
     else:
         _logger.debug("Skipping Environment, Demo, and CDK Toolkit Stacks")

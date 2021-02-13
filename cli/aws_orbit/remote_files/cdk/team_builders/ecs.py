@@ -12,6 +12,8 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from typing import TYPE_CHECKING, Optional
+
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecr as ecr
 import aws_cdk.aws_ecs as ecs
@@ -20,25 +22,25 @@ import aws_cdk.aws_iam as iam
 import aws_cdk.aws_logs as logs
 import aws_cdk.core as core
 
-from aws_orbit.manifest import Manifest
-from aws_orbit.manifest.team import TeamManifest
+from aws_orbit.models.context import construct_ecr_repository_name, get_container_defaults
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context
 
 
 class EcsBuilder:
     @staticmethod
-    def build_cluster(
-        scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest, vpc: ec2.IVpc
-    ) -> ecs.Cluster:
+    def build_cluster(scope: core.Construct, context: "Context", team_name: str, vpc: ec2.IVpc) -> ecs.Cluster:
         return ecs.Cluster(
             scope,
             "ecs_cluster",
             vpc=vpc,
-            cluster_name=f"orbit-{manifest.name}-{team_manifest.name}-cluster",
+            cluster_name=f"orbit-{context.name}-{team_name}-cluster",
         )
 
     @staticmethod
-    def build_ecr_image(scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest) -> ecs.EcrImage:
-        repository_name, tag = team_manifest.construct_ecr_repository_name(manifest.name).split(":")
+    def build_ecr_image(scope: core.Construct, context: "Context", image: Optional[str]) -> ecs.EcrImage:
+        repository_name, tag = construct_ecr_repository_name(env_name=context.name, image=image).split(":")
         repository = ecr.Repository.from_repository_name(
             scope,
             "ecr_repository",
@@ -47,8 +49,8 @@ class EcsBuilder:
         return ecs.ContainerImage.from_ecr_repository(repository=repository, tag=tag)
 
     @staticmethod
-    def build_ecr_image_spark(scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest) -> ecs.EcrImage:
-        repository_name, tag = team_manifest.construct_ecr_repository_name(manifest.name).split(":")
+    def build_ecr_image_spark(scope: core.Construct, context: "Context", image: Optional[str]) -> ecs.EcrImage:
+        repository_name, tag = construct_ecr_repository_name(env_name=context.name, image=image).split(":")
         repository_name += "-spark"
         repository = ecr.Repository.from_repository_name(
             scope,
@@ -60,8 +62,8 @@ class EcsBuilder:
     @staticmethod
     def build_task_definition(
         scope: core.Construct,
-        manifest: Manifest,
-        team_manifest: TeamManifest,
+        context: "Context",
+        team_name: str,
         ecs_execution_role: iam.Role,
         ecs_task_role: iam.Role,
         file_system: efs.FileSystem,
@@ -71,19 +73,19 @@ class EcsBuilder:
         ecs_log_group = logs.LogGroup(
             scope,
             "ecs_log_group",
-            log_group_name=f"/orbit/tasks/{manifest.name}/{team_manifest.name}/containers",
+            log_group_name=f"/orbit/tasks/{context.name}/{team_name}/containers",
             removal_policy=core.RemovalPolicy.DESTROY,
         )
 
         task_definition = ecs.TaskDefinition(
             scope,
             "ecs_task_definition",
-            memory_mib=f"{team_manifest.container_defaults['memory']}",
-            cpu=f"{team_manifest.container_defaults['cpu'] * 1024}",
+            memory_mib=f"{get_container_defaults()['memory']}",
+            cpu=f"{get_container_defaults()['cpu'] * 1024}",
             execution_role=ecs_execution_role,
             task_role=ecs_task_role,
             compatibility=ecs.Compatibility.EC2_AND_FARGATE,
-            family=f"orbit-{manifest.name}-{team_manifest.name}-task-definition",
+            family=f"orbit-{context.name}-{team_name}-task-definition",
             network_mode=ecs.NetworkMode.AWS_VPC,
             volumes=[
                 ecs.Volume(
@@ -98,10 +100,10 @@ class EcsBuilder:
         )
         container_definition = task_definition.add_container(
             "orbit-runner",
-            memory_limit_mib=team_manifest.container_defaults["memory"],
+            memory_limit_mib=get_container_defaults()["memory"],
             image=image,
             logging=ecs.LogDriver.aws_logs(
-                stream_prefix=f"orbit-{manifest.name}-{team_manifest.name}",
+                stream_prefix=f"orbit-{context.name}-{team_name}",
                 log_group=ecs_log_group,
             ),
         )

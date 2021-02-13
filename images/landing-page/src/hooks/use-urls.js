@@ -40,14 +40,14 @@ const fetchParameters = async (groups, jwt) => {
   let urls = [];
   if (Array.isArray(groups) && groups.length) {
     const params = {
-      Names: groups.map((x) => `/orbit/${window.REACT_APP_ENV_NAME}/teams/${x}/manifest`),
+      Names: groups.map((x) => `/orbit/${window.REACT_APP_ENV_NAME}/teams/${x}/context`),
     };
     const ssm = new AWS.SSM();
     // await new Promise(r => setTimeout(r, 3000));
     const response = await ssm.getParameters(params).promise();
     urls = response.Parameters.map((x) => ({
-      title: toTitleCase(x.Name.slice(x.Name.slice(0, -9).lastIndexOf("/") + 1, -9).replace("-", " ")),
-      url: `http://${JSON.parse(x.Value)["jupyter-url"]}/hub/login?next=%2Fhub%2Fhome&token=${jwt}`,
+      title: toTitleCase(x.Name.slice(x.Name.slice(0, -8).lastIndexOf("/") + 1, -8).replace("-", " ")),
+      url: `http://${JSON.parse(x.Value)["JupyterUrl"]}/hub/login?next=%2Fhub%2Fhome&token=${jwt}`,
     }));
   }
   console.log("urls", urls);

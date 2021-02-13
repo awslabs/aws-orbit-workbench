@@ -19,8 +19,6 @@ import aws_cdk.aws_efs as efs
 import aws_cdk.aws_kms as kms
 import aws_cdk.core as core
 
-from aws_orbit.manifest.team import TeamManifest
-
 
 class EfsBuilder:
     @staticmethod
@@ -51,14 +49,14 @@ class EfsBuilder:
 
     @staticmethod
     def build_file_system_access_point(
-        scope: core.Construct, team_manifest: TeamManifest, shared_fs: efs.FileSystem
+        scope: core.Construct, team_name: str, shared_fs: efs.FileSystem
     ) -> efs.AccessPoint:
-        ap_name: str = f"{team_manifest.name}"
+        ap_name: str = f"{team_name}"
         return efs.AccessPoint(
             scope=scope,
             id=ap_name,
             file_system=shared_fs,
-            path=f"/{team_manifest.name}",
+            path=f"/{team_name}",
             posix_user=efs.PosixUser(gid="100", uid="1000"),
             create_acl=efs.Acl(owner_gid="100", owner_uid="1000", permissions="770"),
         )

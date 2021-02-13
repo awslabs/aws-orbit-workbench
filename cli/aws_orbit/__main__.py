@@ -456,7 +456,7 @@ def remote_cli(command: str, args: Tuple[str]) -> None:
     from aws_orbit.remote_files import REMOTE_FUNC_TYPE, RemoteCommands
 
     _logger.debug("Remote bundle structure:")
-    print_dir(os.getcwd(), exclude=["__pycache__", "cdk"])
+    print_dir(os.getcwd(), exclude=["__pycache__", "cdk", ".venv", ".mypy_cache"])
     remote_func: REMOTE_FUNC_TYPE = getattr(RemoteCommands, command)
     remote_func(args)
 
