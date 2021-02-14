@@ -16,12 +16,10 @@
 #
 
 set -ex
-LOCAL_PATH="/home/jovyan/private/samples3"
+LOCAL_PATH="/home/jovyan/shared/samples"
 
-if [ ! -d $LOCAL_PATH ]; then
-    mkdir -p $LOCAL_PATH
-    S3_PATH="s3://$AWS_ORBIT_S3_BUCKET/samples/"
+mkdir -p $LOCAL_PATH
+S3_PATH="s3://$AWS_ORBIT_S3_BUCKET/samples/"
 
-    mkdir -p $LOCAL_PATH
-    aws s3 sync $S3_PATH $LOCAL_PATH
-fi
+mkdir -p $LOCAL_PATH
+aws s3 sync $S3_PATH $LOCAL_PATH

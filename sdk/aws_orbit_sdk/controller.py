@@ -330,7 +330,7 @@ def _make_create_pvc_request(team_constants: TeamConstants, labels):
         return True
     except ApiException as e:
         if e.status == 409:
-            _logger.info("PVC " + pvc_name + " already exists, so did not create new pvc.")
+            _logger.debug("PVC " + pvc_name + " already exists, so did not create new pvc.")
             return True
         elif e.status == 403:
             t, v, tb = sys.exc_info()
@@ -340,7 +340,7 @@ def _make_create_pvc_request(team_constants: TeamConstants, labels):
                 )
             except ApiException as e:
                 raise v.with_traceback(tb)
-            _logger.info("PVC " + pvc_name + " already exists, possibly have reached quota though.")
+            _logger.warning("PVC " + pvc_name + " already exists, possibly have reached quota though.")
             return True
         else:
             raise
