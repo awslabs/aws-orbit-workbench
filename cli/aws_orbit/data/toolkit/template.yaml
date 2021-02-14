@@ -123,10 +123,14 @@ Resources:
               - arn:aws:cloudformation:${region}:${account_id}:stack/eksctl-orbit-${env_name}*
           - Effect: Allow
             Action:
-              - ssm:GetParameters
-              - ssm:DescribeParameters
-              - ssm:GetParameter
-              - ssm:DescribeParameter
+              - ssm:Get*
+              - ssm:Describe*
+            Resource:
+              - arn:aws:ssm:${region}:${account_id}:parameter/orbit*
+          - Effect: Allow
+            Action:
+              - ssm:Get*
+              - ssm:Describe*
               - ssm:PutParameter
               - ssm:AddTagsToResource
               - ssm:DeleteParameter
@@ -250,6 +254,11 @@ Resources:
               - iam:DeletePolicyVersion
             Resource:
               - arn:aws:iam::${account_id}:policy/orbit-${env_name}-*
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Resource:
+              - arn:aws:iam::${account_id}:role/orbit-${env_name}-admin
         Version: '2012-10-17'
       Description: ''
       ManagedPolicyName: orbit-${env_name}-admin-iam-s3

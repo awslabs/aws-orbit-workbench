@@ -2,7 +2,7 @@
 
 set -x
 
-cat <<EOF |  orbit run notebook --env dev-env --team lake-creator --user testing --wait --tail-logs -
+cat <<EOF |  orbit run notebook --env dev-env --team lake-creator --user testing --wait --debug --tail-logs -
 {
       "compute": {
           "container" : {

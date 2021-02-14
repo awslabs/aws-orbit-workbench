@@ -46,9 +46,10 @@ MANIFEST_TEAM_TYPE = Dict[str, Union[str, int, None, List[MANIFEST_PLUGIN_TYPE]]
 MANIFEST_PROPERTY_MAP_TYPE = Dict[str, Union[str, Dict[str, Any]]]
 
 __CURRENT_TEAM_MANIFEST__: MANIFEST_TEAM_TYPE = None
+__CURRENT_ENV_MANIFEST__: MANIFEST_TEAM_TYPE = None
 
 
-def read_raw_manifest_ssm(env_name: str, team_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
+def read_team_manifest_ssm(env_name: str, team_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
     parameter_name: str = f"/orbit/{env_name}/teams/{team_name}/manifest"
     _logger.debug("Trying to read manifest from SSM parameter (%s).", parameter_name)
     client = boto3.client("ssm")
@@ -58,6 +59,18 @@ def read_raw_manifest_ssm(env_name: str, team_name: str) -> Optional[MANIFEST_TE
         _logger.debug("Team %s Manifest SSM parameter not found: %s", team_name, parameter_name)
         return None
     _logger.debug("Team %s Manifest SSM parameter found.", team_name)
+    return cast(MANIFEST_TEAM_TYPE, json.loads(json_str))
+
+def read_env_manifest_ssm(env_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
+    parameter_name: str = f"/orbit/{env_name}/manifest"
+    _logger.debug("Trying to read manifest from SSM parameter (%s).", parameter_name)
+    client = boto3.client("ssm")
+    try:
+        json_str: str = client.get_parameter(Name=parameter_name)["Parameter"]["Value"]
+    except client.exceptions.ParameterNotFound:
+        _logger.debug("Env %s Manifest SSM parameter not found: %s", env_name, parameter_name)
+        return None
+    _logger.debug("Env %s Manifest SSM parameter found.", env_name)
     return cast(MANIFEST_TEAM_TYPE, json.loads(json_str))
 
 
@@ -346,12 +359,20 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
     Response Payload
     """
     props = get_properties()
-
+    global __CURRENT_TEAM_MANIFEST__,__CURRENT_ENV_MANIFEST__
     env = team_constants.env()
-    env_name = env["AWS_ORBIT_ENV"]
-    team_name = env["AWS_ORBIT_TEAM_SPACE"]
+    env_name = props["AWS_ORBIT_ENV"]
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    if __CURRENT_TEAM_MANIFEST__ == None or __CURRENT_TEAM_MANIFEST__["name"] != team_name:
+        __CURRENT_TEAM_MANIFEST__ = read_team_manifest_ssm(env_name, team_name)
+    if __CURRENT_ENV_MANIFEST__ == None:
+        __CURRENT_ENV_MANIFEST__ = read_env_manifest_ssm(env_name)
+
+    env["AWS_ORBIT_ENV"] = env_name
+    env["AWS_ORBIT_TEAM_SPACE"] = team_name
     env["JUPYTERHUB_USER"] = team_constants.username
     env["USERNAME"] = team_constants.username
+    env["AWS_ORBIT_S3_BUCKET"] = __CURRENT_ENV_MANIFEST__["toolkit-s3-bucket"]
     env["task_type"] = taskConfiguration["task_type"]
     env["tasks"] = json.dumps({"tasks": taskConfiguration["tasks"]})
     if "compute" in taskConfiguration:
@@ -359,10 +380,8 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
     else:
         env["compute"] = json.dumps({"compute": {"compute_type": "eks", "node_type": "fargate"}})
 
-    global __CURRENT_TEAM_MANIFEST__
 
-    if __CURRENT_TEAM_MANIFEST__ == None or __CURRENT_TEAM_MANIFEST__["name"] != team_name:
-        __CURRENT_TEAM_MANIFEST__ = read_raw_manifest_ssm(env_name, team_name)
+
 
     if "compute" in taskConfiguration and "profile" in taskConfiguration["compute"]:
         profile = __CURRENT_TEAM_MANIFEST__["compute"]["profile"]
@@ -787,10 +806,10 @@ def tail_logs(team_name, tasks) -> None:
             _logger.debug("pod: %s", pod_instance.metadata.name)
             pod_status: V1PodStatus = cast(V1PodStatus, pod_instance.status)
             _logger.debug("pod s: %s", pod_status)
-            if not pod_status.container_statuses:
+            if pod_status.conditions:
                 for c in pod_status.conditions:
                     condition: V1PodCondition = cast(V1PodCondition, c)
-                    if condition.reason == "Unschedulable":
+                    if condition.type == "Failed" or condition.reason == "Unschedulable":
                         _logger.info("pod has error status %s , %s", condition.reason, condition.message)
                         return
             if pod_status.container_statuses:

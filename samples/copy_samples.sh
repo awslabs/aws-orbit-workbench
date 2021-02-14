@@ -16,27 +16,12 @@
 #
 
 set -ex
+LOCAL_PATH="/home/jovyan/private/samples3"
 
-mkdir -p /efs/"$USERNAME"
-mkdir -p /efs/shared/scheduled/notebooks
-mkdir -p /efs/shared/scheduled/outputs
-mkdir -p /home/jovyan/tmp
+if [ ! -d $LOCAL_PATH ]; then
+    mkdir -p $LOCAL_PATH
+    S3_PATH="s3://$AWS_ORBIT_S3_BUCKET/samples/"
 
-ln -s /efs/"$USERNAME"/ /home/jovyan/private
-ln -s /ebs/ /home/jovyan/ebs
-ln -s /efs/shared/ /home/jovyan/shared
-
-# Bootstrap
-
-LOCAL_PATH="/home/jovyan/.orbit/bootstrap/scripts/"
-S3_PATH="s3://${AWS_ORBIT_S3_BUCKET}/teams/${AWS_ORBIT_TEAM_SPACE}/bootstrap/"
-
-mkdir -p $LOCAL_PATH
-aws s3 cp $S3_PATH $LOCAL_PATH --recursive
-for filename in $(ls $LOCAL_PATH)
-do
-    echo "Running ${filename}"
-    sh "${LOCAL_PATH}${filename}"
-done
-
-rm -fR /home/jovyan/.aws
+    mkdir -p $LOCAL_PATH
+    aws s3 sync $S3_PATH $LOCAL_PATH
+fi
