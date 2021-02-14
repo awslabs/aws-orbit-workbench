@@ -13,33 +13,34 @@
 #    limitations under the License.
 
 import logging
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, cast
 
 import aws_cdk.aws_ssm as ssm
-from aws_cdk.core import Construct, Environment, Stack, Tags
-from aws_orbit.manifest import Manifest
-from aws_orbit.manifest.team import TeamManifest
+from aws_cdk.core import Construct, Environment, IConstruct, Stack, Tags
 from aws_orbit.plugins.helpers import cdk_handler
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context, TeamContext
 
 _logger: logging.Logger = logging.getLogger("aws_orbit")
 
 
 class MyStack(Stack):
     def __init__(
-        self, scope: Construct, id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]
+        self, scope: Construct, id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]
     ) -> None:
 
         super().__init__(
             scope=scope,
             id=id,
             stack_name=id,
-            env=Environment(account=manifest.account_id, region=manifest.region),
+            env=Environment(account=context.account_id, region=context.region),
         )
-        Tags.of(scope=self).add(key="Env", value=f"orbit-{manifest.name}")
+        Tags.of(scope=cast(IConstruct, self)).add(key="Env", value=f"orbit-{context.name}")
         _logger.info(f"Plugin parameters: {parameters}")
         # just showing how to create resource.  Do not forget to update the IAM policy or make sure the attached policy
         # for the team is allowing the creation and destruction of the resource.
-        ssm_parameter: str = f"/orbit/{team_manifest.manifest.name}/{team_manifest.name}/hello-plugin"
+        ssm_parameter: str = f"/orbit/{context.name}/{team_context.name}/hello-plugin"
         ssm.StringParameter(
             scope=self, id="param", string_value="testing plugin hello world", parameter_name=ssm_parameter
         )

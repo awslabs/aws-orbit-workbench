@@ -79,7 +79,7 @@ c.KubeSpawner.storage_access_modes = ["ReadWriteOnce"]
 c.KubeSpawner.storage_capacity = "5Gi"
 c.KubeSpawner.storage_pvc_ensure = True
 c.KubeSpawner.extra_annotations = {"AWS_ORBIT_TEAM_SPACE": TEAM, "AWS_ORBIT_ENV": ENV_NAME}
-pvc_name_template = "claim-{username}{servername}"
+pvc_name_template = "claim-{username}"
 c.KubeSpawner.pvc_name_template = pvc_name_template
 c.KubeSpawner.volumes = [
     {"name": "efs-volume", "persistentVolumeClaim": {"claimName": "jupyterhub"}},
@@ -165,12 +165,12 @@ def per_user_profiles(spawner):
     env = spawner.environment["AWS_ORBIT_ENV"]
     ssm = boto3.Session().client("ssm")
     app_log.info("Getting profiles...")
-    ssm_parameter_name: str = f"/orbit/{env}/teams/{team}/manifest"
+    ssm_parameter_name: str = f"/orbit/{env}/teams/{team}/context"
     json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
 
     team_manifest_dic = json.loads(json_str)
-    if team_manifest_dic.get("profiles"):
-        default_profiles = team_manifest_dic["profiles"]
+    if team_manifest_dic.get("Profiles"):
+        default_profiles = team_manifest_dic["Profiles"]
     else:
         app_log.info("No default profiles found")
         default_profiles = profile_list_default

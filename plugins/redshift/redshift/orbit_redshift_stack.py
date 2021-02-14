@@ -14,17 +14,18 @@
 
 import logging
 import os
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, cast
 
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda
 from aws_cdk import aws_redshift as redshift
 from aws_cdk import aws_secretsmanager, core
-from aws_cdk.core import Construct, Environment, Stack, Tags
-from aws_orbit.manifest import Manifest
-from aws_orbit.manifest.team import TeamManifest
+from aws_cdk.core import Construct, Environment, IConstruct, Stack, Tags
 from aws_orbit.plugins.helpers import cdk_handler
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context, TeamContext
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -185,7 +186,11 @@ class RedshiftFunctionStandard(core.Construct):
         env_name: str = redshift_common.env_name
         teamspace_name: str = redshift_common.teamspace_name
         code = aws_lambda.Code.asset(_lambda_path(path="redshift_db_creator"))
-        lake_role: iam.Role = iam.Role.from_role_arn(
+
+        if redshift_common.lake_role_arn is None:
+            raise ValueError("Orbit lake role arn required")
+
+        lake_role = iam.Role.from_role_arn(
             self,
             f"{env_name}-{teamspace_name}-role",
             redshift_common.lake_role_arn,
@@ -223,29 +228,34 @@ class RedshiftFunctionStandard(core.Construct):
 
 class RedshiftStack(Stack):
     def __init__(
-        self, scope: Construct, id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]
+        self, scope: Construct, id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]
     ) -> None:
 
         super().__init__(
             scope=scope,
             id=id,
             stack_name=id,
-            env=Environment(account=manifest.account_id, region=manifest.region),
+            env=Environment(account=context.account_id, region=context.region),
         )
-        Tags.of(scope=self).add(key="Env", value=f"orbit-{manifest.name}")
+        Tags.of(scope=cast(IConstruct, self)).add(key="Env", value=f"orbit-{context.name}")
 
         # Collecting required parameters
         team_space_props: Dict[str, Any] = {
-            "account_id": team_manifest.manifest.account_id,
-            "region": team_manifest.manifest.region,
+            "account_id": context.account_id,
+            "region": context.region,
             "partition": core.Aws.PARTITION,
-            "env_name": team_manifest.manifest.name,
-            "teamspace_name": team_manifest.name,
-            "lake_role_name": f"orbit-{team_manifest.manifest.name}-{team_manifest.name}-role",
-            "vpc_id": manifest.vpc.asdict()["vpc-id"],
-            "subnet_ids": [sm.subnet_id for sm in manifest.vpc.subnets],
-            "team_security_group_id": team_manifest.team_security_group_id,
-            "team_kms_key_arn": team_manifest.team_kms_key_arn,
+            "env_name": context.name,
+            "teamspace_name": team_context.name,
+            "lake_role_name": f"orbit-{context.name}-{team_context.name}-role",
+            "vpc_id": context.networking.vpc_id,
+            "subnet_ids": [
+                s.subnet_id
+                for s in context.networking.public_subnets
+                + context.networking.isolated_subnets
+                + context.networking.private_subnets
+            ],
+            "team_security_group_id": team_context.team_security_group_id,
+            "team_kms_key_arn": team_context.team_kms_key_arn,
         }
 
         self._redshift_clusters = RedshiftClusters(

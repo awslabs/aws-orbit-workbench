@@ -29,13 +29,14 @@ def _set_environ(env: str, team: str, user: str) -> None:
     os.environ["AWS_ORBIT_S3_BUCKET"] = "Unknown"
 
 
-def _wait(tasks: Dict[str, Any], delay: Optional[int], max_attempts: Optional[int], tail_logs: bool) -> None:
+def _wait(tasks: Dict[str, Any], delay: Optional[int], max_attempts: Optional[int], tail_logs: bool) -> bool:
     params = {"tasks": [tasks], "tail_log": tail_logs}
     if delay:
         params["delay"] = delay
     if max_attempts:
         params["maxAttempts"] = max_attempts
-    controller.wait_for_tasks_to_complete(**params)
+    no_error: bool = controller.wait_for_tasks_to_complete(**params)
+    return no_error
 
 
 def run_python_container(
@@ -48,15 +49,16 @@ def run_python_container(
     max_attempts: Optional[int],
     tail_logs: bool,
     debug: bool,
-) -> None:
+) -> bool:
     if debug:
-        controller.logger.setLevel(logging.DEBUG)
+        controller._logger.setLevel(logging.DEBUG)
     _set_environ(env, team, user)
     response = controller.run_python(tasks)
     if wait:
-        _wait(response, delay, max_attempts, tail_logs)
+        return _wait(response, delay, max_attempts, tail_logs)
     else:
         print(json.dumps(response))
+        return True
 
 
 def run_notebook_container(
@@ -69,12 +71,13 @@ def run_notebook_container(
     max_attempts: Optional[int],
     tail_logs: bool,
     debug: bool,
-) -> None:
+) -> bool:
     if debug:
-        controller.logger.setLevel(logging.DEBUG)
+        controller._logger.setLevel(logging.DEBUG)
     _set_environ(env, team, user)
     response = controller.run_notebooks(tasks)
     if wait:
-        _wait(response, delay, max_attempts, tail_logs)
+        return _wait(response, delay, max_attempts, tail_logs)
     else:
         print(json.dumps(response))
+        return True

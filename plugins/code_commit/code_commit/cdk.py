@@ -13,39 +13,42 @@
 #    limitations under the License.
 
 import logging
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, cast
 
 import aws_cdk.aws_codecommit as codecommit
 import aws_cdk.aws_iam as iam
-from aws_cdk.core import Construct, Environment, Stack, Tags
-from aws_orbit.manifest import Manifest
-from aws_orbit.manifest.team import TeamManifest
+from aws_cdk.core import Construct, Environment, IConstruct, Stack, Tags
 from aws_orbit.plugins.helpers import cdk_handler
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context, TeamContext
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Team(Stack):
     def __init__(
-        self, scope: Construct, id: str, manifest: Manifest, team_manifest: TeamManifest, parameters: Dict[str, Any]
+        self, scope: Construct, id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]
     ) -> None:
 
         super().__init__(
             scope=scope,
             id=id,
             stack_name=id,
-            env=Environment(account=manifest.account_id, region=manifest.region),
+            env=Environment(account=context.account_id, region=context.region),
         )
-        Tags.of(scope=self).add(key="Env", value=f"orbit-{manifest.name}")
+        Tags.of(scope=cast(IConstruct, self)).add(key="Env", value=f"orbit-{context.name}")
 
         repo: codecommit.Repository = codecommit.Repository(
             scope=self,
             id="repo",
-            repository_name=f"orbit-{manifest.name}-{team_manifest.name}",
+            repository_name=f"orbit-{context.name}-{team_context.name}",
         )
 
-        team_role: iam.Role = iam.Role.from_role_arn(
-            scope=self, id="team-role", role_arn=team_manifest.eks_nodegroup_role_arn, mutable=True
+        if team_context.eks_nodegroup_role_arn is None:
+            raise ValueError("Node group role arn required")
+        team_role = iam.Role.from_role_arn(
+            scope=self, id="team-role", role_arn=team_context.eks_nodegroup_role_arn, mutable=True
         )
         team_role.attach_inline_policy(
             policy=iam.Policy(

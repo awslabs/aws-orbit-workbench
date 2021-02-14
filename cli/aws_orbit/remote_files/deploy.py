@@ -18,24 +18,23 @@ import os
 from concurrent.futures import Future
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple
 
-from aws_orbit import bundle, changeset, docker, plugins, remote, sh
-from aws_orbit.manifest import Manifest, get_team_by_name
+from aws_orbit import bundle, docker, plugins, remote, sh
+from aws_orbit.models.changeset import load_changeset_from_ssm
+from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.remote_files import cdk_toolkit, demo, eksctl, env, kubectl, teams
 from aws_orbit.services import codebuild
 
 if TYPE_CHECKING:
-    from aws_orbit.changeset import TeamsChangeset
-    from aws_orbit.manifest.team import TeamManifest
+    from aws_orbit.models.changeset import Changeset
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def _deploy_image(args: Tuple[str, ...]) -> None:
     _logger.debug("_deploy_image args: %s", args)
-    filename: str = args[0]
-    manifest: Manifest = Manifest(filename=filename, env=None, region=None)
-    manifest.fetch_ssm()
-    _logger.debug("manifest.name: %s", manifest.name)
+    context: "Context" = load_context_from_ssm(env_name=args[0])
+    _logger.debug("manifest.name: %s", context.name)
     if len(args) == 2:
         image_name: str = args[1]
         script: Optional[str] = None
@@ -45,31 +44,31 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
     else:
         raise ValueError("Unexpected number of values in args.")
 
-    docker.login(manifest=manifest)
+    docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
     _logger.debug("Deploying the %s Docker image", image_name)
 
-    if manifest.images.get(image_name, {"source": "code"}).get("source") == "code":
+    if getattr(context.images, image_name.replace("-", "_")).source == "code":
         _logger.debug("Building and deploy docker image from source...")
-        path = os.path.join(os.path.dirname(manifest.filename_dir), image_name)
+        path = os.path.join(os.getcwd(), image_name)
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
-        docker.deploy_image_from_source(manifest=manifest, dir=path, name=f"orbit-{manifest.name}-{image_name}")
+        docker.deploy_image_from_source(context=context, dir=path, name=f"orbit-{context.name}-{image_name}")
     else:
         _logger.debug("Replicating docker iamge to ECR...")
         docker.replicate_image(
-            manifest=manifest, image_name=image_name, deployed_name=f"orbit-{manifest.name}-{image_name}"
+            context=context, image_name=image_name, deployed_name=f"orbit-{context.name}-{image_name}"
         )
 
     _logger.debug("Docker Image Deployed to ECR")
 
 
-def _deploy_image_remotely(manifest: Manifest, name: str, bundle_path: str, buildspec: codebuild.SPEC_TYPE) -> None:
+def _deploy_image_remotely(context: "Context", name: str, bundle_path: str, buildspec: codebuild.SPEC_TYPE) -> None:
     _logger.debug("Deploying %s Docker Image remotely into ECR", name)
     remote.run(
         command_name=f"deploy_image-{name}",
-        manifest=manifest,
+        context=context,
         bundle_path=bundle_path,
         buildspec=buildspec,
         codebuild_log_callback=None,
@@ -78,7 +77,7 @@ def _deploy_image_remotely(manifest: Manifest, name: str, bundle_path: str, buil
     _logger.debug("%s Docker Image deployed into ECR", name)
 
 
-def _deploy_images_batch(manifest: Manifest, images: List[Tuple[str, Optional[str]]]) -> None:
+def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[str]]]) -> None:
     _logger.debug("images:\n%s", images)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(images)) as executor:
@@ -87,31 +86,31 @@ def _deploy_images_batch(manifest: Manifest, images: List[Tuple[str, Optional[st
         for name, script in images:
             _logger.debug("name: %s | script: %s", name, script)
 
-            path = os.path.join(os.path.dirname(manifest.filename_dir), name)
+            path = os.path.join(os.getcwd(), name)
             _logger.debug("path: %s", path)
 
-            if manifest.images.get(name, {"source": "code"}).get("source") == "code":
+            if getattr(context.images, name.replace("-", "_")).source == "code":
                 dirs: List[Tuple[str, str]] = [(path, name)]
             else:
                 dirs = []
 
             bundle_path = bundle.generate_bundle(
-                command_name=f"deploy_image-{name}", manifest=manifest, dirs=dirs, plugins=False
+                command_name=f"deploy_image-{name}", context=context, dirs=dirs, plugins=False
             )
             _logger.debug("bundle_path: %s", bundle_path)
             script_str = "" if script is None else script
             buildspec = codebuild.generate_spec(
-                manifest=manifest,
+                context=context,
                 plugins=False,
-                cmds_build=[f"orbit remote --command _deploy_image ./conf/manifest.yaml {name} {script_str}"],
+                cmds_build=[f"orbit remote --command _deploy_image {context.name} {name} {script_str}"],
             )
-            futures.append(executor.submit(_deploy_image_remotely, manifest, name, bundle_path, buildspec))
+            futures.append(executor.submit(_deploy_image_remotely, context, name, bundle_path, buildspec))
 
         for f in futures:
             f.result()
 
 
-def deploy_images_remotely(manifest: Manifest) -> None:
+def deploy_images_remotely(context: "Context") -> None:
     # First batch
     images: List[Tuple[str, Optional[str]]] = [
         ("jupyter-hub", None),
@@ -119,101 +118,89 @@ def deploy_images_remotely(manifest: Manifest) -> None:
         ("landing-page", "build.sh"),
     ]
     _logger.debug("Building the first images batch")
-    _deploy_images_batch(manifest=manifest, images=images)
+    _deploy_images_batch(context=context, images=images)
 
     # Second Batch
     images = [
         ("jupyter-user-spark", None),
     ]
-    if manifest.internet_accessible is False:
+    if context.networking.data.internet_accessible is False:
         images += [
             ("aws-efs-csi-driver", None),
             ("livenessprobe", None),
             ("csi-node-driver-registrar", None),
         ]
     _logger.debug("Building the second images batch")
-    _deploy_images_batch(manifest=manifest, images=images)
-
-
-def eval_teams_change(manifest: Manifest, teams_changeset: "TeamsChangeset") -> None:
-    _logger.debug("Teams %s must be deleted.", teams_changeset.removed_teams_names)
-    for name in teams_changeset.removed_teams_names:
-        team_manifest: Optional["TeamManifest"] = get_team_by_name(teams=teams_changeset.old_teams, name=name)
-        if team_manifest is None:
-            raise RuntimeError(f"Team {name} not found!")
-        _logger.debug("Destroying team %s", name)
-        plugins.PLUGINS_REGISTRIES.destroy_team_plugins(manifest=manifest, team_manifest=team_manifest)
-        kubectl.destroy_team(manifest=manifest, team_manifest=team_manifest)
-        eksctl.destroy_team(manifest=manifest, team_manifest=team_manifest)
-        teams.destroy(manifest=manifest, team_manifest=team_manifest)
-        _logger.debug("Team %s destroyed", name)
+    _deploy_images_batch(context=context, images=images)
 
 
 def deploy_foundation(args: Tuple[str, ...]) -> None:
     _logger.debug("args: %s", args)
     if len(args) != 1:
         raise ValueError("Unexpected number of values in args")
-    filename: str = args[0]
-
-    manifest: Manifest = Manifest(filename=filename, env=None, region=None)
-    manifest.fillup()
-    _logger.debug("Manifest loaded")
-    docker.login(manifest=manifest)
-    cdk_toolkit.deploy(manifest=manifest)
+    env_name: str = args[0]
+    context: "Context" = load_context_from_ssm(env_name=env_name)
+    _logger.debug("Context loaded.")
+    docker.login(context=context)
+    _logger.debug("DockerHub and ECR Logged in")
+    cdk_toolkit.deploy(context=context)
     _logger.debug("CDK Toolkit Stack deployed")
-    demo.deploy(manifest=manifest)
+    demo.deploy(context=context)
     _logger.debug("Demo Stack deployed")
 
 
 def deploy(args: Tuple[str, ...]) -> None:
     _logger.debug("args: %s", args)
-    filename: str = args[0]
+    env_name: str = args[0]
     if len(args) == 3:
         skip_images_remote_flag: str = str(args[1])
         env_only: bool = args[2] == "env-stacks"
     else:
         raise ValueError("Unexpected number of values in args")
 
-    manifest: Manifest = Manifest(filename=filename, env=None, region=None)
-    manifest.fillup()
-    _logger.debug("Manifest loaded")
-    docker.login(manifest=manifest)
+    context: "Context" = load_context_from_ssm(env_name=env_name)
+    _logger.debug("Context loaded.")
+    changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=env_name)
+    _logger.debug("Changeset loaded.")
+
+    if changeset:
+        plugins.PLUGINS_REGISTRIES.load_plugins(
+            context=context, plugin_changesets=changeset.plugin_changesets, teams_changeset=changeset.teams_changeset
+        )
+        _logger.debug("Plugins loaded")
+
+    docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
-    changes: changeset.Changeset = changeset.read_changeset_file(manifest=manifest, filename="changeset.json")
-    _logger.debug(f"Changeset: {changes.asdict()}")
-    _logger.debug("Changeset loaded")
-    plugins.PLUGINS_REGISTRIES.load_plugins(
-        manifest=manifest, plugin_changesets=changes.plugin_changesets, teams_changeset=changes.teams_changeset
-    )
-    _logger.debug("Plugins loaded")
-    cdk_toolkit.deploy(manifest=manifest)
+    cdk_toolkit.deploy(context=context)
     _logger.debug("CDK Toolkit Stack deployed")
-    manifest.fetch_network_data()
+    demo.deploy(context=context)
+    _logger.debug("Demo Stack deployed")
     env.deploy(
-        manifest=manifest,
+        context=context,
         add_images=[],
         remove_images=[],
-        eks_system_masters_roles_changes=changes.eks_system_masters_roles_changeset,
+        eks_system_masters_roles_changes=changeset.eks_system_masters_roles_changeset if changeset else None,
     )
     _logger.debug("Env Stack deployed")
     if skip_images_remote_flag == "skip-images":
         _logger.debug("Docker images build skipped")
     else:
-        deploy_images_remotely(manifest=manifest)
+        deploy_images_remotely(context=context)
         _logger.debug("Docker Images deployed")
-    eksctl.deploy_env(manifest=manifest, eks_system_masters_roles_changes=changes.eks_system_masters_roles_changeset)
+    eksctl.deploy_env(
+        context=context,
+        eks_system_masters_roles_changes=changeset.eks_system_masters_roles_changeset if changeset else None,
+    )
     _logger.debug("EKS Environment Stack deployed")
-    kubectl.deploy_env(manifest=manifest)
+    kubectl.deploy_env(context=context)
     _logger.debug("Kubernetes Environment components deployed")
 
     if not env_only:
-        if changes.teams_changeset:
-            eval_teams_change(manifest=manifest, teams_changeset=changes.teams_changeset)
-        teams.deploy(manifest=manifest)
+        teams.deploy(context=context, teams_changeset=changeset.teams_changeset if changeset else None)
         _logger.debug("Team Stacks deployed")
-        eksctl.deploy_teams(manifest=manifest)
+        eksctl.deploy_teams(context=context)
         _logger.debug("EKS Team Stacks deployed")
-        kubectl.deploy_teams(manifest=manifest, changes=changes.plugin_changesets)
+        kubectl.deploy_teams(context=context, changes=changeset.plugin_changesets if changeset else [])
         _logger.debug("Kubernetes Team components deployed")
     else:
         _logger.debug("Skipping Team Stacks")

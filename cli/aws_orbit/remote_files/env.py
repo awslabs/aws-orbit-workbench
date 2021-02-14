@@ -14,49 +14,47 @@
 
 import logging
 import os
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
 
 from aws_orbit import ORBIT_CLI_ROOT, cdk, docker
-from aws_orbit.changeset import ListChangeset
-from aws_orbit.manifest import Manifest
 from aws_orbit.services import cfn, ecr, iam
+from aws_orbit.utils import boto3_client
+
+if TYPE_CHECKING:
+    from aws_orbit.models.changeset import ListChangeset
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
-
 
 DEFAULT_IMAGES: List[str] = ["landing-page", "jupyter-hub", "jupyter-user", "jupyter-user-spark"]
 DEFAULT_ISOLATED_IMAGES: List[str] = ["aws-efs-csi-driver", "livenessprobe", "csi-node-driver-registrar"]
 
 
-def _filter_repos(manifest: Manifest, page: Dict[str, Any]) -> Iterator[str]:
-    client = manifest.boto3_client("ecr")
+def _filter_repos(env_name: str, page: Dict[str, Any]) -> Iterator[str]:
+    client = boto3_client("ecr")
     for repo in page["repositories"]:
         response: Dict[str, Any] = client.list_tags_for_resource(resourceArn=repo["repositoryArn"])
         for tag in response["tags"]:
-            if tag["Key"] == "Env" and tag["Value"] == f"orbit-{manifest.name}":
+            if tag["Key"] == "Env" and tag["Value"] == f"orbit-{env_name}":
                 yield repo["repositoryName"]
 
 
-def _fetch_repos(manifest: Manifest) -> Iterator[str]:
-    client = manifest.boto3_client("ecr")
+def _fetch_repos(env_name: str) -> Iterator[str]:
+    client = boto3_client("ecr")
     paginator = client.get_paginator("describe_repositories")
     for page in paginator.paginate():
-        for repo_name in _filter_repos(manifest=manifest, page=page):
+        for repo_name in _filter_repos(env_name, page=page):
             yield repo_name
 
 
-def _ecr(manifest: Manifest) -> None:
-    for repo in _fetch_repos(manifest=manifest):
-        ecr.delete_repo(manifest=manifest, repo=repo)
+def _cleanup_remaining_resources(env_name: str) -> None:
+    for repo in _fetch_repos(env_name=env_name):
+        ecr.delete_repo(repo=repo)
 
 
-def _cleanup_remaining_resources(manifest: Manifest) -> None:
-    _ecr(manifest=manifest)
-
-
-def _concat_images_into_args(manifest: Manifest, add_images: List[str], remove_images: List[str]) -> Tuple[str, str]:
+def _concat_images_into_args(context: "Context", add_images: List[str], remove_images: List[str]) -> Tuple[str, str]:
     add_images += DEFAULT_IMAGES
-    if manifest.internet_accessible is False:
+    if context.networking.data.internet_accessible is False:
         add_images += DEFAULT_ISOLATED_IMAGES
     add_images_str = ",".join(add_images) if add_images else "null"
     remove_images_str = ",".join(remove_images) if remove_images else "null"
@@ -64,54 +62,48 @@ def _concat_images_into_args(manifest: Manifest, add_images: List[str], remove_i
 
 
 def deploy(
-    manifest: Manifest,
+    context: "Context",
     add_images: List[str],
     remove_images: List[str],
-    eks_system_masters_roles_changes: Optional[ListChangeset],
+    eks_system_masters_roles_changes: Optional["ListChangeset"],
 ) -> None:
-    _logger.debug("Stack name: %s", manifest.env_stack_name)
-    add_images_str, remove_images_str = _concat_images_into_args(
-        manifest=manifest, add_images=add_images, remove_images=remove_images
-    )
-    args: List[str]
-    if hasattr(manifest, "filename"):
-        args = ["manifest", manifest.filename, add_images_str, remove_images_str]
-    else:
-        args = ["env", manifest.name, add_images_str, remove_images_str]
+    _logger.debug("Stack name: %s", context.env_stack_name)
 
     if eks_system_masters_roles_changes and (
         eks_system_masters_roles_changes.added_values or eks_system_masters_roles_changes.removed_values
     ):
         iam.update_assume_role_roles(
-            manifest=manifest,
-            role_name=f"orbit-{manifest.name}-admin",
+            account_id=context.account_id,
+            role_name=f"orbit-{context.name}-admin",
             roles_to_add=eks_system_masters_roles_changes.added_values,
             roles_to_remove=eks_system_masters_roles_changes.removed_values,
         )
+
+    add_images_str, remove_images_str = _concat_images_into_args(
+        context=context, add_images=add_images, remove_images=remove_images
+    )
+    args: List[str] = [context.name, add_images_str, remove_images_str]
+
     cdk.deploy(
-        manifest=manifest,
-        stack_name=manifest.env_stack_name,
+        context=context,
+        stack_name=context.env_stack_name,
         app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "env.py"),
         args=args,
     )
-    manifest.fetch_ssm()
-    manifest.fetch_cognito_external_idp_data()
+    context.fetch_env_data()
 
 
-def destroy(manifest: Manifest) -> None:
-    _logger.debug("Stack name: %s", manifest.env_stack_name)
-    if cfn.does_stack_exist(manifest=manifest, stack_name=manifest.env_stack_name):
-        docker.login(manifest=manifest)
+def destroy(context: "Context") -> None:
+    _logger.debug("Stack name: %s", context.env_stack_name)
+    if cfn.does_stack_exist(stack_name=context.env_stack_name):
+        docker.login(context=context)
         _logger.debug("DockerHub and ECR Logged in")
-        _cleanup_remaining_resources(manifest=manifest)
-        add_images_str, remove_images_str = _concat_images_into_args(manifest=manifest, add_images=[], remove_images=[])
-        if hasattr(manifest, "filename"):
-            args = ["manifest", manifest.filename, add_images_str, remove_images_str]
-        else:
-            args = ["env", manifest.name, add_images_str, remove_images_str]
+        _cleanup_remaining_resources(env_name=context.name)
+        add_images_str, remove_images_str = _concat_images_into_args(context=context, add_images=[], remove_images=[])
+        args = [context.name, add_images_str, remove_images_str]
         cdk.destroy(
-            manifest=manifest,
-            stack_name=manifest.env_stack_name,
+            context=context,
+            stack_name=context.env_stack_name,
             app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "env.py"),
             args=args,
         )

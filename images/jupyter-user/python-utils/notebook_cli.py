@@ -1,6 +1,5 @@
 import logging
 import os
-import subprocess
 import sys
 from os.path import expanduser
 
@@ -82,28 +81,14 @@ def run_tasks() -> int:
         notifyOnTasksCompletion(
             "Error while executing tasks. Errors: \n", str(e) + "\n\n Tasks:\n" + os.environ["tasks"], compute
         )
-        return 1000
+        raise e
     finally:
         logger.info("Exiting Container Main()")
 
 
-def symlink_efs():
-    jupyter_user = os.environ.get("JUPYTERHUB_USER", None)
-    if jupyter_user:
-        os.makedirs(f"/efs/{jupyter_user}", exist_ok=True)
-        logger.info(f"Symlinking /efs/{jupyter_user} to /home/jovyan/private")
-        subprocess.check_call(["ln", "-s", f"/efs/{jupyter_user}", "/home/jovyan/private"])
-    logger.info("Symlinking /efs/shared /home/jovyan/shared")
-    subprocess.check_call(["ln", "-s", "/efs/shared", "/home/jovyan/shared"])
-
-
 if __name__ == "__main__":
     logger.info("Starting Container Main")
-    symlink_efs()
     logger.info("Running tasks...")
-    try:
-        ret = run_tasks()
-        sys.exit(ret)
-    except Exception as e:
-        logger.info("Exception %s", e)
-        sys.exit(1001)
+
+    ret = run_tasks()
+    sys.exit(ret)

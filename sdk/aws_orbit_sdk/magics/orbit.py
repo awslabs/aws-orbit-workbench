@@ -4,7 +4,6 @@ import sys
 from typing import Any, Dict, List, Optional, Union
 
 import IPython.core.display
-import qgrid
 from IPython import get_ipython
 from IPython.core.magic import Magics, cell_magic, line_cell_magic, line_magic, magics_class, needs_local_scope
 
@@ -65,43 +64,43 @@ class OrbitWorkbenchMagics(Magics):
         lineArgs = line.split(" ")
         return run_schema_induction_args(lineArgs)
 
-    @needs_local_scope
-    @line_magic
-    def display_grid(self, line: str, local_ns: Optional[Dict[str, str]] = None) -> qgrid.QGridWidget:
-        """
-        Renders a DataFrame or Series as an interactive qgrid, represented by an instance of the QgridWidget class.
-
-        Parameter
-        ----------
-        line : str
-            Specifies the name of the DataFrame
-        local_ns : str
-            The namespace to load into IPython user namespace
-
-        Return
-        ----------
-        qgrid : qgrid.QGridWidget
-            A DataFrame or Series shown as an interactive qgrid
-
-        Example
-        ----------
-        >>> %%sql analysis <<
-        >>> select * from database.table1
-
-        >>> %display_grid analysis
-        """
-        lineArgs = line.split(" ")
-        dataset = local_ns[lineArgs[0]]
-        return qgrid.show_grid(
-            dataset.DataFrame(),
-            show_toolbar=False,
-            grid_options={
-                "forceFitColumns": False,
-                "defaultColumnWidth": 140,
-                "editable": False,
-                "autoEdit": False,
-            },
-        )
+    # @needs_local_scope
+    # @line_magic
+    # def display_grid(self, line: str, local_ns: Optional[Dict[str, str]] = None) -> qgrid.QGridWidget:
+    #     """
+    #     Renders a DataFrame or Series as an interactive qgrid, represented by an instance of the QgridWidget class.
+    #
+    #     Parameter
+    #     ----------
+    #     line : str
+    #         Specifies the name of the DataFrame
+    #     local_ns : str
+    #         The namespace to load into IPython user namespace
+    #
+    #     Return
+    #     ----------
+    #     qgrid : qgrid.QGridWidget
+    #         A DataFrame or Series shown as an interactive qgrid
+    #
+    #     Example
+    #     ----------
+    #     >>> %%sql analysis <<
+    #     >>> select * from database.table1
+    #
+    #     >>> %display_grid analysis
+    #     """
+    #     lineArgs = line.split(" ")
+    #     dataset = local_ns[lineArgs[0]]
+    #     return qgrid.show_grid(
+    #         dataset.DataFrame(),
+    #         show_toolbar=False,
+    #         grid_options={
+    #             "forceFitColumns": False,
+    #             "defaultColumnWidth": 140,
+    #             "editable": False,
+    #             "autoEdit": False,
+    #         },
+    #     )
 
     @needs_local_scope
     @line_magic

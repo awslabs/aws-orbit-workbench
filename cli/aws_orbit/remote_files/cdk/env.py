@@ -12,11 +12,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import logging
 import os
 import shutil
 import sys
-from typing import List, cast
+from typing import TYPE_CHECKING, List, cast
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2
@@ -27,10 +28,13 @@ import aws_cdk.aws_ssm as ssm
 from aws_cdk import aws_lambda
 from aws_cdk.core import App, CfnOutput, Construct, Duration, Environment, IConstruct, Stack, Tags
 
-from aws_orbit.manifest import Manifest
+from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.remote_files.cdk import _lambda_path
 from aws_orbit.services import cognito as orbit_cognito
 from aws_orbit.utils import extract_images_names
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -40,38 +44,42 @@ class Env(Stack):
         self,
         scope: Construct,
         id: str,
-        manifest: Manifest,
+        context: "Context",
         add_images: List[str],
         remove_images: List[str],
     ) -> None:
         self.scope = scope
         self.id = id
-        self.manifest = manifest
+        self.context = context
         self.add_images = add_images
         self.remove_images = remove_images
         super().__init__(
             scope=scope,
             id=id,
             stack_name=id,
-            env=Environment(account=self.manifest.account_id, region=self.manifest.region),
+            env=Environment(account=self.context.account_id, region=self.context.region),
         )
-        Tags.of(scope=cast(IConstruct, self)).add(key="Env", value=f"orbit-{self.manifest.name}")
+        Tags.of(scope=cast(IConstruct, self)).add(key="Env", value=f"orbit-{self.context.name}")
+        if self.context.networking.vpc_id is None:
+            raise ValueError("self.context.networking.vpc_id is None.")
+        if self.context.networking.availability_zones is None:
+            raise ValueError("self.context.networking.availability_zones is None.")
         self.i_vpc = ec2.Vpc.from_vpc_attributes(
             scope=self,
             id="vpc",
-            vpc_id=cast(str, self.manifest.vpc.vpc_id),
-            availability_zones=cast(List[str], self.manifest.vpc.availability_zones),
+            vpc_id=self.context.networking.vpc_id,
+            availability_zones=self.context.networking.availability_zones,
         )
         self.repos = self._create_ecr_repos()
         self.role_eks_cluster = self._create_role_cluster()
         self.role_eks_env_nodegroup = self._create_env_nodegroup_role()
         self.role_fargate_profile = self._create_role_fargate_profile()
-        if hasattr(self.manifest, "user_pool_id") and self.manifest.user_pool_id:
-            self.manifest.cognito_users_urls = orbit_cognito.get_users_url(
-                user_pool_id=self.manifest.user_pool_id, region=self.manifest.region
+        if self.context.user_pool_id:
+            self.context.cognito_users_url = orbit_cognito.get_users_url(
+                user_pool_id=self.context.user_pool_id, region=self.context.region
             )
             cognito_pool_arn: str = orbit_cognito.get_pool_arn(
-                user_pool_id=self.manifest.user_pool_id, region=self.manifest.region, account=self.manifest.account_id
+                user_pool_id=self.context.user_pool_id, region=self.context.region, account=self.context.account_id
             )
             self.user_pool: cognito.UserPool = self._get_user_pool(user_pool_arn=cognito_pool_arn)
         else:
@@ -79,17 +87,17 @@ class Env(Stack):
         self.user_pool_client = self._create_user_pool_client()
         self.identity_pool = self._create_identity_pool()
         self.token_validation_lambda = self._create_token_validation_lambda()
-        self.manifest_parameter = self._create_manifest_parameter()
+        self.context_parameter = self._create_manifest_parameter()
 
     def create_repo(self, image_name: str) -> ecr.Repository:
         return ecr.Repository(
             scope=self,
             id=f"repo-{image_name}",
-            repository_name=f"orbit-{self.manifest.name}-{image_name}",
+            repository_name=f"orbit-{self.context.name}-{image_name}",
         )
 
     def _create_ecr_repos(self) -> List[ecr.Repository]:
-        current_images_names = extract_images_names(manifest=self.manifest)
+        current_images_names = extract_images_names(env_name=self.context.name)
         current_images_names = list(set(current_images_names) - set(self.remove_images))
         repos = [self.create_repo(image_name=r) for r in current_images_names]
         for image_name in self.add_images:
@@ -101,13 +109,13 @@ class Env(Stack):
             CfnOutput(
                 scope=self,
                 id="repos",
-                export_name=f"orbit-{self.manifest.name}-repos",
+                export_name=f"orbit-{self.context.name}-repos",
                 value=",".join([x for x in current_images_names]),
             )
         return repos
 
     def _create_role_cluster(self) -> iam.Role:
-        name: str = f"orbit-{self.manifest.name}-eks-cluster-role"
+        name: str = f"orbit-{self.context.name}-eks-cluster-role"
         role = iam.Role(
             scope=self,
             id=name,
@@ -158,7 +166,7 @@ class Env(Stack):
         return role
 
     def _create_role_fargate_profile(self) -> iam.Role:
-        name: str = f"orbit-{self.manifest.name}-eks-fargate-profile-role"
+        name: str = f"orbit-{self.context.name}-eks-fargate-profile-role"
         return iam.Role(
             scope=self,
             id=name,
@@ -194,7 +202,7 @@ class Env(Stack):
         )
 
     def _create_env_nodegroup_role(self) -> iam.Role:
-        name: str = f"orbit-{self.manifest.name}-eks-nodegroup-role"
+        name: str = f"orbit-{self.context.name}-eks-nodegroup-role"
         role = iam.Role(
             scope=self,
             id=name,
@@ -231,7 +239,7 @@ class Env(Stack):
         provider_name = (
             self.user_pool.user_pool_provider_name
             if hasattr(self.user_pool, "user_pool_provider_name")
-            else f"cognito-idp.{self.manifest.region}.amazonaws.com/{self.manifest.user_pool_id}"
+            else f"cognito-idp.{self.context.region}.amazonaws.com/{self.context.user_pool_id}"
         )
 
         pool = cognito.CfnIdentityPool(
@@ -278,8 +286,8 @@ class Env(Stack):
                         iam.PolicyStatement(
                             actions=["ssm:DescribeParameters", "ssm:GetParameters"],
                             resources=[
-                                f"arn:aws:ssm:{self.manifest.region}:{self.manifest.account_id}:"
-                                f"parameter/orbit/{self.manifest.name}/teams/*"
+                                f"arn:aws:ssm:{self.context.region}:{self.context.account_id}:"
+                                f"parameter/orbit/{self.context.name}/teams/*"
                             ],
                         )
                     ]
@@ -329,7 +337,7 @@ class Env(Stack):
         return lambda_python.PythonFunction(
             scope=self,
             id="token_validation_lambda",
-            function_name=f"orbit-{self.manifest.name}-token-validation",
+            function_name=f"orbit-{self.context.name}-token-validation",
             entry=_lambda_path("token_validation"),
             index="index.py",
             handler="handler",
@@ -337,7 +345,7 @@ class Env(Stack):
             timeout=Duration.seconds(5),
             environment={
                 "COGNITO_USER_POOL_ID": self.user_pool.user_pool_id,
-                "REGION": self.manifest.region,
+                "REGION": self.context.region,
                 "COGNITO_USER_POOL_CLIENT_ID": self.user_pool_client.user_pool_client_id,
             },
             initial_policy=[
@@ -350,20 +358,22 @@ class Env(Stack):
         )
 
     def _create_manifest_parameter(self) -> ssm.StringParameter:
-        self.manifest.eks_cluster_role_arn = self.role_eks_cluster.role_arn
-        self.manifest.eks_fargate_profile_role_arn = self.role_fargate_profile.role_arn
-        self.manifest.eks_env_nodegroup_role_arn = self.role_eks_env_nodegroup.role_arn
-        self.manifest.user_pool_id = self.user_pool.user_pool_id
-        self.manifest.user_pool_client_id = self.user_pool_client.user_pool_client_id
-        self.manifest.identity_pool_id = self.identity_pool.ref
-        manifest_json: str = self.manifest.asjson()
         parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,
-            id=self.manifest.ssm_parameter_name,
-            string_value=manifest_json,
+            id="/orbit/EnvParams",
+            string_value=json.dumps(
+                {
+                    "EksClusterRoleArn": self.role_eks_cluster.role_arn,
+                    "EksFargateProfileRoleArn": self.role_fargate_profile.role_arn,
+                    "EksEnvNodegroupRoleArn": self.role_eks_env_nodegroup.role_arn,
+                    "UserPoolId": self.user_pool.user_pool_id,
+                    "UserPoolClientId": self.user_pool_client.user_pool_client_id,
+                    "IdentityPoolId": self.identity_pool.ref,
+                }
+            ),
             type=ssm.ParameterType.STRING,
-            description="Orbit Workbench Remote Manifest.",
-            parameter_name=self.manifest.ssm_parameter_name,
+            description="Orbit Workbench Remote Env.",
+            parameter_name=self.context.env_ssm_parameter_name,
             simple_name=False,
             tier=ssm.ParameterTier.INTELLIGENT_TIERING,
         )
@@ -372,32 +382,22 @@ class Env(Stack):
 
 def main() -> None:
     _logger.debug("sys.argv: %s", sys.argv)
-    if len(sys.argv) == 5:
-        manifest: Manifest
-        if sys.argv[1] == "manifest":
-            filename = sys.argv[2]
-            manifest = Manifest(filename=filename, env=None, region=None)
-        elif sys.argv[1] == "env":
-            env = sys.argv[2]
-            manifest = Manifest(filename=None, env=env, region=None)
-        else:
-            raise ValueError(f"Unexpected argv[1] ({len(sys.argv)}) - {sys.argv}.")
-        add_images = [] if sys.argv[3] == "null" else sys.argv[3].split(sep=",")
-        remove_images = [] if sys.argv[4] == "null" else sys.argv[3].split(sep=",")
+    if len(sys.argv) == 4:
+        context: "Context" = load_context_from_ssm(env_name=sys.argv[1])
+        add_images = [] if sys.argv[2] == "null" else sys.argv[2].split(sep=",")
+        remove_images = [] if sys.argv[3] == "null" else sys.argv[3].split(sep=",")
     else:
         raise ValueError(f"Unexpected number of values in sys.argv ({len(sys.argv)}), {sys.argv}")
 
-    manifest.fillup()
-
-    outdir = os.path.join(".orbit.out", manifest.name, "cdk", manifest.env_stack_name)
+    outdir = os.path.join(".orbit.out", context.name, "cdk", context.env_stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
 
     app = App(outdir=outdir)
     Env(
         scope=app,
-        id=manifest.env_stack_name,
-        manifest=manifest,
+        id=context.env_stack_name,
+        context=context,
         add_images=add_images,
         remove_images=remove_images,
     )

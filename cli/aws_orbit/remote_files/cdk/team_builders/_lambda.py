@@ -12,24 +12,26 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_stepfunctions as sfn
 import aws_cdk.core as core
 from aws_cdk import aws_lambda
 
-from aws_orbit.manifest import Manifest
-from aws_orbit.manifest.team import TeamManifest
+from aws_orbit.models.context import get_container_defaults
 from aws_orbit.remote_files.cdk import _lambda_path
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context
 
 
 class LambdaBuilder:
     @staticmethod
     def build_container_runner(
         scope: core.Construct,
-        manifest: Manifest,
-        team_manifest: TeamManifest,
+        context: "Context",
+        team_name: str,
         ecs_fargate_runner: sfn.StateMachine,
         eks_fargate_runner: sfn.StateMachine,
         eks_ec2_runner: sfn.StateMachine,
@@ -37,7 +39,7 @@ class LambdaBuilder:
         return aws_lambda.Function(
             scope=scope,
             id="container_runner",
-            function_name=f"orbit-{manifest.name}-{team_manifest.name}-container-runner",
+            function_name=f"orbit-{context.name}-{team_name}-container-runner",
             code=aws_lambda.Code.asset(_lambda_path("container_runner")),
             handler="index.handler",
             runtime=aws_lambda.Runtime.PYTHON_3_6,
@@ -46,9 +48,9 @@ class LambdaBuilder:
                 "ECS_FARGATE_STATE_MACHINE_ARN": ecs_fargate_runner.state_machine_arn,
                 "EKS_FARGATE_STATE_MACHINE_ARN": eks_fargate_runner.state_machine_arn,
                 "EKS_EC2_STATE_MACHINE_ARN": eks_ec2_runner.state_machine_arn,
-                "DEFAULT_CPU": f"{team_manifest.container_defaults['cpu']}",
-                "DEFAULT_MEMORY": f"{team_manifest.container_defaults['memory']}M",
-                "DEFAULT_EKS_CLUSTER": f"orbit-{manifest.name}",
+                "DEFAULT_CPU": f"{get_container_defaults()['cpu']}",
+                "DEFAULT_MEMORY": f"{get_container_defaults()['memory']}M",
+                "DEFAULT_EKS_CLUSTER": f"orbit-{context.name}",
             },
             initial_policy=[
                 iam.PolicyStatement(
@@ -87,8 +89,8 @@ class LambdaBuilder:
     @staticmethod
     def get_or_build_eks_describe_cluster(
         scope: core.Construct,
-        manifest: Manifest,
-        team_manifest: TeamManifest,
+        context: "Context",
+        team_name: str,
     ) -> aws_lambda.Function:
         stack = core.Stack.of(cast(core.IConstruct, scope))
         lambda_function = cast(aws_lambda.Function, stack.node.try_find_child("eks_describe_cluster"))
@@ -96,7 +98,7 @@ class LambdaBuilder:
             lambda_function = aws_lambda.Function(
                 scope=stack,
                 id="eks_describe_cluster",
-                function_name=f"orbit-{manifest.name}-{team_manifest.name}-eks-describe-cluster",
+                function_name=f"orbit-{context.name}-{team_name}-eks-describe-cluster",
                 code=aws_lambda.Code.asset(_lambda_path("eks_describe_cluster")),
                 handler="index.handler",
                 runtime=aws_lambda.Runtime.PYTHON_3_6,
@@ -114,8 +116,8 @@ class LambdaBuilder:
     @staticmethod
     def get_or_build_construct_request(
         scope: core.Construct,
-        manifest: Manifest,
-        team_manifest: TeamManifest,
+        context: "Context",
+        team_name: str,
     ) -> aws_lambda.Function:
         stack = core.Stack.of(cast(core.IConstruct, scope))
         lambda_function = cast(aws_lambda.Function, stack.node.try_find_child("construct_request"))
@@ -123,7 +125,7 @@ class LambdaBuilder:
             lambda_function = aws_lambda.Function(
                 scope=stack,
                 id="construct_request",
-                function_name=f"orbit-{manifest.name}-{team_manifest.name}-k8s-construct-request",
+                function_name=f"orbit-{context.name}-{team_name}-k8s-construct-request",
                 code=aws_lambda.Code.asset(_lambda_path("construct_request")),
                 handler="index.handler",
                 runtime=aws_lambda.Runtime.PYTHON_3_6,
