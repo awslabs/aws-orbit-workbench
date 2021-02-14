@@ -87,8 +87,9 @@ def runNotebooks(reportsToRun, compute):
 def runNotebook(parameters):
     errors = []
     output_path = parameters.get("PAPERMILL_OUTPUT_PATH")
+    output_path_dir = parameters.get("PAPERMILL_OUTPUT_DIR_PATH")
+    os.makedirs(output_path_dir,exist_ok=True)
     try:
-
         logger.info("Starting notebook execution for %s", output_path)
         pm.execute_notebook(
             input_path=parameters["PAPERMILL_INPUT_PATH"],
