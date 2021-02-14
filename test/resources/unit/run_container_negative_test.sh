@@ -12,7 +12,7 @@ cat <<EOF |  orbit run notebook --env dev-env --team $TEST_TEAM_SPACE --user tes
           "node_type": "fargate"
       },
       "tasks":  [{
-          "notebookName": "sanity-good.ipynb",
+          "notebookName": "sanity-bad.ipynb",
           "sourcePath": "/efs/shared/samples/notebooks/Z-Tests",
           "targetPath": "/efs/shared/regression/notebooks/Z-Tests",
           "params": {
