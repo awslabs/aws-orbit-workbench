@@ -157,6 +157,12 @@ class TeamConstants:
                 return p
         return None
 
+    def profile(self, name: str) -> PROFILE_TYPE:
+        for p in self.team_profiles():
+            if p["display_name"] == name:
+                return p
+        return None
+
     def init_containers(self, image):
         return [
             {

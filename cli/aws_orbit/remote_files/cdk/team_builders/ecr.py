@@ -12,12 +12,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import aws_cdk.aws_ec2 as ec2
+
 import aws_cdk.aws_ecr as ecr
 import aws_cdk.aws_ecs as ecs
-import aws_cdk.aws_efs as efs
-import aws_cdk.aws_iam as iam
-import aws_cdk.aws_logs as logs
 import aws_cdk.core as core
 
 from aws_orbit.manifest import Manifest

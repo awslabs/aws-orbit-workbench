@@ -100,7 +100,6 @@ class TeamManifest:
         self.jupyter_url: Optional[str] = None
         self.ecs_cluster_name: Optional[str] = None
         self.container_runner_arn: Optional[str] = None
-        self.eks_k8s_api_arn: Optional[str] = None
         self.team_kms_key_arn: Optional[str] = None
         self.elbs: Optional[Dict[str, Dict[str, Any]]] = elbs
         self.team_security_group_id: Optional[str] = None
@@ -165,7 +164,6 @@ class TeamManifest:
             self.scratch_bucket = cast(str, raw.get("scratch-bucket"))
             self.ecs_cluster_name = cast(str, raw.get("ecs-cluster-name"))
             self.container_runner_arn = cast(str, raw.get("container-runner-arn"))
-            self.eks_k8s_api_arn = cast(str, raw.get("eks-k8s-api-arn"))
             self.team_kms_key_arn = cast(str, raw.get("team-kms-key-arn"))
             self.team_security_group_id = cast(str, raw.get("team-security-group-id"))
 

@@ -32,7 +32,6 @@ from aws_orbit import changeset
 from aws_orbit.manifest import Manifest
 from aws_orbit.manifest.subnet import SubnetKind
 from aws_orbit.manifest.team import TeamManifest
-from aws_orbit.remote_files.cdk.team_builders._lambda import LambdaBuilder
 from aws_orbit.remote_files.cdk.team_builders.ec2 import Ec2Builder
 from aws_orbit.remote_files.cdk.team_builders.ecr import EcrBuilder
 from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
@@ -158,7 +157,6 @@ class Team(Stack):
         self.team_manifest.efs_ap_id = self.efs_ap.access_point_id
         self.team_manifest.eks_nodegroup_role_arn = self.role_eks_nodegroup.role_arn
         self.team_manifest.scratch_bucket = self.scratch_bucket.bucket_name
-        self.team_manifest.eks_k8s_api_arn = self.eks_k8s_api.state_machine_arn
         self.team_manifest.team_kms_key_arn = self.team_kms_key.key_arn
         self.team_manifest.team_security_group_id = self.team_security_group.security_group_id
 

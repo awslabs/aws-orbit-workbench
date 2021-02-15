@@ -14,8 +14,6 @@
 
 from typing import cast
 
-import aws_cdk.aws_iam as iam
-import aws_cdk.aws_stepfunctions as sfn
 import aws_cdk.core as core
 from aws_cdk import aws_lambda
 

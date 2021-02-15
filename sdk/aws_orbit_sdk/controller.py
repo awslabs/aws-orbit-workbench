@@ -61,6 +61,7 @@ def read_team_manifest_ssm(env_name: str, team_name: str) -> Optional[MANIFEST_T
     _logger.debug("Team %s Manifest SSM parameter found.", team_name)
     return cast(MANIFEST_TEAM_TYPE, json.loads(json_str))
 
+
 def read_env_manifest_ssm(env_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
     parameter_name: str = f"/orbit/{env_name}/manifest"
     _logger.debug("Trying to read manifest from SSM parameter (%s).", parameter_name)
@@ -345,6 +346,7 @@ def _make_create_pvc_request(team_constants: TeamConstants, labels):
         else:
             raise
 
+
 def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_constants: TeamConstants) -> V1JobSpec:
     """
     Runs Task in Python in a notebook using lambda.
@@ -359,8 +361,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
     Response Payload
     """
     props = get_properties()
-    global __CURRENT_TEAM_MANIFEST__,__CURRENT_ENV_MANIFEST__
-    env = team_constants.env()
+    global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
     env_name = props["AWS_ORBIT_ENV"]
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     if __CURRENT_TEAM_MANIFEST__ == None or __CURRENT_TEAM_MANIFEST__["name"] != team_name:
@@ -368,6 +369,86 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
     if __CURRENT_ENV_MANIFEST__ == None:
         __CURRENT_ENV_MANIFEST__ = read_env_manifest_ssm(env_name)
 
+    env = build_env(__CURRENT_ENV_MANIFEST__, env_name, taskConfiguration, team_constants, team_name)
+    profile = resolve_profile(__CURRENT_TEAM_MANIFEST__, taskConfiguration, team_constants)
+    image = resolve_image(__CURRENT_TEAM_MANIFEST__, profile)
+    node_type = get_node_type(taskConfiguration)
+
+    job_name: str = f'run-{taskConfiguration["task_type"]}'
+    grant_sudo = (
+        taskConfiguration["grant_sudo"]
+        if "compute" in taskConfiguration and "grant_sudo" in taskConfiguration["compute"]
+        and (taskConfiguration["compute"] or taskConfiguration["compute"] == "True")
+        else False
+    )
+    add_ebs = (
+        taskConfiguration["add_ebs"]
+        if "compute" in taskConfiguration and "add_ebs" in taskConfiguration["compute"]
+        and (taskConfiguration["add_ebs"] or taskConfiguration["add_ebs"] == "True")
+        else False
+    )
+
+    node_selector = team_constants.node_selector()
+    if node_type == "ec2":
+        node_selector["orbit/compute-type"] = "ec2"
+
+    pod_properties: Dict[str, str] = dict(
+        name=job_name,
+        image=image,
+        cmd=["python", "/opt/python-utils/notebook_cli.py"],
+        port=22,
+        image_pull_policy=team_constants.image_pull_policy(),
+        image_pull_secrets=None,
+        node_selector=node_selector,
+        run_as_uid=team_constants.uid(grant_sudo),
+        run_as_gid=team_constants.gid(),
+        fs_gid=team_constants.gid(),
+        run_privileged=False,
+        allow_privilege_escalation=True,
+        env=env,
+        volumes=team_constants.volumes(add_ebs),
+        volume_mounts=team_constants.volume_mounts(add_ebs),
+        labels=labels,
+        annotations=team_constants.annotations(),
+        lifecycle_hooks=team_constants.life_cycle_hooks(),
+        init_containers=team_constants.init_containers(image) if add_ebs else [],
+        service_account=team_name,
+        logger=_logger,
+    )
+    if grant_sudo:
+        pod_properties["uid"] = 0
+
+    if "kubespawner_override" in profile:
+        for k, v in profile["kubespawner_override"].items():
+            if k in ["image"]:
+                # special handling is already done for image
+                continue
+            if k in pod_properties:
+                raise RuntimeError("Override '%s' in profile is not allowed", k)
+            _logger.debug("profile overriding pod value %s=%s", k, v)
+            pod_properties[k] = v
+
+    pod: V1Pod = make_pod(**pod_properties)
+    job_spec = V1JobSpec(
+        backoff_limit=0,
+        template=pod,
+        ttl_seconds_after_finished=120,
+    )
+
+    return job_spec
+
+
+def resolve_image(__CURRENT_TEAM_MANIFEST__, profile):
+    if not profile or "kubespawner_override" not in profile or "image" not in profile["kubespawner_override"]:
+        repository = __CURRENT_TEAM_MANIFEST__["final-image-address"]
+        image = f"{repository}:latest"
+    else:
+        image = profile["kubespawner_override"]["image"]
+    return image
+
+
+def build_env(__CURRENT_ENV_MANIFEST__, env_name, taskConfiguration, team_constants, team_name):
+    env = team_constants.env()
     env["AWS_ORBIT_ENV"] = env_name
     env["AWS_ORBIT_TEAM_SPACE"] = team_name
     env["JUPYTERHUB_USER"] = team_constants.username
@@ -379,82 +460,20 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
         env["compute"] = json.dumps({"compute": taskConfiguration["compute"]})
     else:
         env["compute"] = json.dumps({"compute": {"compute_type": "eks", "node_type": "fargate"}})
+    return env
 
 
-
-
+def resolve_profile(__CURRENT_TEAM_MANIFEST__, taskConfiguration, team_constants):
     if "compute" in taskConfiguration and "profile" in taskConfiguration["compute"]:
-        profile = __CURRENT_TEAM_MANIFEST__["compute"]["profile"]
-        _logger.info(f"using profile %s", profile)
+        profile_name = __CURRENT_TEAM_MANIFEST__["compute"]["profile"]
+        _logger.info(f"using profile %s", profile_name)
+        profile = team_constants.profile(profile_name)
+        if not profile:
+            raise Exception("Profile '%s' not found", profile)
     else:
         profile = team_constants.default_profile()
         _logger.info(f"using default profile %s", profile)
-
-    if profile and "image" in profile:
-        image = profile["image"]
-    else:
-        repository = __CURRENT_TEAM_MANIFEST__["final-image-address"]
-        image = f"{repository}:latest"
-
-    node_type = get_node_type(taskConfiguration)
-
-    job_name: str = f'run-{taskConfiguration["task_type"]}'
-    grant_sudo = False
-    add_ebs = True
-    node_selector = team_constants.node_selector()
-    if node_type == "ec2":
-        node_selector["orbit/compute-type"] = "ec2"
-
-    pod: V1Pod = make_pod(
-        name=job_name,
-        cmd=["python", "/opt/python-utils/notebook_cli.py"],
-        port=22,
-        image=image,
-        image_pull_policy=team_constants.image_pull_policy(),
-        image_pull_secrets=None,
-        node_selector=node_selector,
-        run_as_uid=team_constants.uid(grant_sudo),
-        run_as_gid=team_constants.gid(),
-        fs_gid=team_constants.gid(),
-        supplemental_gids=None,
-        run_privileged=False,
-        allow_privilege_escalation=True,
-        env=env,
-        working_dir=None,
-        volumes=team_constants.volumes(add_ebs),
-        volume_mounts=team_constants.volume_mounts(add_ebs),
-        labels=labels,
-        annotations=team_constants.annotations(),
-        cpu_limit=None,
-        cpu_guarantee=None,
-        mem_limit=None,
-        mem_guarantee=None,
-        extra_resource_limits=None,
-        extra_resource_guarantees=None,
-        lifecycle_hooks=team_constants.life_cycle_hooks(),
-        init_containers=team_constants.init_containers(image) if add_ebs else [],
-        service_account=team_name,
-        extra_container_config=None,
-        extra_pod_config=None,
-        extra_containers=None,
-        scheduler_name=None,
-        tolerations=None,
-        node_affinity_preferred=None,
-        node_affinity_required=None,
-        pod_affinity_preferred=None,
-        pod_affinity_required=None,
-        pod_anti_affinity_preferred=None,
-        pod_anti_affinity_required=None,
-        priority_class_name=None,
-        logger=_logger,
-    )
-    job_spec = V1JobSpec(
-        backoff_limit=0,
-        template=pod,
-        ttl_seconds_after_finished=120,
-    )
-
-    return job_spec
+    return profile
 
 
 def _run_task_eks(taskConfiguration: dict) -> Any:
@@ -479,16 +498,9 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
         "orbit/node-type": node_type,
     }
     team_constants: TeamConstants = TeamConstants()
-
     job_spec = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
-
-    if "AWS_WEB_IDENTITY_TOKEN_FILE" in os.environ and "eks.amazonaws.com" in os.environ["AWS_WEB_IDENTITY_TOKEN_FILE"]:
-        k8_config.load_incluster_config()
-    else:
-        k8_config.load_kube_config()
-
+    load_kube_config()
     _make_create_pvc_request(team_constants=team_constants, labels=labels)
-
     job = V1Job(
         api_version="batch/v1",
         kind="Job",
@@ -497,7 +509,6 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
         ),
         spec=job_spec,
     )
-
     job_instance: V1Job = BatchV1Api().create_namespaced_job(
         namespace=team_name,
         body=job,
@@ -511,6 +522,7 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
         "NodeType": node_type,
         "tasks": taskConfiguration["tasks"],
     }
+
 
 def schedule_python(triggerName: str, frequency: str, taskConfiguration: Dict[str, Any]) -> str:
     """
@@ -625,10 +637,8 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     frequency: str
         A cron string e.g., cron(0/15 * 1/1 * ? *) to define the starting times of the execution
     taskConfiguration: Any
-
     Return
     ------
-
     Example
     -------
     Example for schedule_task similar to run_python and run_notebook tasks (refer to 'run_python').
@@ -641,13 +651,11 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
         "app": f"orbit-runner",
         "orbit/node-type": node_type,
     }
-
     username = os.environ["JUPYTERHUB_USER"] if os.environ["JUPYTERHUB_USER"] else os.environ["USERNAME"]
     team_constants: TeamConstants = TeamConstants(username)
     job_spec = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
     cron_job_template: V1beta1JobTemplateSpec = V1beta1JobTemplateSpec(spec=job_spec)
     cron_job_spec: V1beta1CronJobSpec = V1beta1CronJobSpec(job_template=cron_job_template, schedule=frequency)
-
     job = V1beta1CronJob(
         api_version="batch/v1beta1",
         kind="CronJob",
@@ -655,25 +663,23 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
         status=V1beta1CronJobStatus(),
         spec=cron_job_spec,
     )
-
-    if "AWS_WEB_IDENTITY_TOKEN_FILE" in os.environ and "eks.amazonaws.com" in os.environ["AWS_WEB_IDENTITY_TOKEN_FILE"]:
-        k8_config.load_incluster_config()
-    else:
-        k8_config.load_kube_config()
-
-    _make_create_pvc_request(team_constants=team_constants, labels=labels, request_timeout=120)
-
+    load_kube_config()
+    _make_create_pvc_request(team_constants=team_constants, labels=labels)
     job_instance: V1beta1CronJob = BatchV1beta1Api().create_namespaced_cron_job(namespace=team_name, body=job)
-
     metadata: V1ObjectMeta = job_instance.metadata
     return {
         "ExecutionType": "eks",
         "Identifier": metadata.name,
     }
-
     metadata: V1ObjectMeta = job_instance.metadata
-
     _logger.debug(f"started job {metadata.name}")
+
+
+def load_kube_config():
+    if "AWS_WEB_IDENTITY_TOKEN_FILE" in os.environ and "eks.amazonaws.com" in os.environ["AWS_WEB_IDENTITY_TOKEN_FILE"]:
+        k8_config.load_incluster_config()
+    else:
+        k8_config.load_kube_config()
 
 
 def delete_task_schedule(triggerName: str, compute_type: str = "eks") -> None:
@@ -686,12 +692,10 @@ def delete_task_schedule(triggerName: str, compute_type: str = "eks") -> None:
 def delete_task_schedule_eks(triggerName: str) -> None:
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
-    if "AWS_WEB_IDENTITY_TOKEN_FILE" in os.environ and "eks.amazonaws.com" in os.environ["AWS_WEB_IDENTITY_TOKEN_FILE"]:
-        k8_config.load_incluster_config()
-    else:
-        k8_config.load_kube_config()
+    load_kube_config()
 
     BatchV1beta1Api().delete_namespaced_cron_job(name=f"orbit-{team_name}-{triggerName}", namespace=team_name)
+
 
 def order_def(task_definition: Any) -> datetime:
     """
@@ -777,20 +781,20 @@ def wait_for_tasks_to_complete(
             if tail_log:
                 tail_logs(team_name, tasks)
 
-            tasks = incomplete_tasks
-            incomplete_tasks = []
-            _logger.info(f"Running: {len(tasks)} Completed: {len(completed_tasks)} Errored: {len(errored_tasks)}")
+        tasks = incomplete_tasks
+        incomplete_tasks = []
+        _logger.info(f"Running: {len(tasks)} Completed: {len(completed_tasks)} Errored: {len(errored_tasks)}")
 
-            attempts += 1
-            if len(tasks) == 0:
-                _logger.info("All tasks stopped")
-                return len(errored_tasks) == 0
-            elif attempts >= maxAttempts:
-                _logger.info("Stopped waiting as maxAttempts reached")
-                return len(errored_tasks) > 0
-            else:
-                _logger.info("waiting...")
-                time.sleep(delay)
+        attempts += 1
+        if len(tasks) == 0:
+            _logger.info("All tasks stopped")
+            return len(errored_tasks) == 0
+        elif attempts >= maxAttempts:
+            _logger.info("Stopped waiting as maxAttempts reached")
+            return len(errored_tasks) > 0
+        else:
+            _logger.info("waiting...")
+            time.sleep(delay)
 
 
 def tail_logs(team_name, tasks) -> None:
@@ -826,6 +830,7 @@ def tail_logs(team_name, tasks) -> None:
                             _logger.info(line)
                     else:
                         _logger.info("task not started yet for %s", task_id)
+
 
 def logEvents(paginator: Any, logGroupName: Any, logStreams: Any, fromTime: Any) -> int:
     """

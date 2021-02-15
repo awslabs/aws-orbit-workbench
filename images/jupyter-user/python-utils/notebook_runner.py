@@ -88,7 +88,7 @@ def runNotebook(parameters):
     errors = []
     output_path = parameters.get("PAPERMILL_OUTPUT_PATH")
     output_path_dir = parameters.get("PAPERMILL_OUTPUT_DIR_PATH")
-    os.makedirs(output_path_dir,exist_ok=True)
+    os.makedirs(output_path_dir, exist_ok=True)
     try:
         logger.info("Starting notebook execution for %s", output_path)
         pm.execute_notebook(
@@ -205,13 +205,15 @@ def prepareNotebook(default_output_directory, notebook, key):
         pathToParamPath = os.path.abspath(notebook["paramPath"])
         try:
             parameters = read_yaml_file(pathToParamPath)
-        except:
+        except Exception as e:
             logger.error("cannot find parameter file at: %s", pathToParamPath)
+            raise e
     elif "params" in notebook:
         try:
             parameters = notebook["params"]
-        except:
+        except Exception as e:
             logger.error("fail to parse parameters: %s", notebook["params"])
+            raise e
     else:
         parameters = dict()
 
