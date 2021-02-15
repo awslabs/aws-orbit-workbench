@@ -32,7 +32,6 @@ from aws_cdk.core import App, Construct, Environment, IConstruct, Stack, Tags
 from aws_orbit.models.changeset import load_changeset_from_ssm
 from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.models.manifest import load_manifest_from_ssm
-from aws_orbit.remote_files.cdk.team_builders._lambda import LambdaBuilder
 from aws_orbit.remote_files.cdk.team_builders.ec2 import Ec2Builder
 from aws_orbit.remote_files.cdk.team_builders.ecr import EcrBuilder
 from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
@@ -164,19 +163,11 @@ class Team(Stack):
             scope=self, team_name=team_name, shared_fs=self.shared_fs
         )
 
-        self.ecr_image = EcrBuilder.build_ecr_image(scope=self, manifest=manifest, team_manifest=team_manifest)
-        self.ecr_image_spark = EcrBuilder.build_ecr_image_spark(
-            scope=self, manifest=manifest, team_manifest=team_manifest
-        )
+        self.ecr_image = EcrBuilder.build_ecr_image(scope=self, context=context, image=self.image)
+        self.ecr_image_spark = EcrBuilder.build_ecr_image_spark(scope=self, context=context, image=self.image)
 
-        self.team_manifest.efs_id = self.shared_fs.file_system_id
-        self.team_manifest.efs_ap_id = self.efs_ap.access_point_id
-        self.team_manifest.eks_nodegroup_role_arn = self.role_eks_nodegroup.role_arn
-        self.team_manifest.scratch_bucket = self.scratch_bucket.bucket_name
-        self.team_manifest.team_kms_key_arn = self.team_kms_key.key_arn
-        self.team_manifest.team_security_group_id = self.team_security_group.security_group_id
-
-        self.manifest_parameter: ssm.StringParameter = ssm.StringParameter(
+        team_ssm_parameter_name: str = f"/orbit/{context.name}/teams/{self.team_name}/team"
+        self.context_parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,
             id=team_ssm_parameter_name,
             string_value=json.dumps(
@@ -185,9 +176,6 @@ class Team(Stack):
                     "EfsApId": self.efs_ap.access_point_id,
                     "EksNodegroupRoleArn": self.role_eks_nodegroup.role_arn,
                     "ScratchBucket": self.scratch_bucket.bucket_name,
-                    "EcsClusterName": self.ecs_cluster.cluster_name,
-                    "ContainerRunnerArn": self.container_runner.function_arn,
-                    "EksK8sApiArn": self.eks_k8s_api.state_machine_arn,
                     "TeamKmsKeyArn": self.team_kms_key.key_arn,
                     "TeamSecurityGroupId": self.team_security_group.security_group_id,
                 }

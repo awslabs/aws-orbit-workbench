@@ -377,13 +377,15 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
     job_name: str = f'run-{taskConfiguration["task_type"]}'
     grant_sudo = (
         taskConfiguration["grant_sudo"]
-        if "compute" in taskConfiguration and "grant_sudo" in taskConfiguration["compute"]
+        if "compute" in taskConfiguration
+        and "grant_sudo" in taskConfiguration["compute"]
         and (taskConfiguration["compute"] or taskConfiguration["compute"] == "True")
         else False
     )
     add_ebs = (
         taskConfiguration["add_ebs"]
-        if "compute" in taskConfiguration and "add_ebs" in taskConfiguration["compute"]
+        if "compute" in taskConfiguration
+        and "add_ebs" in taskConfiguration["compute"]
         and (taskConfiguration["add_ebs"] or taskConfiguration["add_ebs"] == "True")
         else False
     )
@@ -762,7 +764,7 @@ def wait_for_tasks_to_complete(
                     namespace=team_name, label_selector=f"app=orbit-runner"
                 )
             except exceptions.ApiException as e:
-                _logger.error("Error during list jobs for %s: %s",team_name, e)
+                _logger.error("Error during list jobs for %s: %s", team_name, e)
                 # try again after 5 seconds.
                 time.sleep(5)
                 current_jobs: V1JobList = BatchV1Api().list_namespaced_job(
@@ -778,7 +780,7 @@ def wait_for_tasks_to_complete(
                 _logger.debug(f"job-status={job_status}")
                 if job_status.active == 1:
                     incomplete_tasks.append(task)
-                    _logger.info('Task %s is running with status %s',task,job_status)
+                    _logger.info("Task %s is running with status %s", task, job_status)
                 elif job_status.failed == 1:
                     _logger.debug(f"Execution error: {task_name}")
                     errored_tasks.append(task)
@@ -802,7 +804,7 @@ def wait_for_tasks_to_complete(
             _logger.info("Stopped waiting as maxAttempts reached")
             return len(errored_tasks) > 0
         else:
-            _logger.info("waiting for %s",tasks)
+            _logger.info("waiting for %s", tasks)
             time.sleep(delay)
 
 

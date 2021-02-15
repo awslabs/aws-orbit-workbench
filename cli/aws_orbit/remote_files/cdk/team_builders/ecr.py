@@ -13,18 +13,22 @@
 #    limitations under the License.
 
 
+from typing import TYPE_CHECKING, Optional
+
 import aws_cdk.aws_ecr as ecr
 import aws_cdk.aws_ecs as ecs
 import aws_cdk.core as core
 
-from aws_orbit.manifest import Manifest
-from aws_orbit.manifest.team import TeamManifest
+from aws_orbit.models.context import construct_ecr_repository_name
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context
 
 
 class EcrBuilder:
     @staticmethod
-    def build_ecr_image(scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest) -> ecs.EcrImage:
-        repository_name, tag = team_manifest.construct_ecr_repository_name(manifest.name).split(":")
+    def build_ecr_image(scope: core.Construct, context: "Context", image: Optional[str]) -> ecs.EcrImage:
+        repository_name, tag = construct_ecr_repository_name(env_name=context.name, image=image).split(":")
         repository = ecr.Repository.from_repository_name(
             scope,
             "ecr_repository",
@@ -33,8 +37,8 @@ class EcrBuilder:
         return ecs.ContainerImage.from_ecr_repository(repository=repository, tag=tag)
 
     @staticmethod
-    def build_ecr_image_spark(scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest) -> ecs.EcrImage:
-        repository_name, tag = team_manifest.construct_ecr_repository_name(manifest.name).split(":")
+    def build_ecr_image_spark(scope: core.Construct, context: "Context", image: Optional[str]) -> ecs.EcrImage:
+        repository_name, tag = construct_ecr_repository_name(env_name=context.name, image=image).split(":")
         repository_name += "-spark"
         repository = ecr.Repository.from_repository_name(
             scope,

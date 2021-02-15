@@ -17,7 +17,6 @@ from typing import TYPE_CHECKING, cast
 import aws_cdk.core as core
 from aws_cdk import aws_lambda
 
-from aws_orbit.models.context import get_container_defaults
 from aws_orbit.remote_files.cdk import _lambda_path
 
 if TYPE_CHECKING:
