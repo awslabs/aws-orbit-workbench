@@ -76,31 +76,32 @@ def generate_bundle(
     os.makedirs(bundle_dir, exist_ok=True)
 
     # Plugins
-    if plugins:
-        for team_context in context.teams:
-            plugin_bundle_dir = os.path.join(bundle_dir, team_context.name)
-            _logger.debug("plugin_bundle_dir: %s", plugin_bundle_dir)
-            for plugin in team_context.plugins:
-                if plugin.path is not None and plugin.module is not None:
-                    _logger.debug("Bundling plugin %s (%s)...", plugin.plugin_id, plugin.path)
-                    _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin.path, name=plugin.module)
-        if changeset is not None:
-            for plugin_changeset in changeset.plugin_changesets:
-                plugin_bundle_dir = os.path.join(bundle_dir, plugin_changeset.team_name)
-
-                # OLD
-                for plugin_name, plugin_path in plugin_changeset.old_paths.items():
-                    module: str = plugin_changeset.old_modules[plugin_name]
-                    if plugin_name not in plugin_changeset.new and module is not None and plugin_path is not None:
-                        _logger.debug("Changest - Bundling plugin %s (%s)... [OLD]", plugin_name, plugin_path)
-                        _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin_path, name=module)
-
-                # NEW
-                for plugin_name, plugin_path in plugin_changeset.new_paths.items():
-                    module = plugin_changeset.new_modules[plugin_name]
-                    if plugin_name not in plugin_changeset.old and module is not None and plugin_path is not None:
-                        _logger.debug("Changest - Bundling plugin %s (%s)... [NEW]", plugin_name, plugin_path)
-                        _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin_path, name=module)
+    # TODO Change 1
+    # if plugins:
+    #     for team_context in context.teams:
+    #         plugin_bundle_dir = os.path.join(bundle_dir, team_context.name)
+    #         _logger.debug("plugin_bundle_dir: %s", plugin_bundle_dir)
+    #         for plugin in team_context.plugins:
+    #             if plugin.path is not None and plugin.module is not None:
+    #                 _logger.debug("Bundling plugin %s (%s)...", plugin.plugin_id, plugin.path)
+    #                 _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin.path, name=plugin.module)
+    #     if changeset is not None:
+    #         for plugin_changeset in changeset.plugin_changesets:
+    #             plugin_bundle_dir = os.path.join(bundle_dir, plugin_changeset.team_name)
+    #
+    #             # OLD
+    #             for plugin_name, plugin_path in plugin_changeset.old_paths.items():
+    #                 module: str = plugin_changeset.old_modules[plugin_name]
+    #                 if plugin_name not in plugin_changeset.new and module is not None and plugin_path is not None:
+    #                     _logger.debug("Changest - Bundling plugin %s (%s)... [OLD]", plugin_name, plugin_path)
+    #                     _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin_path, name=module)
+    #
+    #             # NEW
+    #             for plugin_name, plugin_path in plugin_changeset.new_paths.items():
+    #                 module = plugin_changeset.new_modules[plugin_name]
+    #                 if plugin_name not in plugin_changeset.old and module is not None and plugin_path is not None:
+    #                     _logger.debug("Changest - Bundling plugin %s (%s)... [NEW]", plugin_name, plugin_path)
+    #                     _generate_dir(bundle_dir=plugin_bundle_dir, dir=plugin_path, name=module)
 
     # Extra Directories
     if dirs is not None:

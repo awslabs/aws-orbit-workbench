@@ -15,8 +15,8 @@
 from setuptools import setup
 
 setup(
-    name="redshift",
-    version="0.0b0",
+    name="aws-orbit-redshift",
+    version="0.11.0.dev0",
     description="Orbit Workbench Redshift Plugin.",
     license="Apache License 2.0",
     packages=["redshift"],

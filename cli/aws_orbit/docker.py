@@ -124,6 +124,13 @@ def deploy_image_from_source(
     tag: str = "latest",
     use_cache: bool = True,
 ) -> None:
+    _logger.debug("Adding CodeArtifact login to build environment, user by Dockerfile")
+    if context.codeartifact_domain and context.codeartifact_repository:
+        ca_domain: str = context.codeartifact_domain
+        ca_repo: str = context.codeartifact_repository
+        sh.run(f"aws codeartifact login --tool pip --domain {ca_domain} --repository {ca_repo}")
+        sh.run("cp ~/.config/pip/pip.conf .")
+
     _logger.debug("Building docker image from %s", os.path.abspath(dir))
     update_docker_file(context=context, dir=dir)
     build(context=context, dir=dir, name=name, tag=tag, use_cache=use_cache, pull=True)

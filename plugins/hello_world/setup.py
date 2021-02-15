@@ -15,8 +15,8 @@
 from setuptools import setup
 
 setup(
-    name="hello_world",
-    version="0.0b0",
+    name="aws-orbit-hello-world",
+    version="0.11.0.dev0",
     description="Minimal Orbit Workbench Plugin.",
     license="Apache License 2.0",
     packages=["hello_world"],

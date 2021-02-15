@@ -15,8 +15,8 @@
 from setuptools import setup
 
 setup(
-    name="team_script_launcher",
-    version="0.0b0",
+    name="aws-orbit-team-script-launcher",
+    version="0.11.0.dev0",
     description="Launch a Pod for the team space that executes a script given by the user",
     license="Apache License 2.0",
     packages=["team_script_launcher"],

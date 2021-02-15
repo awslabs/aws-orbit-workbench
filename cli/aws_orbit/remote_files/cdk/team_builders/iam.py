@@ -222,6 +222,15 @@ class IamBuilder:
                         f"arn:{partition}:lambda:{region}:{account}:function:orbit-{env_name}-token-validation",
                     ],
                 ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "cloudformation:DescribeStacks",
+                    ],
+                    resources=[
+                        f"arn:{partition}:cloudformation:{region}:{account}:stack/orbit-{env_name}/*",
+                    ],
+                ),
             ],
         )
 

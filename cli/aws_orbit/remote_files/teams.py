@@ -62,7 +62,22 @@ def _create_dockerfile(context: "Context", team_context: "TeamContext", image_na
 
     _logger.debug("base_image_cmd: %s", base_image_cmd)
     cmds: List[str] = [base_image_cmd]
+
+    # TODO - Testing - For now do all steps with root user. Need to test with flipping with $NB_UID
+    # Add CodeArtifact pip.conf
+    cmds += ["USER root"]
+
+    if context.codeartifact_domain and context.codeartifact_repository:
+        ca_domain: str = context.codeartifact_domain
+        ca_repo: str = context.codeartifact_repository
+        cmds += ["ADD pip.conf /etc/pip.conf"]
+
     for plugin in team_context.plugins:
+
+        # Adding plugin modules to image via pip
+        plugin_module_name = (plugin.module).replace("_", "-")
+        cmds += ["USER root", f"RUN pip install --upgrade aws-orbit-{plugin_module_name}", "USER $NB_UID"]
+
         hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
             context=context,
             team_name=team_context.name,
@@ -73,6 +88,10 @@ def _create_dockerfile(context: "Context", team_context: "TeamContext", image_na
             plugin_cmds = cast(Optional[List[str]], hook(plugin.plugin_id, context, team_context, plugin.parameters))
             if plugin_cmds is not None:
                 cmds += [f"# Commands for {plugin.plugin_id} plugin"] + plugin_cmds
+
+    # Adding pip conf remove commands
+    cmds += ["USER root", "RUN rm /etc/pip.conf", "USER $NB_UID"]
+    _logger.debug("********Team Dockerfile commands list********")
     _logger.debug("cmds: %s", cmds)
     outdir = os.path.join(".orbit.out", context.name, team_context.name, "image")
     output_filename = os.path.join(outdir, "Dockerfile")

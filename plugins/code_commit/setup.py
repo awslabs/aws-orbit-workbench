@@ -15,8 +15,8 @@
 from setuptools import setup
 
 setup(
-    name="orbit-codecommit",
-    version="0.0b0",
+    name="aws-orbit-code-commit",
+    version="0.11.0.dev0",
     description="Orbit Workbench CodeCommit Plugin.",
     license="Apache License 2.0",
     packages=["code_commit"],
