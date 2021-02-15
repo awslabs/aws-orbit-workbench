@@ -757,9 +757,13 @@ def wait_for_tasks_to_complete(
     while True:
         for task in tasks:
             _logger.debug("Checking execution state of: %s", task)
-            current_jobs: V1JobList = BatchV1Api().list_namespaced_job(
-                namespace=team_name, label_selector=f"app=orbit-runner"
-            )
+            try:
+                current_jobs: V1JobList = BatchV1Api().list_namespaced_job(
+                    namespace=team_name, label_selector=f"app=orbit-runner"
+                )
+            except exceptions.ApiException as e:
+                _logger.error("Error during list jobs for %s: %s",team_name, e)
+                raise e
             task_name = task["Identifier"]
             for job in current_jobs.items:
                 job_instance: V1Job = cast(V1Job, job)
