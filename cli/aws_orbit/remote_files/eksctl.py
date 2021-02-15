@@ -174,13 +174,18 @@ def map_iam_identities(
                     )
                     break
             else:
-                _logger.debug(f"Skipping existing IAM Identity Mapping - Role: {arn}")
+                _logger.debug(f"Skip adding existing IAM Identity Mapping - Role: {arn}")
 
     if eks_system_masters_roles_changes and eks_system_masters_roles_changes.removed_values:
         for role in eks_system_masters_roles_changes.removed_values:
             arn = f"arn:aws:iam::{context.account_id}:role/{role}"
-            _logger.debug(f"Removing IAM Identity Mapping - Role: {arn}")
-            sh.run(f"eksctl delete iamidentitymapping --cluster {cluster_name} --arn {arn} --all")
+            for line in sh.run_iterating(f"eksctl get iamidentitymapping --cluster {cluster_name} --arn {arn}"):
+                if line.startswith("Error: no iamidentitymapping with arn"):
+                    _logger.debug(f"Skip removing nonexisting IAM Identity Mapping - Role: {arn}")
+                    break
+            else:
+                _logger.debug(f"Removing IAM Identity Mapping - Role: {arn}")
+                sh.run(f"eksctl delete iamidentitymapping --cluster {cluster_name} --arn {arn} --all")
 
 
 def get_pod_to_cluster_rules(group_id: str) -> List[IpPermission]:
