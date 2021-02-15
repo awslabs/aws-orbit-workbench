@@ -1,11 +1,10 @@
 Name: dev-env
 CodeartifactDomain: aws-orbit
-CodeartifactRepository: python-Repository
+CodeartifactRepository: python-repository
 ScratchBucketArn: !SSM ${/orbit/dev-env/demo::ScratchBucketArn}
 UserPoolId: !SSM ${/orbit/dev-env/demo::UserPoolId}
-SharedEfsFsId: !SSM ${/orbit/dev-env/demo::EFSFilesystemID}
-SharedEfsSgId: !SSM ${/orbit/dev-env/demo::SharedEFSSecurityGroup}
-VpcId: !SSM ${/orbit/dev-env/demo::VpcId}
+SharedEfsFsId: !SSM ${/orbit/dev-env/demo::SharedEfsFsId}
+SharedEfsSgId: !SSM ${/orbit/dev-env/demo::SharedEfsSgId}
 Images:
     JupyterHub:
         Repository: aws-orbit-JupyterHub
@@ -27,15 +26,19 @@ Images:
         Source: code
         Path: ../Images/LandingPage
         Version: latest
-    CodeBuildImage:
+    CodeBuild:
         Repository: aws-orbit-code-build-base
         Source: code
         Path: ../Images/CodeBuildImage
         Version: latest
 Networking:
+    VpcId: !SSM ${/orbit/dev-env/demo::VpcId}
+    PublicSubnets: !SSM ${/orbit/dev-env/demo::PublicSubnets}
+    PrivateSubnets: !SSM ${/orbit/dev-env/demo::PrivateSubnets}
+    IsolatedSubnets: !SSM ${/orbit/dev-env/demo::IsolatedSubnets}
     Data:
         InternetAccessible: false
         NodesSubnets: !SSM ${/orbit/dev-env/demo::NodesSubnets}
-    FrontEnd:
+    Frontend:
         LoadBalancersSubnets: !SSM ${/orbit/dev-env/demo::LoadBalancersSubnets}
 Teams: []
