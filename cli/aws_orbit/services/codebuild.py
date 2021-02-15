@@ -267,8 +267,8 @@ def generate_spec(
             for plugin in team_context.plugins:
                 if plugin.path is not None and plugin.module is not None:
                     # TODO Change 2
-                    #install.append(f"ls -la ./{team_context.name}/{plugin.module}/")
-                    #install.append(f"pip install -e ./{team_context.name}/{plugin.module}/")
+                    # install.append(f"ls -la ./{team_context.name}/{plugin.module}/")
+                    # install.append(f"pip install -e ./{team_context.name}/{plugin.module}/")
 
                     plugin_module_name = (plugin.module).replace("_", "-")
                     install.append(f"ls -lrta ")
@@ -281,8 +281,8 @@ def generate_spec(
                 for plugin_name in plugin_changeset.old:
                     module: str = plugin_changeset.old_modules[plugin_name]
                     if plugin_name not in plugin_changeset.new and module is not None:
-                        #install.append(f"ls -la ./{plugin_changeset.team_name}/{module}/")
-                        #install.append(f"pip install -e ./{plugin_changeset.team_name}/{module}/")
+                        # install.append(f"ls -la ./{plugin_changeset.team_name}/{module}/")
+                        # install.append(f"pip install -e ./{plugin_changeset.team_name}/{module}/")
 
                         plugin_module_name = (module).replace("_", "-")
                         install.append(f"ls -lrta ")
@@ -292,8 +292,8 @@ def generate_spec(
                 for plugin_name in plugin_changeset.new:
                     module = plugin_changeset.new_modules[plugin_name]
                     if plugin_name not in plugin_changeset.old and module is not None:
-                        #install.append(f"ls -la ./{plugin_changeset.team_name}/{module}/")
-                        #install.append(f"pip install -e ./{plugin_changeset.team_name}/{module}/")
+                        # install.append(f"ls -la ./{plugin_changeset.team_name}/{module}/")
+                        # install.append(f"pip install -e ./{plugin_changeset.team_name}/{module}/")
 
                         plugin_module_name = (module).replace("_", "-")
                         install.append(f"ls -lrta ")
@@ -303,7 +303,7 @@ def generate_spec(
         install += cmds_install
 
     # TODO Change 3
-    return_spec = {
+    return_spec : SPEC_TYPE = {
         "version": 0.2,
         "phases": {
             "install": {
