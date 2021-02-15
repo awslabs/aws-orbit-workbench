@@ -1,41 +1,41 @@
-name: dev-env
-codeartifact-domain: aws-orbit
-codeartifact-repository: python-repository
-scratch-bucket-arn: !SSM ${/orbit/dev-env/demo::ScratchBucketArn}
-user-pool-id: !SSM ${/orbit/dev-env/demo::UserPoolId}
-shared-efs-fs-id: !SSM ${/orbit/dev-env/demo::EFSFilesystemID}
-shared-efs-sg-id: !SSM ${/orbit/dev-env/demo::SharedEFSSecurityGroup}
-vpc-id: !SSM ${/orbit/dev-env/demo::VpcId}
-images:
-    jupyter-hub:
-        repository: aws-orbit-jupyter-hub
-        source: code
-        path: ../images/jupyter-hub
-        version: latest
-    jupyter-user:
-        repository: aws-orbit-jupyter-user
-        source: code
-        path: ../images/jupyter-user
-        version: latest
-    jupyter-user-spark:
-        repository: aws-orbit-jupyter-user-spark
-        source: code
-        path: ../images/jupyter-user-spark
-        version: latest
-    landing-page:
-        repository: aws-orbit-landing-page
-        source: code
-        path: ../images/landing-page
-        version: latest
-    code-build-image:
-        repository: aws-orbit-code-build-base
-        source: code
-        path: ../images/code-build-image
-        version: latest
-networking:
-    data:
-        internet-accessible: false
-        nodes-subnets: !SSM ${/orbit/dev-env/demo::NodesSubnets}
-    frontend:
-        load-balancers-subnets: !SSM ${/orbit/dev-env/demo::LoadBalancersSubnets}
-teams: []
+Name: dev-env
+CodeartifactDomain: aws-orbit
+CodeartifactRepository: python-Repository
+ScratchBucketArn: !SSM ${/orbit/dev-env/demo::ScratchBucketArn}
+UserPoolId: !SSM ${/orbit/dev-env/demo::UserPoolId}
+SharedEfsFsId: !SSM ${/orbit/dev-env/demo::EFSFilesystemID}
+SharedEfsSgId: !SSM ${/orbit/dev-env/demo::SharedEFSSecurityGroup}
+VpcId: !SSM ${/orbit/dev-env/demo::VpcId}
+Images:
+    JupyterHub:
+        Repository: aws-orbit-JupyterHub
+        Source: code
+        Path: ../Images/JupyterHub
+        Version: latest
+    JupyterUser:
+        Repository: aws-orbit-JupyterUser
+        Source: code
+        Path: ../Images/JupyterUser
+        Version: latest
+    JupyterUser-Spark:
+        Repository: aws-orbit-JupyterUser-Spark
+        Source: code
+        Path: ../Images/JupyterUser-Spark
+        Version: latest
+    LandingPage:
+        Repository: aws-orbit-LandingPage
+        Source: code
+        Path: ../Images/LandingPage
+        Version: latest
+    CodeBuildImage:
+        Repository: aws-orbit-code-build-base
+        Source: code
+        Path: ../Images/CodeBuildImage
+        Version: latest
+Networking:
+    Data:
+        InternetAccessible: false
+        NodesSubnets: !SSM ${/orbit/dev-env/demo::NodesSubnets}
+    FrontEnd:
+        LoadBalancersSubnets: !SSM ${/orbit/dev-env/demo::LoadBalancersSubnets}
+Teams: []
