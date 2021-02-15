@@ -770,6 +770,7 @@ def wait_for_tasks_to_complete(
                 _logger.debug(f"job-status={job_status}")
                 if job_status.active == 1:
                     incomplete_tasks.append(task)
+                    _logger.info('Task %s is running with status %s',task,job_status)
                 elif job_status.failed == 1:
                     _logger.debug(f"Execution error: {task_name}")
                     errored_tasks.append(task)
@@ -793,7 +794,7 @@ def wait_for_tasks_to_complete(
             _logger.info("Stopped waiting as maxAttempts reached")
             return len(errored_tasks) > 0
         else:
-            _logger.info("waiting...")
+            _logger.info("waiting for %s",tasks)
             time.sleep(delay)
 
 
