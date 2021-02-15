@@ -13,10 +13,11 @@
 #    limitations under the License.
 
 import logging
-
 from typing import ClassVar, List, Type
-from marshmallow_dataclass import dataclass
+
+from dataclasses import field
 from marshmallow import Schema
+from marshmallow_dataclass import dataclass
 
 from aws_orbit.models.common import BaseSchema
 from aws_orbit.utils import boto3_client
@@ -36,7 +37,7 @@ class IpPermission:
     from_port: int
     to_port: int
     ip_protocol: str
-    user_id_group_pairs: List[UserIdGroupPair]
+    user_id_group_pairs: List[UserIdGroupPair] = field(default_factory=list)
 
 
 def authorize_security_group_ingress(group_id: str, ip_permissions: List[IpPermission]) -> None:
@@ -44,10 +45,28 @@ def authorize_security_group_ingress(group_id: str, ip_permissions: List[IpPermi
     _logger.debug(f"Authorizing Ingress for Security Group: {group_id}\nPermissions: {permissions}")
 
     ec2_client = boto3_client("ec2")
-    ec2_client.authorize_security_group_ingress(
-        GroupId=group_id,
-        IpPermissions=permissions
-    )
+    ec2_client.authorize_security_group_ingress(GroupId=group_id, IpPermissions=permissions)
+
+
+def authorize_security_group_egress(group_id: str, ip_permissions: List[IpPermission]) -> None:
+    permissions = [IpPermission.Schema().dump(i) for i in ip_permissions]
+    _logger.debug(f"Authorizing Egress for Security Group: {group_id}\nPermissions: {permissions}")
+
+    ec2_client = boto3_client("ec2")
+    ec2_client.authorize_security_group_egress(GroupId=group_id, IpPermissions=permissions)
 
 
 def revoke_security_group_ingress(group_id: str, ip_permissions: List[IpPermission]) -> None:
+    permissions = [IpPermission.Schema().dump(i) for i in ip_permissions]
+    _logger.debug(f"Revoking Ingress for Security Group: {group_id}\nPermissions: {permissions}")
+
+    ec2_client = boto3_client("ec2")
+    ec2_client.revoke_security_group_ingress(GroupId=group_id, IpPermissions=permissions)
+
+
+def revoke_security_group_egress(group_id: str, ip_permissions: List[IpPermission]) -> None:
+    permissions = [IpPermission.Schema().dump(i) for i in ip_permissions]
+    _logger.debug(f"Revoking Egress for Security Group: {group_id}\nPermissions: {permissions}")
+
+    ec2_client = boto3_client("ec2")
+    ec2_client.revoke_security_group_egress(GroupId=group_id, IpPermissions=permissions)

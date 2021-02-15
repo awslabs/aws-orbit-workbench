@@ -370,7 +370,7 @@ class Env(Stack):
                     "UserPoolId": self.user_pool.user_pool_id,
                     "UserPoolClientId": self.user_pool_client.user_pool_client_id,
                     "IdentityPoolId": self.identity_pool.ref,
-                    "ClusterPodSecurityGroupId": self.cluster_pod_security_group.security_group_id
+                    "ClusterPodSecurityGroupId": self.cluster_pod_security_group.security_group_id,
                 }
             ),
             type=ssm.ParameterType.STRING,

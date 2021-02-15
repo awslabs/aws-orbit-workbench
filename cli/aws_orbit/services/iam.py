@@ -26,10 +26,7 @@ def get_role(role_name: str) -> Optional[Dict[str, Any]]:
 
     iam_client = boto3_client("iam")
     try:
-        return cast(
-            Dict[str, Any],
-            iam_client.get_role(RoleName=role_name)
-        )
+        return cast(Dict[str, Any], iam_client.get_role(RoleName=role_name))
     except iam_client.exceptions.NoSuchEntityException:
         return None
 
@@ -64,7 +61,9 @@ def update_assume_role_roles(
 
     statements = []
     roles_to_add_set = (
-        set() if roles_to_add is None else {f"arn:aws:iam::{account_id}:role/{role}" for role in roles_to_add if get_role(role)}
+        set()
+        if roles_to_add is None
+        else {f"arn:aws:iam::{account_id}:role/{role}" for role in roles_to_add if get_role(role)}
     )
     roles_to_remove_set = (
         set() if roles_to_remove is None else {f"arn:aws:iam::{account_id}:role/{role}" for role in roles_to_remove}

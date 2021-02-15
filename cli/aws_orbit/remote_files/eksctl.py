@@ -15,17 +15,18 @@
 import logging
 import os
 import pprint
-from typing import TYPE_CHECKING, Any, Dict, Optional, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
 import yaml
 
 from aws_orbit import sh
 from aws_orbit.models.context import dump_context_to_ssm
-from aws_orbit.services import cfn, eks, iam
+from aws_orbit.services import cfn, ec2, eks, iam
 
 if TYPE_CHECKING:
     from aws_orbit.models.changeset import ListChangeset
     from aws_orbit.models.context import Context, TeamContext
+    from aws_orbit.services.ec2 import IpPermission, UserIdGroupPair
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -155,8 +156,9 @@ def associate_open_id_connect_provider(context: Context, cluster_name: str) -> N
         _logger.debug("OpenID Connect Provider already associated")
 
 
-
-def map_iam_identities(context: Context, cluster_name: str, eks_system_masters_roles_changes: Optional["ListChangeset"]) -> None:
+def map_iam_identities(
+    context: Context, cluster_name: str, eks_system_masters_roles_changes: Optional["ListChangeset"]
+) -> None:
     if eks_system_masters_roles_changes and eks_system_masters_roles_changes.added_values:
         for role in eks_system_masters_roles_changes.added_values:
             if iam.get_role(role) is None:
@@ -182,9 +184,90 @@ def map_iam_identities(context: Context, cluster_name: str, eks_system_masters_r
             sh.run(f"eksctl delete iamidentitymapping --cluster {cluster_name} --arn {arn} --all")
 
 
-def authorize_cluster_pod_security_group(context: Context): -> None:
+def get_pod_to_cluster_rules(group_id: str) -> List[IpPermission]:
+    return [
+        IpPermission(  # type: ignore
+            from_port=53,
+            to_port=53,
+            ip_protocol="tcp",
+            user_id_group_pairs=[UserIdGroupPair(description="DNS Lookup from Pod", group_id=group_id)],  # type: ignore
+        ),
+        IpPermission(  # type: ignore
+            from_port=53,
+            to_port=53,
+            ip_protocol="udp",
+            user_id_group_pairs=[UserIdGroupPair(description="DNS Lookup from Pod", group_id=group_id)],  # type: ignore
+        ),
+        IpPermission(  # type: ignore
+            from_port=443,
+            to_port=443,
+            ip_protocol="tcp",
+            user_id_group_pairs=[
+                UserIdGroupPair(description="Kubernetes API from Pod", group_id=group_id)  # type: ignore
+            ],
+        ),
+        IpPermission(  # type: ignore
+            from_port=10250,
+            to_port=10250,
+            ip_protocol="tcp",
+            user_id_group_pairs=[UserIdGroupPair(description="Kubelet from Pod", group_id=group_id)],  # type: ignore
+        ),
+    ]
 
 
+def get_cluster_to_pod_rules(group_id: str) -> List[IpPermission]:
+    return [
+        IpPermission(  # type: ignore
+            from_port=-1,
+            to_port=-1,
+            ip_protocol="-1",
+            user_id_group_pairs=[UserIdGroupPair(description="All from Cluster", group_id=group_id)],  # type: ignore
+        )
+    ]
+
+
+def authorize_cluster_pod_security_group(context: Context) -> None:
+    # Authorize Pods to access Cluster
+    ec2.authorize_security_group_ingress(
+        group_id=cast(str, context.cluster_sg_id),
+        ip_permissions=get_pod_to_cluster_rules(cast(str, context.cluster_pod_sg_id)),
+    )
+    ec2.authorize_security_group_egress(
+        group_id=cast(str, context.cluster_pod_sg_id),
+        ip_permissions=get_pod_to_cluster_rules(cast(str, context.cluster_sg_id)),
+    )
+
+    # Authorize Cluster to access Pods
+    ec2.authorize_security_group_ingress(
+        group_id=cast(str, context.cluster_pod_sg_id),
+        ip_permissions=get_cluster_to_pod_rules(cast(str, context.cluster_sg_id)),
+    )
+    ec2.authorize_security_group_egress(
+        group_id=cast(str, context.cluster_sg_id),
+        ip_permissions=get_cluster_to_pod_rules(cast(str, context.cluster_pod_sg_id)),
+    )
+
+
+def revoke_cluster_pod_security_group(context: Context) -> None:
+    # Authorize Pods to access Cluster
+    ec2.revoke_security_group_ingress(
+        group_id=cast(str, context.cluster_sg_id),
+        ip_permissions=get_pod_to_cluster_rules(cast(str, context.cluster_pod_sg_id)),
+    )
+    ec2.revoke_security_group_egress(
+        group_id=cast(str, context.cluster_pod_sg_id),
+        ip_permissions=get_pod_to_cluster_rules(cast(str, context.cluster_sg_id)),
+    )
+
+    # Authorize Cluster to access Pods
+    ec2.revoke_security_group_ingress(
+        group_id=cast(str, context.cluster_pod_sg_id),
+        ip_permissions=get_cluster_to_pod_rules(cast(str, context.cluster_sg_id)),
+    )
+    ec2.revoke_security_group_egress(
+        group_id=cast(str, context.cluster_sg_id),
+        ip_permissions=get_cluster_to_pod_rules(cast(str, context.cluster_pod_sg_id)),
+    )
 
 
 def fetch_cluster_data(context: "Context", cluster_name: str) -> None:
@@ -221,7 +304,9 @@ def deploy_env(context: "Context", eks_system_masters_roles_changes: Optional["L
 
     fetch_cluster_data(context=context, cluster_name=cluster_name)
     associate_open_id_connect_provider(context=context, cluster_name=cluster_name)
-    map_iam_identities(context=context, cluster_name=cluster_name, eks_system_masters_roles_changes=eks_system_masters_roles_changes)
+    map_iam_identities(
+        context=context, cluster_name=cluster_name, eks_system_masters_roles_changes=eks_system_masters_roles_changes
+    )
     authorize_cluster_pod_security_group(context=context)
 
     _logger.debug("EKSCTL deployed")
@@ -281,6 +366,8 @@ def destroy_env(context: "Context") -> None:
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
     if cfn.does_stack_exist(stack_name=final_eks_stack_name):
+        revoke_cluster_pod_security_group(context=context)
+
         sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
         output_filename = generate_manifest(context=context, name=stack_name)
         sh.run(f"eksctl delete cluster -f {output_filename} --wait --verbose 4")
