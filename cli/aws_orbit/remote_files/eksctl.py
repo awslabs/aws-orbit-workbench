@@ -20,13 +20,12 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 import yaml
 
 from aws_orbit import sh
-from aws_orbit.models.context import dump_context_to_ssm
+from aws_orbit.models.context import Context, TeamContext, dump_context_to_ssm
 from aws_orbit.services import cfn, ec2, eks, iam
+from aws_orbit.services.ec2 import IpPermission, UserIdGroupPair
 
 if TYPE_CHECKING:
     from aws_orbit.models.changeset import ListChangeset
-    from aws_orbit.models.context import Context, TeamContext
-    from aws_orbit.services.ec2 import IpPermission, UserIdGroupPair
 
 _logger: logging.Logger = logging.getLogger(__name__)
 

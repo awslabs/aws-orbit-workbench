@@ -268,4 +268,16 @@ spec:
   securityGroups:
     groupIds:
       - ${team_security_group_id}
+---
+apiVersion: vpcresources.k8s.aws/v1beta1
+kind: SecurityGroupPolicy
+metadata:
+  name: cluster-pod-security-group-policy
+  namespace: ${team}
+spec:
+  podSelector:
+    matchLabels:
+      orbit/compute-type: ec2
+  securityGroups:
+    groupIds:
       - ${cluster_pod_security_group_id}

@@ -72,7 +72,9 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
         internal_load_balancer='"false"' if context.networking.frontend.load_balancers_subnets else '"true"',
         jupyterhub_inbound_ranges=inbound_ranges,
         team_kms_key_arn=team_context.team_kms_key_arn,
-        security_group_id=team_context.team_security_group_id,
+        team_security_group_id=team_context.team_security_group_id,
+        cluster_pod_security_group_id=context.cluster_pod_sg_id,
+
     )
     _logger.debug("Kubectl Team %s manifest:\n%s", team_context.name, content)
     with open(output, "w") as file:
