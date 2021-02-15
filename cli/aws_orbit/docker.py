@@ -6,17 +6,17 @@ from aws_orbit import dockerhub, exceptions, sh, utils
 from aws_orbit.services import ecr
 
 if TYPE_CHECKING:
-    from aws_orbit.manifest import Manifest
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def login(manifest: "Manifest") -> None:
-    username, password = dockerhub.get_credential(manifest)
+def login(context: "Context") -> None:
+    username, password = dockerhub.get_credential(context=context)
     sh.run(f"docker login --username {username} --password {password}", hide_cmd=True)
     _logger.debug("DockerHub logged in.")
-    username, password = ecr.get_credential(manifest=manifest)
-    ecr_address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com"
+    username, password = ecr.get_credential()
+    ecr_address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com"
     sh.run(
         f"docker login --username {username} --password {password} {ecr_address}",
         hide_cmd=True,
@@ -24,12 +24,12 @@ def login(manifest: "Manifest") -> None:
     _logger.debug("ECR logged in.")
 
 
-def login_ecr_only(manifest: "Manifest", account_id: Optional[str] = None, region: Optional[str] = None) -> None:
+def login_ecr_only(context: "Context", account_id: Optional[str] = None, region: Optional[str] = None) -> None:
     if account_id is None:
-        account_id = manifest.account_id
+        account_id = context.account_id
     if region is None:
-        region = manifest.region
-    username, password = ecr.get_credential(manifest=manifest, region=region)
+        region = context.region
+    username, password = ecr.get_credential(region=region)
     ecr_address = f"{account_id}.dkr.ecr.{region}.amazonaws.com"
     sh.run(
         f"docker login --username {username} --password {password} {ecr_address}",
@@ -42,74 +42,73 @@ def dockerhub_pull(name: str, tag: str = "latest") -> None:
     sh.run(f"docker pull {name}:{tag}")
 
 
-def ecr_pull(manifest: "Manifest", name: str, tag: str = "latest") -> None:
+def ecr_pull(context: "Context", name: str, tag: str = "latest") -> None:
     if name.startswith("public.ecr.aws"):
         repository = name
     else:
-        repository = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/{name}"
+        repository = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/{name}"
     sh.run(f"docker pull {repository}:{tag}")
 
 
-def ecr_pull_external(manifest: "Manifest", repository: str, tag: str = "latest") -> None:
+def ecr_pull_external(context: "Context", repository: str, tag: str = "latest") -> None:
     parts: List[str] = repository.split(".")
     if len(parts) < 6:
         raise ValueError(f"Invalid External ECR Repository: {repository}")
     external_account_id: str = parts[0]
     external_region: str = parts[3]
-    login_ecr_only(manifest=manifest, account_id=external_account_id, region=external_region)
+    login_ecr_only(context=context, account_id=external_account_id, region=external_region)
     sh.run(f"docker pull {repository}:{tag}")
 
 
-def tag_image(manifest: "Manifest", remote_name: str, remote_source: str, name: str, tag: str = "latest") -> None:
-    ecr_address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com"
+def tag_image(context: "Context", remote_name: str, remote_source: str, name: str, tag: str = "latest") -> None:
+    ecr_address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com"
     if remote_source == "ecr" and not remote_name.startswith("public.ecr.aws"):
         remote_name = f"{ecr_address}/{remote_name}"
     sh.run(f"docker tag {remote_name}:{tag} {ecr_address}/{name}:{tag}")
 
 
 def build(
-    manifest: "Manifest", dir: str, name: str, tag: str = "latest", use_cache: bool = True, pull: bool = False
+    context: "Context", dir: str, name: str, tag: str = "latest", use_cache: bool = True, pull: bool = False
 ) -> None:
-    ecr_address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com"
+    ecr_address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com"
     repo_address = f"{ecr_address}/{name}:{tag}"
     cache_str: str = ""
     pull_str: str = "--pull" if pull else ""
     if use_cache:
         try:
-            ecr_pull(manifest=manifest, name=name, tag=tag)
+            ecr_pull(context=context, name=name, tag=tag)
             cache_str = f"--cache-from {repo_address}"
         except exceptions.FailedShellCommand:
             _logger.debug(f"Docker cache not found at ECR {name}:{tag}")
     sh.run(f"docker build {pull_str} {cache_str} --tag {name} .", cwd=dir)
 
 
-def push(manifest: "Manifest", name: str, tag: str = "latest") -> None:
-    ecr_address = f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com"
+def push(context: "Context", name: str, tag: str = "latest") -> None:
+    ecr_address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com"
     repo_address = f"{ecr_address}/{name}:{tag}"
     sh.run(f"docker push {repo_address}")
 
 
-def update_docker_file(manifest: "Manifest", dir: str) -> None:
+def update_docker_file(context: "Context", dir: str) -> None:
     _logger.debug("Docker directory before building: %s", os.path.abspath(dir))
     utils.print_dir(dir)
     docker_file = os.path.join(dir, "Dockerfile")
     if os.path.exists(docker_file):
         _logger.info("Building DockerFile %s", docker_file)
         jupyter_user_base = (
-            f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/orbit-{manifest.name}-jupyter-user"
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}-jupyter-user"
         )
         jupyter_user_spark_base = (
-            f"{manifest.account_id}.dkr.ecr.{manifest.region}.amazonaws.com/"
-            f"orbit-{manifest.name}-jupyter-user-spark"
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/" f"orbit-{context.name}-jupyter-user-spark"
         )
         with open(docker_file, "r") as file:
             content: str = file.read()
         content = utils.resolve_parameters(
             content,
             dict(
-                region=manifest.region,
-                account=manifest.account_id,
-                env=manifest.name,
+                region=context.region,
+                account=context.account_id,
+                env=context.name,
                 jupyter_user_base=jupyter_user_base,
                 jupyter_user_spark_base=jupyter_user_spark_base,
             ),
@@ -119,41 +118,42 @@ def update_docker_file(manifest: "Manifest", dir: str) -> None:
 
 
 def deploy_image_from_source(
-    manifest: "Manifest",
+    context: "Context",
     dir: str,
     name: str,
     tag: str = "latest",
     use_cache: bool = True,
 ) -> None:
     _logger.debug("Building docker image from %s", os.path.abspath(dir))
-    update_docker_file(manifest=manifest, dir=dir)
-    build(manifest=manifest, dir=dir, name=name, tag=tag, use_cache=use_cache, pull=True)
+    update_docker_file(context=context, dir=dir)
+    build(context=context, dir=dir, name=name, tag=tag, use_cache=use_cache, pull=True)
     _logger.debug("Docker Image built")
-    tag_image(manifest=manifest, remote_name=name, remote_source="local", name=name, tag=tag)
+    tag_image(context=context, remote_name=name, remote_source="local", name=name, tag=tag)
     _logger.debug("Docker Image tagged")
-    push(manifest=manifest, name=name, tag=tag)
+    push(context=context, name=name, tag=tag)
     _logger.debug("Docker Image pushed")
 
 
 def replicate_image(
-    manifest: "Manifest",
+    context: "Context",
     deployed_name: str,
     image_name: str,
 ) -> None:
     _logger.debug("Logged in")
-    _logger.debug(f"Manifest: {vars(manifest)}")
+    _logger.debug(f"Context: {vars(context)}")
 
-    source = manifest.images[image_name]["source"]
-    source_repository = manifest.images[image_name]["repository"]
-    source_version = manifest.images[image_name]["version"]
+    attr_name: str = image_name.replace("-", "_")
+    source = getattr(context.images, attr_name).source
+    source_repository = getattr(context.images, attr_name).repository
+    source_version = getattr(context.images, attr_name).version
     if source == "dockerhub":
         dockerhub_pull(name=source_repository, tag=source_version)
         _logger.debug("Pulled DockerHub Image")
     elif source == "ecr":
-        ecr_pull(manifest=manifest, name=source_repository, tag=source_version)
+        ecr_pull(context=context, name=source_repository, tag=source_version)
         _logger.debug("Pulled ECR Image")
     elif source == "ecr-external":
-        ecr_pull_external(manifest=manifest, repository=source_repository, tag=source_version)
+        ecr_pull_external(context=context, repository=source_repository, tag=source_version)
         _logger.debug("Pulled external ECR Image")
     else:
         e = ValueError(f"Invalid Image Source: {source}. Valid values are: code, dockerhub, ecr")
@@ -161,6 +161,6 @@ def replicate_image(
         raise e
 
     tag_image(
-        manifest=manifest, remote_name=source_repository, remote_source=source, name=deployed_name, tag=source_version
+        context=context, remote_name=source_repository, remote_source=source, name=deployed_name, tag=source_version
     )
-    push(manifest=manifest, name=deployed_name, tag=source_version)
+    push(context=context, name=deployed_name, tag=source_version)

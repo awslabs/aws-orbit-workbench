@@ -19,6 +19,6 @@ set -ex
 
 isort --check .
 black --check .
-mypy .
+mypy aws_orbit
 flake8 .
 cfn-lint -i E1029,E3031 -- aws_orbit/data/toolkit/template.yaml

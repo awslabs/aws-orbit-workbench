@@ -114,7 +114,7 @@ def get_workspace() -> Dict[str, str]:
     ssm = boto3.client("ssm")
     props = get_properties()
 
-    role_key = f"/orbit/{props['AWS_ORBIT_ENV']}/teams/{props['AWS_ORBIT_TEAM_SPACE']}/manifest"
+    role_key = f"/orbit/{props['AWS_ORBIT_ENV']}/teams/{props['AWS_ORBIT_TEAM_SPACE']}/context"
 
     role_config_str = ssm.get_parameter(Name=role_key)["Parameter"]["Value"]
 
@@ -151,7 +151,7 @@ def get_scratch_database() -> str:
     response = glue.get_databases()
     workspace = get_workspace()
     scratch_db_name = f"scratch_db_{workspace['env_name']}_{workspace['team_space']}".lower().replace("-", "_")
-    new_location = f"s3://{workspace['scratch-bucket']}/{workspace['team_space']}/{scratch_db_name}"
+    new_location = f"s3://{workspace['ScratchBucket']}/{workspace['team_space']}/{scratch_db_name}"
     for db in response["DatabaseList"]:
         if db["Name"].lower() == scratch_db_name:
             if new_location == db["LocationUri"]:

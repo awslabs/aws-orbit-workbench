@@ -25,7 +25,7 @@ import boto3
 import botocore.exceptions
 
 if TYPE_CHECKING:
-    from aws_orbit.manifest import Manifest
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -35,27 +35,27 @@ def chunkify(lst: List[Any], num_chunks: int = 1, max_length: Optional[int] = No
     return [lst[i : i + num] for i in range(0, len(lst), num)]  # noqa: E203
 
 
+def get_botocore_config() -> botocore.config.Config:
+    return botocore.config.Config(retries={"max_attempts": 5}, connect_timeout=10, max_pool_connections=10)
+
+
+def boto3_client(service_name: str) -> boto3.client:
+    return boto3.Session().client(service_name=service_name, use_ssl=True, config=get_botocore_config())
+
+
+def boto3_resource(service_name: str) -> boto3.client:
+    return boto3.Session().resource(service_name=service_name, use_ssl=True, config=get_botocore_config())
+
+
 def get_region() -> str:
     session = boto3.Session()
     if session.region_name is None:
-        raise ValueError(
-            "It is not possible to infer AWS REGION from your environment. Please pass the --region argument."
-        )
+        raise ValueError("It is not possible to infer AWS REGION from your environment.")
     return str(session.region_name)
 
 
 def get_account_id() -> str:
     return str(boto3_client(service_name="sts").get_caller_identity().get("Account"))
-
-
-def _botocore_config() -> botocore.config.Config:
-    return botocore.config.Config(retries={"max_attempts": 5}, connect_timeout=10, max_pool_connections=10)
-
-
-def boto3_client(service_name: str) -> boto3.client:
-    return boto3.Session(region_name=get_region()).client(
-        service_name=service_name, use_ssl=True, config=_botocore_config()
-    )
 
 
 def namedtuple_to_dict(obj: Any) -> Any:
@@ -74,8 +74,8 @@ def path_from_filename(filename: str) -> str:
     return os.path.dirname(os.path.realpath(filename))
 
 
-def upsert_subnet_tag(manifest: "Manifest", subnet_id: str, key: str, value: str) -> None:
-    ec2: Any = manifest.boto3_resource("ec2")
+def upsert_subnet_tag(subnet_id: str, key: str, value: str) -> None:
+    ec2: Any = boto3_resource("ec2")
     ec2.Subnet(subnet_id).create_tags(Tags=[{"Key": key, "Value": value}])
 
 
@@ -95,18 +95,13 @@ def extract_plugin_module_name(func: Callable[..., Union[None, List[str], str]])
     return name
 
 
-def extract_images_names(manifest: "Manifest") -> List[str]:
+def extract_images_names(env_name: str) -> List[str]:
     resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
     try:
-        response: resp_type = manifest.boto3_client("cloudformation").describe_stacks(
-            StackName=f"orbit-{manifest.name}"
-        )
+        response: resp_type = boto3_client("cloudformation").describe_stacks(StackName=f"orbit-{env_name}")
     except botocore.exceptions.ClientError as ex:
         error: Dict[str, Any] = ex.response["Error"]
-        if (
-            error["Code"] == "ValidationError"
-            and f"Stack with id orbit-{manifest.name} does not exist" in error["Message"]
-        ):
+        if error["Code"] == "ValidationError" and f"Stack with id orbit-{env_name} does not exist" in error["Message"]:
             return []
         raise
     if len(response["Stacks"]) < 1:
@@ -114,10 +109,10 @@ def extract_images_names(manifest: "Manifest") -> List[str]:
     if "Outputs" not in response["Stacks"][0]:
         return []
     for output in response["Stacks"][0]["Outputs"]:
-        if output["ExportName"] == f"orbit-{manifest.name}-repos":
+        if output["ExportName"] == f"orbit-{env_name}-repos":
             _logger.debug("Export value: %s", output["OutputValue"])
             return output["OutputValue"].split(",")
-    raise RuntimeError(f"Stack orbit-{manifest.name} does not have the expected orbit-{manifest.name}-repos output.")
+    raise RuntimeError(f"Stack orbit-{env_name} does not have the expected orbit-{env_name}-repos output.")
 
 
 def try_it(
@@ -149,29 +144,25 @@ def try_it(
             time.sleep(delay)
 
 
-def get_dns_ip(manifest: "Manifest") -> str:
+def get_dns_ip(context: "Context") -> str:
     """
     Reserved by AWS. The IP address of the DNS server is the base of the VPC network range plus two.
     For VPCs with multiple CIDR blocks, the IP address of the DNS server is located in the primary CIDR.
     We also reserve the base of each subnet range plus two for all CIDR blocks in the VPC.
     """
-    if manifest.vpc.cidr_block is None:
-        manifest.vpc.fillup_from_ssm()
-    if manifest.vpc.cidr_block is None:
-        manifest.vpc.fetch_properties()
-    if manifest.vpc.cidr_block is None:
+    if context.networking.vpc_cidr_block is None:
         raise ValueError("Impossible to localize the VPC CIDR Block!")
-    base: str = manifest.vpc.cidr_block[:-3]
+    base: str = context.networking.vpc_cidr_block[:-3]
     return str(ipaddress.ip_address(base) + 2)
 
 
-def get_dns_ip_cidr(manifest: "Manifest") -> str:
+def get_dns_ip_cidr(context: "Context") -> str:
     """
     Reserved by AWS. The IP address of the DNS server is the base of the VPC network range plus two.
     For VPCs with multiple CIDR blocks, the IP address of the DNS server is located in the primary CIDR.
     We also reserve the base of each subnet range plus two for all CIDR blocks in the VPC.
     """
-    cidr: str = f"{get_dns_ip(manifest)}/32"
+    cidr: str = f"{get_dns_ip(context)}/32"
     _logger.debug("DNS CIDR: %s", cidr)
     return cidr
 

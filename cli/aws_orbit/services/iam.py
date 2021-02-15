@@ -16,16 +16,16 @@ import json
 import logging
 from typing import Any, Dict, List, Optional, cast
 
-from aws_orbit.manifest import Manifest
+from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def get_open_id_connect_provider(manifest: Manifest, open_id_connect_provider_id: str) -> Optional[Dict[str, Any]]:
-    open_id_connect_provider_arn = f"arn:aws:iam::{manifest.account_id}:oidc-provider/{open_id_connect_provider_id}"
+def get_open_id_connect_provider(account_id: str, open_id_connect_provider_id: str) -> Optional[Dict[str, Any]]:
+    open_id_connect_provider_arn = f"arn:aws:iam::{account_id}:oidc-provider/{open_id_connect_provider_id}"
     _logger.debug(f"Getting OpenIDConnectProvider: {open_id_connect_provider_arn}")
 
-    iam_client = manifest.boto3_client("iam")
+    iam_client = boto3_client("iam")
     try:
         return cast(
             Dict[str, Any],
@@ -36,7 +36,7 @@ def get_open_id_connect_provider(manifest: Manifest, open_id_connect_provider_id
 
 
 def update_assume_role_roles(
-    manifest: Manifest,
+    account_id: str,
     role_name: str,
     roles_to_add: Optional[List[str]] = None,
     roles_to_remove: Optional[List[str]] = None,
@@ -46,17 +46,15 @@ def update_assume_role_roles(
 
     _logger.debug(f"Updating AssumeRolePolicy for {role_name}, Adding: {roles_to_add}, Removing: {roles_to_remove}")
 
-    iam_client = manifest.boto3_client("iam")
+    iam_client = boto3_client("iam")
     assume_role_policy = iam_client.get_role(RoleName=role_name)["Role"]["AssumeRolePolicyDocument"]
 
     statements = []
     roles_to_add_set = (
-        set() if roles_to_add is None else {f"arn:aws:iam::{manifest.account_id}:role/{role}" for role in roles_to_add}
+        set() if roles_to_add is None else {f"arn:aws:iam::{account_id}:role/{role}" for role in roles_to_add}
     )
     roles_to_remove_set = (
-        set()
-        if roles_to_remove is None
-        else {f"arn:aws:iam::{manifest.account_id}:role/{role}" for role in roles_to_remove}
+        set() if roles_to_remove is None else {f"arn:aws:iam::{account_id}:role/{role}" for role in roles_to_remove}
     )
 
     for statement in assume_role_policy["Statement"]:
@@ -72,8 +70,10 @@ def update_assume_role_roles(
             statements.append(statement)
 
     for arn in roles_to_add_set:
-        _logger.debug("Adding %s to AssumeRolePolicy")
+        _logger.debug("Adding %s to AssumeRolePolicy", arn)
         statements.append({"Effect": "Allow", "Action": "sts:AssumeRole", "Principal": {"AWS": arn}})
 
     assume_role_policy["Statement"] = statements
-    iam_client.update_assume_role_policy(RoleName=role_name, PolicyDocument=json.dumps(assume_role_policy))
+    policy_body = json.dumps(assume_role_policy)
+    _logger.debug("policy_body: %s", policy_body)
+    iam_client.update_assume_role_policy(RoleName=role_name, PolicyDocument=policy_body)

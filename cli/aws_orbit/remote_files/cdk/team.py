@@ -12,11 +12,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import logging
 import os
 import shutil
 import sys
-from typing import List, cast
+from typing import TYPE_CHECKING, List, Optional, cast
 
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecr as ecr
@@ -28,49 +29,66 @@ import aws_cdk.aws_ssm as ssm
 import aws_cdk.core as core
 from aws_cdk.core import App, Construct, Environment, IConstruct, Stack, Tags
 
-from aws_orbit import changeset
-from aws_orbit.manifest import Manifest
-from aws_orbit.manifest.subnet import SubnetKind
-from aws_orbit.manifest.team import TeamManifest
+from aws_orbit.models.changeset import load_changeset_from_ssm
+from aws_orbit.models.context import load_context_from_ssm
+from aws_orbit.models.manifest import load_manifest_from_ssm
+from aws_orbit.remote_files.cdk.team_builders._lambda import LambdaBuilder
 from aws_orbit.remote_files.cdk.team_builders.ec2 import Ec2Builder
 from aws_orbit.remote_files.cdk.team_builders.ecr import EcrBuilder
 from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
 from aws_orbit.remote_files.cdk.team_builders.iam import IamBuilder
 
+if TYPE_CHECKING:
+    from aws_orbit.models.changeset import Changeset
+    from aws_orbit.models.context import Context, TeamContext
+    from aws_orbit.models.manifest import Manifest, TeamManifest
+
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
 class Team(Stack):
-    def __init__(self, scope: Construct, id: str, manifest: Manifest, team_manifest: TeamManifest) -> None:
+    def __init__(
+        self,
+        scope: Construct,
+        id: str,
+        context: "Context",
+        team_name: str,
+        team_policies: List[str],
+        image: Optional[str],
+    ) -> None:
         self.scope = scope
         self.id = id
-        self.manifest = manifest
-        self.team_manifest = team_manifest
+        self.context: "Context" = context
+        self.team_name: str = team_name
+        self.team_policies: List[str] = team_policies
+        self.image: Optional[str] = image
         super().__init__(
             scope=scope,
             id=id,
             stack_name=id,
-            env=Environment(account=self.manifest.account_id, region=self.manifest.region),
+            env=Environment(account=self.context.account_id, region=self.context.region),
         )
-        Tags.of(scope=cast(IConstruct, self)).add(key="Env", value=f"orbit-{self.manifest.name}")
-        Tags.of(scope=cast(IConstruct, self)).add(key="TeamSpace", value=self.team_manifest.name)
+        Tags.of(scope=cast(IConstruct, self)).add(key="Env", value=f"orbit-{self.context.name}")
+        Tags.of(scope=cast(IConstruct, self)).add(key="TeamSpace", value=self.team_name)
 
+        if self.context.networking.vpc_id is None:
+            raise ValueError("self.context.networking.vpc_id is None!")
         self.i_vpc = ec2.Vpc.from_vpc_attributes(
             scope=self,
             id="vpc",
-            vpc_id=cast(str, self.manifest.vpc.vpc_id),
-            availability_zones=cast(List[str], self.manifest.vpc.availability_zones),
+            vpc_id=self.context.networking.vpc_id,
+            availability_zones=cast(List[str], self.context.networking.availability_zones),
         )
-        self.i_isolated_subnets = Ec2Builder.build_subnets_from_kind(
-            scope=self, subnet_manifests=manifest.vpc.subnets, subnet_kind=SubnetKind.isolated
+        self.i_isolated_subnets = Ec2Builder.build_subnets(
+            scope=self, subnet_manifests=context.networking.isolated_subnets
         )
-        self.i_private_subnets = Ec2Builder.build_subnets_from_kind(
-            scope=self, subnet_manifests=manifest.vpc.subnets, subnet_kind=SubnetKind.private
+        self.i_private_subnets = Ec2Builder.build_subnets(
+            scope=self, subnet_manifests=context.networking.private_subnets
         )
         administrator_arns: List[str] = []  # A place to add other admins if needed for KMS
         admin_principals = iam.CompositePrincipal(
             *[iam.ArnPrincipal(arn) for arn in administrator_arns],
-            iam.ArnPrincipal(f"arn:aws:iam::{self.manifest.account_id}:root"),
+            iam.ArnPrincipal(f"arn:aws:iam::{self.context.account_id}:root"),
         )
         self.team_kms_key: kms.Key = kms.Key(
             self,
@@ -87,65 +105,63 @@ class Team(Stack):
             ),
         )
         self.team_security_group: ec2.SecurityGroup = Ec2Builder.build_team_security_group(
-            scope=self, manifest=manifest, team_manifest=team_manifest, vpc=self.i_vpc
+            scope=self, context=context, team_name=self.team_name, vpc=self.i_vpc
         )
         self.ecr_repo: ecr.Repository = ecr.Repository(
             scope=self,
             id="repo",
-            repository_name=f"orbit-{self.manifest.name}-{self.team_manifest.name}",
+            repository_name=f"orbit-{self.context.name}-{self.team_name}",
         )
 
         self.ecr_repo_spark: ecr.Repository = ecr.Repository(
             scope=self,
             id="repo-spark",
-            repository_name=f"orbit-{self.manifest.name}-{self.team_manifest.name}-spark",
+            repository_name=f"orbit-{self.context.name}-{self.team_name}-spark",
         )
 
-        self.policies: List[str] = self.team_manifest.policies
-        if self.manifest.scratch_bucket_arn:
+        self.policies: List[str] = self.team_policies
+        if self.context.scratch_bucket_arn:
             self.scratch_bucket: s3.Bucket = cast(
                 s3.Bucket,
                 s3.Bucket.from_bucket_attributes(
                     scope=self,
                     id="scratch_bucket",
-                    bucket_arn=self.manifest.scratch_bucket_arn,
-                    bucket_name=self.manifest.scratch_bucket_arn.split(":::")[1],
+                    bucket_arn=self.context.scratch_bucket_arn,
+                    bucket_name=self.context.scratch_bucket_arn.split(":::")[1],
                 ),
             )
         else:
-            raise Exception("Scratch bucket was not provided in Manifest ('scratch-bucket-arn')")
+            raise Exception("Scratch bucket was not provided in Manifest ('ScratchBucketArn')")
 
         self.role_eks_nodegroup = IamBuilder.build_team_role(
             scope=self,
-            manifest=self.manifest,
-            team_manifest=self.team_manifest,
+            context=self.context,
+            team_name=self.team_name,
             policy_names=self.policies,
             scratch_bucket=self.scratch_bucket,
             team_kms_key=self.team_kms_key,
         )
-        shared_fs_name: str = f"orbit-{manifest.name}-{team_manifest.name}-shared-fs"
-        if not manifest.shared_efs_fs_id:
-            raise Exception("Shared EFS File system ID was not provided in Manifest ('shared-efs-fs-id')")
+        shared_fs_name: str = f"orbit-{context.name}-{self.team_name}-shared-fs"
+        if context.shared_efs_fs_id is None:
+            raise Exception("Shared EFS File system ID was not provided in Manifest ('SharedEfsFsId')")
 
-        if not manifest.shared_efs_sg_id:
-            raise Exception(
-                "Shared EFS File system security group ID was not provided in Manifest ('shared-efs-sg-id')"
-            )
+        if context.shared_efs_sg_id is None:
+            raise Exception("Shared EFS File system security group ID was not provided in Manifest ('SharedEfsSgId')")
 
         self.shared_fs: efs.FileSystem = cast(
             efs.FileSystem,
             efs.FileSystem.from_file_system_attributes(
                 scope=self,
                 id=shared_fs_name,
-                file_system_id=manifest.shared_efs_fs_id,
+                file_system_id=context.shared_efs_fs_id,
                 security_group=ec2.SecurityGroup.from_security_group_id(
-                    scope=self, id="team_sec_group", security_group_id=manifest.shared_efs_sg_id
+                    scope=self, id="team_sec_group", security_group_id=context.shared_efs_sg_id
                 ),
             ),
         )
 
         self.efs_ap: efs.AccessPoint = EfsBuilder.build_file_system_access_point(
-            scope=self, team_manifest=team_manifest, shared_fs=self.shared_fs
+            scope=self, team_name=team_name, shared_fs=self.shared_fs
         )
 
         self.ecr_image = EcrBuilder.build_ecr_image(scope=self, manifest=manifest, team_manifest=team_manifest)
@@ -162,15 +178,27 @@ class Team(Stack):
 
         self.manifest_parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,
-            id=self.team_manifest.ssm_parameter_name,
-            string_value=self.team_manifest.asjson(),
+            id=team_ssm_parameter_name,
+            string_value=json.dumps(
+                {
+                    "EfsId": self.shared_fs.file_system_id,
+                    "EfsApId": self.efs_ap.access_point_id,
+                    "EksNodegroupRoleArn": self.role_eks_nodegroup.role_arn,
+                    "ScratchBucket": self.scratch_bucket.bucket_name,
+                    "EcsClusterName": self.ecs_cluster.cluster_name,
+                    "ContainerRunnerArn": self.container_runner.function_arn,
+                    "EksK8sApiArn": self.eks_k8s_api.state_machine_arn,
+                    "TeamKmsKeyArn": self.team_kms_key.key_arn,
+                    "TeamSecurityGroupId": self.team_security_group.security_group_id,
+                }
+            ),
             type=ssm.ParameterType.STRING,
             description="Orbit Workbench Team Context.",
-            parameter_name=self.team_manifest.ssm_parameter_name,
+            parameter_name=team_ssm_parameter_name,
             simple_name=False,
             tier=ssm.ParameterTier.INTELLIGENT_TIERING,
         )
-        ssm_profile_name = f"/orbit/{self.manifest.name}/teams/{self.team_manifest.name}/user/profiles"
+        ssm_profile_name = f"/orbit/{self.context.name}/teams/{self.team_name}/user/profiles"
         self.user_profiles: ssm.StringParameter = ssm.StringParameter(
             scope=self,
             id=ssm_profile_name,
@@ -185,44 +213,45 @@ class Team(Stack):
 
 def main() -> None:
     _logger.debug("sys.argv: %s", sys.argv)
-    if len(sys.argv) == 4:
-        manifest: Manifest
-        if sys.argv[1] == "manifest":
-            filename: str = sys.argv[2]
-            manifest = Manifest(filename=filename, env=None, region=None)
-        elif sys.argv[1] == "env":
-            env: str = sys.argv[2]
-            manifest = Manifest(filename=None, env=env, region=None)
-        else:
-            raise ValueError(f"Unexpected argv[1] ({len(sys.argv)}) - {sys.argv}.")
-        team_name: str = sys.argv[3]
+    if len(sys.argv) == 3:
+        context: "Context" = load_context_from_ssm(env_name=sys.argv[1])
+        team_name: str = sys.argv[2]
     else:
         raise ValueError("Unexpected number of values in sys.argv.")
 
-    manifest.fillup()
+    changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=context.name)
+    _logger.debug("Changeset loaded.")
 
-    changes: changeset.Changeset = changeset.read_changeset_file(manifest=manifest, filename="changeset.json")
-    if changes.teams_changeset and team_name in changes.teams_changeset.removed_teams_names:
-        for team in changes.teams_changeset.old_teams:
-            if team.name == team_name:
-                team_manifest: TeamManifest = team
-                break
+    team_policies: Optional[List[str]] = None
+    image: Optional[str] = None
+
+    if changeset and changeset.teams_changeset and team_name in changeset.teams_changeset.added_teams_names:
+        manifest: Optional["Manifest"] = load_manifest_from_ssm(env_name=sys.argv[1])
+        if manifest is None:
+            raise ValueError("manifest is None!")
+        team_manifest: Optional["TeamManifest"] = manifest.get_team_by_name(name=team_name)
+        if team_manifest:
+            team_policies = team_manifest.policies
+            image = team_manifest.image
         else:
-            raise ValueError(f"Team {team_name} not found in the teams_changeset.old_teams list.")
+            raise ValueError(f"{team_name} not found in manifest!")
     else:
-        for team in manifest.teams:
-            if team.name == team_name:
-                team_manifest = team
-                break
+        team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_name)
+        if team_context:
+            team_policies = team_context.policies
+            image = team_context.image
         else:
-            raise ValueError(f"Team {team_name} not found in the manifest.")
+            raise ValueError(f"Team {team_name} not found in the context.")
 
-    outdir = os.path.join(".orbit.out", manifest.name, "cdk", team_manifest.stack_name)
+    if team_policies is None:
+        raise ValueError("team_policies is None!")
+
+    stack_name: str = f"orbit-{context.name}-{team_name}"
+    outdir = os.path.join(".orbit.out", context.name, "cdk", stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
-
     app = App(outdir=outdir)
-    Team(scope=app, id=team_manifest.stack_name, manifest=manifest, team_manifest=team_manifest)
+    Team(scope=app, id=stack_name, context=context, team_name=team_name, team_policies=team_policies, image=image)
     app.synth(force=True)
 
 

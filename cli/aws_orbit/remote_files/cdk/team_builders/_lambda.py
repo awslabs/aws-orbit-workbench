@@ -12,22 +12,24 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import aws_cdk.core as core
 from aws_cdk import aws_lambda
 
-from aws_orbit.manifest import Manifest
-from aws_orbit.manifest.team import TeamManifest
+from aws_orbit.models.context import get_container_defaults
 from aws_orbit.remote_files.cdk import _lambda_path
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context
 
 
 class LambdaBuilder:
     @staticmethod
     def get_or_build_construct_request(
         scope: core.Construct,
-        manifest: Manifest,
-        team_manifest: TeamManifest,
+        context: "Context",
+        team_name: str,
     ) -> aws_lambda.Function:
         stack = core.Stack.of(cast(core.IConstruct, scope))
         lambda_function = cast(aws_lambda.Function, stack.node.try_find_child("construct_request"))
@@ -35,7 +37,7 @@ class LambdaBuilder:
             lambda_function = aws_lambda.Function(
                 scope=stack,
                 id="construct_request",
-                function_name=f"orbit-{manifest.name}-{team_manifest.name}-k8s-construct-request",
+                function_name=f"orbit-{context.name}-{team_name}-k8s-construct-request",
                 code=aws_lambda.Code.asset(_lambda_path("construct_request")),
                 handler="index.handler",
                 runtime=aws_lambda.Runtime.PYTHON_3_6,

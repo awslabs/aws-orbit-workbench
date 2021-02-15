@@ -24,19 +24,19 @@ TEAM: str = os.environ["TEAM"]
 GRANT_SUDO: str = os.environ["GRANT_SUDO"]
 
 
-def read_manifest_ssm() -> Dict[str, Any]:
+def _read_context_ssm() -> Dict[str, Any]:
     client = boto3.Session().client(service_name="ssm")
-    yaml_str: str = client.get_parameter(Name=f"/orbit/{ENV_NAME}/manifest")["Parameter"]["Value"]
+    yaml_str: str = client.get_parameter(Name=f"/orbit/{ENV_NAME}/context")["Parameter"]["Value"]
     return cast(Dict[str, Any], yaml.safe_load(yaml_str))
 
 
-MANIFEST: Dict[str, Any] = read_manifest_ssm()
-REGION: str = MANIFEST["region"]
-ACCOUNT_ID: str = MANIFEST["account-id"]
-COGNITO_USER_POOL_ID: str = MANIFEST["user-pool-id"]
-TOOLKIT_S3_BUCKET: str = MANIFEST["toolkit-s3-bucket"]
-TAG: str = MANIFEST["images"]["jupyter-user"]["version"]
+CONTEXT: Dict[str, Any] = _read_context_ssm()
+REGION: str = CONTEXT["Region"]
+ACCOUNT_ID: str = CONTEXT["AccountId"]
+COGNITO_USER_POOL_ID: str = CONTEXT["UserPoolId"]
+TOOLKIT_S3_BUCKET: str = CONTEXT["Toolkit"]["S3Bucket"]
+TAG: str = CONTEXT["Images"]["JupyterUser"]["Version"]
 IMAGE: Optional[str] = f"{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/orbit-{ENV_NAME}-{TEAM}:latest"
 IMAGE_SPARK: Optional[str] = f"{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/orbit-{ENV_NAME}-{TEAM}-spark:latest"
-CODEARTIFACT_DOMAIN: str = MANIFEST["codeartifact-domain"]
-CODEARTIFACT_REPOSITORY: str = MANIFEST["codeartifact-repository"]
+CODEARTIFACT_DOMAIN: str = CONTEXT["CodeartifactDomain"]
+CODEARTIFACT_REPOSITORY: str = CONTEXT["CodeartifactRepository"]

@@ -17,7 +17,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import Any, Dict, List, cast
+from typing import TYPE_CHECKING, Any, Dict, List, cast
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_kms as kms
@@ -28,18 +28,21 @@ from aws_cdk import aws_iam as iam
 from aws_cdk import aws_ssm as ssm
 from aws_cdk.core import App, CfnOutput, Construct, Duration, Stack, Tags
 
-from aws_orbit.manifest import Manifest
+from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.remote_files.cdk.team_builders.cognito import CognitoBuilder
 from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
 from aws_orbit.remote_files.cdk.team_builders.s3 import S3Builder
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
 class DemoStack(Stack):
-    def __init__(self, scope: Construct, id: str, manifest: Manifest, **kwargs: Any) -> None:
-        self.env_name = manifest.name
-        self.manifest = manifest
+    def __init__(self, scope: Construct, id: str, context: "Context", **kwargs: Any) -> None:
+        self.env_name = context.name
+        self.context = context
         super().__init__(scope, id, **kwargs)
         Tags.of(scope=cast(core.IConstruct, self)).add(key="Env", value=f"orbit-{self.env_name}")
         self.vpc: ec2.Vpc = self._create_vpc()
@@ -59,24 +62,20 @@ class DemoStack(Stack):
             if self.vpc.isolated_subnets
             else self.vpc.select_subnets(subnet_name="")
         )
-        self.nodes_subnets = self.private_subnets if manifest.internet_accessible else self.isolated_subnets
+        self.nodes_subnets = (
+            self.private_subnets if context.networking.data.internet_accessible else self.isolated_subnets
+        )
 
         self._create_vpc_endpoints()
 
-        if manifest.toolkit_s3_bucket is None:
-            _logger.info("manifest.toolkit_s3_bucket is none, fetching from ssm")
-            manifest.fetch_ssm()
-        if manifest.toolkit_s3_bucket is None:
-            _logger.info("manifest.toolkit_s3_bucket is none, fetching from toolkit data")
-            manifest.fetch_toolkit_data()
-        if manifest.toolkit_s3_bucket is None:
-            raise ValueError("manifest.toolkit_s3_bucket is not defined")
-        toolkit_s3_bucket_name: str = manifest.toolkit_s3_bucket
+        if context.toolkit.s3_bucket is None:
+            raise ValueError("context.toolkit_s3_bucket is not defined")
+        toolkit_s3_bucket_name: str = context.toolkit.s3_bucket
         acct: str = core.Aws.ACCOUNT_ID
         self.bucket_names: Dict[str, Any] = {
-            "lake-bucket": f"orbit-{self.env_name}-demo-lake-{acct}-{manifest.deploy_id}",
-            "secured-lake-bucket": f"orbit-{self.env_name}-secured-demo-lake-{acct}-{manifest.deploy_id}",
-            "scratch-bucket": f"orbit-{self.env_name}-scratch-{acct}-{manifest.deploy_id}",
+            "lake-bucket": f"orbit-{self.env_name}-demo-lake-{acct}-{context.toolkit.deploy_id}",
+            "secured-lake-bucket": f"orbit-{self.env_name}-secured-demo-lake-{acct}-{context.toolkit.deploy_id}",
+            "scratch-bucket": f"orbit-{self.env_name}-scratch-{acct}-{context.toolkit.deploy_id}",
             "toolkit-bucket": toolkit_s3_bucket_name,
         }
         self._build_kms_key_for_env()
@@ -139,17 +138,17 @@ class DemoStack(Stack):
                     "CreatorAaccessPolicy": self.lake_bucket_full_access.managed_policy_name,
                     "UserAccessPolicy": self.lake_bucket_read_only_access.managed_policy_name,
                     "KMSKey": self.env_kms_key.key_arn,
-                    "EFSFilesystemID": self.efs_fs.file_system_id,
+                    "SharedEfsFsId": self.efs_fs.file_system_id,
                     "ScratchBucketArn": self.scratch_bucket.bucket_arn,
                     "ScratchBucketName": self.scratch_bucket.bucket_name,
                     "UserPoolId": self.user_pool.user_pool_id,
-                    "SharedEFSSecurityGroup": self._vpc_security_group.security_group_id,
+                    "SharedEfsSgId": self._vpc_security_group.security_group_id,
                     "UserPoolProviderName": self.user_pool.user_pool_provider_name,
                 }
             ),
             type=ssm.ParameterType.STRING,
             description="Orbit Workbench Demo resources.",
-            parameter_name=f"/orbit/{self.env_name}/demo",
+            parameter_name=self.context.demo_ssm_parameter_name,
             simple_name=False,
             tier=ssm.ParameterTier.INTELLIGENT_TIERING,
         )
@@ -204,7 +203,7 @@ class DemoStack(Stack):
         administrator_arns: List[str] = []  # A place to add other admins if needed for KMS
         admin_principals = iam.CompositePrincipal(
             *[iam.ArnPrincipal(arn) for arn in administrator_arns],
-            iam.ArnPrincipal(f"arn:aws:iam::{self.manifest.account_id}:root"),
+            iam.ArnPrincipal(f"arn:aws:iam::{self.context.account_id}:root"),
         )
         self.env_kms_key: kms.Key = kms.Key(
             self,
@@ -436,19 +435,16 @@ class DemoStack(Stack):
 def main() -> None:
     _logger.debug("sys.argv: %s", sys.argv)
     if len(sys.argv) == 2:
-        filename: str = sys.argv[1]
+        context: "Context" = load_context_from_ssm(env_name=sys.argv[1])
     else:
         raise ValueError("Unexpected number of values in sys.argv.")
 
-    manifest: Manifest = Manifest(filename=filename, env=None, region=None)
-    manifest.fillup()
-
-    outdir = os.path.join(".orbit.out", manifest.name, "cdk", manifest.demo_stack_name)
+    outdir = os.path.join(".orbit.out", context.name, "cdk", context.demo_stack_name)
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
 
     app = App(outdir=outdir)
-    DemoStack(scope=app, id=manifest.demo_stack_name, manifest=manifest)
+    DemoStack(scope=app, id=context.demo_stack_name, context=context)
     app.synth(force=True)
 
 
