@@ -1,9 +1,8 @@
 import logging
 import time
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List
+from typing import Any, Dict, Iterator, List
 
-if TYPE_CHECKING:
-    from aws_orbit.manifest import Manifest
+from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -22,33 +21,33 @@ def _filter_filesystems_by_tag(page: Dict[str, Any], key: str, value: str) -> It
                 yield fs["FileSystemId"]
 
 
-def fetch_env_filesystems(manifest: "Manifest") -> Iterator[str]:
-    client = manifest.boto3_client("efs")
+def fetch_env_filesystems(env_name: str) -> Iterator[str]:
+    client = boto3_client("efs")
     paginator = client.get_paginator("describe_file_systems")
     for page in paginator.paginate():
-        for fs_id in _filter_env_filesystems(page=page, env_name=manifest.name):
+        for fs_id in _filter_env_filesystems(page=page, env_name=env_name):
             yield fs_id
 
 
-def fetch_filesystems_by_tag(manifest: "Manifest", key: str, value: str) -> Iterator[str]:
-    client = manifest.boto3_client("efs")
+def fetch_filesystems_by_tag(key: str, value: str) -> Iterator[str]:
+    client = boto3_client("efs")
     paginator = client.get_paginator("describe_file_systems")
     for page in paginator.paginate():
         for fs_id in _filter_filesystems_by_tag(page=page, key=key, value=value):
             yield fs_id
 
 
-def fetch_targets(manifest: "Manifest", fs_id: str) -> Iterator[str]:
-    client = manifest.boto3_client("efs")
+def fetch_targets(fs_id: str) -> Iterator[str]:
+    client = boto3_client("efs")
     paginator = client.get_paginator("describe_mount_targets")
     for page in paginator.paginate(FileSystemId=fs_id):
         for target in page["MountTargets"]:
             yield target["MountTargetId"]
 
 
-def delete_targets(manifest: "Manifest", fs_id: str) -> None:
-    client = manifest.boto3_client("efs")
-    for target in fetch_targets(manifest=manifest, fs_id=fs_id):
+def delete_targets(fs_id: str) -> None:
+    client = boto3_client("efs")
+    for target in fetch_targets(fs_id=fs_id):
         try:
             _logger.debug("Deleting fs target %s (%s)", target, fs_id)
             client.delete_mount_target(MountTargetId=target)
@@ -59,28 +58,28 @@ def delete_targets(manifest: "Manifest", fs_id: str) -> None:
         time.sleep(3)
 
 
-def delete_env_filesystems(manifest: "Manifest") -> List[str]:
-    client = manifest.boto3_client("efs")
+def delete_env_filesystems(env_name: str) -> List[str]:
+    client = boto3_client("efs")
     fs_ids: List[str] = []
-    for fs_id in fetch_env_filesystems(manifest=manifest):
+    for fs_id in fetch_env_filesystems(env_name=env_name):
         fs_ids.append(fs_id)
-        delete_targets(manifest=manifest, fs_id=fs_id)
+        delete_targets(fs_id=fs_id)
         _logger.debug("Deleting fs %s", fs_id)
         client.delete_file_system(FileSystemId=fs_id)
     return fs_ids
 
 
-def delete_filesystems_by_tag(manifest: "Manifest", key: str, value: str) -> List[str]:
-    client = manifest.boto3_client("efs")
+def delete_filesystems_by_tag(key: str, value: str) -> List[str]:
+    client = boto3_client("efs")
     fs_ids: List[str] = []
-    for fs_id in fetch_filesystems_by_tag(manifest=manifest, key=key, value=value):
+    for fs_id in fetch_filesystems_by_tag(key=key, value=value):
         fs_ids.append(fs_id)
-        delete_targets(manifest=manifest, fs_id=fs_id)
+        delete_targets(fs_id=fs_id)
         client.delete_file_system(FileSystemId=fs_id)
     return fs_ids
 
 
-def delete_filesystems_by_team(manifest: "Manifest", team_name: str) -> None:
-    fs_name: str = f"orbit-{manifest.name}-{team_name}-fs"
+def delete_filesystems_by_team(env_name: str, team_name: str) -> None:
+    fs_name: str = f"orbit-{env_name}-{team_name}-fs"
     _logger.debug("fs_name: %s...", fs_name)
-    delete_filesystems_by_tag(manifest=manifest, key="Name", value=fs_name)
+    delete_filesystems_by_tag(key="Name", value=fs_name)

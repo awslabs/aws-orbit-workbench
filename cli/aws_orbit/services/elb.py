@@ -14,10 +14,9 @@
 
 import logging
 from pprint import pformat
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import Any, Dict, List
 
-if TYPE_CHECKING:
-    from aws_orbit.manifest import Manifest
+from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -26,36 +25,36 @@ def _tags2dict(tags: List[Dict[str, str]]) -> Dict[str, str]:
     return {x["Key"]: x["Value"] for x in tags}
 
 
-def _check_elb_tag(manifest: "Manifest", tags: Dict[str, str]) -> bool:
-    key: str = f"kubernetes.io/cluster/orbit-{manifest.name}"
+def _check_elb_tag(env_name: str, tags: Dict[str, str]) -> bool:
+    key: str = f"kubernetes.io/cluster/orbit-{env_name}"
     return tags.get(key) == "owned"
 
 
-def _apply_tag_filter(manifest: "Manifest", elbs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _apply_tag_filter(env_name: str, elbs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     names: List[str] = [x["LoadBalancerName"] for x in elbs]
     _logger.debug("Filtering ELBS:\n%s", pformat(names))
     if not names:
         return []
-    client = manifest.boto3_client("elb")
+    client = boto3_client("elb")
     res: List[Dict[str, Any]] = client.describe_tags(LoadBalancerNames=names)["TagDescriptions"]
     tags: Dict[str, Dict[str, str]] = {x["LoadBalancerName"]: _tags2dict(tags=x["Tags"]) for x in res}
-    return [x for x in elbs if _check_elb_tag(manifest=manifest, tags=tags[x["LoadBalancerName"]])]
+    return [x for x in elbs if _check_elb_tag(env_name=env_name, tags=tags[x["LoadBalancerName"]])]
 
 
-def describe_load_balancers(manifest: "Manifest") -> List[Dict[str, Any]]:
-    paginator = manifest.boto3_client("elb").get_paginator("describe_load_balancers")
+def describe_load_balancers(env_name: str) -> List[Dict[str, Any]]:
+    paginator = boto3_client("elb").get_paginator("describe_load_balancers")
     elbs: List[Dict[str, Any]] = []
     for page in paginator.paginate():
         _logger.debug(page)
-        elbs += _apply_tag_filter(manifest=manifest, elbs=page.get("LoadBalancerDescriptions", []))
+        elbs += _apply_tag_filter(env_name=env_name, elbs=page.get("LoadBalancerDescriptions", []))
     _logger.debug("Filtered ELB names:\n%s", pformat([x["LoadBalancerName"] for x in elbs]))
     return elbs
 
 
-def identify_services(manifest: "Manifest", names: List[str]) -> Dict[str, str]:
+def identify_services(names: List[str]) -> Dict[str, str]:
     if not names:
         return {}
-    client = manifest.boto3_client("elb")
+    client = boto3_client("elb")
     res: List[Dict[str, Any]] = client.describe_tags(LoadBalancerNames=names)["TagDescriptions"]
     tags: Dict[str, Dict[str, str]] = {x["LoadBalancerName"]: _tags2dict(tags=x["Tags"]) for x in res}
     services = {t["kubernetes.io/service-name"]: name for name, t in tags.items() if "kubernetes.io/service-name" in t}
@@ -70,7 +69,7 @@ def _search_elb_by_name(elbs: List[Dict[str, Any]], name: str) -> Dict[str, Any]
     raise RuntimeError(f"ELB {name} not found!")
 
 
-def get_elbs_by_service(manifest: "Manifest") -> Dict[str, Dict[str, Any]]:
+def get_elbs_by_service(env_name: str) -> Dict[str, Dict[str, Any]]:
     # Cleaning up CreatedTime cause datatime objects are not JSON serializable
     elbs = [
         {
@@ -85,13 +84,13 @@ def get_elbs_by_service(manifest: "Manifest") -> Dict[str, Dict[str, Any]]:
                 "BackendServerDescriptions",
             }
         }
-        for x in describe_load_balancers(manifest=manifest)
+        for x in describe_load_balancers(env_name=env_name)
     ]
-    services = identify_services(manifest=manifest, names=[x["LoadBalancerName"] for x in elbs])
+    services = identify_services(names=[x["LoadBalancerName"] for x in elbs])
     return {s: _search_elb_by_name(elbs=elbs, name=a) for s, a in services.items()}
 
 
-def delete_load_balancers(manifest: "Manifest") -> None:
-    client = manifest.boto3_client("elb")
-    for elb in describe_load_balancers(manifest=manifest):
+def delete_load_balancers(env_name: str) -> None:
+    client = boto3_client("elb")
+    for elb in describe_load_balancers(env_name=env_name):
         client.delete_load_balancer(LoadBalancerName=elb["LoadBalancerName"])

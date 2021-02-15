@@ -140,3 +140,5 @@ cython_debug/
 # Misc
 notes.txt
 dev/
+bundle/
+data/

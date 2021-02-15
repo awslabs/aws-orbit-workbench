@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import Any, Dict, List, cast
+from typing import TYPE_CHECKING, Any, Dict, List, cast
 
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecs as ecs
@@ -23,8 +23,6 @@ import aws_cdk.aws_stepfunctions_tasks as sfn_tasks
 import aws_cdk.core as core
 from aws_cdk import aws_lambda
 
-from aws_orbit.manifest import Manifest
-from aws_orbit.manifest.team import TeamManifest
 from aws_orbit.remote_files.cdk.team_builders._lambda import LambdaBuilder
 from aws_orbit.remote_files.cdk.team_builders.stepfunctions_tasks import (
     EcsRunTask,
@@ -33,6 +31,9 @@ from aws_orbit.remote_files.cdk.team_builders.stepfunctions_tasks import (
     LambdaInvoke,
     LogOptions,
 )
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context
 
 COMMAND = ["python", "/opt/python-utils/notebook_cli.py"]
 
@@ -61,8 +62,8 @@ class StateMachineBuilder:
     @staticmethod
     def _build_construct_request_task(
         scope: core.Construct,
-        manifest: Manifest,
-        team_manifest: TeamManifest,
+        context: "Context",
+        team_name: str,
         namespace: str,
         result_path: str = "$.RequestResult",
     ) -> sfn_tasks.LambdaInvoke:
@@ -70,7 +71,7 @@ class StateMachineBuilder:
             scope=scope,
             id="ConstructRequest",
             lambda_function=LambdaBuilder.get_or_build_construct_request(
-                scope=scope, manifest=manifest, team_manifest=team_manifest
+                scope=scope, context=context, team_name=team_name
             ),
             payload_response_only=True,
             payload=sfn.TaskInput.from_object(
@@ -85,8 +86,8 @@ class StateMachineBuilder:
     @staticmethod
     def build_ecs_run_container_state_machine(
         scope: core.Construct,
-        manifest: Manifest,
-        team_manifest: TeamManifest,
+        context: "Context",
+        team_name: str,
         cluster: ecs.Cluster,
         task_definition: ecs.TaskDefinition,
         team_security_group: ec2.SecurityGroup,
@@ -119,8 +120,8 @@ class StateMachineBuilder:
                         sfn_tasks.TaskEnvironmentVariable(name="task_type", value=sfn.JsonPath.string_at("$.TaskType")),
                         sfn_tasks.TaskEnvironmentVariable(name="tasks", value=sfn.JsonPath.string_at("$.Tasks")),
                         sfn_tasks.TaskEnvironmentVariable(name="compute", value=sfn.JsonPath.string_at("$.Compute")),
-                        sfn_tasks.TaskEnvironmentVariable(name="AWS_ORBIT_TEAM_SPACE", value=team_manifest.name),
-                        sfn_tasks.TaskEnvironmentVariable(name="AWS_ORBIT_ENV", value=manifest.name),
+                        sfn_tasks.TaskEnvironmentVariable(name="AWS_ORBIT_TEAM_SPACE", value=team_name),
+                        sfn_tasks.TaskEnvironmentVariable(name="AWS_ORBIT_ENV", value=context.name),
                         sfn_tasks.TaskEnvironmentVariable(name="AWS_ORBIT_S3_BUCKET", value=scratch_bucket.bucket_name),
                         sfn_tasks.TaskEnvironmentVariable(name="AWS_STS_REGIONAL_ENDPOINTS", value="regional"),
                         sfn_tasks.TaskEnvironmentVariable(
@@ -137,7 +138,7 @@ class StateMachineBuilder:
         return sfn.StateMachine(
             scope=construct,
             id="ecs_run_container_state_machine",
-            state_machine_name=f"orbit-{manifest.name}-{team_manifest.name}-ecs-container-runner",
+            state_machine_name=f"orbit-{context.name}-{team_name}-ecs-container-runner",
             definition=cast(sfn.IChainable, definition),
             role=role,
         )
@@ -145,8 +146,8 @@ class StateMachineBuilder:
     @staticmethod
     def build_eks_run_container_state_machine(
         scope: core.Construct,
-        manifest: Manifest,
-        team_manifest: TeamManifest,
+        context: "Context",
+        team_name: str,
         image: ecs.EcrImage,
         role: iam.IRole,
         node_type: str,
@@ -158,7 +159,7 @@ class StateMachineBuilder:
         construct = core.Construct(scope, f"eks_run_{node_type}_container_nested_construct")
 
         eks_describe_cluster = LambdaBuilder.get_or_build_eks_describe_cluster(
-            scope=construct, manifest=manifest, team_manifest=team_manifest
+            scope=construct, context=context, team_name=team_name
         )
         eks_describe_cluster_task = StateMachineBuilder._build_eks_describe_cluster_task(
             scope=construct,
@@ -169,9 +170,9 @@ class StateMachineBuilder:
             "apiVersion": "batch/v1",
             "kind": "Job",
             "metadata": {
-                "labels": {"app": f"orbit-{team_manifest.name}-{node_type}-runner"},
-                "generateName": f"orbit-{team_manifest.name}-{node_type}-runner-",
-                "namespace": team_manifest.name,
+                "labels": {"app": f"orbit-{team_name}-{node_type}-runner"},
+                "generateName": f"orbit-{team_name}-{node_type}-runner-",
+                "namespace": team_name,
             },
             "spec": {
                 "backoffLimit": 0,
@@ -179,8 +180,8 @@ class StateMachineBuilder:
                 "ttlSecondsAfterFinished": 120,
                 "template": {
                     "metadata": {
-                        "labels": {"app": f"orbit-{team_manifest.name}-runner", "team": team_manifest.name},
-                        "namespace": team_manifest.name,
+                        "labels": {"app": f"orbit-{team_name}-runner", "team": team_name},
+                        "namespace": team_name,
                     },
                     "spec": {
                         "containers": [
@@ -205,8 +206,8 @@ class StateMachineBuilder:
                                     {"name": "task_type", "value": sfn.JsonPath.string_at("$.TaskType")},
                                     {"name": "tasks", "value": sfn.JsonPath.string_at("$.Tasks")},
                                     {"name": "compute", "value": sfn.JsonPath.string_at("$.Compute")},
-                                    {"name": "AWS_ORBIT_TEAM_SPACE", "value": team_manifest.name},
-                                    {"name": "AWS_ORBIT_ENV", "value": manifest.name},
+                                    {"name": "AWS_ORBIT_TEAM_SPACE", "value": team_name},
+                                    {"name": "AWS_ORBIT_ENV", "value": context.name},
                                     {"name": "AWS_STS_REGIONAL_ENDPOINTS", "value": "regional"},
                                     {"name": "JUPYTERHUB_USER", "value": sfn.JsonPath.string_at("$.JupyterHubUser")},
                                 ],
@@ -219,11 +220,11 @@ class StateMachineBuilder:
                 },
             },
         }
-        job["spec"]["template"]["spec"]["serviceAccountName"] = team_manifest.name
+        job["spec"]["template"]["spec"]["serviceAccountName"] = team_name
         job["spec"]["template"]["spec"]["securityContext"] = {"fsGroup": 1000}
         if node_type == "ec2":
             job["spec"]["template"]["spec"]["nodeSelector"] = {
-                "team": team_manifest.name,
+                "team": team_name,
                 "orbit/compute-type": "ec2",
             }
         elif node_type == "fargate":
@@ -235,7 +236,7 @@ class StateMachineBuilder:
             cluster_name=sfn.JsonPath.string_at("$.ClusterName"),
             certificate_authority=sfn.JsonPath.string_at("$.DescribeResult.CertificateAuthority"),
             endpoint=sfn.JsonPath.string_at("$.DescribeResult.Endpoint"),
-            namespace=team_manifest.name,
+            namespace=team_name,
             job=job,
             log_options=LogOptions(retrieve_logs=True, log_parameters={"tailLines": ["20"]}),
             timeout_path="$.Timeout",
@@ -251,7 +252,7 @@ class StateMachineBuilder:
             id="K8sApiStateMachine",
             state_machine_arn=(
                 f"arn:{core.Aws.PARTITION}:states:{core.Aws.REGION}:"
-                f"{core.Aws.ACCOUNT_ID}:stateMachine:orbit-{manifest.name}-{team_manifest.name}-eks-k8s-api"
+                f"{core.Aws.ACCOUNT_ID}:stateMachine:orbit-{context.name}-{team_name}-eks-k8s-api"
             ),
         )
         delete_job = sfn_tasks.StepFunctionsStartExecution(
@@ -282,7 +283,7 @@ class StateMachineBuilder:
         return sfn.StateMachine(
             scope=construct,
             id="eks_run_container_state_machine",
-            state_machine_name=f"orbit-{manifest.name}-{team_manifest.name}-eks-{node_type}-container-runner",
+            state_machine_name=f"orbit-{context.name}-{team_name}-eks-{node_type}-container-runner",
             definition=cast(sfn.IChainable, definition),
             role=role,
         )
@@ -290,15 +291,15 @@ class StateMachineBuilder:
     @staticmethod
     def build_eks_k8s_api_state_machine(
         scope: core.Construct,
-        manifest: Manifest,
-        team_manifest: TeamManifest,
+        context: "Context",
+        team_name: str,
         role: iam.Role,
     ) -> sfn.StateMachine:
         # We use a nested Construct to avoid collisions with Lambda and Task ids
         construct = core.Construct(scope, "eks_k8s_api_nested_construct")
 
         eks_describe_cluster = LambdaBuilder.get_or_build_eks_describe_cluster(
-            scope=construct, manifest=manifest, team_manifest=team_manifest
+            scope=construct, context=context, team_name=team_name
         )
         eks_describe_cluster_task = StateMachineBuilder._build_eks_describe_cluster_task(
             scope=construct,
@@ -307,9 +308,9 @@ class StateMachineBuilder:
 
         construct_request = StateMachineBuilder._build_construct_request_task(
             scope=construct,
-            manifest=manifest,
-            team_manifest=team_manifest,
-            namespace=team_manifest.name,
+            context=context,
+            team_name=team_name,
+            namespace=team_name,
         )
 
         eks_call = EksCall(
@@ -335,7 +336,7 @@ class StateMachineBuilder:
         return sfn.StateMachine(
             scope=construct,
             id="eks_k8s_api_state_machine",
-            state_machine_name=f"orbit-{manifest.name}-{team_manifest.name}-eks-k8s-api",
+            state_machine_name=f"orbit-{context.name}-{team_name}-eks-k8s-api",
             state_machine_type=sfn.StateMachineType.EXPRESS,
             definition=cast(sfn.IChainable, definition),
             role=role,

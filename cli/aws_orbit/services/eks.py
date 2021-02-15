@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, cast
 
 from botocore.waiter import WaiterModel, create_waiter_with_client
 
-from aws_orbit.manifest import Manifest
+from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -61,9 +61,9 @@ WAITER_CONFIG = {
 }
 
 
-def describe_fargate_profile(manifest: Manifest, profile_name: str, cluster_name: str) -> Optional[Dict[str, Any]]:
+def describe_fargate_profile(profile_name: str, cluster_name: str) -> Optional[Dict[str, Any]]:
     _logger.debug(f"Describing Fargate Profile: {cluster_name} - {profile_name}")
-    eks_client = manifest.boto3_client("eks")
+    eks_client = boto3_client("eks")
 
     try:
         return cast(
@@ -78,11 +78,10 @@ def describe_fargate_profile(manifest: Manifest, profile_name: str, cluster_name
 
 
 def describe_cluster(
-    manifest: Manifest,
     cluster_name: str,
 ) -> Optional[Dict[str, Any]]:
     _logger.debug(f"Describing Cluster: {cluster_name}")
-    eks_client = manifest.boto3_client("eks")
+    eks_client = boto3_client("eks")
 
     try:
         return cast(Dict[str, Any], eks_client.describe_cluster(name=cluster_name))
@@ -90,9 +89,9 @@ def describe_cluster(
         return None
 
 
-def describe_nodegroup(manifest: Manifest, cluster_name: str, nodegroup_name: str) -> Optional[Dict[str, Any]]:
+def describe_nodegroup(cluster_name: str, nodegroup_name: str) -> Optional[Dict[str, Any]]:
     _logger.debug(f"Describing NodeGroup: {nodegroup_name}")
-    eks_client = manifest.boto3_client("eks")
+    eks_client = boto3_client("eks")
 
     try:
         return cast(
@@ -103,7 +102,6 @@ def describe_nodegroup(manifest: Manifest, cluster_name: str, nodegroup_name: st
 
 
 def create_fargate_profile(
-    manifest: Manifest,
     profile_name: str,
     cluster_name: str,
     role_arn: str,
@@ -113,11 +111,11 @@ def create_fargate_profile(
 ) -> None:
     _logger.debug(f"Creating EKS Fargate Profile: {profile_name}")
 
-    if describe_fargate_profile(manifest=manifest, profile_name=profile_name, cluster_name=cluster_name) is not None:
+    if describe_fargate_profile(profile_name=profile_name, cluster_name=cluster_name) is not None:
         _logger.debug(f"EKS Fargate Profile already exists: {profile_name}")
         return
 
-    eks_client = manifest.boto3_client("eks")
+    eks_client = boto3_client("eks")
     eks_client.create_fargate_profile(
         fargateProfileName=profile_name,
         clusterName=cluster_name,
@@ -133,17 +131,16 @@ def create_fargate_profile(
 
 
 def delete_fargate_profile(
-    manifest: Manifest,
     profile_name: str,
     cluster_name: str,
 ) -> None:
     _logger.debug(f"Deleting EKS Fargate Profile: {profile_name}")
 
-    if describe_fargate_profile(manifest=manifest, profile_name=profile_name, cluster_name=cluster_name) is None:
+    if describe_fargate_profile(profile_name=profile_name, cluster_name=cluster_name) is None:
         _logger.debug(f"EKS Fargate Profile not found: {profile_name}")
         return
 
-    eks_client = manifest.boto3_client("eks")
+    eks_client = boto3_client("eks")
     eks_client.delete_fargate_profile(
         fargateProfileName=profile_name,
         clusterName=cluster_name,

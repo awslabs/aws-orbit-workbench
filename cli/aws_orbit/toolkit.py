@@ -15,9 +15,12 @@
 import logging
 import os
 import shutil
+from typing import TYPE_CHECKING
 
 from aws_orbit import ORBIT_CLI_ROOT
-from aws_orbit.manifest import Manifest
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -25,28 +28,30 @@ FILENAME = "template.yaml"
 MODEL_FILENAME = os.path.join(ORBIT_CLI_ROOT, "data", "toolkit", FILENAME)
 
 
-def synth(manifest: Manifest) -> str:
-    conf_dir = os.path.dirname(os.path.abspath(manifest.filename))
-    outdir = os.path.join(os.path.dirname(conf_dir), ".orbit.out", manifest.name, "toolkit")
-    output_filename = os.path.join(outdir, FILENAME)
+def synth(context: "Context") -> str:
+    outdir = os.path.join(os.getcwd(), ".orbit.out", context.name, "toolkit")
+    try:
+        shutil.rmtree(outdir)
+    except FileNotFoundError:
+        pass
     os.makedirs(outdir, exist_ok=True)
-    shutil.rmtree(outdir)
+    output_filename = os.path.join(outdir, FILENAME)
 
     _logger.debug("Reading %s", MODEL_FILENAME)
     with open(MODEL_FILENAME, "r") as file:
         content: str = file.read()
     _logger.debug(
         "manifest.name: %s | manifest.account_id: %s | manifest.region: %s | manifest.deploy_id: %s",
-        manifest.name,
-        manifest.account_id,
-        manifest.region,
-        manifest.deploy_id,
+        context.name,
+        context.account_id,
+        context.region,
+        context.toolkit.deploy_id,
     )
     content = content.replace("$", "").format(
-        env_name=manifest.name,
-        account_id=manifest.account_id,
-        region=manifest.region,
-        deploy_id=manifest.deploy_id,
+        env_name=context.name,
+        account_id=context.account_id,
+        region=context.region,
+        deploy_id=context.toolkit.deploy_id,
     )
     _logger.debug("Writing %s", output_filename)
     os.makedirs(outdir, exist_ok=True)

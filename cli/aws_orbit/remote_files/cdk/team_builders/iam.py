@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import logging
-from typing import Any, Dict, List, Optional, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_kms as kms
@@ -21,8 +21,10 @@ import aws_cdk.aws_s3 as s3
 import aws_cdk.core as core
 import botocore
 
-from aws_orbit.manifest import Manifest
-from aws_orbit.manifest.team import TeamManifest
+from aws_orbit.utils import boto3_client
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -31,21 +33,20 @@ class IamBuilder:
     @staticmethod
     def build_team_role(
         scope: core.Construct,
-        manifest: Manifest,
-        team_manifest: TeamManifest,
+        context: "Context",
+        team_name: str,
         policy_names: List[str],
         scratch_bucket: s3.IBucket,
         team_kms_key: kms.Key,
     ) -> iam.Role:
-        env_name = manifest.name
-        team_name = team_manifest.name
+        env_name = context.name
         partition = core.Aws.PARTITION
         account = core.Aws.ACCOUNT_ID
         region = core.Aws.REGION
 
         lake_role_name: str = f"orbit-{env_name}-{team_name}-role"
         kms_keys = [team_kms_key.key_arn]
-        scratch_bucket_kms_key = IamBuilder.get_kms_key_scratch_bucket(manifest)
+        scratch_bucket_kms_key = IamBuilder.get_kms_key_scratch_bucket(context=context)
         if scratch_bucket_kms_key:
             kms_keys.append(scratch_bucket_kms_key)
 
@@ -70,8 +71,8 @@ class IamBuilder:
                     effect=iam.Effect.ALLOW,
                     actions=["s3:List*", "s3:Get*"],
                     resources=[
-                        f"arn:{partition}:s3:::{manifest.toolkit_s3_bucket}",
-                        f"arn:{partition}:s3:::{manifest.toolkit_s3_bucket}/*",
+                        f"arn:{partition}:s3:::{context.toolkit.s3_bucket}",
+                        f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/*",
                     ],
                 ),
                 iam.PolicyStatement(
@@ -267,10 +268,10 @@ class IamBuilder:
                     actions=["sts:AssumeRoleWithWebIdentity"],
                     principals=[
                         iam.FederatedPrincipal(
-                            federated=f"arn:{partition}:iam::{account}:oidc-provider/{manifest.eks_oidc_provider}",
+                            federated=f"arn:{partition}:iam::{account}:oidc-provider/{context.eks_oidc_provider}",
                             conditions={
                                 "StringLike": {
-                                    f"{manifest.eks_oidc_provider}:sub": f"system:serviceaccount:{team_manifest.name}:*"
+                                    f"{context.eks_oidc_provider}:sub": f"system:serviceaccount:{team_name}:*"
                                 }
                             },
                         )
@@ -291,13 +292,13 @@ class IamBuilder:
         )
 
     @staticmethod
-    def get_kms_key_scratch_bucket(manifest: Manifest) -> Optional[str]:
-        if not manifest.scratch_bucket_arn:
+    def get_kms_key_scratch_bucket(context: "Context") -> Optional[str]:
+        if not context.scratch_bucket_arn:
             return None
-        bucket_name = manifest.scratch_bucket_arn.split(":::")[1]
+        bucket_name = context.scratch_bucket_arn.split(":::")[1]
         _logger.debug(f"Getting KMS Key for scratch bucket: {bucket_name}")
         try:
-            s3_client = manifest.boto3_client("s3")
+            s3_client = boto3_client("s3")
             encryption = cast(
                 Dict[str, Any],
                 s3_client.get_bucket_encryption(Bucket=bucket_name),
@@ -321,10 +322,10 @@ class IamBuilder:
             raise e
 
     @staticmethod
-    def build_container_runner_role(scope: core.Construct, manifest: Manifest, team_manifest: TeamManifest) -> iam.Role:
+    def build_container_runner_role(scope: core.Construct, context: "Context", team_name: str) -> iam.Role:
         return iam.Role(
             scope=scope,
             id="container_runner_role",
-            role_name=f"orbit-{manifest.name}-{team_manifest.name}-runner",
+            role_name=f"orbit-{context.name}-{team_name}-runner",
             assumed_by=iam.ServicePrincipal("states.amazonaws.com"),
         )

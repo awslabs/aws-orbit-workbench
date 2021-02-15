@@ -17,14 +17,16 @@ import json
 import logging
 import pprint
 import time
-from itertools import repeat
-from typing import Any, Dict, List, Optional, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
 import botocore.exceptions
 
 from aws_orbit import utils
-from aws_orbit.manifest import Manifest
-from aws_orbit.services import efs, elb, s3
+from aws_orbit.services import efs, elb, s3, ssm
+from aws_orbit.utils import boto3_client, boto3_resource
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -36,9 +38,9 @@ def _detach_network_interface(nid: int, network_interface: Any) -> None:
     network_interface.reload()
 
 
-def _network_interface(manifest: Manifest, vpc_id: str) -> None:
-    client = manifest.boto3_client("ec2")
-    ec2 = manifest.boto3_resource("ec2")
+def _network_interface(vpc_id: str) -> None:
+    client = boto3_client("ec2")
+    ec2 = boto3_resource("ec2")
     for i in client.describe_network_interfaces(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}])["NetworkInterfaces"]:
         try:
             network_interface = ec2.NetworkInterface(i["NetworkInterfaceId"])
@@ -79,8 +81,8 @@ def _network_interface(manifest: Manifest, vpc_id: str) -> None:
                 raise
 
 
-def delete_sec_group(manifest: Manifest, sec_group: str) -> None:
-    ec2 = manifest.boto3_resource("ec2")
+def delete_sec_group(sec_group: str) -> None:
+    ec2 = boto3_resource("ec2")
     try:
         sgroup = ec2.SecurityGroup(sec_group)
         if sgroup.ip_permissions:
@@ -104,8 +106,8 @@ def delete_sec_group(manifest: Manifest, sec_group: str) -> None:
             raise
 
 
-def _security_group(manifest: Manifest, vpc_id: str) -> None:
-    client = manifest.boto3_client("ec2")
+def _security_group(vpc_id: str) -> None:
+    client = boto3_client("ec2")
     sec_groups: List[str] = [
         s["GroupId"]
         for s in client.describe_security_groups()["SecurityGroups"]
@@ -113,11 +115,11 @@ def _security_group(manifest: Manifest, vpc_id: str) -> None:
     ]
     if sec_groups:
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(sec_groups)) as executor:
-            list(executor.map(delete_sec_group, repeat(manifest), sec_groups))
+            list(executor.map(delete_sec_group, sec_groups))
 
 
-def _endpoints(manifest: Manifest, vpc_id: str) -> None:
-    client = manifest.boto3_client("ec2")
+def _endpoints(vpc_id: str) -> None:
+    client = boto3_client("ec2")
     paginator = client.get_paginator("describe_vpc_endpoints")
     response_iterator = paginator.paginate(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}], MaxResults=25)
     for resp in response_iterator:
@@ -132,38 +134,52 @@ def _endpoints(manifest: Manifest, vpc_id: str) -> None:
             _logger.debug("resp:\n%s", pprint.pformat(resp))
 
 
-def demo_remaining_dependencies(manifest: Manifest, vpc_id: Optional[str] = None) -> None:
-    efs.delete_env_filesystems(manifest=manifest)
-    ssm_param_name = f"/orbit/{manifest.name}/demo"
+def demo_remaining_dependencies(context: "Context", vpc_id: Optional[str] = None) -> None:
+    efs.delete_env_filesystems(env_name=context.name)
+    ssm_param_name = f"/orbit/{context.name}/demo"
     ssm = utils.boto3_client("ssm")
 
     demo_config = json.loads(ssm.get_parameter(Name=ssm_param_name)["Parameter"]["Value"])
-    if manifest.scratch_bucket_arn:
-        scratch_bucket: str = manifest.scratch_bucket_arn.split(":::")[1]
+    if context.scratch_bucket_arn:
+        scratch_bucket: str = context.scratch_bucket_arn.split(":::")[1]
         try:
-            s3.delete_bucket(manifest=manifest, bucket=scratch_bucket)
+            s3.delete_bucket(bucket=scratch_bucket)
         except Exception as ex:
             _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
         try:
-            s3.delete_bucket(manifest=manifest, bucket=demo_config["LakeBucket"])
+            s3.delete_bucket(bucket=demo_config["LakeBucket"])
         except Exception as ex:
             _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
         try:
-            s3.delete_bucket(manifest=manifest, bucket=demo_config["SecuredLakeBucket"])
+            s3.delete_bucket(bucket=demo_config["SecuredLakeBucket"])
         except Exception as ex:
             _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
     if vpc_id is None:
-        if manifest.vpc.vpc_id is None:
-            manifest.fetch_ssm()
-        if manifest.vpc.vpc_id is None:
-            manifest.fetch_network_data()
-        if manifest.vpc.vpc_id is None:
-            _logger.debug(
-                "Skipping _cleanup_remaining_dependencies() because manifest.vpc.vpc_id: %s", manifest.vpc.vpc_id
-            )
+        if context.networking.vpc_id is None:
+            _logger.debug("Skipping _cleanup_remaining_dependencies() because manifest.vpc.vpc_id is None!")
             return None
-        vpc_id = manifest.vpc.vpc_id
-    elb.delete_load_balancers(manifest=manifest)
-    _endpoints(manifest=manifest, vpc_id=vpc_id)
-    _network_interface(manifest=manifest, vpc_id=vpc_id)
-    _security_group(manifest=manifest, vpc_id=vpc_id)
+        vpc_id = context.networking.vpc_id
+    elb.delete_load_balancers(env_name=context.name)
+    _endpoints(vpc_id=vpc_id)
+    _network_interface(vpc_id=vpc_id)
+    _security_group(vpc_id=vpc_id)
+
+
+def demo_remaining_dependencies_contextless(env_name: str, vpc_id: Optional[str] = None) -> None:
+    efs.delete_env_filesystems(env_name=env_name)
+    ssm_param_name = f"/orbit/{env_name}/demo"
+    demo_config: Optional[Dict[str, Any]] = ssm.get_parameter_if_exists(name=ssm_param_name)
+    if demo_config:
+        try:
+            s3.delete_bucket(bucket=demo_config["LakeBucket"])
+        except Exception as ex:
+            _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
+        try:
+            s3.delete_bucket(bucket=demo_config["SecuredLakeBucket"])
+        except Exception as ex:
+            _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
+    if vpc_id:
+        elb.delete_load_balancers(env_name=env_name)
+        _endpoints(vpc_id=vpc_id)
+        _network_interface(vpc_id=vpc_id)
+        _security_group(vpc_id=vpc_id)

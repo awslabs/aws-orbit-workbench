@@ -130,8 +130,14 @@ Resources:
               - ssm:PutParameter
               - ssm:AddTagsToResource
               - ssm:DeleteParameter
+              - ssm:DeleteParameters
             Resource:
               - arn:aws:ssm:${region}:${account_id}:parameter/orbit/${env_name}/*
+          - Effect: Allow
+            Action:
+              - ssm:DescribeParameters
+            Resource:
+              - arn:aws:ssm:${region}:${account_id}:*
           - Effect: Allow
             Action:
               - kms:*

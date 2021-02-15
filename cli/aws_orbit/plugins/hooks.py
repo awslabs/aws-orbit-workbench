@@ -13,38 +13,39 @@
 #    limitations under the License.
 
 import logging
-from typing import Any, Callable, Dict, List
+from typing import TYPE_CHECKING, Any, Callable, Dict, List
 
-from aws_orbit.manifest import Manifest
-from aws_orbit.manifest.team import TeamManifest
 from aws_orbit.plugins import PLUGINS_REGISTRIES
+
+if TYPE_CHECKING:
+    from aws_orbit.models.context import Context, TeamContext
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def deploy(
-    func: Callable[[str, Manifest, TeamManifest, Dict[str, Any]], None]
-) -> Callable[[str, Manifest, TeamManifest, Dict[str, Any]], None]:
+    func: Callable[[str, "Context", "TeamContext", Dict[str, Any]], None]
+) -> Callable[[str, "Context", "TeamContext", Dict[str, Any]], None]:
     PLUGINS_REGISTRIES.add_hook(hook_name="deploy_hook", func=func)
     return func
 
 
 def destroy(
-    func: Callable[[str, Manifest, TeamManifest, Dict[str, Any]], None]
-) -> Callable[[str, Manifest, TeamManifest, Dict[str, Any]], None]:
+    func: Callable[[str, "Context", "TeamContext", Dict[str, Any]], None]
+) -> Callable[[str, "Context", "TeamContext", Dict[str, Any]], None]:
     PLUGINS_REGISTRIES.add_hook(hook_name="destroy_hook", func=func)
     return func
 
 
 def dockerfile_injection(
-    func: Callable[[str, Manifest, TeamManifest, Dict[str, Any]], List[str]]
-) -> Callable[[str, Manifest, TeamManifest, Dict[str, Any]], List[str]]:
+    func: Callable[[str, "Context", "TeamContext", Dict[str, Any]], List[str]]
+) -> Callable[[str, "Context", "TeamContext", Dict[str, Any]], List[str]]:
     PLUGINS_REGISTRIES.add_hook(hook_name="dockerfile_injection_hook", func=func)
     return func
 
 
 def bootstrap_injection(
-    func: Callable[[str, Manifest, TeamManifest, Dict[str, Any]], str]
-) -> Callable[[str, Manifest, TeamManifest, Dict[str, Any]], str]:
+    func: Callable[[str, "Context", "TeamContext", Dict[str, Any]], str]
+) -> Callable[[str, "Context", "TeamContext", Dict[str, Any]], str]:
     PLUGINS_REGISTRIES.add_hook(hook_name="bootstrap_injection_hook", func=func)
     return func

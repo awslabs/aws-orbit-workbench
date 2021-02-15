@@ -13,19 +13,15 @@
 #    limitations under the License.
 
 import logging
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
-if TYPE_CHECKING:
-    from aws_orbit.manifest import Manifest
+from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def modify_vpc_endpoint(manifest: "Manifest", service_name: str, private_dns_enabled: bool) -> None:
-    if manifest.vpc.vpc_id is None:
-        manifest.fetch_network_data()
-    vpc_id = manifest.vpc.vpc_id
-    ec2_client = manifest.boto3_client("ec2")
+def modify_vpc_endpoint(vpc_id: str, service_name: str, private_dns_enabled: bool) -> None:
+    ec2_client = boto3_client("ec2")
     paginator = ec2_client.get_paginator("describe_vpc_endpoints")
     _logger.debug("Modifying VPC Endpoints for VPC: %s", vpc_id)
     response_iterator = paginator.paginate(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}], MaxResults=50)
@@ -37,11 +33,11 @@ def modify_vpc_endpoint(manifest: "Manifest", service_name: str, private_dns_ena
                 ec2_client.modify_vpc_endpoint(VpcEndpointId=ep["VpcEndpointId"], PrivateDnsEnabled=private_dns_enabled)
 
 
-def get_env_vpc_id(manifest: "Manifest") -> str:
-    ec2_client = manifest.boto3_client("ec2")
+def get_env_vpc_id(env_name: str) -> str:
+    ec2_client = boto3_client("ec2")
     paginator = ec2_client.get_paginator("describe_vpcs")
-    response_iterator = paginator.paginate(Filters=[{"Name": "tag:Env", "Values": [f"orbit-{manifest.name}"]}])
+    response_iterator = paginator.paginate(Filters=[{"Name": "tag:Env", "Values": [f"orbit-{env_name}"]}])
     for response in response_iterator:
         for vpc in response["Vpcs"]:
             return cast(str, vpc["VpcId"])
-    raise ValueError(f"VPC not found for env {manifest.name}")
+    raise ValueError(f"VPC not found for env {env_name}.")
