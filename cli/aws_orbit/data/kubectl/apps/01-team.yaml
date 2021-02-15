@@ -229,6 +229,7 @@ spec:
     metadata:
       labels:
         orbit/compute-type: ec2
+        orbit/attach-security-group: yes
     spec:
       nodeSelector:
         team: ${team}
@@ -263,6 +264,8 @@ spec:
   podSelector:
     matchLabels:
       orbit/compute-type: ec2
+      orbit/attach-security-group: yes
   securityGroups:
     groupIds:
-      - ${security_group_id}
+      - ${team_security_group_id}
+      - ${cluster_pod_security_group_id}

@@ -21,6 +21,19 @@ from aws_orbit.utils import boto3_client
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
+def get_role(role_name: str) -> Optional[Dict[str, Any]]:
+    _logger.debug(f"Getting Role: {role_name}")
+
+    iam_client = boto3_client("iam")
+    try:
+        return cast(
+            Dict[str, Any],
+            iam_client.get_role(RoleName=role_name)
+        )
+    except iam_client.exceptions.NoSuchEntityException:
+        return None
+
+
 def get_open_id_connect_provider(account_id: str, open_id_connect_provider_id: str) -> Optional[Dict[str, Any]]:
     open_id_connect_provider_arn = f"arn:aws:iam::{account_id}:oidc-provider/{open_id_connect_provider_id}"
     _logger.debug(f"Getting OpenIDConnectProvider: {open_id_connect_provider_arn}")
@@ -51,7 +64,7 @@ def update_assume_role_roles(
 
     statements = []
     roles_to_add_set = (
-        set() if roles_to_add is None else {f"arn:aws:iam::{account_id}:role/{role}" for role in roles_to_add}
+        set() if roles_to_add is None else {f"arn:aws:iam::{account_id}:role/{role}" for role in roles_to_add if get_role(role)}
     )
     roles_to_remove_set = (
         set() if roles_to_remove is None else {f"arn:aws:iam::{account_id}:role/{role}" for role in roles_to_remove}

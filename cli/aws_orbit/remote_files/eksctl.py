@@ -142,11 +142,57 @@ def generate_manifest(context: "Context", name: str, output_teams: bool = True) 
     return output_filename
 
 
+def associate_open_id_connect_provider(context: Context, cluster_name: str) -> None:
+    if (
+        iam.get_open_id_connect_provider(
+            account_id=context.account_id, open_id_connect_provider_id=cast(str, context.eks_oidc_provider)
+        )
+        is None
+    ):
+        _logger.debug("Associating OpenID Connect Provider")
+        sh.run(f"eksctl utils associate-iam-oidc-provider --cluster {cluster_name} --approve")
+    else:
+        _logger.debug("OpenID Connect Provider already associated")
+
+
+
+def map_iam_identities(context: Context, cluster_name: str, eks_system_masters_roles_changes: Optional["ListChangeset"]) -> None:
+    if eks_system_masters_roles_changes and eks_system_masters_roles_changes.added_values:
+        for role in eks_system_masters_roles_changes.added_values:
+            if iam.get_role(role) is None:
+                _logger.debug(f"Skipping nonexisting IAM Role: {role}")
+                continue
+
+            arn = f"arn:aws:iam::{context.account_id}:role/{role}"
+            for line in sh.run_iterating(f"eksctl get iamidentitymapping --cluster {cluster_name} --arn {arn}"):
+                if line.startswith("Error: no iamidentitymapping with arn"):
+                    _logger.debug(f"Adding IAM Identity Mapping - Role: {arn}, Username: {role}, Group: system:masters")
+                    sh.run(
+                        f"eksctl create iamidentitymapping --cluster {cluster_name} --arn {arn} "
+                        f"--username {role} --group system:masters"
+                    )
+                    break
+            else:
+                _logger.debug(f"Skipping existing IAM Identity Mapping - Role: {arn}")
+
+    if eks_system_masters_roles_changes and eks_system_masters_roles_changes.removed_values:
+        for role in eks_system_masters_roles_changes.removed_values:
+            arn = f"arn:aws:iam::{context.account_id}:role/{role}"
+            _logger.debug(f"Removing IAM Identity Mapping - Role: {arn}")
+            sh.run(f"eksctl delete iamidentitymapping --cluster {cluster_name} --arn {arn} --all")
+
+
+def authorize_cluster_pod_security_group(context: Context): -> None:
+
+
+
+
 def fetch_cluster_data(context: "Context", cluster_name: str) -> None:
     _logger.debug("Fetching Cluster data...")
     cluster_data = cast(Dict[str, Any], eks.describe_cluster(cluster_name=cluster_name))
 
     context.eks_oidc_provider = cluster_data["cluster"]["identity"]["oidc"]["issuer"].replace("https://", "")
+    context.cluster_sg_id = cluster_data["cluster"]["resourcesVpcConfig"]["clusterSecurityGroupId"]
     dump_context_to_ssm(context=context)
     _logger.debug("Cluster data fetched successfully.")
 
@@ -174,32 +220,9 @@ def deploy_env(context: "Context", eks_system_masters_roles_changes: Optional["L
         sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
 
     fetch_cluster_data(context=context, cluster_name=cluster_name)
-
-    if (
-        iam.get_open_id_connect_provider(
-            account_id=context.account_id, open_id_connect_provider_id=cast(str, context.eks_oidc_provider)
-        )
-        is None
-    ):
-        _logger.debug("Associating OpenID Connect Provider")
-        sh.run(f"eksctl utils associate-iam-oidc-provider --cluster {cluster_name} --approve")
-    else:
-        _logger.debug("OpenID Connect Provider already associated")
-
-    if eks_system_masters_roles_changes and eks_system_masters_roles_changes.added_values:
-        for role in eks_system_masters_roles_changes.added_values:
-            arn = f"arn:aws:iam::{context.account_id}:role/{role}"
-            _logger.debug(f"Adding IAM Identity Mapping - Role: {arn}, Username: {role}, Group: system:masters")
-            sh.run(
-                f"eksctl create iamidentitymapping --cluster {cluster_name} --arn {arn} "
-                f"--username {role} --group system:masters"
-            )
-
-    if eks_system_masters_roles_changes and eks_system_masters_roles_changes.removed_values:
-        for role in eks_system_masters_roles_changes.removed_values:
-            arn = f"arn:aws:iam::{context.account_id}:role/{role}"
-            _logger.debug(f"Removing IAM Identity Mapping - Role: {arn}")
-            sh.run(f"eksctl delete iamidentitymapping --cluster {cluster_name} --arn {arn} --all")
+    associate_open_id_connect_provider(context=context, cluster_name=cluster_name)
+    map_iam_identities(context=context, cluster_name=cluster_name, eks_system_masters_roles_changes=eks_system_masters_roles_changes)
+    authorize_cluster_pod_security_group(context=context)
 
     _logger.debug("EKSCTL deployed")
 
