@@ -104,6 +104,7 @@ def _create_dockerfile(context: "Context", team_context: "TeamContext", image_na
 
 def _deploy_team_image(context: "Context", team_context: "TeamContext", image: str) -> None:
     image_dir: str = _create_dockerfile(context=context, team_context=team_context, image_name=image)
+    _logger.debug(f"***image_dir={image_dir}***")
     image_name: str = f"orbit-{context.name}-{team_context.name}"
     _logger.debug("Deploying the %s Docker image", image_name)
     docker.deploy_image_from_source(context=context, dir=image_dir, name=image_name)
