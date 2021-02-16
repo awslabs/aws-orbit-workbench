@@ -729,10 +729,7 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     node_type = get_node_type(taskConfiguration)
 
-    labels = {
-        "app": f"orbit-runner",
-        "orbit/node-type": node_type
-    }
+    labels = {"app": f"orbit-runner", "orbit/node-type": node_type}
 
     job_spec = _create_eks_job_spec(taskConfiguration, labels=labels)
     cron_job_template: V1beta1JobTemplateSpec = V1beta1JobTemplateSpec(spec=job_spec)
