@@ -12,10 +12,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+# flake8: noqa: F811
+
 import logging
-import botocore.exceptions
 from typing import ClassVar, List, Type
 
+import botocore.exceptions
 from dataclasses import field
 from marshmallow import Schema
 from marshmallow_dataclass import dataclass
