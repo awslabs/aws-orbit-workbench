@@ -303,7 +303,7 @@ def generate_spec(
         install += cmds_install
 
     # TODO Change 3
-    return_spec : SPEC_TYPE = {
+    return_spec: SPEC_TYPE = {
         "version": 0.2,
         "phases": {
             "install": {
