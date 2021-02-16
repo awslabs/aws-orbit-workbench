@@ -259,7 +259,7 @@ def generate_spec(
             f"--domain {context.codeartifact_domain} "
             f"--repository {context.codeartifact_repository}"
         )
-        install.apend("whoami")
+        install.append("whoami")
         install.append("pip config list -v")
         install.append("pwd")
         install.append("cp ~/.config/pip/pip.conf .")
