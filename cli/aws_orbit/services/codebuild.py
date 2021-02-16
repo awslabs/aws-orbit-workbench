@@ -263,6 +263,10 @@ def generate_spec(
         install.append("pip config list -v")
         install.append("pwd")
         install.append("cp ~/.config/pip/pip.conf .")
+
+    install.append("pwd")
+    install.append("ls -lrta")
+
     install.append("pip install aws-orbit")
 
     # Plugins
