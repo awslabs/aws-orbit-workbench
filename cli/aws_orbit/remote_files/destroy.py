@@ -60,11 +60,14 @@ def destroy(args: Tuple[str, ...]) -> None:
     _logger.debug("Changeset loaded.")
 
     if changeset:
+        _logger.debug("*******Loading plugin changesets*******")
         plugins.PLUGINS_REGISTRIES.load_plugins(
             context=context, plugin_changesets=changeset.plugin_changesets, teams_changeset=changeset.teams_changeset
         )
     else:
+        _logger.debug("*******Loading plugins*******")
         plugins.PLUGINS_REGISTRIES.load_plugins(context=context, plugin_changesets=[], teams_changeset=None)
+
     _logger.debug("Plugins loaded")
 
     kubectl.destroy_teams(context=context)
