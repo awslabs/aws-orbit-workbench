@@ -5,7 +5,7 @@ Images:
     CodeBuild:
         Repository: aws-orbit-code-build-base
         Source: code
-        Path: ../Images/CodeBuildImage
+        Path: ../images/code-build-image
         Version: latest
 Networking:
     Data:

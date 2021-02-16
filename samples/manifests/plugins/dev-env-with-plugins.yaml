@@ -7,29 +7,29 @@ SharedEfsFsId: !SSM ${/orbit/dev-env/demo::SharedEfsFsId}
 SharedEfsSgId: !SSM ${/orbit/dev-env/demo::SharedEfsSgId}
 Images:
     JupyterHub:
-        Repository: aws-orbit-JupyterHub
+        Repository: aws-orbit-jupyter-hub
         Source: code
-        Path: ../Images/JupyterHub
+        Path: ../images/jupyter-hub
         Version: latest
     JupyterUser:
-        Repository: aws-orbit-JupyterUser
+        Repository: aws-orbit-jupyter-user
         Source: code
-        Path: ../Images/JupyterUser
+        Path: ../images/jupyter-user
         Version: latest
-    JupyterUser-Spark:
-        Repository: aws-orbit-JupyterUser-Spark
+    JupyterUserSpark:
+        Repository: aws-orbit-jupyter-user-spark
         Source: code
-        Path: ../Images/JupyterUser-Spark
+        Path: ../images/jupyter-user-spark
         Version: latest
     LandingPage:
-        Repository: aws-orbit-LandingPage
+        Repository: aws-orbit-landing-page
         Source: code
-        Path: ../Images/LandingPage
+        Path: ../images/landing-page
         Version: latest
     CodeBuild:
         Repository: aws-orbit-code-build-base
         Source: code
-        Path: ../Images/CodeBuildImage
+        Path: ../images/code-build-image
         Version: latest
 Networking:
     VpcId: !SSM ${/orbit/dev-env/demo::VpcId}

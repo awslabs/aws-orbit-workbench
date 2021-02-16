@@ -1,15 +1,15 @@
 -   Id: code_commit
     Module: code_commit
-    Path: ../Plugins/code_commit/
+    Path: ../plugins/code_commit/
 -   Id: hello_world
     Module: hello_world
-    Path: ../Plugins/hello_world/
+    Path: ../plugins/hello_world/
     Parameters:
         foo: boo
         xoo: 1234
 -   Id: team_script_launcher
     Module: team_script_launcher
-    Path: ../Plugins/team_script_launcher/
+    Path: ../plugins/team_script_launcher/
     Parameters:
         script: |
             echo "START LOOP"
