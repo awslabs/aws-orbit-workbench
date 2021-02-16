@@ -87,6 +87,7 @@ class Env(Stack):
         self.user_pool_client = self._create_user_pool_client()
         self.identity_pool = self._create_identity_pool()
         self.token_validation_lambda = self._create_token_validation_lambda()
+        self.cluster_pod_security_group = self._create_cluster_pod_security_group()
         self.context_parameter = self._create_manifest_parameter()
 
     def create_repo(self, image_name: str) -> ecr.Repository:
@@ -369,6 +370,7 @@ class Env(Stack):
                     "UserPoolId": self.user_pool.user_pool_id,
                     "UserPoolClientId": self.user_pool_client.user_pool_client_id,
                     "IdentityPoolId": self.identity_pool.ref,
+                    "ClusterPodSecurityGroupId": self.cluster_pod_security_group.security_group_id,
                 }
             ),
             type=ssm.ParameterType.STRING,
@@ -378,6 +380,17 @@ class Env(Stack):
             tier=ssm.ParameterTier.INTELLIGENT_TIERING,
         )
         return parameter
+
+    def _create_cluster_pod_security_group(self) -> ec2.SecurityGroup:
+        name = f"orbit-{self.context.name}-cluster-pod-sg"
+        sg = ec2.SecurityGroup(
+            scope=self,
+            id="cluster-pod-security-group",
+            security_group_name=name,
+            vpc=self.i_vpc,
+        )
+        Tags.of(scope=sg).add(key="Name", value=name)
+        return sg
 
 
 def main() -> None:

@@ -230,6 +230,8 @@ class Context:
     elbs: Optional[Dict[str, Dict[str, Any]]] = None
     shared_efs_fs_id: Optional[str] = None
     shared_efs_sg_id: Optional[str] = None
+    cluster_sg_id: Optional[str] = None
+    cluster_pod_sg_id: Optional[str] = None
 
     def get_team_by_name(self, name: str) -> Optional[TeamContext]:
         for t in self.teams:
@@ -291,6 +293,7 @@ class Context:
         self.user_pool_id = values["UserPoolId"]
         self.user_pool_client_id = values["UserPoolClientId"]
         self.identity_pool_id = values["IdentityPoolId"]
+        self.cluster_pod_sg_id = values["ClusterPodSecurityGroupId"]
         self.fetch_cognito_external_idp_data()
         _logger.debug("Env data fetched successfully.")
 

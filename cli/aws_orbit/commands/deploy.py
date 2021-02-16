@@ -56,7 +56,7 @@ def _get_images_dirs(context: "Context", manifest_filename: str, skip_images: bo
         _logger.debug("refdir: %s", refdir)
         _logger.debug(context.images.jupyter_hub.source)
         dirs = [
-            (os.path.join(refdir, getattr(context.images, name).path), name)
+            (os.path.join(refdir, getattr(context.images, name).path), name.replace("_", "-"))
             for name in context.images.names
             if getattr(context.images, name).source == "code"
         ]
