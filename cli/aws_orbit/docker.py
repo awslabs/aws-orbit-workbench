@@ -133,7 +133,7 @@ def deploy_image_from_source(
         sh.run("pwd")
         sh.run("ls -lrta")
         sh.run("pip config list -v")
-        sh.run("cp ./pip.conf .")
+        #sh.run("cp ./pip.conf .")
 
     _logger.debug("Building docker image from %s", os.path.abspath(dir))
     update_docker_file(context=context, dir=dir)
