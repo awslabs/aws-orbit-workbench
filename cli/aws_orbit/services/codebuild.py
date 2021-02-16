@@ -280,7 +280,7 @@ def generate_spec(
 
                     plugin_module_name = (plugin.module).replace("_", "-")
                     install.append("pwd")
-                    install.append("ls -lrta")
+                    install.append("ls")
                     install.append(f"pip install --upgrade aws-orbit-{plugin_module_name}")
 
         if changeset is not None:
@@ -294,7 +294,7 @@ def generate_spec(
                         # install.append(f"pip install -e ./{plugin_changeset.team_name}/{module}/")
 
                         plugin_module_name = (module).replace("_", "-")
-                        install.append("ls -lrta")
+                        install.append("ls")
                         install.append(f"pip install --upgrade aws-orbit-{plugin_module_name}")
 
                 # OLD
@@ -305,7 +305,7 @@ def generate_spec(
                         # install.append(f"pip install -e ./{plugin_changeset.team_name}/{module}/")
 
                         plugin_module_name = (module).replace("_", "-")
-                        install.append("ls -lrta")
+                        install.append("ls")
                         install.append(f"pip install --upgrade aws-orbit-{plugin_module_name}")
 
     if cmds_install is not None:

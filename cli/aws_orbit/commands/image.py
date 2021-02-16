@@ -132,12 +132,16 @@ def build_image(
     env: str, dir: str, name: str, script: Optional[str], teams: Optional[List[str]], region: Optional[str], debug: bool
 ) -> None:
     with MessagesContext("Deploying Docker Image", debug=debug) as msg_ctx:
+        _logger.debug("*************Building custom image*******")
+        # TODO - This activity will manipulate the SSM parameters.
+        # Should we allow lake users to change/refresh the SSM parameters indirectly
         ssm.cleanup_changeset(env_name=env)
         ssm.cleanup_manifest(env_name=env)
+        _logger.debug("********************")
         context: "Context" = load_context_from_ssm(env_name=env)
         msg_ctx.info("Manifest loaded")
         if cfn.does_stack_exist(stack_name=f"orbit-{context.name}") is False:
-            msg_ctx.error("Please, deploy your environment before deploy any addicional docker image")
+            msg_ctx.error("Please, deploy your environment before deploy any additional docker image")
             return
         msg_ctx.progress(3)
 

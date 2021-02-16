@@ -231,6 +231,30 @@ class IamBuilder:
                         f"arn:{partition}:cloudformation:{region}:{account}:stack/orbit-{env_name}/*",
                     ],
                 ),
+                # TODO - Verify the impact on SSM parameters
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "ssm:GetParameters",
+                        "ssm:DescribeParameters",
+                        "ssm:GetParameter",
+                        "ssm:DescribeParameter",
+                        "ssm:PutParameter",
+                        "ssm:AddTagsToResource",
+                        "ssm:DeleteParameter",
+                        "ssm:DeleteParameters",
+                    ],
+                    resources=[
+                        f"arn:{partition}:ssm:{region}:{account}:parameter/orbit/{env_name}/*",
+                    ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "ssm:DescribeParameters",
+                    ],
+                    resources=[f"arn:{partition}:ssm:{region}:{account}:*"],
+                ),
             ],
         )
 
