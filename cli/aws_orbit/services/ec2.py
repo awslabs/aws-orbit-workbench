@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import logging
+import botocore.exceptions
 from typing import ClassVar, List, Type
 
 from dataclasses import field
@@ -45,7 +46,14 @@ def authorize_security_group_ingress(group_id: str, ip_permissions: List[IpPermi
     _logger.debug(f"Authorizing Ingress for Security Group: {group_id}\nPermissions: {permissions}")
 
     ec2_client = boto3_client("ec2")
-    ec2_client.authorize_security_group_ingress(GroupId=group_id, IpPermissions=permissions)
+    try:
+        ec2_client.authorize_security_group_ingress(GroupId=group_id, IpPermissions=permissions)
+    except botocore.exceptions.ClientError as ex:
+        _logger.error("Error Authorizing Ingress", ex)
+        if ex.response.get("Error", {}).get("Code", "Unknown") != "InvalidPermission.Duplicate":
+            raise
+        else:
+            _logger.debug("Ingress previously authorized")
 
 
 def authorize_security_group_egress(group_id: str, ip_permissions: List[IpPermission]) -> None:
@@ -53,7 +61,14 @@ def authorize_security_group_egress(group_id: str, ip_permissions: List[IpPermis
     _logger.debug(f"Authorizing Egress for Security Group: {group_id}\nPermissions: {permissions}")
 
     ec2_client = boto3_client("ec2")
-    ec2_client.authorize_security_group_egress(GroupId=group_id, IpPermissions=permissions)
+    try:
+        ec2_client.authorize_security_group_egress(GroupId=group_id, IpPermissions=permissions)
+    except botocore.exceptions.ClientError as ex:
+        _logger.error("Error Authorizing Egress", ex)
+        if ex.response.get("Error", {}).get("Code", "Unknown") != "InvalidPermission.Duplicate":
+            raise
+        else:
+            _logger.debug("Egress previously authorized")
 
 
 def revoke_security_group_ingress(group_id: str, ip_permissions: List[IpPermission]) -> None:
@@ -61,7 +76,14 @@ def revoke_security_group_ingress(group_id: str, ip_permissions: List[IpPermissi
     _logger.debug(f"Revoking Ingress for Security Group: {group_id}\nPermissions: {permissions}")
 
     ec2_client = boto3_client("ec2")
-    ec2_client.revoke_security_group_ingress(GroupId=group_id, IpPermissions=permissions)
+    try:
+        ec2_client.revoke_security_group_ingress(GroupId=group_id, IpPermissions=permissions)
+    except botocore.exceptions.ClientError as ex:
+        _logger.error("Error Revoking Ingress", ex)
+        if ex.response.get("Error", {}).get("Code", "Unknown") != "InvalidPermission.NotFound":
+            raise
+        else:
+            _logger.debug("Ingress not previously authorized")
 
 
 def revoke_security_group_egress(group_id: str, ip_permissions: List[IpPermission]) -> None:
@@ -69,4 +91,11 @@ def revoke_security_group_egress(group_id: str, ip_permissions: List[IpPermissio
     _logger.debug(f"Revoking Egress for Security Group: {group_id}\nPermissions: {permissions}")
 
     ec2_client = boto3_client("ec2")
-    ec2_client.revoke_security_group_egress(GroupId=group_id, IpPermissions=permissions)
+    try:
+        ec2_client.revoke_security_group_egress(GroupId=group_id, IpPermissions=permissions)
+    except botocore.exceptions.ClientError as ex:
+        _logger.error("Error Revoking Egress", ex)
+        if ex.response.get("Error", {}).get("Code", "Unknown") != "InvalidPermission.NotFound":
+            raise
+        else:
+            _logger.debug("Egress not previously authorized")

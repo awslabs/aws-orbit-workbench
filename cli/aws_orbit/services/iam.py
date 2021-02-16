@@ -69,6 +69,7 @@ def update_assume_role_roles(
         set() if roles_to_remove is None else {f"arn:aws:iam::{account_id}:role/{role}" for role in roles_to_remove}
     )
 
+    _logger.debug("current_policies: %s", assume_role_policy["Statement"])
     for statement in assume_role_policy["Statement"]:
         arn = statement.get("Principal", {}).get("AWS", None)
         if arn in roles_to_remove_set:
