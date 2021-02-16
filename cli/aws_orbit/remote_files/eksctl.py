@@ -52,7 +52,7 @@ def create_nodegroup_structure(context: "Context", team: "TeamContext", env_name
         "maxSize": team.nodes_num_max,
         "volumeSize": team.local_storage_size,
         "ssh": {"allow": False},
-        "labels": {"team": team.name, "orbit/compute-type": "ec2"},
+        "labels": {"team": team.name, "orbit/node-type": "ec2"},
         "tags": {"Env": f"orbit-{env_name}", "TeamSpace": team.name},
         "iam": {"instanceRoleARN": context.eks_env_nodegroup_role_arn},
     }
@@ -337,7 +337,7 @@ def deploy_teams(context: "Context") -> None:
                 role_arn=cast(str, context.eks_fargate_profile_role_arn),
                 subnets=subnets_ids,
                 namespace=team.name,
-                selector_labels={"team": team.name, "orbit/compute-type": "fargate"},
+                selector_labels={"team": team.name, "orbit/node-type": "fargate"},
             )
 
             username = f"orbit-{context.name}-{team.name}-runner"

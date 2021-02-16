@@ -56,7 +56,7 @@ c.Spawner.args = [
 ]
 c.KubeSpawner.start_timeout = 360
 c.KubeSpawner.common_labels = {
-    "orbit/compute-type": "ec2",
+    "orbit/node-type": "ec2",
     "orbit/attach-security-group": "yes"
 }
 c.KubeSpawner.namespace = TEAM
