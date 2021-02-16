@@ -76,8 +76,9 @@ def update_assume_role_roles(
             _logger.debug("Removing %s from AssumeRolePolicy", arn)
             continue
         elif arn in roles_to_add_set:
-            _logger.debug("AssumeRolePolicy already contains %s", arn)
+            _logger.debug("AssumeRolePolicy Statement (%s) found containing %s", statement, arn)
             roles_to_add_set.remove(arn)
+            statements.append(statement)
         else:
             _logger.debug("Keeping %s in AssumeRolePolicy", statement)
             statements.append(statement)
