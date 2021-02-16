@@ -72,7 +72,7 @@ def _create_dockerfile(context: "Context", team_context: "TeamContext", image_na
 
         # Adding plugin modules to image via pip
         plugin_module_name = (plugin.module).replace("_", "-")
-        cmds += [ f"RUN pip install --upgrade aws-orbit-{plugin_module_name}"]
+        cmds += [f"RUN pip install --upgrade aws-orbit-{plugin_module_name}"]
 
         hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
             context=context,
@@ -86,7 +86,7 @@ def _create_dockerfile(context: "Context", team_context: "TeamContext", image_na
                 cmds += [f"# Commands for {plugin.plugin_id} plugin"] + plugin_cmds
 
     # Adding pip conf remove commands
-    cmds += [ "RUN rm /etc/pip.conf", "USER $NB_UID"]
+    cmds += ["RUN rm /etc/pip.conf", "USER $NB_UID"]
     _logger.debug("********Team Dockerfile commands list********")
     _logger.debug("cmds: %s", cmds)
     outdir = os.path.join(".orbit.out", context.name, team_context.name, "image")
