@@ -66,11 +66,7 @@ def _create_dockerfile(context: "Context", team_context: "TeamContext", image_na
     # TODO - Testing - For now do all steps with root user. Need to test with flipping with $NB_UID
     # Add CodeArtifact pip.conf
     cmds += ["USER root"]
-
-    if context.codeartifact_domain and context.codeartifact_repository:
-        ca_domain: str = context.codeartifact_domain
-        ca_repo: str = context.codeartifact_repository
-        cmds += ["ADD pip.conf /etc/pip.conf"]
+    cmds += ["ADD pip.conf /etc/pip.conf"]
 
     for plugin in team_context.plugins:
 
