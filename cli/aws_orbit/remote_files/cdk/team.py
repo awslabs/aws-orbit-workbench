@@ -134,7 +134,7 @@ class Team(Stack):
         else:
             raise Exception("Scratch bucket was not provided in Manifest ('ScratchBucketArn')")
 
-        self.role_eks_nodegroup = IamBuilder.build_team_role(
+        self.role_eks_pod = IamBuilder.build_team_role(
             scope=self,
             context=self.context,
             team_name=self.team_name,
@@ -174,7 +174,7 @@ class Team(Stack):
             context=context,
             team_name=team_name,
             ecs_execution_role=self.ecs_execution_role,
-            ecs_task_role=self.role_eks_nodegroup,
+            ecs_task_role=self.role_eks_pod,
             file_system=self.shared_fs,
             fs_accesspoint=self.efs_ap,
             image=self.ecr_image,
@@ -234,7 +234,7 @@ class Team(Stack):
                 {
                     "EfsId": self.shared_fs.file_system_id,
                     "EfsApId": self.efs_ap.access_point_id,
-                    "EksNodegroupRoleArn": self.role_eks_nodegroup.role_arn,
+                    "EksPodRoleArn": self.role_eks_pod.role_arn,
                     "ScratchBucket": self.scratch_bucket.bucket_name,
                     "EcsClusterName": self.ecs_cluster.cluster_name,
                     "ContainerRunnerArn": self.container_runner.function_arn,

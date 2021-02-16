@@ -50,11 +50,6 @@ class PluginManifest:
 class TeamManifest:
     Schema: ClassVar[Type[Schema]] = Schema
     name: str
-    instance_type: str = "m5.4xlarge"
-    local_storage_size: int = 128
-    nodes_num_desired: int = 2
-    nodes_num_max: int = 3
-    nodes_num_min: int = 1
     policies: List[str] = field(default_factory=list)
     grant_sudo: bool = False
     jupyterhub_inbound_ranges: List[str] = field(default_factory=lambda: ["0.0.0.0/0"])
@@ -71,6 +66,18 @@ class ImageManifest:
     source: str = "dockerhub"
     version: str = "latest"
     path: Optional[str] = None
+
+
+@dataclass(base_schema=BaseSchema, frozen=True)
+class ManagedNodeGroupManifest:
+    Schema: ClassVar[Type[Schema]] = Schema
+    name: str
+    instance_type: str = "m5.4xlarge"
+    local_storage_size: int = 128
+    nodes_num_desired: int = 2
+    nodes_num_max: int = 3
+    nodes_num_min: int = 1
+    labels: Dict[str, str] = field(default_factory=dict)
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -185,6 +192,7 @@ class Manifest:
     images: ImagesManifest = ImagesManifest()
     shared_efs_fs_id: Optional[str] = None
     shared_efs_sg_id: Optional[str] = None
+    managed_nodegroups: List[ManagedNodeGroupManifest] = field(default_factory=list)
 
     def get_team_by_name(self, name: str) -> Optional[TeamManifest]:
         for t in self.teams:

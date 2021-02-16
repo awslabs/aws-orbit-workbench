@@ -45,10 +45,10 @@ class Team(Stack):
             repository_name=f"orbit-{context.name}-{team_context.name}",
         )
 
-        if team_context.eks_nodegroup_role_arn is None:
-            raise ValueError("Node group role arn required")
+        if team_context.eks_pod_role_arn is None:
+            raise ValueError("Pod Role arn required")
         team_role = iam.Role.from_role_arn(
-            scope=self, id="team-role", role_arn=team_context.eks_nodegroup_role_arn, mutable=True
+            scope=self, id="team-role", role_arn=team_context.eks_pod_role_arn, mutable=True
         )
         team_role.attach_inline_policy(
             policy=iam.Policy(

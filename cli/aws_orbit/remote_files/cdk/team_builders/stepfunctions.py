@@ -227,7 +227,7 @@ class StateMachineBuilder:
         job["spec"]["template"]["spec"]["securityContext"] = {"fsGroup": 1000}
         if node_type == "ec2":
             job["spec"]["template"]["spec"]["nodeSelector"] = {
-                "team": team_name,
+                "orbit/usage": "teams",
                 "orbit/node-type": "ec2",
             }
             job["spec"]["template"]["metadata"]["labels"]["orbit/node-type"] = "ec2"
