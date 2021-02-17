@@ -41,13 +41,5 @@ Networking:
         NodesSubnets: !SSM ${/orbit/dev-env/demo::NodesSubnets}
     Frontend:
         LoadBalancersSubnets: !SSM ${/orbit/dev-env/demo::LoadBalancersSubnets}
-ManagedNodegroups:
--   Name: primary-compute
-    InstanceType: m5.2xlarge
-    LocalStorageSize: 128
-    NodesNumDesired: 2
-    NodesNumMax: 3
-    NodesNumMin: 1
-    Labels:
-        instance-type: m5.2xlarge
+ManagedNodegroups: []
 Teams: []
