@@ -454,9 +454,7 @@ def load_context_from_ssm(env_name: str) -> Context:
     # TODO - Verify the casting outcome
     _logger.debug("*******raw main**********")
     _logger.debug(main)
-    return cast(
-        Context, Context.Schema().load(data=main, many=False, partial=False, unknown="RAISE")
-    )
+    return cast(Context, Context.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
 
 
 def construct_ecr_repository_name(env_name: str, image: Optional[str]) -> str:
