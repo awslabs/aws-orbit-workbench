@@ -148,6 +148,9 @@ def start(
             },
             "s3Logs": {"status": "DISABLED"},
         },
+        "environmentVariablesOverride": [
+            {"name": "CODEBUILD_CONTEXT_REGION", "value": context.region, "type": "PLAINTEXT"}
+        ],
     }
     if repo:
         build_params["imageOverride"] = repo
@@ -253,6 +256,9 @@ def generate_spec(
     ]
 
     # Orbit Workbench CLI
+    # TODO Change back to conditional
+    _logger.debug(f"***context.codeartifact_domain={context.codeartifact_domain}")
+    _logger.debug(f"***context.codeartifact_domain={context.codeartifact_repository}")
     if context.codeartifact_domain and context.codeartifact_repository:
         install.append(
             "aws codeartifact login --tool pip "
@@ -263,6 +269,9 @@ def generate_spec(
         install.append("pip config list -v")
         install.append("pwd")
         install.append("cp ~/.config/pip/pip.conf .")
+    else:
+        _logger.error("Context codeartifact domain and repository are required")
+        raise Exception("Context codeartifact domain and repository are required")
 
     install.append("pwd")
     install.append("ls -lrta")

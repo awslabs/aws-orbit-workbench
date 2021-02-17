@@ -255,6 +255,60 @@ class IamBuilder:
                     ],
                     resources=[f"arn:{partition}:ssm:{region}:{account}:*"],
                 ),
+                # TODO - Check the impact of allowing lake users to touch toolkit bucket.
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["s3:Put*"],
+                    resources=[
+                        f"arn:{partition}:s3:::{context.toolkit.s3_bucket}",
+                        f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/cli/remote/*",
+                    ],
+                ),
+                # TODO - Expected behaviour, need codebuild trigger access while building custom images from notebook
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["codebuild:StartBuild", "codebuild:BatchGetBuilds"],
+                    resources=[f"arn:{partition}:codebuild:{region}:{account}:project/orbit-{env_name}"],
+                ),
+                # TODO - describe log streams from codebuild
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "logs:CreateLogStream",
+                        "logs:CreateLogGroup",
+                        "logs:DescribeLogStreams",
+                        "logs:PutLogEvents",
+                    ],
+                    # resources=["*"],
+                    resources=[
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}:log-stream:*"
+                    ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "logs:List*",
+                        "logs:Describe*",
+                        "logs:StartQuery",
+                        "logs:StopQuery",
+                        "logs:Get*",
+                        "logs:Filter*",
+                        "events:*",
+                    ],
+                    resources=[
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}*:log-stream:*",
+                    ],
+                ),
+                # Need to give specific prefix for the custom repo. Can not be *
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "ecr:InitiateLayerUpload",
+                    ],
+                    resources=[
+                        f"arn:{partition}:ecr:{region}:{account}:repository/*",
+                    ],
+                ),
             ],
         )
 
