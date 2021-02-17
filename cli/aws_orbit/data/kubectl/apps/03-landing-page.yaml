@@ -61,7 +61,7 @@ spec:
               memory: 1.8G
       nodeSelector:
         orbit/usage: reserved
-        orbit/node-type: ec2
+        orbit/node-group: env
 ---
 apiVersion: v1
 kind: Service

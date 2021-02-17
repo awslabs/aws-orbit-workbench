@@ -291,12 +291,10 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
     current_nodegroups = context.managed_nodegroups
 
     if not cfn.does_stack_exist(stack_name=final_eks_stack_name):
-        current_nodegroups = (
-            changeset.managed_nodegroups_changeset.added_nodegroups
-            if changeset and changeset.managed_nodegroups_changeset
-            else []
-        )
         output_filename = generate_manifest(context=context, name=stack_name, nodegroups=current_nodegroups)
+        eks_system_masters_changeset: Optional[ListChangeset] = ListChangeset(  # type: ignore
+            added_values=context.eks_system_masters_roles, removed_values=[]
+        )
         _logger.debug("Deploying EKSCTL Environment resources")
         sh.run(f"eksctl create cluster -f {output_filename} --write-kubeconfig --verbose 4")
 
@@ -309,6 +307,11 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
         )
     else:
         sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
+        eks_system_masters_changeset = (
+            changeset.eks_system_masters_roles_changeset
+            if changeset and changeset.eks_system_masters_roles_changeset
+            else None
+        )
         if changeset and changeset.managed_nodegroups_changeset:
             if changeset.managed_nodegroups_changeset.added_nodegroups:
                 output_filename = generate_manifest(
@@ -348,7 +351,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
     map_iam_identities(
         context=context,
         cluster_name=cluster_name,
-        eks_system_masters_roles_changes=changeset.eks_system_masters_roles_changeset if changeset else None,
+        eks_system_masters_roles_changes=eks_system_masters_changeset,
     )
 
     fetch_cluster_data(context=context, cluster_name=cluster_name)
