@@ -189,7 +189,7 @@ def deploy(args: Tuple[str, ...]) -> None:
         _logger.debug("Docker Images deployed")
     eksctl.deploy_env(
         context=context,
-        eks_system_masters_roles_changes=changeset.eks_system_masters_roles_changeset if changeset else None,
+        changeset=changeset,
     )
     _logger.debug("EKS Environment Stack deployed")
     kubectl.deploy_env(context=context)

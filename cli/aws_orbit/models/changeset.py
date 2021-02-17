@@ -25,6 +25,7 @@ from marshmallow import Schema
 from marshmallow_dataclass import dataclass
 
 from aws_orbit.models.common import BaseSchema
+from aws_orbit.models.manifest import ManagedNodeGroupManifest
 from aws_orbit.services import ssm
 
 if TYPE_CHECKING:
@@ -81,6 +82,13 @@ class ListChangeset:
 
 
 @dataclass(base_schema=BaseSchema)
+class ManagedNodeGroupsChangeset:
+    Schema: ClassVar[Type[Schema]] = Schema
+    removed_nodegroups: List[ManagedNodeGroupManifest]
+    added_nodegroups: List[ManagedNodeGroupManifest]
+
+
+@dataclass(base_schema=BaseSchema)
 class Changeset:
     Schema: ClassVar[Type[Schema]] = Schema
     image_changesets: List[ImageChangeset]
@@ -88,6 +96,7 @@ class Changeset:
     external_idp_changeset: Optional[ExternalIDPChangeset]
     teams_changeset: Optional[TeamsChangeset]
     eks_system_masters_roles_changeset: Optional[ListChangeset]
+    managed_nodegroups_changeset: Optional[ManagedNodeGroupsChangeset]
 
 
 def _check_images(manifest: "Manifest", context: "Context", msg_ctx: "MessagesContext") -> List[ImageChangeset]:
@@ -233,6 +242,29 @@ def _check_eks_system_masters_roles(
     return list_changeset
 
 
+def _check_managed_nodegroups(
+    manifest: "Manifest", context: "Context", msg_ctx: "MessagesContext"
+) -> Optional[ManagedNodeGroupsChangeset]:
+    _logger.debug("Inpecting Managed NodeGroups changes...")
+    old_nodegroups: List[str] = sorted([ng.name for ng in context.managed_nodegroups])
+    new_nodegroups: List[str] = sorted([ng.name for ng in manifest.managed_nodegroups])
+    _logger.debug("ManagedNodeGroups: %s -> %s", old_nodegroups, new_nodegroups)
+    removed_nodegroups: List[str] = list(set(old_nodegroups) - set(new_nodegroups))
+    added_nodegroups: List[str] = list(set(new_nodegroups) - set(old_nodegroups))
+    _logger.debug("removed_roles: %s", removed_nodegroups)
+    _logger.debug("added_roles: %s", added_nodegroups)
+    if removed_nodegroups or added_nodegroups:
+        managed_nodegroups_changeset: Optional[ManagedNodeGroupsChangeset] = ManagedNodeGroupsChangeset(  # type: ignore
+            removed_nodegroups=[ng for ng in context.managed_nodegroups if ng.name in removed_nodegroups],
+            added_nodegroups=[ng for ng in manifest.managed_nodegroups if ng.name in added_nodegroups],
+        )
+        msg_ctx.info(f"Removed ManagedNodeGroups: {list(removed_nodegroups)}")
+        msg_ctx.info(f"Added ManagedNodeGroups: {list(added_nodegroups)}")
+    else:
+        managed_nodegroups_changeset = None
+    return managed_nodegroups_changeset
+
+
 def extract_changeset(manifest: "Manifest", context: "Context", msg_ctx: "MessagesContext") -> Changeset:
     image_changesets: List[ImageChangeset] = _check_images(manifest=manifest, context=context, msg_ctx=msg_ctx)
     external_idp_changeset: Optional[ExternalIDPChangeset] = _check_external_idp(
@@ -245,12 +277,16 @@ def extract_changeset(manifest: "Manifest", context: "Context", msg_ctx: "Messag
     eks_system_masters_roles_changeset: Optional[ListChangeset] = _check_eks_system_masters_roles(
         manifest=manifest, context=context, msg_ctx=msg_ctx
     )
+    managed_nodegroups_changeset: Optional[ManagedNodeGroupsChangeset] = _check_managed_nodegroups(
+        manifest=manifest, context=context, msg_ctx=msg_ctx
+    )
     changeset: Changeset = Changeset(  # type: ignore
         image_changesets=image_changesets,
         plugin_changesets=plugin_changesets,
         external_idp_changeset=external_idp_changeset,
         teams_changeset=teams_changeset,
         eks_system_masters_roles_changeset=eks_system_masters_roles_changeset,
+        managed_nodegroups_changeset=managed_nodegroups_changeset,
     )
     dump_changeset_to_ssm(env_name=context.name, changeset=changeset)
     return changeset

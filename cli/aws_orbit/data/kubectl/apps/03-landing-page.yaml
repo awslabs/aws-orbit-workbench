@@ -60,7 +60,8 @@ spec:
               cpu: 0.9
               memory: 1.8G
       nodeSelector:
-        team: env
+        orbit/usage: reserved
+        orbit/node-group: env
 ---
 apiVersion: v1
 kind: Service

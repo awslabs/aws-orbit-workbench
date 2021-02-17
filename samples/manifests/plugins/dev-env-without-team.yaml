@@ -41,4 +41,5 @@ Networking:
         NodesSubnets: !SSM ${/orbit/dev-env/demo::NodesSubnets}
     Frontend:
         LoadBalancersSubnets: !SSM ${/orbit/dev-env/demo::LoadBalancersSubnets}
+ManagedNodegroups: []
 Teams: []

@@ -233,7 +233,8 @@ spec:
               cpu: "2"
               memory: "3G"
       nodeSelector:
-        team: ${team}
+        orbit/usage: teams
+        orbit/node-type: ec2
       serviceAccountName: ${team}
       securityContext:
         fsGroup: 100
@@ -259,7 +260,8 @@ spec:
         orbit/attach-security-group: "yes"
     spec:
       nodeSelector:
-        team: ${team}
+        orbit/usage: teams
+        orbit/node-type: ec2
       serviceAccountName: ${team}
       containers:
       - name: run-efs-init

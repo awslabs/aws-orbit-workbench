@@ -16,7 +16,7 @@ spec:
     spec:
       nodeSelector:
         kubernetes.io/os: linux
-        orbit/compute-type: ec2
+        orbit/node-type: ec2
       hostNetwork: true
       priorityClassName: system-node-critical
       tolerations:
