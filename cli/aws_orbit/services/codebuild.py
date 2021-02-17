@@ -148,9 +148,6 @@ def start(
             },
             "s3Logs": {"status": "DISABLED"},
         },
-        "environmentVariablesOverride": [
-            {"name": "CODEBUILD_CONTEXT_REGION", "value": context.region, "type": "PLAINTEXT"}
-        ],
     }
     if repo:
         build_params["imageOverride"] = repo
