@@ -33,16 +33,15 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 def _deploy_image(args: Tuple[str, ...]) -> None:
     _logger.debug("_deploy_image args: %s", args)
-    context: "Context" = load_context_from_ssm(env_name=args[0])
-    _logger.debug("manifest.name: %s", context.name)
-    if len(args) == 2:
-        image_name: str = args[1]
-        script: Optional[str] = None
-    elif len(args) == 3:
-        image_name = args[1]
-        script = args[2]
-    else:
+    if len(args) < 3:
         raise ValueError("Unexpected number of values in args.")
+    env: str = args[0]
+    image_name: str = args[1]
+    script: Optional[str] = args[2] if args[2] != "NO_SCRIPT" else None
+    build_args = args[3:]
+
+    context: "Context" = load_context_from_ssm(env_name=env)
+    _logger.debug("manifest.name: %s", context.name)
 
     docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
@@ -54,7 +53,7 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
-        docker.deploy_image_from_source(context=context, dir=path, name=f"orbit-{context.name}-{image_name}")
+        docker.deploy_image_from_source(context=context, dir=path, name=f"orbit-{context.name}-{image_name}", build_args=build_args)
     else:
         _logger.debug("Replicating docker iamge to ECR...")
         docker.replicate_image(
@@ -83,14 +82,14 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(images)) as executor:
         futures: List[Future[Any]] = []
 
-        for name, script in images:
+        for name, dir, script, build_args in images:
             _logger.debug("name: %s | script: %s", name, script)
 
             path = os.path.join(os.getcwd(), name)
             _logger.debug("path: %s", path)
 
             if getattr(context.images, name.replace("-", "_")).source == "code":
-                dirs: List[Tuple[str, str]] = [(path, name)]
+                dirs: List[Tuple[str, str]] = [(path, dir)]
             else:
                 dirs = []
 
@@ -98,11 +97,12 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
                 command_name=f"deploy_image-{name}", context=context, dirs=dirs, plugins=False
             )
             _logger.debug("bundle_path: %s", bundle_path)
-            script_str = "" if script is None else script
+            script_str = "NO_SCRIPT" if script is None else script
+            build_args = [] if build_args is None else build_args
             buildspec = codebuild.generate_spec(
                 context=context,
                 plugins=False,
-                cmds_build=[f"orbit remote --command _deploy_image {context.name} {name} {script_str}"],
+                cmds_build=[f"orbit remote --command _deploy_image {context.name} {name} {script_str} {' '.join(build_args)}"],
             )
             futures.append(executor.submit(_deploy_image_remotely, context, name, bundle_path, buildspec))
 
@@ -113,9 +113,10 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
 def deploy_images_remotely(context: "Context") -> None:
     # First batch
     images: List[Tuple[str, Optional[str]]] = [
-        ("jupyter-hub", None),
-        ("jupyter-user", "build.sh"),
-        ("landing-page", "build.sh"),
+        ("jupyter-hub", "jupyter-hub", None, []),
+        ("jupyter-user", "jupyter-user", "build.sh", []),
+        ("landing-page", "landing-page", "build.sh", []),
+        ("gpu-jupyter-user", "jupyter-user", "build.sh", ["BASE_IMAGE=cschranz/gpu-jupyter"]),
     ]
     _logger.debug("Building the first images batch")
     _deploy_images_batch(context=context, images=images)

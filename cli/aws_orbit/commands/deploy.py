@@ -248,7 +248,7 @@ def deploy_env(
         msg_ctx.progress(100)
 
 
-def _deploy_image(env: str, dir: str, name: str, script: Optional[str], region: Optional[str], debug: bool) -> None:
+def _deploy_image(env: str, dir: str, name: str, script: Optional[str], build_args: Optional[List[str]], region: Optional[str], debug: bool) -> None:
     with MessagesContext("Deploying Docker Image", debug=debug) as msg_ctx:
         context: "Context" = load_context_from_ssm(env_name=env)
 
@@ -268,11 +268,12 @@ def _deploy_image(env: str, dir: str, name: str, script: Optional[str], region: 
             command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)], changeset=None
         )
         msg_ctx.progress(4)
-        script_str = "" if script is None else script
+        script_str = "NO_SCRIPT" if script is None else script
+        build_args = [] if build_args is None else build_args
         buildspec = codebuild.generate_spec(
             context=context,
             plugins=True,
-            cmds_build=[f"orbit remote --command _deploy_image {env} {name} {script_str}"],
+            cmds_build=[f"orbit remote --command _deploy_image {env} {name} {script_str} {' '.join(build_args)}"],
             changeset=None,
         )
         remote.run(

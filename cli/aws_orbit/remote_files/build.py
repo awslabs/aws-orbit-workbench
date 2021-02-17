@@ -30,12 +30,13 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def build_image(args: Tuple[str, ...]) -> None:
-    if len(args) != 4:
+    if len(args) < 4:
         raise ValueError("Unexpected number of values in args.")
     env: str = args[0]
     image_name: str = args[1]
     script: Optional[str] = args[2] if args[2] != "NO_SCRIPT" else None
     teams: Optional[List[str]] = args[3].split(",") if args[3] != "NO_TEAMS" else None
+    build_args = args[4:]
 
     _logger.debug("args: %s", args)
     context: "Context" = load_context_from_ssm(env_name=env)
@@ -58,7 +59,7 @@ def build_image(args: Tuple[str, ...]) -> None:
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
-        docker.deploy_image_from_source(context=context, dir=path, name=ecr_repo)
+        docker.deploy_image_from_source(context=context, dir=path, name=ecr_repo, build_args=build_args)
     else:
         docker.replicate_image(context=context, image_name=image_name, deployed_name=ecr_repo)
     _logger.debug("Docker Image Deployed to ECR")
