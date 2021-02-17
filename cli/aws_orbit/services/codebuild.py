@@ -259,7 +259,7 @@ def generate_spec(
     _logger.info("#############")
     _logger.debug(f"***context.codeartifact_domain={context.codeartifact_domain}")
     _logger.debug(f"***context.codeartifact_domain={context.codeartifact_repository}")
-    #if context.codeartifact_domain and context.codeartifact_repository:
+    # if context.codeartifact_domain and context.codeartifact_repository:
     install.append(
         "aws codeartifact login --tool pip "
         f"--domain {context.codeartifact_domain} "
