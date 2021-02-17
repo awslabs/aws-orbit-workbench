@@ -281,7 +281,7 @@ class IamBuilder:
                     ],
                     # resources=["*"],
                     resources=[
-                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}:log-stream:*"
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}:log-stream:*" # noqa
                     ],
                 ),
                 iam.PolicyStatement(
@@ -296,7 +296,7 @@ class IamBuilder:
                         "events:*",
                     ],
                     resources=[
-                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}*:log-stream:*",
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}*:log-stream:*", # noqa
                     ],
                 ),
                 # Need to give specific prefix for the custom repo. Can not be *
