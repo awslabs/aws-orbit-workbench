@@ -111,13 +111,19 @@ class Team(Stack):
         self.ecr_repo: ecr.Repository = ecr.Repository(
             scope=self,
             id="repo",
-            repository_name=f"orbit-{self.context.name}-{self.team_name}",
+            repository_name=f"orbit-{self.context.name}-{self.team_name}-jupyter-user",
         )
 
         self.ecr_repo_spark: ecr.Repository = ecr.Repository(
             scope=self,
             id="repo-spark",
-            repository_name=f"orbit-{self.context.name}-{self.team_name}-spark",
+            repository_name=f"orbit-{self.context.name}-{self.team_name}-jupyter-user-spark",
+        )
+
+        self.ecr_repo_gpu: ecr.Repository = ecr.Repository(
+            scope=self,
+            id="repo-gpu",
+            repository_name=f"orbit-{self.context.name}-{self.team_name}-gpu-jupyter-user",
         )
 
         self.policies: List[str] = self.team_policies

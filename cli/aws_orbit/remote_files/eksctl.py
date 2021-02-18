@@ -15,6 +15,7 @@
 import logging
 import os
 import pprint
+import re
 from typing import Any, Dict, List, Optional, cast
 
 import yaml
@@ -41,6 +42,14 @@ MANIFEST: Dict[str, Any] = {
 def create_nodegroup_structure(context: "Context", nodegroup: ManagedNodeGroupManifest) -> Dict[str, Any]:
     labels = {"orbit/node-group": nodegroup.name, "orbit/usage": "teams", "orbit/node-type": "ec2"}
     labels.update(nodegroup.labels)
+
+    # Extra label for gpu instance types
+    if re.match("^p[2-9]|^g[3-9]", nodegroup.instance_type):
+        if nodegroup.enable_virtual_gpu:
+            labels["k8s.amazonaws.com/accelerator"] = "vgpu"
+        else:
+            labels["k8s.amazonaws.com/accelerator"] = "gpu"
+
     return {
         "name": nodegroup.name,
         "privateNetworking": True,

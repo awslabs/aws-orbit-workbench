@@ -1,4 +1,5 @@
-FROM jupyter/base-notebook:python-3.8.6
+ARG BASE_IMAGE=jupyter/base-notebook:python-3.8.6
+FROM $BASE_IMAGE
 
 ######################################
 # System
@@ -40,13 +41,12 @@ ADD python-utils/ /opt/python-utils/
 RUN chmod -R 755 /opt/python-utils/
 ADD transformations/ /opt/transformations/
 RUN chmod -R 755 /opt/transformations/
-USER $NB_UID
 
 ######################################
 # Jupyter Environment configuration
 ######################################
 
-RUN mkdir -p /home/jovyan/.local/share/jupyter 
+RUN mkdir -p /home/jovyan/.local/share/jupyter
 RUN chown -R jovyan /home/jovyan/.local/share/jupyter
 ADD jupyter_server_config.py /home/jovyan/.jupyter/jupyter_server_config.py
 ADD bootstrap.sh /etc/jupyterhub/bootstrap.sh
@@ -65,9 +65,7 @@ RUN conda run pip install -r /etc/jupyter/requirements.txt && \
 
 ADD pip.conf /etc/pip.conf
 RUN conda run pip install --upgrade aws-orbit aws-orbit-sdk
-USER root
 RUN rm /etc/pip.conf
-USER $NB_UID
 
 # ######################################
 # # Jupyter Lab extensions
@@ -85,3 +83,5 @@ RUN jupyter serverextension enable --py jupyterlab --sys-prefix && \
     rm -rf "/home/${NB_USER}/.node-gyp" && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
+
+USER $NB_UID
