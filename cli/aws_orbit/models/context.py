@@ -27,7 +27,13 @@ from marshmallow_dataclass import dataclass
 
 from aws_orbit import utils
 from aws_orbit.models.common import BaseSchema
-from aws_orbit.models.manifest import DataNetworkingManifest, FrontendNetworkingManifest, ImagesManifest, PluginManifest
+from aws_orbit.models.manifest import (
+    DataNetworkingManifest,
+    FrontendNetworkingManifest,
+    ImagesManifest,
+    ManagedNodeGroupManifest,
+    PluginManifest,
+)
 from aws_orbit.services import ssm
 from aws_orbit.utils import boto3_client, boto3_resource
 
@@ -126,11 +132,6 @@ class TeamContext:
 
     # Manifest
     name: str
-    instance_type: str
-    local_storage_size: int
-    nodes_num_desired: int
-    nodes_num_max: int
-    nodes_num_min: int
     policies: List[str]
     grant_sudo: bool
     jupyterhub_inbound_ranges: List[str]
@@ -144,6 +145,8 @@ class TeamContext:
     final_image_address: str
     base_spark_image_address: str
     final_spark_image_address: str
+    base_gpu_image_address: str
+    final_gpu_image_address: str
     stack_name: str
     ssm_parameter_name: str
     team_ssm_parameter_name: str
@@ -152,7 +155,7 @@ class TeamContext:
     container_defaults: Dict[str, Any] = field(default_factory=get_container_defaults)
     efs_id: Optional[str] = None
     efs_ap_id: Optional[str] = None
-    eks_nodegroup_role_arn: Optional[str] = None
+    eks_pod_role_arn: Optional[str] = None
     jupyter_url: Optional[str] = None
     ecs_cluster_name: Optional[str] = None
     container_runner_arn: Optional[str] = None
@@ -166,7 +169,7 @@ class TeamContext:
         values = ssm.get_parameter(name=self.team_ssm_parameter_name)
         self.efs_id = values["EfsId"]
         self.efs_ap_id = values["EfsApId"]
-        self.eks_nodegroup_role_arn = values["EksNodegroupRoleArn"]
+        self.eks_pod_role_arn = values["EksPodRoleArn"]
         self.scratch_bucket = values["ScratchBucket"]
         self.ecs_cluster_name = values["EcsClusterName"]
         self.container_runner_arn = values["ContainerRunnerArn"]
@@ -230,6 +233,9 @@ class Context:
     elbs: Optional[Dict[str, Dict[str, Any]]] = None
     shared_efs_fs_id: Optional[str] = None
     shared_efs_sg_id: Optional[str] = None
+    cluster_sg_id: Optional[str] = None
+    cluster_pod_sg_id: Optional[str] = None
+    managed_nodegroups: List[ManagedNodeGroupManifest] = field(default_factory=list)
 
     def get_team_by_name(self, name: str) -> Optional[TeamContext]:
         for t in self.teams:
@@ -291,6 +297,7 @@ class Context:
         self.user_pool_id = values["UserPoolId"]
         self.user_pool_client_id = values["UserPoolClientId"]
         self.identity_pool_id = values["IdentityPoolId"]
+        self.cluster_pod_sg_id = values["ClusterPodSecurityGroupId"]
         self.fetch_cognito_external_idp_data()
         _logger.debug("Env data fetched successfully.")
 
@@ -321,19 +328,29 @@ def create_team_context_from_manifest(manifest: "Manifest", team_manifest: "Team
     if team_manifest.image is None:
         base_image_address: str = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-jupyter-user"
     else:
-        base_image_address = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.image}"
-    final_image_address: str = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}"
+        base_image_address = (
+            f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.image}-jupyter-user"
+        )
+    final_image_address: str = (
+        f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}-jupyter-user"
+    )
     base_spark_image_address: str = (
         f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-jupyter-user-spark"
     )
     final_spark_image_address: str = (
-        f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}-spark"
+        f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}-jupyter-user-spark"
+    )
+    base_gpu_image_address: str = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-gpu-jupyter-user"
+    final_gpu_image_address: str = (
+        f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}-gpu-jupyter-user"
     )
     return TeamContext(  # type: ignore
         base_image_address=base_image_address,
         final_image_address=final_image_address,
         base_spark_image_address=base_spark_image_address,
         final_spark_image_address=final_spark_image_address,
+        base_gpu_image_address=base_gpu_image_address,
+        final_gpu_image_address=final_gpu_image_address,
         stack_name=f"orbit-{manifest.name}-{team_manifest.name}",
         ssm_parameter_name=ssm_parameter_name,
         team_ssm_parameter_name=f"/orbit/{manifest.name}/teams/{team_manifest.name}/team",
@@ -417,6 +434,7 @@ def load_context_from_manifest(manifest: "Manifest") -> Context:
             teams=create_teams_context_from_manifest(manifest=manifest),
             shared_efs_fs_id=manifest.shared_efs_fs_id,
             shared_efs_sg_id=manifest.shared_efs_sg_id,
+            managed_nodegroups=manifest.managed_nodegroups,
         )
     context.fetch_toolkit_data()
     dump_context_to_ssm(context=context)

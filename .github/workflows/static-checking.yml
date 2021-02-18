@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6]
+        python-version: [3.7]
     defaults:
       run:
         working-directory: cli
@@ -27,6 +27,7 @@ jobs:
       - name: Install Requirements
         run: |
           python -m pip install --upgrade pip
+          pip install -r requirements.txt
           pip install -r requirements-dev.txt
       - name: Mypy Check
         run: mypy .
@@ -43,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6]
+        python-version: [3.7]
     defaults:
       run:
         working-directory: sdk
@@ -56,6 +57,7 @@ jobs:
       - name: Install Requirements
         run: |
           python -m pip install --upgrade pip
+          pip install -r requirements.txt
           pip install -r requirements-dev.txt
       # - name: Mypy Check
       #   run: mypy .
@@ -70,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6]
+        python-version: [3.7]
     defaults:
       run:
         working-directory: images/jupyter-hub
@@ -97,7 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6]
+        python-version: [3.7]
     defaults:
       run:
         working-directory: images/jupyter-user
@@ -110,6 +112,7 @@ jobs:
       - name: Install Requirements
         run: |
           python -m pip install --upgrade pip
+          pip install -r requirements.txt
           pip install -r requirements-dev.txt
       - name: Mypy Check
         run: mypy python-utils
@@ -143,7 +146,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6]
+        python-version: [3.7]
     defaults:
       run:
         working-directory: plugins/hello_world
@@ -156,6 +159,7 @@ jobs:
       - name: Install Requirements
         run: |
           python -m pip install --upgrade pip
+          pip install -r requirements.txt
           pip install -r requirements-dev.txt
       - name: Mypy Check
         run: mypy .
@@ -170,7 +174,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6]
+        python-version: [3.7]
     defaults:
       run:
         working-directory: plugins/code_commit
@@ -183,6 +187,35 @@ jobs:
       - name: Install Requirements
         run: |
           python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      - name: Mypy Check
+        run: mypy .
+      - name: Flake8 Check
+        run: flake8 .
+      - name: Black Check
+        run: black --check .
+      - name: Isort Check
+        run: isort --check .
+
+  PluginRedshift:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+    defaults:
+      run:
+        working-directory: plugins/redshift
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
           pip install -r requirements-dev.txt
       - name: Mypy Check
         run: mypy .
@@ -197,7 +230,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6]
+        python-version: [3.7]
     defaults:
       run:
         working-directory: plugins/team_script_launcher
@@ -210,6 +243,7 @@ jobs:
       - name: Install Requirements
         run: |
           python -m pip install --upgrade pip
+          pip install -r requirements.txt
           pip install -r requirements-dev.txt
       - name: Mypy Check
         run: mypy .

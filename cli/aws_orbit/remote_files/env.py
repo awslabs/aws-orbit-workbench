@@ -17,7 +17,7 @@ import os
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
 
 from aws_orbit import ORBIT_CLI_ROOT, cdk, docker
-from aws_orbit.services import cfn, ecr, iam
+from aws_orbit.services import cfn, ecr, iam, ssm
 from aws_orbit.utils import boto3_client
 
 if TYPE_CHECKING:
@@ -107,3 +107,4 @@ def destroy(context: "Context") -> None:
             app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "env.py"),
             args=args,
         )
+        ssm.cleanup_context(env_name=context.name)

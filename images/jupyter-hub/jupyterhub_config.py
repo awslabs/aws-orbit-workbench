@@ -23,7 +23,17 @@ import boto3
 from tornado.log import app_log
 
 from jupyterhub_utils.authenticator import OrbitWorkbenchAuthenticator
-from jupyterhub_utils.ssm import ACCOUNT_ID, ENV_NAME, GRANT_SUDO, IMAGE, IMAGE_SPARK, REGION, TEAM, TOOLKIT_S3_BUCKET
+from jupyterhub_utils.ssm import (
+    ACCOUNT_ID,
+    ENV_NAME,
+    GRANT_SUDO,
+    IMAGE,
+    IMAGE_GPU,
+    IMAGE_SPARK,
+    REGION,
+    TEAM,
+    TOOLKIT_S3_BUCKET,
+)
 
 PROFILES_TYPE = List[Dict[str, Any]]
 
@@ -31,6 +41,7 @@ app_log.info("ACCOUNT_ID: %s", ACCOUNT_ID)
 app_log.info("ENV_NAME: %s", ENV_NAME)
 app_log.info("IMAGE: %s", IMAGE)
 app_log.info("IMAGE_SPARK: %s", IMAGE_SPARK)
+app_log.info("IMAGE_GPU: %s", IMAGE_GPU)
 app_log.info("REGION: %s", REGION)
 app_log.info("TEAM: %s", TEAM)
 app_log.info("TOOLKIT_S3_BUCKET: %s", TOOLKIT_S3_BUCKET)
@@ -55,7 +66,7 @@ c.Spawner.args = [
     "--SingleUserServerApp.default_url=/lab",
 ]
 c.KubeSpawner.start_timeout = 360
-c.KubeSpawner.common_labels = {}
+c.KubeSpawner.common_labels = {"orbit/node-type": "ec2", "orbit/attach-security-group": "yes"}
 c.KubeSpawner.namespace = TEAM
 c.KubeSpawner.environment = {
     "USERNAME": lambda spawner: str(spawner.user.name),
@@ -98,7 +109,7 @@ c.KubeSpawner.init_containers = [
 ]
 c.KubeSpawner.fs_gid = 100
 c.KubeSpawner.lifecycle_hooks = {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh"]}}}
-c.KubeSpawner.node_selector = {"team": TEAM}
+c.KubeSpawner.node_selector = {"orbit/usage": "teams", "orbit/node-type": "ec2"}
 c.KubeSpawner.service_account = f"{TEAM}"
 c.JupyterHub.allow_named_servers = True
 c.JupyterHub.named_server_limit_per_user = 5
@@ -155,6 +166,34 @@ profile_list_default = [
             "cpu_limit": 4,
             "mem_guarantee": "8G",
             "mem_limit": "8G",
+        },
+    },
+    {
+        "display_name": "Small (GPU Enabled)",
+        "slug": "small-gpu",
+        "description": "4 CPU + 8G MEM + 1 GPU",
+        "kubespawner_override": {
+            "image": IMAGE_GPU,
+            "cpu_guarantee": 4,
+            "cpu_limit": 4,
+            "mem_guarantee": "8G",
+            "mem_limit": "8G",
+            "extra_resource_limits": {"nvidia.com/gpu": "1"},
+            "extra_resource_guarantees": {"nvidia.com/gpu": "1"},
+        },
+    },
+    {
+        "display_name": "Small (vGPU Enabled)",
+        "slug": "small-vgpu",
+        "description": "4 CPU + 8G MEM + 1 vGPU",
+        "kubespawner_override": {
+            "image": IMAGE_GPU,
+            "cpu_guarantee": 4,
+            "cpu_limit": 4,
+            "mem_guarantee": "8G",
+            "mem_limit": "8G",
+            "extra_resource_limits": {"k8s.amazonaws.com/vgpu": "1"},
+            "extra_resource_guarantees": {"k8s.amazonaws.com/vgpu": "1"},
         },
     },
 ]

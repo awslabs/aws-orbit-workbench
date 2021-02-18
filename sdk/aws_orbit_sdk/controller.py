@@ -392,7 +392,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
 
     node_selector = team_constants.node_selector()
     if node_type == "ec2":
-        node_selector["orbit/compute-type"] = "ec2"
+        node_selector["orbit/node-type"] = "ec2"
 
     pod_properties: Dict[str, str] = dict(
         name=job_name,
@@ -498,6 +498,7 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
     labels = {
         "app": f"orbit-runner",
         "orbit/node-type": node_type,
+        "orbit/attach-security-group": "yes"
     }
     team_constants: TeamConstants = TeamConstants()
     job_spec = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)

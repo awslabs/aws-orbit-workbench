@@ -109,13 +109,19 @@ class Team(Stack):
         self.ecr_repo: ecr.Repository = ecr.Repository(
             scope=self,
             id="repo",
-            repository_name=f"orbit-{self.context.name}-{self.team_name}",
+            repository_name=f"orbit-{self.context.name}-{self.team_name}-jupyter-user",
         )
 
         self.ecr_repo_spark: ecr.Repository = ecr.Repository(
             scope=self,
             id="repo-spark",
-            repository_name=f"orbit-{self.context.name}-{self.team_name}-spark",
+            repository_name=f"orbit-{self.context.name}-{self.team_name}-jupyter-user-spark",
+        )
+
+        self.ecr_repo_gpu: ecr.Repository = ecr.Repository(
+            scope=self,
+            id="repo-gpu",
+            repository_name=f"orbit-{self.context.name}-{self.team_name}-gpu-jupyter-user",
         )
 
         self.policies: List[str] = self.team_policies
@@ -132,7 +138,7 @@ class Team(Stack):
         else:
             raise Exception("Scratch bucket was not provided in Manifest ('ScratchBucketArn')")
 
-        self.role_eks_nodegroup = IamBuilder.build_team_role(
+        self.role_eks_pod = IamBuilder.build_team_role(
             scope=self,
             context=self.context,
             team_name=self.team_name,
@@ -174,7 +180,7 @@ class Team(Stack):
                 {
                     "EfsId": self.shared_fs.file_system_id,
                     "EfsApId": self.efs_ap.access_point_id,
-                    "EksNodegroupRoleArn": self.role_eks_nodegroup.role_arn,
+                    "EksPodRoleArn": self.role_eks_pod.role_arn,
                     "ScratchBucket": self.scratch_bucket.bucket_name,
                     "TeamKmsKeyArn": self.team_kms_key.key_arn,
                     "TeamSecurityGroupId": self.team_security_group.security_group_id,
