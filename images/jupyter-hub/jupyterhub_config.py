@@ -23,7 +23,17 @@ import boto3
 from tornado.log import app_log
 
 from jupyterhub_utils.authenticator import OrbitWorkbenchAuthenticator
-from jupyterhub_utils.ssm import ACCOUNT_ID, ENV_NAME, GRANT_SUDO, IMAGE, IMAGE_GPU, IMAGE_SPARK, REGION, TEAM, TOOLKIT_S3_BUCKET
+from jupyterhub_utils.ssm import (
+    ACCOUNT_ID,
+    ENV_NAME,
+    GRANT_SUDO,
+    IMAGE,
+    IMAGE_GPU,
+    IMAGE_SPARK,
+    REGION,
+    TEAM,
+    TOOLKIT_S3_BUCKET,
+)
 
 PROFILES_TYPE = List[Dict[str, Any]]
 
