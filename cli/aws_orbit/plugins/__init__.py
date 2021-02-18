@@ -155,7 +155,6 @@ class PluginRegistries:
 
         # CURRENT
         for team_context in context.teams:
-            _logger.debug(f"***** team_context.name={team_context.name}")
             if team_context.name not in self._registries:
                 self._registries[team_context.name] = {}
             for plugin in team_context.plugins:

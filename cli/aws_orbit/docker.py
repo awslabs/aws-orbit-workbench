@@ -124,7 +124,7 @@ def deploy_image_from_source(
     tag: str = "latest",
     use_cache: bool = True,
 ) -> None:
-    _logger.debug("Adding CodeArtifact login to build environment, user by Dockerfile")
+    _logger.debug("Adding CodeArtifact login to build environment, used by Dockerfile")
     if context.codeartifact_domain and context.codeartifact_repository:
         ca_domain: str = context.codeartifact_domain
         ca_repo: str = context.codeartifact_repository
