@@ -12,11 +12,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from io import open
 from setuptools import find_packages, setup
+
+with open("VERSION", "r") as version_file:
+    version = version_file.read().strip()
 
 setup(
     name="aws-orbit-redshift",
-    version="0.11.0.dev0",
+    version=version,
     description="Orbit Workbench Redshift Plugin.",
     license="Apache License 2.0",
     packages=find_packages(include=["redshift", "redshift.*"]),
