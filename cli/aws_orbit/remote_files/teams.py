@@ -63,13 +63,11 @@ def _create_dockerfile(context: "Context", team_context: "TeamContext", image_na
     _logger.debug("base_image_cmd: %s", base_image_cmd)
     cmds: List[str] = [base_image_cmd]
 
-    # TODO - Testing - For now do all steps with root user. Need to test with flipping with $NB_UID
     # Add CodeArtifact pip.conf
     cmds += ["USER root"]
     cmds += ["ADD pip.conf /etc/pip.conf"]
 
     for plugin in team_context.plugins:
-
         # Adding plugin modules to image via pip
         plugin_module_name = (plugin.module).replace("_", "-")
         cmds += [f"RUN pip install --upgrade aws-orbit-{plugin_module_name}"]
@@ -85,10 +83,9 @@ def _create_dockerfile(context: "Context", team_context: "TeamContext", image_na
             if plugin_cmds is not None:
                 cmds += [f"# Commands for {plugin.plugin_id} plugin"] + plugin_cmds
 
-    # Adding pip conf remove commands
+    # Removing pip conf and setting to notebook user
     cmds += ["RUN rm /etc/pip.conf", "USER $NB_UID"]
-    _logger.debug("********Team Dockerfile commands list********")
-    _logger.debug("cmds: %s", cmds)
+    _logger.debug("Dockerfile cmds: %s", cmds)
     outdir = os.path.join(".orbit.out", context.name, team_context.name, "image")
     output_filename = os.path.join(outdir, "Dockerfile")
     os.makedirs(outdir, exist_ok=True)
@@ -104,7 +101,6 @@ def _create_dockerfile(context: "Context", team_context: "TeamContext", image_na
 
 def _deploy_team_image(context: "Context", team_context: "TeamContext", image: str) -> None:
     image_dir: str = _create_dockerfile(context=context, team_context=team_context, image_name=image)
-    _logger.debug(f"***image_dir={image_dir}***")
     image_name: str = f"orbit-{context.name}-{team_context.name}"
     _logger.debug("Deploying the %s Docker image", image_name)
     docker.deploy_image_from_source(context=context, dir=image_dir, name=image_name)

@@ -57,12 +57,9 @@ def build_image(args: Tuple[str, ...]) -> None:
         path = image_name
         _logger.debug("path: %s", path)
         if script is not None:
-            _logger.debug("********script*********")
             sh.run(f"sh {script}", cwd=path)
-        _logger.debug("********docker.deploy_image_from_source*********")
         docker.deploy_image_from_source(context=context, dir=path, name=ecr_repo)
     else:
-        _logger.debug("********docker.replicate_image*********")
         docker.replicate_image(context=context, image_name=image_name, deployed_name=ecr_repo)
     _logger.debug("Docker Image Deployed to ECR")
 

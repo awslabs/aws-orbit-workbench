@@ -129,11 +129,6 @@ def deploy_image_from_source(
         ca_domain: str = context.codeartifact_domain
         ca_repo: str = context.codeartifact_repository
         sh.run(f"aws codeartifact login --tool pip --domain {ca_domain} --repository {ca_repo}")
-        sh.run("whoami")
-        sh.run("pwd")
-        sh.run("ls")
-        sh.run("pip config list -v")
-        _logger.debug(f"*****Directory={dir}*******")
         sh.run(f"cp ./pip.conf ./{dir}/")
 
     _logger.debug("Building docker image from %s", os.path.abspath(dir))

@@ -19,7 +19,6 @@ set -ex
 
 LOCAL_NAME=my-custom-jupyter-user
 AWS_REPO_NAME=orbit-myenv-jupyter-user
-build.sh
 REGION=$(aws configure get region)
 ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 ECR_ADDRESS="${ACCOUNT_ID}".dkr.ecr."${REGION}".amazonaws.com

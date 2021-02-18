@@ -451,9 +451,6 @@ def load_context_from_ssm(env_name: str) -> Context:
     _logger.debug("teams_parameters: %s", teams_parameters)
     teams = [ssm.get_parameter_if_exists(name=p) for p in teams_parameters if p.endswith("/context")]
     main["Teams"] = [t for t in teams if t]
-    # TODO - Verify the casting outcome
-    _logger.debug("*******raw main**********")
-    _logger.debug(main)
     return cast(Context, Context.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
 
 

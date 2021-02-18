@@ -252,46 +252,24 @@ def generate_spec(
         "eksctl version",
     ]
 
+    if context.codeartifact_domain and context.codeartifact_repository:
+        install.append(
+            "aws codeartifact login --tool pip "
+            f"--domain {context.codeartifact_domain} "
+            f"--repository {context.codeartifact_repository}"
+        )
+        # Adding Codeartifact based pip.conf, later used for Dockerfile build.
+        install.append("cp ~/.config/pip/pip.conf .")
+
     # Orbit Workbench CLI
-    # TODO Change back to conditional
-    _logger.info("#############")
-    _logger.info(context)
-    _logger.info("#############")
-    _logger.debug(f"***context.codeartifact_domain={context.codeartifact_domain}")
-    _logger.debug(f"***context.codeartifact_domain={context.codeartifact_repository}")
-    # if context.codeartifact_domain and context.codeartifact_repository:
-    install.append(
-        "aws codeartifact login --tool pip "
-        f"--domain {context.codeartifact_domain} "
-        f"--repository {context.codeartifact_repository}"
-    )
-
-    install.append("whoami")
-    install.append("pip config list -v")
-    install.append("pwd")
-    install.append("cp ~/.config/pip/pip.conf .")
-
-    install.append("pwd")
-    install.append("ls -lrta")
-
     install.append("pip install aws-orbit")
-
-    _logger.info("#############")
-    _logger.info(install)
-    _logger.info("#############")
 
     # Plugins
     if plugins:
         for team_context in context.teams:
             for plugin in team_context.plugins:
                 if plugin.path is not None and plugin.module is not None:
-                    # TODO Change 2
-                    # install.append(f"ls -la ./{team_context.name}/{plugin.module}/")
-                    # install.append(f"pip install -e ./{team_context.name}/{plugin.module}/")
-
                     plugin_module_name = (plugin.module).replace("_", "-")
-                    install.append("pwd")
-                    install.append("ls")
                     install.append(f"pip install --upgrade aws-orbit-{plugin_module_name}")
 
         if changeset is not None:
@@ -301,28 +279,19 @@ def generate_spec(
                 for plugin_name in plugin_changeset.old:
                     module: str = plugin_changeset.old_modules[plugin_name]
                     if plugin_name not in plugin_changeset.new and module is not None:
-                        # install.append(f"ls -la ./{plugin_changeset.team_name}/{module}/")
-                        # install.append(f"pip install -e ./{plugin_changeset.team_name}/{module}/")
-
                         plugin_module_name = (module).replace("_", "-")
-                        install.append("ls")
                         install.append(f"pip install --upgrade aws-orbit-{plugin_module_name}")
 
                 # OLD
                 for plugin_name in plugin_changeset.new:
                     module = plugin_changeset.new_modules[plugin_name]
                     if plugin_name not in plugin_changeset.old and module is not None:
-                        # install.append(f"ls -la ./{plugin_changeset.team_name}/{module}/")
-                        # install.append(f"pip install -e ./{plugin_changeset.team_name}/{module}/")
-
                         plugin_module_name = (module).replace("_", "-")
-                        install.append("ls")
                         install.append(f"pip install --upgrade aws-orbit-{plugin_module_name}")
 
     if cmds_install is not None:
         install += cmds_install
 
-    # TODO Change 3
     return_spec: SPEC_TYPE = {
         "version": 0.2,
         "phases": {
@@ -335,6 +304,5 @@ def generate_spec(
             "post_build": {"commands": post},
         },
     }
-    _logger.debug("******return_spec*******")
     _logger.debug(return_spec)
     return return_spec

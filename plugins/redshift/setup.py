@@ -19,7 +19,6 @@ setup(
     version="0.11.0.dev0",
     description="Orbit Workbench Redshift Plugin.",
     license="Apache License 2.0",
-    # packages=["redshift"],
     packages=find_packages(include=["redshift", "redshift.*"]),
     python_requires=">=3.6, <3.9",
     install_requires=open("requirements.txt").read().strip().split("\n"),

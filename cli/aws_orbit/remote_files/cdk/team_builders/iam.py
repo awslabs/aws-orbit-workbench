@@ -231,7 +231,6 @@ class IamBuilder:
                         f"arn:{partition}:cloudformation:{region}:{account}:stack/orbit-{env_name}/*",
                     ],
                 ),
-                # TODO - Verify the impact on SSM parameters
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
@@ -255,7 +254,6 @@ class IamBuilder:
                     ],
                     resources=[f"arn:{partition}:ssm:{region}:{account}:*"],
                 ),
-                # TODO - Check the impact of allowing lake users to touch toolkit bucket.
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=["s3:Put*"],
@@ -264,13 +262,11 @@ class IamBuilder:
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/cli/remote/*",
                     ],
                 ),
-                # TODO - Expected behaviour, need codebuild trigger access while building custom images from notebook
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=["codebuild:StartBuild", "codebuild:BatchGetBuilds"],
                     resources=[f"arn:{partition}:codebuild:{region}:{account}:project/orbit-{env_name}"],
                 ),
-                # TODO - describe log streams from codebuild
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
@@ -279,7 +275,6 @@ class IamBuilder:
                         "logs:DescribeLogStreams",
                         "logs:PutLogEvents",
                     ],
-                    # resources=["*"],
                     resources=[
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}:log-stream:*"  # noqa
                     ],
@@ -299,7 +294,6 @@ class IamBuilder:
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}*:log-stream:*",  # noqa
                     ],
                 ),
-                # Need to give specific prefix for the custom repo. Can not be *
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
