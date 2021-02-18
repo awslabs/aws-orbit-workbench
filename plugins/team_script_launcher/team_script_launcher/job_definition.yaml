@@ -6,7 +6,9 @@ spec:
   template:
     spec:
       nodeSelector:
-        team: ${team}
+        orbit/usage: teams
+        orbit/node-type: ec2
+        orbit/attach-security-group: "yes"
       serviceAccountName: ${team}
       securityContext:
         fsGroup: 100

@@ -72,6 +72,8 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
         internal_load_balancer='"false"' if context.networking.frontend.load_balancers_subnets else '"true"',
         jupyterhub_inbound_ranges=inbound_ranges,
         team_kms_key_arn=team_context.team_kms_key_arn,
+        team_security_group_id=team_context.team_security_group_id,
+        cluster_pod_security_group_id=context.cluster_pod_sg_id,
     )
     _logger.debug("Kubectl Team %s manifest:\n%s", team_context.name, content)
     with open(output, "w") as file:
@@ -254,6 +256,7 @@ def deploy_env(context: "Context") -> None:
             sh.run(f"kubectl apply -k {EFS_DRIVE} --context {k8s_context} --wait")
         output_path = _generate_env_manifest(context=context)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
+        sh.run(f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} ENABLE_POD_ENI=true")
         fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=False)
 
 

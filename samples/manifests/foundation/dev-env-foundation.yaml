@@ -1,15 +1,15 @@
-name: dev-env
-codeartifact-domain: aws-orbit
-codeartifact-repository: python-repository
-images:
-    code-build-image:
-        repository: aws-orbit-code-build-base
-        source: code
-        path: ../images/code-build-image
-        version: latest
-networking:
-    data:
-        internet-accessible: false
-        nodes-subnets: []
-    frontend:
-        load-balancers-subnets: []
+Name: dev-env
+CodeartifactDomain: aws-orbit
+CodeartifactRepository: python-repository
+Images:
+    CodeBuild:
+        Repository: aws-orbit-code-build-base
+        Source: code
+        Path: ../images/code-build-image
+        Version: latest
+Networking:
+    Data:
+        InternetAccessible: false
+        NodesSubnets: []
+    Frontend:
+        LoadBalancersSubnets: []

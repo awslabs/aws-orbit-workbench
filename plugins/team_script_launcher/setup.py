@@ -21,7 +21,7 @@ setup(
     license="Apache License 2.0",
     packages=["team_script_launcher"],
     python_requires=">=3.6, <3.9",
-    install_requires=open("requirements.txt").read().strip().split("\n"),
+    install_requires=[],
     include_package_data=True,
     package_data={"team_script_launcher": ["*.yaml"]},
 )

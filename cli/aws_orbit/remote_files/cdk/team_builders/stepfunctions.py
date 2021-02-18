@@ -180,7 +180,10 @@ class StateMachineBuilder:
                 "ttlSecondsAfterFinished": 120,
                 "template": {
                     "metadata": {
-                        "labels": {"app": f"orbit-{team_name}-runner", "team": team_name},
+                        "labels": {
+                            "app": f"orbit-{team_name}-runner",
+                            "team": team_name,
+                        },
                         "namespace": team_name,
                     },
                     "spec": {
@@ -224,11 +227,13 @@ class StateMachineBuilder:
         job["spec"]["template"]["spec"]["securityContext"] = {"fsGroup": 1000}
         if node_type == "ec2":
             job["spec"]["template"]["spec"]["nodeSelector"] = {
-                "team": team_name,
-                "orbit/compute-type": "ec2",
+                "orbit/usage": "teams",
+                "orbit/node-type": "ec2",
             }
+            job["spec"]["template"]["metadata"]["labels"]["orbit/node-type"] = "ec2"
+            job["spec"]["template"]["metadata"]["labels"]["orbit/attach-security-group"] = "yes"
         elif node_type == "fargate":
-            job["spec"]["template"]["metadata"]["labels"]["orbit/compute-type"] = "fargate"
+            job["spec"]["template"]["metadata"]["labels"]["orbit/node-type"] = "fargate"
 
         run_job = EksRunJob(
             scope=construct,

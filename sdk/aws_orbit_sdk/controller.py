@@ -425,16 +425,18 @@ def _get_job_spec(
         restart_policy="Never",
         containers=[container],
         volumes=volumes,
-        node_selector={"team": team_name},
+        node_selector={"orbit/usage": "teams"},
         service_account=team_name,
         security_context=V1PodSecurityContext(fs_group=1000),
         init_containers=init_containers,
     )
     if node_type == "ec2":
         pod_spec.node_selector = {
-            "team": team_name,
-            "orbit/compute-type": "ec2",
+            "orbit/usage": "teams",
+            "orbit/node-type": "ec2",
         }
+        labels["orbit/attach-security-group"] = "yes"
+
     pod = V1PodTemplateSpec(metadata=V1ObjectMeta(labels=labels, namespace=team_name), spec=pod_spec)
 
     job_spec = V1JobSpec(
@@ -727,10 +729,7 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     node_type = get_node_type(taskConfiguration)
 
-    labels = {
-        "app": f"orbit-runner",
-        "orbit/node-type": node_type,
-    }
+    labels = {"app": f"orbit-runner", "orbit/node-type": node_type}
 
     job_spec = _create_eks_job_spec(taskConfiguration, labels=labels)
     cron_job_template: V1beta1JobTemplateSpec = V1beta1JobTemplateSpec(spec=job_spec)
