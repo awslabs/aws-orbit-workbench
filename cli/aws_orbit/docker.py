@@ -68,7 +68,13 @@ def tag_image(context: "Context", remote_name: str, remote_source: str, name: st
 
 
 def build(
-    context: "Context", dir: str, name: str, tag: str = "latest", use_cache: bool = True, pull: bool = False, build_args: Optional[List[str]] = None
+    context: "Context",
+    dir: str,
+    name: str,
+    tag: str = "latest",
+    use_cache: bool = True,
+    pull: bool = False,
+    build_args: Optional[List[str]] = None,
 ) -> None:
     ecr_address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com"
     repo_address = f"{ecr_address}/{name}:{tag}"
@@ -124,7 +130,7 @@ def deploy_image_from_source(
     name: str,
     tag: str = "latest",
     use_cache: bool = True,
-    build_args: Optional[List[str]] = None
+    build_args: Optional[List[str]] = None,
 ) -> None:
     build_args = [] if build_args is None else build_args
     _logger.debug("Building docker image from %s", os.path.abspath(dir))

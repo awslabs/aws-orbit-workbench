@@ -129,7 +129,14 @@ def build_profile(env: str, team: str, profile: str, debug: bool) -> None:
 
 
 def build_image(
-    env: str, dir: str, name: str, script: Optional[str], teams: Optional[List[str]], build_args: Optional[List[str]], region: Optional[str], debug: bool
+    env: str,
+    dir: str,
+    name: str,
+    script: Optional[str],
+    teams: Optional[List[str]],
+    build_args: Optional[List[str]],
+    region: Optional[str],
+    debug: bool,
 ) -> None:
     with MessagesContext("Deploying Docker Image", debug=debug) as msg_ctx:
         ssm.cleanup_changeset(env_name=env)
@@ -152,7 +159,9 @@ def build_image(
         buildspec = codebuild.generate_spec(
             context=context,
             plugins=False,
-            cmds_build=[f"orbit remote --command build_image {env} {name} {script_str} {teams_str} {' '.join(build_args)}"],
+            cmds_build=[
+                f"orbit remote --command build_image {env} {name} {script_str} {teams_str} {' '.join(build_args)}"
+            ],
             changeset=None,
         )
         msg_ctx.progress(5)

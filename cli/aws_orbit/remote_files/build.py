@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import logging
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional, Tuple, cast
 
 from boto3 import client
 
@@ -59,7 +59,9 @@ def build_image(args: Tuple[str, ...]) -> None:
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
-        docker.deploy_image_from_source(context=context, dir=path, name=ecr_repo, build_args=build_args)
+        docker.deploy_image_from_source(
+            context=context, dir=path, name=ecr_repo, build_args=cast(Optional[List[str]], build_args)
+        )
     else:
         docker.replicate_image(context=context, image_name=image_name, deployed_name=ecr_repo)
     _logger.debug("Docker Image Deployed to ECR")

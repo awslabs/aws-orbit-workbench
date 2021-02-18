@@ -303,7 +303,14 @@ def build() -> None:
     show_default=True,
 )
 def deploy_image_cli(
-    env: str, dir: str, name: str, script: Optional[str], team: Optional[List[str]], build_arg: Optional[List[str]], region: Optional[str], debug: bool
+    env: str,
+    dir: str,
+    name: str,
+    script: Optional[str],
+    team: Optional[List[str]],
+    build_arg: Optional[List[str]],
+    region: Optional[str],
+    debug: bool,
 ) -> None:
     """Build and Deploy a new Docker image into ECR."""
     if debug:
@@ -315,7 +322,9 @@ def deploy_image_cli(
     _logger.debug("teams: %s", team)
     _logger.debug("region: %s", region)
     _logger.debug("debug: %s", debug)
-    build_image(dir=dir, name=name, env=env, script=script, teams=team, build_args=build_arg, region=region, debug=debug)
+    build_image(
+        dir=dir, name=name, env=env, script=script, teams=team, build_args=build_arg, region=region, debug=debug
+    )
 
 
 @build.command(name="profile")

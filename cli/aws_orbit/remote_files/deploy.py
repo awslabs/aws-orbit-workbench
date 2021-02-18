@@ -16,7 +16,7 @@ import concurrent.futures
 import logging
 import os
 from concurrent.futures import Future
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, cast
 
 from aws_orbit import bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import load_changeset_from_ssm
@@ -33,12 +33,13 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 def _deploy_image(args: Tuple[str, ...]) -> None:
     _logger.debug("_deploy_image args: %s", args)
-    if len(args) < 3:
+    if len(args) < 4:
         raise ValueError("Unexpected number of values in args.")
     env: str = args[0]
     image_name: str = args[1]
-    script: Optional[str] = args[2] if args[2] != "NO_SCRIPT" else None
-    build_args = args[3:]
+    dir: str = args[2]
+    script: Optional[str] = args[3] if args[3] != "NO_SCRIPT" else None
+    build_args = args[4:]
 
     context: "Context" = load_context_from_ssm(env_name=env)
     _logger.debug("manifest.name: %s", context.name)
@@ -49,11 +50,16 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
 
     if getattr(context.images, image_name.replace("-", "_")).source == "code":
         _logger.debug("Building and deploy docker image from source...")
-        path = os.path.join(os.getcwd(), image_name)
+        path = os.path.join(os.getcwd(), dir)
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
-        docker.deploy_image_from_source(context=context, dir=path, name=f"orbit-{context.name}-{image_name}", build_args=build_args)
+        docker.deploy_image_from_source(
+            context=context,
+            dir=path,
+            name=f"orbit-{context.name}-{image_name}",
+            build_args=cast(Optional[List[str]], build_args),
+        )
     else:
         _logger.debug("Replicating docker iamge to ECR...")
         docker.replicate_image(
@@ -76,11 +82,15 @@ def _deploy_image_remotely(context: "Context", name: str, bundle_path: str, buil
     _logger.debug("%s Docker Image deployed into ECR", name)
 
 
-def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[str]]]) -> None:
+def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[str], Optional[str], List[str]]]) -> None:
     _logger.debug("images:\n%s", images)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(images)) as executor:
         futures: List[Future[Any]] = []
+        name: str = ""
+        dir: Optional[str] = None
+        script: Optional[str] = None
+        build_args: List[str] = []
 
         for name, dir, script, build_args in images:
             _logger.debug("name: %s | script: %s", name, script)
@@ -89,7 +99,7 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
             _logger.debug("path: %s", path)
 
             if getattr(context.images, name.replace("-", "_")).source == "code":
-                dirs: List[Tuple[str, str]] = [(path, dir)]
+                dirs: List[Tuple[str, str]] = [(path, cast(str, dir))]
             else:
                 dirs = []
 
@@ -102,7 +112,10 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
             buildspec = codebuild.generate_spec(
                 context=context,
                 plugins=False,
-                cmds_build=[f"orbit remote --command _deploy_image {context.name} {name} {script_str} {' '.join(build_args)}"],
+                cmds_build=[
+                    "orbit remote --command _deploy_image "
+                    f"{context.name} {name} {dir} {script_str} {' '.join(build_args)}"
+                ],
             )
             futures.append(executor.submit(_deploy_image_remotely, context, name, bundle_path, buildspec))
 
@@ -112,7 +125,7 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
 
 def deploy_images_remotely(context: "Context") -> None:
     # First batch
-    images: List[Tuple[str, Optional[str]]] = [
+    images: List[Tuple[str, Optional[str], Optional[str], List[str]]] = [
         ("jupyter-hub", "jupyter-hub", None, []),
         ("jupyter-user", "jupyter-user", "build.sh", []),
         ("landing-page", "landing-page", "build.sh", []),
@@ -123,13 +136,13 @@ def deploy_images_remotely(context: "Context") -> None:
 
     # Second Batch
     images = [
-        ("jupyter-user-spark", None),
+        ("jupyter-user-spark", "jupyter-user-spark", None, []),
     ]
     if context.networking.data.internet_accessible is False:
         images += [
-            ("aws-efs-csi-driver", None),
-            ("livenessprobe", None),
-            ("csi-node-driver-registrar", None),
+            ("aws-efs-csi-driver", None, None, []),
+            ("livenessprobe", None, None, []),
+            ("csi-node-driver-registrar", None, None, []),
         ]
     _logger.debug("Building the second images batch")
     _deploy_images_batch(context=context, images=images)

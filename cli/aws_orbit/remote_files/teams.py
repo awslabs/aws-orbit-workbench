@@ -91,7 +91,7 @@ def _create_dockerfile(context: "Context", team_context: "TeamContext", image_na
 
 def _deploy_team_image(context: "Context", team_context: "TeamContext", image: str) -> None:
     image_dir: str = _create_dockerfile(context=context, team_context=team_context, image_name=image)
-    image_name: str = f"orbit-{context.name}-{team_context.name}"
+    image_name: str = f"orbit-{context.name}-{team_context.name}-{image}"
     _logger.debug("Deploying the %s Docker image", image_name)
     docker.deploy_image_from_source(context=context, dir=image_dir, name=image_name)
     _logger.debug("Docker Image Deployed to ECR (%s).", image_name)
@@ -173,13 +173,17 @@ def destroy(context: "Context", team_context: "TeamContext") -> None:
     _logger.debug("Stack name: %s", team_context.stack_name)
     if cfn.does_stack_exist(stack_name=context.toolkit.stack_name):
         try:
-            ecr.delete_repo(repo=f"orbit-{context.name}-{team_context.name}")
+            ecr.delete_repo(repo=f"orbit-{context.name}-{team_context.name}-jupyter-user")
         except Exception as ex:
-            _logger.debug("Skipping Team ECR Repository deletion. Cause: %s", ex)
+            _logger.error("Skipping Team ECR Repository deletion. Cause: %s", ex)
         try:
-            ecr.delete_repo(repo=f"orbit-{context.name}-{team_context.name}-spark")
+            ecr.delete_repo(repo=f"orbit-{context.name}-{team_context.name}-jupyter-user-spark")
         except Exception as ex:
-            _logger.debug("Skipping Team ECR Repository (Spark) deletion. Cause: %s", ex)
+            _logger.error("Skipping Team ECR Repository (Spark) deletion. Cause: %s", ex)
+        try:
+            ecr.delete_repo(repo=f"orbit-{context.name}-{team_context.name}-gpu-jupyter-user")
+        except Exception as ex:
+            _logger.error("Skipping Team ECR Repository deletion. Cause: %s", ex)
         if cfn.does_stack_exist(stack_name=team_context.stack_name):
             args: List[str] = [context.name, team_context.name]
             cdk.destroy(

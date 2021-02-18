@@ -78,6 +78,7 @@ class ManagedNodeGroupManifest:
     nodes_num_max: int = 3
     nodes_num_min: int = 1
     labels: Dict[str, str] = field(default_factory=dict)
+    enable_virtual_gpu: bool = False
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
