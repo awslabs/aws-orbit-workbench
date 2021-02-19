@@ -1,5 +1,4 @@
-ARG BASE_IMAGE=jupyter/base-notebook:python-3.8.6
-FROM $BASE_IMAGE
+FROM jupyter/base-notebook:python-3.8.6
 
 ######################################
 # System
@@ -41,10 +40,6 @@ ADD python-utils/ /opt/python-utils/
 RUN chmod -R 755 /opt/python-utils/
 ADD transformations/ /opt/transformations/
 RUN chmod -R 755 /opt/transformations/
-
-ADD bootstrap.sh /etc/jupyterhub/bootstrap.sh
-RUN chown -R jovyan /etc/jupyterhub/bootstrap.sh
-RUN chmod a+x /etc/jupyterhub/bootstrap.sh
 USER $NB_UID
 
 ######################################
@@ -54,7 +49,7 @@ USER $NB_UID
 RUN mkdir -p /home/jovyan/.local/share/jupyter
 RUN chown -R jovyan /home/jovyan/.local/share/jupyter
 ADD jupyter_server_config.py /home/jovyan/.jupyter/jupyter_server_config.py
-
+ADD bootstrap.sh /etc/jupyterhub/bootstrap.sh
 
 ######################################
 # Python/Conda packages
@@ -77,6 +72,7 @@ RUN echo "" > `conda run pip  show jupyterhub-kubespawner | grep "Location:" | c
 
 USER root
 RUN rm /etc/pip.conf
+USER $NB_UID
 
 # ######################################
 # # Jupyter Lab extensions
@@ -94,5 +90,3 @@ RUN jupyter serverextension enable --py jupyterlab --sys-prefix && \
     rm -rf "/home/${NB_USER}/.node-gyp" && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
-
-USER $NB_UID
