@@ -78,6 +78,7 @@ class ManagedNodeGroupManifest:
     nodes_num_max: int = 3
     nodes_num_min: int = 1
     labels: Dict[str, str] = field(default_factory=dict)
+    enable_virtual_gpu: bool = False
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -98,6 +99,11 @@ class JupyterUserImageManifest(ImageManifest):
 @dataclass(base_schema=BaseSchema, frozen=True)
 class JupyterUserSparkImageManifest(ImageManifest):
     repository: str = "aws-orbit-jupyter-user-spark"
+
+
+@dataclass(base_schema=BaseSchema, frozen=True)
+class GpuJupyterUserImageManifest(ImageManifest):
+    repository: str = "aws-orbit-gpu-jupyter-user"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -133,6 +139,7 @@ class ImagesManifest:
     jupyter_hub: JupyterHubImageManifest = JupyterHubImageManifest()
     jupyter_user: JupyterUserImageManifest = JupyterUserImageManifest()
     jupyter_user_spark: JupyterUserSparkImageManifest = JupyterUserSparkImageManifest()
+    gpu_jupyter_user: GpuJupyterUserImageManifest = GpuJupyterUserImageManifest()
     landing_page: LandingPageImageManifest = LandingPageImageManifest()
     aws_efs_csi_driver: AwsEfsDriverImageManifest = AwsEfsDriverImageManifest()
     livenessprobe: LivenessprobeImageManifest = LivenessprobeImageManifest()
@@ -144,6 +151,7 @@ class ImagesManifest:
             "jupyter_hub",
             "jupyter_user",
             "jupyter_user_spark",
+            "gpu_jupyter_user",
             "landing_page",
             "aws_efs_csi_driver",
             "livenessprobe",

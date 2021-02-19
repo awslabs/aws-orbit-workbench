@@ -145,6 +145,8 @@ class TeamContext:
     final_image_address: str
     base_spark_image_address: str
     final_spark_image_address: str
+    base_gpu_image_address: str
+    final_gpu_image_address: str
     stack_name: str
     ssm_parameter_name: str
     team_ssm_parameter_name: str
@@ -326,19 +328,29 @@ def create_team_context_from_manifest(manifest: "Manifest", team_manifest: "Team
     if team_manifest.image is None:
         base_image_address: str = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-jupyter-user"
     else:
-        base_image_address = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.image}"
-    final_image_address: str = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}"
+        base_image_address = (
+            f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.image}-jupyter-user"
+        )
+    final_image_address: str = (
+        f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}-jupyter-user"
+    )
     base_spark_image_address: str = (
         f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-jupyter-user-spark"
     )
     final_spark_image_address: str = (
-        f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}-spark"
+        f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}-jupyter-user-spark"
+    )
+    base_gpu_image_address: str = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-gpu-jupyter-user"
+    final_gpu_image_address: str = (
+        f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}-gpu-jupyter-user"
     )
     return TeamContext(  # type: ignore
         base_image_address=base_image_address,
         final_image_address=final_image_address,
         base_spark_image_address=base_spark_image_address,
         final_spark_image_address=final_spark_image_address,
+        base_gpu_image_address=base_gpu_image_address,
+        final_gpu_image_address=final_gpu_image_address,
         stack_name=f"orbit-{manifest.name}-{team_manifest.name}",
         ssm_parameter_name=ssm_parameter_name,
         team_ssm_parameter_name=f"/orbit/{manifest.name}/teams/{team_manifest.name}/team",

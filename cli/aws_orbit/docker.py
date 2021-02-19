@@ -68,19 +68,26 @@ def tag_image(context: "Context", remote_name: str, remote_source: str, name: st
 
 
 def build(
-    context: "Context", dir: str, name: str, tag: str = "latest", use_cache: bool = True, pull: bool = False
+    context: "Context",
+    dir: str,
+    name: str,
+    tag: str = "latest",
+    use_cache: bool = True,
+    pull: bool = False,
+    build_args: Optional[List[str]] = None,
 ) -> None:
     ecr_address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com"
     repo_address = f"{ecr_address}/{name}:{tag}"
     cache_str: str = ""
     pull_str: str = "--pull" if pull else ""
+    build_args_str = " ".join([f"--build-arg {ba}" for ba in build_args]) if build_args else ""
     if use_cache:
         try:
             ecr_pull(context=context, name=name, tag=tag)
             cache_str = f"--cache-from {repo_address}"
         except exceptions.FailedShellCommand:
             _logger.debug(f"Docker cache not found at ECR {name}:{tag}")
-    sh.run(f"docker build {pull_str} {cache_str} --tag {name} .", cwd=dir)
+    sh.run(f"docker build {pull_str} {cache_str} {build_args_str} --tag {name} .", cwd=dir)
 
 
 def push(context: "Context", name: str, tag: str = "latest") -> None:
@@ -123,6 +130,7 @@ def deploy_image_from_source(
     name: str,
     tag: str = "latest",
     use_cache: bool = True,
+    build_args: Optional[List[str]] = None,
 ) -> None:
     _logger.debug("Adding CodeArtifact login to build environment, used by Dockerfile")
     if context.codeartifact_domain and context.codeartifact_repository:
@@ -130,10 +138,10 @@ def deploy_image_from_source(
         ca_repo: str = context.codeartifact_repository
         sh.run(f"aws codeartifact login --tool pip --domain {ca_domain} --repository {ca_repo}")
         sh.run(f"cp ./pip.conf ./{dir}/")
-
+    build_args = [] if build_args is None else build_args
     _logger.debug("Building docker image from %s", os.path.abspath(dir))
     update_docker_file(context=context, dir=dir)
-    build(context=context, dir=dir, name=name, tag=tag, use_cache=use_cache, pull=True)
+    build(context=context, dir=dir, name=name, tag=tag, use_cache=use_cache, pull=True, build_args=build_args)
     _logger.debug("Docker Image built")
     tag_image(context=context, remote_name=name, remote_source="local", name=name, tag=tag)
     _logger.debug("Docker Image tagged")
