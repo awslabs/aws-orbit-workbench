@@ -172,7 +172,7 @@ def build_image(
             bundle_path=bundle_path,
             buildspec=buildspec,
             codebuild_log_callback=msg_ctx.progress_bar_callback,
-            timeout=15,
+            timeout=30,
         )
         msg_ctx.info("Docker Image deploy into ECR")
         msg_ctx.progress(98)
