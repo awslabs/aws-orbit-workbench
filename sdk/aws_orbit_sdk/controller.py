@@ -495,11 +495,7 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
 
     node_type = get_node_type(taskConfiguration)
-    labels = {
-        "app": f"orbit-runner",
-        "orbit/node-type": node_type,
-        "orbit/attach-security-group": "yes"
-    }
+    labels = {"app": f"orbit-runner", "orbit/node-type": node_type, "orbit/attach-security-group": "yes"}
     team_constants: TeamConstants = TeamConstants()
     job_spec = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
     load_kube_config()
