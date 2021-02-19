@@ -238,13 +238,20 @@ class IamBuilder:
                         "ssm:DescribeParameters",
                         "ssm:GetParameter",
                         "ssm:DescribeParameter",
-                        "ssm:PutParameter",
-                        "ssm:AddTagsToResource",
+                    ],
+                    resources=[
+                        f"arn:{partition}:ssm:{region}:{account}:parameter/orbit/{env_name}/teams/{team_name}/*",
+                    ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
                         "ssm:DeleteParameter",
                         "ssm:DeleteParameters",
                     ],
                     resources=[
-                        f"arn:{partition}:ssm:{region}:{account}:parameter/orbit/{env_name}/*",
+                        f"arn:{partition}:ssm:{region}:{account}:parameter/orbit/{env_name}/changeset",
+                        f"arn:{partition}:ssm:{region}:{account}:parameter/orbit/{env_name}/manifest",
                     ],
                 ),
                 iam.PolicyStatement(
