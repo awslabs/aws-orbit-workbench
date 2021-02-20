@@ -50,6 +50,8 @@ RUN mkdir -p /home/jovyan/.local/share/jupyter
 RUN chown -R jovyan /home/jovyan/.local/share/jupyter
 ADD jupyter_server_config.py /home/jovyan/.jupyter/jupyter_server_config.py
 ADD bootstrap.sh /etc/jupyterhub/bootstrap.sh
+RUN chown -R jovyan /etc/jupyterhub/bootstrap.sh
+RUN chmod a+x /etc/jupyterhub/bootstrap.sh
 
 ######################################
 # Python/Conda packages

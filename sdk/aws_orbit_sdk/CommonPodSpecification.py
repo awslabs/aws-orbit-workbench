@@ -48,8 +48,11 @@ class TeamConstants:
             return 0
         return 1000
 
-    def node_selector(self) -> List[Dict[str, str]]:
-        return {"team": self.team_name}
+    def node_selector(self, node_type: str) -> List[Dict[str, str]]:
+        node_selector =  {"orbit/usage": "teams" }
+        if node_type == "ec2":
+            node_selector["orbit/node-type"] = "ec2"
+        return node_selector
 
     def volume_mounts(self, add_ebs: bool = True) -> List[Dict[str, Any]]:
         mounts = [{"mountPath": "/efs", "name": "efs-volume"}]
@@ -133,7 +136,7 @@ class TeamConstants:
 
     def team_profiles(self) -> PROFILES_TYPE:
         ssm = boto3.Session().client("ssm")
-        ssm_parameter_name: str = f"/orbit/{self.env_name}/teams/{self.team_name}/manifest"
+        ssm_parameter_name: str = f"/orbit/{self.env_name}/teams/{self.team_name}/context"
         json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
 
         team_manifest_dic = cast(PROFILES_TYPE, json.loads(json_str))
@@ -175,7 +178,10 @@ class TeamConstants:
         ]
 
     def life_cycle_hooks(self):
-        return {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh"]}}}
+        return {}
+        #return {"postStart": {"exec": {"command": ["/bin/sh", "/efs/shared/bootstrap.sh"]}}}
+
+        # return {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh", "2>&1","|","tee /efs/shared/bootstrap.log"]}}}
 
     def annotations(self) -> Dict[str, str]:
         return {"AWS_ORBIT_TEAM_SPACE": self.team_name, "AWS_ORBIT_ENV": self.env_name}

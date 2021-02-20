@@ -9,7 +9,8 @@ cat <<EOF |  orbit run notebook --env dev-env --team $TEST_TEAM_SPACE --user tes
               "p_concurrent": "1"
           },
           "compute_type": "ecs",
-          "node_type": "fargate"
+          "node_type": "fargate",
+          "add_ebs": "True"
       },
       "tasks":  [{
           "notebookName": "sanity-good.ipynb",

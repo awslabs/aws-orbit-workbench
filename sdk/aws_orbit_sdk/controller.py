@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, cast
 
 import boto3
+import botocore
 import pandas as pd
 from kubernetes import config as k8_config
 from kubernetes import watch as k8_watch
@@ -62,17 +63,27 @@ def read_team_manifest_ssm(env_name: str, team_name: str) -> Optional[MANIFEST_T
     return cast(MANIFEST_TEAM_TYPE, json.loads(json_str))
 
 
-def read_env_manifest_ssm(env_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
-    parameter_name: str = f"/orbit/{env_name}/manifest"
-    _logger.debug("Trying to read manifest from SSM parameter (%s).", parameter_name)
-    client = boto3.client("ssm")
+def get_parameter(client, name: str) -> Dict[str, Any]:
     try:
-        json_str: str = client.get_parameter(Name=parameter_name)["Parameter"]["Value"]
-    except client.exceptions.ParameterNotFound:
-        _logger.debug("Env %s Manifest SSM parameter not found: %s", env_name, parameter_name)
-        return None
-    _logger.debug("Env %s Manifest SSM parameter found.", env_name)
-    return cast(MANIFEST_TEAM_TYPE, json.loads(json_str))
+        json_str: str = client.get_parameter(Name=name)["Parameter"]["Value"]
+    except botocore.errorfactory.ParameterNotFound as e:
+        _logger.error("failed to read parameter %s", name)
+        raise
+    return cast(Dict[str, Any], json.loads(json_str))
+
+
+def load_env_context_from_ssm(env_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
+    ssm = boto3.client("ssm")
+    context_parameter_name: str = f"/orbit/{env_name}/context"
+    context = get_parameter(ssm, name=context_parameter_name)
+    return cast(MANIFEST_TEAM_TYPE, context)
+
+
+def load_team_context_from_ssm(env_name: str, team_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
+    ssm = boto3.client("ssm")
+    context_parameter_name: str = f"/orbit/{env_name}/teams/{team_name}/context"
+    context = get_parameter(ssm, name=context_parameter_name)
+    return cast(MANIFEST_TEAM_TYPE, context)
 
 
 def get_execution_history(notebookDir: str, notebookName: str) -> pd.DataFrame:
@@ -311,7 +322,7 @@ def _make_create_pvc_request(team_constants: TeamConstants, labels):
         labels=labels,
         storage_class=team_constants.storage_class(),
         access_modes=team_constants.ebs_access_mode(),
-        storage="5Gi",
+        storage="10Gi",
         selector={},
         annotations=None,
     )
@@ -337,7 +348,7 @@ def _make_create_pvc_request(team_constants: TeamConstants, labels):
             t, v, tb = sys.exc_info()
             try:
                 CoreV1Api().read_namespaced_persistent_volume_claim_status(
-                    namespace=team_constants.team_name, name=metadata.name
+                    namespace=team_constants.team_name, name=pvc_name
                 )
             except ApiException as e:
                 raise v.with_traceback(tb)
@@ -365,9 +376,9 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
     env_name = props["AWS_ORBIT_ENV"]
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     if __CURRENT_TEAM_MANIFEST__ == None or __CURRENT_TEAM_MANIFEST__["name"] != team_name:
-        __CURRENT_TEAM_MANIFEST__ = read_team_manifest_ssm(env_name, team_name)
+        __CURRENT_TEAM_MANIFEST__ = load_team_context_from_ssm(env_name, team_name)
     if __CURRENT_ENV_MANIFEST__ == None:
-        __CURRENT_ENV_MANIFEST__ = read_env_manifest_ssm(env_name)
+        __CURRENT_ENV_MANIFEST__ = load_env_context_from_ssm(env_name)
 
     env = build_env(__CURRENT_ENV_MANIFEST__, env_name, taskConfiguration, team_constants, team_name)
     profile = resolve_profile(__CURRENT_TEAM_MANIFEST__, taskConfiguration, team_constants)
@@ -375,29 +386,24 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
     node_type = get_node_type(taskConfiguration)
 
     job_name: str = f'run-{taskConfiguration["task_type"]}'
-    grant_sudo = (
-        taskConfiguration["grant_sudo"]
-        if "compute" in taskConfiguration
-        and "grant_sudo" in taskConfiguration["compute"]
-        and (taskConfiguration["compute"] or taskConfiguration["compute"] == "True")
-        else False
-    )
-    add_ebs = (
-        taskConfiguration["add_ebs"]
-        if "compute" in taskConfiguration
-        and "add_ebs" in taskConfiguration["compute"]
-        and (taskConfiguration["add_ebs"] or taskConfiguration["add_ebs"] == "True")
-        else False
-    )
+    add_ebs = False
+    grant_sudo = False
+    if "compute" in taskConfiguration:
+        if "grant_sudo" in taskConfiguration["compute"]:
+                if taskConfiguration["compute"]["grant_sudo"] or taskConfiguration["compute"]["grant_sudo"]  == "True":
+                    grant_sudo = True
+        if "add_ebs" in taskConfiguration["compute"]:
+            val = taskConfiguration["compute"]["add_ebs"]
+            if val or val=="True":
+                add_ebs = True
 
-    node_selector = team_constants.node_selector()
-    if node_type == "ec2":
-        node_selector["orbit/node-type"] = "ec2"
+    node_selector = team_constants.node_selector(node_type)
+
 
     pod_properties: Dict[str, str] = dict(
         name=job_name,
         image=image,
-        cmd=["python", "/opt/python-utils/notebook_cli.py"],
+        cmd=["bash","-c","/efs/shared/bootstrap.sh && python /opt/python-utils/notebook_cli.py"],
         port=22,
         image_pull_policy=team_constants.image_pull_policy(),
         image_pull_secrets=None,
@@ -431,6 +437,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
             pod_properties[k] = v
 
     pod: V1Pod = make_pod(**pod_properties)
+    pod.spec.restart_policy = 'Never'
     job_spec = V1JobSpec(
         backoff_limit=0,
         template=pod,
@@ -442,7 +449,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
 
 def resolve_image(__CURRENT_TEAM_MANIFEST__, profile):
     if not profile or "kubespawner_override" not in profile or "image" not in profile["kubespawner_override"]:
-        repository = __CURRENT_TEAM_MANIFEST__["final-image-address"]
+        repository = __CURRENT_TEAM_MANIFEST__["FinalImageAddress"]
         image = f"{repository}:latest"
     else:
         image = profile["kubespawner_override"]["image"]
@@ -455,7 +462,7 @@ def build_env(__CURRENT_ENV_MANIFEST__, env_name, taskConfiguration, team_consta
     env["AWS_ORBIT_TEAM_SPACE"] = team_name
     env["JUPYTERHUB_USER"] = team_constants.username
     env["USERNAME"] = team_constants.username
-    env["AWS_ORBIT_S3_BUCKET"] = __CURRENT_ENV_MANIFEST__["toolkit-s3-bucket"]
+    env["AWS_ORBIT_S3_BUCKET"] = __CURRENT_ENV_MANIFEST__["Toolkit"]["S3Bucket"]
     env["task_type"] = taskConfiguration["task_type"]
     env["tasks"] = json.dumps({"tasks": taskConfiguration["tasks"]})
     if "compute" in taskConfiguration:
@@ -495,7 +502,9 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
 
     node_type = get_node_type(taskConfiguration)
-    labels = {"app": f"orbit-runner", "orbit/node-type": node_type, "orbit/attach-security-group": "yes"}
+    labels = {"app": f"orbit-runner", "orbit/node-type": node_type,
+              # "orbit/attach-security-group": "yes"
+              }
     team_constants: TeamConstants = TeamConstants()
     job_spec = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
     load_kube_config()
@@ -645,7 +654,6 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     node_type = get_node_type(taskConfiguration)
-    team_constants: TeamConstants = TeamConstants()
     labels = {
         "app": f"orbit-runner",
         "orbit/node-type": node_type,
