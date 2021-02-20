@@ -77,7 +77,7 @@ class IamBuilder:
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=["ssm:Describe*", "ssm:Get*"],
+                    actions=["ssm:Get*"],
                     resources=[
                         f"arn:{partition}:ssm:{region}:{account}:parameter/orbit*",
                         f"arn:{partition}:ssm:{region}:{account}:parameter/emr_launch/",
@@ -122,6 +122,7 @@ class IamBuilder:
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
+                        "ssm:Describe*",
                         "codeartifact:Describe*",
                         "codeartifact:Get*",
                         "codeartifact:List*",

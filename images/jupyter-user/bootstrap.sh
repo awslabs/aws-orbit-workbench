@@ -17,6 +17,13 @@
 
 set -ex
 
+if [ $UID -eq 0 ]; then
+  COMMAND=$0
+  COMMANDARGS="$(printf " %q" "${@}")"
+  exec sudo -E su jovyan -c "/usr/bin/bash -l $COMMAND $COMMANDARGS"
+  exit
+fi
+
 mkdir -p /efs/"$USERNAME"
 mkdir -p /efs/shared/scheduled/notebooks
 mkdir -p /efs/shared/scheduled/outputs
@@ -30,6 +37,7 @@ ln -s /efs/shared/ /home/jovyan/shared
 LOCAL_PATH="/home/jovyan/.orbit/bootstrap/scripts/"
 S3_PATH="s3://${AWS_ORBIT_S3_BUCKET}/teams/${AWS_ORBIT_TEAM_SPACE}/bootstrap/"
 
+export PATH=$PATH:/opt/conda/bin
 mkdir -p $LOCAL_PATH
 aws s3 cp $S3_PATH $LOCAL_PATH --recursive
 for filename in $(ls $LOCAL_PATH)

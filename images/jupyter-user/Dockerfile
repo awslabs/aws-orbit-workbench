@@ -49,8 +49,6 @@ USER $NB_UID
 RUN mkdir -p /home/jovyan/.local/share/jupyter
 RUN chown -R jovyan /home/jovyan/.local/share/jupyter
 ADD jupyter_server_config.py /home/jovyan/.jupyter/jupyter_server_config.py
-RUN mkdir -p /home/jovyan/.orbit
-ADD bootstrap.sh /home/jovyan/.orbit/bootstrap.sh
 
 ######################################
 # Python/Conda packages
@@ -73,6 +71,11 @@ RUN echo "" > `conda run pip  show jupyterhub-kubespawner | grep "Location:" | c
 
 USER root
 RUN rm /etc/pip.conf
+# add the boostrap script and change permission to jovyan
+RUN mkdir -p /home/jovyan/.orbit
+ADD bootstrap.sh /home/jovyan/.orbit/bootstrap.sh
+RUN chown -R jovyan /home/jovyan/.orbit
+RUN chmod a+xr /home/jovyan/.orbit/bootstrap.sh
 USER $NB_UID
 
 # ######################################
