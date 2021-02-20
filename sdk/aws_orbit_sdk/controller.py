@@ -375,7 +375,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
     global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
     env_name = props["AWS_ORBIT_ENV"]
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
-    if __CURRENT_TEAM_MANIFEST__ == None or __CURRENT_TEAM_MANIFEST__["name"] != team_name:
+    if __CURRENT_TEAM_MANIFEST__ == None or __CURRENT_TEAM_MANIFEST__["Name"] != team_name:
         __CURRENT_TEAM_MANIFEST__ = load_team_context_from_ssm(env_name, team_name)
     if __CURRENT_ENV_MANIFEST__ == None:
         __CURRENT_ENV_MANIFEST__ = load_env_context_from_ssm(env_name)
