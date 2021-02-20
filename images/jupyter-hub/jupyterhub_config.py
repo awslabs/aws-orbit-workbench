@@ -108,7 +108,7 @@ c.KubeSpawner.init_containers = [
     }
 ]
 c.KubeSpawner.fs_gid = 100
-c.KubeSpawner.lifecycle_hooks = {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh"]}}}
+c.KubeSpawner.lifecycle_hooks = {"postStart": {"exec": {"command": ["/bin/sh", "/home/jovyan/.orbit/bootstrap.sh"]}}}
 c.KubeSpawner.node_selector = {"orbit/usage": "teams", "orbit/node-type": "ec2"}
 c.KubeSpawner.service_account = f"{TEAM}"
 c.JupyterHub.allow_named_servers = True
