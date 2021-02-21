@@ -1,4 +1,5 @@
-FROM jupyter/base-notebook:python-3.8.6
+ARG BASE_IMAGE=jupyter/base-notebook:python-3.8.6
+FROM $BASE_IMAGE
 
 ######################################
 # System
@@ -40,7 +41,6 @@ ADD python-utils/ /opt/python-utils/
 RUN chmod -R 755 /opt/python-utils/
 ADD transformations/ /opt/transformations/
 RUN chmod -R 755 /opt/transformations/
-USER $NB_UID
 
 ######################################
 # Jupyter Environment configuration
@@ -64,19 +64,17 @@ RUN conda run pip install -r /etc/jupyter/requirements.txt && \
 
 ADD pip.conf /etc/pip.conf
 RUN conda run pip install --upgrade aws-orbit aws-orbit-sdk
+RUN rm /etc/pip.conf
 
 # remove the auto includes with the kubespawner package as we just using the helper class.
 RUN conda run pip install --no-deps jupyterhub-kubespawner~=0.15.0
 RUN echo "" > `conda run pip  show jupyterhub-kubespawner | grep "Location:" | cut -d ':' -f 2`/kubespawner/__init__.py
 
-USER root
-RUN rm /etc/pip.conf
 # add the boostrap script and change permission to jovyan
 RUN mkdir -p /home/jovyan/.orbit
 ADD bootstrap.sh /home/jovyan/.orbit/bootstrap.sh
 RUN chown -R jovyan /home/jovyan/.orbit
 RUN chmod a+xr /home/jovyan/.orbit/bootstrap.sh
-USER $NB_UID
 
 # ######################################
 # # Jupyter Lab extensions
@@ -94,3 +92,5 @@ RUN jupyter serverextension enable --py jupyterlab --sys-prefix && \
     rm -rf "/home/${NB_USER}/.node-gyp" && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
+
+USER $NB_UID
