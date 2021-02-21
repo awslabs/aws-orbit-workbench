@@ -314,7 +314,7 @@ def run_notebooks(taskConfiguration: dict) -> Any:
         raise RuntimeError("Unsupported compute_type '%s'", taskConfiguration["compute_type"])
 
 
-def _make_create_pvc_request(team_constants: TeamConstants, labels,storage_capacity):
+def _make_create_pvc_request(team_constants: TeamConstants, labels, storage_capacity):
     pvc_name = f"orbit-{team_constants.username}"
 
     pvc = make_pvc(
@@ -357,6 +357,7 @@ def _make_create_pvc_request(team_constants: TeamConstants, labels,storage_capac
         else:
             raise
 
+
 def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_constants: TeamConstants) -> V1JobSpec:
     """
     Runs Task in Python in a notebook using lambda.
@@ -394,7 +395,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
                 grant_sudo = True
         if "storage_capacity" in taskConfiguration["compute"]:
             ebs_storage_capacity = taskConfiguration["compute"]["storage_capacity"]
-            add_ebs=True
+            add_ebs = True
 
     if "kubespawner_override" in profile:
         if "storage_capacity" in profile["kubespawner_override"]:
@@ -514,7 +515,11 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
     job_spec = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
     load_kube_config()
     if "EBS_STORAGE" in job_spec.template.metadata.annotations:
-        _make_create_pvc_request(team_constants=team_constants, labels=labels,storage_capacity=job_spec.template.metadata.annotations["EBS_STORAGE"])
+        _make_create_pvc_request(
+            team_constants=team_constants,
+            labels=labels,
+            storage_capacity=job_spec.template.metadata.annotations["EBS_STORAGE"],
+        )
     job = V1Job(
         api_version="batch/v1",
         kind="Job",
@@ -678,7 +683,11 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     )
     load_kube_config()
     if "EBS_STORAGE" in job_spec.template.metadata.annotations:
-        _make_create_pvc_request(team_constants=team_constants, labels=labels,storage_capacity=job_spec.template.metadata.annotations["EBS_STORAGE"])
+        _make_create_pvc_request(
+            team_constants=team_constants,
+            labels=labels,
+            storage_capacity=job_spec.template.metadata.annotations["EBS_STORAGE"],
+        )
 
     job_instance: V1beta1CronJob = BatchV1beta1Api().create_namespaced_cron_job(namespace=team_name, body=job)
     metadata: V1ObjectMeta = job_instance.metadata
