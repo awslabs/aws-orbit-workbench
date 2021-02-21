@@ -390,20 +390,19 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
     grant_sudo = False
     if "compute" in taskConfiguration:
         if "grant_sudo" in taskConfiguration["compute"]:
-                if taskConfiguration["compute"]["grant_sudo"] or taskConfiguration["compute"]["grant_sudo"]  == "True":
-                    grant_sudo = True
+            if taskConfiguration["compute"]["grant_sudo"] or taskConfiguration["compute"]["grant_sudo"] == "True":
+                grant_sudo = True
         if "add_ebs" in taskConfiguration["compute"]:
             val = taskConfiguration["compute"]["add_ebs"]
-            if val or val=="True":
+            if val or val == "True":
                 add_ebs = True
 
     node_selector = team_constants.node_selector(node_type)
 
-
     pod_properties: Dict[str, str] = dict(
         name=job_name,
         image=image,
-        cmd=["bash","-c","/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"],
+        cmd=["bash", "-c", "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"],
         port=22,
         image_pull_policy=team_constants.image_pull_policy(),
         image_pull_secrets=None,
@@ -437,7 +436,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
             pod_properties[k] = v
 
     pod: V1Pod = make_pod(**pod_properties)
-    pod.spec.restart_policy = 'Never'
+    pod.spec.restart_policy = "Never"
     job_spec = V1JobSpec(
         backoff_limit=0,
         template=pod,
@@ -502,9 +501,11 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
 
     node_type = get_node_type(taskConfiguration)
-    labels = {"app": f"orbit-runner", "orbit/node-type": node_type,
-              # "orbit/attach-security-group": "yes"
-              }
+    labels = {
+        "app": f"orbit-runner",
+        "orbit/node-type": node_type,
+        # "orbit/attach-security-group": "yes"
+    }
     team_constants: TeamConstants = TeamConstants()
     job_spec = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
     load_kube_config()

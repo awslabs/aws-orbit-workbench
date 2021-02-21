@@ -49,7 +49,7 @@ class TeamConstants:
         return 1000
 
     def node_selector(self, node_type: str) -> List[Dict[str, str]]:
-        node_selector =  {"orbit/usage": "teams" }
+        node_selector = {"orbit/usage": "teams"}
         if node_type == "ec2":
             node_selector["orbit/node-type"] = "ec2"
         return node_selector
@@ -179,7 +179,7 @@ class TeamConstants:
 
     def life_cycle_hooks(self):
         return {}
-        #return {"postStart": {"exec": {"command": ["/bin/sh", "/efs/shared/bootstrap.sh"]}}}
+        # return {"postStart": {"exec": {"command": ["/bin/sh", "/efs/shared/bootstrap.sh"]}}}
 
         # return {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh", "2>&1","|","tee /efs/shared/bootstrap.log"]}}}
 
