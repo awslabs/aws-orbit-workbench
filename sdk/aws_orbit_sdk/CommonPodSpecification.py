@@ -15,7 +15,7 @@
 import json
 import logging
 import os
-from typing import Any, Dict, List, Union, cast
+from typing import Any, Dict, List, Union, cast,Optional
 
 import boto3
 
@@ -183,8 +183,10 @@ class TeamConstants:
 
         # return {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh", "2>&1","|","tee /efs/shared/bootstrap.log"]}}}
 
-    def annotations(self) -> Dict[str, str]:
-        return {"AWS_ORBIT_TEAM_SPACE": self.team_name, "AWS_ORBIT_ENV": self.env_name}
+    def annotations(self, ebs_storage_capacity: Optional[str]) -> Dict[str, str]:
+        anno = {"AWS_ORBIT_TEAM_SPACE": self.team_name, "AWS_ORBIT_ENV": self.env_name}
+        if ebs_storage_capacity:
+            anno["EBS_STORAGE"] = ebs_storage_capacity
 
     def storage_class(self) -> str:
         return f"ebs-{self.team_name}-gp2"

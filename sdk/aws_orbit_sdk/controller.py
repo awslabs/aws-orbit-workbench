@@ -314,7 +314,7 @@ def run_notebooks(taskConfiguration: dict) -> Any:
         raise RuntimeError("Unsupported compute_type '%s'", taskConfiguration["compute_type"])
 
 
-def _make_create_pvc_request(team_constants: TeamConstants, labels):
+def _make_create_pvc_request(team_constants: TeamConstants, labels,storage_capacity):
     pvc_name = f"orbit-{team_constants.username}"
 
     pvc = make_pvc(
@@ -322,8 +322,8 @@ def _make_create_pvc_request(team_constants: TeamConstants, labels):
         labels=labels,
         storage_class=team_constants.storage_class(),
         access_modes=team_constants.ebs_access_mode(),
-        storage="10Gi",
-        selector={},
+        storage=storage_capacity,
+        selector=None,
         annotations=None,
     )
     # Try and create the pvc. If it succeeds we are good. If
@@ -357,7 +357,6 @@ def _make_create_pvc_request(team_constants: TeamConstants, labels):
         else:
             raise
 
-
 def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_constants: TeamConstants) -> V1JobSpec:
     """
     Runs Task in Python in a notebook using lambda.
@@ -386,16 +385,21 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
     node_type = get_node_type(taskConfiguration)
 
     job_name: str = f'run-{taskConfiguration["task_type"]}'
+    ebs_storage_capacity = None
     add_ebs = False
     grant_sudo = False
     if "compute" in taskConfiguration:
         if "grant_sudo" in taskConfiguration["compute"]:
             if taskConfiguration["compute"]["grant_sudo"] or taskConfiguration["compute"]["grant_sudo"] == "True":
                 grant_sudo = True
-        if "add_ebs" in taskConfiguration["compute"]:
-            val = taskConfiguration["compute"]["add_ebs"]
-            if val or val == "True":
-                add_ebs = True
+        if "storage_capacity" in taskConfiguration["compute"]:
+            ebs_storage_capacity = taskConfiguration["compute"]["storage_capacity"]
+            add_ebs=True
+
+    if "kubespawner_override" in profile:
+        if "storage_capacity" in profile["kubespawner_override"]:
+            ebs_storage_capacity = profile["kubespawner_override"]["storage_capacity"]
+            add_ebs = True
 
     node_selector = team_constants.node_selector(node_type)
 
@@ -416,7 +420,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
         volumes=team_constants.volumes(add_ebs),
         volume_mounts=team_constants.volume_mounts(add_ebs),
         labels=labels,
-        annotations=team_constants.annotations(),
+        annotations=team_constants.annotations(ebs_storage_capacity),
         lifecycle_hooks=team_constants.life_cycle_hooks(),
         init_containers=team_constants.init_containers(image) if add_ebs else [],
         service_account=team_name,
@@ -509,7 +513,8 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
     team_constants: TeamConstants = TeamConstants()
     job_spec = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
     load_kube_config()
-    _make_create_pvc_request(team_constants=team_constants, labels=labels)
+    if "EBS_STORAGE" in job_spec.template.metadata.annotations:
+        _make_create_pvc_request(team_constants=team_constants, labels=labels,storage_capacity=job_spec.template.metadata.annotations["EBS_STORAGE"])
     job = V1Job(
         api_version="batch/v1",
         kind="Job",
@@ -672,7 +677,9 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
         spec=cron_job_spec,
     )
     load_kube_config()
-    _make_create_pvc_request(team_constants=team_constants, labels=labels)
+    if "EBS_STORAGE" in job_spec.template.metadata.annotations:
+        _make_create_pvc_request(team_constants=team_constants, labels=labels,storage_capacity=job_spec.template.metadata.annotations["EBS_STORAGE"])
+
     job_instance: V1beta1CronJob = BatchV1beta1Api().create_namespaced_cron_job(namespace=team_name, body=job)
     metadata: V1ObjectMeta = job_instance.metadata
     return {
