@@ -50,7 +50,7 @@ __CURRENT_TEAM_MANIFEST__: MANIFEST_TEAM_TYPE = None
 
 
 def read_raw_manifest_ssm(env_name: str, team_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
-    parameter_name: str = f"/orbit/{env_name}/teams/{team_name}/manifest"
+    parameter_name: str = f"/orbit/{env_name}/teams/{team_name}/context"
     _logger.debug("Trying to read manifest from SSM parameter (%s).", parameter_name)
     client = boto3.client("ssm")
     try:
@@ -394,8 +394,9 @@ def _get_job_spec(
     image: str,
     node_type: str,
     labels: Dict[str, str],
-    team_constants: TeamConstants = TeamConstants(),
+    team_constants: TeamConstants = None,
 ) -> V1JobSpec:
+    team_constants = TeamConstants() if team_constants is None else team_constants
     container = V1Container(
         name=job_name,
         image=image,
@@ -493,7 +494,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
     if profile and "image" in profile:
         image = profile["image"]
     else:
-        repository = __CURRENT_TEAM_MANIFEST__["final-image-address"]
+        repository = __CURRENT_TEAM_MANIFEST__["FinalImageAddress"]
         image = f"{repository}:latest"
 
     node_type = get_node_type(taskConfiguration)
