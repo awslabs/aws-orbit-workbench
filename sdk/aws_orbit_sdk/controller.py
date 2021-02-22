@@ -526,8 +526,7 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
             team_constants=team_constants,
             pvc=pvc,
         )
-    else:
-        assert False
+
     job = V1Job(
         api_version="batch/v1",
         kind="Job",
