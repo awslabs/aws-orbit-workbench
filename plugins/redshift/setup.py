@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 from io import open
+
 from setuptools import find_packages, setup
 
 with open("VERSION", "r") as version_file:
