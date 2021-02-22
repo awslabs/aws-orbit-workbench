@@ -165,6 +165,12 @@ def deploy_cli(
     help="The target Orbit Workbench manifest file (yaml).",
 )
 @click.option(
+    "--name",
+    "-n",
+    type=str,
+    help="The Name of the Orbit Foundation deployment",
+)
+@click.option(
     "--username",
     "-u",
     type=str,
@@ -177,25 +183,49 @@ def deploy_cli(
     help="Dockerhub password (Required only for the first deploy).",
 )
 @click.option(
+    "--codeartifact-domain",
+    type=str,
+    help="CodeArtifact Domain to pull packages from.",
+)
+@click.option(
+    "--codeartifact-repository",
+    type=str,
+    help="CodeArtifact Repository to pull packages from.",
+)
+@click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
     show_default=True,
 )
 def deploy_foundation_cli(
-    filename: str,
-    debug: bool,
+    filename: Optional[str] = None,
+    name: Optional[str] = None,
+    debug: bool = False,
     username: Optional[str] = None,
     password: Optional[str] = None,
+    codeartifact_domain: Optional[str] = None,
+    codeartifact_repository: Optional[str] = None,
 ) -> None:
     """Deploy a Orbit Workbench foundation based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
-    filename = filename if filename[0] in (".", "/") else f"./{filename}"
+
+    if not filename and not name:
+        raise click.ClickException('One of "filename" or "name" is required.')
+
+    if filename:
+        filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
+    _logger.debug("name: %s", name)
+    _logger.debug("codeartifact_domain: %s", codeartifact_domain)
+    _logger.debug("codeartifact_repository: %s", codeartifact_repository)
     _logger.debug("username: %s", username)
     deploy_foundation(
         filename=filename,
+        name=name,
+        codeartifact_domain=codeartifact_domain,
+        codeartifact_repository=codeartifact_repository,
         username=username,
         password=password,
         debug=debug,

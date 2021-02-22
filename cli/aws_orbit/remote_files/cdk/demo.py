@@ -188,14 +188,14 @@ class DemoStack(Stack):
         CfnOutput(
             scope=self,
             id=f"{id}lakebucketfullaccesspolicy",
-            export_name="lake-bucket-full-access-policy",
+            export_name=f"orbit-{self.env_name}-lake-bucket-full-access-policy",
             value=self.lake_bucket_full_access.managed_policy_name,
         )
 
         CfnOutput(
             scope=self,
             id=f"{id}lakebucketreadonlypolicy",
-            export_name="lake-bucket-read-only-policy",
+            export_name=f"orbit-{self.env_name}-lake-bucket-read-only-policy",
             value=self.lake_bucket_read_only_access.managed_policy_name,
         )
 

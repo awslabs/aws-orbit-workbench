@@ -23,13 +23,12 @@ from aws_orbit import bundle, dockerhub, plugins, remote, toolkit
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.changeset import dump_changeset_to_str, extract_changeset
 from aws_orbit.models.context import dump_context_to_ssm, load_context_from_manifest, load_context_from_ssm
-from aws_orbit.models.manifest import load_manifest_from_file
+from aws_orbit.models.manifest import Manifest, load_manifest_from_file, dump_manifest_to_ssm
 from aws_orbit.services import cfn, codebuild
 
 if TYPE_CHECKING:
     from aws_orbit.models.changeset import Changeset
     from aws_orbit.models.context import Context
-    from aws_orbit.models.manifest import Manifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -110,16 +109,34 @@ def deploy_toolkit(
 
 
 def deploy_foundation(
-    filename: str,
-    debug: bool,
+    filename: Optional[str] = None,
+    name: Optional[str] = None,
+    debug: bool = False,
+    codeartifact_domain: Optional[str] = None,
+    codeartifact_repository: Optional[str] = None,
     username: Optional[str] = None,
     password: Optional[str] = None,
 ) -> None:
     with MessagesContext("Deploying", debug=debug) as msg_ctx:
         msg_ctx.progress(2)
 
-        manifest: "Manifest" = load_manifest_from_file(filename=filename)
-        msg_ctx.info(f"Manifest loaded: {filename}")
+        if filename:
+            manifest: "Manifest" = load_manifest_from_file(filename=filename)
+            if name or codeartifact_domain or codeartifact_repository:
+                msg_ctx.warn(f'Reading parameters from {filename}, "name", "codeartifact-domain", '
+                'and "codeartifact-repository" ignored.')
+        elif name:
+            manifest: Manifest = Manifest(
+                name=name,
+                codeartifact_domain=codeartifact_domain,
+                codeartifact_repository=codeartifact_repository
+            )
+        else:
+            msg_ctx.error('One of "filename" or "name" is required')
+            raise ValueError('One of "filename" or "name" is required')
+
+        dump_manifest_to_ssm(manifest=manifest)
+        msg_ctx.info(f"Manifest loaded: {manifest.name}")
         msg_ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
         msg_ctx.progress(3)
 
