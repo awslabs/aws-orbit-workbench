@@ -3,14 +3,14 @@ apiVersion: storage.k8s.io/v1
 metadata:
   name: ebs-${team}-gp2
 provisioner: kubernetes.io/aws-ebs
-volumeBindingMode: Immediate
-allowVolumeExpansion: "true"
+allowVolumeExpansion: true
 reclaimPolicy: Delete
 parameters:
   type: gp2
   fsType: ext4
   encrypted: "true"
   kmsKeyId: ${team_kms_key_arn}
+volumeBindingMode: Immediate
 ---
 apiVersion: v1
 kind: PersistentVolume
