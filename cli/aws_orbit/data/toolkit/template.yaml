@@ -290,7 +290,6 @@ Resources:
         - Ref: OrbitAdminPolicyOther
         - Ref: OrbitAdminPolicyIAMS3
         - Ref: RedshiftPluginManagedPolicy
-        - arn:aws:iam::aws:policy/AWSServiceCatalogAdminFullAccess
       RoleName: orbit-${env_name}-admin
       MaxSessionDuration: 10000
       AssumeRolePolicyDocument:
