@@ -171,9 +171,6 @@ class TeamContext:
         self.efs_ap_id = values["EfsApId"]
         self.eks_pod_role_arn = values["EksPodRoleArn"]
         self.scratch_bucket = values["ScratchBucket"]
-        self.ecs_cluster_name = values["EcsClusterName"]
-        self.container_runner_arn = values["ContainerRunnerArn"]
-        self.eks_k8s_api_arn = values["EksK8sApiArn"]
         self.team_kms_key_arn = values["TeamKmsKeyArn"]
         self.team_security_group_id = values["TeamSecurityGroupId"]
 

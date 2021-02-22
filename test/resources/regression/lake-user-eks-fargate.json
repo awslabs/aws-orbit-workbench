@@ -8,7 +8,7 @@
     },
     "tasks":  [
         {
-            "notebookName": "run-analyst-notebooks.ipynb",
+            "notebookName": "run-user-regression-notebooks.ipynb",
             "sourcePath": "shared/samples/notebooks/Z-Tests",
             "targetPath": "shared/regression/notebooks/Z-Tests/",
             "params": {

@@ -49,7 +49,6 @@ RUN chmod -R 755 /opt/transformations/
 RUN mkdir -p /home/jovyan/.local/share/jupyter
 RUN chown -R jovyan /home/jovyan/.local/share/jupyter
 ADD jupyter_server_config.py /home/jovyan/.jupyter/jupyter_server_config.py
-ADD bootstrap.sh /etc/jupyterhub/bootstrap.sh
 
 ######################################
 # Python/Conda packages
@@ -66,6 +65,16 @@ RUN conda run pip install -r /etc/jupyter/requirements.txt && \
 ADD pip.conf /etc/pip.conf
 RUN conda run pip install --upgrade aws-orbit aws-orbit-sdk
 RUN rm /etc/pip.conf
+
+# remove the auto includes with the kubespawner package as we just using the helper class.
+RUN conda run pip install --no-deps jupyterhub-kubespawner~=0.15.0
+RUN echo "" > `conda run pip  show jupyterhub-kubespawner | grep "Location:" | cut -d ':' -f 2`/kubespawner/__init__.py
+
+# add the boostrap script and change permission to jovyan
+RUN mkdir -p /home/jovyan/.orbit
+ADD bootstrap.sh /home/jovyan/.orbit/bootstrap.sh
+RUN chown -R jovyan /home/jovyan/.orbit
+RUN chmod a+xr /home/jovyan/.orbit/bootstrap.sh
 
 # ######################################
 # # Jupyter Lab extensions
