@@ -314,18 +314,7 @@ def run_notebooks(taskConfiguration: dict) -> Any:
         raise RuntimeError("Unsupported compute_type '%s'", taskConfiguration["compute_type"])
 
 
-def _make_create_pvc_request(team_constants: TeamConstants, labels, storage_capacity):
-    pvc_name = f"orbit-{team_constants.username}"
-
-    pvc = make_pvc(
-        name=pvc_name,
-        labels=labels,
-        storage_class=team_constants.storage_class(),
-        access_modes=team_constants.ebs_access_mode(),
-        storage=storage_capacity,
-        selector=None,
-        annotations=None,
-    )
+def _make_create_pvc_request(team_constants: TeamConstants, pvc):
     # Try and create the pvc. If it succeeds we are good. If
     # returns a 409 indicating it already exists we are good. If
     # it returns a 403, indicating potential quota issue we need
@@ -342,17 +331,17 @@ def _make_create_pvc_request(team_constants: TeamConstants, labels, storage_capa
         return True
     except ApiException as e:
         if e.status == 409:
-            _logger.debug("PVC " + pvc_name + " already exists, so did not create new pvc.")
+            _logger.debug("PVC " + pvc.metadata.name + " already exists, so did not create new pvc.")
             return True
         elif e.status == 403:
             t, v, tb = sys.exc_info()
             try:
                 CoreV1Api().read_namespaced_persistent_volume_claim_status(
-                    namespace=team_constants.team_name, name=pvc_name
+                    namespace=team_constants.team_name, name=pvc.metadata.name
                 )
             except ApiException as e:
                 raise v.with_traceback(tb)
-            _logger.warning("PVC " + pvc_name + " already exists, possibly have reached quota though.")
+            _logger.warning("PVC " + pvc.metadata.name + " already exists, possibly have reached quota though.")
             return True
         else:
             raise
@@ -396,11 +385,13 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
         if "storage_capacity" in taskConfiguration["compute"]:
             ebs_storage_capacity = taskConfiguration["compute"]["storage_capacity"]
             add_ebs = True
+            _logger.info("attaching EBS volume size %s", ebs_storage_capacity)
 
     if "kubespawner_override" in profile:
         if "storage_capacity" in profile["kubespawner_override"]:
             ebs_storage_capacity = profile["kubespawner_override"]["storage_capacity"]
             add_ebs = True
+            _logger.info("profile override is attaching EBS volume size %s", ebs_storage_capacity)
 
     node_selector = team_constants.node_selector(node_type)
 
@@ -448,7 +439,22 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
         ttl_seconds_after_finished=120,
     )
 
-    return job_spec
+    pvc_name = f"orbit-{team_constants.username}"
+
+    if add_ebs:
+        pvc = make_pvc(
+            name=pvc_name,
+            labels=labels,
+            storage_class=team_constants.storage_class(),
+            access_modes=team_constants.ebs_access_mode(),
+            storage=ebs_storage_capacity,
+            selector=None,
+            annotations=None,
+        )
+    else:
+        pvc = None
+
+    return (job_spec, pvc)
 
 
 def resolve_image(__CURRENT_TEAM_MANIFEST__, profile):
@@ -512,14 +518,16 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
         # "orbit/attach-security-group": "yes"
     }
     team_constants: TeamConstants = TeamConstants()
-    job_spec = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
+    (job_spec, pvc) = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
     load_kube_config()
-    if "EBS_STORAGE" in job_spec.template.metadata.annotations:
+
+    if pvc:
         _make_create_pvc_request(
             team_constants=team_constants,
-            labels=labels,
-            storage_capacity=job_spec.template.metadata.annotations["EBS_STORAGE"],
+            pvc=pvc,
         )
+    else:
+        assert False
     job = V1Job(
         api_version="batch/v1",
         kind="Job",
@@ -671,7 +679,7 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     }
     username = os.environ["JUPYTERHUB_USER"] if os.environ["JUPYTERHUB_USER"] else os.environ["USERNAME"]
     team_constants: TeamConstants = TeamConstants(username)
-    job_spec = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
+    (job_spec, pvc) = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
     cron_job_template: V1beta1JobTemplateSpec = V1beta1JobTemplateSpec(spec=job_spec)
     cron_job_spec: V1beta1CronJobSpec = V1beta1CronJobSpec(job_template=cron_job_template, schedule=frequency)
     job = V1beta1CronJob(
@@ -682,11 +690,10 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
         spec=cron_job_spec,
     )
     load_kube_config()
-    if "EBS_STORAGE" in job_spec.template.metadata.annotations:
+    if pvc:
         _make_create_pvc_request(
             team_constants=team_constants,
-            labels=labels,
-            storage_capacity=job_spec.template.metadata.annotations["EBS_STORAGE"],
+            pvc=pvc,
         )
 
     job_instance: V1beta1CronJob = BatchV1beta1Api().create_namespaced_cron_job(namespace=team_name, body=job)

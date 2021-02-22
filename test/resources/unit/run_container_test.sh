@@ -10,7 +10,7 @@ cat <<EOF |  orbit run notebook --env dev-env --team $TEST_TEAM_SPACE --user tes
           },
           "compute_type": "ecs",
           "node_type": "fargate",
-          "add_ebs": "True"
+          "storage_capacity": "20Gi"
       },
       "tasks":  [{
           "notebookName": "sanity-good.ipynb",
