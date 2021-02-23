@@ -34,8 +34,13 @@ class TeamConstants:
         if username:
             self.username = username
         else:
-            self.username = os.environ["JUPYTERHUB_USER"] if "JUPYTERHUB_USER" in os.environ \
-                                    else os.environ["USERNAME"] if "USERNAME" in os.environ else None
+            self.username = (
+                os.environ["JUPYTERHUB_USER"]
+                if "JUPYTERHUB_USER" in os.environ
+                else os.environ["USERNAME"]
+                if "USERNAME" in os.environ
+                else None
+            )
         self.pvc_name_template = f"orbit-{self.username}"
 
     def image_pull_policy(self) -> str:
