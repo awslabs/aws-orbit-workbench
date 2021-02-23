@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Any, Dict, Iterable, List, NamedTuple, Optiona
 import botocore.exceptions
 import yaml
 
+from aws_orbit import __version__
 from aws_orbit.utils import boto3_client, try_it
 
 if TYPE_CHECKING:
@@ -241,15 +242,6 @@ def generate_spec(
             " --host=tcp://0.0.0.0:2375 --storage-driver=overlay&"
         ),
         'timeout 15 sh -c "until docker info; do echo .; sleep 1; done"',
-        "ls -la",
-        "cd bundle",
-        "ls -la",
-        f"pip install kubernetes~=12.0.1 {' '.join([f'{m}{CDK_VERSION}' for m in CDK_MODULES])}",
-        "npm -g install yarn",
-        "npm install -g aws-cdk@1.67.0",
-        'curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp',  # noqa
-        "mv /tmp/eksctl /usr/local/bin",
-        "eksctl version",
     ]
 
     # Orbit Workbench CLI
@@ -259,7 +251,7 @@ def generate_spec(
             f"--domain {context.codeartifact_domain} "
             f"--repository {context.codeartifact_repository}"
         )
-    install.append("pip install aws-orbit")
+    install.append(f"pip install aws-orbit=={__version__}")
 
     # Plugins
     if plugins:
