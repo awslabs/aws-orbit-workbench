@@ -4,9 +4,9 @@
 #
 #    pip-compile requirements-dev.in
 #
--e ../../cli
-    # via -r requirements-dev.in
 -e .
+    # via -r requirements-dev.in
+-e ../../cli
     # via -r requirements-dev.in
 appdirs==1.4.4
     # via black
@@ -59,7 +59,7 @@ aws-cdk.aws-cloudwatch==1.67.0
     #   aws-cdk.aws-sns
     #   aws-cdk.aws-sqs
 aws-cdk.aws-codecommit==1.67.0
-    # via orbit-codecommit
+    # via aws-orbit-code-commit
 aws-cdk.aws-codeguruprofiler==1.67.0
     # via aws-cdk.aws-lambda
 aws-cdk.aws-cognito==1.67.0
@@ -145,7 +145,7 @@ aws-cdk.aws-iam==1.67.0
     #   aws-cdk.aws-sqs
     #   aws-cdk.aws-ssm
     #   aws-cdk.custom-resources
-    #   orbit-codecommit
+    #   aws-orbit-code-commit
 aws-cdk.aws-kms==1.67.0
     # via
     #   -r requirements-dev.in
@@ -308,20 +308,31 @@ aws-cdk.region-info==1.67.0
     #   aws-cdk.core
 black==20.8b1
     # via -r requirements-dev.in
-boto3==1.17.7
+bleach==3.3.0
+    # via readme-renderer
+boto3==1.17.14
     # via aws-orbit
-botocore==1.20.7
+botocore==1.20.14
     # via
     #   aws-orbit
     #   boto3
     #   s3transfer
 cattrs==1.1.2
     # via jsii
+certifi==2020.12.5
+    # via requests
+cffi==1.14.5
+    # via cryptography
+chardet==4.0.0
+    # via requests
 click==7.1.2
     # via
     #   aws-orbit
     #   black
-constructs==3.3.21
+    #   pip-tools
+colorama==0.4.4
+    # via twine
+constructs==3.3.37
     # via
     #   aws-cdk.assets
     #   aws-cdk.aws-apigateway
@@ -361,19 +372,32 @@ constructs==3.3.21
     #   aws-cdk.aws-ssm
     #   aws-cdk.core
     #   aws-cdk.custom-resources
+cryptography==3.4.6
+    # via secretstorage
 decorator==4.4.2
     # via jsonpath-ng
+docutils==0.16
+    # via readme-renderer
 flake8==3.8.4
     # via -r requirements-dev.in
-importlib-metadata==3.4.0
-    # via flake8
+idna==2.10
+    # via requests
+importlib-metadata==3.5.0
+    # via
+    #   flake8
+    #   keyring
+    #   twine
 isort==5.6.4
     # via -r requirements-dev.in
+jeepney==0.6.0
+    # via
+    #   keyring
+    #   secretstorage
 jmespath==0.10.0
     # via
     #   boto3
     #   botocore
-jsii==1.21.0
+jsii==1.22.0
     # via
     #   aws-cdk.assets
     #   aws-cdk.aws-apigateway
@@ -419,6 +443,8 @@ jsii==1.21.0
     #   constructs
 jsonpath-ng==1.5.2
     # via aws-orbit
+keyring==22.0.1
+    # via twine
 marshmallow-dataclass[enum,union]==8.3.1
     # via aws-orbit
 marshmallow-enum==1.5.1
@@ -434,10 +460,16 @@ mypy-extensions==0.4.3
     #   black
     #   mypy
     #   typing-inspect
-mypy==0.800
+mypy==0.812
     # via -r requirements-dev.in
+packaging==20.9
+    # via bleach
 pathspec==0.8.1
     # via black
+pip-tools==5.5.0
+    # via -r requirements-dev.in
+pkginfo==1.7.0
+    # via twine
 ply==3.11
     # via jsonpath-ng
 publication==0.0.3
@@ -486,8 +518,14 @@ publication==0.0.3
     #   constructs
 pycodestyle==2.6.0
     # via flake8
+pycparser==2.20
+    # via cffi
 pyflakes==2.2.0
     # via flake8
+pygments==2.8.0
+    # via readme-renderer
+pyparsing==2.4.7
+    # via packaging
 python-dateutil==2.8.1
     # via
     #   botocore
@@ -498,23 +536,41 @@ pyyaml==5.3.1
     # via
     #   aws-orbit
     #   pyyaml-include
+readme-renderer==29.0
+    # via twine
 regex==2020.11.13
     # via black
+requests-toolbelt==0.9.1
+    # via twine
+requests==2.25.1
+    # via
+    #   requests-toolbelt
+    #   twine
+rfc3986==1.4.0
+    # via twine
 s3transfer==0.3.4
     # via boto3
+secretstorage==3.3.1
+    # via keyring
 six==1.15.0
     # via
+    #   bleach
     #   jsonpath-ng
     #   python-dateutil
+    #   readme-renderer
 toml==0.10.2
     # via black
 tqdm==4.56.2
-    # via aws-orbit
+    # via
+    #   aws-orbit
+    #   twine
+twine==3.3.0
+    # via -r requirements-dev.in
 typed-ast==1.4.2
     # via
     #   black
     #   mypy
-typeguard==2.10.0
+typeguard==2.11.1
     # via marshmallow-dataclass
 typing-extensions==3.7.4.3
     # via
@@ -526,6 +582,16 @@ typing-extensions==3.7.4.3
 typing-inspect==0.6.0
     # via marshmallow-dataclass
 urllib3==1.26.3
-    # via botocore
+    # via
+    #   botocore
+    #   requests
+webencodings==0.5.1
+    # via bleach
+wheel==0.36.2
+    # via -r requirements-dev.in
 zipp==3.4.0
     # via importlib-metadata
+
+# The following packages are considered to be unsafe in a requirements file:
+# pip
+# setuptools

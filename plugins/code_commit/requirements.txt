@@ -9,14 +9,14 @@ attrs==20.3.0
     #   cattrs
     #   jsii
 aws-cdk.aws-codecommit==1.67.0
-    # via orbit-codecommit (setup.py)
+    # via aws-orbit-code-commit (setup.py)
 aws-cdk.aws-events==1.67.0
     # via aws-cdk.aws-codecommit
 aws-cdk.aws-iam==1.67.0
     # via
     #   aws-cdk.aws-codecommit
     #   aws-cdk.aws-events
-    #   orbit-codecommit (setup.py)
+    #   aws-orbit-code-commit (setup.py)
 aws-cdk.cloud-assembly-schema==1.67.0
     # via
     #   aws-cdk.core
@@ -34,13 +34,13 @@ aws-cdk.region-info==1.67.0
     #   aws-cdk.core
 cattrs==1.1.2
     # via jsii
-constructs==3.3.21
+constructs==3.3.37
     # via
     #   aws-cdk.aws-codecommit
     #   aws-cdk.aws-events
     #   aws-cdk.aws-iam
     #   aws-cdk.core
-jsii==1.21.0
+jsii==1.22.0
     # via
     #   aws-cdk.aws-codecommit
     #   aws-cdk.aws-events
