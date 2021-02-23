@@ -15,9 +15,9 @@
 import json
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
-
+import botocore
 from kubernetes import config
-
+import os
 from aws_orbit import bundle, remote, sh, utils
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.context import load_context_from_ssm
@@ -35,7 +35,12 @@ def read_user_profiles_ssm(env_name: str, team_name: str) -> PROFILES_TYPE:
     ssm_profile_name = f"/orbit/{env_name}/teams/{team_name}/user/profiles"
     _logger.debug("Trying to read profiles from SSM parameter (%s).", ssm_profile_name)
     client = utils.boto3_client(service_name="ssm")
-    json_str: str = client.get_parameter(Name=ssm_profile_name)["Parameter"]["Value"]
+    try:
+        json_str: str = client.get_parameter(Name=ssm_profile_name)["Parameter"]["Value"]
+    except botocore.errorfactory.ParameterNotFound as e:
+        _logger.info("No team profile found, returning only default profiles")
+        pass
+
     return cast(PROFILES_TYPE, json.loads(json_str))
 
 
@@ -95,9 +100,17 @@ def delete_profile(env: str, team: str, profile_name: str, debug: bool) -> None:
 def list_profiles(env: str, team: str, debug: bool) -> None:
     ssm.cleanup_changeset(env_name=env)
     ssm.cleanup_manifest(env_name=env)
+    print("Team profiles:")
     profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
     _logger.debug("Existing user profiles for team %s: %s", team, profiles)
     print(json.dumps(profiles, indent=4, sort_keys=True))
+
+    print("Admin deployed profiles:")
+    from aws_orbit_sdk import common_pod_specification
+    os.environ["AWS_ORBIT_ENV"] = env
+    os.environ["AWS_ORBIT_TEAM_SPACE"] = team
+    deployed_profiles : common_pod_specification.PROFILES_TYPE = common_pod_specification.TeamConstants().deployed_profiles()
+    print(json.dumps(deployed_profiles, indent=4, sort_keys=True))
 
 
 def build_profile(env: str, team: str, profile: str, debug: bool) -> None:

@@ -34,7 +34,8 @@ class TeamConstants:
         if username:
             self.username = username
         else:
-            self.username = os.environ["JUPYTERHUB_USER"] if os.environ["JUPYTERHUB_USER"] else os.environ["USERNAME"]
+            self.username = os.environ["JUPYTERHUB_USER"] if "JUPYTERHUB_USER" in os.environ \
+                                    else os.environ["USERNAME"] if "USERNAME" in os.environ else None
         self.pvc_name_template = f"orbit-{self.username}"
 
     def image_pull_policy(self) -> str:
@@ -134,17 +135,24 @@ class TeamConstants:
             },
         ]
 
-    def team_profiles(self) -> PROFILES_TYPE:
+    def deployed_profiles(self) -> PROFILES_TYPE:
         ssm = boto3.Session().client("ssm")
         ssm_parameter_name: str = f"/orbit/{self.env_name}/teams/{self.team_name}/context"
         json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
 
         team_manifest_dic = cast(PROFILES_TYPE, json.loads(json_str))
-        default_profiles: PROFILES_TYPE = []
+        deployed_profiles: PROFILES_TYPE = []
         if team_manifest_dic.get("profiles"):
-            default_profiles = team_manifest_dic["profiles"]
-        if len(default_profiles) == 0:
-            default_profiles = self.default_profiles()
+            deployed_profiles = team_manifest_dic["profiles"]
+        if len(deployed_profiles) == 0:
+            deployed_profiles = self.default_profiles()
+
+        return deployed_profiles
+
+    def team_profiles(self) -> PROFILES_TYPE:
+        ssm = boto3.Session().client("ssm")
+
+        default_profiles = self.deployed_profiles()
 
         ssm_parameter_name: str = f"/orbit/{self.env_name}/teams/{self.team_name}/user/profiles"
         json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
