@@ -263,8 +263,7 @@ def _add_ssm_param_injector(tag: str = "!SSM") -> None:
                     raise Exception(f"Injected parameter {jsonpath} not found in SSM {ssm_param_name}")
 
                 param_value: str = json_match[0].value
-                _logger.debug(f"injected parameter {g} resolved to {param_value}")
-                # full_value = full_value.replace(f"${{{g}}}", str(param_value))
+                _logger.debug(f"injected SSM parameter {g} resolved to {param_value}")
                 return param_value
             return full_value
         return value
@@ -286,7 +285,7 @@ def _add_env_var_injector(tag: str = "!ENV") -> None:
         something_else: !ENV '${AWESOME_ENV_VAR}/var/${A_SECOND_AWESOME_VAR}'
     """
     # pattern for global vars: look for ${word}
-    pattern = re.compile(".*?\${(\w+)}.*?")  # noqa: W605
+    pattern = re.compile(".*?\${(.*)}.*?")  # noqa: W605
     loader = yaml.SafeLoader
 
     # the tag will be used to mark where to start searching for the pattern
@@ -306,8 +305,10 @@ def _add_env_var_injector(tag: str = "!ENV") -> None:
         if match:
             full_value = value
             for g in match:
-                _logger.debug(f"match: {g}")
-                full_value = full_value.replace(f"${{{g}}}", os.environ.get(g, g))
+                (env_var, default_val) = g.split("::")
+                value = os.environ.get(env_var, default_val)
+                full_value = full_value.replace(f"${{{g}}}", value)
+                _logger.debug(f"injected ENV parameter {env_var} resolved to {value}")
             return full_value
         return value
 
