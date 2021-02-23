@@ -202,7 +202,9 @@ profile_list_default = [
 def userdata_hook(spawner, auth_state):
     spawner._profile_list = None
 
+
 c.Spawner.auth_state_hook = userdata_hook
+
 
 def per_user_profiles(spawner):
     team = spawner.environment["AWS_ORBIT_TEAM_SPACE"]

@@ -381,7 +381,11 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
     if "kubespawner_override" in profile:
         if "storage_capacity" in profile["kubespawner_override"]:
             ebs_storage_capacity = profile["kubespawner_override"]["storage_capacity"]
-            ebs_storage_name = profile["kubespawner_override"]["ebs_storage_name"] if "ebs_storage_name" in profile["kubespawner_override"]  else "1"
+            ebs_storage_name = (
+                profile["kubespawner_override"]["ebs_storage_name"]
+                if "ebs_storage_name" in profile["kubespawner_override"]
+                else "1"
+            )
             add_ebs = True
             _logger.info("profile override is attaching EBS volume size %s", ebs_storage_capacity)
 
@@ -391,10 +395,13 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
                 grant_sudo = True
         if "storage_capacity" in taskConfiguration["compute"]:
             ebs_storage_capacity = taskConfiguration["compute"]["storage_capacity"]
-            ebs_storage_name = taskConfiguration["compute"]["ebs_storage_name"] if "ebs_storage_name" in taskConfiguration["compute"] else "1"
+            ebs_storage_name = (
+                taskConfiguration["compute"]["ebs_storage_name"]
+                if "ebs_storage_name" in taskConfiguration["compute"]
+                else "1"
+            )
             add_ebs = True
             _logger.info("attaching EBS volume size %s", ebs_storage_capacity)
-
 
     node_selector = team_constants.node_selector(node_type)
 
@@ -518,8 +525,8 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
         "app": f"orbit-runner",
         "orbit/node-type": node_type,
     }
-    if node_type == 'ec2':
-        labels["orbit/attach-security-group"] ="yes"
+    if node_type == "ec2":
+        labels["orbit/attach-security-group"] = "yes"
     team_constants: TeamConstants = TeamConstants()
     (job_spec, pvc) = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
     load_kube_config()
