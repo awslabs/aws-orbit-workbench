@@ -14,10 +14,12 @@
 
 import json
 import logging
+import os
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
+
 import botocore
 from kubernetes import config
-import os
+
 from aws_orbit import bundle, remote, sh, utils
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.context import load_context_from_ssm
@@ -37,7 +39,7 @@ def read_user_profiles_ssm(env_name: str, team_name: str) -> PROFILES_TYPE:
     client = utils.boto3_client(service_name="ssm")
     try:
         json_str: str = client.get_parameter(Name=ssm_profile_name)["Parameter"]["Value"]
-    except botocore.errorfactory.ParameterNotFound as e:
+    except botocore.errorfactory.ParameterNotFound:
         _logger.info("No team profile found, returning only default profiles")
         pass
 
@@ -107,9 +109,12 @@ def list_profiles(env: str, team: str, debug: bool) -> None:
 
     print("Admin deployed profiles:")
     from aws_orbit_sdk import common_pod_specification
+
     os.environ["AWS_ORBIT_ENV"] = env
     os.environ["AWS_ORBIT_TEAM_SPACE"] = team
-    deployed_profiles : common_pod_specification.PROFILES_TYPE = common_pod_specification.TeamConstants().deployed_profiles()
+    deployed_profiles: common_pod_specification.PROFILES_TYPE = (
+        common_pod_specification.TeamConstants().deployed_profiles()
+    )
     print(json.dumps(deployed_profiles, indent=4, sort_keys=True))
 
 
