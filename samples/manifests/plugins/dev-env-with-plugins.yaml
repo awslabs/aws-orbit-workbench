@@ -57,7 +57,7 @@ Teams:
     GrantSudo: false
     JupyterhubInboundRanges:
     - 0.0.0.0/0
-    Plugins: !include Plugins.yaml
+    Plugins: !include plugins.yaml
     EfsLifeCycle: AFTER_7_DAYS
 -   Name: lake-user
     Policies:
@@ -65,6 +65,6 @@ Teams:
     JupyterhubInboundRanges:
     - 0.0.0.0/0
     GrantSudo: true
-    Profiles: !include lake-user-Profiles.json
-    Plugins: !include Plugins.yaml
+    Profiles: !include lake-user-profiles.json
+    Plugins: !include plugins.yaml
     EfsLifeCycle: AFTER_7_DAYS

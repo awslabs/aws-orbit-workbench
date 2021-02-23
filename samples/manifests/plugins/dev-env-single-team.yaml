@@ -57,5 +57,5 @@ Teams:
     GrantSudo: false
     JupyterhubInboundRanges:
     - 0.0.0.0/0
-    Plugins: !include Plugins.yaml
+    Plugins: !include plugins.yaml
     EfsLifeCycle: AFTER_7_DAYS
