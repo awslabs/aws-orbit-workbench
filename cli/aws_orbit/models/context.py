@@ -422,7 +422,6 @@ def load_context_from_manifest(manifest: "Manifest") -> Context:
             codeartifact_domain=manifest.codeartifact_domain,
             codeartifact_repository=manifest.codeartifact_repository,
             scratch_bucket_arn=manifest.scratch_bucket_arn,
-            eks_system_masters_roles=manifest.eks_system_masters_roles,
             networking=create_networking_context_from_manifest(networking=manifest.networking),
             images=manifest.images,
             user_pool_id=manifest.user_pool_id,
@@ -431,7 +430,8 @@ def load_context_from_manifest(manifest: "Manifest") -> Context:
             teams=create_teams_context_from_manifest(manifest=manifest),
             shared_efs_fs_id=manifest.shared_efs_fs_id,
             shared_efs_sg_id=manifest.shared_efs_sg_id,
-            managed_nodegroups=manifest.managed_nodegroups,
+            managed_nodegroups=[],
+            eks_system_masters_roles=[],
         )
     context.fetch_toolkit_data()
     dump_context_to_ssm(context=context)
