@@ -17,8 +17,8 @@ paths=(
 for path in "${paths[@]}"; do
     cd $path
 
-    pip-compile --upgrade
-    pip-compile --upgrade -r requirements-dev.in
+    pip-compile 
+    pip-compile -r requirements-dev.in
     
     sed -i "s|file://$path|.|g" requirements-dev.txt
 
