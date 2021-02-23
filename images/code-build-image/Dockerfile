@@ -21,7 +21,7 @@ RUN apt -y update && \
 
 RUN npm install -g aws-cdk@$CDK_VERSION yarn
 
-RUN pip install kubernetes~=11.0.0 \
+RUN pip install kubernetes~=12.0.0 \
                 aws_cdk.core~=$CDK_VERSION \
                 aws-cdk.aws-ec2~=$CDK_VERSION \
                 aws-cdk.aws-s3~=$CDK_VERSION \
