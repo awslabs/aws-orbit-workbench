@@ -9,11 +9,10 @@ cat <<EOF |  orbit run notebook --env dev-env --team $TEST_TEAM_SPACE --user tes
               "p_concurrent": "1"
           },
           "compute_type": "ecs",
-          "node_type": "fargate",
-          "storage_capacity": "20Gi"
+          "node_type": "fargate"
       },
       "tasks":  [{
-          "notebookName": "sanity-good.ipynb",
+          "notebookName": "sanity-bad.ipynb",
           "sourcePath": "/efs/shared/samples/notebooks/Z-Tests",
           "targetPath": "/efs/shared/regression/notebooks/Z-Tests",
           "params": {
@@ -23,4 +22,11 @@ cat <<EOF |  orbit run notebook --env dev-env --team $TEST_TEAM_SPACE --user tes
  }
 EOF
 
-echo $?
+ret=$?
+if [ $ret -eq 0 ]
+then
+    echo "bad-sanity-test failed"
+    exit 255
+else
+    echo "bad-sanity-test passed"
+fi

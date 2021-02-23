@@ -77,7 +77,7 @@ class IamBuilder:
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=["ssm:Describe*", "ssm:Get*"],
+                    actions=["ssm:Get*"],
                     resources=[
                         f"arn:{partition}:ssm:{region}:{account}:parameter/orbit*",
                         f"arn:{partition}:ssm:{region}:{account}:parameter/emr_launch/",
@@ -122,6 +122,7 @@ class IamBuilder:
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
+                        "ssm:Describe*",
                         "codeartifact:Describe*",
                         "codeartifact:Get*",
                         "codeartifact:List*",
@@ -342,7 +343,6 @@ class IamBuilder:
                 iam.ServicePrincipal("ec2.amazonaws.com"),
                 iam.ServicePrincipal("glue.amazonaws.com"),
                 iam.ServicePrincipal("sagemaker.amazonaws.com"),
-                iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
                 iam.ServicePrincipal("redshift.amazonaws.com"),
                 iam.ServicePrincipal("codepipeline.amazonaws.com"),
                 iam.ServicePrincipal("personalize.amazonaws.com"),
@@ -367,17 +367,6 @@ class IamBuilder:
                 ),
             )
         return role
-
-    @staticmethod
-    def build_ecs_role(scope: core.Construct) -> iam.Role:
-        return iam.Role(
-            scope=scope,
-            id="ecs_execution_role",
-            assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
-            managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AmazonECSTaskExecutionRolePolicy")
-            ],
-        )
 
     @staticmethod
     def get_kms_key_scratch_bucket(context: "Context") -> Optional[str]:
@@ -408,12 +397,3 @@ class IamBuilder:
             if "ServerSideEncryptionConfigurationNotFoundError" in str(e):
                 return None
             raise e
-
-    @staticmethod
-    def build_container_runner_role(scope: core.Construct, context: "Context", team_name: str) -> iam.Role:
-        return iam.Role(
-            scope=scope,
-            id="container_runner_role",
-            role_name=f"orbit-{context.name}-{team_name}-runner",
-            assumed_by=iam.ServicePrincipal("states.amazonaws.com"),
-        )
