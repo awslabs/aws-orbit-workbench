@@ -252,13 +252,16 @@ def generate_spec(
         "eksctl version",
     ]
 
-    # Orbit Workbench CLI
     if context.codeartifact_domain and context.codeartifact_repository:
         install.append(
             "aws codeartifact login --tool pip "
             f"--domain {context.codeartifact_domain} "
             f"--repository {context.codeartifact_repository}"
         )
+        # Adding Codeartifact based pip.conf, later used for Dockerfile build.
+        install.append("cp ~/.config/pip/pip.conf .")
+
+    # Orbit Workbench CLI
     install.append("pip install aws-orbit")
 
     # Plugins
@@ -266,8 +269,9 @@ def generate_spec(
         for team_context in context.teams:
             for plugin in team_context.plugins:
                 if plugin.path is not None and plugin.module is not None:
-                    install.append(f"ls -la ./{team_context.name}/{plugin.module}/")
-                    install.append(f"pip install -e ./{team_context.name}/{plugin.module}/")
+                    plugin_module_name = (plugin.module).replace("_", "-")
+                    install.append(f"pip install --upgrade aws-orbit-{plugin_module_name}")
+
         if changeset is not None:
             for plugin_changeset in changeset.plugin_changesets:
 
@@ -275,19 +279,20 @@ def generate_spec(
                 for plugin_name in plugin_changeset.old:
                     module: str = plugin_changeset.old_modules[plugin_name]
                     if plugin_name not in plugin_changeset.new and module is not None:
-                        install.append(f"ls -la ./{plugin_changeset.team_name}/{module}/")
-                        install.append(f"pip install -e ./{plugin_changeset.team_name}/{module}/")
+                        plugin_module_name = (module).replace("_", "-")
+                        install.append(f"pip install --upgrade aws-orbit-{plugin_module_name}")
 
                 # OLD
                 for plugin_name in plugin_changeset.new:
                     module = plugin_changeset.new_modules[plugin_name]
                     if plugin_name not in plugin_changeset.old and module is not None:
-                        install.append(f"ls -la ./{plugin_changeset.team_name}/{module}/")
-                        install.append(f"pip install -e ./{plugin_changeset.team_name}/{module}/")
+                        plugin_module_name = (module).replace("_", "-")
+                        install.append(f"pip install --upgrade aws-orbit-{plugin_module_name}")
 
     if cmds_install is not None:
         install += cmds_install
-    return {
+
+    return_spec: SPEC_TYPE = {
         "version": 0.2,
         "phases": {
             "install": {
@@ -299,3 +304,5 @@ def generate_spec(
             "post_build": {"commands": post},
         },
     }
+    _logger.debug(return_spec)
+    return return_spec
