@@ -43,10 +43,10 @@ setup(
         "pyyaml-include~=1.2",
         "jsonpath-ng~=1.5.0",
         "marshmallow_dataclass[enum,union]~=8.3.0",
+        "cfn-flip~=1.2.3",
     ],
     entry_points={"console_scripts": ["orbit = aws_orbit.__main__:main"]},
     classifiers=[
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],

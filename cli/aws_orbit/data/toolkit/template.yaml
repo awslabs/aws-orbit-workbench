@@ -211,10 +211,10 @@ Resources:
               - arn:aws:s3:::orbit-${env_name}-toolkit-${account_id}-${deploy_id}
               - arn:aws:s3:::orbit-${env_name}-cdk-toolkit-${account_id}-${deploy_id}/*
               - arn:aws:s3:::orbit-${env_name}-cdk-toolkit-${account_id}-${deploy_id}
-              - arn:aws:s3:::orbit-${env_name}-demo-lake-${account_id}-${deploy_id}/*
-              - arn:aws:s3:::orbit-${env_name}-demo-lake-${account_id}-${deploy_id}
-              - arn:aws:s3:::orbit-${env_name}-secured-demo-lake-${account_id}-${deploy_id}/*
-              - arn:aws:s3:::orbit-${env_name}-secured-demo-lake-${account_id}-${deploy_id}
+          - Effect: Allow
+            Action:
+              - s3:GetBucketEncryption
+            Resource: "*"
           - Effect: Allow
             Action:
               - iam:CreateRole
@@ -290,6 +290,7 @@ Resources:
         - Ref: OrbitAdminPolicyOther
         - Ref: OrbitAdminPolicyIAMS3
         - Ref: RedshiftPluginManagedPolicy
+        - arn
       RoleName: orbit-${env_name}-admin
       MaxSessionDuration: 10000
       AssumeRolePolicyDocument:

@@ -18,6 +18,9 @@ import shutil
 from typing import TYPE_CHECKING
 
 from aws_orbit import ORBIT_CLI_ROOT
+from cfn_tools import load_yaml
+from cfn_flip import yaml_dumper
+import yaml
 
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context
@@ -39,7 +42,7 @@ def synth(context: "Context") -> str:
 
     _logger.debug("Reading %s", MODEL_FILENAME)
     with open(MODEL_FILENAME, "r") as file:
-        content: str = file.read()
+        template = load_yaml(file)
     _logger.debug(
         "manifest.name: %s | manifest.account_id: %s | manifest.region: %s | manifest.deploy_id: %s",
         context.name,
@@ -47,6 +50,9 @@ def synth(context: "Context") -> str:
         context.region,
         context.toolkit.deploy_id,
     )
+
+    # template["Resources"]["AdminRole"]["Properties"]["ManagedPolicyArns"].append()
+    content: str = yaml.dump(template, Dumper=yaml_dumper.get_dumper())
     content = content.replace("$", "").format(
         env_name=context.name,
         account_id=context.account_id,

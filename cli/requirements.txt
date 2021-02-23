@@ -11,8 +11,12 @@ botocore==1.20.7
     #   aws-orbit (setup.py)
     #   boto3
     #   s3transfer
-click==7.1.2
+cfn-flip==1.2.3
     # via aws-orbit (setup.py)
+click==7.1.2
+    # via
+    #   aws-orbit (setup.py)
+    #   cfn-flip
 decorator==4.4.2
     # via jsonpath-ng
 jmespath==0.10.0
@@ -40,11 +44,13 @@ pyyaml-include==1.2.post2
 pyyaml==5.3.1
     # via
     #   aws-orbit (setup.py)
+    #   cfn-flip
     #   pyyaml-include
 s3transfer==0.3.4
     # via boto3
 six==1.15.0
     # via
+    #   cfn-flip
     #   jsonpath-ng
     #   python-dateutil
 tqdm==4.56.2
