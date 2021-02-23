@@ -120,24 +120,29 @@ def build_profile(env: str, team: str, profile: str, debug: bool) -> None:
         msg_ctx.info("Retrieving existing profiles")
         profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
         _logger.debug("Existing user profiles for team %s: %s", team, profiles)
-        profile_json = cast(Dict[str, Any], json.loads(profile))
-        if "display_name" not in profile_json:
-            raise Exception("Profile document must include property 'display_name'")
+        profiles_new = json.loads(profile)
+        if isinstance(profiles_new, dict):
+            profile_json_list = [cast(Dict[str, Any], profiles_new)]
+        else:
+            profile_json_list = cast(List[Dict[str, Any]], profiles_new)
 
-        profile_name = profile_json["display_name"]
-        _logger.debug(f"new profile name: {profile_name}")
-        _logger.debug(f"profiles: {profile.__class__} , {profiles}")
-        for p in profiles:
-            if p["display_name"] == profile_name:
-                _logger.info("Profile exists, updating...")
-                profiles.remove(p)
-                break
+        for profile_json in profile_json_list:
+            profile_name = profile_json["display_name"]
+            if "display_name" not in profile_json:
+                raise Exception("Profile document must include property 'display_name'")
 
-        profiles.append(profile_json)
-        _logger.debug("Updated user profiles for team %s: %s", team, profiles)
+            _logger.debug(f"new profile name: {profile_name}")
+            _logger.debug(f"profiles: {profile.__class__} , {profiles}")
+            for p in profiles:
+                if p["display_name"] == profile_name:
+                    _logger.info("Profile exists, updating...")
+                    profiles.remove(p)
+                    break
+
+            profiles.append(profile_json)
+            msg_ctx.tip(f"Profile added {profile_name}")
+            _logger.debug("Updated user profiles for team %s: %s", team, profiles)
         write_context_ssm(profiles, env, team)
-        restart_jupyterhub(env, team, msg_ctx)
-        msg_ctx.tip("Profile added")
         msg_ctx.progress(100)
 
 
