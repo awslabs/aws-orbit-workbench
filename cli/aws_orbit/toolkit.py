@@ -17,6 +17,8 @@ import os
 import shutil
 from typing import TYPE_CHECKING
 
+from aws_cdk.aws_iam import Policy
+
 from aws_orbit import ORBIT_CLI_ROOT
 from cfn_tools import load_yaml
 from cfn_flip import yaml_dumper
@@ -51,7 +53,11 @@ def synth(context: "Context") -> str:
         context.toolkit.deploy_id,
     )
 
-    # template["Resources"]["AdminRole"]["Properties"]["ManagedPolicyArns"].append()
+    if context.policies:
+        template["Resources"]["AdminRole"]["Properties"]["ManagedPolicyArns"].extend(
+            [f"arn:aws:iam::{context.account_id}:policy/{policy}" for policy in context.policies]
+        )
+
     content: str = yaml.dump(template, Dumper=yaml_dumper.get_dumper())
     content = content.replace("$", "").format(
         env_name=context.name,

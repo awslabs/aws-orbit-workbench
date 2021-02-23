@@ -236,6 +236,7 @@ class Context:
     cluster_sg_id: Optional[str] = None
     cluster_pod_sg_id: Optional[str] = None
     managed_nodegroups: List[ManagedNodeGroupManifest] = field(default_factory=list)
+    policies: Optional[str] = None
 
     def get_team_by_name(self, name: str) -> Optional[TeamContext]:
         for t in self.teams:
@@ -402,6 +403,7 @@ def load_context_from_manifest(manifest: "Manifest") -> Context:
         context.shared_efs_fs_id = manifest.shared_efs_fs_id
         context.shared_efs_sg_id = manifest.shared_efs_sg_id
         context.scratch_bucket_arn = manifest.scratch_bucket_arn
+        context.policies = manifest.policies
         for team_manifest in manifest.teams:
             team_context: Optional[TeamContext] = context.get_team_by_name(name=team_manifest.name)
             if team_context:
@@ -435,6 +437,7 @@ def load_context_from_manifest(manifest: "Manifest") -> Context:
             shared_efs_fs_id=manifest.shared_efs_fs_id,
             shared_efs_sg_id=manifest.shared_efs_sg_id,
             managed_nodegroups=manifest.managed_nodegroups,
+            policies=manifest.policies,
         )
     context.fetch_toolkit_data()
     dump_context_to_ssm(context=context)

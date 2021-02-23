@@ -201,6 +201,7 @@ class Manifest:
     shared_efs_fs_id: Optional[str] = None
     shared_efs_sg_id: Optional[str] = None
     managed_nodegroups: List[ManagedNodeGroupManifest] = field(default_factory=list)
+    policies: Optional[str] = None
 
     def get_team_by_name(self, name: str) -> Optional[TeamManifest]:
         for t in self.teams:
