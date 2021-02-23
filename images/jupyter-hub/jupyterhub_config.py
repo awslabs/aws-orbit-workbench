@@ -90,7 +90,7 @@ c.KubeSpawner.storage_access_modes = ["ReadWriteOnce"]
 c.KubeSpawner.storage_capacity = "5Gi"
 c.KubeSpawner.storage_pvc_ensure = True
 c.KubeSpawner.extra_annotations = {"AWS_ORBIT_TEAM_SPACE": TEAM, "AWS_ORBIT_ENV": ENV_NAME}
-pvc_name_template = "claim-{username}"
+pvc_name_template = "orbit-{username}-{servername}"
 c.KubeSpawner.pvc_name_template = pvc_name_template
 c.KubeSpawner.volumes = [
     {"name": "efs-volume", "persistentVolumeClaim": {"claimName": "jupyterhub"}},
@@ -197,6 +197,13 @@ profile_list_default = [
         },
     },
 ]
+
+# reset the profile list so its loaded every time from SSM
+def userdata_hook(spawner, auth_state):
+    spawner._profile_list = None
+
+
+c.Spawner.auth_state_hook = userdata_hook
 
 
 def per_user_profiles(spawner):
