@@ -162,7 +162,7 @@ def build_image(
         context: "Context" = load_context_from_ssm(env_name=env)
         msg_ctx.info("Manifest loaded")
         if cfn.does_stack_exist(stack_name=f"orbit-{context.name}") is False:
-            msg_ctx.error("Please, deploy your environment before deploy any addicional docker image")
+            msg_ctx.error("Please, deploy your environment before deploying any additional docker image")
             return
         msg_ctx.progress(3)
 
