@@ -314,7 +314,7 @@ def _add_env_var_injector(tag: str = "!ENV") -> None:
     loader.add_constructor(tag, constructor_env_variables)  # type: ignore
 
 
-def load_manifest_from_file(filename: str) -> Manifest:
+def load_manifest_from_file(filename: str, name_prefix: Optional[str] = None) -> Manifest:
     _logger.debug("Loading manifest file (%s)", filename)
     filepath = os.path.abspath(filename)
     _logger.debug("filepath: %s", filepath)
@@ -325,7 +325,10 @@ def load_manifest_from_file(filename: str) -> Manifest:
     _add_env_var_injector()
     with open(filepath, "r") as f:
         raw: Dict[str, Any] = cast(Dict[str, Any], yaml.safe_load(f))
+    _logger.debug("name_prefix: %s", name_prefix)
     _logger.debug("raw: %s", raw)
+    if name_prefix:
+        raw["Name"] = f"{name_prefix}-{raw['Name']}"
     manifest: Manifest = cast(Manifest, Manifest.Schema().load(data=raw, many=False, partial=False, unknown="RAISE"))
     dump_manifest_to_ssm(manifest=manifest)
     return manifest

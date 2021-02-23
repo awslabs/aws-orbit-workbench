@@ -121,13 +121,13 @@ def deploy_foundation(
         msg_ctx.progress(2)
 
         if filename:
-            manifest: "Manifest" = load_manifest_from_file(filename=filename)
+            manifest: "Manifest" = load_manifest_from_file(filename=filename, name_prefix="foundation")
             if name or codeartifact_domain or codeartifact_repository:
                 msg_ctx.warn(f'Reading parameters from {filename}, "name", "codeartifact-domain", '
                 'and "codeartifact-repository" ignored.')
         elif name:
             manifest: Manifest = Manifest(
-                name=name,
+                name=f"foundation-{name}",
                 codeartifact_domain=codeartifact_domain,
                 codeartifact_repository=codeartifact_repository
             )
