@@ -89,6 +89,11 @@ def cleanup_env(env_name: str) -> None:
     delete_parameters(parameters=pars)
 
 
+def cleanup_teams(env_name: str) -> None:
+    pars: List[str] = list_parameters(prefix=f"/orbit/{env_name}/teams/")
+    delete_parameters(parameters=pars)
+
+
 def cleanup_by_suffix(env_name: str, suffix: str) -> None:
     pars: List[str] = [p for p in list_parameters(prefix=f"/orbit/{env_name}/") if p.endswith(suffix)]
     delete_parameters(parameters=pars)

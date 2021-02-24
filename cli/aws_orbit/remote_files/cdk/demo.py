@@ -315,6 +315,8 @@ class DemoStack(Stack):
             "efs": ec2.InterfaceVpcEndpointAwsService.ELASTIC_FILESYSTEM,
             "elb": ec2.InterfaceVpcEndpointAwsService.ELASTIC_LOAD_BALANCING,
             "autoscaling": ec2.InterfaceVpcEndpointAwsService("autoscaling"),
+            "cloudformation_endpoint": ec2.InterfaceVpcEndpointAwsService("cloudformation"),
+            "codebuild_endpoint": ec2.InterfaceVpcEndpointAwsService("codebuild"),
         }
 
         for name, gateway_vpc_endpoint_service in vpc_gateway_endpoints.items():

@@ -32,12 +32,10 @@ from aws_cdk.core import App, Construct, Environment, IConstruct, Stack, Tags
 from aws_orbit.models.changeset import load_changeset_from_ssm
 from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.models.manifest import load_manifest_from_ssm
-from aws_orbit.remote_files.cdk.team_builders._lambda import LambdaBuilder
 from aws_orbit.remote_files.cdk.team_builders.ec2 import Ec2Builder
-from aws_orbit.remote_files.cdk.team_builders.ecs import EcsBuilder
+from aws_orbit.remote_files.cdk.team_builders.ecr import EcrBuilder
 from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
 from aws_orbit.remote_files.cdk.team_builders.iam import IamBuilder
-from aws_orbit.remote_files.cdk.team_builders.stepfunctions import StateMachineBuilder
 
 if TYPE_CHECKING:
     from aws_orbit.models.changeset import Changeset
@@ -171,67 +169,9 @@ class Team(Stack):
             scope=self, team_name=team_name, shared_fs=self.shared_fs
         )
 
-        self.ecs_cluster = EcsBuilder.build_cluster(scope=self, context=context, team_name=team_name, vpc=self.i_vpc)
-        self.ecr_image = EcsBuilder.build_ecr_image(scope=self, context=context, image=self.image)
-        self.ecr_image_spark = EcsBuilder.build_ecr_image_spark(scope=self, context=context, image=self.image)
-        self.ecs_execution_role = IamBuilder.build_ecs_role(scope=self)
-        self.ecs_task_definition = EcsBuilder.build_task_definition(
-            scope=self,
-            context=context,
-            team_name=team_name,
-            ecs_execution_role=self.ecs_execution_role,
-            ecs_task_role=self.role_eks_pod,
-            file_system=self.shared_fs,
-            fs_accesspoint=self.efs_ap,
-            image=self.ecr_image,
-        )
-        self.container_runner_role = IamBuilder.build_container_runner_role(
-            scope=self, context=context, team_name=team_name
-        )
-        self.ecs_fargate_runner = StateMachineBuilder.build_ecs_run_container_state_machine(
-            scope=self,
-            context=context,
-            team_name=team_name,
-            cluster=self.ecs_cluster,
-            task_definition=self.ecs_task_definition,
-            team_security_group=self.team_security_group,
-            subnets=self.i_private_subnets
-            if self.context.networking.data.internet_accessible
-            else self.i_isolated_subnets,
-            role=self.container_runner_role,
-            scratch_bucket=self.scratch_bucket,
-        )
-        self.eks_k8s_api = StateMachineBuilder.build_eks_k8s_api_state_machine(
-            scope=self,
-            context=context,
-            team_name=team_name,
-            role=self.container_runner_role,
-        )
-        self.eks_fargate_runner = StateMachineBuilder.build_eks_run_container_state_machine(
-            scope=self,
-            context=context,
-            team_name=team_name,
-            image=self.ecr_image,
-            role=self.container_runner_role,
-            node_type="fargate",
-        )
-        self.eks_ec2_runner = StateMachineBuilder.build_eks_run_container_state_machine(
-            scope=self,
-            context=context,
-            team_name=team_name,
-            image=self.ecr_image,
-            role=self.container_runner_role,
-            node_type="ec2",
-        )
+        self.ecr_image = EcrBuilder.build_ecr_image(scope=self, context=context, image=self.image)
+        self.ecr_image_spark = EcrBuilder.build_ecr_image_spark(scope=self, context=context, image=self.image)
 
-        self.container_runner = LambdaBuilder.build_container_runner(
-            scope=self,
-            context=context,
-            team_name=team_name,
-            ecs_fargate_runner=self.ecs_fargate_runner,
-            eks_fargate_runner=self.eks_fargate_runner,
-            eks_ec2_runner=self.eks_ec2_runner,
-        )
         team_ssm_parameter_name: str = f"/orbit/{context.name}/teams/{self.team_name}/team"
         self.context_parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,
@@ -242,9 +182,6 @@ class Team(Stack):
                     "EfsApId": self.efs_ap.access_point_id,
                     "EksPodRoleArn": self.role_eks_pod.role_arn,
                     "ScratchBucket": self.scratch_bucket.bucket_name,
-                    "EcsClusterName": self.ecs_cluster.cluster_name,
-                    "ContainerRunnerArn": self.container_runner.function_arn,
-                    "EksK8sApiArn": self.eks_k8s_api.state_machine_arn,
                     "TeamKmsKeyArn": self.team_kms_key.key_arn,
                     "TeamSecurityGroupId": self.team_security_group.security_group_id,
                 }

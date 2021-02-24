@@ -318,15 +318,6 @@ def build() -> None:
     required=False,
 )
 @click.option(
-    "--region",
-    "-r",
-    type=str,
-    default=None,
-    help="AWS Region name (e.g. us-east-1). If None, it will be infered.",
-    show_default=False,
-    required=False,
-)
-@click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
@@ -339,7 +330,6 @@ def deploy_image_cli(
     script: Optional[str],
     team: Optional[List[str]],
     build_arg: Optional[List[str]],
-    region: Optional[str],
     debug: bool,
 ) -> None:
     """Build and Deploy a new Docker image into ECR."""
@@ -350,11 +340,8 @@ def deploy_image_cli(
     _logger.debug("name: %s", name)
     _logger.debug("script: %s", script)
     _logger.debug("teams: %s", team)
-    _logger.debug("region: %s", region)
     _logger.debug("debug: %s", debug)
-    build_image(
-        dir=dir, name=name, env=env, script=script, teams=team, build_args=build_arg, region=region, debug=debug
-    )
+    build_image(dir=dir, name=name, env=env, script=script, teams=team, build_args=build_arg, debug=debug)
 
 
 @build.command(name="profile")
@@ -515,6 +502,17 @@ def run_container() -> None:
         import aws_orbit_sdk  # noqa: F401
     except ImportError:
         raise click.ClickException('The "utils" submodule is required to use "run" commands')
+    pass
+    try:
+        from kubespawner.objects import make_pod  # noqa: F401
+    except ImportError:
+        raise click.ClickException(
+            (
+                'The "jupyterhub-kubespawner" package is required to use "run" commands.'
+                'Please install it with "pip install --no-deps jupyterhub-kubespawner~=0.15.0" command,'
+                'or install our "kubespawner" submodule'
+            )
+        )
     pass
 
 

@@ -77,7 +77,7 @@ class IamBuilder:
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=["ssm:Describe*", "ssm:Get*"],
+                    actions=["ssm:Get*"],
                     resources=[
                         f"arn:{partition}:ssm:{region}:{account}:parameter/orbit*",
                         f"arn:{partition}:ssm:{region}:{account}:parameter/emr_launch/",
@@ -122,6 +122,7 @@ class IamBuilder:
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
+                        "ssm:Describe*",
                         "codeartifact:Describe*",
                         "codeartifact:Get*",
                         "codeartifact:List*",
@@ -222,6 +223,94 @@ class IamBuilder:
                         f"arn:{partition}:lambda:{region}:{account}:function:orbit-{env_name}-token-validation",
                     ],
                 ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "cloudformation:DescribeStacks",
+                    ],
+                    resources=[
+                        f"arn:{partition}:cloudformation:{region}:{account}:stack/orbit-{env_name}/*",
+                    ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "ssm:GetParameters",
+                        "ssm:DescribeParameters",
+                        "ssm:GetParameter",
+                        "ssm:DescribeParameter",
+                    ],
+                    resources=[
+                        f"arn:{partition}:ssm:{region}:{account}:parameter/orbit/{env_name}/teams/{team_name}/*",
+                    ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "ssm:DeleteParameter",
+                        "ssm:DeleteParameters",
+                    ],
+                    resources=[
+                        f"arn:{partition}:ssm:{region}:{account}:parameter/orbit/{env_name}/changeset",
+                        f"arn:{partition}:ssm:{region}:{account}:parameter/orbit/{env_name}/manifest",
+                    ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "ssm:DescribeParameters",
+                    ],
+                    resources=[f"arn:{partition}:ssm:{region}:{account}:*"],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["s3:Put*"],
+                    resources=[
+                        f"arn:{partition}:s3:::{context.toolkit.s3_bucket}",
+                        f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/cli/remote/*",
+                    ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["codebuild:StartBuild", "codebuild:BatchGetBuilds"],
+                    resources=[f"arn:{partition}:codebuild:{region}:{account}:project/orbit-{env_name}"],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "logs:CreateLogStream",
+                        "logs:CreateLogGroup",
+                        "logs:DescribeLogStreams",
+                        "logs:PutLogEvents",
+                    ],
+                    resources=[
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}:log-stream:*"  # noqa
+                    ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "logs:List*",
+                        "logs:Describe*",
+                        "logs:StartQuery",
+                        "logs:StopQuery",
+                        "logs:Get*",
+                        "logs:Filter*",
+                        "events:*",
+                    ],
+                    resources=[
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}*:log-stream:*",  # noqa
+                    ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "ecr:InitiateLayerUpload",
+                    ],
+                    resources=[
+                        f"arn:{partition}:ecr:{region}:{account}:repository/*",
+                    ],
+                ),
             ],
         )
 
@@ -254,7 +343,6 @@ class IamBuilder:
                 iam.ServicePrincipal("ec2.amazonaws.com"),
                 iam.ServicePrincipal("glue.amazonaws.com"),
                 iam.ServicePrincipal("sagemaker.amazonaws.com"),
-                iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
                 iam.ServicePrincipal("redshift.amazonaws.com"),
                 iam.ServicePrincipal("codepipeline.amazonaws.com"),
                 iam.ServicePrincipal("personalize.amazonaws.com"),
@@ -279,17 +367,6 @@ class IamBuilder:
                 ),
             )
         return role
-
-    @staticmethod
-    def build_ecs_role(scope: core.Construct) -> iam.Role:
-        return iam.Role(
-            scope=scope,
-            id="ecs_execution_role",
-            assumed_by=iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
-            managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AmazonECSTaskExecutionRolePolicy")
-            ],
-        )
 
     @staticmethod
     def get_kms_key_scratch_bucket(context: "Context") -> Optional[str]:
@@ -320,12 +397,3 @@ class IamBuilder:
             if "ServerSideEncryptionConfigurationNotFoundError" in str(e):
                 return None
             raise e
-
-    @staticmethod
-    def build_container_runner_role(scope: core.Construct, context: "Context", team_name: str) -> iam.Role:
-        return iam.Role(
-            scope=scope,
-            id="container_runner_role",
-            role_name=f"orbit-{context.name}-{team_name}-runner",
-            assumed_by=iam.ServicePrincipal("states.amazonaws.com"),
-        )

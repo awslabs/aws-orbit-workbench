@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, List, Optional, Tuple, cast
 
 from boto3 import client
 
-from aws_orbit import docker, sh
+from aws_orbit import docker, plugins, sh
 from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.remote_files import teams as team_utils
 from aws_orbit.utils import boto3_client
@@ -35,11 +35,14 @@ def build_image(args: Tuple[str, ...]) -> None:
     env: str = args[0]
     image_name: str = args[1]
     script: Optional[str] = args[2] if args[2] != "NO_SCRIPT" else None
-    teams: Optional[List[str]] = args[3].split(",") if args[3] != "NO_TEAMS" else None
+    teams: Optional[List[str]] = list(set(args[3].split(","))) if args[3] != "NO_TEAMS" else None
     build_args = args[4:]
 
     _logger.debug("args: %s", args)
     context: "Context" = load_context_from_ssm(env_name=env)
+
+    plugins.PLUGINS_REGISTRIES.load_plugins(context=context, plugin_changesets=[], teams_changeset=None)
+    _logger.debug("Plugins loaded")
 
     docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")

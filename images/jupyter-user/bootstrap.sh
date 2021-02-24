@@ -17,13 +17,19 @@
 
 set -ex
 
+if [ $UID -eq 0 ]; then
+  COMMAND=$0
+  COMMANDARGS="$(printf " %q" "${@}")"
+  exec sudo -E su jovyan -c "/usr/bin/bash -l $COMMAND $COMMANDARGS"
+  exit
+fi
+
 mkdir -p /efs/"$USERNAME"
 mkdir -p /efs/shared/scheduled/notebooks
 mkdir -p /efs/shared/scheduled/outputs
 mkdir -p /home/jovyan/tmp
 
 ln -s /efs/"$USERNAME"/ /home/jovyan/private
-ln -s /ebs/ /home/jovyan/ebs
 ln -s /efs/shared/ /home/jovyan/shared
 
 # Bootstrap
@@ -31,6 +37,7 @@ ln -s /efs/shared/ /home/jovyan/shared
 LOCAL_PATH="/home/jovyan/.orbit/bootstrap/scripts/"
 S3_PATH="s3://${AWS_ORBIT_S3_BUCKET}/teams/${AWS_ORBIT_TEAM_SPACE}/bootstrap/"
 
+export PATH=$PATH:/opt/conda/bin
 mkdir -p $LOCAL_PATH
 aws s3 cp $S3_PATH $LOCAL_PATH --recursive
 for filename in $(ls $LOCAL_PATH)
@@ -38,19 +45,5 @@ do
     echo "Running ${filename}"
     sh "${LOCAL_PATH}${filename}"
 done
-
-# Restore samples artifacts:
-
-LOCAL_PATH="/home/jovyan/private/samples"
-
-if [ ! -d $LOCAL_PATH ]; then
-    mkdir -p $LOCAL_PATH
-    TEAM_BUCKET=`aws ssm get-parameter --name /orbit/dev-env/teams/$ORBIT_TEAM_SPACE/context | jq -r '.Parameter' | jq -r '.Value' | jq -r '.["ScratchBucket"]'`
-
-    S3_PATH="s3://$TEAM_BUCKET/source/samples"
-
-    echo mkdir -p $LOCAL_PATH
-    echo aws s3 cp $S3_PATH $LOCAL_PATH --recursive
-fi
 
 rm -fR /home/jovyan/.aws

@@ -12,11 +12,16 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from io import open
+
 from setuptools import setup
 
+with open("VERSION", "r") as version_file:
+    version = version_file.read().strip()
+
 setup(
-    name="orbit-codecommit",
-    version="0.0b0",
+    name="aws-orbit-code-commit",
+    version=version,
     description="Orbit Workbench CodeCommit Plugin.",
     license="Apache License 2.0",
     packages=["code_commit"],

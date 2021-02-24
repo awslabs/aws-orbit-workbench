@@ -58,7 +58,9 @@ def dockerfile_injection(
     _logger.debug("Injecting CodeCommit plugin commands for team %s Image", team_context.name)
     return [
         "RUN pip install --upgrade jupyterlab-git",
-        "RUN jupyter lab build",
+        "RUN jupyter lab build --dev-build=False -y ",
+        "RUN jupyter lab clean -y",
+        "RUN npm cache clean --force",
     ]
 
 

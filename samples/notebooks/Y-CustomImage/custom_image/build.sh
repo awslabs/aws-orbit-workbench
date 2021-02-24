@@ -17,13 +17,21 @@
 
 set -ex
 
-LOCAL_NAME=my-custom-jupyter-user
-AWS_REPO_NAME=orbit-myenv-jupyter-user
+AWS_REPO_NAME=orbit-dev-env-jupyter-user
+
 REGION=$(aws configure get region)
 ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
 ECR_ADDRESS="${ACCOUNT_ID}".dkr.ecr."${REGION}".amazonaws.com
 REPO_ADDRESS="${ECR_ADDRESS}"/"${AWS_REPO_NAME}"
+echo $REGION
+echo $ACCOUNT_ID
+echo $ECR_ADDRESS
+echo $REPO_ADDRESS
 
 aws ecr get-login-password --region "${REGION}" | docker login --username AWS --password-stdin "${ECR_ADDRESS}"
+
 docker pull "${REPO_ADDRESS}"
-docker build --tag "${LOCAL_NAME}" .
+#docker build --tag "${CUSTOM_IMAGE_ADDRESS}" --build-arg SAMPLE_ARG=HELLO .
+
+docker images
+

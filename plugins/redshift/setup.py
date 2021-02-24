@@ -12,14 +12,19 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from setuptools import setup
+from io import open
+
+from setuptools import find_packages, setup
+
+with open("VERSION", "r") as version_file:
+    version = version_file.read().strip()
 
 setup(
-    name="redshift",
-    version="0.0b0",
+    name="aws-orbit-redshift",
+    version=version,
     description="Orbit Workbench Redshift Plugin.",
     license="Apache License 2.0",
-    packages=["redshift"],
+    packages=find_packages(include=["redshift", "redshift.*"]),
     python_requires=">=3.6, <3.9",
     install_requires=[
         "aws_cdk.core~=1.67.0",
@@ -33,5 +38,6 @@ setup(
         "aws-cdk-aws-sns~=1.67.0",
         "aws-cdk-aws-sns-subscriptions~=1.67.0",
     ],
+    package_data={"redshift": ["lambda_sources/redshift_db_creator/*.py"]},
     include_package_data=True,
 )

@@ -12,11 +12,16 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from io import open
+
 from setuptools import setup
 
+with open("VERSION", "r") as version_file:
+    version = version_file.read().strip()
+
 setup(
-    name="hello_world",
-    version="0.0b0",
+    name="aws-orbit-hello-world",
+    version=version,
     description="Minimal Orbit Workbench Plugin.",
     license="Apache License 2.0",
     packages=["hello_world"],

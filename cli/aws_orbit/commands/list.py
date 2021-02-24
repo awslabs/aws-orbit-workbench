@@ -44,15 +44,13 @@ def list_env(variable: str) -> None:
     ssm = utils.boto3_client("ssm")
     params = ssm.get_parameters_by_path(Path="/orbit", Recursive=True)["Parameters"]
 
-    _logger.debug(f"ssm /orbit parameters found {params}")
-
     env_info: Dict[str, str] = {}
     for p in params:
-        if not p["Name"].endswith("manifest") or "teams" in p["Name"]:
+        if not p["Name"].endswith("context") or "teams" in p["Name"]:
             continue
         env_name = p["Name"].split("/")[2]
-        _logger.debug(f"found env: {env_name}")
         context: "Context" = load_context_from_ssm(env_name=env_name)
+        _logger.debug(f"found env: {env_name}")
         teams_list: str = ",".join([x.name for x in context.teams])
         if variable == "landing-page":
             print(context.landing_page_url)

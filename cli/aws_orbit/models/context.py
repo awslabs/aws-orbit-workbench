@@ -171,9 +171,6 @@ class TeamContext:
         self.efs_ap_id = values["EfsApId"]
         self.eks_pod_role_arn = values["EksPodRoleArn"]
         self.scratch_bucket = values["ScratchBucket"]
-        self.ecs_cluster_name = values["EcsClusterName"]
-        self.container_runner_arn = values["ContainerRunnerArn"]
-        self.eks_k8s_api_arn = values["EksK8sApiArn"]
         self.team_kms_key_arn = values["TeamKmsKeyArn"]
         self.team_security_group_id = values["TeamSecurityGroupId"]
 
@@ -427,7 +424,6 @@ def load_context_from_manifest(manifest: "Manifest") -> Context:
             codeartifact_domain=manifest.codeartifact_domain,
             codeartifact_repository=manifest.codeartifact_repository,
             scratch_bucket_arn=manifest.scratch_bucket_arn,
-            eks_system_masters_roles=manifest.eks_system_masters_roles,
             networking=create_networking_context_from_manifest(networking=manifest.networking),
             images=manifest.images,
             user_pool_id=manifest.user_pool_id,
@@ -436,7 +432,8 @@ def load_context_from_manifest(manifest: "Manifest") -> Context:
             teams=create_teams_context_from_manifest(manifest=manifest),
             shared_efs_fs_id=manifest.shared_efs_fs_id,
             shared_efs_sg_id=manifest.shared_efs_sg_id,
-            managed_nodegroups=manifest.managed_nodegroups,
+            managed_nodegroups=[],
+            eks_system_masters_roles=[],
             policies=manifest.policies,
         )
     context.fetch_toolkit_data()

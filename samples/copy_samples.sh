@@ -16,14 +16,10 @@
 #
 
 set -ex
+LOCAL_PATH="/home/jovyan/shared/samples"
 
-LOCAL_NAME=my-custom-jupyter-user
-AWS_REPO_NAME=orbit-myenv-jupyter-user
-REGION=$(aws configure get region)
-ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
-ECR_ADDRESS="${ACCOUNT_ID}".dkr.ecr."${REGION}".amazonaws.com
-REPO_ADDRESS="${ECR_ADDRESS}"/"${AWS_REPO_NAME}"
+mkdir -p $LOCAL_PATH
+S3_PATH="s3://$AWS_ORBIT_S3_BUCKET/samples/"
 
-aws ecr get-login-password --region "${REGION}" | docker login --username AWS --password-stdin "${ECR_ADDRESS}"
-docker pull "${REPO_ADDRESS}"
-docker build --tag "${LOCAL_NAME}" .
+mkdir -p $LOCAL_PATH
+aws s3 sync $S3_PATH $LOCAL_PATH
