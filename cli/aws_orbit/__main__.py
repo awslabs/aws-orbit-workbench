@@ -288,15 +288,6 @@ def build() -> None:
     required=False,
 )
 @click.option(
-    "--region",
-    "-r",
-    type=str,
-    default=None,
-    help="AWS Region name (e.g. us-east-1). If None, it will be infered.",
-    show_default=False,
-    required=False,
-)
-@click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
@@ -309,7 +300,6 @@ def deploy_image_cli(
     script: Optional[str],
     team: Optional[List[str]],
     build_arg: Optional[List[str]],
-    region: Optional[str],
     debug: bool,
 ) -> None:
     """Build and Deploy a new Docker image into ECR."""
@@ -320,11 +310,8 @@ def deploy_image_cli(
     _logger.debug("name: %s", name)
     _logger.debug("script: %s", script)
     _logger.debug("teams: %s", team)
-    _logger.debug("region: %s", region)
     _logger.debug("debug: %s", debug)
-    build_image(
-        dir=dir, name=name, env=env, script=script, teams=team, build_args=build_arg, region=region, debug=debug
-    )
+    build_image(dir=dir, name=name, env=env, script=script, teams=team, build_args=build_arg, debug=debug)
 
 
 @build.command(name="profile")
