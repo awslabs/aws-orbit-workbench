@@ -111,16 +111,17 @@ def destroy_all(env: str, teams_only: bool, keep_demo: bool, debug: bool) -> Non
             msg_ctx.info("Env destroyed")
         msg_ctx.progress(95)
 
-        try:
-            if not teams_only and not keep_demo:
+        if teams_only is False and keep_demo is False:
+            try:
                 destroy_toolkit(env_name=context.name)
-        except botocore.exceptions.ClientError as ex:
-            error = ex.response["Error"]
-            if "does not exist" not in error["Message"]:
-                raise
-            _logger.debug(f"Skipping toolkit destroy: {error['Message']}")
-        if teams_only:
-            msg_ctx.info("Toolkit skipped")
-        else:
+            except botocore.exceptions.ClientError as ex:
+                error = ex.response["Error"]
+                if "does not exist" not in error["Message"]:
+                    raise
+                _logger.debug(f"Skipping toolkit destroy: {error['Message']}")
             msg_ctx.info("Toolkit destroyed")
+            ssm.cleanup_env(env_name=context.name)
+        else:
+            msg_ctx.info("Toolkit skipped")
+
         msg_ctx.progress(100)
