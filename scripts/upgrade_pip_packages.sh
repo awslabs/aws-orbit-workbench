@@ -22,6 +22,8 @@ for path in "${paths[@]}"; do
     pip-compile ${1} -r requirements-dev.in
     
     sed -i "s|file://$path|.|g" requirements-dev.txt
+    sed -i "/^--index-url.*$/d" requirements.txt requirements-dev.txt
+    sed -i '/^$/d' requirements.txt requirements-dev.txt
 
     if [[ "${path}" == *"plugins"* ]]; then
         sed -i "s|file://$ROOT_PATH|../..|g" requirements-dev.txt
