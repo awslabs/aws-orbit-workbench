@@ -17,8 +17,9 @@ paths=(
 for path in "${paths[@]}"; do
     cd $path
 
-    pip-compile 
-    pip-compile -r requirements-dev.in
+    # Where {1} is a cli arg. In our case, --upgrade, for the periodic task of upgrading all packages
+    pip-compile ${1}
+    pip-compile ${1} -r requirements-dev.in
     
     sed -i "s|file://$path|.|g" requirements-dev.txt
 
