@@ -178,6 +178,7 @@ def map_iam_identities(
                         f"--username {role} --group system:masters"
                     )
                     context.eks_system_masters_roles.append(role)
+                    dump_context_to_ssm(context=context)
                     break
             else:
                 _logger.debug(f"Skip adding existing IAM Identity Mapping - Role: {arn}")
@@ -193,6 +194,7 @@ def map_iam_identities(
                 _logger.debug(f"Removing IAM Identity Mapping - Role: {arn}")
                 sh.run(f"eksctl delete iamidentitymapping --cluster {cluster_name} --arn {arn} --all")
                 context.eks_system_masters_roles.remove(role)
+                dump_context_to_ssm(context=context)
 
 
 def get_pod_to_cluster_rules(group_id: str) -> List[IpPermission]:
@@ -297,10 +299,15 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
     _logger.debug("Synthetizing the EKSCTL Environment manifest")
     cluster_name = f"orbit-{context.name}"
-    current_nodegroups = context.managed_nodegroups
 
-    if not cfn.does_stack_exist(stack_name=final_eks_stack_name):
-        output_filename = generate_manifest(context=context, name=stack_name, nodegroups=current_nodegroups)
+    if cfn.does_stack_exist(stack_name=final_eks_stack_name) is False:
+
+        requested_nodegroups = []
+        if changeset and changeset.managed_nodegroups_changeset:
+            requested_nodegroups = changeset.managed_nodegroups_changeset.added_nodegroups
+        _logger.debug(f"requested nodegroups: {[n.name for n in requested_nodegroups]}")
+
+        output_filename = generate_manifest(context=context, name=stack_name, nodegroups=requested_nodegroups)
         eks_system_masters_changeset: Optional[ListChangeset] = ListChangeset(  # type: ignore
             added_values=context.eks_system_masters_roles, removed_values=[]
         )
@@ -314,7 +321,13 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
             f"eksctl create iamidentitymapping --cluster {cluster_name} --arn {arn} "
             f"--username {username} --group system:masters"
         )
+        context.managed_nodegroups = requested_nodegroups
+        dump_context_to_ssm(context=context)
     else:
+
+        current_nodegroups = context.managed_nodegroups
+        _logger.debug(f"current nodegroups: {[n.name for n in current_nodegroups]}")
+
         sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
         eks_system_masters_changeset = (
             changeset.eks_system_masters_roles_changeset
@@ -322,6 +335,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
             else None
         )
         if changeset and changeset.managed_nodegroups_changeset:
+
             if changeset.managed_nodegroups_changeset.added_nodegroups:
                 output_filename = generate_manifest(
                     context=context, name=stack_name, nodegroups=changeset.managed_nodegroups_changeset.added_nodegroups
@@ -336,6 +350,8 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
                 current_nodegroups.extend(
                     [ng for ng in changeset.managed_nodegroups_changeset.added_nodegroups if ng.name in nodegroups]
                 )
+                context.managed_nodegroups = current_nodegroups
+                dump_context_to_ssm(context=context)
 
             if changeset.managed_nodegroups_changeset.removed_nodegroups:
                 output_filename = generate_manifest(
@@ -353,9 +369,8 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
                     f"eksctl delete nodegroup -f {output_filename} --include={','.join(nodegroups)} "
                     "--approve --wait --drain=false --verbose 4"
                 )
-                current_nodegroups = [ng for ng in current_nodegroups if ng.name not in nodegroups]
-
-    context.managed_nodegroups = current_nodegroups
+                context.managed_nodegroups = [ng for ng in current_nodegroups if ng.name not in nodegroups]
+                dump_context_to_ssm(context=context)
 
     map_iam_identities(
         context=context,

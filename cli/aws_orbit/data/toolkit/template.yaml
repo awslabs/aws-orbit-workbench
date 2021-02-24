@@ -338,7 +338,7 @@ Resources:
         Type: NO_ARTIFACTS
       Environment:
         Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_MEDIUM
+        ComputeType: BUILD_GENERAL1_LARGE
         Image: aws/codebuild/standard:4.0
       Source:
         Type: NO_SOURCE
