@@ -57,8 +57,6 @@ def _create_dockerfile(context: "Context", team_context: "TeamContext", image_na
         base_image_cmd = f"FROM {team_context.base_image_address}"
     elif image_name == "jupyter-user-spark":
         base_image_cmd = f"FROM {team_context.base_spark_image_address}"
-    elif image_name == "gpu-jupyter-user":
-        base_image_cmd = f"FROM {team_context.base_gpu_image_address}"
     else:
         raise Exception(f"The image {image_name} is not deployable to individual Teams.")
 
@@ -177,7 +175,6 @@ def deploy(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> N
     for team_context in context.teams:
         _deploy_team_image(context=context, team_context=team_context, image="jupyter-user")
         _deploy_team_image(context=context, team_context=team_context, image="jupyter-user-spark")
-        _deploy_team_image(context=context, team_context=team_context, image="gpu-jupyter-user")
         _deploy_team_bootstrap(context=context, team_context=team_context)
 
 
@@ -192,10 +189,6 @@ def destroy(context: "Context", team_context: "TeamContext") -> None:
             ecr.delete_repo(repo=f"orbit-{context.name}-{team_context.name}-jupyter-user-spark")
         except Exception as ex:
             _logger.error("Skipping Team ECR Repository (Spark) deletion. Cause: %s", ex)
-        try:
-            ecr.delete_repo(repo=f"orbit-{context.name}-{team_context.name}-gpu-jupyter-user")
-        except Exception as ex:
-            _logger.error("Skipping Team ECR Repository deletion. Cause: %s", ex)
         if cfn.does_stack_exist(stack_name=team_context.stack_name):
             args: List[str] = [context.name, team_context.name]
             cdk.destroy(
