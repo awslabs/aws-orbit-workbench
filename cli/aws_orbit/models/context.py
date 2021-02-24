@@ -18,7 +18,7 @@ import concurrent.futures
 import json
 import logging
 from enum import IntEnum, auto
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Type, Union, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, Generic, List, Optional, Type, TypeVar, Union, cast
 
 import botocore.exceptions
 from dataclasses import field
@@ -29,6 +29,7 @@ from aws_orbit import utils
 from aws_orbit.models.common import BaseSchema
 from aws_orbit.models.manifest import (
     DataNetworkingManifest,
+    FoundationImagesManifest,
     FrontendNetworkingManifest,
     ImagesManifest,
     ManagedNodeGroupManifest,
@@ -192,6 +193,20 @@ class CdkToolkitManifest:
 
 
 @dataclass(base_schema=BaseSchema)
+class FoundationContext:
+    Schema: ClassVar[Type[Schema]] = Schema
+    name: str
+    account_id: str
+    region: str
+    toolkit: ToolkitManifest
+    cdk_toolkit: CdkToolkitManifest
+    codeartifact_domain: Optional[str] = None
+    codeartifact_repository: Optional[str] = None
+    images: ImagesManifest = FoundationImagesManifest()
+    policies: Optional[str] = None
+
+
+@dataclass(base_schema=BaseSchema)
 class Context:
     Schema: ClassVar[Type[Schema]] = Schema
     name: str
@@ -201,8 +216,6 @@ class Context:
     env_stack_name: str
     env_ssm_parameter_name: str
     eks_stack_name: str
-    demo_stack_name: str
-    demo_ssm_parameter_name: str
     ssm_parameter_name: str
     ssm_dockerhub_parameter_name: str
     toolkit: ToolkitManifest
@@ -388,57 +401,66 @@ def create_networking_context_from_manifest(networking: "NetworkingManifest") ->
     ctx.fetch_properties()
     return ctx
 
+T = TypeVar("T")
+V = TypeVar("V")
 
-def load_context_from_manifest(manifest: "Manifest") -> Context:
-    _logger.debug("Loading Context from manifest")
-    context_parameter_name: str = f"/orbit/{manifest.name}/context"
-    if ssm.does_parameter_exist(name=context_parameter_name):
-        context: Context = load_context_from_ssm(env_name=manifest.name)
-        context.images = manifest.images
-        context.networking = create_networking_context_from_manifest(networking=manifest.networking)
-        context.user_pool_id = manifest.user_pool_id
-        context.shared_efs_fs_id = manifest.shared_efs_fs_id
-        context.shared_efs_sg_id = manifest.shared_efs_sg_id
-        context.scratch_bucket_arn = manifest.scratch_bucket_arn
-        context.policies = manifest.policies
-        for team_manifest in manifest.teams:
-            team_context: Optional[TeamContext] = context.get_team_by_name(name=team_manifest.name)
-            if team_context:
-                _logger.debug("Updating context profiles for team %s", team_manifest.name)
-                team_context.profiles = team_manifest.profiles
-    else:
-        context = Context(  # type: ignore
-            name=manifest.name,
-            account_id=utils.get_account_id(),
-            region=utils.get_region(),
-            env_tag=f"orbit-{manifest.name}",
-            env_stack_name=f"orbit-{manifest.name}",
-            env_ssm_parameter_name=f"/orbit/{manifest.name}/env",
-            eks_stack_name=f"eksctl-orbit-{manifest.name}-cluster",
-            demo_stack_name=f"orbit-{manifest.name}-demo",
-            demo_ssm_parameter_name=f"/orbit/{manifest.name}/demo",
-            ssm_parameter_name=context_parameter_name,
-            ssm_dockerhub_parameter_name=f"/orbit/{manifest.name}/dockerhub",
-            toolkit=ToolkitManifest(stack_name=f"orbit-{manifest.name}-toolkit", codebuild_project=f"orbit-{manifest.name}"),  # type: ignore
-            cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-{manifest.name}-cdk-toolkit"),  # type: ignore
-            codeartifact_domain=manifest.codeartifact_domain,
-            codeartifact_repository=manifest.codeartifact_repository,
-            scratch_bucket_arn=manifest.scratch_bucket_arn,
-            networking=create_networking_context_from_manifest(networking=manifest.networking),
-            images=manifest.images,
-            user_pool_id=manifest.user_pool_id,
-            cognito_external_provider=manifest.cognito_external_provider,
-            cognito_external_provider_label=manifest.cognito_external_provider_label,
-            teams=create_teams_context_from_manifest(manifest=manifest),
-            shared_efs_fs_id=manifest.shared_efs_fs_id,
-            shared_efs_sg_id=manifest.shared_efs_sg_id,
-            managed_nodegroups=[],
-            eks_system_masters_roles=[],
-            policies=manifest.policies,
-        )
-    context.fetch_toolkit_data()
-    dump_context_to_ssm(context=context)
-    return context
+class ContextLoader(Generic[T, V]):
+    @staticmethod
+    def load_context_from_manifest(manifest: T) -> V:
+        if isinstance(manifest, Manifest):
+            return cast(V, ContextLoader._load_context_from_manifest(manifest))
+        else:
+            raise ValueError("Unknown 'manifest' Type")
+
+    @staticmethod
+    def _load_context_from_manifest(manifest: "Manifest") -> Context:
+        _logger.debug("Loading Context from manifest")
+        context_parameter_name: str = f"/orbit/{manifest.name}/context"
+        if ssm.does_parameter_exist(name=context_parameter_name):
+            context: Context = load_context_from_ssm(env_name=manifest.name)
+            context.images = manifest.images
+            context.networking = create_networking_context_from_manifest(networking=manifest.networking)
+            context.user_pool_id = manifest.user_pool_id
+            context.shared_efs_fs_id = manifest.shared_efs_fs_id
+            context.shared_efs_sg_id = manifest.shared_efs_sg_id
+            context.scratch_bucket_arn = manifest.scratch_bucket_arn
+            context.policies = manifest.policies
+            for team_manifest in manifest.teams:
+                team_context: Optional[TeamContext] = context.get_team_by_name(name=team_manifest.name)
+                if team_context:
+                    _logger.debug("Updating context profiles for team %s", team_manifest.name)
+                    team_context.profiles = team_manifest.profiles
+        else:
+            context = Context(  # type: ignore
+                name=manifest.name,
+                account_id=utils.get_account_id(),
+                region=utils.get_region(),
+                env_tag=f"orbit-{manifest.name}",
+                env_stack_name=f"orbit-{manifest.name}",
+                env_ssm_parameter_name=f"/orbit/{manifest.name}/env",
+                eks_stack_name=f"eksctl-orbit-{manifest.name}-cluster",
+                ssm_parameter_name=context_parameter_name,
+                ssm_dockerhub_parameter_name=f"/orbit/{manifest.name}/dockerhub",
+                toolkit=ToolkitManifest(stack_name=f"orbit-{manifest.name}-toolkit", codebuild_project=f"orbit-{manifest.name}"),  # type: ignore
+                cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-{manifest.name}-cdk-toolkit"),  # type: ignore
+                codeartifact_domain=manifest.codeartifact_domain,
+                codeartifact_repository=manifest.codeartifact_repository,
+                scratch_bucket_arn=manifest.scratch_bucket_arn,
+                networking=create_networking_context_from_manifest(networking=manifest.networking),
+                images=manifest.images,
+                user_pool_id=manifest.user_pool_id,
+                cognito_external_provider=manifest.cognito_external_provider,
+                cognito_external_provider_label=manifest.cognito_external_provider_label,
+                teams=create_teams_context_from_manifest(manifest=manifest),
+                shared_efs_fs_id=manifest.shared_efs_fs_id,
+                shared_efs_sg_id=manifest.shared_efs_sg_id,
+                managed_nodegroups=[],
+                eks_system_masters_roles=[],
+                policies=manifest.policies,
+            )
+        context.fetch_toolkit_data()
+        dump_context_to_ssm(context=context)
+        return context
 
 
 def dump_context_to_str(context: Context) -> str:

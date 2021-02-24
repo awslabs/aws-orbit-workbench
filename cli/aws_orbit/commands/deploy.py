@@ -22,7 +22,7 @@ import click
 from aws_orbit import bundle, dockerhub, plugins, remote, toolkit
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.changeset import dump_changeset_to_str, extract_changeset
-from aws_orbit.models.context import dump_context_to_ssm, load_context_from_manifest, load_context_from_ssm
+from aws_orbit.models.context import ContextLoader, dump_context_to_ssm, load_context_from_ssm
 from aws_orbit.models.manifest import Manifest, load_manifest_from_file, dump_manifest_to_ssm
 from aws_orbit.services import cfn, codebuild
 
@@ -126,7 +126,7 @@ def deploy_foundation(
                 msg_ctx.warn(f'Reading parameters from {filename}, "name", "codeartifact-domain", '
                 'and "codeartifact-repository" ignored.')
         elif name:
-            manifest: Manifest = Manifest(
+            manifest: Manifest = Manifest(  # type: ignore
                 name=f"foundation-{name}",
                 codeartifact_domain=codeartifact_domain,
                 codeartifact_repository=codeartifact_repository
@@ -140,7 +140,7 @@ def deploy_foundation(
         msg_ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
         msg_ctx.progress(3)
 
-        context: "Context" = load_context_from_manifest(manifest=manifest)
+        context: Context = ContextLoader.load_context_from_manifest(manifest=manifest)
         msg_ctx.info("Current Context loaded")
         msg_ctx.info(f"Teams: {','.join([t.name for t in context.teams])}")
         msg_ctx.progress(4)
@@ -196,7 +196,7 @@ def deploy_env(
         msg_ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
         msg_ctx.progress(3)
 
-        context: "Context" = load_context_from_manifest(manifest=manifest)
+        context: "Context" = ContextLoader.load_context_from_manifest(manifest=manifest)
         msg_ctx.info("Current Context loaded")
         msg_ctx.info(f"Teams: {','.join([t.name for t in context.teams])}")
         msg_ctx.progress(4)
@@ -250,7 +250,7 @@ def deploy_env(
         msg_ctx.progress(98)
 
         if cfn.does_stack_exist(stack_name=context.demo_stack_name):
-            context = load_context_from_manifest(manifest=manifest)
+            context = ContextLoader.load_context_from_manifest(manifest=manifest)
             msg_ctx.info(f"Context updated: {filename}")
         msg_ctx.progress(99)
 
