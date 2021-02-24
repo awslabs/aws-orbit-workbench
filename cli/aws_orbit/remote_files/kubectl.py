@@ -304,6 +304,7 @@ def destroy_teams(context: "Context") -> None:
         _logger.debug("kubectl k8s_context: %s", k8s_context)
         _logger.debug("Attempting kubectl delete")
         output_path = _generate_teams_manifest(context=context)
+        utils.print_dir(dir=output_path)
         try:
             sh.run(
                 f"kubectl delete -f {output_path} --grace-period=0 --force "
