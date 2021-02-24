@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
 from kubernetes import config
 
-from aws_orbit import bundle, remote, sh, utils
+from aws_orbit import bundle, plugins, remote, sh, utils
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.remote_files.utils import get_k8s_context
@@ -140,7 +140,6 @@ def build_image(
     script: Optional[str],
     teams: Optional[List[str]],
     build_args: Optional[List[str]],
-    region: Optional[str],
     debug: bool,
 ) -> None:
     with MessagesContext("Deploying Docker Image", debug=debug) as msg_ctx:
@@ -153,23 +152,31 @@ def build_image(
             return
         msg_ctx.progress(3)
 
-        bundle_path = bundle.generate_bundle(
-            command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)], changeset=None, plugins=False
+        plugins.PLUGINS_REGISTRIES.load_plugins(
+            context=context,
+            msg_ctx=msg_ctx,
+            plugin_changesets=[],
+            teams_changeset=None,
         )
         msg_ctx.progress(4)
+
+        bundle_path = bundle.generate_bundle(
+            command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)], changeset=None, plugins=True
+        )
+        msg_ctx.progress(5)
 
         script_str = "NO_SCRIPT" if script is None else script
         teams_str = "NO_TEAMS" if not teams else ",".join(teams)
         build_args = [] if build_args is None else build_args
         buildspec = codebuild.generate_spec(
             context=context,
-            plugins=False,
+            plugins=True,
             cmds_build=[
                 f"orbit remote --command build_image {env} {name} {script_str} {teams_str} {' '.join(build_args)}"
             ],
             changeset=None,
         )
-        msg_ctx.progress(5)
+        msg_ctx.progress(6)
 
         remote.run(
             command_name=f"deploy_image-{name}",

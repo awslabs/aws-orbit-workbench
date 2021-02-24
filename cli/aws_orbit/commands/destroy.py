@@ -87,7 +87,7 @@ def destroy_all(env: str, teams_only: bool, keep_demo: bool, debug: bool) -> Non
             or cfn.does_stack_exist(stack_name=context.env_stack_name)
             or cfn.does_stack_exist(stack_name=context.cdk_toolkit.stack_name)
         ):
-            bundle_path = bundle.generate_bundle(command_name="destroy", context=context, changeset=None)
+            bundle_path = bundle.generate_bundle(command_name="destroy", context=context, changeset=None, plugins=True)
             msg_ctx.progress(5)
             flags = "teams-stacks" if teams_only else "keep-demo" if keep_demo else "all-stacks"
 
