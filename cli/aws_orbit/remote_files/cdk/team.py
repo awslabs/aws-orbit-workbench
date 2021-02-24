@@ -118,12 +118,6 @@ class Team(Stack):
             repository_name=f"orbit-{self.context.name}-{self.team_name}-jupyter-user-spark",
         )
 
-        # self.ecr_repo_gpu: ecr.Repository = ecr.Repository(
-        #     scope=self,
-        #     id="repo-gpu",
-        #     repository_name=f"orbit-{self.context.name}-{self.team_name}-gpu-jupyter-user",
-        # )
-
         self.policies: List[str] = self.team_policies
         if self.context.scratch_bucket_arn:
             self.scratch_bucket: s3.Bucket = cast(
