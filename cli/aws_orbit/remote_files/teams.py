@@ -177,7 +177,7 @@ def deploy(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> N
     for team_context in context.teams:
         _deploy_team_image(context=context, team_context=team_context, image="jupyter-user")
         _deploy_team_image(context=context, team_context=team_context, image="jupyter-user-spark")
-        #_deploy_team_image(context=context, team_context=team_context, image="gpu-jupyter-user")
+        # _deploy_team_image(context=context, team_context=team_context, image="gpu-jupyter-user")
         _deploy_team_bootstrap(context=context, team_context=team_context)
 
 
