@@ -205,7 +205,7 @@ def build_image(
             timeout=30,
         )
         msg_ctx.info("Docker Image deploy into ECR")
-        msg_ctx.progress(98)
-        address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}-{name}"
+        address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}-users-{name}"
+        msg_ctx.info(f"ECR Image Address={address}")
         msg_ctx.tip(f"ECR Image Address: {stylize(address, underline=True)}")
         msg_ctx.progress(100)

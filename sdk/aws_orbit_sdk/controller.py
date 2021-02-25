@@ -370,7 +370,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
         __CURRENT_ENV_MANIFEST__ = load_env_context_from_ssm(env_name)
 
     env = build_env(__CURRENT_ENV_MANIFEST__, env_name, taskConfiguration, team_constants, team_name)
-    profile = resolve_profile(__CURRENT_TEAM_MANIFEST__, taskConfiguration, team_constants)
+    profile = resolve_profile(taskConfiguration, team_constants)
     image = resolve_image(__CURRENT_TEAM_MANIFEST__, profile)
     node_type = get_node_type(taskConfiguration)
 
@@ -491,9 +491,9 @@ def build_env(__CURRENT_ENV_MANIFEST__, env_name, taskConfiguration, team_consta
     return env
 
 
-def resolve_profile(__CURRENT_TEAM_MANIFEST__, taskConfiguration, team_constants):
+def resolve_profile(taskConfiguration, team_constants):
     if "compute" in taskConfiguration and "profile" in taskConfiguration["compute"]:
-        profile_name = __CURRENT_TEAM_MANIFEST__["compute"]["profile"]
+        profile_name = taskConfiguration["compute"]["profile"]
         _logger.info(f"using profile %s", profile_name)
         profile = team_constants.profile(profile_name)
         if not profile:

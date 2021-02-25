@@ -210,6 +210,13 @@ class IamBuilder:
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
+                    actions=[
+                        "ecr:*",
+                    ],
+                    resources=[f"arn:aws:ecr:${region}:${account}:repository/orbit-${env_name}-users-*"],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
                     actions=["kms:Encrypt", "kms:Decrypt", "kms:ReEncrypt", "kms:GenerateDataKey", "kms:DescribeKey"],
                     resources=kms_keys,
                 ),

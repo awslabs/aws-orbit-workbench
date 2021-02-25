@@ -48,7 +48,7 @@ def build_image(args: Tuple[str, ...]) -> None:
     _logger.debug("DockerHub and ECR Logged in")
 
     ecr = boto3_client("ecr")
-    ecr_repo = f"orbit-{context.name}-{image_name}"
+    ecr_repo = f"orbit-{context.name}-users-{image_name}"
     try:
         ecr.describe_repositories(repositoryNames=[ecr_repo])
     except ecr.exceptions.RepositoryNotFoundException:
