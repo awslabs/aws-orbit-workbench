@@ -12,11 +12,16 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from io import open
+
 from setuptools import setup
 
+with open("VERSION", "r") as version_file:
+    version = version_file.read().strip()
+
 setup(
-    name="team_script_launcher",
-    version="0.0b0",
+    name="aws-orbit-team-script-launcher",
+    version=version,
     description="Launch a Pod for the team space that executes a script given by the user",
     license="Apache License 2.0",
     packages=["team_script_launcher"],

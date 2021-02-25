@@ -13,16 +13,14 @@
 #    limitations under the License.
 
 import logging
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Tuple
 
 from aws_orbit import plugins
-from aws_orbit.models.changeset import load_changeset_from_ssm
 from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.remote_files import cdk_toolkit, demo, eksctl, env, kubectl, teams
-from aws_orbit.services import ecr
+from aws_orbit.services import ecr, ssm
 
 if TYPE_CHECKING:
-    from aws_orbit.models.changeset import Changeset
     from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -56,15 +54,7 @@ def destroy(args: Tuple[str, ...]) -> None:
     else:
         raise ValueError("Unexpected number of values in args.")
 
-    changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=env_name)
-    _logger.debug("Changeset loaded.")
-
-    if changeset:
-        plugins.PLUGINS_REGISTRIES.load_plugins(
-            context=context, plugin_changesets=changeset.plugin_changesets, teams_changeset=changeset.teams_changeset
-        )
-    else:
-        plugins.PLUGINS_REGISTRIES.load_plugins(context=context, plugin_changesets=[], teams_changeset=None)
+    plugins.PLUGINS_REGISTRIES.load_plugins(context=context, plugin_changesets=[], teams_changeset=None)
     _logger.debug("Plugins loaded")
 
     kubectl.destroy_teams(context=context)
@@ -73,6 +63,7 @@ def destroy(args: Tuple[str, ...]) -> None:
     _logger.debug("EKS Team Stacks destroyed")
     teams.destroy_all(context=context)
     _logger.debug("Teams Stacks destroyed")
+    ssm.cleanup_teams(env_name=context.name)
 
     if not teams_only:
         kubectl.destroy_env(context=context)

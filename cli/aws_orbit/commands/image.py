@@ -14,11 +14,13 @@
 
 import json
 import logging
+import os
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
+import botocore
 from kubernetes import config
 
-from aws_orbit import bundle, remote, sh, utils
+from aws_orbit import bundle, plugins, remote, sh, utils
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.remote_files.utils import get_k8s_context
@@ -35,7 +37,12 @@ def read_user_profiles_ssm(env_name: str, team_name: str) -> PROFILES_TYPE:
     ssm_profile_name = f"/orbit/{env_name}/teams/{team_name}/user/profiles"
     _logger.debug("Trying to read profiles from SSM parameter (%s).", ssm_profile_name)
     client = utils.boto3_client(service_name="ssm")
-    json_str: str = client.get_parameter(Name=ssm_profile_name)["Parameter"]["Value"]
+    try:
+        json_str: str = client.get_parameter(Name=ssm_profile_name)["Parameter"]["Value"]
+    except botocore.errorfactory.ParameterNotFound:
+        _logger.info("No team profile found, returning only default profiles")
+        pass
+
     return cast(PROFILES_TYPE, json.loads(json_str))
 
 
@@ -95,9 +102,20 @@ def delete_profile(env: str, team: str, profile_name: str, debug: bool) -> None:
 def list_profiles(env: str, team: str, debug: bool) -> None:
     ssm.cleanup_changeset(env_name=env)
     ssm.cleanup_manifest(env_name=env)
+    print("Team profiles:")
     profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
     _logger.debug("Existing user profiles for team %s: %s", team, profiles)
     print(json.dumps(profiles, indent=4, sort_keys=True))
+
+    print("Admin deployed profiles:")
+    from aws_orbit_sdk import common_pod_specification
+
+    os.environ["AWS_ORBIT_ENV"] = env
+    os.environ["AWS_ORBIT_TEAM_SPACE"] = team
+    deployed_profiles: common_pod_specification.PROFILES_TYPE = (
+        common_pod_specification.TeamConstants().deployed_profiles()
+    )
+    print(json.dumps(deployed_profiles, indent=4, sort_keys=True))
 
 
 def build_profile(env: str, team: str, profile: str, debug: bool) -> None:
@@ -140,7 +158,6 @@ def build_image(
     script: Optional[str],
     teams: Optional[List[str]],
     build_args: Optional[List[str]],
-    region: Optional[str],
     debug: bool,
 ) -> None:
     with MessagesContext("Deploying Docker Image", debug=debug) as msg_ctx:
@@ -149,27 +166,35 @@ def build_image(
         context: "Context" = load_context_from_ssm(env_name=env)
         msg_ctx.info("Manifest loaded")
         if cfn.does_stack_exist(stack_name=f"orbit-{context.name}") is False:
-            msg_ctx.error("Please, deploy your environment before deploy any addicional docker image")
+            msg_ctx.error("Please, deploy your environment before deploying any additional docker image")
             return
         msg_ctx.progress(3)
 
-        bundle_path = bundle.generate_bundle(
-            command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)], changeset=None, plugins=False
+        plugins.PLUGINS_REGISTRIES.load_plugins(
+            context=context,
+            msg_ctx=msg_ctx,
+            plugin_changesets=[],
+            teams_changeset=None,
         )
         msg_ctx.progress(4)
+
+        bundle_path = bundle.generate_bundle(
+            command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)], changeset=None, plugins=True
+        )
+        msg_ctx.progress(5)
 
         script_str = "NO_SCRIPT" if script is None else script
         teams_str = "NO_TEAMS" if not teams else ",".join(teams)
         build_args = [] if build_args is None else build_args
         buildspec = codebuild.generate_spec(
             context=context,
-            plugins=False,
+            plugins=True,
             cmds_build=[
                 f"orbit remote --command build_image {env} {name} {script_str} {teams_str} {' '.join(build_args)}"
             ],
             changeset=None,
         )
-        msg_ctx.progress(5)
+        msg_ctx.progress(6)
 
         remote.run(
             command_name=f"deploy_image-{name}",

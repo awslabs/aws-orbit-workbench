@@ -57,14 +57,21 @@ def _create_dockerfile(context: "Context", team_context: "TeamContext", image_na
         base_image_cmd = f"FROM {team_context.base_image_address}"
     elif image_name == "jupyter-user-spark":
         base_image_cmd = f"FROM {team_context.base_spark_image_address}"
-    elif image_name == "gpu-jupyter-user":
-        base_image_cmd = f"FROM {team_context.base_gpu_image_address}"
     else:
         raise Exception(f"The image {image_name} is not deployable to individual Teams.")
 
     _logger.debug("base_image_cmd: %s", base_image_cmd)
     cmds: List[str] = [base_image_cmd]
+
+    # Add CodeArtifact pip.conf
+    cmds += ["USER root"]
+    cmds += ["ADD pip.conf /etc/pip.conf"]
+
     for plugin in team_context.plugins:
+        # Adding plugin modules to image via pip
+        plugin_module_name = (plugin.module).replace("_", "-")
+        cmds += [f"RUN pip install --upgrade aws-orbit-{plugin_module_name}"]
+
         hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
             context=context,
             team_name=team_context.name,
@@ -75,7 +82,10 @@ def _create_dockerfile(context: "Context", team_context: "TeamContext", image_na
             plugin_cmds = cast(Optional[List[str]], hook(plugin.plugin_id, context, team_context, plugin.parameters))
             if plugin_cmds is not None:
                 cmds += [f"# Commands for {plugin.plugin_id} plugin"] + plugin_cmds
-    _logger.debug("cmds: %s", cmds)
+
+    # Removing pip conf and setting to notebook user
+    cmds += ["RUN rm /etc/pip.conf", "USER $NB_UID"]
+    _logger.debug("Dockerfile cmds: %s", cmds)
     outdir = os.path.join(".orbit.out", context.name, team_context.name, "image")
     output_filename = os.path.join(outdir, "Dockerfile")
     os.makedirs(outdir, exist_ok=True)
@@ -165,7 +175,6 @@ def deploy(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> N
     for team_context in context.teams:
         _deploy_team_image(context=context, team_context=team_context, image="jupyter-user")
         _deploy_team_image(context=context, team_context=team_context, image="jupyter-user-spark")
-        _deploy_team_image(context=context, team_context=team_context, image="gpu-jupyter-user")
         _deploy_team_bootstrap(context=context, team_context=team_context)
 
 
@@ -180,10 +189,6 @@ def destroy(context: "Context", team_context: "TeamContext") -> None:
             ecr.delete_repo(repo=f"orbit-{context.name}-{team_context.name}-jupyter-user-spark")
         except Exception as ex:
             _logger.error("Skipping Team ECR Repository (Spark) deletion. Cause: %s", ex)
-        try:
-            ecr.delete_repo(repo=f"orbit-{context.name}-{team_context.name}-gpu-jupyter-user")
-        except Exception as ex:
-            _logger.error("Skipping Team ECR Repository deletion. Cause: %s", ex)
         if cfn.does_stack_exist(stack_name=team_context.stack_name):
             args: List[str] = [context.name, team_context.name]
             cdk.destroy(
