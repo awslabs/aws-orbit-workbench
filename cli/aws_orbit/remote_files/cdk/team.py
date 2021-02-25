@@ -112,18 +112,6 @@ class Team(Stack):
             repository_name=f"orbit-{self.context.name}-{self.team_name}-jupyter-user",
         )
 
-        self.ecr_repo_spark: ecr.Repository = ecr.Repository(
-            scope=self,
-            id="repo-spark",
-            repository_name=f"orbit-{self.context.name}-{self.team_name}-jupyter-user-spark",
-        )
-
-        self.ecr_repo_gpu: ecr.Repository = ecr.Repository(
-            scope=self,
-            id="repo-gpu",
-            repository_name=f"orbit-{self.context.name}-{self.team_name}-gpu-jupyter-user",
-        )
-
         self.policies: List[str] = self.team_policies
         if self.context.scratch_bucket_arn:
             self.scratch_bucket: s3.Bucket = cast(
@@ -170,7 +158,6 @@ class Team(Stack):
         )
 
         self.ecr_image = EcrBuilder.build_ecr_image(scope=self, context=context, image=self.image)
-        self.ecr_image_spark = EcrBuilder.build_ecr_image_spark(scope=self, context=context, image=self.image)
 
         team_ssm_parameter_name: str = f"/orbit/{context.name}/teams/{self.team_name}/team"
         self.context_parameter: ssm.StringParameter = ssm.StringParameter(

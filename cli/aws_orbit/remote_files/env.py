@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
-DEFAULT_IMAGES: List[str] = ["landing-page", "jupyter-hub", "jupyter-user", "jupyter-user-spark", "gpu-jupyter-user"]
+DEFAULT_IMAGES: List[str] = ["landing-page", "jupyter-hub", "jupyter-user"]
 DEFAULT_ISOLATED_IMAGES: List[str] = ["aws-efs-csi-driver", "livenessprobe", "csi-node-driver-registrar"]
 
 

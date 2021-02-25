@@ -28,8 +28,6 @@ from jupyterhub_utils.ssm import (
     ENV_NAME,
     GRANT_SUDO,
     IMAGE,
-    IMAGE_GPU,
-    IMAGE_SPARK,
     REGION,
     TEAM,
     TOOLKIT_S3_BUCKET,
@@ -40,8 +38,6 @@ PROFILES_TYPE = List[Dict[str, Any]]
 app_log.info("ACCOUNT_ID: %s", ACCOUNT_ID)
 app_log.info("ENV_NAME: %s", ENV_NAME)
 app_log.info("IMAGE: %s", IMAGE)
-app_log.info("IMAGE_SPARK: %s", IMAGE_SPARK)
-app_log.info("IMAGE_GPU: %s", IMAGE_GPU)
 app_log.info("REGION: %s", REGION)
 app_log.info("TEAM: %s", TEAM)
 app_log.info("TOOLKIT_S3_BUCKET: %s", TOOLKIT_S3_BUCKET)
@@ -154,46 +150,6 @@ profile_list_default = [
             "cpu_limit": 4,
             "mem_guarantee": "8G",
             "mem_limit": "8G",
-        },
-    },
-    {
-        "display_name": "Small (Apache Spark)",
-        "slug": "small-spark",
-        "description": "4 CPU + 8G MEM",
-        "kubespawner_override": {
-            "image": IMAGE_SPARK,
-            "cpu_guarantee": 4,
-            "cpu_limit": 4,
-            "mem_guarantee": "8G",
-            "mem_limit": "8G",
-        },
-    },
-    {
-        "display_name": "Small (GPU Enabled)",
-        "slug": "small-gpu",
-        "description": "4 CPU + 8G MEM + 1 GPU",
-        "kubespawner_override": {
-            "image": IMAGE_GPU,
-            "cpu_guarantee": 4,
-            "cpu_limit": 4,
-            "mem_guarantee": "8G",
-            "mem_limit": "8G",
-            "extra_resource_limits": {"nvidia.com/gpu": "1"},
-            "extra_resource_guarantees": {"nvidia.com/gpu": "1"},
-        },
-    },
-    {
-        "display_name": "Small (vGPU Enabled)",
-        "slug": "small-vgpu",
-        "description": "4 CPU + 8G MEM + 1 vGPU",
-        "kubespawner_override": {
-            "image": IMAGE_GPU,
-            "cpu_guarantee": 4,
-            "cpu_limit": 4,
-            "mem_guarantee": "8G",
-            "mem_limit": "8G",
-            "extra_resource_limits": {"k8s.amazonaws.com/vgpu": "1"},
-            "extra_resource_guarantees": {"k8s.amazonaws.com/vgpu": "1"},
         },
     },
 ]

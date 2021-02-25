@@ -105,9 +105,7 @@ def update_docker_file(context: "Context", dir: str) -> None:
         jupyter_user_base = (
             f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}-jupyter-user"
         )
-        jupyter_user_spark_base = (
-            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/" f"orbit-{context.name}-jupyter-user-spark"
-        )
+
         with open(docker_file, "r") as file:
             content: str = file.read()
         content = utils.resolve_parameters(
@@ -117,7 +115,6 @@ def update_docker_file(context: "Context", dir: str) -> None:
                 account=context.account_id,
                 env=context.name,
                 jupyter_user_base=jupyter_user_base,
-                jupyter_user_spark_base=jupyter_user_spark_base,
             ),
         )
         with open(docker_file, "w") as file:

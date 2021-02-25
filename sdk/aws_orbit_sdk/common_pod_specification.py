@@ -126,18 +126,6 @@ class TeamConstants:
                     "mem_limit": "8G",
                 },
             },
-            {
-                "display_name": "Small (Apache Spark)",
-                "slug": "small-spark",
-                "description": "4 CPU + 8G MEM",
-                "kubespawner_override": {
-                    "image": self.default_spark_image(),
-                    "cpu_guarantee": 4,
-                    "cpu_limit": 4,
-                    "mem_guarantee": "8G",
-                    "mem_limit": "8G",
-                },
-            },
         ]
 
     def deployed_profiles(self) -> PROFILES_TYPE:
