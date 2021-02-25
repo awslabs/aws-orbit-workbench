@@ -15,7 +15,7 @@
 import logging
 import os
 import shutil
-from typing import TYPE_CHECKING, Iterator, List, Optional, cast
+from typing import TYPE_CHECKING, Iterator, List, Dict, Optional, cast
 
 import boto3
 
@@ -157,6 +157,24 @@ def deploy(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> N
     eval_removed_teams(context=context, teams_changeset=teams_changeset)
     for team_manifest in manifest.teams:
         args = [context.name, team_manifest.name]
+
+        # For each team, find the plugins, pull custom cfn plugin
+        # Get the hook and deploy the specific hook function
+        team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_manifest.name)
+        if team_context:
+            team_context.fetch_team_data()
+
+        for plugin in team_context.plugins:
+            hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
+                context=context,
+                team_name=team_context.name,
+                plugin_name=plugin.plugin_id,
+                hook_name="pre_hook",
+            )
+            if hook is not None:
+                cfn_resource_details: Optional[Dict[str,str]] = cast(Optional[Dict[str,str]],
+                                   hook(plugin.plugin_id, context, team_context, plugin.parameters))
+
         cdk.deploy(
             context=context,
             stack_name=f"orbit-{manifest.name}-{team_manifest.name}",
@@ -197,6 +215,18 @@ def destroy(context: "Context", team_context: "TeamContext") -> None:
                 app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
                 args=args,
             )
+
+        # MYTODO - get team specific post_hook details and execute destroy of resources.
+        for plugin in team_context.plugins:
+            hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
+                context=context,
+                team_name=team_context.name,
+                plugin_name=plugin.plugin_id,
+                hook_name="post_hook",
+            )
+            if hook is not None:
+                cfn_resource_details: Optional[str] = cast(Optional[str],
+                                   hook(plugin.plugin_id, context, team_context, plugin.parameters))
 
 
 def destroy_all(context: "Context") -> None:

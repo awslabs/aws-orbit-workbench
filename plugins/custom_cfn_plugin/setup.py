@@ -15,13 +15,12 @@
 from setuptools import setup
 
 setup(
-    name="team_script_launcher",
+    name="custom_cfn_plugin",
     version="0.0b0",
-    description="Launch a Pod for the team space that executes a script given by the user",
+    description="Launch a precursor CloudFormation stack for the team space",
     license="Apache License 2.0",
-    packages=["team_script_launcher"],
+    packages=["custom_cfn_plugin"],
     python_requires=">=3.6, <3.9",
     install_requires=[],
-    include_package_data=True,
-    package_data={"team_script_launcher": ["*.yaml"]},
+    include_package_data=True
 )

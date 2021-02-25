@@ -16,7 +16,6 @@ import logging
 import os
 from typing import TYPE_CHECKING, Any, Dict
 
-from aws_orbit import sh, utils
 from aws_orbit.plugins import hooks
 import aws_orbit.services.cfn as cfn
 
@@ -24,10 +23,8 @@ if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
 
 _logger: logging.Logger = logging.getLogger("aws_orbit")
-POD_FILENAME = os.path.join(os.path.dirname(__file__), "job_definition.yaml")
 
-
-@hooks.deploy
+@hooks.pre
 def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
     if parameters['cfn_template_path'] and os.path.isfile(parameters['cfn_template_path']):
@@ -46,10 +43,15 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
         env_tag = context.env_tag,
         s3_bucket = context.toolkit.s3_bucket
     )
+    # MYTODO - Read from the stack outputs and prepare the return dict
+    stack_details : Dict[str,str]= {
+        "policy_arn":""
+    }
+    return stack_details
 
 
-
-@hooks.destroy
+@hooks.post
 def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
     cfn.destroy_stack(stack_name = f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-resources")
-
+    # MYTODO - Make a meaningful return from the post hook execution
+    return "DELETED"
