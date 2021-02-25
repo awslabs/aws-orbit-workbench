@@ -108,7 +108,7 @@ def _check_images(manifest: "Manifest", context: "Context", msg_ctx: "MessagesCo
         _logger.debug("Inpecting Image Change for team %s: %s -> %s", team.name, team.image, new_team.image)
         if team.image != new_team.image:
             msg_ctx.info(f"Image change detected for Team {team.name}: {team.image} -> {new_team.image}")
-            image_changesets.append(ImageChangeset(team_name=team.name, old_image=team.image, new_image=new_team.image))  # type: ignore
+            image_changesets.append(ImageChangeset(team_name=team.name, old_image=team.image, new_image=new_team.image))
     return image_changesets
 
 
@@ -123,7 +123,7 @@ def _check_external_idp(
     new_label: Optional[str] = manifest.cognito_external_provider_label
     _logger.debug("Label: %s -> %s", old_label, new_label)
     if old_provider != new_provider or old_label != new_label:
-        external_idp_changeset: Optional[ExternalIDPChangeset] = ExternalIDPChangeset(  # type: ignore
+        external_idp_changeset: Optional[ExternalIDPChangeset] = ExternalIDPChangeset(
             old_provider=old_provider, new_provider=new_provider, old_label=old_label, new_label=new_label
         )
         msg_ctx.info(f"External IDP change detected: {old_provider} ({old_label}) -> {new_provider} ({new_label})")
@@ -144,7 +144,7 @@ def _check_teams(manifest: "Manifest", context: "Context", msg_ctx: "MessagesCon
     added_teams: Set[str] = set(new_names) - set(old_names)
     _logger.debug("added_teams: %s", added_teams)
     if removed_teams or added_teams:
-        teams_changeset: Optional[TeamsChangeset] = TeamsChangeset(  # type: ignore
+        teams_changeset: Optional[TeamsChangeset] = TeamsChangeset(
             removed_teams_names=list(removed_teams),
             added_teams_names=list(added_teams),
         )
@@ -168,7 +168,7 @@ def _check_team_plugins(
 
     if old_names != new_names:
         msg_ctx.info(f"Plugin change detected for Team {team_manifest.name}: {old_names} -> {new_names}")
-        return PluginChangeset(  # type: ignore
+        return PluginChangeset(
             team_name=team_manifest.name,
             old=old_names,
             old_paths={p.plugin_id: p.path for p in old_team.plugins} if old_team else {},
@@ -203,7 +203,7 @@ def _check_plugins(
             if not old_names:
                 continue
             plugin_changesets.append(
-                PluginChangeset(  # type: ignore
+                PluginChangeset(
                     team_name=team.name,
                     old=old_names,
                     old_paths={p.plugin_id: p.path for p in team.plugins},
@@ -234,7 +234,7 @@ def _check_eks_system_masters_roles(
     _logger.debug("removed_roles: %s", removed_roles)
     _logger.debug("added_roles: %s", added_roles)
     if removed_roles or added_roles:
-        list_changeset: Optional[ListChangeset] = ListChangeset(removed_values=removed_roles, added_values=added_roles)  # type: ignore
+        list_changeset: Optional[ListChangeset] = ListChangeset(removed_values=removed_roles, added_values=added_roles)
         msg_ctx.info(f"Removed system:masters Roles: {list(removed_roles)}")
         msg_ctx.info(f"Added system:masters Roles: {list(added_roles)}")
     else:
@@ -254,7 +254,7 @@ def _check_managed_nodegroups(
     _logger.debug("removed_roles: %s", removed_nodegroups)
     _logger.debug("added_roles: %s", added_nodegroups)
     if removed_nodegroups or added_nodegroups:
-        managed_nodegroups_changeset: Optional[ManagedNodeGroupsChangeset] = ManagedNodeGroupsChangeset(  # type: ignore
+        managed_nodegroups_changeset: Optional[ManagedNodeGroupsChangeset] = ManagedNodeGroupsChangeset(
             removed_nodegroups=[ng for ng in context.managed_nodegroups if ng.name in removed_nodegroups],
             added_nodegroups=[ng for ng in manifest.managed_nodegroups if ng.name in added_nodegroups],
         )
@@ -280,7 +280,7 @@ def extract_changeset(manifest: "Manifest", context: "Context", msg_ctx: "Messag
     managed_nodegroups_changeset: Optional[ManagedNodeGroupsChangeset] = _check_managed_nodegroups(
         manifest=manifest, context=context, msg_ctx=msg_ctx
     )
-    changeset: Changeset = Changeset(  # type: ignore
+    changeset: Changeset = Changeset(
         image_changesets=image_changesets,
         plugin_changesets=plugin_changesets,
         external_idp_changeset=external_idp_changeset,

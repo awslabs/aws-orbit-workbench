@@ -341,7 +341,7 @@ def create_team_context_from_manifest(manifest: "Manifest", team_manifest: "Team
     final_gpu_image_address: str = (
         f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}-gpu-jupyter-user"
     )
-    return TeamContext(  # type: ignore
+    return TeamContext(
         base_image_address=base_image_address,
         final_image_address=final_image_address,
         base_spark_image_address=base_spark_image_address,
@@ -372,18 +372,18 @@ def create_networking_context_from_manifest(networking: "NetworkingManifest") ->
     if networking.vpc_id:
         args["vpc_id"] = networking.vpc_id
         args["public_subnets"] = [
-            SubnetContext(subnet_id=x, kind=SubnetKind.public, vpc_id=networking.vpc_id)  # type: ignore
+            SubnetContext(subnet_id=x, kind=SubnetKind.public, vpc_id=networking.vpc_id)
             for x in networking.public_subnets
         ]
         args["private_subnets"] = [
-            SubnetContext(subnet_id=x, kind=SubnetKind.private, vpc_id=networking.vpc_id)  # type: ignore
+            SubnetContext(subnet_id=x, kind=SubnetKind.private, vpc_id=networking.vpc_id)
             for x in networking.private_subnets
         ]
         args["isolated_subnets"] = [
-            SubnetContext(subnet_id=x, kind=SubnetKind.isolated, vpc_id=networking.vpc_id)  # type: ignore
+            SubnetContext(subnet_id=x, kind=SubnetKind.isolated, vpc_id=networking.vpc_id)
             for x in networking.isolated_subnets
         ]
-    ctx = NetworkingContext(**args)  # type: ignore
+    ctx = NetworkingContext(**args)
     ctx.fetch_properties()
     return ctx
 
@@ -405,7 +405,7 @@ def load_context_from_manifest(manifest: "Manifest") -> Context:
                 _logger.debug("Updating context profiles for team %s", team_manifest.name)
                 team_context.profiles = team_manifest.profiles
     else:
-        context = Context(  # type: ignore
+        context = Context(
             name=manifest.name,
             account_id=utils.get_account_id(),
             region=utils.get_region(),
@@ -417,8 +417,10 @@ def load_context_from_manifest(manifest: "Manifest") -> Context:
             demo_ssm_parameter_name=f"/orbit/{manifest.name}/demo",
             ssm_parameter_name=context_parameter_name,
             ssm_dockerhub_parameter_name=f"/orbit/{manifest.name}/dockerhub",
-            toolkit=ToolkitManifest(stack_name=f"orbit-{manifest.name}-toolkit", codebuild_project=f"orbit-{manifest.name}"),  # type: ignore
-            cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-{manifest.name}-cdk-toolkit"),  # type: ignore
+            toolkit=ToolkitManifest(
+                stack_name=f"orbit-{manifest.name}-toolkit", codebuild_project=f"orbit-{manifest.name}"
+            ),
+            cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-{manifest.name}-cdk-toolkit"),
             codeartifact_domain=manifest.codeartifact_domain,
             codeartifact_repository=manifest.codeartifact_repository,
             scratch_bucket_arn=manifest.scratch_bucket_arn,
