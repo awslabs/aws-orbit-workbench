@@ -134,9 +134,7 @@ def deploy_images_remotely(context: "Context") -> None:
     _deploy_images_batch(context=context, images=images)
 
     # Second Batch
-    images = [
-        ("jupyter-user-spark", "jupyter-user-spark", None, []),
-    ]
+    images = []
     if context.networking.data.internet_accessible is False:
         images += [
             ("aws-efs-csi-driver", None, None, []),
