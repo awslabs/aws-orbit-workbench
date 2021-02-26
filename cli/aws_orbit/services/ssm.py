@@ -84,32 +84,32 @@ def delete_parameters(parameters: List[str]) -> None:
         client.delete_parameters(Names=parameters)
 
 
-def cleanup_env(env_name: str) -> None:
-    pars: List[str] = [p for p in list_parameters(prefix=f"/orbit/{env_name}/") if p.endswith("/cicd") is False]
+def cleanup_env(env_name: str, top_level: str = "orbit") -> None:
+    pars: List[str] = [p for p in list_parameters(prefix=f"/{top_level}/{env_name}/") if p.endswith("/cicd") is False]
     delete_parameters(parameters=pars)
 
 
-def cleanup_teams(env_name: str) -> None:
-    pars: List[str] = list_parameters(prefix=f"/orbit/{env_name}/teams/")
+def cleanup_teams(env_name: str, top_level: str = "orbit") -> None:
+    pars: List[str] = list_parameters(prefix=f"/{top_level}/{env_name}/teams/")
     delete_parameters(parameters=pars)
 
 
-def cleanup_by_suffix(env_name: str, suffix: str) -> None:
-    pars: List[str] = [p for p in list_parameters(prefix=f"/orbit/{env_name}/") if p.endswith(suffix)]
+def cleanup_by_suffix(env_name: str, suffix: str, top_level: str = "orbit") -> None:
+    pars: List[str] = [p for p in list_parameters(prefix=f"/{top_level}/{env_name}/") if p.endswith(suffix)]
     delete_parameters(parameters=pars)
 
 
-def cleanup_manifest(env_name: str) -> None:
-    cleanup_by_suffix(env_name=env_name, suffix="/manifest")
+def cleanup_manifest(env_name: str, top_level: str = "orbit") -> None:
+    cleanup_by_suffix(env_name=env_name, suffix="/manifest", top_level=top_level)
 
 
-def cleanup_context(env_name: str) -> None:
-    cleanup_by_suffix(env_name=env_name, suffix="/context")
+def cleanup_context(env_name: str, top_level: str = "orbit") -> None:
+    cleanup_by_suffix(env_name=env_name, suffix="/context", top_level=top_level)
 
 
-def cleanup_changeset(env_name: str) -> None:
-    cleanup_by_suffix(env_name=env_name, suffix="/changeset")
+def cleanup_changeset(env_name: str, top_level: str = "orbit") -> None:
+    cleanup_by_suffix(env_name=env_name, suffix="/changeset", top_level=top_level)
 
 
-def list_teams_contexts(env_name: str) -> List[str]:
-    return [p for p in list_parameters(prefix=f"/orbit/{env_name}/teams/") if p.endswith("/context")]
+def list_teams_contexts(env_name: str, top_level: str = "orbit") -> List[str]:
+    return [p for p in list_parameters(prefix=f"/{top_level}/{env_name}/teams/") if p.endswith("/context")]

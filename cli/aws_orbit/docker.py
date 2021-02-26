@@ -1,17 +1,20 @@
 import logging
 import os
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, TypeVar
 
 from aws_orbit import dockerhub, exceptions, sh, utils
+from aws_orbit.models.context import Context, FoundationContext
 from aws_orbit.services import ecr
-
-if TYPE_CHECKING:
-    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def login(context: "Context") -> None:
+T = TypeVar("T")
+
+
+def login(context: T) -> None:
+    if not (isinstance(context, Context) or isinstance(context, FoundationContext)):
+        raise ValueError("Unknown 'context' Type")
     username, password = dockerhub.get_credential(context=context)
     sh.run(f"docker login --username {username} --password {password}", hide_cmd=True)
     _logger.debug("DockerHub logged in.")

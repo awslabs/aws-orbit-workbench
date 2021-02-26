@@ -1,14 +1,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: |
-  Orbit Workbench Toolkit Stack - ${env_name}
+  Orbit Workbench Toolkit Stack - ${top_level}-${env_name}
 Resources:
   Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: orbit-${env_name}-toolkit-${account_id}-${deploy_id}
+      BucketName: ${top_level}-${env_name}-toolkit-${account_id}-${deploy_id}
       Tags:
         - Key: Env
-          Value: orbit-${env_name}
+          Value: ${top_level}-${env_name}
       VersioningConfiguration:
         Status: Suspended
       PublicAccessBlockConfiguration:
@@ -103,24 +103,24 @@ Resources:
               - codebuild:StartBuild
               - codebuild:BatchGetBuilds
             Resource:
-              - arn:aws:codebuild:${region}:${account_id}:project/orbit-${env_name}
+              - arn:aws:codebuild:${region}:${account_id}:project/${top_level}-${env_name}
           - Effect: Allow
             Action:
               - ecr:*
             Resource:
-              - arn:aws:ecr:${region}:${account_id}:repository/orbit-${env_name}-*
+              - arn:aws:ecr:${region}:${account_id}:repository/${top_level}-${env_name}-*
               - arn:aws:ecr:${region}:${account_id}:repository/aws-orbit-code-build-base
           - Effect: Allow
             Action:
               - states:*
             Resource:
-              - arn:aws:states:${region}:${account_id}:stateMachine:orbit-${env_name}-*
+              - arn:aws:states:${region}:${account_id}:stateMachine:${top_level}-${env_name}-*
           - Effect: Allow
             Action:
               - cloudformation:*
             Resource:
-              - arn:aws:cloudformation:${region}:${account_id}:stack/orbit-${env_name}*
-              - arn:aws:cloudformation:${region}:${account_id}:stack/eksctl-orbit-${env_name}*
+              - arn:aws:cloudformation:${region}:${account_id}:stack/${top_level}-${env_name}*
+              - arn:aws:cloudformation:${region}:${account_id}:stack/eksctl-${top_level}-${env_name}*
           - Effect: Allow
             Action:
               - ssm:Get*
@@ -129,14 +129,12 @@ Resources:
               - arn:aws:ssm:${region}:${account_id}:parameter/orbit*
           - Effect: Allow
             Action:
-              - ssm:Get*
-              - ssm:Describe*
               - ssm:PutParameter
               - ssm:AddTagsToResource
               - ssm:DeleteParameter
               - ssm:DeleteParameters
             Resource:
-              - arn:aws:ssm:${region}:${account_id}:parameter/orbit/${env_name}/*
+              - arn:aws:ssm:${region}:${account_id}:parameter/${top_level}/${env_name}/*
           - Effect: Allow
             Action:
               - ssm:DescribeParameters
@@ -146,26 +144,26 @@ Resources:
             Action:
               - kms:*
             Resource:
-              - arn:aws:kms:${region}:${account_id}:alias/orbit-{env_name}*
+              - arn:aws:kms:${region}:${account_id}:alias/${top_level}-{env_name}*
               - arn:aws:kms:${region}:${account_id}:key/*
           - Effect: Allow
             Action:
               - eks:*
             Resource:
-              - arn:aws:eks:${region}:${account_id}:cluster/orbit-${env_name}
-              - arn:aws:eks:${region}:${account_id}:cluster/orbit-${env_name}/*
-              - arn:aws:eks:${region}:${account_id}:nodegroup/orbit-${env_name}/*
-              - arn:aws:eks:${region}:${account_id}:fargateprofile/orbit-${env_name}/*
+              - arn:aws:eks:${region}:${account_id}:cluster/${top_level}-${env_name}
+              - arn:aws:eks:${region}:${account_id}:cluster/${top_level}-${env_name}/*
+              - arn:aws:eks:${region}:${account_id}:nodegroup/${top_level}-${env_name}/*
+              - arn:aws:eks:${region}:${account_id}:fargateprofile/${top_level}-${env_name}/*
           - Effect: Allow
             Action:
               - ecs:*
             Resource:
-              - arn:aws:ecs:${region}:${account_id}:cluster/orbit-${env_name}-*
+              - arn:aws:ecs:${region}:${account_id}:cluster/${top_level}-${env_name}-*
           - Effect: Allow
             Action:
               - lambda:*
             Resource:
-              - arn:aws:lambda:${region}:${account_id}:function:orbit-${env_name}-*
+              - arn:aws:lambda:${region}:${account_id}:function:${top_level}-${env_name}-*
           - Effect: Allow
             Action:
               - codeartifact:GetAuthorizationToken
@@ -183,10 +181,10 @@ Resources:
             Action:
               - codecommit:*
             Resource:
-              - arn:aws:codecommit:${region}:${account_id}:orbit-${env_name}-*
+              - arn:aws:codecommit:${region}:${account_id}:${top_level}-${env_name}-*
         Version: '2012-10-17'
       Description: ''
-      ManagedPolicyName: orbit-${env_name}-admin-other
+      ManagedPolicyName: ${top_level}-${env_name}-admin-other
       Path: /
   OrbitAdminPolicyIAMS3:
     Type: AWS::IAM::ManagedPolicy
@@ -209,12 +207,16 @@ Resources:
               - s3:DeleteObjectVersion
               - s3:DeleteBucket
             Resource:
-              - arn:aws:s3:::orbit-${env_name}-scratch-${account_id}-${deploy_id}/*
-              - arn:aws:s3:::orbit-${env_name}-scratch-${account_id}-${deploy_id}
-              - arn:aws:s3:::orbit-${env_name}-toolkit-${account_id}-${deploy_id}/*
-              - arn:aws:s3:::orbit-${env_name}-toolkit-${account_id}-${deploy_id}
-              - arn:aws:s3:::orbit-${env_name}-cdk-toolkit-${account_id}-${deploy_id}/*
-              - arn:aws:s3:::orbit-${env_name}-cdk-toolkit-${account_id}-${deploy_id}
+              - arn:aws:s3:::${top_level}-${env_name}-scratch-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::${top_level}-${env_name}-scratch-${account_id}-${deploy_id}
+              - arn:aws:s3:::${top_level}-${env_name}-toolkit-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::${top_level}-${env_name}-toolkit-${account_id}-${deploy_id}
+              - arn:aws:s3:::${top_level}-${env_name}-cdk-toolkit-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::${top_level}-${env_name}-cdk-toolkit-${account_id}-${deploy_id}
+              - arn:aws:s3:::${top_level}-${env_name}-demo-lake-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::${top_level}-${env_name}-demo-lake-${account_id}-${deploy_id}
+              - arn:aws:s3:::${top_level}-${env_name}-secured-demo-lake-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::${top_level}-${env_name}-secured-demo-lake-${account_id}-${deploy_id}
           - Effect: Allow
             Action:
               - s3:GetBucketEncryption
@@ -234,8 +236,8 @@ Resources:
               - iam:ListAttachedRolePolicies
               - iam:UpdateAssumeRolePolicy
             Resource:
-              - arn:aws:iam::${account_id}:role/orbit-${env_name}-*
-              - arn:aws:iam::${account_id}:role/eksctl-orbit-${env_name}-*
+              - arn:aws:iam::${account_id}:role/${top_level}-${env_name}-*
+              - arn:aws:iam::${account_id}:role/eksctl-${top_level}-${env_name}-*
           - Effect: Allow
             Action:
               - iam:CreateServiceLinkedRole
@@ -259,15 +261,15 @@ Resources:
               - iam:CreatePolicyVersion
               - iam:DeletePolicyVersion
             Resource:
-              - arn:aws:iam::${account_id}:policy/orbit-${env_name}-*
+              - arn:aws:iam::${account_id}:policy/${top_level}-${env_name}-*
           - Effect: Allow
             Action:
               - sts:AssumeRole
             Resource:
-              - arn:aws:iam::${account_id}:role/orbit-${env_name}-admin
+              - arn:aws:iam::${account_id}:role/${top_level}-${env_name}-admin
         Version: '2012-10-17'
       Description: ''
-      ManagedPolicyName: orbit-${env_name}-admin-iam-s3
+      ManagedPolicyName: ${top_level}-${env_name}-admin-iam-s3
       Path: /
   RedshiftPluginManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
@@ -278,18 +280,18 @@ Resources:
             Action:
               - redshift:*
             Resource:
-              - arn:aws:redshift:${region}:${account_id}:parametergroup:orbit-${env_name}-*
-              - arn:aws:redshift:${region}:${account_id}:securitygroup:orbit-${env_name}-*
-              - arn:aws:redshift:${region}:${account_id}:subnetgroup:orbit-${env_name}-*
-              - arn:aws:redshift:${region}:${account_id}:cluster:orbit-${env_name}-*
+              - arn:aws:redshift:${region}:${account_id}:parametergroup:${top_level}-${env_name}-*
+              - arn:aws:redshift:${region}:${account_id}:securitygroup:${top_level}-${env_name}-*
+              - arn:aws:redshift:${region}:${account_id}:subnetgroup:${top_level}-${env_name}-*
+              - arn:aws:redshift:${region}:${account_id}:cluster:${top_level}-${env_name}-*
           - Effect: Allow
             Action:
               - secretsmanager:*
             Resource:
-              - arn:aws:secretsmanager:${region}:${account_id}:secret:orbit-redshift-master-${env_name}*
+              - arn:aws:secretsmanager:${region}:${account_id}:secret:${top_level}-redshift-master-${env_name}*
         Version: '2012-10-17'
       Description: 'Managed policy for plugin specific resources'
-      ManagedPolicyName: orbit-${env_name}-plugin-admin
+      ManagedPolicyName: ${top_level}-${env_name}-plugin-admin
       Path: /
   AdminRole:
     Type: AWS::IAM::Role
@@ -299,8 +301,7 @@ Resources:
         - Ref: OrbitAdminPolicyOther
         - Ref: OrbitAdminPolicyIAMS3
         - Ref: RedshiftPluginManagedPolicy
-        - arn
-      RoleName: orbit-${env_name}-admin
+      RoleName: ${top_level}-${env_name}-admin
       MaxSessionDuration: 10000
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -328,10 +329,10 @@ Resources:
   CodeBuild:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: orbit-${env_name}
+      Name: ${top_level}-${env_name}
       Tags:
         - Key: Env
-          Value: orbit-${env_name}
+          Value: ${top_level}-${env_name}
       Description: Orbit Workbench CLI backend.
       ServiceRole: !Ref AdminRole
       Artifacts:
@@ -356,13 +357,13 @@ Resources:
       LogsConfig:
         CloudWatchLogs:
           Status: ENABLED
-          GroupName: /aws/codebuild/orbit-${env_name}
+          GroupName: /aws/codebuild/${top_level}-${env_name}
         S3Logs:
           Status: DISABLED
   KmsKeyAlias:
     Type: AWS::KMS::Alias
     Properties:
-      AliasName: alias/orbit-${env_name}-${deploy_id}
+      AliasName: alias/${top_level}-${env_name}-${deploy_id}
       TargetKeyId:
         Ref: KmsKey
   KmsKey:
@@ -370,11 +371,11 @@ Resources:
     Properties:
       Tags:
         - Key: Env
-          Value: orbit-${env_name}
+          Value: ${top_level}-${env_name}
       Description: Orbit Workbench key for ${env_name}.
       KeyPolicy:
         Version: '2012-10-17'
-        Id: orbit-${env_name}
+        Id: ${top_level}-${env_name}
         Statement:
           - Sid: Enable IAM User Permissions
             Effect: Allow
@@ -405,11 +406,11 @@ Outputs:
   DeployId:
     Value: '${deploy_id}'
     Export:
-      Name: orbit-${env_name}-deploy-id
+      Name: ${top_level}-${env_name}-deploy-id
   KmsKeyArn:
     Value:
       Fn::GetAtt:
         - KmsKey
         - Arn
     Export:
-      Name: orbit-${env_name}-kms-arn
+      Name: ${top_level}-${env_name}-kms-arn

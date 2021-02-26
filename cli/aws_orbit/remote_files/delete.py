@@ -15,7 +15,7 @@
 import logging
 from typing import TYPE_CHECKING, Tuple
 
-from aws_orbit.models.context import load_context_from_ssm
+from aws_orbit.models.context import ContextSerDe
 from aws_orbit.remote_files import env
 from aws_orbit.services import ecr
 
@@ -27,7 +27,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 def delete_image(args: Tuple[str, ...]) -> None:
     _logger.debug("args %s", args)
-    context: "Context" = load_context_from_ssm(env_name=args[0])
+    context: "Context" = ContextSerDe.load_context_from_ssm(env_name=args[0], type=Context)
     _logger.debug("context.name %s", context.name)
     if len(args) == 2:
         image_name: str = args[1]

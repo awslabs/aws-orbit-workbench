@@ -22,7 +22,7 @@ import yaml
 
 from aws_orbit import sh
 from aws_orbit.models.changeset import Changeset, ListChangeset
-from aws_orbit.models.context import Context, TeamContext, dump_context_to_ssm
+from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.models.manifest import ManagedNodeGroupManifest
 from aws_orbit.services import cfn, ec2, eks, iam
 from aws_orbit.services.ec2 import IpPermission, UserIdGroupPair
@@ -178,7 +178,7 @@ def map_iam_identities(
                         f"--username {role} --group system:masters"
                     )
                     context.eks_system_masters_roles.append(role)
-                    dump_context_to_ssm(context=context)
+                    ContextSerDe.dump_context_to_ssm(context=context)
                     break
             else:
                 _logger.debug(f"Skip adding existing IAM Identity Mapping - Role: {arn}")
@@ -194,7 +194,7 @@ def map_iam_identities(
                 _logger.debug(f"Removing IAM Identity Mapping - Role: {arn}")
                 sh.run(f"eksctl delete iamidentitymapping --cluster {cluster_name} --arn {arn} --all")
                 context.eks_system_masters_roles.remove(role)
-                dump_context_to_ssm(context=context)
+                ContextSerDe.dump_context_to_ssm(context=context)
 
 
 def get_pod_to_cluster_rules(group_id: str) -> List[IpPermission]:
@@ -289,7 +289,7 @@ def fetch_cluster_data(context: "Context", cluster_name: str) -> None:
 
     context.eks_oidc_provider = cluster_data["cluster"]["identity"]["oidc"]["issuer"].replace("https://", "")
     context.cluster_sg_id = cluster_data["cluster"]["resourcesVpcConfig"]["clusterSecurityGroupId"]
-    dump_context_to_ssm(context=context)
+    ContextSerDe.dump_context_to_ssm(context=context)
     _logger.debug("Cluster data fetched successfully.")
 
 
@@ -322,7 +322,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
             f"--username {username} --group system:masters"
         )
         context.managed_nodegroups = requested_nodegroups
-        dump_context_to_ssm(context=context)
+        ContextSerDe.dump_context_to_ssm(context=context)
     else:
 
         current_nodegroups = context.managed_nodegroups
@@ -351,7 +351,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
                     [ng for ng in changeset.managed_nodegroups_changeset.added_nodegroups if ng.name in nodegroups]
                 )
                 context.managed_nodegroups = current_nodegroups
-                dump_context_to_ssm(context=context)
+                ContextSerDe.dump_context_to_ssm(context=context)
 
             if changeset.managed_nodegroups_changeset.removed_nodegroups:
                 output_filename = generate_manifest(
@@ -370,7 +370,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
                     "--approve --wait --drain=false --verbose 4"
                 )
                 context.managed_nodegroups = [ng for ng in current_nodegroups if ng.name not in nodegroups]
-                dump_context_to_ssm(context=context)
+                ContextSerDe.dump_context_to_ssm(context=context)
 
     map_iam_identities(
         context=context,

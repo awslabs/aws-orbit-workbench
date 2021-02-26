@@ -17,11 +17,8 @@ from typing import TYPE_CHECKING
 
 from aws_orbit import bundle, plugins, remote
 from aws_orbit.messages import MessagesContext
-from aws_orbit.models.context import load_context_from_ssm
+from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.services import cfn, codebuild, ssm
-
-if TYPE_CHECKING:
-    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -30,7 +27,7 @@ def delete_image(env: str, name: str, debug: bool) -> None:
     with MessagesContext("Destroying Docker Image", debug=debug) as msg_ctx:
         ssm.cleanup_changeset(env_name=env)
         ssm.cleanup_manifest(env_name=env)
-        context: "Context" = load_context_from_ssm(env_name=env)
+        context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
         msg_ctx.info("Manifest loaded")
         if cfn.does_stack_exist(stack_name=f"orbit-{context.name}") is False:
             msg_ctx.error("Please, deploy your environment before deploy/destroy any docker image")
@@ -44,9 +41,7 @@ def delete_image(env: str, name: str, debug: bool) -> None:
         )
         msg_ctx.progress(3)
 
-        bundle_path = bundle.generate_bundle(
-            command_name=f"delete_image-{name}", context=context, dirs=[], changeset=None
-        )
+        bundle_path = bundle.generate_bundle(command_name=f"delete_image-{name}", context=context, dirs=[])
         msg_ctx.progress(4)
         buildspec = codebuild.generate_spec(
             context=context,

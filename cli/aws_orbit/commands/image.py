@@ -22,12 +22,9 @@ from kubernetes import config
 
 from aws_orbit import bundle, plugins, remote, sh, utils
 from aws_orbit.messages import MessagesContext, stylize
-from aws_orbit.models.context import load_context_from_ssm
+from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.utils import get_k8s_context
 from aws_orbit.services import cfn, codebuild, ssm
-
-if TYPE_CHECKING:
-    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 PROFILES_TYPE = List[Dict[str, Any]]
@@ -65,7 +62,7 @@ def write_context_ssm(profiles: PROFILES_TYPE, env_name: str, team_name: str) ->
 
 def restart_jupyterhub(env: str, team: str, msg_ctx: MessagesContext) -> None:
     ssm.cleanup_manifest(env_name=env)
-    context: "Context" = load_context_from_ssm(env_name=env)
+    context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
     msg_ctx.tip("JupyterHub update...")
     msg_ctx.tip("JupyterHub and notebooks in your namespace will be restarted. Please close notebook and login again")
     try:
@@ -163,7 +160,7 @@ def build_image(
     with MessagesContext("Deploying Docker Image", debug=debug) as msg_ctx:
         ssm.cleanup_changeset(env_name=env)
         ssm.cleanup_manifest(env_name=env)
-        context: "Context" = load_context_from_ssm(env_name=env)
+        context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
         msg_ctx.info("Manifest loaded")
         if cfn.does_stack_exist(stack_name=f"orbit-{context.name}") is False:
             msg_ctx.error("Please, deploy your environment before deploying any additional docker image")
@@ -178,9 +175,7 @@ def build_image(
         )
         msg_ctx.progress(4)
 
-        bundle_path = bundle.generate_bundle(
-            command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)], changeset=None, plugins=True
-        )
+        bundle_path = bundle.generate_bundle(command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)])
         msg_ctx.progress(5)
 
         script_str = "NO_SCRIPT" if script is None else script

@@ -20,8 +20,8 @@ from typing import TYPE_CHECKING, Iterator, List, Optional, cast
 import boto3
 
 from aws_orbit import ORBIT_CLI_ROOT, cdk, docker, plugins, sh
-from aws_orbit.models.context import create_team_context_from_manifest, dump_context_to_ssm
-from aws_orbit.models.manifest import load_manifest_from_ssm
+from aws_orbit.models.context import ContextSerDe, create_team_context_from_manifest
+from aws_orbit.models.manifest import ManifestSerDe
 from aws_orbit.remote_files import eksctl, kubectl
 from aws_orbit.services import cfn, ecr
 from aws_orbit.utils import boto3_client
@@ -149,11 +149,11 @@ def eval_removed_teams(context: "Context", teams_changeset: Optional["TeamsChang
         destroy(context=context, team_context=team_context)
         _logger.debug("Team %s destroyed", name)
         context.remove_team_by_name(name=name)
-        dump_context_to_ssm(context=context)
+        ContextSerDe.dump_context_to_ssm(context=context)
 
 
 def deploy(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> None:
-    manifest: Optional["Manifest"] = load_manifest_from_ssm(env_name=context.name)
+    manifest: Optional["Manifest"] = ManifestSerDe.load_manifest_from_ssm(env_name=context.name, type=Manifest)
     if manifest is None:
         raise ValueError("manifest is None!")
     eval_removed_teams(context=context, teams_changeset=teams_changeset)
@@ -172,7 +172,7 @@ def deploy(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> N
             team_context = create_team_context_from_manifest(manifest=manifest, team_manifest=team_manifest)
             team_context.fetch_team_data()
             context.teams.append(team_context)
-        dump_context_to_ssm(context=context)
+        ContextSerDe.dump_context_to_ssm(context=context)
 
     for team_context in context.teams:
         _deploy_team_image(context=context, team_context=team_context, image="jupyter-user")
@@ -212,4 +212,4 @@ def destroy_all(context: "Context") -> None:
     for team_context in context.teams:
         destroy(context=context, team_context=team_context)
     context.teams = []
-    dump_context_to_ssm(context=context)
+    ContextSerDe.dump_context_to_ssm(context=context)

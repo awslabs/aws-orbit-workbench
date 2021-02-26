@@ -22,11 +22,11 @@ import botocore.exceptions
 import yaml
 
 from aws_orbit import __version__
+from aws_orbit.models.context import Context, FoundationContext
 from aws_orbit.utils import boto3_client, try_it
 
 if TYPE_CHECKING:
-    from aws_orbit.models.changeset import Changeset
-    from aws_orbit.models.context import Context
+    from aws_orbit.models.changeset import Changesetm
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -127,7 +127,7 @@ def start(
     client = boto3_client("codebuild")
     repo: Optional[str] = None
     credentials: Optional[str] = None
-    if context.images.code_build.source == "ecr":
+    if context.images.code_build.source.startswith("ecr"):
         repo = context.images.code_build.repository
         if not any(match in repo for match in [".amazonaws.com/", "public.ecr.aws"]):
             repo = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/{repo}"
@@ -225,7 +225,7 @@ SPEC_TYPE = Dict[str, Union[float, Dict[str, Dict[str, Union[List[str], Dict[str
 
 
 def generate_spec(
-    context: "Context",
+    context: Union[Context, FoundationContext],
     changeset: Optional["Changeset"] = None,
     plugins: bool = True,
     cmds_install: Optional[List[str]] = None,

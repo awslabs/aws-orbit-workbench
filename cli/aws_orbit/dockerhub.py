@@ -1,19 +1,22 @@
 import json
 import logging
-from typing import TYPE_CHECKING, Dict, Tuple
+from typing import TYPE_CHECKING, Dict, Tuple, TypeVar
 
 import botocore
 
+from aws_orbit.models.context import Context, FoundationContext
 from aws_orbit.services import s3
 from aws_orbit.utils import boto3_client
-
-if TYPE_CHECKING:
-    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def get_credential(context: "Context") -> Tuple[str, str]:
+T = TypeVar("T")
+
+
+def get_credential(context: T) -> Tuple[str, str]:
+    if not (isinstance(context, Context) or isinstance(context, FoundationContext)):
+        raise ValueError("Unknown 'context' Type")
     if context.toolkit.s3_bucket is None:
         raise ValueError("context.toolkit.s3_bucket is None!")
     client_s3 = boto3_client(service_name="s3")

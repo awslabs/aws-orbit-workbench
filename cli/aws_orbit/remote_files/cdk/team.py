@@ -30,8 +30,8 @@ import aws_cdk.core as core
 from aws_cdk.core import App, Construct, Environment, IConstruct, Stack, Tags
 
 from aws_orbit.models.changeset import load_changeset_from_ssm
-from aws_orbit.models.context import load_context_from_ssm
-from aws_orbit.models.manifest import load_manifest_from_ssm
+from aws_orbit.models.context import ContextSerDe
+from aws_orbit.models.manifest import ManifestSerDe
 from aws_orbit.remote_files.cdk.team_builders.ec2 import Ec2Builder
 from aws_orbit.remote_files.cdk.team_builders.ecr import EcrBuilder
 from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
@@ -208,7 +208,7 @@ class Team(Stack):
 def main() -> None:
     _logger.debug("sys.argv: %s", sys.argv)
     if len(sys.argv) == 3:
-        context: "Context" = load_context_from_ssm(env_name=sys.argv[1])
+        context: "Context" = ContextSerDe.load_context_from_ssm(env_name=sys.argv[1], type=Context)
         team_name: str = sys.argv[2]
     else:
         raise ValueError("Unexpected number of values in sys.argv.")
@@ -220,7 +220,7 @@ def main() -> None:
     image: Optional[str] = None
 
     if changeset and changeset.teams_changeset and team_name in changeset.teams_changeset.added_teams_names:
-        manifest: Optional["Manifest"] = load_manifest_from_ssm(env_name=sys.argv[1])
+        manifest: Optional["Manifest"] = ManifestSerDe.load_manifest_from_ssm(env_name=sys.argv[1], type=Manifest)
         if manifest is None:
             raise ValueError("manifest is None!")
         team_manifest: Optional["TeamManifest"] = manifest.get_team_by_name(name=team_name)

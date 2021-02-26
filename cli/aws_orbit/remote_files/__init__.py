@@ -24,9 +24,12 @@ REMOTE_FUNC_TYPE = Callable[[Tuple[str, ...]], None]
 
 
 class RemoteCommands(Enum):
-    deploy: REMOTE_FUNC_TYPE = deploy_module.deploy
     _deploy_image: REMOTE_FUNC_TYPE = deploy_module._deploy_image
-    destroy: REMOTE_FUNC_TYPE = destroy_module.destroy
     build_image: REMOTE_FUNC_TYPE = build_image_module.build_image
     delete_image: REMOTE_FUNC_TYPE = delete_image_module.delete_image
     deploy_foundation: REMOTE_FUNC_TYPE = deploy_module.deploy_foundation
+    deploy_env: REMOTE_FUNC_TYPE = deploy_module.deploy_env
+    deploy_teams: REMOTE_FUNC_TYPE = deploy_module.deploy_teams
+    destroy_teams: REMOTE_FUNC_TYPE = destroy_module.destroy_teams
+    destroy_env: REMOTE_FUNC_TYPE = destroy_module.destroy_env
+    destroy_foundation: REMOTE_FUNC_TYPE = destroy_module.destroy_foundation
