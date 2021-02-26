@@ -46,7 +46,7 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
 
     if getattr(context.images, image_name.replace("-", "_")).source == "code":
         _logger.debug("Building and deploy docker image from source...")
-        path = os.path.join(os.getcwd(), dir)
+        path = os.path.join(os.getcwd(), "bundle", dir)
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
@@ -91,7 +91,7 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
         for name, dir, script, build_args in images:
             _logger.debug("name: %s | script: %s", name, script)
 
-            path = os.path.join(os.getcwd(), name)
+            path = os.path.join(os.getcwd(), "bundle", name)
             _logger.debug("path: %s", path)
 
             if getattr(context.images, name.replace("-", "_")).source == "code":
