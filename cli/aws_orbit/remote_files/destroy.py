@@ -69,6 +69,8 @@ def destroy_env(args: Tuple[str, ...]) -> None:
     _logger.debug("EKS Environment Stacks destroyed")
     env.destroy(context=context)
     _logger.debug("Env Stack destroyed")
+    cdk_toolkit.destroy(context=context)
+    _logger.debug("CDK Toolkit Stack destroyed")
 
 
 def destroy_foundation(args: Tuple[str, ...]) -> None:

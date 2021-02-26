@@ -107,8 +107,10 @@ def destroy_env(env: str, debug: bool) -> None:
         msg_ctx.info(f"Teams: {','.join([t.name for t in context.teams])}")
         msg_ctx.progress(2)
 
-        if cfn.does_stack_exist(stack_name=context.env_stack_name) or cfn.does_stack_exist(
-            stack_name=context.cdk_toolkit.stack_name
+        if (
+            cfn.does_stack_exist(stack_name=context.env_stack_name)
+            or cfn.does_stack_exist(stack_name=context.toolkit.stack_name)
+            or cfn.does_stack_exist(stack_name=context.cdk_toolkit.stack_name)
         ):
             bundle_path = bundle.generate_bundle(command_name="destroy", context=context)
             msg_ctx.progress(5)
