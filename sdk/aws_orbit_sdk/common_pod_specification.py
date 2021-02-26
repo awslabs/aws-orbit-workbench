@@ -163,7 +163,7 @@ class TeamConstants:
 
     def profile(self, name: str) -> PROFILE_TYPE:
         for p in self.team_profiles():
-            if p["display_name"] == name:
+            if p["slug"] == name:
                 return p
         return None
 

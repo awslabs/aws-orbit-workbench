@@ -29,6 +29,7 @@ from kubernetes import config as k8_config
 from kubernetes import watch as k8_watch
 from kubernetes.client import *
 from kubespawner.objects import make_pod, make_pvc
+from slugify import slugify
 
 from aws_orbit_sdk.common import get_properties, get_stepfunctions_waiter_config
 from aws_orbit_sdk.common_pod_specification import TeamConstants
@@ -494,6 +495,7 @@ def build_env(__CURRENT_ENV_MANIFEST__, env_name, taskConfiguration, team_consta
 def resolve_profile(taskConfiguration, team_constants):
     if "compute" in taskConfiguration and "profile" in taskConfiguration["compute"]:
         profile_name = taskConfiguration["compute"]["profile"]
+        profile_name = slugify(profile_name)
         _logger.info(f"using profile %s", profile_name)
         profile = team_constants.profile(profile_name)
         if not profile:
