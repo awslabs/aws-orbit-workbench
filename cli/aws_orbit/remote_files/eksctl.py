@@ -125,16 +125,6 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
         for nodegroup in nodegroups:
             MANIFEST["managedNodeGroups"].append(create_nodegroup_structure(context=context, nodegroup=nodegroup))
 
-    MANIFEST["fargateProfiles"] = [
-        {
-            "name": "fargate-default",
-            "selectors": [
-                {"namespace": "default"},
-                {"namespace": "kube-system"},
-            ],
-        }
-    ]
-
     MANIFEST["cloudWatch"] = {"clusterLogging": {"enableTypes": ["*"]}}
 
     _logger.debug("eksctl manifest:\n%s", pprint.pformat(MANIFEST))
