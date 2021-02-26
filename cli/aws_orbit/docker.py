@@ -137,6 +137,7 @@ def deploy_image_from_source(
         sh.run(f"cp /root/.config/pip/pip.conf ./{dir}/")
     build_args = [] if build_args is None else build_args
     _logger.debug("Building docker image from %s", os.path.abspath(dir))
+    sh.run(cmd="docker system prune --all --force --volumes")
     update_docker_file(context=context, dir=dir)
     build(context=context, dir=dir, name=name, tag=tag, use_cache=use_cache, pull=True, build_args=build_args)
     _logger.debug("Docker Image built")
