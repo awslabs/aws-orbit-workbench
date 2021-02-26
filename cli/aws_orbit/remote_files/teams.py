@@ -172,8 +172,7 @@ def deploy(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> N
                 hook_name="pre_hook",
             )
             if hook is not None:
-                cfn_resource_details: Optional[Dict[str,str]] = cast(Optional[Dict[str,str]],
-                                   hook(plugin.plugin_id, context, team_context, plugin.parameters))
+                hook(plugin.plugin_id, context, team_context, plugin.parameters)
 
         cdk.deploy(
             context=context,
@@ -225,8 +224,7 @@ def destroy(context: "Context", team_context: "TeamContext") -> None:
                 hook_name="post_hook",
             )
             if hook is not None:
-                cfn_resource_details: Optional[str] = cast(Optional[str],
-                                   hook(plugin.plugin_id, context, team_context, plugin.parameters))
+                hook(plugin.plugin_id, context, team_context, plugin.parameters)
 
 
 def destroy_all(context: "Context") -> None:

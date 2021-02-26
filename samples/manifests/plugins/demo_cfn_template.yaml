@@ -1,0 +1,394 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  Orbit Workbench Toolkit Stack - ${env_name} - ${team_name}
+Resources:
+
+
+  scratchbucket33C5A08B:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              KMSMasterKeyID: !GetAtt
+                - kmskey49FBC3B3
+                - Arn
+              SSEAlgorithm: 'aws:kms'
+      BucketName: !Join
+        - ''
+        - - orbit-dev-env-scratch-
+          - !Ref 'AWS::AccountId'
+          - '-3fe187'
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 30
+            Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Env
+          Value: orbit-dev-env
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      'aws:cdk:path': orbit-dev-env-demo/scratch_bucket/Resource
+  lakebucket778F4D47:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              KMSMasterKeyID: !GetAtt
+                - kmskey49FBC3B3
+                - Arn
+              SSEAlgorithm: 'aws:kms'
+      BucketName: !Join
+        - ''
+        - - orbit-dev-env-demo-lake-
+          - !Ref 'AWS::AccountId'
+          - '-3fe187'
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 90
+            Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Env
+          Value: orbit-dev-env
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      'aws:cdk:path': orbit-dev-env-demo/lake_bucket/Resource
+  securedlakebucketF62B741B:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              KMSMasterKeyID: !GetAtt
+                - kmskey49FBC3B3
+                - Arn
+              SSEAlgorithm: 'aws:kms'
+      BucketName: !Join
+        - ''
+        - - orbit-dev-env-secured-demo-lake-
+          - !Ref 'AWS::AccountId'
+          - '-3fe187'
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 90
+            Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Env
+          Value: orbit-dev-env
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      'aws:cdk:path': orbit-dev-env-demo/secured_lake_bucket/Resource
+  LakeBucketFullAccess83731CEA:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action: 's3:*'
+            Effect: Allow
+            Resource:
+              - !GetAtt
+                - lakebucket778F4D47
+                - Arn
+              - !Join
+                - ''
+                - - !GetAtt
+                    - lakebucket778F4D47
+                    - Arn
+                  - '*'
+          - Action: 'glue:*'
+            Effect: Allow
+            Resource: '*'
+        Version: 2012-10-17
+      Description: ''
+      ManagedPolicyName: orbit-dev-env-demo-lake-bucket-fullaccess
+      Path: /
+    Metadata:
+      'aws:cdk:path': orbit-dev-env-demo/LakeBucketFullAccess/Resource
+  LakeBucketReadOnlyAccessE37861C8:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:Get*'
+              - 's3:List*'
+            Effect: Allow
+            Resource:
+              - !GetAtt
+                - lakebucket778F4D47
+                - Arn
+              - !Join
+                - ''
+                - - !GetAtt
+                    - lakebucket778F4D47
+                    - Arn
+                  - '*'
+          - Action: 'glue:*'
+            Effect: Allow
+            Resource: '*'
+          - Action: 'kms:*'
+            Effect: Allow
+            Resource: !GetAtt
+              - kmskey49FBC3B3
+              - Arn
+        Version: 2012-10-17
+      Description: ''
+      ManagedPolicyName: orbit-dev-env-demo-lake-bucket-readonlyaccess
+      Path: /
+    Metadata:
+      'aws:cdk:path': orbit-dev-env-demo/LakeBucketReadOnlyAccess/Resource
+
+
+  lakecreatorgroup:
+    Type: 'AWS::Cognito::UserPoolGroup'
+    Properties:
+      UserPoolId: !Ref orbituserpool1A3D9DA3
+      Description: lake-creator users group.
+      GroupName: lake-creator
+    Metadata:
+      'aws:cdk:path': orbit-dev-env-demo/lake-creator_group
+  lakeusergroup:
+    Type: 'AWS::Cognito::UserPoolGroup'
+    Properties:
+      UserPoolId: !Ref orbituserpool1A3D9DA3
+      Description: lake-user users group.
+      GroupName: lake-user
+    Metadata:
+      'aws:cdk:path': orbit-dev-env-demo/lake-user_group
+  orbitDemoParamsF0345F8B:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Type: String
+      Value: !Join
+        - ''
+        - - '{"VpcId": "'
+          - !Ref vpcA2121C38
+          - '", "PublicSubnets": ["'
+          - !Ref vpcPublicSubnet1Subnet2E65531E
+          - '", "'
+          - !Ref vpcPublicSubnet2Subnet009B674F
+          - '"], "PrivateSubnets": ["'
+          - !Ref vpcPrivateSubnet1Subnet934893E8
+          - '", "'
+          - !Ref vpcPrivateSubnet2Subnet7031C2BA
+          - '"], "IsolatedSubnets": ["'
+          - !Ref vpcIsolatedSubnet1Subnet8B28CEB3
+          - '", "'
+          - !Ref vpcIsolatedSubnet2Subnet2C6B375C
+          - '"], "NodesSubnets": ["'
+          - !Ref vpcIsolatedSubnet1Subnet8B28CEB3
+          - '", "'
+          - !Ref vpcIsolatedSubnet2Subnet2C6B375C
+          - '"], "LoadBalancersSubnets": ["'
+          - !Ref vpcPublicSubnet1Subnet2E65531E
+          - '", "'
+          - !Ref vpcPublicSubnet2Subnet009B674F
+          - '"], "LakeBucket": "orbit-dev-env-demo-lake-'
+          - !Ref 'AWS::AccountId'
+          - '-3fe187", "SecuredLakeBucket": "orbit-dev-env-secured-demo-lake-'
+          - !Ref 'AWS::AccountId'
+          - '-3fe187", "CreatorAaccessPolicy": "'
+          - !Select
+            - 1
+            - !Split
+              - /
+              - !Select
+                - 5
+                - !Split
+                  - ':'
+                  - !Ref LakeBucketFullAccess83731CEA
+          - '", "UserAccessPolicy": "'
+          - !Select
+            - 1
+            - !Split
+              - /
+              - !Select
+                - 5
+                - !Split
+                  - ':'
+                  - !Ref LakeBucketReadOnlyAccessE37861C8
+          - '", "KMSKey": "'
+          - !GetAtt
+            - kmskey49FBC3B3
+            - Arn
+          - '", "SharedEfsFsId": "'
+          - !Ref orbitorbitfsfs335842CC
+          - '", "ScratchBucketArn": "'
+          - !GetAtt
+            - scratchbucket33C5A08B
+            - Arn
+          - '", "ScratchBucketName": "'
+          - !Ref scratchbucket33C5A08B
+          - '", "UserPoolId": "'
+          - !Ref orbituserpool1A3D9DA3
+          - '", "SharedEfsSgId": "'
+          - !GetAtt
+            - vpcsg90F3EB1C
+            - GroupId
+          - '", "UserPoolProviderName": "'
+          - !GetAtt
+            - orbituserpool1A3D9DA3
+            - ProviderName
+          - '"}'
+      Description: Orbit Workbench Demo resources.
+      Name: /orbit/dev-env/demo
+      Tags:
+        Env: orbit-dev-env
+      Tier: Intelligent-Tiering
+    Metadata:
+      'aws:cdk:path': orbit-dev-env-demo/--orbit--DemoParams/Resource
+  CDKMetadata:
+    Type: 'AWS::CDK::Metadata'
+    Properties:
+      Modules: >-
+        aws-cdk=1.67.0,@aws-cdk/assets=1.67.0,@aws-cdk/aws-applicationautoscaling=1.67.0,@aws-cdk/aws-autoscaling-common=1.67.0,@aws-cdk/aws-certificatemanager=1.67.0,@aws-cdk/aws-cloudformation=1.67.0,@aws-cdk/aws-cloudwatch=1.67.0,@aws-cdk/aws-codeguruprofiler=1.67.0,@aws-cdk/aws-cognito=1.67.0,@aws-cdk/aws-ec2=1.67.0,@aws-cdk/aws-efs=1.67.0,@aws-cdk/aws-events=1.67.0,@aws-cdk/aws-iam=1.67.0,@aws-cdk/aws-kms=1.67.0,@aws-cdk/aws-lambda=1.67.0,@aws-cdk/aws-logs=1.67.0,@aws-cdk/aws-route53=1.67.0,@aws-cdk/aws-s3=1.67.0,@aws-cdk/aws-s3-assets=1.67.0,@aws-cdk/aws-sns=1.67.0,@aws-cdk/aws-sqs=1.67.0,@aws-cdk/aws-ssm=1.67.0,@aws-cdk/cloud-assembly-schema=1.67.0,@aws-cdk/core=1.67.0,@aws-cdk/custom-resources=1.67.0,@aws-cdk/cx-api=1.67.0,@aws-cdk/region-info=1.67.0,jsii-runtime=Python/3.8.7
+    Metadata:
+      'aws:cdk:path': orbit-dev-env-demo/CDKMetadata/Default
+    Condition: CDKMetadataAvailable
+Outputs:
+  orbitdevenvdemovpcid:
+    Value: !Ref vpcA2121C38
+    Export:
+      Name: orbit-dev-env-vpc-id
+  orbitdevenvdemopublicsubnetsids:
+    Value: !Join
+      - ''
+      - - !Ref vpcPublicSubnet1Subnet2E65531E
+        - ','
+        - !Ref vpcPublicSubnet2Subnet009B674F
+    Export:
+      Name: orbit-dev-env-public-subnet-ids
+  orbitdevenvdemoprivatesubnetsids:
+    Value: !Join
+      - ''
+      - - !Ref vpcPrivateSubnet1Subnet934893E8
+        - ','
+        - !Ref vpcPrivateSubnet2Subnet7031C2BA
+    Export:
+      Name: orbit-dev-env-private-subnet-ids
+  orbitdevenvdemoisolatedsubnetsids:
+    Value: !Join
+      - ''
+      - - !Ref vpcIsolatedSubnet1Subnet8B28CEB3
+        - ','
+        - !Ref vpcIsolatedSubnet2Subnet2C6B375C
+    Export:
+      Name: orbit-dev-env-isolated-subnet-ids
+  orbitdevenvdemonodesubnetsids:
+    Value: !Join
+      - ''
+      - - !Ref vpcIsolatedSubnet1Subnet8B28CEB3
+        - ','
+        - !Ref vpcIsolatedSubnet2Subnet2C6B375C
+    Export:
+      Name: orbit-dev-env-nodes-subnet-ids
+  orbitdevenvdemolakebucketfullaccesspolicy:
+    Value: !Select
+      - 1
+      - !Split
+        - /
+        - !Select
+          - 5
+          - !Split
+            - ':'
+            - !Ref LakeBucketFullAccess83731CEA
+    Export:
+      Name: lake-bucket-full-access-policy
+  orbitdevenvdemolakebucketreadonlypolicy:
+    Value: !Select
+      - 1
+      - !Split
+        - /
+        - !Select
+          - 5
+          - !Split
+            - ':'
+            - !Ref LakeBucketReadOnlyAccessE37861C8
+    Export:
+      Name: lake-bucket-read-only-policy
+Conditions:
+  CDKMetadataAvailable: !Or
+    - !Or
+      - !Equals
+        - !Ref 'AWS::Region'
+        - ap-east-1
+      - !Equals
+        - !Ref 'AWS::Region'
+        - ap-northeast-1
+      - !Equals
+        - !Ref 'AWS::Region'
+        - ap-northeast-2
+      - !Equals
+        - !Ref 'AWS::Region'
+        - ap-south-1
+      - !Equals
+        - !Ref 'AWS::Region'
+        - ap-southeast-1
+      - !Equals
+        - !Ref 'AWS::Region'
+        - ap-southeast-2
+      - !Equals
+        - !Ref 'AWS::Region'
+        - ca-central-1
+      - !Equals
+        - !Ref 'AWS::Region'
+        - cn-north-1
+      - !Equals
+        - !Ref 'AWS::Region'
+        - cn-northwest-1
+      - !Equals
+        - !Ref 'AWS::Region'
+        - eu-central-1
+    - !Or
+      - !Equals
+        - !Ref 'AWS::Region'
+        - eu-north-1
+      - !Equals
+        - !Ref 'AWS::Region'
+        - eu-west-1
+      - !Equals
+        - !Ref 'AWS::Region'
+        - eu-west-2
+      - !Equals
+        - !Ref 'AWS::Region'
+        - eu-west-3
+      - !Equals
+        - !Ref 'AWS::Region'
+        - me-south-1
+      - !Equals
+        - !Ref 'AWS::Region'
+        - sa-east-1
+      - !Equals
+        - !Ref 'AWS::Region'
+        - us-east-1
+      - !Equals
+        - !Ref 'AWS::Region'
+        - us-east-2
+      - !Equals
+        - !Ref 'AWS::Region'
+        - us-west-1
+      - !Equals
+        - !Ref 'AWS::Region'
+        - us-west-2

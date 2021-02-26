@@ -15,12 +15,12 @@
 from setuptools import setup
 
 setup(
-    name="custom_cfn_plugin",
+    name="custom_cfn",
     version="0.0b0",
     description="Launch a precursor CloudFormation stack for the team space",
     license="Apache License 2.0",
-    packages=["custom_cfn_plugin"],
+    packages=["custom_cfn"],
     python_requires=">=3.6, <3.9",
     install_requires=[],
-    include_package_data=True
+    include_package_data=True,
 )

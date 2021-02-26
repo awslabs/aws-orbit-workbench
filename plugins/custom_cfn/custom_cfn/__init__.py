@@ -16,42 +16,36 @@ import logging
 import os
 from typing import TYPE_CHECKING, Any, Dict
 
-from aws_orbit.plugins import hooks
 import aws_orbit.services.cfn as cfn
+from aws_orbit.plugins import hooks
 
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
 
 _logger: logging.Logger = logging.getLogger("aws_orbit")
 
+
 @hooks.pre
 def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
-    if parameters['cfn_template_path'] and os.path.isfile(parameters['cfn_template_path']):
+    if parameters["cfn_template_path"] and os.path.isfile(parameters["cfn_template_path"]):
         _logger.info(f"CloudFormation template found at {parameters['cfn_template_path']}")
     else:
         raise FileNotFoundError(f"CloudFormation template not found at {parameters['cfn_template_path']}")
 
     # Read the YAML/JSON file from the parameters key
-    # Replace the ${} references with any requierd variables
+    # Replace the ${} references with any required variables
     # aws_orbit.services.
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
     cfn.deploy_template(
-        stack_name =  f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-resources",
-        filename = parameters['cfn_template_path'],
-        env_tag = context.env_tag,
-        s3_bucket = context.toolkit.s3_bucket
+        stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-resources",
+        filename=parameters["cfn_template_path"],
+        env_tag=context.env_tag,
+        s3_bucket=context.toolkit.s3_bucket,
     )
-    # MYTODO - Read from the stack outputs and prepare the return dict
-    stack_details : Dict[str,str]= {
-        "policy_arn":""
-    }
-    return stack_details
 
 
 @hooks.post
 def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
-    cfn.destroy_stack(stack_name = f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-resources")
-    # MYTODO - Make a meaningful return from the post hook execution
-    return "DELETED"
+    cfn.destroy_stack(stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-resources")

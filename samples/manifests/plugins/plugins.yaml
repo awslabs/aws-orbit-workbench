@@ -21,3 +21,10 @@
             done
             echo "DONE LOOP"
         restartPolicy: Never
+-   PluginId: custom_cfn_plugin
+    Module: custom_cfn_plugin
+    Path: ../plugins/custom_cfn_plugin/
+    Parameters:
+        cfn_template_path: "../conf/plugins/demo_cfn_template.yaml"
+        # MYTODO - Find the exact reference of the cfn template
+
