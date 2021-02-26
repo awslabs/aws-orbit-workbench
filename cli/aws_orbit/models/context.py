@@ -327,7 +327,7 @@ def create_team_context_from_manifest(manifest: "Manifest", team_manifest: "Team
     final_image_address: str = (
         f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}-jupyter-user"
     )
-    return TeamContext(  # type: ignore
+    return TeamContext(
         base_image_address=base_image_address,
         final_image_address=final_image_address,
         stack_name=f"orbit-{manifest.name}-{team_manifest.name}",
