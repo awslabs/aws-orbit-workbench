@@ -199,42 +199,40 @@ def map_iam_identities(
 
 def get_pod_to_cluster_rules(group_id: str) -> List[IpPermission]:
     return [
-        IpPermission(  # type: ignore
+        IpPermission(
             from_port=53,
             to_port=53,
             ip_protocol="tcp",
-            user_id_group_pairs=[UserIdGroupPair(description="DNS Lookup from Pod", group_id=group_id)],  # type: ignore
+            user_id_group_pairs=[UserIdGroupPair(description="DNS Lookup from Pod", group_id=group_id)],
         ),
-        IpPermission(  # type: ignore
+        IpPermission(
             from_port=53,
             to_port=53,
             ip_protocol="udp",
-            user_id_group_pairs=[UserIdGroupPair(description="DNS Lookup from Pod", group_id=group_id)],  # type: ignore
+            user_id_group_pairs=[UserIdGroupPair(description="DNS Lookup from Pod", group_id=group_id)],
         ),
-        IpPermission(  # type: ignore
+        IpPermission(
             from_port=443,
             to_port=443,
             ip_protocol="tcp",
-            user_id_group_pairs=[
-                UserIdGroupPair(description="Kubernetes API from Pod", group_id=group_id)  # type: ignore
-            ],
+            user_id_group_pairs=[UserIdGroupPair(description="Kubernetes API from Pod", group_id=group_id)],
         ),
-        IpPermission(  # type: ignore
+        IpPermission(
             from_port=10250,
             to_port=10250,
             ip_protocol="tcp",
-            user_id_group_pairs=[UserIdGroupPair(description="Kubelet from Pod", group_id=group_id)],  # type: ignore
+            user_id_group_pairs=[UserIdGroupPair(description="Kubelet from Pod", group_id=group_id)],
         ),
     ]
 
 
 def get_cluster_to_pod_rules(group_id: str) -> List[IpPermission]:
     return [
-        IpPermission(  # type: ignore
+        IpPermission(
             from_port=-1,
             to_port=-1,
             ip_protocol="-1",
-            user_id_group_pairs=[UserIdGroupPair(description="All from Cluster", group_id=group_id)],  # type: ignore
+            user_id_group_pairs=[UserIdGroupPair(description="All from Cluster", group_id=group_id)],
         )
     ]
 
@@ -308,7 +306,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
         _logger.debug(f"requested nodegroups: {[n.name for n in requested_nodegroups]}")
 
         output_filename = generate_manifest(context=context, name=stack_name, nodegroups=requested_nodegroups)
-        eks_system_masters_changeset: Optional[ListChangeset] = ListChangeset(  # type: ignore
+        eks_system_masters_changeset: Optional[ListChangeset] = ListChangeset(
             added_values=context.eks_system_masters_roles, removed_values=[]
         )
         _logger.debug("Deploying EKSCTL Environment resources")

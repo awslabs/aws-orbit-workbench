@@ -16,11 +16,6 @@ Images:
         Source: code
         Path: ../images/jupyter-user
         Version: latest
-    JupyterUserSpark:
-        Repository: aws-orbit-jupyter-user-spark
-        Source: code
-        Path: ../images/jupyter-user-spark
-        Version: latest
     LandingPage:
         Repository: aws-orbit-landing-page
         Source: code
