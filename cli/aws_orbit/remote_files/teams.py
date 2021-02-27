@@ -15,7 +15,7 @@
 import logging
 import os
 import shutil
-from typing import TYPE_CHECKING, Iterator, List, Dict, Optional, cast
+from typing import TYPE_CHECKING, Iterator, List, Optional, cast
 
 import boto3
 
@@ -160,19 +160,29 @@ def deploy(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> N
 
         # For each team, find the plugins, pull custom cfn plugin
         # Get the hook and deploy the specific hook function
-        team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_manifest.name)
+        # team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_manifest.name)
+        team_context: Optional["TeamContext"] = create_team_context_from_manifest(
+            manifest=manifest, team_manifest=team_manifest
+        )
+        _logger.debug("*********************************")
+        _logger.debug(team_context)
+        _logger.debug("*********************************")
         if team_context:
             team_context.fetch_team_data()
-
-        for plugin in team_context.plugins:
-            hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
-                context=context,
-                team_name=team_context.name,
-                plugin_name=plugin.plugin_id,
-                hook_name="pre_hook",
-            )
-            if hook is not None:
-                hook(plugin.plugin_id, context, team_context, plugin.parameters)
+            _logger.debug("*********************************")
+            _logger.debug(team_context)
+            _logger.debug("*********************************")
+            for plugin in team_context.plugins:
+                hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
+                    context=context,
+                    team_name=team_context.name,
+                    plugin_name=plugin.plugin_id,
+                    hook_name="pre_hook",
+                )
+                if hook is not None:
+                    hook(plugin.plugin_id, context, team_context, plugin.parameters)
+        else:
+            _logger.debug(f"Skipping pre_hook for unknown Team: {team_manifest.name}")
 
         cdk.deploy(
             context=context,
@@ -180,7 +190,8 @@ def deploy(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> N
             app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
             args=args,
         )
-        team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_manifest.name)
+        # team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_manifest.name)
+        team_context = context.get_team_by_name(name=team_manifest.name)
         if team_context:
             team_context.fetch_team_data()
         else:
@@ -191,7 +202,7 @@ def deploy(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> N
 
     for team_context in context.teams:
         _deploy_team_image(context=context, team_context=team_context, image="jupyter-user")
-        _deploy_team_image(context=context, team_context=team_context, image="jupyter-user-spark")
+        # _deploy_team_image(context=context, team_context=team_context, image="jupyter-user-spark")
         _deploy_team_bootstrap(context=context, team_context=team_context)
 
 

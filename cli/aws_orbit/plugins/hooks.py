@@ -50,17 +50,16 @@ def bootstrap_injection(
     PLUGINS_REGISTRIES.add_hook(hook_name="bootstrap_injection_hook", func=func)
     return func
 
+
 def pre(
     func: Callable[[str, "Context", "TeamContext", Dict[str, Any]], None]
-) -> Callable[[str, "Context", "TeamContext", Dict[str, Any]], str]:
+) -> Callable[[str, "Context", "TeamContext", Dict[str, Any]], None]:
     PLUGINS_REGISTRIES.add_hook(hook_name="pre_hook", func=func)
     return func
 
 
 def post(
     func: Callable[[str, "Context", "TeamContext", Dict[str, Any]], None]
-) -> Callable[[str, "Context", "TeamContext", Dict[str, Any]], str]:
+) -> Callable[[str, "Context", "TeamContext", Dict[str, Any]], None]:
     PLUGINS_REGISTRIES.add_hook(hook_name="post_hook", func=func)
     return func
-
-
