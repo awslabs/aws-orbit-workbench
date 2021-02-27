@@ -1,30 +1,38 @@
 -   Id: code_commit
     Module: code_commit
     Path: ../plugins/code_commit/
--   Id: hello_world
-    Module: hello_world
-    Path: ../plugins/hello_world/
-    Parameters:
-        foo: boo
-        xoo: 1234
--   Id: team_script_launcher
-    Module: team_script_launcher
-    Path: ../plugins/team_script_launcher/
-    Parameters:
-        script: |
-            echo "START LOOP"
-            i=0
-            while [ $i -lt 1 ];
-            do
-              aws s3 sync s3://${toolkit_s3_bucket}/samples/ /home/jovyan/shared/samples
-              sleep 60
-            done
-            echo "DONE LOOP"
-        restartPolicy: Never
--   PluginId: custom_cfn_plugin
-    Module: custom_cfn_plugin
-    Path: ../plugins/custom_cfn_plugin/
+#-   Id: hello_world
+#    Module: hello_world
+#    Path: ../plugins/hello_world/
+#    Parameters:
+#        foo: boo
+#        xoo: 1234
+#-   Id: team_script_launcher
+#    Module: team_script_launcher
+#    Path: ../plugins/team_script_launcher/
+#    Parameters:
+#        script: |
+#            echo "START LOOP"
+#            i=0
+#            while [ $i -lt 1 ];
+#            do
+#              aws s3 sync s3://${toolkit_s3_bucket}/samples/ /home/jovyan/shared/samples
+#              sleep 60
+#            done
+#            echo "DONE LOOP"
+#        restartPolicy: Never
+#-   PluginId: redshift
+#    Module: redshift
+#    Path: ../plugins/redshift/
+#    Parameters:
+#        enable_user_activity_logging: "true"
+#        require_ssl: "true"
+#        use_fips_ssl: "true"
+#        node_type: "DC2.large"
+#        number_of_nodes: "2"
+-   PluginId: custom_cfn
+    Module: custom_cfn
+    Path: ../plugins/custom_cfn/
     Parameters:
         cfn_template_path: "../conf/plugins/demo_cfn_template.yaml"
-        # MYTODO - Find the exact reference of the cfn template
 

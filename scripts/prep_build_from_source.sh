@@ -26,3 +26,6 @@ ${DIR}/update_repo.sh plugins/redshift aws_orbit_redshift \
 ${DIR}/update_repo.sh plugins/team_script_launcher aws_orbit_team_script_launcher \
     && echo "Updated team_script_launcher codeartifact repository" \
     || (echo "ERROR: Failed to update team_script_launcher codeartifact repository"; exit 1)
+${DIR}/update_repo.sh plugins/custom_cfn aws_orbit_custom_cfn \
+    && echo "Updated team_script_launcher codeartifact repository" \
+    || (echo "ERROR: Failed to update team_script_launcher codeartifact repository"; exit 1)

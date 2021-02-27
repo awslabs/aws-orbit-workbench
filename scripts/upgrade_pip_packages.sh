@@ -11,6 +11,7 @@ paths=(
     "${ROOT_PATH}/plugins/hello_world"
     "${ROOT_PATH}/plugins/redshift"
     "${ROOT_PATH}/plugins/team_script_launcher"
+    "${ROOT_PATH}/plugins/custom_cfn"
     "${ROOT_PATH}/sdk"
 )
 

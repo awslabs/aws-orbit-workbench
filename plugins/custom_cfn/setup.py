@@ -12,14 +12,19 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+from io import open
+
 from setuptools import setup
 
+with open("VERSION", "r") as version_file:
+    version = version_file.read().strip()
+
 setup(
-    name="custom_cfn",
-    version="0.0b0",
-    description="Launch a precursor CloudFormation stack for the team space",
+    name="aws-orbit-custom-cfn",
+    version=version,
+    description="Launch a CloudFormation stack for the team space",
     license="Apache License 2.0",
-    packages=["custom_cfn"],
+    packages=["aws-orbit-custom-cfn"],
     python_requires=">=3.6, <3.9",
     install_requires=[],
     include_package_data=True,
