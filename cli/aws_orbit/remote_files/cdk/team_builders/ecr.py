@@ -35,14 +35,3 @@ class EcrBuilder:
             repository_name=repository_name,
         )
         return ecs.ContainerImage.from_ecr_repository(repository=repository, tag=tag)
-
-    @staticmethod
-    def build_ecr_image_spark(scope: core.Construct, context: "Context", image: Optional[str]) -> ecs.EcrImage:
-        repository_name, tag = construct_ecr_repository_name(env_name=context.name, image=image).split(":")
-        repository_name += "-spark"
-        repository = ecr.Repository.from_repository_name(
-            scope,
-            "ecr_repository_spark",
-            repository_name=repository_name,
-        )
-        return ecs.ContainerImage.from_ecr_repository(repository=repository, tag=tag)

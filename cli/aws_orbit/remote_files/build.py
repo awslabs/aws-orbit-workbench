@@ -20,6 +20,7 @@ from boto3 import client
 from aws_orbit import docker, plugins, sh
 from aws_orbit.models.context import load_context_from_ssm
 from aws_orbit.remote_files import teams as team_utils
+from aws_orbit.remote_files.env import DEFAULT_IMAGES, DEFAULT_ISOLATED_IMAGES
 from aws_orbit.utils import boto3_client
 
 if TYPE_CHECKING:
@@ -48,7 +49,12 @@ def build_image(args: Tuple[str, ...]) -> None:
     _logger.debug("DockerHub and ECR Logged in")
 
     ecr = boto3_client("ecr")
-    ecr_repo = f"orbit-{context.name}-{image_name}"
+    if image_name in DEFAULT_IMAGES or image_name in DEFAULT_ISOLATED_IMAGES:
+        # Building system image
+        ecr_repo = f"orbit-{context.name}-{image_name}"
+    else:
+        ecr_repo = f"orbit-{context.name}-users-{image_name}"
+
     try:
         ecr.describe_repositories(repositoryNames=[ecr_repo])
     except ecr.exceptions.RepositoryNotFoundException:
