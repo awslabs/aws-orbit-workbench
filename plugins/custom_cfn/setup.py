@@ -24,7 +24,7 @@ setup(
     version=version,
     description="Launch a CloudFormation stack for the team space",
     license="Apache License 2.0",
-    packages=["aws-orbit-custom-cfn"],
+    packages=["custom_cfn"],
     python_requires=">=3.6, <3.9",
     install_requires=[],
     include_package_data=True,
