@@ -39,7 +39,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
     cfn.deploy_template(
-        stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-resources",
+        stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-demo-resources",
         filename=parameters["cfn_template_path"],
         env_tag=context.env_tag,
         s3_bucket=context.toolkit.s3_bucket,
@@ -48,4 +48,6 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
 
 @hooks.post
 def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
-    cfn.destroy_stack(stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-resources")
+    _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
+    _logger.debug("**********Destroying custom resources using post hook")
+    cfn.destroy_stack(stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-demo-resources")
