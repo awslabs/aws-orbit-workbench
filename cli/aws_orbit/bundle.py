@@ -40,7 +40,7 @@ def _list_files(path: str) -> List[str]:
 
 def _generate_dir(bundle_dir: str, dir: str, name: str) -> str:
     absolute_dir = os.path.realpath(dir)
-    final_dir = os.path.join(bundle_dir, name)
+    final_dir = os.path.join(bundle_dir, "plugins") if name == "PLUGINS" else os.path.join(bundle_dir, name)
     _logger.debug("absolute_dir: %s", absolute_dir)
     _logger.debug("final_dir: %s", final_dir)
     os.makedirs(final_dir, exist_ok=True)
@@ -51,8 +51,10 @@ def _generate_dir(bundle_dir: str, dir: str, name: str) -> str:
     if len(files) == 0:
         raise ValueError(f"{name} ({absolute_dir}) is empty!")
     for file in files:
+        _logger.debug(f"***file={file}")
         relpath = os.path.relpath(file, absolute_dir)
         new_file = os.path.join(final_dir, relpath)
+        _logger.debug("Copying file to %s", new_file)
         os.makedirs(os.path.dirname(new_file), exist_ok=True)
         _logger.debug("Copying file to %s", new_file)
         shutil.copy(src=file, dst=new_file)
@@ -74,10 +76,11 @@ def generate_bundle(
     except FileNotFoundError:
         pass
     os.makedirs(bundle_dir, exist_ok=True)
-
+    _logger.debug(f"**generate_bundle dirs={dirs}")
     # Extra Directories
     if dirs is not None:
         for dir, name in dirs:
+            _logger.debug(f"***dir={dir}:name={name}")
             _generate_dir(bundle_dir=bundle_dir, dir=dir, name=name)
 
     _logger.debug("bundle_dir: %s", bundle_dir)

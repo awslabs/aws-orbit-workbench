@@ -64,6 +64,14 @@ def _get_images_dirs(context: "Context", manifest_filename: str, skip_images: bo
     return dirs
 
 
+def _get_config_dirs(context: "Context", manifest_filename: str) -> List[Tuple[str, str]]:
+    manrefdir: str = os.path.dirname(os.path.abspath(manifest_filename))
+    _logger.debug("manrefdir: %s", manrefdir)
+    dirs = [(manrefdir, "PLUGINS")]
+    _logger.debug("dirs: %s", dirs)
+    return dirs
+
+
 def deploy_toolkit(
     context: "Context",
     username: Optional[str],
@@ -206,10 +214,18 @@ def deploy_env(
         msg_ctx.info("Toolkit deployed")
         msg_ctx.progress(10)
 
+        _logger.debug("******Preparing bundle directory***********")
+        dirs: List[Tuple[str, str]] = []
+        dirs += _get_config_dirs(context=context, manifest_filename=filename)
+        _logger.debug(f"*Directory={dirs}")
+        dirs += _get_images_dirs(context=context, manifest_filename=filename, skip_images=skip_images)
+        _logger.debug(f"**Directory={dirs}")
+
         bundle_path = bundle.generate_bundle(
             command_name="deploy",
             context=context,
-            dirs=_get_images_dirs(context=context, manifest_filename=filename, skip_images=skip_images),
+            # dirs=_get_images_dirs(context=context, manifest_filename=filename, skip_images=skip_images),
+            dirs=dirs,
             changeset=changeset,
         )
         msg_ctx.progress(11)
