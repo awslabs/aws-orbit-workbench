@@ -162,14 +162,13 @@ def deploy(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> N
         team_context: Optional["TeamContext"] = create_team_context_from_manifest(
             manifest=manifest, team_manifest=team_manifest
         )
-        _logger.debug("*********************************")
+        _logger.debug("***************team_context******************")
         _logger.debug(team_context)
         _logger.debug("*********************************")
         if team_context:
-            team_context.fetch_team_data()
-            _logger.debug("*********************************")
-            _logger.debug(team_context)
-            _logger.debug("*********************************")
+            _logger.debug("************team_context.plugins*********************")
+            _logger.debug(team_context.plugins)
+            _logger.debug("*************Calling Pre hooks********************")
             for plugin in team_context.plugins:
                 hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
                     context=context,
@@ -178,7 +177,9 @@ def deploy(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> N
                     hook_name="pre_hook",
                 )
                 if hook is not None:
+                    _logger.debug(f"*******************Found pre_hook for plugin_id {plugin}")
                     hook(plugin.plugin_id, context, team_context, plugin.parameters)
+            _logger.debug("*******************End of pre_hook plugin execution")
         else:
             _logger.debug(f"Skipping pre_hook for unknown Team: {team_manifest.name}")
 
