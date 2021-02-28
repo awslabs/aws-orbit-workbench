@@ -170,6 +170,8 @@ def deploy(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> N
             _logger.debug(team_context.plugins)
             _logger.debug("*************Calling Pre hooks********************")
             for plugin in team_context.plugins:
+                sh.run("pwd")
+                sh.run("ls -lrta")
                 hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
                     context=context,
                     team_name=team_context.name,
