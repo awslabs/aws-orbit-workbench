@@ -14,9 +14,10 @@
 
 import logging
 import os
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, cast
 
 import aws_orbit.services.cfn as cfn
+import aws_orbit.services.ssm as ssm
 from aws_orbit.plugins import hooks
 
 if TYPE_CHECKING:
@@ -38,11 +39,20 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     # aws_orbit.services.
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
-    cfn.deploy_template(
+    context.user_pool_id
+    # MYTODO Can push kms key arn to context instead of reading from SSM
+    env_kms_arn = cast(str, ssm.get_parameter(name=context.demo_ssm_parameter_name)["KMSKey"])
+    cfn.deploy_synth_template(
         stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-demo-resources",
         filename=parameters["cfn_template_path"],
         env_tag=context.env_tag,
         s3_bucket=context.toolkit.s3_bucket,
+        synth_params={
+            "env_name": context.name,
+            "deploy_id": cast(str, context.toolkit.deploy_id),
+            "env_kms_arn": env_kms_arn,
+            "cognito_user_pool_id": cast(str, context.user_pool_id),
+        },
     )
 
 

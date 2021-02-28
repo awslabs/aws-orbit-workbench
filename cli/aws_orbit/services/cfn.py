@@ -144,6 +144,28 @@ def deploy_template(stack_name: str, filename: str, env_tag: str, s3_bucket: Opt
         _wait_for_execute(stack_name=stack_name, changeset_type=changeset_type)
 
 
+def deploy_synth_template(
+    stack_name: str, filename: str, env_tag: str, s3_bucket: Optional[str], synth_params: Dict[str, str]
+) -> None:
+    if not os.path.isfile(filename):
+        raise FileNotFoundError(f"CloudFormation template not found at {filename}")
+    _logger.debug("Reading %s", filename)
+    file_path, file_name = os.path.split(filename)
+    with open(filename, "r") as file:
+        content: str = file.read()
+    _logger.debug(f"******pre synth={content}")
+    _logger.debug(f"synth_params={synth_params}")
+    content = content.replace("$", "").format(**synth_params)
+    _logger.debug(f"******post synth={content}")
+    output_file_name = "synth_" + file_name
+    output_file_path = os.path.join(file_path, output_file_name)
+    _logger.debug("*********Writing %s", output_file_path)
+    with open(output_file_path, "w") as file:
+        file.write(content)
+    deploy_template(stack_name=stack_name, filename=output_file_path, env_tag=env_tag, s3_bucket=s3_bucket)
+    _logger.debug("**********End of CloudFormation template execution")
+
+
 def destroy_stack(stack_name: str) -> None:
     _logger.debug("Destroying stack %s", stack_name)
     client = boto3_client("cloudformation")
