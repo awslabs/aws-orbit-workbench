@@ -109,9 +109,7 @@ def update_docker_file(context: "Context", dir: str) -> None:
         jupyter_user_base = (
             f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}-jupyter-user"
         )
-        jupyter_user_spark_base = (
-            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/" f"orbit-{context.name}-jupyter-user-spark"
-        )
+
         with open(docker_file, "r") as file:
             content: str = file.read()
         content = utils.resolve_parameters(
@@ -121,7 +119,6 @@ def update_docker_file(context: "Context", dir: str) -> None:
                 account=context.account_id,
                 env=context.name,
                 jupyter_user_base=jupyter_user_base,
-                jupyter_user_spark_base=jupyter_user_spark_base,
             ),
         )
         with open(docker_file, "w") as file:
@@ -144,6 +141,7 @@ def deploy_image_from_source(
         sh.run(f"cp ./pip.conf {dir}/")
     build_args = [] if build_args is None else build_args
     _logger.debug("Building docker image from %s", os.path.abspath(dir))
+    sh.run(cmd="docker system prune --all --force --volumes")
     update_docker_file(context=context, dir=dir)
     build(context=context, dir=dir, name=name, tag=tag, use_cache=use_cache, pull=True, build_args=build_args)
     _logger.debug("Docker Image built")

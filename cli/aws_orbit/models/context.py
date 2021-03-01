@@ -145,10 +145,6 @@ class TeamContext:
     # Context
     base_image_address: str
     final_image_address: str
-    base_spark_image_address: str
-    final_spark_image_address: str
-    base_gpu_image_address: str
-    final_gpu_image_address: str
     stack_name: str
     ssm_parameter_name: str
     team_ssm_parameter_name: str
@@ -314,23 +310,9 @@ def create_team_context_from_manifest(manifest: "Manifest", team_manifest: "Team
     final_image_address: str = (
         f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}-jupyter-user"
     )
-    base_spark_image_address: str = (
-        f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-jupyter-user-spark"
-    )
-    final_spark_image_address: str = (
-        f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}-jupyter-user-spark"
-    )
-    base_gpu_image_address: str = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-gpu-jupyter-user"
-    final_gpu_image_address: str = (
-        f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}-gpu-jupyter-user"
-    )
-    return TeamContext(  # type: ignore
+    return TeamContext(
         base_image_address=base_image_address,
         final_image_address=final_image_address,
-        base_spark_image_address=base_spark_image_address,
-        final_spark_image_address=final_spark_image_address,
-        base_gpu_image_address=base_gpu_image_address,
-        final_gpu_image_address=final_gpu_image_address,
         stack_name=f"orbit-{manifest.name}-{team_manifest.name}",
         ssm_parameter_name=ssm_parameter_name,
         team_ssm_parameter_name=f"/orbit/{manifest.name}/teams/{team_manifest.name}/team",
@@ -355,18 +337,18 @@ def create_networking_context_from_manifest(networking: "NetworkingManifest") ->
     if networking.vpc_id:
         args["vpc_id"] = networking.vpc_id
         args["public_subnets"] = [
-            SubnetContext(subnet_id=x, kind=SubnetKind.public, vpc_id=networking.vpc_id)  # type: ignore
+            SubnetContext(subnet_id=x, kind=SubnetKind.public, vpc_id=networking.vpc_id)
             for x in networking.public_subnets
         ]
         args["private_subnets"] = [
-            SubnetContext(subnet_id=x, kind=SubnetKind.private, vpc_id=networking.vpc_id)  # type: ignore
+            SubnetContext(subnet_id=x, kind=SubnetKind.private, vpc_id=networking.vpc_id)
             for x in networking.private_subnets
         ]
         args["isolated_subnets"] = [
-            SubnetContext(subnet_id=x, kind=SubnetKind.isolated, vpc_id=networking.vpc_id)  # type: ignore
+            SubnetContext(subnet_id=x, kind=SubnetKind.isolated, vpc_id=networking.vpc_id)
             for x in networking.isolated_subnets
         ]
-    ctx = NetworkingContext(**args)  # type: ignore
+    ctx = NetworkingContext(**args)
     ctx.fetch_properties()
     return ctx
 

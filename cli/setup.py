@@ -33,7 +33,7 @@ setup(
     description=about["__description__"],
     license=about["__license__"],
     packages=find_packages(include=["aws_orbit", "aws_orbit.*"]),
-    python_requires=">=3.6, <3.9",
+    python_requires=">=3.7, <3.9",
     install_requires=[
         "boto3~=1.12",
         "botocore~=1.15",
@@ -44,6 +44,7 @@ setup(
         "jsonpath-ng~=1.5.0",
         "marshmallow_dataclass[enum,union]~=8.3.0",
         "cfn-flip~=1.2.3",
+        "python-slugify~=4.0.1",
     ],
     entry_points={"console_scripts": ["orbit = aws_orbit.__main__:main"]},
     classifiers=[

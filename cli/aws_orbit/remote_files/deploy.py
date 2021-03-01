@@ -123,20 +123,12 @@ def deploy_images_remotely(context: "Context") -> None:
         ("jupyter-hub", "jupyter-hub", None, []),
         ("jupyter-user", "jupyter-user", "build.sh", []),
         ("landing-page", "landing-page", "build.sh", []),
-        (
-            "gpu-jupyter-user",
-            "jupyter-user",
-            "build.sh",
-            ["BASE_IMAGE=cschranz/gpu-jupyter:v1.3_cuda-10.1_ubuntu-18.04_python-only"],
-        ),
     ]
     _logger.debug("Building the first images batch")
     _deploy_images_batch(context=context, images=images)
 
     # Second Batch
-    images = [
-        ("jupyter-user-spark", "jupyter-user-spark", None, []),
-    ]
+    images = []
     if context.networking.data.internet_accessible is False:
         images += [
             ("aws-efs-csi-driver", None, None, []),

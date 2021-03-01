@@ -101,16 +101,6 @@ class JupyterUserImageManifest(ImageManifest):
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
-class JupyterUserSparkImageManifest(ImageManifest):
-    repository: str = "aws-orbit-jupyter-user-spark"
-
-
-@dataclass(base_schema=BaseSchema, frozen=True)
-class GpuJupyterUserImageManifest(ImageManifest):
-    repository: str = "aws-orbit-gpu-jupyter-user"
-
-
-@dataclass(base_schema=BaseSchema, frozen=True)
 class LandingPageImageManifest(ImageManifest):
     repository: str = "aws-orbit-landing-page"
 
@@ -154,8 +144,6 @@ class ImagesManifest:
     code_build: CodeBuildImageManifest = CodeBuildImageManifest()
     jupyter_hub: JupyterHubImageManifest = JupyterHubImageManifest()
     jupyter_user: JupyterUserImageManifest = JupyterUserImageManifest()
-    jupyter_user_spark: JupyterUserSparkImageManifest = JupyterUserSparkImageManifest()
-    gpu_jupyter_user: GpuJupyterUserImageManifest = GpuJupyterUserImageManifest()
     landing_page: LandingPageImageManifest = LandingPageImageManifest()
     aws_efs_csi_driver: AwsEfsDriverImageManifest = AwsEfsDriverImageManifest()
     livenessprobe: LivenessprobeImageManifest = LivenessprobeImageManifest()
@@ -166,8 +154,6 @@ class ImagesManifest:
             "code_build",
             "jupyter_hub",
             "jupyter_user",
-            "jupyter_user_spark",
-            "gpu_jupyter_user",
             "landing_page",
             "aws_efs_csi_driver",
             "livenessprobe",

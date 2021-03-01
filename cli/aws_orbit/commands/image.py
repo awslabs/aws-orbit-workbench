@@ -19,10 +19,12 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
 import botocore
 from kubernetes import config
+from slugify import slugify
 
 from aws_orbit import bundle, plugins, remote, sh, utils
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.context import Context, ContextSerDe
+from aws_orbit.remote_files.env import DEFAULT_IMAGES, DEFAULT_ISOLATED_IMAGES
 from aws_orbit.remote_files.utils import get_k8s_context
 from aws_orbit.services import cfn, codebuild, ssm
 
@@ -82,7 +84,7 @@ def delete_profile(env: str, team: str, profile_name: str, debug: bool) -> None:
         profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
         _logger.debug("Existing user profiles for team %s: %s", team, profiles)
         for p in profiles:
-            if p["display_name"] == profile_name:
+            if p["slug"] == profile_name:
                 _logger.info("Profile exists, deleting...")
                 profiles.remove(p)
                 _logger.debug("Updated user profiles for team %s: %s", team, profiles)
@@ -129,20 +131,21 @@ def build_profile(env: str, team: str, profile: str, debug: bool) -> None:
             profile_json_list = cast(List[Dict[str, Any]], profiles_new)
 
         for profile_json in profile_json_list:
-            profile_name = profile_json["display_name"]
-            if "display_name" not in profile_json:
-                raise Exception("Profile document must include property 'display_name'")
+            if "slug" not in profile_json:
+                # generate missing slug fields from display_name
+                profile_json["slug"] = slugify(profile_json["display_name"])
+            if "slug" not in profile_json:
+                raise Exception("Profile document must include property 'slug'")
 
-            _logger.debug(f"new profile name: {profile_name}")
-            _logger.debug(f"profiles: {profile.__class__} , {profiles}")
+            _logger.debug(f"new profile name: {profile_json['display_name']}")
             for p in profiles:
-                if p["display_name"] == profile_name:
+                if p["slug"] == profile_json["slug"]:
                     _logger.info("Profile exists, updating...")
                     profiles.remove(p)
                     break
 
             profiles.append(profile_json)
-            msg_ctx.tip(f"Profile added {profile_name}")
+            msg_ctx.tip(f"Profile added {profile_json['display_name']}")
             _logger.debug("Updated user profiles for team %s: %s", team, profiles)
         write_context_ssm(profiles, env, team)
         msg_ctx.progress(100)
@@ -200,7 +203,12 @@ def build_image(
             timeout=30,
         )
         msg_ctx.info("Docker Image deploy into ECR")
-        msg_ctx.progress(98)
-        address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}-{name}"
+        if name in DEFAULT_IMAGES or name in DEFAULT_ISOLATED_IMAGES:
+            # Trying to build the system image, hope you are admin or you will get permission errors
+            address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}-{name}"
+        else:
+            address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}-users-{name}"
+
+        msg_ctx.info(f"ECR Image Address={address}")
         msg_ctx.tip(f"ECR Image Address: {stylize(address, underline=True)}")
         msg_ctx.progress(100)
