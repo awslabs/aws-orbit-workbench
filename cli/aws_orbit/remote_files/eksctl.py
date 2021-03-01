@@ -290,15 +290,15 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
 
     if cfn.does_stack_exist(stack_name=final_eks_stack_name) is False:
 
-        requested_nodegroups = []
-        if changeset and changeset.managed_nodegroups_changeset:
-            requested_nodegroups = changeset.managed_nodegroups_changeset.added_nodegroups
+        requested_nodegroups = (
+            changeset.managed_nodegroups_changeset.added_nodegroups
+            if changeset and changeset.managed_nodegroups_changeset
+            else []
+        )
         _logger.debug(f"requested nodegroups: {[n.name for n in requested_nodegroups]}")
 
         output_filename = generate_manifest(context=context, name=stack_name, nodegroups=requested_nodegroups)
-        eks_system_masters_changeset: Optional[ListChangeset] = ListChangeset(
-            added_values=context.eks_system_masters_roles, removed_values=[]
-        )
+
         _logger.debug("Deploying EKSCTL Environment resources")
         sh.run(f"eksctl create cluster -f {output_filename} --write-kubeconfig --verbose 4")
 
@@ -317,13 +317,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
         _logger.debug(f"current nodegroups: {[n.name for n in current_nodegroups]}")
 
         sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
-        eks_system_masters_changeset = (
-            changeset.eks_system_masters_roles_changeset
-            if changeset and changeset.eks_system_masters_roles_changeset
-            else None
-        )
         if changeset and changeset.managed_nodegroups_changeset:
-
             if changeset.managed_nodegroups_changeset.added_nodegroups:
                 output_filename = generate_manifest(
                     context=context, name=stack_name, nodegroups=changeset.managed_nodegroups_changeset.added_nodegroups
@@ -360,6 +354,11 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
                 context.managed_nodegroups = [ng for ng in current_nodegroups if ng.name not in nodegroups]
                 ContextSerDe.dump_context_to_ssm(context=context)
 
+    eks_system_masters_changeset = (
+        changeset.eks_system_masters_roles_changeset
+        if changeset and changeset.eks_system_masters_roles_changeset
+        else None
+    )
     map_iam_identities(
         context=context,
         cluster_name=cluster_name,
