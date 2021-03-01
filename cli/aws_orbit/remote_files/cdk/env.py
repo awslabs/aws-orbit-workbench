@@ -17,7 +17,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import TYPE_CHECKING, List, cast
+from typing import List, cast
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2

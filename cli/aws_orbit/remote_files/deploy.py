@@ -16,7 +16,7 @@ import concurrent.futures
 import logging
 import os
 from concurrent.futures import Future
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, cast
+from typing import Any, List, Optional, Tuple, cast
 
 from aws_orbit import bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm

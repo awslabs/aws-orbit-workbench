@@ -14,8 +14,7 @@
 
 import logging
 import os
-import time
-from typing import TYPE_CHECKING, List, cast
+from typing import List, cast
 
 from aws_orbit import ORBIT_CLI_ROOT, cdk, cleanup, sh
 from aws_orbit.models.context import FoundationContext
@@ -93,11 +92,11 @@ def _prepare_demo_data(context: "FoundationContext") -> None:
 
 
 def _fetch_vpc_id(context: "FoundationContext") -> str:
-    return cast(str, ssm.get_parameter(name=context.resources_ssm_parameter_name)["VpcId"])
+    return cast(str, ssm.get_parameter(name=cast(str, context.resources_ssm_parameter_name))["VpcId"])
 
 
 def deploy(context: "FoundationContext") -> None:
-    stack_name: str = context.stack_name
+    stack_name: str = cast(str, context.stack_name)
     _logger.debug("Deploying %s Foundation...", stack_name)
     cdk.deploy(
         context=context,
@@ -114,12 +113,12 @@ def deploy(context: "FoundationContext") -> None:
 
 
 def destroy(context: "FoundationContext") -> None:
-    if cfn.does_stack_exist(stack_name=context.stack_name):
+    if cfn.does_stack_exist(stack_name=cast(str, context.stack_name)):
         cleanup.foundation_remaining_dependencies(context=context)
         _logger.debug("Destroying Foundation...")
         cdk.destroy(
             context=context,
-            stack_name=context.stack_name,
+            stack_name=cast(str, context.stack_name),
             app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "foundation.py"),
             args=[context.name],
         )

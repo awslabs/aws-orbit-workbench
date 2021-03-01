@@ -26,7 +26,7 @@ from aws_orbit.models.context import Context, FoundationContext
 from aws_orbit.utils import boto3_client, try_it
 
 if TYPE_CHECKING:
-    from aws_orbit.models.changeset import Changesetm
+    from aws_orbit.models.changeset import Changeset
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -257,7 +257,7 @@ def generate_spec(
     install.append(f"pip install aws-orbit=={__version__}")
 
     # Plugins
-    if plugins:
+    if plugins and isinstance(context, Context):
         for team_context in context.teams:
             for plugin in team_context.plugins:
                 if plugin.path is not None and plugin.module is not None:

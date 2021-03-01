@@ -28,8 +28,8 @@ from marshmallow import Schema
 from marshmallow_dataclass import dataclass
 from yamlinclude import YamlIncludeConstructor
 
-from aws_orbit import utils
 import aws_orbit
+from aws_orbit import utils
 from aws_orbit.models.common import BaseSchema
 from aws_orbit.services import ssm
 from aws_orbit.utils import boto3_client
@@ -396,7 +396,7 @@ class ManifestSerDe(Generic[T]):
         else:
             raise ValueError("Unknown 'manifest' Type")
 
-        ssm.put_parameter(name=manifest_parameter_name, obj=content)
+        ssm.put_parameter(name=cast(str, manifest_parameter_name), obj=content)
 
     @staticmethod
     def load_manifest_from_ssm(env_name: str, type: Type[T]) -> Optional[T]:

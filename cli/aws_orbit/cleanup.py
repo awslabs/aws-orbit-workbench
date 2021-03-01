@@ -17,7 +17,7 @@ import json
 import logging
 import pprint
 import time
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 import botocore.exceptions
 

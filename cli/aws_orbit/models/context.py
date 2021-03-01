@@ -386,7 +386,7 @@ class ContextSerDe(Generic[T, V]):
                     _logger.debug("Updating context profiles for team %s", team_manifest.name)
                     team_context.profiles = team_manifest.profiles
         else:
-            context = Context(  # type: ignore
+            context = Context(
                 name=manifest.name,
                 account_id=utils.get_account_id(),
                 region=utils.get_region(),
@@ -396,8 +396,10 @@ class ContextSerDe(Generic[T, V]):
                 eks_stack_name=f"eksctl-orbit-{manifest.name}-cluster",
                 ssm_parameter_name=context_parameter_name,
                 ssm_dockerhub_parameter_name=f"/orbit/{manifest.name}/dockerhub",
-                toolkit=ToolkitManifest(stack_name=f"orbit-{manifest.name}-toolkit", codebuild_project=f"orbit-{manifest.name}"),  # type: ignore
-                cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-{manifest.name}-cdk-toolkit"),  # type: ignore
+                toolkit=ToolkitManifest(
+                    stack_name=f"orbit-{manifest.name}-toolkit", codebuild_project=f"orbit-{manifest.name}"
+                ),
+                cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-{manifest.name}-cdk-toolkit"),
                 codeartifact_domain=manifest.codeartifact_domain,
                 codeartifact_repository=manifest.codeartifact_repository,
                 scratch_bucket_arn=manifest.scratch_bucket_arn,
@@ -428,15 +430,18 @@ class ContextSerDe(Generic[T, V]):
             context.images = manifest.images
             context.policies = manifest.policies
         else:
-            context = FoundationContext(  # type: ignore
+            context = FoundationContext(
                 name=manifest.name,
                 account_id=utils.get_account_id(),
                 region=utils.get_region(),
                 env_tag=f"orbit-foundation-{manifest.name}",
                 ssm_parameter_name=context_parameter_name,
                 resources_ssm_parameter_name=f"/orbit-foundation/{manifest.name}/resources",
-                toolkit=ToolkitManifest(stack_name=f"orbit-foundation-{manifest.name}-toolkit", codebuild_project=f"orbit-foundation-{manifest.name}"),  # type: ignore
-                cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-foundation-{manifest.name}-cdk-toolkit"),  # type: ignore
+                toolkit=ToolkitManifest(
+                    stack_name=f"orbit-foundation-{manifest.name}-toolkit",
+                    codebuild_project=f"orbit-foundation-{manifest.name}",
+                ),
+                cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-foundation-{manifest.name}-cdk-toolkit"),
                 codeartifact_domain=manifest.codeartifact_domain,
                 codeartifact_repository=manifest.codeartifact_repository,
                 images=manifest.images,
@@ -475,7 +480,7 @@ class ContextSerDe(Generic[T, V]):
             ssm_parameter_name = context.ssm_parameter_name
         elif isinstance(context, FoundationContext):
             content = cast(Dict[str, Any], FoundationContext.Schema().dump(context))
-            ssm_parameter_name = context.ssm_parameter_name
+            ssm_parameter_name = cast(str, context.ssm_parameter_name)
         else:
             raise ValueError("Unknown 'context' Type")
 

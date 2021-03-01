@@ -13,7 +13,6 @@
 #    limitations under the License.
 
 import logging
-from typing import TYPE_CHECKING
 
 from aws_orbit import bundle, plugins, remote
 from aws_orbit.messages import MessagesContext

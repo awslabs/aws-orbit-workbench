@@ -15,20 +15,17 @@
 import logging
 import os
 import shutil
-from typing import TYPE_CHECKING, Iterator, List, Optional, cast
+from typing import Iterator, List, Optional, cast
 
 import boto3
 
 from aws_orbit import ORBIT_CLI_ROOT, cdk, docker, plugins, sh
-from aws_orbit.models.context import ContextSerDe, create_team_context_from_manifest
-from aws_orbit.models.manifest import ManifestSerDe
+from aws_orbit.models.changeset import TeamsChangeset
+from aws_orbit.models.context import Context, ContextSerDe, TeamContext, create_team_context_from_manifest
+from aws_orbit.models.manifest import Manifest, ManifestSerDe
 from aws_orbit.remote_files import eksctl, kubectl
 from aws_orbit.services import cfn, ecr
 from aws_orbit.utils import boto3_client
-
-from aws_orbit.models.changeset import TeamsChangeset
-from aws_orbit.models.context import Context, TeamContext
-from aws_orbit.models.manifest import Manifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 

@@ -15,7 +15,7 @@
 import json
 import logging
 import os
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 import botocore
 from kubernetes import config

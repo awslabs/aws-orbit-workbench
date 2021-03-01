@@ -17,7 +17,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import TYPE_CHECKING, Any, Dict, List, cast
+from typing import Any, Dict, List, cast
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_kms as kms
@@ -71,7 +71,8 @@ class FoundationStack(Stack):
         acct: str = core.Aws.ACCOUNT_ID
         self.bucket_names: Dict[str, Any] = {
             "lake-bucket": f"orbit-foundation-{self.env_name}-demo-lake-{acct}-{context.toolkit.deploy_id}",
-            "secured-lake-bucket": f"orbit-foundation-{self.env_name}-secured-demo-lake-{acct}-{context.toolkit.deploy_id}",
+            "secured-lake-bucket": f"orbit-foundation-{self.env_name}-secured-demo-lake-"
+            f"{acct}-{context.toolkit.deploy_id}",
             "scratch-bucket": f"orbit-foundation-{self.env_name}-scratch-{acct}-{context.toolkit.deploy_id}",
             "toolkit-bucket": toolkit_s3_bucket_name,
         }
@@ -438,12 +439,12 @@ def main() -> None:
     else:
         raise ValueError("Unexpected number of values in sys.argv.")
 
-    outdir = os.path.join(".orbit.out", context.name, "cdk", context.stack_name)
+    outdir = os.path.join(".orbit.out", context.name, "cdk", cast(str, context.stack_name))
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
 
     app = App(outdir=outdir)
-    FoundationStack(scope=app, id=context.stack_name, context=context)
+    FoundationStack(scope=app, id=cast(str, context.stack_name), context=context)
     app.synth(force=True)
 
 

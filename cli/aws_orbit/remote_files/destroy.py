@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import logging
-from typing import TYPE_CHECKING, Tuple
+from typing import Tuple
 
 from aws_orbit import plugins
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext

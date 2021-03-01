@@ -15,10 +15,8 @@
 import logging
 import os
 import shutil
-from typing import TYPE_CHECKING
 
 import yaml
-from aws_cdk.aws_iam import Policy
 from cfn_flip import yaml_dumper
 from cfn_tools import load_yaml
 

@@ -14,7 +14,7 @@
 
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING, Callable, List, Optional
+from typing import Callable, List, Optional
 
 from aws_orbit.models.context import Context
 from aws_orbit.services import cloudwatch, codebuild, s3

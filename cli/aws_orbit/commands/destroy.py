@@ -13,14 +13,14 @@
 #    limitations under the License.
 
 import logging
-from typing import TYPE_CHECKING, Optional, cast
+from typing import cast
 
 import botocore.exceptions
 
-from aws_orbit import bundle, cleanup, plugins, remote, utils
+from aws_orbit import bundle, plugins, remote, utils
 from aws_orbit.messages import MessagesContext
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
-from aws_orbit.services import cfn, codebuild, elb, s3, ssm, vpc
+from aws_orbit.services import cfn, codebuild, elb, s3, ssm
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -108,7 +108,7 @@ def destroy_env(env: str, debug: bool) -> None:
         msg_ctx.progress(2)
 
         if any(cfn.does_stack_exist(stack_name=t.stack_name) for t in context.teams):
-            msg_ctx.error(f"Found Teams ({[t.name for t in context.teams].join(',')}) dependent on the Envrionment.")
+            msg_ctx.error(f"Found Teams ({','.join([t.name for t in context.teams])}) dependent on the Envrionment.")
             return
 
         if (
@@ -168,7 +168,7 @@ def destroy_foundation(env: str, debug: bool) -> None:
         msg_ctx.progress(4)
 
         if (
-            cfn.does_stack_exist(stack_name=context.stack_name)
+            cfn.does_stack_exist(stack_name=cast(str, context.stack_name))
             or cfn.does_stack_exist(stack_name=context.toolkit.stack_name)
             or cfn.does_stack_exist(stack_name=context.cdk_toolkit.stack_name)
         ):

@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import logging
-from typing import TYPE_CHECKING, TypeVar
+from typing import TypeVar
 
 from aws_orbit import cdk
 from aws_orbit.models.context import Context, FoundationContext

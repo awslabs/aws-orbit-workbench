@@ -17,9 +17,8 @@ import logging
 import os
 import shutil
 from pprint import pformat
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
-from aws_orbit.models.changeset import Changeset
 from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)

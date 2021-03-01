@@ -15,7 +15,7 @@
 import logging
 import os
 import uuid
-from typing import TYPE_CHECKING, List, Optional, Tuple, cast
+from typing import List, Optional, Tuple, cast
 
 import click
 
