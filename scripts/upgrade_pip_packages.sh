@@ -3,6 +3,7 @@
 # Run from the root directory #
 
 ROOT_PATH=`pwd`
+SED=${SED:-sed}
 
 # Paths where pip-compile generates requirements files #
 paths=(
@@ -20,11 +21,11 @@ for path in "${paths[@]}"; do
     pip-compile ${1}
     pip-compile ${1} -r requirements-dev.in
 
-    sed -i "s|file://$path|.|g" requirements-dev.txt
+    ${SED} -i "s|file://$path|.|g" requirements-dev.txt
 
     if [[ "${path}" == *"plugins"* ]]; then
-        sed -i "s|file://$ROOT_PATH|../..|g" requirements-dev.txt
+        ${SED} -i "s|file://$ROOT_PATH|../..|g" requirements-dev.txt
     else
-        sed -i "s|file://$ROOT_PATH|..|g" requirements-dev.txt
+        ${SED} -i "s|file://$ROOT_PATH|..|g" requirements-dev.txt
     fi
 done
