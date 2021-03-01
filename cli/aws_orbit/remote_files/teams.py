@@ -223,17 +223,19 @@ def destroy(context: "Context", team_context: "TeamContext") -> None:
             )
 
         _logger.debug("*****team specific post_hook details and execute destroy of resources")
+        _logger.debug(f"team_context.plugins={team_context.plugins}")
         for plugin in team_context.plugins:
             _logger.debug(f"post hook plugin={plugin}")
-            hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
-                context=context,
-                team_name=team_context.name,
-                plugin_name=plugin.plugin_id,
-                hook_name="post_hook",
-            )
-            if hook is not None:
-                _logger.debug(f"Found post hook for team {team_context.name} plugin {plugin.plugin_id}")
-                hook(plugin.plugin_id, context, team_context, plugin.parameters)
+            if plugin.plugin_id == "custom_cfn":
+                hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
+                    context=context,
+                    team_name=team_context.name,
+                    plugin_name=plugin.plugin_id,
+                    hook_name="post_hook",
+                )
+                if hook is not None:
+                    _logger.debug(f"Found post hook for team {team_context.name} plugin {plugin.plugin_id}")
+                    hook(plugin.plugin_id, context, team_context, plugin.parameters)
 
 
 def destroy_all(context: "Context") -> None:
