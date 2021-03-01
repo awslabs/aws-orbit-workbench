@@ -39,7 +39,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
     context.user_pool_id
-    # MYTODO Can push kms key arn to context instead of reading from SSM
+    # TODO Can push kms key arn to context instead of reading from SSM
     env_kms_arn = cast(str, ssm.get_parameter(name=context.demo_ssm_parameter_name)["KMSKey"])
     cfn.deploy_synth_template(
         stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-demo-resources",
