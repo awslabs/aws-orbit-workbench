@@ -26,10 +26,9 @@ from aws_orbit.remote_files import eksctl, kubectl
 from aws_orbit.services import cfn, ecr
 from aws_orbit.utils import boto3_client
 
-if TYPE_CHECKING:
-    from aws_orbit.models.changeset import TeamsChangeset
-    from aws_orbit.models.context import Context, TeamContext
-    from aws_orbit.models.manifest import Manifest
+from aws_orbit.models.changeset import TeamsChangeset
+from aws_orbit.models.context import Context, TeamContext
+from aws_orbit.models.manifest import Manifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
