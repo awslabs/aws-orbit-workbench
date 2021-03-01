@@ -278,7 +278,8 @@ class PluginRegistries:
             )
         _logger.debug("Destroying %s for team %s.", plugin_id, team_context.name)
         self._registries[team_context.name][plugin_id].destroy(context=context, team_context=team_context)
-        del self._registries[team_context.name][plugin_id]
+        if plugin_id != "custom_cfn":
+            del self._registries[team_context.name][plugin_id]
 
     def destroy_team_plugins(self, context: "Context", team_context: "TeamContext") -> None:
         self._context = context
