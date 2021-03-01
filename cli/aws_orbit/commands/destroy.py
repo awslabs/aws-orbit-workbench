@@ -107,6 +107,10 @@ def destroy_env(env: str, debug: bool) -> None:
         msg_ctx.info(f"Teams: {','.join([t.name for t in context.teams])}")
         msg_ctx.progress(2)
 
+        if any(cfn.does_stack_exist(stack_name=t.stack_name) for t in context.teams):
+            msg_ctx.error(f"Found Teams ({[t.name for t in context.teams].join(',')}) dependent on the Envrionment.")
+            return
+
         if (
             cfn.does_stack_exist(stack_name=context.env_stack_name)
             or cfn.does_stack_exist(stack_name=context.toolkit.stack_name)
