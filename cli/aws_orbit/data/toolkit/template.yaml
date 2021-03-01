@@ -219,7 +219,7 @@ Resources:
               - arn:aws:s3:::${top_level}-${env_name}-secured-demo-lake-${account_id}-${deploy_id}
           - Effect: Allow
             Action:
-              - s3:GetBucketEncryption
+              - s3:GetEncryptionConfiguration
             Resource: "*"
           - Effect: Allow
             Action:
