@@ -108,7 +108,7 @@ def destroy_env(env: str, debug: bool) -> None:
         msg_ctx.progress(2)
 
         if any(cfn.does_stack_exist(stack_name=t.stack_name) for t in context.teams):
-            msg_ctx.error(f"Found Teams dependent on the Envrionment.")
+            msg_ctx.error("Found Teams dependent on the Envrionment.")
             return
 
         if (
