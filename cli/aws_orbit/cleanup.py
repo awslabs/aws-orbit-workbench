@@ -146,6 +146,8 @@ def demo_remaining_dependencies(context: "Context", vpc_id: Optional[str] = None
             s3.delete_bucket(bucket=scratch_bucket)
         except Exception as ex:
             _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
+
+        # MYTODO - Remove these two bucket deletions
         try:
             s3.delete_bucket(bucket=demo_config["LakeBucket"])
         except Exception as ex:
@@ -154,6 +156,7 @@ def demo_remaining_dependencies(context: "Context", vpc_id: Optional[str] = None
             s3.delete_bucket(bucket=demo_config["SecuredLakeBucket"])
         except Exception as ex:
             _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
+
     if vpc_id is None:
         if context.networking.vpc_id is None:
             _logger.debug("Skipping _cleanup_remaining_dependencies() because manifest.vpc.vpc_id is None!")
@@ -170,6 +173,7 @@ def demo_remaining_dependencies_contextless(env_name: str, vpc_id: Optional[str]
     ssm_param_name = f"/orbit/{env_name}/demo"
     demo_config: Optional[Dict[str, Any]] = ssm.get_parameter_if_exists(name=ssm_param_name)
     if demo_config:
+        # MYTODO - Remove these two bucket deletions
         try:
             s3.delete_bucket(bucket=demo_config["LakeBucket"])
         except Exception as ex:
@@ -178,6 +182,7 @@ def demo_remaining_dependencies_contextless(env_name: str, vpc_id: Optional[str]
             s3.delete_bucket(bucket=demo_config["SecuredLakeBucket"])
         except Exception as ex:
             _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
+
     if vpc_id:
         elb.delete_load_balancers(env_name=env_name)
         _endpoints(vpc_id=vpc_id)

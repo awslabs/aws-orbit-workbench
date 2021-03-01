@@ -380,6 +380,7 @@ class DemoStack(Stack):
             private_dns_enabled=True,
         )
 
+    # MYTODO - Remove these managed policies
     def _create_fullaccess_managed_policies(self) -> iam.ManagedPolicy:
         lake_bucket_full_access = iam.ManagedPolicy(
             self,
