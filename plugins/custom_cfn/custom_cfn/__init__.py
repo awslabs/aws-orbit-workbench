@@ -72,14 +72,17 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
 
     if cfn.does_stack_exist(stack_name=stack_name):
         try:
+            _logger.debug("Deleting scratch-bucket")
             s3.delete_bucket(bucket=bucket_names["scratch-bucket"])
         except Exception as ex:
             _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
         try:
+            _logger.debug("Deleting lake-bucket")
             s3.delete_bucket(bucket=bucket_names["lake-bucket"])
         except Exception as ex:
             _logger.debug("Skipping Team Lake Bucket deletion. Cause: %s", ex)
         try:
+            _logger.debug("Deleting secured-lake-bucket")
             s3.delete_bucket(bucket=bucket_names["secured-lake-bucket"])
         except Exception as ex:
             _logger.debug("Skipping Team Secured Lake Bucket deletion. Cause: %s", ex)
