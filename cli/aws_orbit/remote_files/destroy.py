@@ -63,7 +63,7 @@ def destroy(args: Tuple[str, ...]) -> None:
     _logger.debug("EKS Team Stacks destroyed")
     _logger.debug(f"***********Destroying context={context}")
     teams.destroy_all(context=context)
-    _logger.debug(f"*****************************************")
+    _logger.debug("*****************************************")
     _logger.debug("Teams Stacks destroyed")
     ssm.cleanup_teams(env_name=context.name)
 
