@@ -16,9 +16,8 @@ import logging
 import os
 from typing import TYPE_CHECKING, Any, Dict, cast
 
-import aws_orbit.services.cfn as cfn
-import aws_orbit.services.ssm as ssm
 from aws_orbit.plugins import hooks
+from aws_orbit.services import cfn, s3, ssm
 
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
@@ -60,5 +59,30 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
 @hooks.post
 def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
+    env_name = context.name
+    team_name = team_context.name
+    deploy_id = context.toolkit.deploy_id
+    acct: str = context.account_id
+    bucket_names: Dict[str, Any] = {
+        "scratch-bucket": f"orbit-{env_name}-scratch-{acct}-{deploy_id}test",
+        "lake-bucket": f"orbit-{env_name}-demo-lake-{acct}-{deploy_id}test",
+        "secured-lake-bucket": f"orbit-{env_name}-secured-demo-lake-{acct}-{deploy_id}test",
+    }
+    stack_name = f"orbit-{env_name}-{team_name}-{plugin_id}-custom-demo-resources"
+
+    if cfn.does_stack_exist(stack_name=stack_name):
+        try:
+            s3.delete_bucket(bucket=bucket_names["scratch-bucket"])
+        except Exception as ex:
+            _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
+        try:
+            s3.delete_bucket(bucket=bucket_names["lake-bucket"])
+        except Exception as ex:
+            _logger.debug("Skipping Team Lake Bucket deletion. Cause: %s", ex)
+        try:
+            s3.delete_bucket(bucket=bucket_names["secured-lake-bucket"])
+        except Exception as ex:
+            _logger.debug("Skipping Team Secured Lake Bucket deletion. Cause: %s", ex)
+
     _logger.debug("**********Destroying custom resources using post hook")
     cfn.destroy_stack(stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-demo-resources")
