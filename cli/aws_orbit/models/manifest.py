@@ -29,6 +29,7 @@ from marshmallow_dataclass import dataclass
 from yamlinclude import YamlIncludeConstructor
 
 from aws_orbit import utils
+import aws_orbit
 from aws_orbit.models.common import BaseSchema
 from aws_orbit.services import ssm
 from aws_orbit.utils import boto3_client
@@ -86,7 +87,7 @@ class ManagedNodeGroupManifest:
 class CodeBuildImageManifest(ImageManifest):
     repository: str = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base"
     source: str = "ecr-public"
-    version: str = "latest"
+    version: str = aws_orbit.__version__
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
