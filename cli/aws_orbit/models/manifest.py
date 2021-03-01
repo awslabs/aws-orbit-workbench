@@ -385,7 +385,7 @@ class ManifestSerDe(Generic[T]):
             ssm.cleanup_manifest(env_name=manifest.name)
             if "Teams" in content:
                 for team in content["Teams"]:
-                    team_parameter_name: str = f"{manifest.ssm_parameter_name}/teams/{team['Name']}/manifest"
+                    team_parameter_name: str = f"/orbit/{manifest.name}/teams/{team['Name']}/manifest"
                     ssm.put_parameter(name=team_parameter_name, obj=team)
                 del content["Teams"]
             manifest_parameter_name = manifest.ssm_parameter_name
@@ -406,7 +406,7 @@ class ManifestSerDe(Generic[T]):
             if main is None:
                 return None
             teams_parameters = ssm.list_parameters(prefix=f"/orbit/{env_name}/teams/")
-            _logger.debug("teams_parameters: %s", teams_parameters)
+            _logger.debug("teams_parameters (/orbit/%s/teams/): %s", env_name, teams_parameters)
             teams = [ssm.get_parameter(name=p) for p in teams_parameters if p.endswith("/manifest")]
             main["Teams"] = teams
             return cast(T, Manifest.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))

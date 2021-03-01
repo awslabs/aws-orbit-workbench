@@ -17,7 +17,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import TYPE_CHECKING, List, Optional, cast
+from typing import List, Optional, cast
 
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecr as ecr
@@ -30,17 +30,16 @@ import aws_cdk.core as core
 from aws_cdk.core import App, Construct, Environment, IConstruct, Stack, Tags
 
 from aws_orbit.models.changeset import load_changeset_from_ssm
-from aws_orbit.models.context import ContextSerDe
+from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.models.manifest import ManifestSerDe
 from aws_orbit.remote_files.cdk.team_builders.ec2 import Ec2Builder
 from aws_orbit.remote_files.cdk.team_builders.ecr import EcrBuilder
 from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
 from aws_orbit.remote_files.cdk.team_builders.iam import IamBuilder
 
-if TYPE_CHECKING:
-    from aws_orbit.models.changeset import Changeset
-    from aws_orbit.models.context import Context, TeamContext
-    from aws_orbit.models.manifest import Manifest, TeamManifest
+from aws_orbit.models.changeset import Changeset
+from aws_orbit.models.context import TeamContext
+from aws_orbit.models.manifest import Manifest, TeamManifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
