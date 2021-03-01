@@ -68,6 +68,8 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
         "lake-bucket": f"orbit-{env_name}-demo-lake-{acct}-{deploy_id}test",
         "secured-lake-bucket": f"orbit-{env_name}-secured-demo-lake-{acct}-{deploy_id}test",
     }
+    plugin_id = plugin_id.replace("_", "-")
+    _logger.debug("plugin_id: %s", plugin_id)
     stack_name = f"orbit-{env_name}-{team_name}-{plugin_id}-custom-demo-resources"
 
     if cfn.does_stack_exist(stack_name=stack_name):
@@ -88,6 +90,4 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
             _logger.debug("Skipping Team Secured Lake Bucket deletion. Cause: %s", ex)
 
     _logger.debug("**********Destroying custom resources using post hook")
-    plugin_id = plugin_id.replace("_", "-")
-    _logger.debug("plugin_id: %s", plugin_id)
     cfn.destroy_stack(stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-demo-resources")
