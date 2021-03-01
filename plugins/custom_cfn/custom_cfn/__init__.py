@@ -85,4 +85,6 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
             _logger.debug("Skipping Team Secured Lake Bucket deletion. Cause: %s", ex)
 
     _logger.debug("**********Destroying custom resources using post hook")
+    plugin_id = plugin_id.replace("_", "-")
+    _logger.debug("plugin_id: %s", plugin_id)
     cfn.destroy_stack(stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-demo-resources")
