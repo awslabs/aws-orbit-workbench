@@ -16,7 +16,7 @@ import logging
 import time
 from datetime import datetime, timezone
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, NamedTuple, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, NamedTuple, Optional, Union, cast
 
 import botocore.exceptions
 import yaml
@@ -127,8 +127,8 @@ def start(
     client = boto3_client("codebuild")
     repo: Optional[str] = None
     credentials: Optional[str] = None
-    if context.images.code_build.source.startswith("ecr"):
-        repo = context.images.code_build.repository
+    if context.images.code_build.source and context.images.code_build.source.startswith("ecr"):
+        repo = cast(str, context.images.code_build.repository)
         if not any(match in repo for match in [".amazonaws.com/", "public.ecr.aws"]):
             repo = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/{repo}"
         credentials = "SERVICE_ROLE"

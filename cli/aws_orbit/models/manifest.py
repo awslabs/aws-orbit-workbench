@@ -64,9 +64,9 @@ class TeamManifest:
 @dataclass(base_schema=BaseSchema, frozen=True)
 class ImageManifest:
     Schema: ClassVar[Type[Schema]] = Schema
-    repository: str
-    source: str = "ecr-public"
-    version: str = aws_orbit.__version__
+    repository: Optional[str]
+    source: Optional[str] = "ecr-public"
+    version: Optional[str] = aws_orbit.__version__
     path: Optional[str] = None
 
 
@@ -85,43 +85,43 @@ class ManagedNodeGroupManifest:
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class CodeBuildImageManifest(ImageManifest):
-    repository: str = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base"
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class JupyterHubImageManifest(ImageManifest):
-    repository: str = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-hub"
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-hub"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class JupyterUserImageManifest(ImageManifest):
-    repository: str = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user"
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class LandingPageImageManifest(ImageManifest):
-    repository: str = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/landing-page"
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/landing-page"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class AwsEfsDriverImageManifest(ImageManifest):
-    repository: str = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/aws-efs-csi-driver"
-    source: str = "ecr-external"
-    version: str = "v1.0.0"
+    repository: Optional[str] = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/aws-efs-csi-driver"
+    source: Optional[str] = "ecr-external"
+    version: Optional[str] = "v1.0.0"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class LivenessprobeImageManifest(ImageManifest):
-    repository: str = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/livenessprobe"
-    source: str = "ecr-external"
-    version: str = "v2.0.0"
+    repository: Optional[str] = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/livenessprobe"
+    source: Optional[str] = "ecr-external"
+    version: Optional[str] = "v2.0.0"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class CsiNodeDriverRegistrarImageManifest(ImageManifest):
-    repository: str = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/csi-node-driver-registrar"
-    source: str = "ecr-external"
-    version: str = "v1.3.0"
+    repository: Optional[str] = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/csi-node-driver-registrar"
+    source: Optional[str] = "ecr-external"
+    version: Optional[str] = "v1.3.0"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)

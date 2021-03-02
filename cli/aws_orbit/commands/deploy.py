@@ -39,6 +39,9 @@ _logger: logging.Logger = logging.getLogger(__name__)
 def _request_dockerhub_credential(msg_ctx: MessagesContext) -> Tuple[str, str]:
     if msg_ctx.pbar is not None:
         msg_ctx.pbar.clear()
+    msg_ctx.info(
+        "When Container Images are built from source or pulled from Dockerhub, " "a Dockerhub login is required."
+    )
     username = cast(
         str,
         click.prompt("Please enter the DockerHub username", type=str, hide_input=False),
@@ -261,8 +264,6 @@ def deploy_env(
 def deploy_teams(
     filename: str,
     debug: bool,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
 ) -> None:
     with MessagesContext("Deploying", debug=debug) as msg_ctx:
         msg_ctx.progress(2)
