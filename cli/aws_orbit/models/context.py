@@ -210,7 +210,7 @@ class FoundationContext:
     codeartifact_domain: Optional[str] = None
     codeartifact_repository: Optional[str] = None
     images: FoundationImagesManifest = FoundationImagesManifest()
-    policies: Optional[str] = None
+    policies: Optional[List[str]] = cast(List[str], field(default_factory=list))
 
 
 @dataclass(base_schema=BaseSchema)
@@ -242,7 +242,7 @@ class Context:
     eks_fargate_profile_role_arn: Optional[str] = None
     eks_env_nodegroup_role_arn: Optional[str] = None
     eks_oidc_provider: Optional[str] = None
-    eks_system_masters_roles: List[str] = field(default_factory=list)
+    eks_system_masters_roles: Optional[List[str]] = cast(List[str], field(default_factory=list))
     user_pool_client_id: Optional[str] = None
     identity_pool_id: Optional[str] = None
     teams: List[TeamContext] = field(default_factory=list)
@@ -253,7 +253,7 @@ class Context:
     cluster_sg_id: Optional[str] = None
     cluster_pod_sg_id: Optional[str] = None
     managed_nodegroups: List[ManagedNodeGroupManifest] = field(default_factory=list)
-    policies: Optional[str] = None
+    policies: Optional[List[str]] = cast(List[str], field(default_factory=list))
 
     def get_team_by_name(self, name: str) -> Optional[TeamContext]:
         for t in self.teams:

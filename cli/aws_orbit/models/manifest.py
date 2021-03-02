@@ -191,7 +191,7 @@ class FoundationManifest:
     codeartifact_domain: Optional[str] = None
     codeartifact_repository: Optional[str] = None
     images: FoundationImagesManifest = FoundationImagesManifest()
-    policies: Optional[str] = None
+    policies: Optional[List[str]] = cast(List[str], field(default_factory=list))
     ssm_parameter_name: Optional[str] = None
     networking: NetworkingManifest = NetworkingManifest()
 
@@ -202,7 +202,7 @@ class Manifest:
     name: str
     user_pool_id: Optional[str] = None
     scratch_bucket_arn: Optional[str] = None
-    eks_system_masters_roles: List[str] = field(default_factory=list)
+    eks_system_masters_roles: Optional[List[str]] = cast(List[str], field(default_factory=list))
     codeartifact_domain: Optional[str] = None
     codeartifact_repository: Optional[str] = None
     cognito_external_provider: Optional[str] = None
@@ -213,7 +213,7 @@ class Manifest:
     shared_efs_fs_id: Optional[str] = None
     shared_efs_sg_id: Optional[str] = None
     managed_nodegroups: List[ManagedNodeGroupManifest] = field(default_factory=list)
-    policies: Optional[str] = None
+    policies: Optional[List[str]] = cast(List[str], field(default_factory=list))
     ssm_parameter_name: Optional[str] = None
 
     def get_team_by_name(self, name: str) -> Optional[TeamManifest]:

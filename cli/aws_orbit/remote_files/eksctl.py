@@ -167,7 +167,7 @@ def map_iam_identities(
                         f"eksctl create iamidentitymapping --cluster {cluster_name} --arn {arn} "
                         f"--username {role} --group system:masters"
                     )
-                    context.eks_system_masters_roles.append(role)
+                    cast(List[str], context.eks_system_masters_roles).append(role)
                     ContextSerDe.dump_context_to_ssm(context=context)
                     break
             else:
@@ -183,7 +183,7 @@ def map_iam_identities(
             else:
                 _logger.debug(f"Removing IAM Identity Mapping - Role: {arn}")
                 sh.run(f"eksctl delete iamidentitymapping --cluster {cluster_name} --arn {arn} --all")
-                context.eks_system_masters_roles.remove(role)
+                cast(List[str], context.eks_system_masters_roles).remove(role)
                 ContextSerDe.dump_context_to_ssm(context=context)
 
 

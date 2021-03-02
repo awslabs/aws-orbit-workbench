@@ -136,7 +136,8 @@ def deploy_images_remotely(context: "Context") -> None:
             ("csi-node-driver-registrar", None, None, []),
         ]
     _logger.debug("Building the second images batch")
-    _deploy_images_batch(context=context, images=images)
+    if images:
+        _deploy_images_batch(context=context, images=images)
 
 
 def deploy_foundation(args: Tuple[str, ...]) -> None:
