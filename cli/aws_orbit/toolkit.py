@@ -15,12 +15,13 @@
 import logging
 import os
 import shutil
-from typing import TYPE_CHECKING
+
+import yaml
+from cfn_flip import yaml_dumper
+from cfn_tools import load_yaml
 
 from aws_orbit import ORBIT_CLI_ROOT
-
-if TYPE_CHECKING:
-    from aws_orbit.models.context import Context
+from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ FILENAME = "template.yaml"
 MODEL_FILENAME = os.path.join(ORBIT_CLI_ROOT, "data", "toolkit", FILENAME)
 
 
-def synth(context: "Context") -> str:
+def synth(context: "Context", top_level: str = "orbit") -> str:
     outdir = os.path.join(os.getcwd(), ".orbit.out", context.name, "toolkit")
     try:
         shutil.rmtree(outdir)
@@ -39,7 +40,7 @@ def synth(context: "Context") -> str:
 
     _logger.debug("Reading %s", MODEL_FILENAME)
     with open(MODEL_FILENAME, "r") as file:
-        content: str = file.read()
+        template = load_yaml(file)
     _logger.debug(
         "manifest.name: %s | manifest.account_id: %s | manifest.region: %s | manifest.deploy_id: %s",
         context.name,
@@ -47,7 +48,15 @@ def synth(context: "Context") -> str:
         context.region,
         context.toolkit.deploy_id,
     )
+
+    if context.policies:
+        template["Resources"]["AdminRole"]["Properties"]["ManagedPolicyArns"].extend(
+            [f"arn:aws:iam::{context.account_id}:policy/{policy}" for policy in context.policies]
+        )
+
+    content: str = yaml.dump(template, Dumper=yaml_dumper.get_dumper())
     content = content.replace("$", "").format(
+        top_level=top_level,
         env_name=context.name,
         account_id=context.account_id,
         region=context.region,

@@ -17,7 +17,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import TYPE_CHECKING, List, Optional, cast
+from typing import List, Optional, cast
 
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_ecr as ecr
@@ -29,18 +29,13 @@ import aws_cdk.aws_ssm as ssm
 import aws_cdk.core as core
 from aws_cdk.core import App, Construct, Environment, IConstruct, Stack, Tags
 
-from aws_orbit.models.changeset import load_changeset_from_ssm
-from aws_orbit.models.context import load_context_from_ssm
-from aws_orbit.models.manifest import load_manifest_from_ssm
+from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
+from aws_orbit.models.context import Context, ContextSerDe, TeamContext
+from aws_orbit.models.manifest import Manifest, ManifestSerDe, TeamManifest
 from aws_orbit.remote_files.cdk.team_builders.ec2 import Ec2Builder
 from aws_orbit.remote_files.cdk.team_builders.ecr import EcrBuilder
 from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
 from aws_orbit.remote_files.cdk.team_builders.iam import IamBuilder
-
-if TYPE_CHECKING:
-    from aws_orbit.models.changeset import Changeset
-    from aws_orbit.models.context import Context, TeamContext
-    from aws_orbit.models.manifest import Manifest, TeamManifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -195,7 +190,7 @@ class Team(Stack):
 def main() -> None:
     _logger.debug("sys.argv: %s", sys.argv)
     if len(sys.argv) == 3:
-        context: "Context" = load_context_from_ssm(env_name=sys.argv[1])
+        context: "Context" = ContextSerDe.load_context_from_ssm(env_name=sys.argv[1], type=Context)
         team_name: str = sys.argv[2]
     else:
         raise ValueError("Unexpected number of values in sys.argv.")
@@ -207,7 +202,7 @@ def main() -> None:
     image: Optional[str] = None
 
     if changeset and changeset.teams_changeset and team_name in changeset.teams_changeset.added_teams_names:
-        manifest: Optional["Manifest"] = load_manifest_from_ssm(env_name=sys.argv[1])
+        manifest: Optional["Manifest"] = ManifestSerDe.load_manifest_from_ssm(env_name=sys.argv[1], type=Manifest)
         if manifest is None:
             raise ValueError("manifest is None!")
         team_manifest: Optional["TeamManifest"] = manifest.get_team_by_name(name=team_name)
