@@ -252,7 +252,7 @@ def deploy_synth_template(
     _add_ssm_param_injector()
     # _add_env_var_injector() - Can add per need
     # Read source YAML file, replace SSM values, write to target YAML file used for deployment.
-    with open(file_path, "r") as f:
+    with open(filename, "r") as f:
         raw: Dict[str, Any] = cast(Dict[str, Any], yaml.safe_load(f))
     _logger.debug("raw: %s", raw)
     output_file_name = "synth_" + file_name
