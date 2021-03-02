@@ -4,4 +4,4 @@ ENV MY_CUSTOM_ENV_VAR COOL
 
 ARG LOCAL_ARG=$SAMPLE_ARG
 
-ADD ../../Y-CustomImage/custom_image/my-custom-image-file.txt /home/jovyan/my-custom-image-file.txt
+ADD my-custom-image-file.txt /home/jovyan/my-custom-image-file.txt

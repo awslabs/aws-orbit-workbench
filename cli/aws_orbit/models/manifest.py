@@ -137,6 +137,18 @@ class FoundationImagesManifest:
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
+class FoundationImagesManifest:
+    Schema: ClassVar[Type[Schema]] = Schema
+    code_build: CodeBuildImageManifest = CodeBuildImageManifest()
+    names: List[str] = field(
+        metadata=dict(load_only=True),
+        default_factory=lambda: [
+            "code_build",
+        ],
+    )
+
+
+@dataclass(base_schema=BaseSchema, frozen=True)
 class ImagesManifest:
     Schema: ClassVar[Type[Schema]] = Schema
     code_build: CodeBuildImageManifest = CodeBuildImageManifest()
