@@ -376,36 +376,31 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
     node_type = get_node_type(taskConfiguration)
 
     job_name: str = f'run-{taskConfiguration["task_type"]}'
-    ebs_storage_capacity = None
-    add_ebs = False
+    volumes = team_constants.volumes()
+    volume_mounts = team_constants.volume_mounts()
     grant_sudo = False
     if "kubespawner_override" in profile:
-        if "storage_capacity" in profile["kubespawner_override"]:
-            ebs_storage_capacity = profile["kubespawner_override"]["storage_capacity"]
-            ebs_storage_name = (
-                profile["kubespawner_override"]["ebs_storage_name"]
-                if "ebs_storage_name" in profile["kubespawner_override"]
-                else "1"
-            )
-            add_ebs = True
-            _logger.info("profile override is attaching EBS volume size %s", ebs_storage_capacity)
-
+        if "volumes" in profile["kubespawner_override"]:
+            volumes.extend(profile["kubespawner_override"]["volumes"])
+            _logger.info("profile override is attaching volumes: %s", volumes)
+        if "volume_mounts" in profile["kubespawner_override"]:
+            volume_mounts.extend(profile["kubespawner_override"]["volume_mounts"])
+            _logger.info("profile override is mounting volumes: %s", volume_mounts)
     if "compute" in taskConfiguration:
         if "grant_sudo" in taskConfiguration["compute"]:
             if taskConfiguration["compute"]["grant_sudo"] or taskConfiguration["compute"]["grant_sudo"] == "True":
                 grant_sudo = True
-        if "storage_capacity" in taskConfiguration["compute"]:
-            ebs_storage_capacity = taskConfiguration["compute"]["storage_capacity"]
-            ebs_storage_name = (
-                taskConfiguration["compute"]["ebs_storage_name"]
-                if "ebs_storage_name" in taskConfiguration["compute"]
-                else "1"
-            )
-            add_ebs = True
-            _logger.info("attaching EBS volume size %s", ebs_storage_capacity)
-
+        if "volumes" in taskConfiguration["compute"]:
+            volumes.extend(taskConfiguration["compute"]["volumes"])
+            _logger.info("task override is attaching volumes: %s", volumes)
+        if "volume_mounts" in taskConfiguration["compute"]:
+            volume_mounts.extend(taskConfiguration["compute"]["volume_mounts"])
+            _logger.info("task override is mounting volumes: %s", volume_mounts)
+        if "labels" in taskConfiguration["compute"]:
+            labels = {**labels, **taskConfiguration["compute"]["labels"]}
     node_selector = team_constants.node_selector(node_type)
-
+    _logger.info('volumes:%s', json.dumps(volumes))
+    _logger.info('volume_mounts:%s', json.dumps(volume_mounts))
     pod_properties: Dict[str, str] = dict(
         name=job_name,
         image=image,
@@ -420,12 +415,11 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
         run_privileged=False,
         allow_privilege_escalation=True,
         env=env,
-        volumes=team_constants.volumes(add_ebs),
-        volume_mounts=team_constants.volume_mounts(add_ebs),
+        volumes=volumes,
+        volume_mounts=volume_mounts,
         labels=labels,
-        annotations=team_constants.annotations(ebs_storage_capacity),
+        annotations=team_constants.annotations(),
         lifecycle_hooks=team_constants.life_cycle_hooks(),
-        init_containers=team_constants.init_containers(image) if add_ebs else [],
         service_account=team_name,
         logger=_logger,
     )
@@ -450,21 +444,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
         ttl_seconds_after_finished=120,
     )
 
-    if add_ebs:
-        pvc_name = f"orbit-{team_constants.username}-{ebs_storage_name}"
-        pvc = make_pvc(
-            name=pvc_name,
-            labels=labels,
-            storage_class=team_constants.storage_class(),
-            access_modes=team_constants.ebs_access_mode(),
-            storage=ebs_storage_capacity,
-            selector=None,
-            annotations=None,
-        )
-    else:
-        pvc = None
-
-    return (job_spec, pvc)
+    return job_spec
 
 
 def resolve_image(__CURRENT_TEAM_MANIFEST__, profile):
@@ -530,15 +510,11 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
     if node_type == "ec2":
         labels["orbit/attach-security-group"] = "yes"
     team_constants: TeamConstants = TeamConstants()
-    (job_spec, pvc) = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
+    job_spec = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
     load_kube_config()
-
-    if pvc:
-        _make_create_pvc_request(
-            team_constants=team_constants,
-            pvc=pvc,
-        )
-
+    if "compute" in taskConfiguration:
+        if "labels" in taskConfiguration["compute"]:
+            labels = {**labels, **taskConfiguration["compute"]["labels"]}
     job = V1Job(
         api_version="batch/v1",
         kind="Job",
@@ -690,7 +666,7 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     }
     username = os.environ["JUPYTERHUB_USER"] if os.environ["JUPYTERHUB_USER"] else os.environ["USERNAME"]
     team_constants: TeamConstants = TeamConstants(username)
-    (job_spec, pvc) = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
+    job_spec = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
     cron_job_template: V1beta1JobTemplateSpec = V1beta1JobTemplateSpec(spec=job_spec)
     cron_job_spec: V1beta1CronJobSpec = V1beta1CronJobSpec(job_template=cron_job_template, schedule=frequency)
     job = V1beta1CronJob(
@@ -701,11 +677,6 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
         spec=cron_job_spec,
     )
     load_kube_config()
-    if pvc:
-        _make_create_pvc_request(
-            team_constants=team_constants,
-            pvc=pvc,
-        )
 
     job_instance: V1beta1CronJob = BatchV1beta1Api().create_namespaced_cron_job(namespace=team_name, body=job)
     metadata: V1ObjectMeta = job_instance.metadata

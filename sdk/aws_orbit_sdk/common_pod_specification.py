@@ -60,18 +60,14 @@ class TeamConstants:
             node_selector["orbit/node-type"] = "ec2"
         return node_selector
 
-    def volume_mounts(self, add_ebs: bool = True) -> List[Dict[str, Any]]:
+    def volume_mounts(self) -> List[Dict[str, Any]]:
         mounts = [{"mountPath": "/efs", "name": "efs-volume"}]
-        if add_ebs:
-            mounts.append({"mountPath": "/ebs", "name": "ebs-volume"})
         return mounts
 
-    def volumes(self, add_ebs: bool = True) -> List[Dict[str, Any]]:
+    def volumes(self) -> List[Dict[str, Any]]:
         vols = [
             {"name": "efs-volume", "persistentVolumeClaim": {"claimName": "jupyterhub"}},
         ]
-        if add_ebs:
-            vols.append({"name": "ebs-volume", "persistentVolumeClaim": {"claimName": self.pvc_name_template}})
         return vols
 
     def default_image(self) -> str:
@@ -184,10 +180,8 @@ class TeamConstants:
 
         # return {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh", "2>&1","|","tee /efs/shared/bootstrap.log"]}}}
 
-    def annotations(self, ebs_storage_capacity: Optional[str]) -> Dict[str, str]:
+    def annotations(self) -> Dict[str, str]:
         anno = {"AWS_ORBIT_TEAM_SPACE": self.team_name, "AWS_ORBIT_ENV": self.env_name}
-        if ebs_storage_capacity:
-            anno["EBS_STORAGE"] = ebs_storage_capacity
 
     def storage_class(self) -> str:
         return f"ebs-{self.team_name}-gp2"
