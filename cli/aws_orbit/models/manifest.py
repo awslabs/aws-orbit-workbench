@@ -65,8 +65,8 @@ class TeamManifest:
 class ImageManifest:
     Schema: ClassVar[Type[Schema]] = Schema
     repository: str
-    source: str = "dockerhub"
-    version: str = "latest"
+    source: str = "ecr-public"
+    version: str = aws_orbit.__version__
     path: Optional[str] = None
 
 
@@ -86,23 +86,21 @@ class ManagedNodeGroupManifest:
 @dataclass(base_schema=BaseSchema, frozen=True)
 class CodeBuildImageManifest(ImageManifest):
     repository: str = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base"
-    source: str = "ecr-public"
-    version: str = aws_orbit.__version__
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class JupyterHubImageManifest(ImageManifest):
-    repository: str = "aws-orbit-jupyter-hub"
+    repository: str = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-hub"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class JupyterUserImageManifest(ImageManifest):
-    repository: str = "aws-orbit-jupyter-user"
+    repository: str = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class LandingPageImageManifest(ImageManifest):
-    repository: str = "aws-orbit-landing-page"
+    repository: str = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/landing-page"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
