@@ -1,4 +1,5 @@
-FROM cschranz/gpu-jupyter:v1.3_cuda-10.1_ubuntu-18.04_python-only
+ARG BASE_IMAGE=jupyter/base-notebook:python-3.8.6
+FROM $BASE_IMAGE
 
 ######################################
 # System

@@ -18,7 +18,8 @@ import json
 import logging
 import os
 import re
-from typing import Any, ClassVar, Dict, List, Optional, Type, Union, cast
+from typing import Any, ClassVar, Dict, Generic, List, Optional, Set, Type, TypeVar, Union, cast
+from warnings import simplefilter
 
 import jsonpath_ng as jsonpath_ng
 import yaml
@@ -27,6 +28,7 @@ from marshmallow import Schema
 from marshmallow_dataclass import dataclass
 from yamlinclude import YamlIncludeConstructor
 
+import aws_orbit
 from aws_orbit import utils
 from aws_orbit.models.common import BaseSchema
 from aws_orbit.services import ssm
@@ -83,7 +85,9 @@ class ManagedNodeGroupManifest:
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class CodeBuildImageManifest(ImageManifest):
-    repository: str = "aws-orbit-code-build-base"
+    repository: str = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base"
+    source: str = "ecr-public"
+    version: str = aws_orbit.__version__
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -123,6 +127,18 @@ class CsiNodeDriverRegistrarImageManifest(ImageManifest):
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
+class FoundationImagesManifest:
+    Schema: ClassVar[Type[Schema]] = Schema
+    code_build: CodeBuildImageManifest = CodeBuildImageManifest()
+    names: List[str] = field(
+        metadata=dict(load_only=True),
+        default_factory=lambda: [
+            "code_build",
+        ],
+    )
+
+
+@dataclass(base_schema=BaseSchema, frozen=True)
 class ImagesManifest:
     Schema: ClassVar[Type[Schema]] = Schema
     code_build: CodeBuildImageManifest = CodeBuildImageManifest()
@@ -155,7 +171,7 @@ class FrontendNetworkingManifest:
 @dataclass(base_schema=BaseSchema, frozen=True)
 class DataNetworkingManifest:
     Schema: ClassVar[Type[Schema]] = Schema
-    internet_accessible: bool = False
+    internet_accessible: bool = True
     nodes_subnets: List[str] = field(default_factory=list)
 
 
@@ -168,6 +184,18 @@ class NetworkingManifest:
     isolated_subnets: List[str] = field(default_factory=list)
     frontend: FrontendNetworkingManifest = FrontendNetworkingManifest()
     data: DataNetworkingManifest = DataNetworkingManifest()
+
+
+@dataclass(base_schema=BaseSchema, frozen=True)
+class FoundationManifest:
+    Schema: ClassVar[Type[Schema]] = Schema
+    name: str
+    codeartifact_domain: Optional[str] = None
+    codeartifact_repository: Optional[str] = None
+    images: FoundationImagesManifest = FoundationImagesManifest()
+    policies: Optional[str] = None
+    ssm_parameter_name: Optional[str] = None
+    networking: NetworkingManifest = NetworkingManifest()
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -187,6 +215,8 @@ class Manifest:
     shared_efs_fs_id: Optional[str] = None
     shared_efs_sg_id: Optional[str] = None
     managed_nodegroups: List[ManagedNodeGroupManifest] = field(default_factory=list)
+    policies: Optional[str] = None
+    ssm_parameter_name: Optional[str] = None
 
     def get_team_by_name(self, name: str) -> Optional[TeamManifest]:
         for t in self.teams:
@@ -195,7 +225,7 @@ class Manifest:
         return None
 
 
-def _add_ssm_param_injector(tag: str = "!SSM") -> None:
+def _add_ssm_param_injector(tag: str = "!SSM") -> Set[str]:
     """
     Load a yaml configuration file and resolve any SSM parameters
     The SSM parameters must have !SSM before them and be in this format
@@ -212,6 +242,8 @@ def _add_ssm_param_injector(tag: str = "!SSM") -> None:
     # the tag will be used to mark where to start searching for the pattern
     # e.g. somekey: !SSM somestring${MYENVVAR}blah blah blah
     loader.add_implicit_resolver(tag, pattern, None)  # type: ignore
+
+    ssm_parameters = set()
 
     def constructor_ssm_parameter(loader, node) -> Any:  # type: ignore
         """
@@ -235,9 +267,9 @@ def _add_ssm_param_injector(tag: str = "!SSM") -> None:
                         SSM_CONTEXT[ssm_param_name] = json.loads(
                             ssm.get_parameter(Name=ssm_param_name)["Parameter"]["Value"]
                         )
+                        ssm_parameters.add(ssm_param_name)
                     except Exception as e:
                         _logger.error(f"Error resolving injected parameter {g}: {e}")
-                        pass
 
                 json_expr = jsonpath_ng.parse(jsonpath)
                 json_data = SSM_CONTEXT[ssm_param_name]
@@ -255,6 +287,7 @@ def _add_ssm_param_injector(tag: str = "!SSM") -> None:
         return value
 
     loader.add_constructor(tag, constructor_ssm_parameter)  # type: ignore
+    return ssm_parameters
 
 
 def _add_env_var_injector(tag: str = "!ENV") -> None:
@@ -301,52 +334,87 @@ def _add_env_var_injector(tag: str = "!ENV") -> None:
     loader.add_constructor(tag, constructor_env_variables)  # type: ignore
 
 
-def load_manifest_from_file(filename: str) -> Manifest:
-    _logger.debug("Loading manifest file (%s)", filename)
-    filepath = os.path.abspath(filename)
-    _logger.debug("filepath: %s", filepath)
-    filedir: str = os.path.dirname(filepath)
-    utils.print_dir(dir=filedir)
-    YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.SafeLoader, base_dir=filedir)
-    _add_ssm_param_injector()
-    _add_env_var_injector()
-    with open(filepath, "r") as f:
-        raw: Dict[str, Any] = cast(Dict[str, Any], yaml.safe_load(f))
-    _logger.debug("raw: %s", raw)
-    manifest: Manifest = cast(Manifest, Manifest.Schema().load(data=raw, many=False, partial=False, unknown="RAISE"))
-    dump_manifest_to_ssm(manifest=manifest)
-    return manifest
+T = TypeVar("T")
 
 
-def dump_manifest_to_file(manifest: Manifest, filepath: str) -> None:
-    _logger.debug("Dumping manifest file (%s)", filepath)
-    content: Dict[str, Any] = cast(Dict[str, Any], Manifest.Schema().dump(manifest))
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
-    with open(filepath, "w") as f:
-        yaml.dump(content, f, sort_keys=False)
+class ManifestSerDe(Generic[T]):
+    @staticmethod
+    def load_manifest_from_file(filename: str, type: Type[T]) -> T:
+        _logger.debug("Loading manifest file (%s)", filename)
+        filepath = os.path.abspath(filename)
+        _logger.debug("filepath: %s", filepath)
+        filedir: str = os.path.dirname(filepath)
+        utils.print_dir(dir=filedir)
+        YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.SafeLoader, base_dir=filedir)
+        _add_ssm_param_injector()
+        _add_env_var_injector()
+        with open(filepath, "r") as f:
+            raw: Dict[str, Any] = cast(Dict[str, Any], yaml.safe_load(f))
+        _logger.debug("raw: %s", raw)
+        if type is Manifest:
+            raw["SsmParameterName"] = f"/orbit/{raw['Name']}/manifest"
+            manifest: T = cast(T, Manifest.Schema().load(data=raw, many=False, partial=False, unknown="RAISE"))
+        elif type is FoundationManifest:
+            raw["SsmParameterName"] = f"/orbit-foundation/{raw['Name']}/manifest"
+            manifest = cast(T, FoundationManifest.Schema().load(data=raw, many=False, partial=False, unknown="RAISE"))
+        else:
+            raise ValueError("Unknown 'manifest' Type")
+        ManifestSerDe.dump_manifest_to_ssm(manifest=manifest)
+        return manifest
 
+    @staticmethod
+    def dump_manifest_to_file(manifest: T, filepath: str) -> None:
+        _logger.debug("Dumping manifest file (%s)", filepath)
+        if isinstance(manifest, Manifest):
+            content: Dict[str, Any] = cast(Dict[str, Any], Manifest.Schema().dump(manifest))
+        elif isinstance(manifest, FoundationManifest):
+            content = cast(Dict[str, Any], FoundationManifest.Schema().dump(manifest))
+        else:
+            raise ValueError("Unknown 'manifest' Type")
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, "w") as f:
+            yaml.dump(content, f, sort_keys=False)
 
-def dump_manifest_to_ssm(manifest: Manifest) -> None:
-    _logger.debug("Writing manifest to SSM parameter.")
-    _logger.debug("Teams: %s", [t.name for t in manifest.teams])
-    content: Dict[str, Any] = cast(Dict[str, Any], Manifest.Schema().dump(manifest))
-    ssm.cleanup_manifest(env_name=manifest.name)
-    if "Teams" in content:
-        for team in content["Teams"]:
-            team_parameter_name: str = f"/orbit/{manifest.name}/teams/{team['Name']}/manifest"
-            ssm.put_parameter(name=team_parameter_name, obj=team)
-        del content["Teams"]
-    manifest_parameter_name: str = f"/orbit/{manifest.name}/manifest"
-    ssm.put_parameter(name=manifest_parameter_name, obj=content)
+    @staticmethod
+    def dump_manifest_to_ssm(manifest: T) -> None:
+        _logger.debug("Writing manifest to SSM parameter.")
 
+        if isinstance(manifest, Manifest):
+            _logger.debug("Teams: %s", [t.name for t in manifest.teams])
+            content: Dict[str, Any] = cast(Dict[str, Any], Manifest.Schema().dump(manifest))
+            ssm.cleanup_manifest(env_name=manifest.name)
+            if "Teams" in content:
+                for team in content["Teams"]:
+                    team_parameter_name: str = f"/orbit/{manifest.name}/teams/{team['Name']}/manifest"
+                    ssm.put_parameter(name=team_parameter_name, obj=team)
+                del content["Teams"]
+            manifest_parameter_name = manifest.ssm_parameter_name
+        elif isinstance(manifest, FoundationManifest):
+            content = cast(Dict[str, Any], FoundationManifest.Schema().dump(manifest))
+            ssm.cleanup_manifest(env_name=manifest.name, top_level="orbit-foundation")
+            manifest_parameter_name = manifest.ssm_parameter_name
+        else:
+            raise ValueError("Unknown 'manifest' Type")
 
-def load_manifest_from_ssm(env_name: str) -> Optional[Manifest]:
-    context_parameter_name: str = f"/orbit/{env_name}/manifest"
-    main = ssm.get_parameter_if_exists(name=context_parameter_name)
-    if main is None:
-        return None
-    teams_parameters = ssm.list_parameters(prefix=f"/orbit/{env_name}/teams/")
-    _logger.debug("teams_parameters: %s", teams_parameters)
-    teams = [ssm.get_parameter(name=p) for p in teams_parameters if p.endswith("/manifest")]
-    main["Teams"] = teams
-    return cast(Manifest, Manifest.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
+        ssm.put_parameter(name=cast(str, manifest_parameter_name), obj=content)
+
+    @staticmethod
+    def load_manifest_from_ssm(env_name: str, type: Type[T]) -> Optional[T]:
+        if type is Manifest:
+            context_parameter_name = f"/orbit/{env_name}/manifest"
+            main = ssm.get_parameter_if_exists(name=context_parameter_name)
+            if main is None:
+                return None
+            teams_parameters = ssm.list_parameters(prefix=f"/orbit/{env_name}/teams/")
+            _logger.debug("teams_parameters (/orbit/%s/teams/): %s", env_name, teams_parameters)
+            teams = [ssm.get_parameter(name=p) for p in teams_parameters if p.endswith("/manifest")]
+            main["Teams"] = teams
+            return cast(T, Manifest.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
+        elif type is FoundationManifest:
+            context_parameter_name = f"/orbit-foundation/{env_name}/manifest"
+            main = ssm.get_parameter_if_exists(name=context_parameter_name)
+            if main is None:
+                return None
+            return cast(T, FoundationManifest.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
+        else:
+            raise ValueError("Unknown 'manifest' Type")

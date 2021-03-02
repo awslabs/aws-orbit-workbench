@@ -17,11 +17,9 @@ import logging
 import os
 import shutil
 from pprint import pformat
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
-if TYPE_CHECKING:
-    from aws_orbit.models.changeset import Changeset
-    from aws_orbit.models.context import Context
+from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -64,8 +62,6 @@ def generate_bundle(
     command_name: str,
     context: "Context",
     dirs: Optional[List[Tuple[str, str]]] = None,
-    changeset: Optional["Changeset"] = None,
-    plugins: bool = True,
 ) -> str:
     remote_dir = os.path.join(os.getcwd(), ".orbit.out", context.name, "remote", command_name)
     bundle_dir = os.path.join(remote_dir, "bundle")

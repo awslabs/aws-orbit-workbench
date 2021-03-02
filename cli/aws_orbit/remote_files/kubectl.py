@@ -18,7 +18,7 @@ import shutil
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, plugins, sh, utils
-from aws_orbit.models.context import dump_context_to_ssm
+from aws_orbit.models.context import ContextSerDe
 from aws_orbit.remote_files.utils import get_k8s_context
 from aws_orbit.services import cfn, elb
 
@@ -200,7 +200,7 @@ def fetch_kubectl_data(context: "Context", k8s_context: str, include_teams: bool
     context.landing_page_url = f"http://{landing_page_url}"
     _update_elbs(context=context)
 
-    dump_context_to_ssm(context=context)
+    ContextSerDe.dump_context_to_ssm(context=context)
     _logger.debug("Kubectl data fetched successfully.")
 
 

@@ -17,7 +17,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import TYPE_CHECKING, List, cast
+from typing import List, cast
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2
@@ -28,13 +28,10 @@ import aws_cdk.aws_ssm as ssm
 from aws_cdk import aws_lambda
 from aws_cdk.core import App, CfnOutput, Construct, Duration, Environment, IConstruct, Stack, Tags
 
-from aws_orbit.models.context import load_context_from_ssm
+from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.cdk import _lambda_path
 from aws_orbit.services import cognito as orbit_cognito
 from aws_orbit.utils import extract_images_names
-
-if TYPE_CHECKING:
-    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -396,7 +393,7 @@ class Env(Stack):
 def main() -> None:
     _logger.debug("sys.argv: %s", sys.argv)
     if len(sys.argv) == 4:
-        context: "Context" = load_context_from_ssm(env_name=sys.argv[1])
+        context: "Context" = ContextSerDe.load_context_from_ssm(env_name=sys.argv[1], type=Context)
         add_images = [] if sys.argv[2] == "null" else sys.argv[2].split(sep=",")
         remove_images = [] if sys.argv[3] == "null" else sys.argv[3].split(sep=",")
     else:

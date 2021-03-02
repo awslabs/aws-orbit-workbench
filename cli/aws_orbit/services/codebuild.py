@@ -21,11 +21,12 @@ from typing import TYPE_CHECKING, Any, Dict, Iterable, List, NamedTuple, Optiona
 import botocore.exceptions
 import yaml
 
+from aws_orbit import __version__
+from aws_orbit.models.context import Context, FoundationContext
 from aws_orbit.utils import boto3_client, try_it
 
 if TYPE_CHECKING:
     from aws_orbit.models.changeset import Changeset
-    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -126,7 +127,7 @@ def start(
     client = boto3_client("codebuild")
     repo: Optional[str] = None
     credentials: Optional[str] = None
-    if context.images.code_build.source == "ecr":
+    if context.images.code_build.source.startswith("ecr"):
         repo = context.images.code_build.repository
         if not any(match in repo for match in [".amazonaws.com/", "public.ecr.aws"]):
             repo = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/{repo}"
@@ -224,7 +225,7 @@ SPEC_TYPE = Dict[str, Union[float, Dict[str, Dict[str, Union[List[str], Dict[str
 
 
 def generate_spec(
-    context: "Context",
+    context: Union[Context, FoundationContext],
     changeset: Optional["Changeset"] = None,
     plugins: bool = True,
     cmds_install: Optional[List[str]] = None,
@@ -241,15 +242,6 @@ def generate_spec(
             " --host=tcp://0.0.0.0:2375 --storage-driver=overlay&"
         ),
         'timeout 15 sh -c "until docker info; do echo .; sleep 1; done"',
-        "ls -la",
-        "cd bundle",
-        "ls -la",
-        f"pip install kubernetes~=12.0.1 {' '.join([f'{m}{CDK_VERSION}' for m in CDK_MODULES])}",
-        "npm -g install yarn",
-        "npm install -g aws-cdk@1.67.0",
-        'curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp',  # noqa
-        "mv /tmp/eksctl /usr/local/bin",
-        "eksctl version",
     ]
 
     if context.codeartifact_domain and context.codeartifact_repository:
@@ -262,10 +254,10 @@ def generate_spec(
         install.append("cp ~/.config/pip/pip.conf .")
 
     # Orbit Workbench CLI
-    install.append("pip install aws-orbit")
+    install.append(f"pip install aws-orbit=={__version__}")
 
     # Plugins
-    if plugins:
+    if plugins and isinstance(context, Context):
         for team_context in context.teams:
             for plugin in team_context.plugins:
                 if plugin.path is not None and plugin.module is not None:

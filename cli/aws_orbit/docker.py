@@ -1,17 +1,34 @@
+#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License").
+#    You may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
 import logging
 import os
-from typing import TYPE_CHECKING, List, Optional
+from typing import List, Optional, TypeVar
 
 from aws_orbit import dockerhub, exceptions, sh, utils
+from aws_orbit.models.context import Context, FoundationContext
 from aws_orbit.services import ecr
-
-if TYPE_CHECKING:
-    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def login(context: "Context") -> None:
+T = TypeVar("T")
+
+
+def login(context: T) -> None:
+    if not (isinstance(context, Context) or isinstance(context, FoundationContext)):
+        raise ValueError("Unknown 'context' Type")
     username, password = dockerhub.get_credential(context=context)
     sh.run(f"docker login --username {username} --password {password}", hide_cmd=True)
     _logger.debug("DockerHub logged in.")
@@ -134,7 +151,7 @@ def deploy_image_from_source(
         ca_domain: str = context.codeartifact_domain
         ca_repo: str = context.codeartifact_repository
         sh.run(f"aws codeartifact login --tool pip --domain {ca_domain} --repository {ca_repo}")
-        sh.run(f"cp /root/.config/pip/pip.conf ./{dir}/")
+        sh.run(f"cp ./pip.conf {dir}/")
     build_args = [] if build_args is None else build_args
     _logger.debug("Building docker image from %s", os.path.abspath(dir))
     sh.run(cmd="docker system prune --all --force --volumes")

@@ -1,15 +1,26 @@
+#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License").
+#    You may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
 import logging
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import click
 
 from aws_orbit import utils
 from aws_orbit.messages import print_list, stylize
-from aws_orbit.models.context import load_context_from_ssm
+from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.utils import boto3_client
-
-if TYPE_CHECKING:
-    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -27,7 +38,7 @@ def _fetch_repo_uri(names: List[str], context: "Context") -> Dict[str, str]:
 
 
 def list_images(env: str, region: Optional[str]) -> None:
-    context: "Context" = load_context_from_ssm(env_name=env)
+    context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
     names = utils.extract_images_names(env_name=env)
     _logger.debug("names: %s", names)
     if names:
@@ -49,7 +60,7 @@ def list_env(variable: str) -> None:
         if not p["Name"].endswith("context") or "teams" in p["Name"]:
             continue
         env_name = p["Name"].split("/")[2]
-        context: "Context" = load_context_from_ssm(env_name=env_name)
+        context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
         _logger.debug(f"found env: {env_name}")
         teams_list: str = ",".join([x.name for x in context.teams])
         if variable == "landing-page":

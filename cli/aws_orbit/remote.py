@@ -14,12 +14,10 @@
 
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING, Callable, List, Optional
+from typing import Callable, List, Optional
 
+from aws_orbit.models.context import Context
 from aws_orbit.services import cloudwatch, codebuild, s3
-
-if TYPE_CHECKING:
-    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 

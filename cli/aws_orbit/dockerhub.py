@@ -1,19 +1,36 @@
+#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License").
+#    You may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
 import json
 import logging
-from typing import TYPE_CHECKING, Dict, Tuple
+from typing import Dict, Tuple, TypeVar
 
 import botocore
 
+from aws_orbit.models.context import Context, FoundationContext
 from aws_orbit.services import s3
 from aws_orbit.utils import boto3_client
-
-if TYPE_CHECKING:
-    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def get_credential(context: "Context") -> Tuple[str, str]:
+T = TypeVar("T")
+
+
+def get_credential(context: T) -> Tuple[str, str]:
+    if not (isinstance(context, Context) or isinstance(context, FoundationContext)):
+        raise ValueError("Unknown 'context' Type")
     if context.toolkit.s3_bucket is None:
         raise ValueError("context.toolkit.s3_bucket is None!")
     client_s3 = boto3_client(service_name="s3")
