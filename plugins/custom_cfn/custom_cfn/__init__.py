@@ -48,7 +48,6 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
         s3_bucket=context.toolkit.s3_bucket,
         synth_params={
             "env_name": context.name,
-            "team_name": team_context.name,
             "deploy_id": cast(str, context.toolkit.deploy_id),
             "env_kms_arn": env_kms_arn,
             "cognito_user_pool_id": cast(str, context.user_pool_id),

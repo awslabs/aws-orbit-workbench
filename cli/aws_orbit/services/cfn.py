@@ -12,18 +12,25 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import logging
 import os
+import re
 import time
 from datetime import datetime
 from typing import Any, Dict, Optional, Tuple, cast
 
 import botocore.exceptions
+import jsonpath_ng as jsonpath_ng
+import yaml
+from yamlinclude import YamlIncludeConstructor
 
+from aws_orbit import utils
 from aws_orbit.services import s3
 from aws_orbit.utils import boto3_client
 
 CHANGESET_PREFIX = "aws-orbit-cli-deploy-"
+SSM_CONTEXT: Dict[str, str] = {}
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -144,6 +151,79 @@ def deploy_template(stack_name: str, filename: str, env_tag: str, s3_bucket: Opt
         _wait_for_execute(stack_name=stack_name, changeset_type=changeset_type)
 
 
+############
+
+# New Approach to replace the SSM params in cfn templates.
+
+
+def _add_ssm_param_injector(tag: str = "!SSM") -> None:
+    """
+    Load a yaml cloudformation file and resolve any SSM parameters
+    The SSM parameters must have !SSM before them and be in this format
+    to be parsed: ${SSM_PARAMETER_PATH::JSONPATH}.
+    E.g.:
+    Parameters:
+      envdeployid:
+        Type: String
+        Default: !SSM ${/orbit/dev-env/context::Toolkit.DeployId}
+        Description: Testing deploy_id
+      envcognitouserpoolid:
+        Type: String
+        Default: !SSM ${/orbit/dev-env/context::UserPoolId}
+        Description: Testing cognito_user_pool_id
+    """
+    # pattern for global vars: look for ${word}
+    pattern = re.compile(".*?\${(.*)}.*?")  # noqa: W605
+    loader = yaml.SafeLoader
+
+    # the tag will be used to mark where to start searching for the pattern
+    # e.g. somekey: !SSM somestring${MYENVVAR}blah blah blah
+    loader.add_implicit_resolver(tag, pattern, None)  # type: ignore
+
+    def constructor_ssm_parameter(loader, node) -> Any:  # type: ignore
+        """
+        Extracts the environment variable from the node's value
+        :param yaml.Loader loader: the yaml loader
+        :param node: the current node in the yaml
+        :return: the parsed string that contains the value of the environment
+        variable
+        """
+        value = loader.construct_scalar(node)
+        match = pattern.findall(value)  # to find all env variables in line
+        if match:
+            full_value = value
+            for g in match:
+                _logger.debug(f"match: {g}")
+                (ssm_param_name, jsonpath) = g.split("::")
+                _logger.debug(f"found injected parameter {(ssm_param_name, jsonpath)}")
+                if ssm_param_name not in SSM_CONTEXT:
+                    ssm = boto3_client("ssm")
+                    try:
+                        SSM_CONTEXT[ssm_param_name] = json.loads(
+                            ssm.get_parameter(Name=ssm_param_name)["Parameter"]["Value"]
+                        )
+                    except Exception as e:
+                        _logger.error(f"Error resolving injected parameter {g}: {e}")
+                        pass
+
+                json_expr = jsonpath_ng.parse(jsonpath)
+                json_data = SSM_CONTEXT[ssm_param_name]
+                json_match = json_expr.find(json_data)
+
+                if len(json_match) > 1:
+                    raise Exception(f"Injected parameter {g} is ambiguous")
+                elif len(json_match) == 0:
+                    raise Exception(f"Injected parameter {jsonpath} not found in SSM {ssm_param_name}")
+
+                param_value: str = json_match[0].value
+                _logger.debug(f"injected SSM parameter {g} resolved to {param_value}")
+                return param_value
+            return full_value
+        return value
+
+    loader.add_constructor(tag, constructor_ssm_parameter)  # type: ignore
+
+
 def deploy_synth_template(
     stack_name: str, filename: str, env_tag: str, s3_bucket: Optional[str], synth_params: Dict[str, str]
 ) -> None:
@@ -151,17 +231,35 @@ def deploy_synth_template(
         raise FileNotFoundError(f"CloudFormation template not found at {filename}")
     _logger.debug("Reading %s", filename)
     file_path, file_name = os.path.split(filename)
-    with open(filename, "r") as file:
-        content: str = file.read()
-    _logger.debug(f"******pre synth={content}")
-    _logger.debug(f"synth_params={synth_params}")
-    content = content.replace("$", "").format(**synth_params)
-    _logger.debug(f"******post synth={content}")
+
+    # with open(filename, "r") as file:
+    #     content: str = file.read()
+    # _logger.debug(f"******pre synth={content}")
+    # _logger.debug(f"synth_params={synth_params}")
+    # content = content.replace("$", "").format(**synth_params)
+    # _logger.debug(f"******post synth={content}")
+    # output_file_name = "synth_" + file_name
+    # output_file_path = os.path.join(file_path, output_file_name)
+    # _logger.debug("*********Writing %s", output_file_path)
+    # with open(output_file_path, "w") as file:
+    #     file.write(content)
+    # deploy_template(stack_name=stack_name, filename=output_file_path, env_tag=env_tag, s3_bucket=s3_bucket)
+    # _logger.debug("**********End of CloudFormation template execution")
+
+    file_dir: str = os.path.dirname(file_path)
+    utils.print_dir(dir=file_dir)
+    YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.SafeLoader, base_dir=file_dir)
+    _add_ssm_param_injector()
+    # _add_env_var_injector() - Can add per need
+    # Read source YAML file, replace SSM values, write to target YAML file used for deployment.
+    with open(file_path, "r") as f:
+        raw: Dict[str, Any] = cast(Dict[str, Any], yaml.safe_load(f))
+    _logger.debug("raw: %s", raw)
     output_file_name = "synth_" + file_name
     output_file_path = os.path.join(file_path, output_file_name)
     _logger.debug("*********Writing %s", output_file_path)
     with open(output_file_path, "w") as file:
-        file.write(content)
+        yaml.dump(raw, file, sort_keys=False)
     deploy_template(stack_name=stack_name, filename=output_file_path, env_tag=env_tag, s3_bucket=s3_bucket)
     _logger.debug("**********End of CloudFormation template execution")
 
