@@ -15,7 +15,7 @@ cat <<EOF |  orbit run notebook --env dev-env --team $TEST_TEAM_SPACE --user tes
           "sourcePath": "/efs/shared/samples/notebooks/Z-Tests",
           "targetPath": "/efs/shared/regression/notebooks/Z-Tests",
           "params": {
-          },
+          }
         }]
 }
 EOF
