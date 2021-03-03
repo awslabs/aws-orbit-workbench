@@ -444,6 +444,7 @@ class ContextSerDe(Generic[T, V]):
                 cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-foundation-{manifest.name}-cdk-toolkit"),
                 codeartifact_domain=manifest.codeartifact_domain,
                 codeartifact_repository=manifest.codeartifact_repository,
+                networking=create_networking_context_from_manifest(networking=manifest.networking),
                 images=manifest.images,
                 policies=manifest.policies,
                 stack_name=f"orbit-foundation-{manifest.name}",
