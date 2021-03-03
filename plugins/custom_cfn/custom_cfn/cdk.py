@@ -22,10 +22,13 @@ from typing import TYPE_CHECKING, Any, Dict, cast
 import six
 import yaml
 from aws_cdk.core import CfnInclude, Construct, Environment, IConstruct, NestedStack, Stack, Tags
-from aws_orbit.plugins.helpers import cdk_handler
+
+# /orbit/env_name/teams missing when we do pre_hook. Can not get team context. Moving to new handler.
+# from aws_orbit.plugins.helpers import cdk_handler, cdk_prep_team_handler
+from aws_orbit.plugins.helpers import cdk_prep_team_handler
 
 if TYPE_CHECKING:
-    from aws_orbit.models.context import Context, TeamContext
+    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -143,9 +146,7 @@ CfnYamlLoader.add_multi_constructor("!", multi_constructor)
 
 
 class Team(Stack):
-    def __init__(
-        self, scope: Construct, id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]
-    ) -> None:
+    def __init__(self, scope: Construct, id: str, context: "Context", parameters: Dict[str, Any]) -> None:
         super().__init__(
             scope=scope,
             id=id,
@@ -173,4 +174,4 @@ class NestedCfnStack(NestedStack):
 
 
 if __name__ == "__main__":
-    cdk_handler(stack_class=Team)
+    cdk_prep_team_handler(stack_class=Team)

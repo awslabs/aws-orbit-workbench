@@ -72,6 +72,38 @@ def cdk_handler(stack_class: Type["Stack"]) -> None:
     app.synth(force=True)
 
 
+def cdk_prep_team_handler(stack_class: Type["Stack"]) -> None:
+    _logger.debug("sys.argv: %s", sys.argv)
+    if len(sys.argv) != 5:
+        raise ValueError(f"Unexpected number of values in sys.argv ({len(sys.argv)}) - {sys.argv}.")
+
+    stack_name: str = sys.argv[1]
+    # team_name: str = sys.argv[3]
+    parameters: Dict[str, Any] = _deserialize_parameters(parameters=sys.argv[4])
+    context: "Context" = load_context_from_ssm(env_name=sys.argv[2])
+
+    # Can not find /orbit/env_name/teams ssm param.
+    # team_context = context.get_team_by_name(name=team_name)
+    # if team_context is None:
+    #     raise ValueError(f"Team {team_name} not found in the context.")
+
+    outdir = os.path.join(
+        ".orbit.out",
+        context.name,
+        "cdk",
+        stack_name,
+    )
+    shutil.rmtree(outdir, ignore_errors=True)
+    os.makedirs(outdir, exist_ok=True)
+
+    # Can't be imported globally because we only have CDK installed on CodeBuild
+    from aws_cdk.core import App
+
+    app = App(outdir=outdir)
+    stack_class(app, stack_name, context, parameters)  # type: ignore
+    app.synth(force=True)
+
+
 def cdk_deploy(
     stack_name: str,
     app_filename: str,
