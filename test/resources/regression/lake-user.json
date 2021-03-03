@@ -1,0 +1,17 @@
+{
+    "compute": {
+        "node_type": "ec2",
+        "container": {
+            "p_concurrent" :1
+        }
+    },
+    "tasks":  [
+        {
+            "notebookName": "run-user-regression-notebooks.ipynb",
+            "sourcePath": "shared/samples/notebooks/Z-Tests",
+            "targetPath": "shared/regression/notebooks/Z-Tests/",
+            "params": {
+            }
+        }
+    ]
+}

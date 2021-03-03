@@ -8,8 +8,7 @@ cat <<EOF |  orbit run notebook --env dev-env --team $TEST_TEAM_SPACE --user tes
           "container" : {
               "p_concurrent": "1"
           },
-          "compute_type": "ecs",
-          "node_type": "fargate"
+          "node_type": "ec2",
       },
       "tasks":  [{
           "notebookName": "sanity-bad.ipynb",
@@ -17,9 +16,8 @@ cat <<EOF |  orbit run notebook --env dev-env --team $TEST_TEAM_SPACE --user tes
           "targetPath": "/efs/shared/regression/notebooks/Z-Tests",
           "params": {
           },
-          "ExecutionType": "ecs"
         }]
- }
+}
 EOF
 
 ret=$?

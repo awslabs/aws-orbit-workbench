@@ -89,6 +89,18 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
     with open(output, "w") as file:
         file.write(content)
 
+    # bind to admin role
+    if team_context.k8_admin:
+        # user service account
+        input = os.path.join(MODELS_PATH, "apps", "04-admin-binding.yaml")
+        output = os.path.join(output_path, f"04-{team_context.name}-admin-binding.yaml")
+
+        with open(input, "r") as file:
+            content = file.read()
+        content = content.replace("$", "").format(team=team_context.name)
+        with open(output, "w") as file:
+            file.write(content)
+
 
 def _landing_page(output_path: str, context: "Context") -> None:
     filename = "03-landing-page.yaml"

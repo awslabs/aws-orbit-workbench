@@ -8,8 +8,7 @@ cat <<EOF |  orbit run notebook --env dev-env --team $TEST_TEAM_SPACE --user tes
           "container" : {
               "p_concurrent": "1"
           },
-          "compute_type": "ecs",
-          "node_type": "fargate",
+          "node_type": "ec2",
           "storage_capacity": "20Gi"
       },
       "tasks":  [{
@@ -18,9 +17,15 @@ cat <<EOF |  orbit run notebook --env dev-env --team $TEST_TEAM_SPACE --user tes
           "targetPath": "/efs/shared/regression/notebooks/Z-Tests",
           "params": {
           },
-          "ExecutionType": "ecs"
         }]
  }
 EOF
 
-echo $?
+ret=$?
+if [ $ret -eq 0 ]
+then
+    echo "good-sanity-test passed"
+    exit 255
+else
+    echo "good-sanity-test failed"
+fi

@@ -397,31 +397,32 @@ def deploy_teams(context: "Context") -> None:
         )
         subnets_ids = [s.subnet_id for s in subnets]
         for team in context.teams:
-            eks.create_fargate_profile(
-                profile_name=f"orbit-{context.name}-{team.name}",
-                cluster_name=f"orbit-{context.name}",
-                role_arn=cast(str, context.eks_fargate_profile_role_arn),
-                subnets=subnets_ids,
-                namespace=team.name,
-                selector_labels={"team": team.name, "orbit/node-type": "fargate"},
-            )
-
-            username = f"orbit-{context.name}-{team.name}-runner"
-            arn = f"arn:aws:iam::{context.account_id}:role/{username}"
-            for line in sh.run_iterating(f"eksctl get iamidentitymapping --cluster {cluster_name} --arn {arn}"):
-                if line == f'Error: no iamidentitymapping with arn "{arn}" found':
-                    _logger.debug(
-                        f"Adding IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters"
-                    )
-                    sh.run(
-                        f"eksctl create iamidentitymapping --cluster {cluster_name} "
-                        f"--arn {arn} --username {username} --group system:masters"
-                    )
-                    break
-            else:
-                _logger.debug(
-                    f"Skipping existing IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters"
+            if team.fargate:
+                eks.create_fargate_profile(
+                    profile_name=f"orbit-{context.name}-{team.name}",
+                    cluster_name=f"orbit-{context.name}",
+                    role_arn=cast(str, context.eks_fargate_profile_role_arn),
+                    subnets=subnets_ids,
+                    namespace=team.name,
+                    selector_labels={"team": team.name, "orbit/node-type": "fargate"},
                 )
+
+                username = f"orbit-{context.name}-{team.name}-runner"
+                arn = f"arn:aws:iam::{context.account_id}:role/{username}"
+                for line in sh.run_iterating(f"eksctl get iamidentitymapping --cluster {cluster_name} --arn {arn}"):
+                    if line == f'Error: no iamidentitymapping with arn "{arn}" found':
+                        _logger.debug(
+                            f"Adding IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters"
+                        )
+                        sh.run(
+                            f"eksctl create iamidentitymapping --cluster {cluster_name} "
+                            f"--arn {arn} --username {username} --group system:masters"
+                        )
+                        break
+                else:
+                    _logger.debug(
+                        f"Skipping existing IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters"
+                    )
 
     _logger.debug("EKSCTL deployed")
 

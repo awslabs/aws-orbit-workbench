@@ -1,0 +1,17 @@
+{
+    "compute": {
+        "node_type": "ec2",
+        "container": {
+            "p_concurrent" :1
+        }
+    },
+    "tasks":  [
+        {
+            "notebookName": "Example-1-Build-Lake.ipynb",
+            "sourcePath": "/efs/shared/samples/notebooks/M-Admin",
+            "targetPath": "/efs/shared/regression/notebooks/M-Admin/",
+            "params": {
+            }
+        }
+    ]
+}
