@@ -32,10 +32,10 @@ ORBIT_CUSTOM_CFN_ROOT = os.path.dirname(os.path.abspath(__file__))
 @hooks.pre
 def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
     _logger.debug("Deploying Custom CloudFormation plugin resources for team %s", team_context.name)
-    if parameters["cfn_template_path"] and os.path.isfile(parameters["cfn_template_path"]):
-        _logger.info(f"CloudFormation template found at {parameters['cfn_template_path']}")
+    if parameters["CfnTemplatePath"] and os.path.isfile(parameters["CfnTemplatePath"]):
+        _logger.info(f"CloudFormation template found at {parameters['CfnTemplatePath']}")
     else:
-        raise FileNotFoundError(f"CloudFormation template not found at {parameters['cfn_template_path']}")
+        raise FileNotFoundError(f"CloudFormation template not found at {parameters['CfnTemplatePath']}")
 
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
@@ -94,10 +94,10 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
 def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
     _logger.debug("Destroying Custom CloudFormation  plugin resources for team %s", team_context.name)
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
-    if parameters["cfn_template_path"] and os.path.isfile(parameters["cfn_template_path"]):
-        _logger.info(f"CloudFormation template found at {parameters['cfn_template_path']}")
+    if parameters["CfnTemplatePath"] and os.path.isfile(parameters["CfnTemplatePath"]):
+        _logger.info(f"CloudFormation template found at {parameters['CfnTemplatePath']}")
     else:
-        raise FileNotFoundError(f"CloudFormation template not found at {parameters['cfn_template_path']}")
+        raise FileNotFoundError(f"CloudFormation template not found at {parameters['CfnTemplatePath']}")
 
     # env_name = context.name
     # team_name = team_context.name
