@@ -2,7 +2,7 @@
 
 set -x
 
-cat <<EOF |  orbit run notebook --env dev-env --team $TEST_TEAM_SPACE --user testing --wait --debug --tail-logs -
+cat <<EOF |  orbit run notebook --env dev-env --team $TEST_TEAM_SPACE --user testing --wait --tail-logs -
 {
       "compute": {
           "container" : {
@@ -23,8 +23,8 @@ EOF
 ret=$?
 if [ $ret -eq 0 ]
 then
+    echo "good-sanity-test failed"
+else
     echo "good-sanity-test passed"
     exit 255
-else
-    echo "good-sanity-test failed"
 fi
