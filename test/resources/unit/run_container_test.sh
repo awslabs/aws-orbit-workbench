@@ -8,8 +8,7 @@ cat <<EOF |  orbit run notebook --env dev-env --team $TEST_TEAM_SPACE --user tes
           "container" : {
               "p_concurrent": "1"
           },
-          "node_type": "ec2",
-          "storage_capacity": "20Gi"
+          "node_type": "ec2"
       },
       "tasks":  [{
           "notebookName": "sanity-good.ipynb",
