@@ -252,7 +252,7 @@ def deploy_synth_template(
     file_dir: str = os.path.dirname(file_path)
     utils.print_dir(dir=file_dir)
     YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.SafeLoader, base_dir=file_dir)
-    _add_ssm_param_injector(tag="@SSM")
+    _add_ssm_param_injector()
     # _add_env_var_injector() - Can add per need
     # Read source YAML file, replace SSM values, write to target YAML file used for deployment.
     with open(filename, "r") as f:
