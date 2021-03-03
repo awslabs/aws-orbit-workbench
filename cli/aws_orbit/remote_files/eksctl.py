@@ -372,7 +372,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
     _logger.debug("EKSCTL deployed")
 
 
-def deploy_teams(context: "Context") -> None:
+def deploy_team(context: "Context", team_context: "TeamContext") -> None:
     stack_name: str = f"orbit-{context.name}"
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
@@ -385,34 +385,29 @@ def deploy_teams(context: "Context") -> None:
             else context.networking.isolated_subnets
         )
         subnets_ids = [s.subnet_id for s in subnets]
-        for team in context.teams:
-            eks.create_fargate_profile(
-                profile_name=f"orbit-{context.name}-{team.name}",
-                cluster_name=f"orbit-{context.name}",
-                role_arn=cast(str, context.eks_fargate_profile_role_arn),
-                subnets=subnets_ids,
-                namespace=team.name,
-                selector_labels={"team": team.name, "orbit/node-type": "fargate"},
-            )
+        eks.create_fargate_profile(
+            profile_name=f"orbit-{context.name}-{team_context.name}",
+            cluster_name=f"orbit-{context.name}",
+            role_arn=cast(str, context.eks_fargate_profile_role_arn),
+            subnets=subnets_ids,
+            namespace=team_context.name,
+            selector_labels={"team": team_context.name, "orbit/node-type": "fargate"},
+        )
 
-            username = f"orbit-{context.name}-{team.name}-runner"
-            arn = f"arn:aws:iam::{context.account_id}:role/{username}"
-            for line in sh.run_iterating(f"eksctl get iamidentitymapping --cluster {cluster_name} --arn {arn}"):
-                if line == f'Error: no iamidentitymapping with arn "{arn}" found':
-                    _logger.debug(
-                        f"Adding IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters"
-                    )
-                    sh.run(
-                        f"eksctl create iamidentitymapping --cluster {cluster_name} "
-                        f"--arn {arn} --username {username} --group system:masters"
-                    )
-                    break
-            else:
-                _logger.debug(
-                    f"Skipping existing IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters"
+        username = f"orbit-{context.name}-{team_context.name}-runner"
+        arn = f"arn:aws:iam::{context.account_id}:role/{username}"
+        for line in sh.run_iterating(f"eksctl get iamidentitymapping --cluster {cluster_name} --arn {arn}"):
+            if line == f'Error: no iamidentitymapping with arn "{arn}" found':
+                _logger.debug(f"Adding IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters")
+                sh.run(
+                    f"eksctl create iamidentitymapping --cluster {cluster_name} "
+                    f"--arn {arn} --username {username} --group system:masters"
                 )
-
-    _logger.debug("EKSCTL deployed")
+                break
+        else:
+            _logger.debug(
+                f"Skipping existing IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters"
+            )
 
 
 def destroy_env(context: "Context") -> None:

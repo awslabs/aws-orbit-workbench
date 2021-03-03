@@ -15,16 +15,12 @@
 import logging
 import os
 import shutil
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, plugins, sh, utils
-from aws_orbit.models.context import ContextSerDe
+from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.remote_files.utils import get_k8s_context
 from aws_orbit.services import cfn, elb
-
-if TYPE_CHECKING:
-    from aws_orbit.models.changeset import PluginChangeset
-    from aws_orbit.models.context import Context, TeamContext
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -243,6 +239,10 @@ def _generate_efs_driver_manifest(context: "Context") -> str:
     return os.path.join(output_path, "overlays")
 
 
+def write_kubeconfig(context: "Context") -> None:
+    sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
+
+
 def deploy_env(context: "Context") -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
@@ -260,19 +260,16 @@ def deploy_env(context: "Context") -> None:
         fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=False)
 
 
-def deploy_teams(context: "Context", changes: List["PluginChangeset"]) -> None:
+def deploy_team(context: "Context", team_context: "TeamContext") -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(stack_name=eks_stack_name):
-        sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
         k8s_context = get_k8s_context(context=context)
         _logger.debug("kubectl context: %s", k8s_context)
-        output_path = _generate_teams_manifest(context=context)
+        output_path = _generate_team_context(context=context, team_context=team_context)
         output_path = _generate_env_manifest(context=context, clean_up=False)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
         fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=True)
-        for team_context in context.teams:
-            plugins.PLUGINS_REGISTRIES.deploy_team_plugins(context=context, team_context=team_context, changes=changes)
 
 
 def destroy_env(context: "Context") -> None:

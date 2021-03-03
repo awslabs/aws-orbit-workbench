@@ -19,11 +19,9 @@ from typing import Iterator, List, Optional, cast
 
 import boto3
 
-from aws_orbit import ORBIT_CLI_ROOT, cdk, docker, plugins, sh
-from aws_orbit.models.changeset import TeamsChangeset
+from aws_orbit import ORBIT_CLI_ROOT, cdk, docker, plugins
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext, create_team_context_from_manifest
-from aws_orbit.models.manifest import Manifest, ManifestSerDe
-from aws_orbit.remote_files import eksctl, kubectl
+from aws_orbit.models.manifest import Manifest, TeamManifest
 from aws_orbit.services import cfn, ecr
 from aws_orbit.utils import boto3_client
 
@@ -124,54 +122,27 @@ def _deploy_team_bootstrap(context: "Context", team_context: "TeamContext") -> N
                 )
 
 
-def eval_removed_teams(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> None:
-    if teams_changeset is None:
-        return
-    _logger.debug("Teams %s must be deleted.", teams_changeset.removed_teams_names)
-    if teams_changeset.removed_teams_names:
-        sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
-    for name in teams_changeset.removed_teams_names:
-        team_context: Optional["TeamContext"] = context.get_team_by_name(name=name)
-        if team_context is None:
-            raise RuntimeError(f"Team {name} not found!")
-        _logger.debug("Destroying team %s", name)
-        plugins.PLUGINS_REGISTRIES.destroy_team_plugins(context=context, team_context=team_context)
-        kubectl.destroy_team(context=context, team_context=team_context)
-        eksctl.destroy_team(context=context, team_context=team_context)
-        destroy(context=context, team_context=team_context)
-        _logger.debug("Team %s destroyed", name)
-        context.remove_team_by_name(name=name)
-        ContextSerDe.dump_context_to_ssm(context=context)
+def deploy_team(context: "Context", manifest: Manifest, team_manifest: TeamManifest) -> None:
+    args = [context.name, team_manifest.name]
+    cdk.deploy(
+        context=context,
+        stack_name=f"orbit-{manifest.name}-{team_manifest.name}",
+        app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
+        args=args,
+    )
+    team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_manifest.name)
+    if team_context:
+        team_context.fetch_team_data()
+    else:
+        team_context = create_team_context_from_manifest(manifest=manifest, team_manifest=team_manifest)
+        team_context.fetch_team_data()
+        context.teams.append(team_context)
+    ContextSerDe.dump_context_to_ssm(context=context)
+    _deploy_team_image(context=context, team_context=team_context, image="jupyter-user")
+    _deploy_team_bootstrap(context=context, team_context=team_context)
 
 
-def deploy(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> None:
-    manifest: Optional["Manifest"] = ManifestSerDe.load_manifest_from_ssm(env_name=context.name, type=Manifest)
-    if manifest is None:
-        raise ValueError("manifest is None!")
-    eval_removed_teams(context=context, teams_changeset=teams_changeset)
-    for team_manifest in manifest.teams:
-        args = [context.name, team_manifest.name]
-        cdk.deploy(
-            context=context,
-            stack_name=f"orbit-{manifest.name}-{team_manifest.name}",
-            app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
-            args=args,
-        )
-        team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_manifest.name)
-        if team_context:
-            team_context.fetch_team_data()
-        else:
-            team_context = create_team_context_from_manifest(manifest=manifest, team_manifest=team_manifest)
-            team_context.fetch_team_data()
-            context.teams.append(team_context)
-        ContextSerDe.dump_context_to_ssm(context=context)
-
-    for team_context in context.teams:
-        _deploy_team_image(context=context, team_context=team_context, image="jupyter-user")
-        _deploy_team_bootstrap(context=context, team_context=team_context)
-
-
-def destroy(context: "Context", team_context: "TeamContext") -> None:
+def destroy_team(context: "Context", team_context: "TeamContext") -> None:
     _logger.debug("Stack name: %s", team_context.stack_name)
     if cfn.does_stack_exist(stack_name=context.toolkit.stack_name):
         try:
@@ -190,6 +161,6 @@ def destroy(context: "Context", team_context: "TeamContext") -> None:
 
 def destroy_all(context: "Context") -> None:
     for team_context in context.teams:
-        destroy(context=context, team_context=team_context)
+        destroy_team(context=context, team_context=team_context)
     context.teams = []
     ContextSerDe.dump_context_to_ssm(context=context)

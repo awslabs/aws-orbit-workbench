@@ -20,7 +20,8 @@ from typing import Any, List, Optional, Tuple, cast
 
 from aws_orbit import bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
-from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
+from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, TeamContext
+from aws_orbit.models.manifest import Manifest, ManifestSerDe
 from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, kubectl, teams
 from aws_orbit.services import codebuild
 
@@ -213,9 +214,49 @@ def deploy_teams(args: Tuple[str, ...]) -> None:
 
     docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
-    teams.deploy(context=context, teams_changeset=changeset.teams_changeset if changeset else None)
-    _logger.debug("Team Stacks deployed")
-    eksctl.deploy_teams(context=context)
-    _logger.debug("EKS Team Stacks deployed")
-    kubectl.deploy_teams(context=context, changes=changeset.plugin_changesets if changeset else [])
-    _logger.debug("Kubernetes Team components deployed")
+    if changeset and changeset.teams_changeset and changeset.teams_changeset.removed_teams_names:
+        kubectl.write_kubeconfig(context=context)
+        for team_name in changeset.teams_changeset.removed_teams_names:
+            team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_name)
+            if team_context is None:
+                raise RuntimeError(f"TeamContext {team_name} not found!")
+            _logger.debug("Destroying team %s", team_name)
+            plugins.PLUGINS_REGISTRIES.destroy_team_plugins(context=context, team_context=team_context)
+            _logger.debug("Team Plugins destroyed")
+            kubectl.destroy_team(context=context, team_context=team_context)
+            _logger.debug("Kubernetes Team components destroyed")
+            eksctl.destroy_team(context=context, team_context=team_context)
+            _logger.debug("EKS Team Stack destroyed")
+            teams.destroy_team(context=context, team_context=team_context)
+            _logger.debug("Team %s destroyed", team_name)
+            context.remove_team_by_name(name=team_name)
+            ContextSerDe.dump_context_to_ssm(context=context)
+
+    team_names = [t.name for t in context.teams]
+    if changeset and changeset.teams_changeset and changeset.teams_changeset.added_teams_names:
+        team_names.extend(changeset.teams_changeset.added_teams_names)
+
+    manifest: Optional["Manifest"] = ManifestSerDe.load_manifest_from_ssm(env_name=context.name, type=Manifest)
+    if manifest is None:
+        raise RuntimeError(f"Manifest {context.name} not found!")
+    kubectl.write_kubeconfig(context=context)
+    for team_name in team_names:
+        team_manifest = manifest.get_team_by_name(name=team_name)
+        if team_manifest is None:
+            raise RuntimeError(f"TeamManifest {team_name} not found!")
+        teams.deploy_team(context=context, manifest=manifest, team_manifest=team_manifest)
+        _logger.debug("Team Stacks deployed")
+        team_context = context.get_team_by_name(name=team_name)
+        if team_context is None:
+            raise RuntimeError(f"TeamContext {team_name} not found!")
+        eksctl.deploy_team(context=context, team_context=team_context)
+        _logger.debug("EKS Team Stack deployed")
+        kubectl.deploy_team(context=context, team_context=team_context)
+        _logger.debug("Kubernetes Team components deployed")
+        plugins.PLUGINS_REGISTRIES.deploy_team_plugins(
+            context=context, team_context=team_context, changes=changeset.plugin_changesets if changeset else []
+        )
+        team_context.plugins = team_manifest.plugins
+        ContextSerDe.dump_context_to_ssm(context=context)
+        _logger.debug("Team Plugins deployed")
+    _logger.debug("Teams deployed")
