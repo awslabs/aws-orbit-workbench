@@ -156,7 +156,7 @@ def deploy_template(stack_name: str, filename: str, env_tag: str, s3_bucket: Opt
 # New Approach to replace the SSM params in cfn templates.
 
 
-def _add_ssm_param_injector(tag: str = "!SSM") -> None:
+def _add_ssm_param_injector(tag: str = "#SSM") -> None:
     """
     Load a yaml cloudformation file and resolve any SSM parameters
     The SSM parameters must have !SSM before them and be in this format
@@ -222,6 +222,9 @@ def _add_ssm_param_injector(tag: str = "!SSM") -> None:
         return value
 
     loader.add_constructor(tag, constructor_ssm_parameter)  # type: ignore
+
+
+# from aws_orbit.models.manifest import _add_ssm_param_injector
 
 
 def deploy_synth_template(
