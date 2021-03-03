@@ -27,4 +27,5 @@ then
     exit 255
 else
     echo "bad-sanity-test passed"
+    exit 0
 fi

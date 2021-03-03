@@ -23,8 +23,9 @@ EOF
 ret=$?
 if [ $ret -eq 0 ]
 then
-    echo "good-sanity-test failed"
-else
     echo "good-sanity-test passed"
+    exit 0
+else
+    echo "good-sanity-test failed"
     exit 255
 fi
