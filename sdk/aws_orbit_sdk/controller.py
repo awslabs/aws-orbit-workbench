@@ -399,8 +399,8 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
         if "labels" in taskConfiguration["compute"]:
             labels = {**labels, **taskConfiguration["compute"]["labels"]}
     node_selector = team_constants.node_selector(node_type)
-    _logger.info('volumes:%s', json.dumps(volumes))
-    _logger.info('volume_mounts:%s', json.dumps(volume_mounts))
+    _logger.info("volumes:%s", json.dumps(volumes))
+    _logger.info("volume_mounts:%s", json.dumps(volume_mounts))
     pod_properties: Dict[str, str] = dict(
         name=job_name,
         image=image,

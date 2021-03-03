@@ -421,7 +421,8 @@ def deploy_teams(context: "Context") -> None:
                         break
                 else:
                     _logger.debug(
-                        f"Skipping existing IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters"
+                        f"Skipping existing IAM Identity Mapping - Role: {arn}, "
+                        f"Username: {username}, Group: system:masters"
                     )
 
     _logger.debug("EKSCTL deployed")
