@@ -26,6 +26,7 @@ from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
 from aws_orbit.models.manifest import (
     DataNetworkingManifest,
     FoundationManifest,
+    ImageManifest,
     Manifest,
     ManifestSerDe,
     NetworkingManifest,
@@ -38,6 +39,9 @@ _logger: logging.Logger = logging.getLogger(__name__)
 def _request_dockerhub_credential(msg_ctx: MessagesContext) -> Tuple[str, str]:
     if msg_ctx.pbar is not None:
         msg_ctx.pbar.clear()
+    msg_ctx.info(
+        "When Container Images are built from source or pulled from Dockerhub, " "a Dockerhub login is required."
+    )
     username = cast(
         str,
         click.prompt("Please enter the DockerHub username", type=str, hide_input=False),
@@ -75,9 +79,11 @@ def deploy_toolkit(
     credential_received: bool = username is not None and password is not None
     stack_exist: bool = cfn.does_stack_exist(stack_name=context.toolkit.stack_name)
     credential_exist: bool = dockerhub.does_credential_exist(context=context) if stack_exist else False
+    image_manifests = [cast(ImageManifest, getattr(context.images, i)) for i in context.images.names]
+    credential_required: bool = any([im.source == "dockerhub" or im.source == "code" for im in image_manifests])
 
     if stack_exist:
-        if not credential_exist and not credential_received:
+        if credential_required and not credential_exist and not credential_received:
             username, password = _request_dockerhub_credential(msg_ctx=msg_ctx)
             dockerhub.store_credential(context=context, username=username, password=password)
             credential_exist = True
@@ -90,7 +96,7 @@ def deploy_toolkit(
             credential_exist = True
     else:
         context.toolkit.deploy_id = uuid.uuid4().hex[:6]
-        if not credential_received:
+        if credential_required and not credential_received:
             username, password = _request_dockerhub_credential(msg_ctx=msg_ctx)
             credential_exist = False
 
@@ -258,8 +264,6 @@ def deploy_env(
 def deploy_teams(
     filename: str,
     debug: bool,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
 ) -> None:
     with MessagesContext("Deploying", debug=debug) as msg_ctx:
         msg_ctx.progress(2)

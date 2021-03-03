@@ -108,18 +108,6 @@ def deploy() -> None:
     help="The target Orbit Workbench manifest file (yaml).",
 )
 @click.option(
-    "--username",
-    "-u",
-    type=str,
-    help="Dockerhub username (Required only for the first deploy).",
-)
-@click.option(
-    "--password",
-    "-p",
-    type=str,
-    help="Dockerhub password (Required only for the first deploy).",
-)
-@click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
@@ -128,19 +116,14 @@ def deploy() -> None:
 def deploy_teams(
     filename: str,
     debug: bool,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
 ) -> None:
     """Deploy a Orbit Workbench environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
-    _logger.debug("username: %s", username)
     deploy_commands.deploy_teams(
         filename=filename,
-        username=username,
-        password=password,
         debug=debug,
     )
 

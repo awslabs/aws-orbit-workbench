@@ -226,8 +226,8 @@ def _check_eks_system_masters_roles(
     manifest: "Manifest", context: "Context", msg_ctx: "MessagesContext"
 ) -> Optional[ListChangeset]:
     _logger.debug("Inpecting EKS system:masters Roles changes...")
-    old_roles: List[str] = sorted(context.eks_system_masters_roles)
-    new_roles: List[str] = sorted(manifest.eks_system_masters_roles)
+    old_roles: List[str] = sorted(cast(List[str], context.eks_system_masters_roles))
+    new_roles: List[str] = sorted(cast(List[str], manifest.eks_system_masters_roles))
     _logger.debug("Roles: %s -> %s", old_roles, new_roles)
     removed_roles: List[str] = list(set(old_roles) - set(new_roles))
     added_roles: List[str] = list(set(new_roles) - set(old_roles))

@@ -21,13 +21,11 @@ import sys
 from typing import TYPE_CHECKING, Any, Dict, List, Type, cast
 
 from aws_orbit import cdk, sh
-from aws_orbit.models.context import ContextSerDe
+from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.services import cfn
 
 if TYPE_CHECKING:
     from aws_cdk.core import Stack
-
-    from aws_orbit.models.context import Context, TeamContext
 
 _logger: logging.Logger = logging.getLogger(__name__)
 

@@ -30,8 +30,12 @@ def login(context: T) -> None:
     if not (isinstance(context, Context) or isinstance(context, FoundationContext)):
         raise ValueError("Unknown 'context' Type")
     username, password = dockerhub.get_credential(context=context)
-    sh.run(f"docker login --username {username} --password {password}", hide_cmd=True)
-    _logger.debug("DockerHub logged in.")
+    if username and password:
+        sh.run(f"docker login --username {username} --password {password}", hide_cmd=True)
+        _logger.debug("DockerHub logged in.")
+    else:
+        _logger.debug("Dockerhub username or password not set.")
+
     username, password = ecr.get_credential()
     ecr_address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com"
     sh.run(
@@ -179,14 +183,16 @@ def replicate_image(
     if source == "dockerhub":
         dockerhub_pull(name=source_repository, tag=source_version)
         _logger.debug("Pulled DockerHub Image")
-    elif source == "ecr":
+    elif source in ["ecr", "ecr-internal", "ecr-public"]:
         ecr_pull(context=context, name=source_repository, tag=source_version)
         _logger.debug("Pulled ECR Image")
     elif source == "ecr-external":
         ecr_pull_external(context=context, repository=source_repository, tag=source_version)
         _logger.debug("Pulled external ECR Image")
     else:
-        e = ValueError(f"Invalid Image Source: {source}. Valid values are: code, dockerhub, ecr")
+        e = ValueError(
+            f"Invalid Image Source: {source}. Valid values are: code, dockerhub, ecr, ecr-internal, ecr-public"
+        )
         _logger.error(e)
         raise e
 
