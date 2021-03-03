@@ -230,8 +230,8 @@ def _add_ssm_param_injector(tag: str = "!SSM") -> Set[str]:
     to be parsed: ${SSM_PARAMETER_PATH::JSONPATH}.
     E.g.:
     database:
-        host: !SSM ${/orbit/dev-env/demo::/UserAccessPolicy}
-        port: !SSM ${/orbit/dev-env/demo::/PublicSubnet/*}
+        host: !SSM ${/orbit-foundation/dev-env/resources::/UserAccessPolicy}
+        port: !SSM ${/orbit-foundation/dev-env/resources::/PublicSubnet/*}
     """
     # pattern for global vars: look for ${word}
     pattern = re.compile(".*?\${(.*)}.*?")  # noqa: W605

@@ -223,16 +223,17 @@ class PluginRegistries:
 
         _logger.debug("teams_names: %s", teams_names)
         for team_name in teams_names:
-            for plugin_name, registry in self._registries[team_name].items():
-                if registry.module_name == plugin_module_name:
-                    self._registries[team_name][plugin_name].__setattr__(hook_name, func)
-                    _logger.debug(
-                        "Team %s / Plugin %s (%s): %s REGISTERED.",
-                        team_name,
-                        plugin_name,
-                        plugin_module_name,
-                        hook_name,
-                    )
+            if team_name in self._registries:
+                for plugin_name, registry in self._registries[team_name].items():
+                    if registry.module_name == plugin_module_name:
+                        self._registries[team_name][plugin_name].__setattr__(hook_name, func)
+                        _logger.debug(
+                            "Team %s / Plugin %s (%s): %s REGISTERED.",
+                            team_name,
+                            plugin_name,
+                            plugin_module_name,
+                            hook_name,
+                        )
 
     def get_hook(self, context: "Context", team_name: str, plugin_name: str, hook_name: str) -> HOOK_TYPE:
         self._context = context
@@ -251,7 +252,9 @@ class PluginRegistries:
     def destroy_team_plugins(self, context: "Context", team_context: "TeamContext") -> None:
         self._context = context
         if team_context.name in self._registries:
+            _logger.debug(f"registries: {self._registries}")
             plugins_ids: List[str] = list(self._registries[team_context.name].keys())
+            _logger.debug(f"plugins_ids: {plugins_ids}")
             for plugin_id in plugins_ids:
                 self.destroy_plugin(context=context, team_context=team_context, plugin_id=plugin_id)
         else:
@@ -303,6 +306,7 @@ class PluginRegistries:
             for plugin_id in plugins_ids:
                 if self._is_plugin_removed(changes=changes, plugin_id=plugin_id, team_name=team_context.name):
                     self.destroy_plugin(context=context, team_context=team_context, plugin_id=plugin_id)
+
                 else:
                     _logger.debug("Deploying plugin %s for team %s", plugin_id, team_context.name)
                     self.deploy_plugin(context=context, team_context=team_context, plugin_id=plugin_id)
