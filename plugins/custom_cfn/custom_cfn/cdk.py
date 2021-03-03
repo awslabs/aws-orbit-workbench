@@ -161,7 +161,7 @@ class Team(Stack):
 
 class NestedCfnStack(NestedStack):
     def __init__(self, scope: Construct, id: str, parameters: Dict[str, Any]) -> None:
-        super().__init__(scope=scope, id=id)
+        super().__init__(scope=scope, id=id, parameters=parameters)
         template_path = parameters["cfn_template_path"]
         _logger.debug(f"cfn_template_path={template_path}")
         if not os.path.isfile(template_path):
