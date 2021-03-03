@@ -116,7 +116,7 @@ def _deploy_team_bootstrap(context: "Context", team_context: "TeamContext") -> N
             if script_content is not None:
                 client = boto3.client("s3")
                 key: str = f"{team_context.bootstrap_s3_prefix}{plugin.plugin_id}.sh"
-                _logger.debug("Uploading s3://{context.toolkit.s3_bucket}/{key}")
+                _logger.debug(f"Uploading s3://{context.toolkit.s3_bucket}/{key}")
                 client.put_object(
                     Body=script_content.encode("utf-8"),
                     Bucket=context.toolkit.s3_bucket,
