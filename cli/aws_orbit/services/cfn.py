@@ -12,20 +12,23 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import json
+# import json
 import logging
 import os
-import re
+
+# import re
 import time
 from datetime import datetime
 from typing import Any, Dict, Optional, Tuple, cast
 
 import botocore.exceptions
-import jsonpath_ng as jsonpath_ng
+
+# import jsonpath_ng as jsonpath_ng
 import yaml
 from yamlinclude import YamlIncludeConstructor
 
 from aws_orbit import utils
+from aws_orbit.models.manifest import _add_ssm_param_injector
 from aws_orbit.services import s3
 from aws_orbit.utils import boto3_client
 
@@ -222,9 +225,6 @@ def deploy_template(stack_name: str, filename: str, env_tag: str, s3_bucket: Opt
 #         return value
 #
 #     loader.add_constructor(tag, constructor_ssm_parameter)  # type: ignore
-
-
-from aws_orbit.models.manifest import _add_ssm_param_injector
 
 
 def deploy_synth_template(
