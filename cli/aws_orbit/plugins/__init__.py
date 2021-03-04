@@ -41,6 +41,8 @@ class PluginRegistry:
         destroy_hook: HOOK_TYPE = None,
         dockerfile_injection_hook: HOOK_TYPE = None,
         bootstrap_injection_hook: HOOK_TYPE = None,
+        pre_hook: HOOK_TYPE = None,
+        post_hook: HOOK_TYPE = None,
     ) -> None:
         self.plugin_id: str = plugin_id
         self.team_name: str = team_name
@@ -50,6 +52,8 @@ class PluginRegistry:
         self._destroy_hook: HOOK_TYPE = destroy_hook
         self._dockerfile_injection_hook: HOOK_TYPE = dockerfile_injection_hook
         self._bootstrap_injection_hook: HOOK_TYPE = bootstrap_injection_hook
+        self._pre_hook: HOOK_TYPE = pre_hook
+        self._post_hook: HOOK_TYPE = post_hook
 
     def destroy(self, context: "Context", team_context: "TeamContext") -> None:
         if self.bootstrap_injection_hook is not None:
@@ -131,6 +135,35 @@ class PluginRegistry:
     @bootstrap_injection_hook.deleter
     def bootstrap_injection_hook(self) -> None:
         self._bootstrap_injection_hook = None
+
+    """
+    PRE AND POST hooks. Used for deploying and destroying CloudFormation based resources as part of team stacks.
+    Cloudformation file path should be part of the custom_cfn parameters.
+    """
+
+    @property
+    def pre_hook(self) -> HOOK_TYPE:
+        return self._pre_hook
+
+    @pre_hook.setter
+    def pre_hook(self, func: HOOK_TYPE) -> None:
+        self._pre_hook = func
+
+    @pre_hook.deleter
+    def pre_hook(self) -> None:
+        self._pre_hook = None
+
+    @property
+    def post_hook(self) -> HOOK_TYPE:
+        return self._post_hook
+
+    @post_hook.setter
+    def post_hook(self, func: HOOK_TYPE) -> None:
+        self._post_hook = func
+
+    @post_hook.deleter
+    def post_hook(self) -> None:
+        self._post_hook = None
 
 
 class PluginRegistries:
@@ -223,16 +256,17 @@ class PluginRegistries:
 
         _logger.debug("teams_names: %s", teams_names)
         for team_name in teams_names:
-            for plugin_name, registry in self._registries[team_name].items():
-                if registry.module_name == plugin_module_name:
-                    self._registries[team_name][plugin_name].__setattr__(hook_name, func)
-                    _logger.debug(
-                        "Team %s / Plugin %s (%s): %s REGISTERED.",
-                        team_name,
-                        plugin_name,
-                        plugin_module_name,
-                        hook_name,
-                    )
+            if team_name in self._registries:
+                for plugin_name, registry in self._registries[team_name].items():
+                    if registry.module_name == plugin_module_name:
+                        self._registries[team_name][plugin_name].__setattr__(hook_name, func)
+                        _logger.debug(
+                            "Team %s / Plugin %s (%s): %s REGISTERED.",
+                            team_name,
+                            plugin_name,
+                            plugin_module_name,
+                            hook_name,
+                        )
 
     def get_hook(self, context: "Context", team_name: str, plugin_name: str, hook_name: str) -> HOOK_TYPE:
         self._context = context
@@ -246,12 +280,15 @@ class PluginRegistries:
             )
         _logger.debug("Destroying %s for team %s.", plugin_id, team_context.name)
         self._registries[team_context.name][plugin_id].destroy(context=context, team_context=team_context)
-        del self._registries[team_context.name][plugin_id]
+        if plugin_id != "custom_cfn":
+            del self._registries[team_context.name][plugin_id]
 
     def destroy_team_plugins(self, context: "Context", team_context: "TeamContext") -> None:
         self._context = context
         if team_context.name in self._registries:
+            _logger.debug(f"registries: {self._registries}")
             plugins_ids: List[str] = list(self._registries[team_context.name].keys())
+            _logger.debug(f"plugins_ids: {plugins_ids}")
             for plugin_id in plugins_ids:
                 self.destroy_plugin(context=context, team_context=team_context, plugin_id=plugin_id)
         else:
@@ -303,6 +340,7 @@ class PluginRegistries:
             for plugin_id in plugins_ids:
                 if self._is_plugin_removed(changes=changes, plugin_id=plugin_id, team_name=team_context.name):
                     self.destroy_plugin(context=context, team_context=team_context, plugin_id=plugin_id)
+
                 else:
                     _logger.debug("Deploying plugin %s for team %s", plugin_id, team_context.name)
                     self.deploy_plugin(context=context, team_context=team_context, plugin_id=plugin_id)

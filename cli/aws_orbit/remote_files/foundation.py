@@ -14,14 +14,11 @@
 
 import logging
 import os
-import time
-from typing import TYPE_CHECKING, List, cast
+from typing import List, cast
 
 from aws_orbit import ORBIT_CLI_ROOT, cdk, cleanup, sh
+from aws_orbit.models.context import FoundationContext
 from aws_orbit.services import cfn, s3, ssm, vpc
-
-if TYPE_CHECKING:
-    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -65,7 +62,7 @@ def _download_demo_data(bucket_name: str, bucket_key_prefix: str, download_files
                 _logger.debug(obj["Key"])
 
 
-def _prepare_demo_data(context: "Context") -> None:
+def _prepare_demo_data(context: "FoundationContext") -> None:
     # Check toolkit bucket details
     if context.toolkit.s3_bucket is None:
         raise ValueError("manifest.toolkit_s3_bucket is not defined")
@@ -94,17 +91,17 @@ def _prepare_demo_data(context: "Context") -> None:
     sh.run(f"aws s3 cp --recursive {cms_schema_files} s3://{bucket_name}/{schema_key_prefix}")
 
 
-def _fetch_vpc_id(context: "Context") -> str:
-    return cast(str, ssm.get_parameter(name=context.demo_ssm_parameter_name)["VpcId"])
+def _fetch_vpc_id(context: "FoundationContext") -> str:
+    return cast(str, ssm.get_parameter(name=cast(str, context.resources_ssm_parameter_name))["VpcId"])
 
 
-def deploy(context: "Context") -> None:
-    stack_name: str = context.demo_stack_name
-    _logger.debug("Deploying %s DEMO...", stack_name)
+def deploy(context: "FoundationContext") -> None:
+    stack_name: str = cast(str, context.stack_name)
+    _logger.debug("Deploying %s Foundation...", stack_name)
     cdk.deploy(
         context=context,
         stack_name=stack_name,
-        app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "demo.py"),
+        app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "foundation.py"),
         args=[context.name],
     )
     _logger.debug("Adding demo data")
@@ -115,22 +112,13 @@ def deploy(context: "Context") -> None:
     vpc.modify_vpc_endpoint(vpc_id=vpc_id, service_name="codeartifact.api", private_dns_enabled=True)
 
 
-def destroy(context: "Context") -> None:
-    if cfn.does_stack_exist(stack_name=context.demo_stack_name):
-        waited: bool = False
-        while cfn.does_stack_exist(stack_name=context.eks_stack_name):
-            waited = True
-            time.sleep(2)
-        else:
-            _logger.debug("EKSCTL stack already is cleaned")
-        if waited:
-            _logger.debug("Waiting EKSCTL stack clean up...")
-            time.sleep(60)  # Given extra 60 seconds if the EKS stack was just delete
-        cleanup.demo_remaining_dependencies(context=context)
-        _logger.debug("Destroying DEMO...")
+def destroy(context: "FoundationContext") -> None:
+    if cfn.does_stack_exist(stack_name=cast(str, context.stack_name)):
+        cleanup.foundation_remaining_dependencies(context=context)
+        _logger.debug("Destroying Foundation...")
         cdk.destroy(
             context=context,
-            stack_name=context.demo_stack_name,
-            app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "demo.py"),
+            stack_name=cast(str, context.stack_name),
+            app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "foundation.py"),
             args=[context.name],
         )

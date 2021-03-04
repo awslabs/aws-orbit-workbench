@@ -17,11 +17,9 @@ import logging
 import os
 import shutil
 from pprint import pformat
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
-if TYPE_CHECKING:
-    from aws_orbit.models.changeset import Changeset
-    from aws_orbit.models.context import Context
+from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -51,8 +49,10 @@ def _generate_dir(bundle_dir: str, dir: str, name: str) -> str:
     if len(files) == 0:
         raise ValueError(f"{name} ({absolute_dir}) is empty!")
     for file in files:
+        _logger.debug(f"***file={file}")
         relpath = os.path.relpath(file, absolute_dir)
         new_file = os.path.join(final_dir, relpath)
+        _logger.debug("Copying file to %s", new_file)
         os.makedirs(os.path.dirname(new_file), exist_ok=True)
         _logger.debug("Copying file to %s", new_file)
         shutil.copy(src=file, dst=new_file)
@@ -64,8 +64,6 @@ def generate_bundle(
     command_name: str,
     context: "Context",
     dirs: Optional[List[Tuple[str, str]]] = None,
-    changeset: Optional["Changeset"] = None,
-    plugins: bool = True,
 ) -> str:
     remote_dir = os.path.join(os.getcwd(), ".orbit.out", context.name, "remote", command_name)
     bundle_dir = os.path.join(remote_dir, "bundle")
@@ -74,10 +72,11 @@ def generate_bundle(
     except FileNotFoundError:
         pass
     os.makedirs(bundle_dir, exist_ok=True)
-
+    _logger.debug(f"generate_bundle dirs={dirs}")
     # Extra Directories
     if dirs is not None:
         for dir, name in dirs:
+            _logger.debug(f"***dir={dir}:name={name}")
             _generate_dir(bundle_dir=bundle_dir, dir=dir, name=name)
 
     _logger.debug("bundle_dir: %s", bundle_dir)

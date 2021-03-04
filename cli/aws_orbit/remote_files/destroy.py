@@ -13,15 +13,12 @@
 #    limitations under the License.
 
 import logging
-from typing import TYPE_CHECKING, Tuple
+from typing import Tuple
 
 from aws_orbit import plugins
-from aws_orbit.models.context import load_context_from_ssm
-from aws_orbit.remote_files import cdk_toolkit, demo, eksctl, env, kubectl, teams
+from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
+from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, kubectl, teams
 from aws_orbit.services import ecr, ssm
-
-if TYPE_CHECKING:
-    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -29,7 +26,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 def delete_image(args: Tuple[str, ...]) -> None:
     _logger.debug("args %s", args)
     env_name: str = args[0]
-    context: "Context" = load_context_from_ssm(env_name=env_name)
+    context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
 
     if len(args) == 2:
         image_name: str = args[1]
@@ -42,21 +39,14 @@ def delete_image(args: Tuple[str, ...]) -> None:
     _logger.debug("Docker Image Destroyed from ECR")
 
 
-def destroy(args: Tuple[str, ...]) -> None:
+def destroy_teams(args: Tuple[str, ...]) -> None:
     _logger.debug("args %s", args)
     env_name: str = args[0]
-    context: "Context" = load_context_from_ssm(env_name=env_name)
+    context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("context.name %s", context.name)
-
-    if len(args) == 2:
-        teams_only: bool = args[1] == "teams-stacks"
-        keep_demo: bool = args[1] == "keep-demo"
-    else:
-        raise ValueError("Unexpected number of values in args.")
 
     plugins.PLUGINS_REGISTRIES.load_plugins(context=context, plugin_changesets=[], teams_changeset=None)
     _logger.debug("Plugins loaded")
-
     kubectl.destroy_teams(context=context)
     _logger.debug("Kubernetes Team components destroyed")
     eksctl.destroy_teams(context=context)
@@ -65,17 +55,30 @@ def destroy(args: Tuple[str, ...]) -> None:
     _logger.debug("Teams Stacks destroyed")
     ssm.cleanup_teams(env_name=context.name)
 
-    if not teams_only:
-        kubectl.destroy_env(context=context)
-        _logger.debug("Kubernetes Environment components destroyed")
-        eksctl.destroy_env(context=context)
-        _logger.debug("EKS Environment Stacks destroyed")
-        env.destroy(context=context)
-        _logger.debug("Env Stack destroyed")
-        if not keep_demo:
-            demo.destroy(context=context)
-            _logger.debug("Demo Stack destroyed")
-            cdk_toolkit.destroy(context=context)
-            _logger.debug("CDK Toolkit Stack destroyed")
-    else:
-        _logger.debug("Skipping Environment, Demo, and CDK Toolkit Stacks")
+
+def destroy_env(args: Tuple[str, ...]) -> None:
+    _logger.debug("args %s", args)
+    env_name: str = args[0]
+    context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
+    _logger.debug("context.name %s", context.name)
+
+    kubectl.destroy_env(context=context)
+    _logger.debug("Kubernetes Environment components destroyed")
+    eksctl.destroy_env(context=context)
+    _logger.debug("EKS Environment Stacks destroyed")
+    env.destroy(context=context)
+    _logger.debug("Env Stack destroyed")
+    cdk_toolkit.destroy(context=context)
+    _logger.debug("CDK Toolkit Stack destroyed")
+
+
+def destroy_foundation(args: Tuple[str, ...]) -> None:
+    _logger.debug("args %s", args)
+    env_name: str = args[0]
+    context: "FoundationContext" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=FoundationContext)
+    _logger.debug("context.name %s", context.name)
+
+    foundation.destroy(context=context)
+    _logger.debug("Demo Stack destroyed")
+    cdk_toolkit.destroy(context=context)
+    _logger.debug("CDK Toolkit Stack destroyed")

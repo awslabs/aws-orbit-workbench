@@ -16,17 +16,14 @@ import concurrent.futures
 import logging
 import os
 from concurrent.futures import Future
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, cast
+from typing import Any, List, Optional, Tuple, cast
 
 from aws_orbit import bundle, docker, plugins, remote, sh
-from aws_orbit.models.changeset import load_changeset_from_ssm
-from aws_orbit.models.context import load_context_from_ssm
-from aws_orbit.remote_files import cdk_toolkit, demo, eksctl, env, kubectl, teams
+from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
+from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, TeamContext
+from aws_orbit.models.manifest import Manifest, ManifestSerDe
+from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, kubectl, teams
 from aws_orbit.services import codebuild
-
-if TYPE_CHECKING:
-    from aws_orbit.models.changeset import Changeset
-    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -41,7 +38,7 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
     script: Optional[str] = args[3] if args[3] != "NO_SCRIPT" else None
     build_args = args[4:]
 
-    context: "Context" = load_context_from_ssm(env_name=env)
+    context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
     _logger.debug("manifest.name: %s", context.name)
 
     docker.login(context=context)
@@ -50,7 +47,7 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
 
     if getattr(context.images, image_name.replace("-", "_")).source == "code":
         _logger.debug("Building and deploy docker image from source...")
-        path = os.path.join(os.getcwd(), dir)
+        path = os.path.join(os.getcwd(), "bundle", dir)
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
@@ -95,7 +92,7 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
         for name, dir, script, build_args in images:
             _logger.debug("name: %s | script: %s", name, script)
 
-            path = os.path.join(os.getcwd(), name)
+            path = os.path.join(os.getcwd(), "bundle", name)
             _logger.debug("path: %s", path)
 
             if getattr(context.images, name.replace("-", "_")).source == "code":
@@ -103,9 +100,7 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
             else:
                 dirs = []
 
-            bundle_path = bundle.generate_bundle(
-                command_name=f"deploy_image-{name}", context=context, dirs=dirs, plugins=False
-            )
+            bundle_path = bundle.generate_bundle(command_name=f"deploy_image-{name}", context=context, dirs=dirs)
             _logger.debug("bundle_path: %s", bundle_path)
             script_str = "NO_SCRIPT" if script is None else script
             build_args = [] if build_args is None else build_args
@@ -142,7 +137,8 @@ def deploy_images_remotely(context: "Context") -> None:
             ("csi-node-driver-registrar", None, None, []),
         ]
     _logger.debug("Building the second images batch")
-    _deploy_images_batch(context=context, images=images)
+    if images:
+        _deploy_images_batch(context=context, images=images)
 
 
 def deploy_foundation(args: Tuple[str, ...]) -> None:
@@ -150,42 +146,33 @@ def deploy_foundation(args: Tuple[str, ...]) -> None:
     if len(args) != 1:
         raise ValueError("Unexpected number of values in args")
     env_name: str = args[0]
-    context: "Context" = load_context_from_ssm(env_name=env_name)
+    context: "FoundationContext" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=FoundationContext)
     _logger.debug("Context loaded.")
     docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
     cdk_toolkit.deploy(context=context)
     _logger.debug("CDK Toolkit Stack deployed")
-    demo.deploy(context=context)
+    foundation.deploy(context=context)
     _logger.debug("Demo Stack deployed")
 
 
-def deploy(args: Tuple[str, ...]) -> None:
+def deploy_env(args: Tuple[str, ...]) -> None:
     _logger.debug("args: %s", args)
-    env_name: str = args[0]
-    if len(args) == 3:
+    if len(args) == 2:
+        env_name: str = args[0]
         skip_images_remote_flag: str = str(args[1])
-        env_only: bool = args[2] == "env-stacks"
     else:
         raise ValueError("Unexpected number of values in args")
 
-    context: "Context" = load_context_from_ssm(env_name=env_name)
+    context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("Context loaded.")
     changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=env_name)
     _logger.debug("Changeset loaded.")
 
-    if changeset:
-        plugins.PLUGINS_REGISTRIES.load_plugins(
-            context=context, plugin_changesets=changeset.plugin_changesets, teams_changeset=changeset.teams_changeset
-        )
-        _logger.debug("Plugins loaded")
-
     docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
     cdk_toolkit.deploy(context=context)
     _logger.debug("CDK Toolkit Stack deployed")
-    demo.deploy(context=context)
-    _logger.debug("Demo Stack deployed")
     env.deploy(
         context=context,
         add_images=[],
@@ -206,12 +193,70 @@ def deploy(args: Tuple[str, ...]) -> None:
     kubectl.deploy_env(context=context)
     _logger.debug("Kubernetes Environment components deployed")
 
-    if not env_only:
-        teams.deploy(context=context, teams_changeset=changeset.teams_changeset if changeset else None)
-        _logger.debug("Team Stacks deployed")
-        eksctl.deploy_teams(context=context)
-        _logger.debug("EKS Team Stacks deployed")
-        kubectl.deploy_teams(context=context, changes=changeset.plugin_changesets if changeset else [])
-        _logger.debug("Kubernetes Team components deployed")
+
+def deploy_teams(args: Tuple[str, ...]) -> None:
+    _logger.debug("args: %s", args)
+    if len(args) == 1:
+        env_name: str = args[0]
     else:
-        _logger.debug("Skipping Team Stacks")
+        raise ValueError("Unexpected number of values in args")
+
+    context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
+    _logger.debug("Context loaded.")
+    changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=env_name)
+    _logger.debug("Changeset loaded.")
+
+    if changeset:
+        plugins.PLUGINS_REGISTRIES.load_plugins(
+            context=context, plugin_changesets=changeset.plugin_changesets, teams_changeset=changeset.teams_changeset
+        )
+        _logger.debug("Plugins loaded")
+
+    docker.login(context=context)
+    _logger.debug("DockerHub and ECR Logged in")
+    if changeset and changeset.teams_changeset and changeset.teams_changeset.removed_teams_names:
+        kubectl.write_kubeconfig(context=context)
+        for team_name in changeset.teams_changeset.removed_teams_names:
+            team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_name)
+            if team_context is None:
+                raise RuntimeError(f"TeamContext {team_name} not found!")
+            _logger.debug("Destroying team %s", team_name)
+            plugins.PLUGINS_REGISTRIES.destroy_team_plugins(context=context, team_context=team_context)
+            _logger.debug("Team Plugins destroyed")
+            kubectl.destroy_team(context=context, team_context=team_context)
+            _logger.debug("Kubernetes Team components destroyed")
+            eksctl.destroy_team(context=context, team_context=team_context)
+            _logger.debug("EKS Team Stack destroyed")
+            teams.destroy_team(context=context, team_context=team_context)
+            _logger.debug("Team %s destroyed", team_name)
+            context.remove_team_by_name(name=team_name)
+            ContextSerDe.dump_context_to_ssm(context=context)
+
+    team_names = [t.name for t in context.teams]
+    if changeset and changeset.teams_changeset and changeset.teams_changeset.added_teams_names:
+        team_names.extend(changeset.teams_changeset.added_teams_names)
+
+    manifest: Optional["Manifest"] = ManifestSerDe.load_manifest_from_ssm(env_name=context.name, type=Manifest)
+    if manifest is None:
+        raise RuntimeError(f"Manifest {context.name} not found!")
+    kubectl.write_kubeconfig(context=context)
+    for team_name in team_names:
+        team_manifest = manifest.get_team_by_name(name=team_name)
+        if team_manifest is None:
+            raise RuntimeError(f"TeamManifest {team_name} not found!")
+        teams.deploy_team(context=context, manifest=manifest, team_manifest=team_manifest)
+        _logger.debug("Team Stacks deployed")
+        team_context = context.get_team_by_name(name=team_name)
+        if team_context is None:
+            raise RuntimeError(f"TeamContext {team_name} not found!")
+        eksctl.deploy_team(context=context, team_context=team_context)
+        _logger.debug("EKS Team Stack deployed")
+        kubectl.deploy_team(context=context, team_context=team_context)
+        _logger.debug("Kubernetes Team components deployed")
+        plugins.PLUGINS_REGISTRIES.deploy_team_plugins(
+            context=context, team_context=team_context, changes=changeset.plugin_changesets if changeset else []
+        )
+        team_context.plugins = team_manifest.plugins
+        ContextSerDe.dump_context_to_ssm(context=context)
+        _logger.debug("Team Plugins deployed")
+    _logger.debug("Teams deployed")

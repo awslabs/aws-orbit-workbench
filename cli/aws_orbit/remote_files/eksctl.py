@@ -22,7 +22,7 @@ import yaml
 
 from aws_orbit import sh
 from aws_orbit.models.changeset import Changeset, ListChangeset
-from aws_orbit.models.context import Context, TeamContext, dump_context_to_ssm
+from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.models.manifest import ManagedNodeGroupManifest
 from aws_orbit.services import cfn, ec2, eks, iam
 from aws_orbit.services.ec2 import IpPermission, UserIdGroupPair
@@ -125,16 +125,6 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
         for nodegroup in nodegroups:
             MANIFEST["managedNodeGroups"].append(create_nodegroup_structure(context=context, nodegroup=nodegroup))
 
-    MANIFEST["fargateProfiles"] = [
-        {
-            "name": "fargate-default",
-            "selectors": [
-                {"namespace": "default"},
-                {"namespace": "kube-system"},
-            ],
-        }
-    ]
-
     MANIFEST["cloudWatch"] = {"clusterLogging": {"enableTypes": ["*"]}}
 
     _logger.debug("eksctl manifest:\n%s", pprint.pformat(MANIFEST))
@@ -177,8 +167,8 @@ def map_iam_identities(
                         f"eksctl create iamidentitymapping --cluster {cluster_name} --arn {arn} "
                         f"--username {role} --group system:masters"
                     )
-                    context.eks_system_masters_roles.append(role)
-                    dump_context_to_ssm(context=context)
+                    cast(List[str], context.eks_system_masters_roles).append(role)
+                    ContextSerDe.dump_context_to_ssm(context=context)
                     break
             else:
                 _logger.debug(f"Skip adding existing IAM Identity Mapping - Role: {arn}")
@@ -193,8 +183,8 @@ def map_iam_identities(
             else:
                 _logger.debug(f"Removing IAM Identity Mapping - Role: {arn}")
                 sh.run(f"eksctl delete iamidentitymapping --cluster {cluster_name} --arn {arn} --all")
-                context.eks_system_masters_roles.remove(role)
-                dump_context_to_ssm(context=context)
+                cast(List[str], context.eks_system_masters_roles).remove(role)
+                ContextSerDe.dump_context_to_ssm(context=context)
 
 
 def get_pod_to_cluster_rules(group_id: str) -> List[IpPermission]:
@@ -287,7 +277,7 @@ def fetch_cluster_data(context: "Context", cluster_name: str) -> None:
 
     context.eks_oidc_provider = cluster_data["cluster"]["identity"]["oidc"]["issuer"].replace("https://", "")
     context.cluster_sg_id = cluster_data["cluster"]["resourcesVpcConfig"]["clusterSecurityGroupId"]
-    dump_context_to_ssm(context=context)
+    ContextSerDe.dump_context_to_ssm(context=context)
     _logger.debug("Cluster data fetched successfully.")
 
 
@@ -300,15 +290,15 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
 
     if cfn.does_stack_exist(stack_name=final_eks_stack_name) is False:
 
-        requested_nodegroups = []
-        if changeset and changeset.managed_nodegroups_changeset:
-            requested_nodegroups = changeset.managed_nodegroups_changeset.added_nodegroups
+        requested_nodegroups = (
+            changeset.managed_nodegroups_changeset.added_nodegroups
+            if changeset and changeset.managed_nodegroups_changeset
+            else []
+        )
         _logger.debug(f"requested nodegroups: {[n.name for n in requested_nodegroups]}")
 
         output_filename = generate_manifest(context=context, name=stack_name, nodegroups=requested_nodegroups)
-        eks_system_masters_changeset: Optional[ListChangeset] = ListChangeset(
-            added_values=context.eks_system_masters_roles, removed_values=[]
-        )
+
         _logger.debug("Deploying EKSCTL Environment resources")
         sh.run(f"eksctl create cluster -f {output_filename} --write-kubeconfig --verbose 4")
 
@@ -320,20 +310,14 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
             f"--username {username} --group system:masters"
         )
         context.managed_nodegroups = requested_nodegroups
-        dump_context_to_ssm(context=context)
+        ContextSerDe.dump_context_to_ssm(context=context)
     else:
 
         current_nodegroups = context.managed_nodegroups
         _logger.debug(f"current nodegroups: {[n.name for n in current_nodegroups]}")
 
         sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
-        eks_system_masters_changeset = (
-            changeset.eks_system_masters_roles_changeset
-            if changeset and changeset.eks_system_masters_roles_changeset
-            else None
-        )
         if changeset and changeset.managed_nodegroups_changeset:
-
             if changeset.managed_nodegroups_changeset.added_nodegroups:
                 output_filename = generate_manifest(
                     context=context, name=stack_name, nodegroups=changeset.managed_nodegroups_changeset.added_nodegroups
@@ -349,7 +333,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
                     [ng for ng in changeset.managed_nodegroups_changeset.added_nodegroups if ng.name in nodegroups]
                 )
                 context.managed_nodegroups = current_nodegroups
-                dump_context_to_ssm(context=context)
+                ContextSerDe.dump_context_to_ssm(context=context)
 
             if changeset.managed_nodegroups_changeset.removed_nodegroups:
                 output_filename = generate_manifest(
@@ -368,8 +352,13 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
                     "--approve --wait --drain=false --verbose 4"
                 )
                 context.managed_nodegroups = [ng for ng in current_nodegroups if ng.name not in nodegroups]
-                dump_context_to_ssm(context=context)
+                ContextSerDe.dump_context_to_ssm(context=context)
 
+    eks_system_masters_changeset = (
+        changeset.eks_system_masters_roles_changeset
+        if changeset and changeset.eks_system_masters_roles_changeset
+        else None
+    )
     map_iam_identities(
         context=context,
         cluster_name=cluster_name,
@@ -383,49 +372,44 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
     _logger.debug("EKSCTL deployed")
 
 
-def deploy_teams(context: "Context") -> None:
+def deploy_team(context: "Context", team_context: "TeamContext") -> None:
     stack_name: str = f"orbit-{context.name}"
     final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
     _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
     _logger.debug("Synthetizing the EKSCTL Teams manifest")
     cluster_name = f"orbit-{context.name}"
     if cfn.does_stack_exist(stack_name=final_eks_stack_name) and context.teams:
-        subnets = (
-            context.networking.private_subnets
-            if context.networking.data.internet_accessible
-            else context.networking.isolated_subnets
-        )
-        subnets_ids = [s.subnet_id for s in subnets]
-        for team in context.teams:
-            if team.fargate:
-                eks.create_fargate_profile(
-                    profile_name=f"orbit-{context.name}-{team.name}",
-                    cluster_name=f"orbit-{context.name}",
-                    role_arn=cast(str, context.eks_fargate_profile_role_arn),
-                    subnets=subnets_ids,
-                    namespace=team.name,
-                    selector_labels={"team": team.name, "orbit/node-type": "fargate"},
+        if team_context.fargate:
+            subnets = (
+                context.networking.private_subnets
+                if context.networking.data.internet_accessible
+                else context.networking.isolated_subnets
+            )
+            subnets_ids = [s.subnet_id for s in subnets]
+
+            eks.create_fargate_profile(
+                profile_name=f"orbit-{context.name}-{team_context.name}",
+                cluster_name=f"orbit-{context.name}",
+                role_arn=cast(str, context.eks_fargate_profile_role_arn),
+                subnets=subnets_ids,
+                namespace=team_context.name,
+                selector_labels={"team": team_context.name, "orbit/node-type": "fargate"},
+            )
+
+        username = f"orbit-{context.name}-{team_context.name}-runner"
+        arn = f"arn:aws:iam::{context.account_id}:role/{username}"
+        for line in sh.run_iterating(f"eksctl get iamidentitymapping --cluster {cluster_name} --arn {arn}"):
+            if line == f'Error: no iamidentitymapping with arn "{arn}" found':
+                _logger.debug(f"Adding IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters")
+                sh.run(
+                    f"eksctl create iamidentitymapping --cluster {cluster_name} "
+                    f"--arn {arn} --username {username} --group system:masters"
                 )
-
-                username = f"orbit-{context.name}-{team.name}-runner"
-                arn = f"arn:aws:iam::{context.account_id}:role/{username}"
-                for line in sh.run_iterating(f"eksctl get iamidentitymapping --cluster {cluster_name} --arn {arn}"):
-                    if line == f'Error: no iamidentitymapping with arn "{arn}" found':
-                        _logger.debug(
-                            f"Adding IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters"
-                        )
-                        sh.run(
-                            f"eksctl create iamidentitymapping --cluster {cluster_name} "
-                            f"--arn {arn} --username {username} --group system:masters"
-                        )
-                        break
-                else:
-                    _logger.debug(
-                        f"Skipping existing IAM Identity Mapping - Role: {arn}, "
-                        f"Username: {username}, Group: system:masters"
-                    )
-
-    _logger.debug("EKSCTL deployed")
+                break
+        else:
+            _logger.debug(
+                f"Skipping existing IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters"
+            )
 
 
 def destroy_env(context: "Context") -> None:
