@@ -20,9 +20,9 @@ from typing import List, Optional, TextIO, Tuple
 
 import click
 
+from aws_orbit.commands import deploy as deploy_commands
+from aws_orbit.commands import destroy as destroy_commands
 from aws_orbit.commands.delete import delete_image
-from aws_orbit.commands.deploy import deploy_env, deploy_foundation
-from aws_orbit.commands.destroy import destroy_all
 from aws_orbit.commands.image import build_image, build_profile, delete_profile, list_profiles
 from aws_orbit.commands.init import init
 from aws_orbit.commands.list import list_env, list_images
@@ -100,6 +100,34 @@ def deploy() -> None:
     pass
 
 
+@deploy.command(name="teams")
+@click.option(
+    "--filename",
+    "-f",
+    type=str,
+    help="The target Orbit Workbench manifest file (yaml).",
+)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def deploy_teams(
+    filename: str,
+    debug: bool,
+) -> None:
+    """Deploy a Orbit Workbench environment based on a manisfest file (yaml)."""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    filename = filename if filename[0] in (".", "/") else f"./{filename}"
+    _logger.debug("filename: %s", filename)
+    deploy_commands.deploy_teams(
+        filename=filename,
+        debug=debug,
+    )
+
+
 @deploy.command(name="env")
 @click.option(
     "--filename",
@@ -125,17 +153,15 @@ def deploy() -> None:
     help="Skip Docker images updates (Usually for development purpose).",
     show_default=True,
 )
-@click.option("--env-stacks/--all-stacks", default=False, help="Deploy Environment Stacks only", show_default=True)
 @click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
     show_default=True,
 )
-def deploy_cli(
+def deploy_env(
     filename: str,
     skip_images: bool,
-    env_stacks: bool,
     debug: bool,
     username: Optional[str] = None,
     password: Optional[str] = None,
@@ -147,12 +173,11 @@ def deploy_cli(
     _logger.debug("filename: %s", filename)
     _logger.debug("username: %s", username)
     _logger.debug("skip_images: %s", skip_images)
-    deploy_env(
+    deploy_commands.deploy_env(
         filename=filename,
         username=username,
         password=password,
         skip_images=skip_images,
-        env_only=env_stacks,
         debug=debug,
     )
 
@@ -163,6 +188,12 @@ def deploy_cli(
     "-f",
     type=str,
     help="The target Orbit Workbench manifest file (yaml).",
+)
+@click.option(
+    "--name",
+    "-n",
+    type=str,
+    help="The Name of the Orbit Foundation deployment",
 )
 @click.option(
     "--username",
@@ -177,28 +208,60 @@ def deploy_cli(
     help="Dockerhub password (Required only for the first deploy).",
 )
 @click.option(
+    "--codeartifact-domain",
+    type=str,
+    help="CodeArtifact Domain to pull packages from.",
+)
+@click.option(
+    "--codeartifact-repository",
+    type=str,
+    help="CodeArtifact Repository to pull packages from.",
+)
+@click.option(
+    "--internet-accessiblity/--no-internet-accessiblity",
+    default=True,
+    help="Configure for deployment to Private (internet accessiblity) or Isolated (no internet accessibility) subnets.",
+    show_default=True,
+)
+@click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
     show_default=True,
 )
-def deploy_foundation_cli(
-    filename: str,
-    debug: bool,
+def deploy_foundation(
+    filename: Optional[str] = None,
+    name: Optional[str] = None,
+    debug: bool = False,
+    internet_accessiblity: bool = True,
     username: Optional[str] = None,
     password: Optional[str] = None,
+    codeartifact_domain: Optional[str] = None,
+    codeartifact_repository: Optional[str] = None,
 ) -> None:
     """Deploy a Orbit Workbench foundation based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
-    filename = filename if filename[0] in (".", "/") else f"./{filename}"
+
+    if not filename and not name:
+        raise click.ClickException('One of "filename" or "name" is required.')
+
+    if filename:
+        filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
+    _logger.debug("name: %s", name)
+    _logger.debug("codeartifact_domain: %s", codeartifact_domain)
+    _logger.debug("codeartifact_repository: %s", codeartifact_repository)
     _logger.debug("username: %s", username)
-    deploy_foundation(
+    deploy_commands.deploy_foundation(
         filename=filename,
+        name=name,
+        codeartifact_domain=codeartifact_domain,
+        codeartifact_repository=codeartifact_repository,
         username=username,
         password=password,
         debug=debug,
+        internet_accessiblity=internet_accessiblity,
     )
 
 
@@ -208,32 +271,36 @@ def destroy() -> None:
     pass
 
 
-@destroy.command(name="env")
-@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
-@click.option(
-    "--team-stacks", is_flag=True, default=False, help="Destroy Team Stacks only or All Stacks", show_default=True
-)
-@click.option(
-    "--keep-demo",
-    is_flag=True,
-    default=True,
-    help="Destroy Env and Team, but keeps Demo env if one was used",
-    show_default=True,
-)
+@destroy.command(name="teams")
+@click.option("--env", "-e", type=str, required=True, help="Destroy Orbit Teams.")
 @click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
     show_default=True,
 )
-def destroy_cli_env(env: str, team_stacks: bool, keep_demo: bool, debug: bool) -> None:
+def destroy_teams(env: str, debug: bool) -> None:
     """Destroy a Orbit Workbench environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     _logger.debug("env: %s", env)
-    _logger.debug("teams only: %s", str(team_stacks))
-    _logger.debug("keep demo: %s", str(keep_demo))
-    destroy_all(env=env, teams_only=team_stacks, keep_demo=keep_demo, debug=debug)
+    destroy_commands.destroy_teams(env=env, debug=debug)
+
+
+@destroy.command(name="env")
+@click.option("--env", "-e", type=str, required=True, help="Destroy Orbit Environment.")
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def destroy_env(env: str, debug: bool) -> None:
+    """Destroy a Orbit Workbench environment based on a manisfest file (yaml)."""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    _logger.debug("env: %s", env)
+    destroy_commands.destroy_env(env=env, debug=debug)
 
 
 @destroy.command(name="foundation")
@@ -244,12 +311,12 @@ def destroy_cli_env(env: str, team_stacks: bool, keep_demo: bool, debug: bool) -
     help="Enable detailed logging.",
     show_default=True,
 )
-def destroy_cli_foundation(name: str, debug: bool) -> None:
+def destroy_foundation(name: str, debug: bool) -> None:
     """Destroy a Orbit Workbench environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     _logger.debug("name: %s", name)
-    destroy_all(env=name, teams_only=False, keep_demo=False, debug=debug)
+    destroy_commands.destroy_foundation(env=name, debug=debug)
 
 
 @click.group(name="build")

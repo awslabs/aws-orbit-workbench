@@ -18,7 +18,7 @@ import concurrent.futures
 import json
 import logging
 from enum import IntEnum, auto
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Type, Union, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, Generic, List, Optional, Type, TypeVar, Union, cast
 
 import botocore.exceptions
 from dataclasses import field
@@ -29,16 +29,18 @@ from aws_orbit import utils
 from aws_orbit.models.common import BaseSchema
 from aws_orbit.models.manifest import (
     DataNetworkingManifest,
+    FoundationImagesManifest,
+    FoundationManifest,
     FrontendNetworkingManifest,
     ImagesManifest,
     ManagedNodeGroupManifest,
+    Manifest,
+    NetworkingManifest,
     PluginManifest,
+    TeamManifest,
 )
 from aws_orbit.services import ssm
 from aws_orbit.utils import boto3_client, boto3_resource
-
-if TYPE_CHECKING:
-    from aws_orbit.models.manifest import Manifest, NetworkingManifest, TeamManifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -188,6 +190,30 @@ class CdkToolkitManifest:
 
 
 @dataclass(base_schema=BaseSchema)
+class FoundationContext:
+    Schema: ClassVar[Type[Schema]] = Schema
+    name: str
+    account_id: str
+    region: str
+    env_tag: str
+    toolkit: ToolkitManifest
+    cdk_toolkit: CdkToolkitManifest
+    networking: NetworkingContext = NetworkingContext()
+    user_pool_id: Optional[str] = None
+    scratch_bucket_arn: Optional[str] = None
+    cognito_users_url: Optional[str] = None
+    cognito_external_provider_redirect: Optional[str] = None
+    cognito_external_provider_domain: Optional[str] = None
+    stack_name: Optional[str] = None
+    ssm_parameter_name: Optional[str] = None
+    resources_ssm_parameter_name: Optional[str] = None
+    codeartifact_domain: Optional[str] = None
+    codeartifact_repository: Optional[str] = None
+    images: FoundationImagesManifest = FoundationImagesManifest()
+    policies: Optional[List[str]] = cast(List[str], field(default_factory=list))
+
+
+@dataclass(base_schema=BaseSchema)
 class Context:
     Schema: ClassVar[Type[Schema]] = Schema
     name: str
@@ -197,8 +223,6 @@ class Context:
     env_stack_name: str
     env_ssm_parameter_name: str
     eks_stack_name: str
-    demo_stack_name: str
-    demo_ssm_parameter_name: str
     ssm_parameter_name: str
     ssm_dockerhub_parameter_name: str
     toolkit: ToolkitManifest
@@ -218,7 +242,7 @@ class Context:
     eks_fargate_profile_role_arn: Optional[str] = None
     eks_env_nodegroup_role_arn: Optional[str] = None
     eks_oidc_provider: Optional[str] = None
-    eks_system_masters_roles: List[str] = field(default_factory=list)
+    eks_system_masters_roles: Optional[List[str]] = cast(List[str], field(default_factory=list))
     user_pool_client_id: Optional[str] = None
     identity_pool_id: Optional[str] = None
     teams: List[TeamContext] = field(default_factory=list)
@@ -229,6 +253,7 @@ class Context:
     cluster_sg_id: Optional[str] = None
     cluster_pod_sg_id: Optional[str] = None
     managed_nodegroups: List[ManagedNodeGroupManifest] = field(default_factory=list)
+    policies: Optional[List[str]] = cast(List[str], field(default_factory=list))
 
     def get_team_by_name(self, name: str) -> Optional[TeamContext]:
         for t in self.teams:
@@ -238,48 +263,6 @@ class Context:
 
     def remove_team_by_name(self, name: str) -> None:
         self.teams = [t for t in self.teams if t.name != name]
-
-    def fetch_toolkit_data(self) -> None:
-        _logger.debug("Fetching Toolkit data...")
-        resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
-        try:
-            response: resp_type = boto3_client("cloudformation").describe_stacks(StackName=self.toolkit.stack_name)
-            _logger.debug("%s stack found.", self.toolkit.stack_name)
-        except botocore.exceptions.ClientError as ex:
-            error: Dict[str, Any] = ex.response["Error"]
-            if error["Code"] == "ValidationError" and f"{self.toolkit.stack_name} not found" in error["Message"]:
-                _logger.debug("Toolkit stack not found.")
-                return
-            if error["Code"] == "ValidationError" and f"{self.toolkit.stack_name} does not exist" in error["Message"]:
-                _logger.debug("Toolkit stack does not exist.")
-                return
-            raise
-        if len(response["Stacks"]) < 1:
-            _logger.debug("Toolkit stack not found.")
-            return
-        if "Outputs" not in response["Stacks"][0]:
-            _logger.debug("Toolkit stack with empty outputs")
-            return
-
-        for output in response["Stacks"][0]["Outputs"]:
-            if output["ExportName"] == f"orbit-{self.name}-deploy-id":
-                _logger.debug("Export value: %s", output["OutputValue"])
-                self.toolkit.deploy_id = output["OutputValue"]
-            if output["ExportName"] == f"orbit-{self.name}-kms-arn":
-                _logger.debug("Export value: %s", output["OutputValue"])
-                self.toolkit.kms_arn = output["OutputValue"]
-        if self.toolkit.deploy_id is None:
-            raise RuntimeError(
-                f"Stack {self.toolkit.stack_name} does not have the expected orbit-{self.name}-deploy-id output."
-            )
-        if self.toolkit.kms_arn is None:
-            raise RuntimeError(
-                f"Stack {self.toolkit.stack_name} does not have the expected orbit-{self.name}-kms-arn output."
-            )
-        self.toolkit.kms_alias = f"orbit-{self.name}-{self.toolkit.deploy_id}"
-        self.toolkit.s3_bucket = f"orbit-{self.name}-toolkit-{self.account_id}-{self.toolkit.deploy_id}"
-        self.cdk_toolkit.s3_bucket = f"orbit-{self.name}-cdk-toolkit-{self.account_id}-{self.toolkit.deploy_id}"
-        _logger.debug("Toolkit data fetched successfully.")
 
     def fetch_env_data(self) -> None:
         _logger.debug("Fetching Env data...")
@@ -370,87 +353,211 @@ def create_networking_context_from_manifest(networking: "NetworkingManifest") ->
     return ctx
 
 
-def load_context_from_manifest(manifest: "Manifest") -> Context:
-    _logger.debug("Loading Context from manifest")
-    context_parameter_name: str = f"/orbit/{manifest.name}/context"
-    if ssm.does_parameter_exist(name=context_parameter_name):
-        context: Context = load_context_from_ssm(env_name=manifest.name)
-        context.images = manifest.images
-        context.networking = create_networking_context_from_manifest(networking=manifest.networking)
-        context.user_pool_id = manifest.user_pool_id
-        context.shared_efs_fs_id = manifest.shared_efs_fs_id
-        context.shared_efs_sg_id = manifest.shared_efs_sg_id
-        context.scratch_bucket_arn = manifest.scratch_bucket_arn
-        for team_manifest in manifest.teams:
-            team_context: Optional[TeamContext] = context.get_team_by_name(name=team_manifest.name)
-            if team_context:
-                _logger.debug("Updating context profiles for team %s", team_manifest.name)
-                team_context.profiles = team_manifest.profiles
-    else:
-        context = Context(
-            name=manifest.name,
-            account_id=utils.get_account_id(),
-            region=utils.get_region(),
-            env_tag=f"orbit-{manifest.name}",
-            env_stack_name=f"orbit-{manifest.name}",
-            env_ssm_parameter_name=f"/orbit/{manifest.name}/env",
-            eks_stack_name=f"eksctl-orbit-{manifest.name}-cluster",
-            demo_stack_name=f"orbit-{manifest.name}-demo",
-            demo_ssm_parameter_name=f"/orbit/{manifest.name}/demo",
-            ssm_parameter_name=context_parameter_name,
-            ssm_dockerhub_parameter_name=f"/orbit/{manifest.name}/dockerhub",
-            toolkit=ToolkitManifest(
-                stack_name=f"orbit-{manifest.name}-toolkit", codebuild_project=f"orbit-{manifest.name}"
-            ),
-            cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-{manifest.name}-cdk-toolkit"),
-            codeartifact_domain=manifest.codeartifact_domain,
-            codeartifact_repository=manifest.codeartifact_repository,
-            scratch_bucket_arn=manifest.scratch_bucket_arn,
-            networking=create_networking_context_from_manifest(networking=manifest.networking),
-            images=manifest.images,
-            user_pool_id=manifest.user_pool_id,
-            cognito_external_provider=manifest.cognito_external_provider,
-            cognito_external_provider_label=manifest.cognito_external_provider_label,
-            teams=create_teams_context_from_manifest(manifest=manifest),
-            shared_efs_fs_id=manifest.shared_efs_fs_id,
-            shared_efs_sg_id=manifest.shared_efs_sg_id,
-            managed_nodegroups=[],
-            eks_system_masters_roles=[],
+T = TypeVar("T")
+V = TypeVar("V")
+
+
+class ContextSerDe(Generic[T, V]):
+    @staticmethod
+    def load_context_from_manifest(manifest: T) -> V:
+        if isinstance(manifest, Manifest):
+            return cast(V, ContextSerDe._load_context_from_manifest(manifest))
+        elif isinstance(manifest, FoundationManifest):
+            return cast(V, ContextSerDe._load_foundation_context_from_manifest(manifest))
+        else:
+            raise ValueError("Unknown 'manifest' Type")
+
+    @staticmethod
+    def _load_context_from_manifest(manifest: "Manifest") -> Context:
+        _logger.debug("Loading Context from manifest")
+        context_parameter_name: str = f"/orbit/{manifest.name}/context"
+        if ssm.does_parameter_exist(name=context_parameter_name):
+            context: Context = ContextSerDe.load_context_from_ssm(env_name=manifest.name, type=Context)
+            context.images = manifest.images
+            context.networking = create_networking_context_from_manifest(networking=manifest.networking)
+            context.user_pool_id = manifest.user_pool_id
+            context.shared_efs_fs_id = manifest.shared_efs_fs_id
+            context.shared_efs_sg_id = manifest.shared_efs_sg_id
+            context.scratch_bucket_arn = manifest.scratch_bucket_arn
+            context.policies = manifest.policies
+            for team_manifest in manifest.teams:
+                team_context: Optional[TeamContext] = context.get_team_by_name(name=team_manifest.name)
+                if team_context:
+                    _logger.debug("Updating context profiles for team %s", team_manifest.name)
+                    team_context.profiles = team_manifest.profiles
+        else:
+            context = Context(
+                name=manifest.name,
+                account_id=utils.get_account_id(),
+                region=utils.get_region(),
+                env_tag=f"orbit-{manifest.name}",
+                env_stack_name=f"orbit-{manifest.name}",
+                env_ssm_parameter_name=f"/orbit/{manifest.name}/env",
+                eks_stack_name=f"eksctl-orbit-{manifest.name}-cluster",
+                ssm_parameter_name=context_parameter_name,
+                ssm_dockerhub_parameter_name=f"/orbit/{manifest.name}/dockerhub",
+                toolkit=ToolkitManifest(
+                    stack_name=f"orbit-{manifest.name}-toolkit", codebuild_project=f"orbit-{manifest.name}"
+                ),
+                cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-{manifest.name}-cdk-toolkit"),
+                codeartifact_domain=manifest.codeartifact_domain,
+                codeartifact_repository=manifest.codeartifact_repository,
+                scratch_bucket_arn=manifest.scratch_bucket_arn,
+                networking=create_networking_context_from_manifest(networking=manifest.networking),
+                images=manifest.images,
+                user_pool_id=manifest.user_pool_id,
+                cognito_external_provider=manifest.cognito_external_provider,
+                cognito_external_provider_label=manifest.cognito_external_provider_label,
+                teams=create_teams_context_from_manifest(manifest=manifest),
+                shared_efs_fs_id=manifest.shared_efs_fs_id,
+                shared_efs_sg_id=manifest.shared_efs_sg_id,
+                managed_nodegroups=[],
+                eks_system_masters_roles=[],
+                policies=manifest.policies,
+            )
+        ContextSerDe.fetch_toolkit_data(context=context)
+        ContextSerDe.dump_context_to_ssm(context=context)
+        return context
+
+    @staticmethod
+    def _load_foundation_context_from_manifest(manifest: "FoundationManifest") -> FoundationContext:
+        _logger.debug("Loading Context from manifest")
+        context_parameter_name: str = f"/orbit-foundation/{manifest.name}/context"
+        if ssm.does_parameter_exist(name=context_parameter_name):
+            context: FoundationContext = ContextSerDe.load_context_from_ssm(
+                env_name=manifest.name, type=FoundationContext
+            )
+            context.images = manifest.images
+            context.policies = manifest.policies
+        else:
+            context = FoundationContext(
+                name=manifest.name,
+                account_id=utils.get_account_id(),
+                region=utils.get_region(),
+                env_tag=f"orbit-foundation-{manifest.name}",
+                ssm_parameter_name=context_parameter_name,
+                resources_ssm_parameter_name=f"/orbit-foundation/{manifest.name}/resources",
+                toolkit=ToolkitManifest(
+                    stack_name=f"orbit-foundation-{manifest.name}-toolkit",
+                    codebuild_project=f"orbit-foundation-{manifest.name}",
+                ),
+                cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-foundation-{manifest.name}-cdk-toolkit"),
+                codeartifact_domain=manifest.codeartifact_domain,
+                codeartifact_repository=manifest.codeartifact_repository,
+                networking=create_networking_context_from_manifest(networking=manifest.networking),
+                images=manifest.images,
+                policies=manifest.policies,
+                stack_name=f"orbit-foundation-{manifest.name}",
+            )
+        ContextSerDe.fetch_toolkit_data(context=context)
+        ContextSerDe.dump_context_to_ssm(context=context)
+        return context
+
+    @staticmethod
+    def dump_context_to_str(context: V) -> str:
+        if isinstance(context, Context):
+            content: Dict[str, Any] = cast(Dict[str, Any], Context.Schema().dump(context))
+        elif isinstance(context, FoundationContext):
+            content = cast(Dict[str, Any], FoundationContext.Schema().dump(context))
+        else:
+            raise ValueError("Unknown 'context' Type")
+        return str(json.dumps(obj=content, sort_keys=True))
+
+    def dump_context_to_ssm(context: V) -> None:
+        _logger.debug("Writing context to SSM parameter.")
+
+        if isinstance(context, Context):
+            _logger.debug("Teams: %s", [t.name for t in context.teams])
+            content: Dict[str, Any] = cast(Dict[str, Any], Context.Schema().dump(context))
+            current_teams_contexts: List[str] = ssm.list_teams_contexts(env_name=context.name)
+            written_teams_contexts: List[str] = []
+            for team in content["Teams"]:
+                ssm.put_parameter(name=team["SsmParameterName"], obj=team)
+                written_teams_contexts.append(team["SsmParameterName"])
+            old_teams_contexts: List[str] = list(set(current_teams_contexts) - set(written_teams_contexts))
+            _logger.debug("old_teams_contexts: %s", old_teams_contexts)
+            ssm.delete_parameters(parameters=old_teams_contexts)
+            del content["Teams"]
+            ssm_parameter_name = context.ssm_parameter_name
+        elif isinstance(context, FoundationContext):
+            content = cast(Dict[str, Any], FoundationContext.Schema().dump(context))
+            ssm_parameter_name = cast(str, context.ssm_parameter_name)
+        else:
+            raise ValueError("Unknown 'context' Type")
+
+        ssm.put_parameter(name=ssm_parameter_name, obj=content)
+
+    @staticmethod
+    def load_context_from_ssm(env_name: str, type: Type[V]) -> V:
+        if type is Context:
+            context_parameter_name: str = f"/orbit/{env_name}/context"
+            main = ssm.get_parameter(name=context_parameter_name)
+            teams_parameters = ssm.list_parameters(prefix=f"/orbit/{env_name}/teams/")
+            _logger.debug("teams_parameters: %s", teams_parameters)
+            teams = [ssm.get_parameter_if_exists(name=p) for p in teams_parameters if p.endswith("/context")]
+            main["Teams"] = [t for t in teams if t]
+            return cast(V, Context.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
+        elif type is FoundationContext:
+            context_parameter_name = f"/orbit-foundation/{env_name}/context"
+            main = ssm.get_parameter(name=context_parameter_name)
+            return cast(V, FoundationContext.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
+        else:
+            raise ValueError("Unknown 'context' Type")
+
+    @staticmethod
+    def fetch_toolkit_data(context: V) -> None:
+        _logger.debug("Fetching Toolkit data...")
+        if not (isinstance(context, Context) or isinstance(context, FoundationContext)):
+            raise ValueError("Unknown 'context' Type")
+
+        top_level = "orbit" if isinstance(context, Context) else "orbit-foundation"
+
+        resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
+        try:
+            response: resp_type = boto3_client("cloudformation").describe_stacks(StackName=context.toolkit.stack_name)
+            _logger.debug("%s stack found.", context.toolkit.stack_name)
+        except botocore.exceptions.ClientError as ex:
+            error: Dict[str, Any] = ex.response["Error"]
+            if error["Code"] == "ValidationError" and f"{context.toolkit.stack_name} not found" in error["Message"]:
+                _logger.debug("Toolkit stack not found.")
+                return
+            if (
+                error["Code"] == "ValidationError"
+                and f"{context.toolkit.stack_name} does not exist" in error["Message"]
+            ):
+                _logger.debug("Toolkit stack does not exist.")
+                return
+            raise
+        if len(response["Stacks"]) < 1:
+            _logger.debug("Toolkit stack not found.")
+            return
+        if "Outputs" not in response["Stacks"][0]:
+            _logger.debug("Toolkit stack with empty outputs")
+            return
+
+        for output in response["Stacks"][0]["Outputs"]:
+            if output["ExportName"] == f"{top_level}-{context.name}-deploy-id":
+                _logger.debug("Export value: %s", output["OutputValue"])
+                context.toolkit.deploy_id = output["OutputValue"]
+            if output["ExportName"] == f"{top_level}-{context.name}-kms-arn":
+                _logger.debug("Export value: %s", output["OutputValue"])
+                context.toolkit.kms_arn = output["OutputValue"]
+        if context.toolkit.deploy_id is None:
+            raise RuntimeError(
+                f"Stack {context.toolkit.stack_name} does not have the expected {top_level}-{context.name}-deploy-id output."
+            )
+        if context.toolkit.kms_arn is None:
+            raise RuntimeError(
+                f"Stack {context.toolkit.stack_name} does not have the expected {top_level}-{context.name}-kms-arn output."
+            )
+        context.toolkit.kms_alias = f"{top_level}-{context.name}-{context.toolkit.deploy_id}"
+        context.toolkit.s3_bucket = (
+            f"{top_level}-{context.name}-toolkit-{context.account_id}-{context.toolkit.deploy_id}"
         )
-    context.fetch_toolkit_data()
-    dump_context_to_ssm(context=context)
-    return context
-
-
-def dump_context_to_str(context: Context) -> str:
-    content: Dict[str, Any] = cast(Dict[str, Any], Context.Schema().dump(context))
-    return str(json.dumps(obj=content, sort_keys=True))
-
-
-def dump_context_to_ssm(context: Context) -> None:
-    _logger.debug("Writing context to SSM parameter.")
-    _logger.debug("Teams: %s", [t.name for t in context.teams])
-    content: Dict[str, Any] = cast(Dict[str, Any], Context.Schema().dump(context))
-    current_teams_contexts: List[str] = ssm.list_teams_contexts(env_name=context.name)
-    written_teams_contexts: List[str] = []
-    for team in content["Teams"]:
-        ssm.put_parameter(name=team["SsmParameterName"], obj=team)
-        written_teams_contexts.append(team["SsmParameterName"])
-    old_teams_contexts: List[str] = list(set(current_teams_contexts) - set(written_teams_contexts))
-    _logger.debug("old_teams_contexts: %s", old_teams_contexts)
-    ssm.delete_parameters(parameters=old_teams_contexts)
-    del content["Teams"]
-    ssm.put_parameter(name=context.ssm_parameter_name, obj=content)
-
-
-def load_context_from_ssm(env_name: str) -> Context:
-    context_parameter_name: str = f"/orbit/{env_name}/context"
-    main = ssm.get_parameter(name=context_parameter_name)
-    teams_parameters = ssm.list_parameters(prefix=f"/orbit/{env_name}/teams/")
-    _logger.debug("teams_parameters: %s", teams_parameters)
-    teams = [ssm.get_parameter_if_exists(name=p) for p in teams_parameters if p.endswith("/context")]
-    main["Teams"] = [t for t in teams if t]
-    return cast(Context, Context.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
+        context.cdk_toolkit.s3_bucket = (
+            f"{top_level}-{context.name}-cdk-toolkit-{context.account_id}-{context.toolkit.deploy_id}"
+        )
+        _logger.debug("Toolkit data fetched successfully.")
 
 
 def construct_ecr_repository_name(env_name: str, image: Optional[str]) -> str:

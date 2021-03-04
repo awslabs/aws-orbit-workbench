@@ -20,6 +20,8 @@
     # via -r requirements-dev.in
 appdirs==1.4.4
     # via black
+appnope==0.1.2
+    # via ipython
 attrs==20.3.0
     # via
     #   cattrs
@@ -504,8 +506,8 @@ certifi==2020.12.5
     # via
     #   kubernetes
     #   requests
-cffi==1.14.5
-    # via cryptography
+cfn-flip==1.2.3
+    # via aws-orbit
 cfn-lint==0.44.7
     # via -r requirements-dev.in
 chardet==4.0.0
@@ -516,6 +518,7 @@ click==7.1.2
     # via
     #   aws-orbit
     #   black
+    #   cfn-flip
     #   pip-tools
 colorama==0.4.4
     # via twine
@@ -576,8 +579,6 @@ constructs==3.3.37
     #   aws-cdk.aws-stepfunctions-tasks
     #   aws-cdk.core
     #   aws-cdk.custom-resources
-cryptography==3.4.6
-    # via secretstorage
 decorator==4.4.2
     # via
     #   ipython
@@ -595,14 +596,6 @@ google-auth==1.27.0
     # via kubernetes
 idna==2.10
     # via requests
-importlib-metadata==3.5.0
-    # via
-    #   build
-    #   flake8
-    #   jsonschema
-    #   keyring
-    #   pep517
-    #   twine
 ipython-genutils==0.2.0
     # via traitlets
 ipython==7.19.0
@@ -611,10 +604,6 @@ isort==5.7.0
     # via -r requirements-dev.in
 jedi==0.18.0
     # via ipython
-jeepney==0.6.0
-    # via
-    #   keyring
-    #   secretstorage
 jmespath==0.10.0
     # via
     #   boto3
@@ -819,8 +808,6 @@ pyasn1==0.4.8
     #   rsa
 pycodestyle==2.6.0
     # via flake8
-pycparser==2.20
-    # via cffi
 pydot==1.4.1
     # via -r requirements-dev.in
 pyflakes==2.2.0
@@ -846,6 +833,11 @@ python-dateutil==2.8.1
     #   pandas
 python-jose==3.2.0
     # via -r requirements-dev.in
+python-slugify==4.0.1
+    # via
+    #   -r requirements-dev.in
+    #   aws-orbit
+    #   aws-orbit-sdk
 pytz==2021.1
     # via pandas
 pyyaml-include==1.2.post2
@@ -854,6 +846,7 @@ pyyaml==5.3.1
     # via
     #   aws-orbit
     #   aws-orbit-sdk
+    #   cfn-flip
     #   cfn-lint
     #   kubernetes
     #   pyyaml-include
@@ -880,12 +873,11 @@ rsa==4.7.1
     #   python-jose
 s3transfer==0.3.4
     # via boto3
-secretstorage==3.3.1
-    # via keyring
 six==1.15.0
     # via
     #   aws-sam-translator
     #   bleach
+    #   cfn-flip
     #   cfn-lint
     #   ecdsa
     #   google-auth
@@ -903,6 +895,8 @@ sqlalchemy==1.3.15
     # via
     #   aws-orbit-sdk
     #   sqlalchemy-redshift
+text-unidecode==1.3
+    # via python-slugify
 toml==0.10.2
     # via
     #   black
@@ -926,7 +920,6 @@ typeguard==2.11.1
 typing-extensions==3.7.4.3
     # via
     #   black
-    #   importlib-metadata
     #   jsii
     #   mypy
     #   typing-inspect
@@ -945,10 +938,6 @@ websocket-client==0.57.0
     # via kubernetes
 wheel==0.36.2
     # via -r requirements-dev.in
-zipp==3.4.0
-    # via
-    #   importlib-metadata
-    #   pep517
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

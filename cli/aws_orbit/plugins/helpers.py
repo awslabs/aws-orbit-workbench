@@ -21,13 +21,11 @@ import sys
 from typing import TYPE_CHECKING, Any, Dict, List, Type, cast
 
 from aws_orbit import cdk, sh
-from aws_orbit.models.context import load_context_from_ssm
+from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.services import cfn
 
 if TYPE_CHECKING:
     from aws_cdk.core import Stack
-
-    from aws_orbit.models.context import Context, TeamContext
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -50,7 +48,7 @@ def cdk_handler(stack_class: Type["Stack"]) -> None:
     stack_name: str = sys.argv[1]
     team_name: str = sys.argv[3]
     parameters: Dict[str, Any] = _deserialize_parameters(parameters=sys.argv[4])
-    context: "Context" = load_context_from_ssm(env_name=sys.argv[2])
+    context: "Context" = ContextSerDe.load_context_from_ssm(env_name=sys.argv[2], type=Context)
     team_context = context.get_team_by_name(name=team_name)
     if team_context is None:
         raise ValueError(f"Team {team_name} not found in the context.")

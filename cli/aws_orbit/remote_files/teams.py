@@ -15,21 +15,15 @@
 import logging
 import os
 import shutil
-from typing import TYPE_CHECKING, Iterator, List, Optional, cast
+from typing import Iterator, List, Optional, cast
 
 import boto3
 
-from aws_orbit import ORBIT_CLI_ROOT, cdk, docker, plugins, sh
-from aws_orbit.models.context import create_team_context_from_manifest, dump_context_to_ssm
-from aws_orbit.models.manifest import load_manifest_from_ssm
-from aws_orbit.remote_files import eksctl, kubectl
+from aws_orbit import ORBIT_CLI_ROOT, cdk, docker, plugins
+from aws_orbit.models.context import Context, ContextSerDe, TeamContext, create_team_context_from_manifest
+from aws_orbit.models.manifest import Manifest, TeamManifest
 from aws_orbit.services import cfn, ecr
 from aws_orbit.utils import boto3_client
-
-if TYPE_CHECKING:
-    from aws_orbit.models.changeset import TeamsChangeset
-    from aws_orbit.models.context import Context, TeamContext
-    from aws_orbit.models.manifest import Manifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -120,7 +114,7 @@ def _deploy_team_bootstrap(context: "Context", team_context: "TeamContext") -> N
             if script_content is not None:
                 client = boto3.client("s3")
                 key: str = f"{team_context.bootstrap_s3_prefix}{plugin.plugin_id}.sh"
-                _logger.debug("Uploading s3://{context.toolkit.s3_bucket}/{key}")
+                _logger.debug(f"Uploading s3://{context.toolkit.s3_bucket}/{key}")
                 client.put_object(
                     Body=script_content.encode("utf-8"),
                     Bucket=context.toolkit.s3_bucket,
@@ -128,85 +122,54 @@ def _deploy_team_bootstrap(context: "Context", team_context: "TeamContext") -> N
                 )
 
 
-def eval_removed_teams(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> None:
-    if teams_changeset is None:
-        return
-    _logger.debug("Teams %s must be deleted.", teams_changeset.removed_teams_names)
-    if teams_changeset.removed_teams_names:
-        sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
-    for name in teams_changeset.removed_teams_names:
-        team_context: Optional["TeamContext"] = context.get_team_by_name(name=name)
-        if team_context is None:
-            raise RuntimeError(f"Team {name} not found!")
-        _logger.debug("Destroying team %s", name)
-        plugins.PLUGINS_REGISTRIES.destroy_team_plugins(context=context, team_context=team_context)
-        kubectl.destroy_team(context=context, team_context=team_context)
-        eksctl.destroy_team(context=context, team_context=team_context)
-        destroy(context=context, team_context=team_context)
-        _logger.debug("Team %s destroyed", name)
-        context.remove_team_by_name(name=name)
-        dump_context_to_ssm(context=context)
+def deploy_team(context: "Context", manifest: Manifest, team_manifest: TeamManifest) -> None:
+    # Pull team spacific custom cfn plugin, trigger pre_hook
+    team_context: Optional["TeamContext"] = create_team_context_from_manifest(
+        manifest=manifest, team_manifest=team_manifest
+    )
+    _logger.debug("***************team_context******************")
+    _logger.debug(team_context)
+    _logger.debug("*********************************")
+    if team_context:
+        _logger.debug("************team_context.plugins*********************")
+        _logger.debug(team_context.plugins)
+        _logger.debug("*************Calling Pre hooks********************")
+        for plugin in team_context.plugins:
+            sh.run("pwd")
+            sh.run("ls -lrta")
+            hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
+                context=context,
+                team_name=team_context.name,
+                plugin_name=plugin.plugin_id,
+                hook_name="pre_hook",
+            )
+            if hook is not None:
+                _logger.debug(f"*******************Found pre_hook for plugin_id {plugin}")
+                hook(plugin.plugin_id, context, team_context, plugin.parameters)
+        _logger.debug("*******************End of pre_hook plugin execution")
+    else:
+        _logger.debug(f"Skipping pre_hook for unknown Team: {team_manifest.name}")
+
+    args = [context.name, team_manifest.name]
+    cdk.deploy(
+        context=context,
+        stack_name=f"orbit-{manifest.name}-{team_manifest.name}",
+        app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
+        args=args,
+    )
+    team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_manifest.name)
+    if team_context:
+        team_context.fetch_team_data()
+    else:
+        team_context = create_team_context_from_manifest(manifest=manifest, team_manifest=team_manifest)
+        team_context.fetch_team_data()
+        context.teams.append(team_context)
+    ContextSerDe.dump_context_to_ssm(context=context)
+    _deploy_team_image(context=context, team_context=team_context, image="jupyter-user")
+    _deploy_team_bootstrap(context=context, team_context=team_context)
 
 
-def deploy(context: "Context", teams_changeset: Optional["TeamsChangeset"]) -> None:
-    manifest: Optional["Manifest"] = load_manifest_from_ssm(env_name=context.name)
-    if manifest is None:
-        raise ValueError("manifest is None!")
-    eval_removed_teams(context=context, teams_changeset=teams_changeset)
-    for team_manifest in manifest.teams:
-        args = [context.name, team_manifest.name]
-
-        # For each team, find the plugins, pull custom cfn plugin
-        # Get the hook and deploy the specific hook function
-        # team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_manifest.name)
-        team_context: Optional["TeamContext"] = create_team_context_from_manifest(
-            manifest=manifest, team_manifest=team_manifest
-        )
-        _logger.debug("***************team_context******************")
-        _logger.debug(team_context)
-        _logger.debug("*********************************")
-        if team_context:
-            _logger.debug("************team_context.plugins*********************")
-            _logger.debug(team_context.plugins)
-            _logger.debug("*************Calling Pre hooks********************")
-            for plugin in team_context.plugins:
-                sh.run("pwd")
-                sh.run("ls -lrta")
-                hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
-                    context=context,
-                    team_name=team_context.name,
-                    plugin_name=plugin.plugin_id,
-                    hook_name="pre_hook",
-                )
-                if hook is not None:
-                    _logger.debug(f"*******************Found pre_hook for plugin_id {plugin}")
-                    hook(plugin.plugin_id, context, team_context, plugin.parameters)
-            _logger.debug("*******************End of pre_hook plugin execution")
-        else:
-            _logger.debug(f"Skipping pre_hook for unknown Team: {team_manifest.name}")
-
-        cdk.deploy(
-            context=context,
-            stack_name=f"orbit-{manifest.name}-{team_manifest.name}",
-            app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
-            args=args,
-        )
-        # team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_manifest.name)
-        team_context = context.get_team_by_name(name=team_manifest.name)
-        if team_context:
-            team_context.fetch_team_data()
-        else:
-            team_context = create_team_context_from_manifest(manifest=manifest, team_manifest=team_manifest)
-            team_context.fetch_team_data()
-            context.teams.append(team_context)
-        dump_context_to_ssm(context=context)
-
-    for team_context in context.teams:
-        _deploy_team_image(context=context, team_context=team_context, image="jupyter-user")
-        _deploy_team_bootstrap(context=context, team_context=team_context)
-
-
-def destroy(context: "Context", team_context: "TeamContext") -> None:
+def destroy_team(context: "Context", team_context: "TeamContext") -> None:
     _logger.debug("Stack name: %s", team_context.stack_name)
     if cfn.does_stack_exist(stack_name=context.toolkit.stack_name):
         try:
@@ -240,6 +203,6 @@ def destroy(context: "Context", team_context: "TeamContext") -> None:
 
 def destroy_all(context: "Context") -> None:
     for team_context in context.teams:
-        destroy(context=context, team_context=team_context)
+        destroy_team(context=context, team_context=team_context)
     context.teams = []
-    dump_context_to_ssm(context=context)
+    ContextSerDe.dump_context_to_ssm(context=context)
