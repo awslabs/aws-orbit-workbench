@@ -8,8 +8,8 @@
     "tasks":  [
         {
             "notebookName": "Example-1-Build-Lake.ipynb",
-            "sourcePath": "/efs/shared/samples/notebooks/M-Admin",
-            "targetPath": "/efs/shared/regression/notebooks/M-Admin/",
+            "sourcePath": "/efs/shared/samples/notebooks/A-LakeCreator",
+            "targetPath": "/efs/shared/regression/notebooks/A-LakeCreator/",
             "params": {
             }
         }
