@@ -47,14 +47,11 @@ def destroy_teams(args: Tuple[str, ...]) -> None:
 
     plugins.PLUGINS_REGISTRIES.load_plugins(context=context, plugin_changesets=[], teams_changeset=None)
     _logger.debug("Plugins loaded")
-    _logger.debug(f"**************Destroying - plugins={plugins}")
     kubectl.destroy_teams(context=context)
     _logger.debug("Kubernetes Team components destroyed")
     eksctl.destroy_teams(context=context)
     _logger.debug("EKS Team Stacks destroyed")
-    _logger.debug(f"***********Destroying context={context}")
     teams.destroy_all(context=context)
-    _logger.debug("*****************************************")
     _logger.debug("Teams Stacks destroyed")
     ssm.cleanup_teams(env_name=context.name)
 

@@ -298,7 +298,7 @@ def deploy_teams(
             teams_changeset=changeset.teams_changeset,
         )
         msg_ctx.progress(7)
-        _logger.debug("******Preparing bundle directory***********")
+        _logger.debug("Preparing bundle directory")
         dirs: List[Tuple[str, str]] = []
         dirs += _get_config_dirs(context=context, manifest_filename=filename)
         _logger.debug(f"*Directory={dirs}")

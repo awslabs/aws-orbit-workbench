@@ -72,7 +72,7 @@ def generate_bundle(
     except FileNotFoundError:
         pass
     os.makedirs(bundle_dir, exist_ok=True)
-    _logger.debug(f"**generate_bundle dirs={dirs}")
+    _logger.debug(f"generate_bundle dirs={dirs}")
     # Extra Directories
     if dirs is not None:
         for dir, name in dirs:
