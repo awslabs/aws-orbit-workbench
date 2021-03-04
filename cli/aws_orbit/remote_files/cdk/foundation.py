@@ -29,8 +29,6 @@ from aws_cdk import aws_ssm as ssm
 from aws_cdk.core import App, CfnOutput, Construct, Duration, Stack, Tags
 
 from aws_orbit.models.context import ContextSerDe, FoundationContext
-
-# from aws_orbit.remote_files.cdk.team_builders.cognito import CognitoBuilder
 from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
 from aws_orbit.remote_files.cdk.team_builders.s3 import S3Builder
 
@@ -82,22 +80,6 @@ class FoundationStack(Stack):
             scratch_retention_days=30,
             kms_key=self.env_kms_key,
         )
-        # self.lake_bucket: s3.Bucket = S3Builder.build_s3_bucket(
-        #     scope=self,
-        #     id="lake_bucket",
-        #     name=self.bucket_names["lake-bucket"],
-        #     scratch_retention_days=90,
-        #     kms_key=self.env_kms_key,
-        # )
-        # self.secured_lake_bucket: s3.Bucket = S3Builder.build_s3_bucket(
-        #     scope=self,
-        #     id="secured_lake_bucket",
-        #     name=self.bucket_names["secured-lake-bucket"],
-        #     scratch_retention_days=90,
-        #     kms_key=self.env_kms_key,
-        # )
-        # self.lake_bucket_full_access = self._create_fullaccess_managed_policies()
-        # self.lake_bucket_read_only_access = self._create_readonlyaccess_managed_policies()
 
         self.efs_fs = EfsBuilder.build_file_system(
             scope=self,
@@ -111,13 +93,6 @@ class FoundationStack(Stack):
 
         self.user_pool: cognito.UserPool = self._create_user_pool()
 
-        # self.user_pool_lake_creator: cognito.CfnUserPoolGroup = CognitoBuilder.build_user_pool_group(
-        #     scope=self, user_pool_id=self.user_pool.user_pool_id, team_name="lake-creator"
-        # )
-        # self.user_pool_lake_user: cognito.CfnUserPoolGroup = CognitoBuilder.build_user_pool_group(
-        #     scope=self, user_pool_id=self.user_pool.user_pool_id, team_name="lake-user"
-        # )
-
         self._ssm_parameter = ssm.StringParameter(
             self,
             id="/orbit/DemoParams",
@@ -129,10 +104,6 @@ class FoundationStack(Stack):
                     "IsolatedSubnets": self.isolated_subnets.subnet_ids,
                     "NodesSubnets": self.nodes_subnets.subnet_ids,
                     "LoadBalancersSubnets": self.public_subnets.subnet_ids,
-                    # "LakeBucket": self.bucket_names["lake-bucket"],
-                    # "SecuredLakeBucket": self.bucket_names["secured-lake-bucket"],
-                    # "CreatorAaccessPolicy": self.lake_bucket_full_access.managed_policy_name,
-                    # "UserAccessPolicy": self.lake_bucket_read_only_access.managed_policy_name,
                     "KMSKey": self.env_kms_key.key_arn,
                     "SharedEfsFsId": self.efs_fs.file_system_id,
                     "ScratchBucketArn": self.scratch_bucket.bucket_arn,
@@ -180,20 +151,6 @@ class FoundationStack(Stack):
             export_name=f"orbit-foundation-{self.env_name}-nodes-subnet-ids",
             value=",".join(self.nodes_subnets.subnet_ids),
         )
-
-        # CfnOutput(
-        #     scope=self,
-        #     id=f"{id}lakebucketfullaccesspolicy",
-        #     export_name=f"orbit-foundation-{self.env_name}-lake-bucket-full-access-policy",
-        #     value=self.lake_bucket_full_access.managed_policy_name,
-        # )
-        #
-        # CfnOutput(
-        #     scope=self,
-        #     id=f"{id}lakebucketreadonlypolicy",
-        #     export_name=f"orbit-foundation-{self.env_name}-lake-bucket-read-only-policy",
-        #     value=self.lake_bucket_read_only_access.managed_policy_name,
-        # )
 
     def _build_kms_key_for_env(self) -> None:
         administrator_arns: List[str] = []  # A place to add other admins if needed for KMS
@@ -375,59 +332,6 @@ class FoundationStack(Stack):
             subnet_ids=self.nodes_subnets.subnet_ids,
             private_dns_enabled=True,
         )
-
-    # def _create_fullaccess_managed_policies(self) -> iam.ManagedPolicy:
-    #     lake_bucket_full_access = iam.ManagedPolicy(
-    #         self,
-    #         "LakeBucketFullAccess",
-    #         statements=[
-    #             iam.PolicyStatement(
-    #                 effect=iam.Effect.ALLOW,
-    #                 actions=[
-    #                     "s3:*",
-    #                 ],
-    #                 resources=[
-    #                     self.lake_bucket.bucket_arn,
-    #                     f"{self.lake_bucket.bucket_arn}*",
-    #                 ],
-    #             ),
-    #             iam.PolicyStatement(
-    #                 effect=iam.Effect.ALLOW,
-    #                 actions=["glue:*"],
-    #                 resources=["*"],
-    #             ),
-    #         ],
-    #         managed_policy_name=f"orbit-foundation-{self.env_name}-demo-lake-bucket-fullaccess",
-    #     )
-    #     return lake_bucket_full_access
-    #
-    # def _create_readonlyaccess_managed_policies(self) -> iam.ManagedPolicy:
-    #     lake_bucket_read_only_access = iam.ManagedPolicy(
-    #         self,
-    #         "LakeBucketReadOnlyAccess",
-    #         statements=[
-    #             iam.PolicyStatement(
-    #                 effect=iam.Effect.ALLOW,
-    #                 actions=["s3:Get*", "s3:List*"],
-    #                 resources=[
-    #                     self.lake_bucket.bucket_arn,
-    #                     f"{self.lake_bucket.bucket_arn}*",
-    #                 ],
-    #             ),
-    #             iam.PolicyStatement(
-    #                 effect=iam.Effect.ALLOW,
-    #                 actions=["glue:*"],
-    #                 resources=["*"],
-    #             ),
-    #             iam.PolicyStatement(
-    #                 effect=iam.Effect.ALLOW,
-    #                 actions=["kms:*"],
-    #                 resources=[self.env_kms_key.key_arn],
-    #             ),
-    #         ],
-    #         managed_policy_name=f"orbit-foundation-{self.env_name}-demo-lake-bucket-readonlyaccess",
-    #     )
-    #     return lake_bucket_read_only_access
 
 
 def main() -> None:

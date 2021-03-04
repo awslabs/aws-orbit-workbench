@@ -137,7 +137,8 @@ class PluginRegistry:
         self._bootstrap_injection_hook = None
 
     """
-    PRE AND POST
+    PRE AND POST hooks. Used for deploying and destroying CloudFormation based resources as part of team stacks.
+    Cloudformation file path should be part of the custom_cfn parameters.
     """
 
     @property

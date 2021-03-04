@@ -132,24 +132,12 @@ def _endpoints(vpc_id: str) -> None:
 
 def foundation_remaining_dependencies(context: "FoundationContext", vpc_id: Optional[str] = None) -> None:
     efs.delete_env_filesystems(env_name=context.name)
-    # ssm_param_name = context.resources_ssm_parameter_name
-    # ssm = utils.boto3_client("ssm")
-
-    # demo_config = json.loads(ssm.get_parameter(Name=ssm_param_name)["Parameter"]["Value"])
     if context.scratch_bucket_arn:
         scratch_bucket: str = context.scratch_bucket_arn.split(":::")[1]
         try:
             s3.delete_bucket(bucket=scratch_bucket)
         except Exception as ex:
             _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
-        # try:
-        #     s3.delete_bucket(bucket=demo_config["LakeBucket"])
-        # except Exception as ex:
-        #     _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
-        # try:
-        #     s3.delete_bucket(bucket=demo_config["SecuredLakeBucket"])
-        # except Exception as ex:
-        #     _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
     if vpc_id is None:
         if context.networking.vpc_id is None:
             _logger.debug("Skipping _cleanup_remaining_dependencies() because manifest.vpc.vpc_id is None!")
@@ -163,17 +151,6 @@ def foundation_remaining_dependencies(context: "FoundationContext", vpc_id: Opti
 
 def foundation_remaining_dependencies_contextless(env_name: str, vpc_id: Optional[str] = None) -> None:
     efs.delete_env_filesystems(env_name=env_name)
-    # ssm_param_name = f"/orbit-foundation/{env_name}/resources"
-    # demo_config: Optional[Dict[str, Any]] = ssm.get_parameter_if_exists(name=ssm_param_name)
-    # if demo_config:
-    #     try:
-    #         s3.delete_bucket(bucket=demo_config["LakeBucket"])
-    #     except Exception as ex:
-    #         _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
-    #     try:
-    #         s3.delete_bucket(bucket=demo_config["SecuredLakeBucket"])
-    #     except Exception as ex:
-    #         _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
     if vpc_id:
         elb.delete_load_balancers(env_name=env_name)
         _endpoints(vpc_id=vpc_id)
