@@ -21,11 +21,13 @@ cat <<EOF |  orbit run notebook --env dev-env --team $TEST_TEAM_SPACE --user tes
 EOF
 
 ret=$?
-if [ $ret -eq 0 ]
+echo "ret=$ret"
+
+if [[ $ret -eq 0 ]];
 then
-    echo "bad-sanity-test failed"
-    exit 255
+    echo "bad-sanity-test failed";
+    exit 255;
 else
-    echo "bad-sanity-test passed"
-    exit 0
+    echo "bad-sanity-test passed";
+    exit 0;
 fi
