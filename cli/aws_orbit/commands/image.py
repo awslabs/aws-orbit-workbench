@@ -21,7 +21,7 @@ import botocore
 from kubernetes import config
 from slugify import slugify
 
-from aws_orbit import bundle, plugins, remote, sh, utils
+from aws_orbit import bundle, remote, sh, utils
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.env import DEFAULT_IMAGES, DEFAULT_ISOLATED_IMAGES
@@ -166,9 +166,7 @@ def build_image(
             return
         msg_ctx.progress(3)
 
-        bundle_path = bundle.generate_bundle(
-            command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)], changeset=None, plugins=True
-        )
+        bundle_path = bundle.generate_bundle(command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)])
         msg_ctx.progress(5)
 
         script_str = "NO_SCRIPT" if script is None else script
