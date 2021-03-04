@@ -102,8 +102,6 @@ def delete_profile(env: str, team: str, profile_name: str, debug: bool) -> None:
 
 
 def list_profiles(env: str, team: str, debug: bool) -> None:
-    ssm.cleanup_changeset(env_name=env)
-    ssm.cleanup_manifest(env_name=env)
     print("Team profiles:")
     profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
     _logger.debug("Existing user profiles for team %s: %s", team, profiles)
