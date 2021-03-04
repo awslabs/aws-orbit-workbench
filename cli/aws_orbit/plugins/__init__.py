@@ -41,6 +41,8 @@ class PluginRegistry:
         destroy_hook: HOOK_TYPE = None,
         dockerfile_injection_hook: HOOK_TYPE = None,
         bootstrap_injection_hook: HOOK_TYPE = None,
+        pre_hook: HOOK_TYPE = None,
+        post_hook: HOOK_TYPE = None,
     ) -> None:
         self.plugin_id: str = plugin_id
         self.team_name: str = team_name
@@ -50,6 +52,8 @@ class PluginRegistry:
         self._destroy_hook: HOOK_TYPE = destroy_hook
         self._dockerfile_injection_hook: HOOK_TYPE = dockerfile_injection_hook
         self._bootstrap_injection_hook: HOOK_TYPE = bootstrap_injection_hook
+        self._pre_hook: HOOK_TYPE = pre_hook
+        self._post_hook: HOOK_TYPE = post_hook
 
     def destroy(self, context: "Context", team_context: "TeamContext") -> None:
         if self.bootstrap_injection_hook is not None:
@@ -131,6 +135,35 @@ class PluginRegistry:
     @bootstrap_injection_hook.deleter
     def bootstrap_injection_hook(self) -> None:
         self._bootstrap_injection_hook = None
+
+    """
+    PRE AND POST hooks. Used for deploying and destroying CloudFormation based resources as part of team stacks.
+    Cloudformation file path should be part of the custom_cfn parameters.
+    """
+
+    @property
+    def pre_hook(self) -> HOOK_TYPE:
+        return self._pre_hook
+
+    @pre_hook.setter
+    def pre_hook(self, func: HOOK_TYPE) -> None:
+        self._pre_hook = func
+
+    @pre_hook.deleter
+    def pre_hook(self) -> None:
+        self._pre_hook = None
+
+    @property
+    def post_hook(self) -> HOOK_TYPE:
+        return self._post_hook
+
+    @post_hook.setter
+    def post_hook(self, func: HOOK_TYPE) -> None:
+        self._post_hook = func
+
+    @post_hook.deleter
+    def post_hook(self) -> None:
+        self._post_hook = None
 
 
 class PluginRegistries:
@@ -247,7 +280,8 @@ class PluginRegistries:
             )
         _logger.debug("Destroying %s for team %s.", plugin_id, team_context.name)
         self._registries[team_context.name][plugin_id].destroy(context=context, team_context=team_context)
-        del self._registries[team_context.name][plugin_id]
+        if plugin_id != "custom_cfn":
+            del self._registries[team_context.name][plugin_id]
 
     def destroy_team_plugins(self, context: "Context", team_context: "TeamContext") -> None:
         self._context = context
