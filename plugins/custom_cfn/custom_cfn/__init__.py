@@ -17,7 +17,7 @@ import os
 from typing import TYPE_CHECKING, Any, Dict, cast
 
 from aws_orbit.plugins import hooks
-from aws_orbit.plugins.helpers import cdk_deploy, cdk_destroy
+from aws_orbit.plugins.helpers import cdk_deploy
 from aws_orbit.services import cfn, s3
 
 if TYPE_CHECKING:
@@ -59,22 +59,17 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
 def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
     _logger.debug("Destroying Custom CloudFormation  plugin resources for team %s", team_context.name)
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
-    if parameters["CfnTemplatePath"] and os.path.isfile(parameters["CfnTemplatePath"]):
-        _logger.info(f"CloudFormation template found at {parameters['CfnTemplatePath']}")
-    else:
-        raise FileNotFoundError(f"CloudFormation template not found at {parameters['CfnTemplatePath']}")
-
     env_name = context.name
     acct: str = context.account_id
     deploy_id: str = cast(str, context.toolkit.deploy_id)
-
     plugin_id = plugin_id.replace("_", "-")
     stack_name = f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-demo-resources"
     _logger.debug(f"stack_name={stack_name}")
     bucket_names: Dict[str, Any] = {
-        "lake-bucket": f"orbit-{env_name}-demo-lake-{acct}-{deploy_id}test",
-        "secured-lake-bucket": f"orbit-{env_name}-secured-demo-lake-{acct}-{deploy_id}test",
+        "lake-bucket": f"orbit-{env_name}-demo-lake-{acct}-{deploy_id}",
+        "secured-lake-bucket": f"orbit-{env_name}-secured-demo-lake-{acct}-{deploy_id}",
     }
+    _logger.debug(f"bucket_names={bucket_names}")
     # CDK skips bucket deletion.
     if cfn.does_stack_exist(stack_name=stack_name):
         try:
@@ -89,18 +84,5 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
             _logger.debug("Skipping Team Secured Lake Bucket deletion. Cause: %s", ex)
 
     _logger.debug("Destroying custom resources using post hook")
-    cfn_params: Dict[str, Any] = {
-        "envname": context.name,
-        "envdeployid": cast(str, context.toolkit.deploy_id),
-        "envcognitouserpoolid": cast(str, context.user_pool_id),
-    }
-    cfn_params.update(parameters)
-    _logger.debug(f"cfn_params={cfn_params}")
-    cdk_destroy(
-        stack_name=stack_name,
-        app_filename=os.path.join(ORBIT_CUSTOM_CFN_ROOT, "cdk.py"),
-        context=context,
-        team_context=team_context,
-        parameters=parameters,
-    )
-    _logger.debug("Custom Cfn plugin post_hook compeleted")
+    cfn.destroy_stack(stack_name=stack_name)
+    _logger.debug("Destroyed")

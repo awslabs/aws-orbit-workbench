@@ -53,7 +53,7 @@ def _get_config_dirs(context: "Context", manifest_filename: str) -> List[Tuple[s
     return dirs
 
 
-def destroy_teams(env: str, filename: str, debug: bool) -> None:
+def destroy_teams(env: str, debug: bool) -> None:
     with MessagesContext("Destroying", debug=debug) as msg_ctx:
         ssm.cleanup_changeset(env_name=env)
 
@@ -76,17 +76,7 @@ def destroy_teams(env: str, filename: str, debug: bool) -> None:
         msg_ctx.progress(4)
 
         if any(cfn.does_stack_exist(stack_name=t.stack_name) for t in context.teams):
-
-            _logger.debug("******Preparing bundle directory***********")
-            dirs: List[Tuple[str, str]] = []
-            dirs += _get_config_dirs(context=context, manifest_filename=filename)
-            _logger.debug(f"*Directory={dirs}")
-
-            bundle_path = bundle.generate_bundle(
-                command_name="destroy",
-                context=context,
-                dirs=dirs,
-            )
+            bundle_path = bundle.generate_bundle(command_name="destroy", context=context)
             msg_ctx.progress(5)
 
             buildspec = codebuild.generate_spec(
