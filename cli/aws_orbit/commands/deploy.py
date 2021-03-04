@@ -308,7 +308,7 @@ def deploy_teams(
         bundle_path = bundle.generate_bundle(
             command_name="deploy",
             context=context,
-            dirs=_get_images_dirs(context=context, manifest_filename=filename, skip_images=True),
+            dirs=dirs,
         )
         msg_ctx.progress(11)
         buildspec = codebuild.generate_spec(

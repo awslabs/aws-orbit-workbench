@@ -274,17 +274,23 @@ def destroy() -> None:
 @destroy.command(name="teams")
 @click.option("--env", "-e", type=str, required=True, help="Destroy Orbit Teams.")
 @click.option(
+    "--filename",
+    "-f",
+    type=str,
+    help="The target Orbit Workbench manifest file (yaml).",
+)
+@click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
     show_default=True,
 )
-def destroy_teams(env: str, debug: bool) -> None:
+def destroy_teams(env: str, filename: str, debug: bool) -> None:
     """Destroy a Orbit Workbench environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     _logger.debug("env: %s", env)
-    destroy_commands.destroy_teams(env=env, debug=debug)
+    destroy_commands.destroy_teams(env=env, filename=filename, debug=debug)
 
 
 @destroy.command(name="env")

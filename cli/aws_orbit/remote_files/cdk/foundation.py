@@ -29,7 +29,8 @@ from aws_cdk import aws_ssm as ssm
 from aws_cdk.core import App, CfnOutput, Construct, Duration, Stack, Tags
 
 from aws_orbit.models.context import ContextSerDe, FoundationContext
-from aws_orbit.remote_files.cdk.team_builders.cognito import CognitoBuilder
+
+# from aws_orbit.remote_files.cdk.team_builders.cognito import CognitoBuilder
 from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
 from aws_orbit.remote_files.cdk.team_builders.s3 import S3Builder
 
@@ -70,9 +71,6 @@ class FoundationStack(Stack):
         toolkit_s3_bucket_name: str = context.toolkit.s3_bucket
         acct: str = core.Aws.ACCOUNT_ID
         self.bucket_names: Dict[str, Any] = {
-            #"lake-bucket": f"orbit-foundation-{self.env_name}-demo-lake-{acct}-{context.toolkit.deploy_id}",
-            #"secured-lake-bucket": f"orbit-foundation-{self.env_name}-secured-demo-lake-"
-            f"{acct}-{context.toolkit.deploy_id}",
             "scratch-bucket": f"orbit-foundation-{self.env_name}-scratch-{acct}-{context.toolkit.deploy_id}",
             "toolkit-bucket": toolkit_s3_bucket_name,
         }

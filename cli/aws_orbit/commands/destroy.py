@@ -13,7 +13,8 @@
 #    limitations under the License.
 
 import logging
-from typing import cast
+import os
+from typing import List, Tuple, cast
 
 import botocore.exceptions
 
@@ -44,7 +45,15 @@ def destroy_remaining_resources(env_name: str, top_level: str = "orbit") -> None
     destroy_toolkit(env_name=env_name)
 
 
-def destroy_teams(env: str, debug: bool) -> None:
+def _get_config_dirs(context: "Context", manifest_filename: str) -> List[Tuple[str, str]]:
+    manifest_dir: str = os.path.dirname(os.path.abspath(manifest_filename))
+    _logger.debug("manrefdir: %s", manifest_dir)
+    dirs = [(manifest_dir, "PLUGINS")]
+    _logger.debug("dirs: %s", dirs)
+    return dirs
+
+
+def destroy_teams(env: str, filename: str, debug: bool) -> None:
     with MessagesContext("Destroying", debug=debug) as msg_ctx:
         ssm.cleanup_changeset(env_name=env)
 
@@ -67,7 +76,17 @@ def destroy_teams(env: str, debug: bool) -> None:
         msg_ctx.progress(4)
 
         if any(cfn.does_stack_exist(stack_name=t.stack_name) for t in context.teams):
-            bundle_path = bundle.generate_bundle(command_name="destroy", context=context)
+
+            _logger.debug("******Preparing bundle directory***********")
+            dirs: List[Tuple[str, str]] = []
+            dirs += _get_config_dirs(context=context, manifest_filename=filename)
+            _logger.debug(f"*Directory={dirs}")
+
+            bundle_path = bundle.generate_bundle(
+                command_name="destroy",
+                context=context,
+                dirs=dirs,
+            )
             msg_ctx.progress(5)
 
             buildspec = codebuild.generate_spec(

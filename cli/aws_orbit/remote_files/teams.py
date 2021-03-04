@@ -135,8 +135,6 @@ def deploy_team(context: "Context", manifest: Manifest, team_manifest: TeamManif
         _logger.debug(team_context.plugins)
         _logger.debug("*************Calling Pre hooks********************")
         for plugin in team_context.plugins:
-            sh.run("pwd")
-            sh.run("ls -lrta")
             hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
                 context=context,
                 team_name=team_context.name,
@@ -157,7 +155,7 @@ def deploy_team(context: "Context", manifest: Manifest, team_manifest: TeamManif
         app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
         args=args,
     )
-    team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_manifest.name)
+    team_context = context.get_team_by_name(name=team_manifest.name)
     if team_context:
         team_context.fetch_team_data()
     else:

@@ -14,7 +14,7 @@
 
 from io import open
 
-from setuptools import setup
+from setuptools import find_packages, setup
 
 with open("VERSION", "r") as version_file:
     version = version_file.read().strip()
@@ -24,8 +24,10 @@ setup(
     version=version,
     description="Launch a CloudFormation stack for the team space",
     license="Apache License 2.0",
-    packages=["custom_cfn"],
+    packages=find_packages(include=["custom_cfn", "custom_cfn.*"]),
     python_requires=">=3.6, <3.9",
-    install_requires=[],
+    install_requires=[
+        "aws_cdk.core~=1.67.0",
+    ],
     include_package_data=True,
 )

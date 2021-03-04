@@ -17,76 +17,130 @@ import os
 from typing import TYPE_CHECKING, Any, Dict, cast
 
 from aws_orbit.plugins import hooks
-from aws_orbit.services import cfn, s3, ssm
+from aws_orbit.plugins.helpers import cdk_deploy, cdk_destroy
+
+# from aws_orbit.services import cfn, s3, ssm
 
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
 
 _logger: logging.Logger = logging.getLogger("aws_orbit")
 
+ORBIT_CUSTOM_CFN_ROOT = os.path.dirname(os.path.abspath(__file__))
+
 
 @hooks.pre
 def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
-    _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
-    if parameters["cfn_template_path"] and os.path.isfile(parameters["cfn_template_path"]):
-        _logger.info(f"CloudFormation template found at {parameters['cfn_template_path']}")
+    _logger.debug("Deploying Custom CloudFormation plugin resources for team %s", team_context.name)
+    if parameters["CfnTemplatePath"] and os.path.isfile(parameters["CfnTemplatePath"]):
+        _logger.info(f"CloudFormation template found at {parameters['CfnTemplatePath']}")
     else:
-        raise FileNotFoundError(f"CloudFormation template not found at {parameters['cfn_template_path']}")
+        raise FileNotFoundError(f"CloudFormation template not found at {parameters['CfnTemplatePath']}")
 
-    # Read the YAML/JSON file from the parameters key
-    # Replace the ${} references with any required variables
-    # aws_orbit.services.
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
-    context.user_pool_id
-    # TODO Can push kms key arn to context instead of reading from SSM
-    env_kms_arn = cast(str, ssm.get_parameter(name=context.demo_ssm_parameter_name)["KMSKey"])
-    cfn.deploy_synth_template(
+    cfn_params: Dict[str, Any] = {
+        "envname": context.name,
+        "envdeployid": cast(str, context.toolkit.deploy_id),
+        # "env_kms_arn": cast(str, ssm.get_parameter(name=context.demo_ssm_parameter_name)["KMSKey"]),
+        "envcognitouserpoolid": cast(str, context.user_pool_id),
+    }
+    cfn_params.update(parameters)
+    _logger.debug("**********************")
+    _logger.debug(f"cfn_params={cfn_params}")
+    _logger.debug("**********************")
+    cdk_deploy(
         stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-demo-resources",
-        filename=parameters["cfn_template_path"],
-        env_tag=context.env_tag,
-        s3_bucket=context.toolkit.s3_bucket,
-        synth_params={
-            "env_name": context.name,
-            "deploy_id": cast(str, context.toolkit.deploy_id),
-            "env_kms_arn": env_kms_arn,
-            "cognito_user_pool_id": cast(str, context.user_pool_id),
-        },
+        app_filename=os.path.join(ORBIT_CUSTOM_CFN_ROOT, "cdk.py"),
+        context=context,
+        team_context=team_context,
+        parameters=cfn_params,
     )
+    _logger.debug("Custom Cfn plugin pre_hook compeleted")
+
+
+#
+# @hooks.pre
+# def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+#     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
+#     if parameters["cfn_template_path"] and os.path.isfile(parameters["cfn_template_path"]):
+#         _logger.info(f"CloudFormation template found at {parameters['cfn_template_path']}")
+#     else:
+#         raise FileNotFoundError(f"CloudFormation template not found at {parameters['cfn_template_path']}")
+#
+#     # Read the YAML/JSON file from the parameters key
+#     # Replace the ${} references with any required variables
+#     # aws_orbit.services.
+#     plugin_id = plugin_id.replace("_", "-")
+#     _logger.debug("plugin_id: %s", plugin_id)
+#     context.user_pool_id
+#     # TODO Can push kms key arn to context instead of reading from SSM
+#     env_kms_arn = cast(str, ssm.get_parameter(name=context.demo_ssm_parameter_name)["KMSKey"])
+#     cfn.deploy_synth_template(
+#         stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-demo-resources",
+#         filename=parameters["cfn_template_path"],
+#         env_tag=context.env_tag,
+#         s3_bucket=context.toolkit.s3_bucket,
+#         synth_params={
+#             "env_name": context.name,
+#             "deploy_id": cast(str, context.toolkit.deploy_id),
+#             "env_kms_arn": env_kms_arn,
+#             "cognito_user_pool_id": cast(str, context.user_pool_id),
+#         },
+#     )
 
 
 @hooks.post
 def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+    _logger.debug("Destroying Custom CloudFormation  plugin resources for team %s", team_context.name)
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
-    env_name = context.name
-    team_name = team_context.name
-    deploy_id = context.toolkit.deploy_id
-    acct: str = context.account_id
-    bucket_names: Dict[str, Any] = {
-        "scratch-bucket": f"orbit-{env_name}-scratch-{acct}-{deploy_id}test",
-        "lake-bucket": f"orbit-{env_name}-demo-lake-{acct}-{deploy_id}test",
-        "secured-lake-bucket": f"orbit-{env_name}-secured-demo-lake-{acct}-{deploy_id}test",
-    }
+    if parameters["CfnTemplatePath"] and os.path.isfile(parameters["CfnTemplatePath"]):
+        _logger.info(f"CloudFormation template found at {parameters['CfnTemplatePath']}")
+    else:
+        raise FileNotFoundError(f"CloudFormation template not found at {parameters['CfnTemplatePath']}")
+
+    # env_name = context.name
+    # team_name = team_context.name
+    # acct: str = context.account_id
+
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
-    stack_name = f"orbit-{env_name}-{team_name}-{plugin_id}-custom-demo-resources"
-
-    if cfn.does_stack_exist(stack_name=stack_name):
-        try:
-            _logger.debug("Deleting scratch-bucket")
-            s3.delete_bucket(bucket=bucket_names["scratch-bucket"])
-        except Exception as ex:
-            _logger.debug("Skipping Team Scratch Bucket deletion. Cause: %s", ex)
-        try:
-            _logger.debug("Deleting lake-bucket")
-            s3.delete_bucket(bucket=bucket_names["lake-bucket"])
-        except Exception as ex:
-            _logger.debug("Skipping Team Lake Bucket deletion. Cause: %s", ex)
-        try:
-            _logger.debug("Deleting secured-lake-bucket")
-            s3.delete_bucket(bucket=bucket_names["secured-lake-bucket"])
-        except Exception as ex:
-            _logger.debug("Skipping Team Secured Lake Bucket deletion. Cause: %s", ex)
+    stack_name = f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-demo-resources"
+    # bucket_names: Dict[str, Any] = {
+    #     "lake-bucket": f"orbit-{env_name}-demo-lake-{acct}-{deploy_id}test",
+    #     "secured-lake-bucket": f"orbit-{env_name}-secured-demo-lake-{acct}-{deploy_id}test",
+    # }
+    # Allow CDK to handle the S3 buckets.
+    # if cfn.does_stack_exist(stack_name=stack_name):
+    #     try:
+    #         _logger.debug("Deleting lake-bucket")
+    #         s3.delete_bucket(bucket=bucket_names["lake-bucket"])
+    #     except Exception as ex:
+    #         _logger.debug("Skipping Team Lake Bucket deletion. Cause: %s", ex)
+    #     try:
+    #         _logger.debug("Deleting secured-lake-bucket")
+    #         s3.delete_bucket(bucket=bucket_names["secured-lake-bucket"])
+    #     except Exception as ex:
+    #         _logger.debug("Skipping Team Secured Lake Bucket deletion. Cause: %s", ex)
 
     _logger.debug("**********Destroying custom resources using post hook")
-    cfn.destroy_stack(stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-demo-resources")
+    # cfn.destroy_stack(stack_name=f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-demo-resources")
+
+    cfn_params: Dict[str, Any] = {
+        "envname": context.name,
+        "envdeployid": cast(str, context.toolkit.deploy_id),
+        # "env_kms_arn": cast(str, ssm.get_parameter(name=context.demo_ssm_parameter_name)["KMSKey"]),
+        "envcognitouserpoolid": cast(str, context.user_pool_id),
+    }
+    cfn_params.update(parameters)
+    _logger.debug("**********************")
+    _logger.debug(f"cfn_params={cfn_params}")
+    _logger.debug("**********************")
+    cdk_destroy(
+        stack_name=stack_name,
+        app_filename=os.path.join(ORBIT_CUSTOM_CFN_ROOT, "cdk.py"),
+        context=context,
+        team_context=team_context,
+        parameters=parameters,
+    )
+    _logger.debug("Custom Cfn plugin post_hook compeleted")
