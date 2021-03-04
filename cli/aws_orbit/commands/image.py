@@ -169,14 +169,6 @@ def build_image(
             return
         msg_ctx.progress(3)
 
-        plugins.PLUGINS_REGISTRIES.load_plugins(
-            context=context,
-            msg_ctx=msg_ctx,
-            plugin_changesets=[],
-            teams_changeset=None,
-        )
-        msg_ctx.progress(4)
-
         bundle_path = bundle.generate_bundle(
             command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)], changeset=None, plugins=True
         )
