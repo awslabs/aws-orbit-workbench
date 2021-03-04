@@ -64,9 +64,9 @@ class TeamManifest:
 @dataclass(base_schema=BaseSchema, frozen=True)
 class ImageManifest:
     Schema: ClassVar[Type[Schema]] = Schema
-    repository: str
-    source: str = "dockerhub"
-    version: str = "latest"
+    repository: Optional[str]
+    source: Optional[str] = "ecr-public"
+    version: Optional[str] = aws_orbit.__version__
     path: Optional[str] = None
 
 
@@ -85,45 +85,43 @@ class ManagedNodeGroupManifest:
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class CodeBuildImageManifest(ImageManifest):
-    repository: str = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base"
-    source: str = "ecr-public"
-    version: str = aws_orbit.__version__
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class JupyterHubImageManifest(ImageManifest):
-    repository: str = "aws-orbit-jupyter-hub"
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-hub"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class JupyterUserImageManifest(ImageManifest):
-    repository: str = "aws-orbit-jupyter-user"
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class LandingPageImageManifest(ImageManifest):
-    repository: str = "aws-orbit-landing-page"
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/landing-page"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class AwsEfsDriverImageManifest(ImageManifest):
-    repository: str = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/aws-efs-csi-driver"
-    source: str = "ecr-external"
-    version: str = "v1.0.0"
+    repository: Optional[str] = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/aws-efs-csi-driver"
+    source: Optional[str] = "ecr-external"
+    version: Optional[str] = "v1.0.0"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class LivenessprobeImageManifest(ImageManifest):
-    repository: str = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/livenessprobe"
-    source: str = "ecr-external"
-    version: str = "v2.0.0"
+    repository: Optional[str] = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/livenessprobe"
+    source: Optional[str] = "ecr-external"
+    version: Optional[str] = "v2.0.0"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class CsiNodeDriverRegistrarImageManifest(ImageManifest):
-    repository: str = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/csi-node-driver-registrar"
-    source: str = "ecr-external"
-    version: str = "v1.3.0"
+    repository: Optional[str] = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/csi-node-driver-registrar"
+    source: Optional[str] = "ecr-external"
+    version: Optional[str] = "v1.3.0"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -193,7 +191,7 @@ class FoundationManifest:
     codeartifact_domain: Optional[str] = None
     codeartifact_repository: Optional[str] = None
     images: FoundationImagesManifest = FoundationImagesManifest()
-    policies: Optional[str] = None
+    policies: Optional[List[str]] = cast(List[str], field(default_factory=list))
     ssm_parameter_name: Optional[str] = None
     networking: NetworkingManifest = NetworkingManifest()
 
@@ -204,7 +202,7 @@ class Manifest:
     name: str
     user_pool_id: Optional[str] = None
     scratch_bucket_arn: Optional[str] = None
-    eks_system_masters_roles: List[str] = field(default_factory=list)
+    eks_system_masters_roles: Optional[List[str]] = cast(List[str], field(default_factory=list))
     codeartifact_domain: Optional[str] = None
     codeartifact_repository: Optional[str] = None
     cognito_external_provider: Optional[str] = None
@@ -215,7 +213,7 @@ class Manifest:
     shared_efs_fs_id: Optional[str] = None
     shared_efs_sg_id: Optional[str] = None
     managed_nodegroups: List[ManagedNodeGroupManifest] = field(default_factory=list)
-    policies: Optional[str] = None
+    policies: Optional[List[str]] = cast(List[str], field(default_factory=list))
     ssm_parameter_name: Optional[str] = None
 
     def get_team_by_name(self, name: str) -> Optional[TeamManifest]:
@@ -232,8 +230,8 @@ def _add_ssm_param_injector(tag: str = "!SSM") -> Set[str]:
     to be parsed: ${SSM_PARAMETER_PATH::JSONPATH}.
     E.g.:
     database:
-        host: !SSM ${/orbit/dev-env/demo::/UserAccessPolicy}
-        port: !SSM ${/orbit/dev-env/demo::/PublicSubnet/*}
+        host: !SSM ${/orbit-foundation/dev-env/resources::/UserAccessPolicy}
+        port: !SSM ${/orbit-foundation/dev-env/resources::/PublicSubnet/*}
     """
     # pattern for global vars: look for ${word}
     pattern = re.compile(".*?\${(.*)}.*?")  # noqa: W605
