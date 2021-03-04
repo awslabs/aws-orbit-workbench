@@ -13,8 +13,7 @@
 #    limitations under the License.
 
 import logging
-import os
-from typing import List, Tuple, cast
+from typing import cast
 
 import botocore.exceptions
 
@@ -43,14 +42,6 @@ def destroy_remaining_resources(env_name: str, top_level: str = "orbit") -> None
     if cfn.does_stack_exist(stack_name=env_cdk_toolkit):
         cfn.destroy_stack(stack_name=env_cdk_toolkit)
     destroy_toolkit(env_name=env_name)
-
-
-def _get_config_dirs(context: "Context", manifest_filename: str) -> List[Tuple[str, str]]:
-    manifest_dir: str = os.path.dirname(os.path.abspath(manifest_filename))
-    _logger.debug("manrefdir: %s", manifest_dir)
-    dirs = [(manifest_dir, "plugins")]
-    _logger.debug("dirs: %s", dirs)
-    return dirs
 
 
 def destroy_teams(env: str, debug: bool) -> None:

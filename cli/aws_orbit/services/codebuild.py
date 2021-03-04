@@ -253,6 +253,8 @@ def generate_spec(
         # Adding Codeartifact based pip.conf, later used for Dockerfile build.
         install.append("cp ~/.config/pip/pip.conf .")
 
+    install.append("pwd")
+    install.append("find . -name '*.yaml'")
     # Orbit Workbench CLI
     install.append(f"pip install aws-orbit=={__version__}")
 
