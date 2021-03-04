@@ -70,9 +70,9 @@ def _get_images_dirs(context: "Context", manifest_filename: str, skip_images: bo
 
 
 def _get_config_dirs(context: "Context", manifest_filename: str) -> List[Tuple[str, str]]:
-    manrefdir: str = os.path.dirname(os.path.abspath(manifest_filename))
-    _logger.debug("manrefdir: %s", manrefdir)
-    dirs = [(manrefdir, "PLUGINS")]
+    manifest_dir: str = os.path.dirname(os.path.abspath(manifest_filename))
+    _logger.debug("manrefdir: %s", manifest_dir)
+    dirs = [(manifest_dir, "plugins")]
     _logger.debug("dirs: %s", dirs)
     return dirs
 

@@ -48,7 +48,7 @@ def destroy_remaining_resources(env_name: str, top_level: str = "orbit") -> None
 def _get_config_dirs(context: "Context", manifest_filename: str) -> List[Tuple[str, str]]:
     manifest_dir: str = os.path.dirname(os.path.abspath(manifest_filename))
     _logger.debug("manrefdir: %s", manifest_dir)
-    dirs = [(manifest_dir, "PLUGINS")]
+    dirs = [(manifest_dir, "plugins")]
     _logger.debug("dirs: %s", dirs)
     return dirs
 

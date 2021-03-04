@@ -38,7 +38,7 @@ def _list_files(path: str) -> List[str]:
 
 def _generate_dir(bundle_dir: str, dir: str, name: str) -> str:
     absolute_dir = os.path.realpath(dir)
-    final_dir = os.path.join(bundle_dir, "plugins") if name == "PLUGINS" else os.path.join(bundle_dir, name)
+    final_dir = os.path.join(bundle_dir, name)
     _logger.debug("absolute_dir: %s", absolute_dir)
     _logger.debug("final_dir: %s", final_dir)
     os.makedirs(final_dir, exist_ok=True)

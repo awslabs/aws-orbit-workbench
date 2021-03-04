@@ -1,22 +1,21 @@
--   Id: code_commit
+-   PluginId: code_commit
     Module: code_commit
     Path: ../plugins/code_commit/
-#-   Id: hello_world
+#-   PluginId: hello_world
 #    Module: hello_world
 #    Path: ../plugins/hello_world/
 #    Parameters:
 #        foo: boo
 #        xoo: 1234
-#-   Id: team_script_launcher
+#-   PluginId: team_script_launcher
 #    Module: team_script_launcher
 #    Path: ../plugins/team_script_launcher/
 #    Parameters:
 #        script: |
-#            echo "START LOOP"
 #            i=0
 #            while [ $i -lt 1 ];
 #            do
-#              aws s3 sync s3://${toolkit_s3_bucket}/samples/ /home/jovyan/shared/samples
+#              find /efs/shared/regression -mtime +5 -exec rm {} \;
 #              sleep 60
 #            done
 #            echo "DONE LOOP"
@@ -34,5 +33,4 @@
     Module: custom_cfn
     Path: ../plugins/custom_cfn/
     Parameters:
-        cfn_template_path: "../conf/plugins/demo_cfn_template.yaml"
-
+        CfnTemplatePath: "./plugins/demo-lake-creator-cfn-template.yaml"
