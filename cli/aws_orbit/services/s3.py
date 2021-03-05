@@ -67,10 +67,17 @@ def delete_objects(bucket: str, keys: Optional[List[str]] = None) -> None:
 
 def delete_bucket(bucket: str) -> None:
     client_s3 = boto3_client("s3")
-    _logger.debug("Cleaning up bucket: %s", bucket)
-    delete_objects(bucket=bucket)
-    _logger.debug("Deleting bucket: %s", bucket)
-    client_s3.delete_bucket(Bucket=bucket)
+    try:
+        _logger.debug("Cleaning up bucket: %s", bucket)
+        delete_objects(bucket=bucket)
+        _logger.debug("Deleting bucket: %s", bucket)
+        client_s3.delete_bucket(Bucket=bucket)
+    except Exception as ex:
+        if "NoSuchBucket" in str(ex):
+            _logger.debug(f"Bucket ({bucket}) does not exist, skipping")
+            return
+        else:
+            raise ex
 
 
 def upload_file(src: str, bucket: str, key: str) -> None:
