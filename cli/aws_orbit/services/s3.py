@@ -74,6 +74,7 @@ def delete_bucket(bucket: str) -> None:
         client_s3.delete_bucket(Bucket=bucket)
     except Exception as ex:
         if "NoSuchBucket" in str(ex):
+            _logger.debug(f"Bucket ({bucket}) does not exist, skipping")
             return
         else:
             raise ex
