@@ -1,7 +1,8 @@
 import sys
 import logging
 from typing import List
-from aws_orbit.models.context import Context,ContextSerDe
+import boto3
+import json
 import os
 from aws_orbit import sh
 from aws_orbit.services import s3
@@ -51,11 +52,7 @@ def _download_demo_data(bucket_name: str, bucket_key_prefix: str, download_files
                 _logger.debug(obj["Key"])
 
 
-def _prepare_demo_data(context: "Context") -> None:
-    # Check toolkit bucket details
-    if context.toolkit.s3_bucket is None:
-        raise ValueError("manifest.toolkit_s3_bucket is not defined")
-    bucket_name: str = context.toolkit.s3_bucket
+def _prepare_demo_data(bucket_name) -> None:
     _logger.debug("Adding CMS data sets")
     cms_files: List[str] = [
         "https://www.cms.gov/Research-Statistics-Data-and-Systems/Downloadable-Public-Use-Files/SynPUFs/Downloads/DE1_0_2008_Beneficiary_Summary_File_Sample_1.zip",  # noqa
@@ -88,9 +85,11 @@ def main() -> None:
         raise ValueError("Orbit environment name required")
         sys.exit(1)
     try:
-        _logger.info(f"Preparing context for environment {env_name}")
-        context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
-        _prepare_demo_data(context=context)
+        ssm = boto3.client('ssm')
+        demo_config = json.loads(ssm.get_parameter(Name=f"/orbit/{env_name}/demo")['Parameter']['Value'])
+        lake_bucket = demo_config.get("LakeBucket").split(':::')[1]
+        _logger.info(f"Using Lake Bucket {lake_bucket}")
+        _prepare_demo_data(lake_bucket)
     except Exception as ex:
         error = ex.response["Error"]
         _logger.error("Invalid environment %s. Cause: %s", env_name, error)
