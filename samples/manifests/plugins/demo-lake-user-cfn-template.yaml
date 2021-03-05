@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  Orbit Workbench lake-user demo stack
+Parameters:
+  envname:
+    Type: String
+    Default: dev-env
+    Description: Orbit Environemnt Name
+  envdeployid:
+    Type: String
+    Description: Orbit Deployment ID
+  envcognitouserpoolid:
+    Type: String
+    Description: Orbit Cognito Userpool ID
+  CfnTemplatePath:
+    Type: String
+    Description: Orbit  cfn_template_path
+Resources:
+  LakeUserGroup:
+    Type: 'AWS::Cognito::UserPoolGroup'
+    Properties:
+      UserPoolId: !Ref envcognitouserpoolid
+      Description: The Lake User Group Name.
+      GroupName: lake-user
+
+Outputs:
+  LakeUserGroupName:
+    Description: The Lake User Group Name
+    Value:
+      Ref: LakeUserGroup
