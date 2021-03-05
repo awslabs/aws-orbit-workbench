@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: |
-  Orbit Workbench lake-creator demo stack
+  Orbit Workbench Lake Creator demo stack
 Parameters:
   envname:
     Type: String
@@ -14,62 +14,8 @@ Parameters:
     Description: Orbit Cognito Userpool ID
   CfnTemplatePath:
     Type: String
-    Description: Orbit  cfn_template_path
+    Description: Orbit Lake Creator CloudFormation template path
 Resources:
-  demokmskey:
-    Type: 'AWS::KMS::Key'
-    Properties:
-      KeyPolicy:
-        Statement:
-          - Action: 'kms:*'
-            Effect: Allow
-            Principal:
-              AWS: !Join
-                - ''
-                - - 'arn:'
-                  - !Ref 'AWS::Partition'
-                  - ':iam::'
-                  - !Ref 'AWS::AccountId'
-                  - ':root'
-            Resource: '*'
-          - Action:
-              - 'kms:Create*'
-              - 'kms:Describe*'
-              - 'kms:Enable*'
-              - 'kms:List*'
-              - 'kms:Put*'
-              - 'kms:Update*'
-              - 'kms:Revoke*'
-              - 'kms:Disable*'
-              - 'kms:Get*'
-              - 'kms:Delete*'
-              - 'kms:ScheduleKeyDeletion'
-              - 'kms:CancelKeyDeletion'
-              - 'kms:GenerateDataKey'
-              - 'kms:TagResource'
-              - 'kms:UntagResource'
-            Effect: Allow
-            Principal:
-              AWS: !Join
-                - ''
-                - - 'arn:'
-                  - !Ref 'AWS::Partition'
-                  - ':iam::'
-                  - !Ref 'AWS::AccountId'
-                  - ':root'
-            Resource: '*'
-        Version: 2012-10-17
-      Enabled: true
-      EnableKeyRotation: true
-      Tags:
-        - Key: Env
-          Value: !Join
-            - ''
-            - - 'orbit-'
-              - !Ref envname
-    UpdateReplacePolicy: Retain
-    DeletionPolicy: Retain
-
 
   LakeBucket:
     Type: 'AWS::S3::Bucket'
@@ -78,10 +24,7 @@ Resources:
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
-              KMSMasterKeyID: !GetAtt
-                - demokmskey
-                - Arn
-              SSEAlgorithm: 'aws:kms'
+              SSEAlgorithm: 'AES256'
       BucketName: !Join
         - ''
         - - 'orbit-'
@@ -114,10 +57,7 @@ Resources:
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
-              KMSMasterKeyID: !GetAtt
-                - demokmskey
-                - Arn
-              SSEAlgorithm: 'aws:kms'
+              SSEAlgorithm: 'AES256'
       BucketName: !Join
         - ''
         - - 'orbit-'
@@ -143,7 +83,7 @@ Resources:
               - !Ref envname
     UpdateReplacePolicy: Retain
     DeletionPolicy: Retain
-  LakeBucketFullAccess:
+  LakeCreatorAdditionalPolicy:
     Type: 'AWS::IAM::ManagedPolicy'
     Properties:
       PolicyDocument:
@@ -163,64 +103,15 @@ Resources:
           - Action: 'glue:*'
             Effect: Allow
             Resource: '*'
-          - Action: 'kms:*'
-            Effect: Allow
-            Resource: !GetAtt
-              - demokmskey
-              - Arn
         Version: 2012-10-17
       Description: ''
       ManagedPolicyName: !Join
         - ''
         - - 'orbit-'
           - !Ref envname
-          - '-demo-lake-bucket-fullaccess'
+          - '-demo-lake-creator-add-policy'
       Path: /
-  LakeBucketReadOnlyAccess:
-    Type: 'AWS::IAM::ManagedPolicy'
-    Properties:
-      PolicyDocument:
-        Statement:
-          - Action:
-              - 's3:Get*'
-              - 's3:List*'
-            Effect: Allow
-            Resource:
-              - !Join
-                - ''
-                - - 'arn:aws:s3:::'
-                  - 'orbit-'
-                  - !Ref envname
-                  - '-demo-lake-'
-                  - !Ref 'AWS::AccountId'
-                  - '-'
-                  - !Ref envdeployid
-              - !Join
-                - ''
-                - - 'arn:aws:s3:::'
-                  - 'orbit-'
-                  - !Ref envname
-                  - '-demo-lake-'
-                  - !Ref 'AWS::AccountId'
-                  - '-'
-                  - !Ref envdeployid
-                  - '/*'
-          - Action: 'glue:*'
-            Effect: Allow
-            Resource: '*'
-          - Action: 'kms:*'
-            Effect: Allow
-            Resource: !GetAtt
-              - demokmskey
-              - Arn
-        Version: 2012-10-17
-      Description: ''
-      ManagedPolicyName: !Join
-        - ''
-        - - 'orbit-'
-          - !Ref envname
-          - '-demo-lake-bucket-readonlyaccess'
-      Path: /
+
   LakeCreatorGroup:
     Type: 'AWS::Cognito::UserPoolGroup'
     Properties:
@@ -242,31 +133,7 @@ Resources:
           - !GetAtt
             - SecuredLakeBucket
             - Arn
-          - '"CreatorAccessPolicy": "'
-          - !Select
-            - 1
-            - !Split
-              - /
-              - !Select
-                - 5
-                - !Split
-                  - ':'
-                  - !Ref LakeBucketFullAccess
-          - '", "UserAccessPolicy": "'
-          - !Select
-            - 1
-            - !Split
-              - /
-              - !Select
-                - 5
-                - !Split
-                  - ':'
-                  - !Ref LakeBucketReadOnlyAccess
-          - '", "DemoKMSKey": "'
-          - !GetAtt
-            - demokmskey
-            - Arn
-          - '"}'
+          - '}'
       Description: Orbit Workbench Demo resources.
       Name: !Join
         - ''
@@ -290,14 +157,10 @@ Outputs:
     Description: The name of the S3 bucket owned by the CDK toolkit stack
     Value:
       Ref: SecuredLakeBucket
-  LakeBucketFullAccessName:
-    Description: The LakeBucketFullAccess Policy
+  LakeCreatorAdditionalPolicy:
+    Description: The Lake Creator Additional Policy
     Value:
-      Ref: LakeBucketFullAccess
-  LakeBucketReadOnlyAccessName:
-    Description: The LakeBucketReadOnlyAccess Policy
-    Value:
-      Ref: LakeBucketReadOnlyAccess
+      Ref: LakeCreatorAdditionalPolicy
   LakeCreatorGroupName:
     Description: The Lake Creator Group Name
     Value:

@@ -31,7 +31,7 @@ def delete_crawler(crawler: str) -> None:
 
     Example
     -------
-    >>> import aws.utils.notebooks.glue as glue
+    >>> import aws_orbit_sdk.glue_catalog as glue
     >>> delete_crawler(crawler= "crawler-name")
     """
     glue = boto3.client("glue")
@@ -61,10 +61,10 @@ def run_crawler(crawler: str, target_db: str, target_path: str, wait: Optional[A
         Returns the state of the crawler after finished running and creating tables.
     Example
     -------
-    >>> import aws.utils.notebooks.glue as glue
+    >>> import aws_orbit_sdk.glue_catalog as glue
     >>> response = glue.run_crawler(crawler, target_db, target_path, wait=True)
     """
-    role = get_workspace()["eks-nodegroup-role-arn"]
+    role = get_workspace()["EksPodRoleArn"]
     glue = boto3.client("glue")
     try:
         glue.delete_crawler(Name=crawler)
@@ -127,7 +127,7 @@ def update_teamspace_lakeformation_permissions(db_name: Optional[str] = "*") -> 
 
     Example
     --------
-    >>> import aws.utils.notebooks.glue as glue
+    >>> import aws_orbit_sdk.glue_catalog as glue
     >>> glue.update_teamspace_lakeformation_permissions(database_name)
     """
     workspace = get_workspace()
@@ -137,7 +137,7 @@ def update_teamspace_lakeformation_permissions(db_name: Optional[str] = "*") -> 
         "env_name": workspace["env_name"],
         "team_space": workspace["team_space"],
         "db_name": db_name,
-        "role_arn": workspace["eks-nodegroup-role-arn"],
+        "role_arn": workspace["EksPodRoleArn"],
     }
     payload = json.dumps(inp)
     response = lambda_client.invoke(
@@ -205,7 +205,7 @@ def tag_columns(
 
     Examples
     --------
-    >>> import aws.utils.notebooks.glue as glue
+    >>> import aws_orbit_sdk.glue_catalog as glue
     >>> update_table = orbit_catalog_api.tag_columns(
     ...                        database='secured_database',
     ...                        table_name='table1',
@@ -271,7 +271,7 @@ def untag_columns(
 
     Example
     -------
-    >>> import aws.utils.notebooks.glue as glue
+    >>> import aws_orbit_sdk.glue_catalog as glue
     >>> orbit_catalog_api.untag_columns(database='secured_database',key='security-level')
     """
     glue = boto3.client("glue")
