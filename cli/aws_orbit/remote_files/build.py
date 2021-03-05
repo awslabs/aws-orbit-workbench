@@ -18,14 +18,11 @@ from typing import TYPE_CHECKING, List, Optional, Tuple, cast
 from boto3 import client
 
 from aws_orbit import docker, plugins, sh
-from aws_orbit.models.context import ContextSerDe
+from aws_orbit.models.context import Context, ContextSerDe, TeamContext
+from aws_orbit.models.manifest import ImageManifest
 from aws_orbit.remote_files import teams as team_utils
 from aws_orbit.remote_files.env import DEFAULT_IMAGES, DEFAULT_ISOLATED_IMAGES
 from aws_orbit.utils import boto3_client
-
-if TYPE_CHECKING:
-    from aws_orbit.models.context import Context, TeamContext
-    from aws_orbit.models.manifest import ImageManifest
 
 _logger: logging.Logger = logging.getLogger(__name__)
 

@@ -161,8 +161,6 @@ def build_image(
     debug: bool,
 ) -> None:
     with MessagesContext("Deploying Docker Image", debug=debug) as msg_ctx:
-        ssm.cleanup_changeset(env_name=env)
-        ssm.cleanup_manifest(env_name=env)
         context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
         msg_ctx.info("Manifest loaded")
         if cfn.does_stack_exist(stack_name=f"orbit-{context.name}") is False:

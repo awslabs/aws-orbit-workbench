@@ -76,6 +76,10 @@ ADD bootstrap.sh /home/jovyan/.orbit/bootstrap.sh
 RUN chown -R jovyan /home/jovyan/.orbit
 RUN chmod a+xr /home/jovyan/.orbit/bootstrap.sh
 
+# add bundle with docker image sources
+COPY aws-orbit_jupyter-user.tar.gz /home/jovyan/aws-orbit_jupyter-user.tar.gz
+RUN chown jovyan /home/jovyan/aws-orbit_jupyter-user.tar.gz
+
 # ######################################
 # # Jupyter Lab extensions
 # ######################################
