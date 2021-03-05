@@ -48,7 +48,7 @@ ManagedNodegroups:
 Teams:
 -   Name: lake-creator
     Policies:
-    - orbit-dev-env-demo-lake-bucket-fullaccess
+    - orbit-dev-env-demo-lake-creator-add-policy
     GrantSudo: false
     JupyterhubInboundRanges:
     - 0.0.0.0/0
@@ -56,7 +56,7 @@ Teams:
     EfsLifeCycle: AFTER_7_DAYS
 -   Name: lake-user
     Policies:
-    - orbit-dev-env-demo-lake-bucket-readonlyaccess
+    - orbit-dev-env-demo-lake-user-add-policy
     JupyterhubInboundRanges:
     - 0.0.0.0/0
     GrantSudo: true
