@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  Orbit Workbench lake-user demo stack
+Parameters:
+  envname:
+    Type: String
+    Default: dev-env
+    Description: Orbit Environemnt Name
+  envdeployid:
+    Type: String
+    Description: Orbit Deployment ID
+  envcognitouserpoolid:
+    Type: String
+    Description: Orbit Cognito Userpool ID
+  CfnTemplatePath:
+    Type: String
+    Description: Orbit Lake User  CloudFormation template path
+Resources:
+  LakeUserAdditionalPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:Get*'
+              - 's3:List*'
+            Effect: Allow
+            Resource:
+              - !Join
+                - ''
+                - - 'arn:aws:s3:::'
+                  - 'orbit-'
+                  - !Ref envname
+                  - '-demo-lake-'
+                  - !Ref 'AWS::AccountId'
+                  - '-'
+                  - !Ref envdeployid
+              - !Join
+                - ''
+                - - 'arn:aws:s3:::'
+                  - 'orbit-'
+                  - !Ref envname
+                  - '-demo-lake-'
+                  - !Ref 'AWS::AccountId'
+                  - '-'
+                  - !Ref envdeployid
+                  - '/*'
+          - Action: 'glue:*'
+            Effect: Allow
+            Resource: '*'
+        Version: 2012-10-17
+      Description: ''
+      ManagedPolicyName: !Join
+        - ''
+        - - 'orbit-'
+          - !Ref envname
+          - '-demo-lake-user-add-policy'
+      Path: /
+  LakeUserGroup:
+    Type: 'AWS::Cognito::UserPoolGroup'
+    Properties:
+      UserPoolId: !Ref envcognitouserpoolid
+      Description: The Lake User Group Name.
+      GroupName: lake-user
+
+Outputs:
+  LakeUserAdditionalPolicy:
+    Description: The Lake User Additional Policy
+    Value:
+      Ref: LakeUserAdditionalPolicy
+  LakeUserGroupName:
+    Description: The Lake User Group Name
+    Value:
+      Ref: LakeUserGroup

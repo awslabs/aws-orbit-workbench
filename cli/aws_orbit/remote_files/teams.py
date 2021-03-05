@@ -123,6 +123,28 @@ def _deploy_team_bootstrap(context: "Context", team_context: "TeamContext") -> N
 
 
 def deploy_team(context: "Context", manifest: Manifest, team_manifest: TeamManifest) -> None:
+    # Pull team spacific custom cfn plugin, trigger pre_hook
+    team_context: Optional["TeamContext"] = create_team_context_from_manifest(
+        manifest=manifest, team_manifest=team_manifest
+    )
+    _logger.debug(f"team_context={team_context}")
+    if team_context:
+        _logger.debug(f"team_context.plugins={team_context.plugins}")
+        _logger.debug("Calling team pre_hook")
+        for plugin in team_context.plugins:
+            hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
+                context=context,
+                team_name=team_context.name,
+                plugin_name=plugin.plugin_id,
+                hook_name="pre_hook",
+            )
+            if hook is not None:
+                _logger.debug(f"Found pre_hook for plugin_id {plugin}")
+                hook(plugin.plugin_id, context, team_context, plugin.parameters)
+        _logger.debug("End of pre_hook plugin execution")
+    else:
+        _logger.debug(f"Skipping pre_hook for unknown Team: {team_manifest.name}")
+
     args = [context.name, team_manifest.name]
     cdk.deploy(
         context=context,
@@ -130,7 +152,7 @@ def deploy_team(context: "Context", manifest: Manifest, team_manifest: TeamManif
         app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
         args=args,
     )
-    team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_manifest.name)
+    team_context = context.get_team_by_name(name=team_manifest.name)
     if team_context:
         team_context.fetch_team_data()
     else:
@@ -157,6 +179,21 @@ def destroy_team(context: "Context", team_context: "TeamContext") -> None:
                 app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "team.py"),
                 args=args,
             )
+
+        _logger.debug("Team specific post_hook execute to destroy the cfn resources")
+        _logger.debug(f"team_context.plugins={team_context.plugins}")
+        for plugin in team_context.plugins:
+            _logger.debug(f"post hook plugin={plugin}")
+            if plugin.plugin_id == "custom_cfn":
+                hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
+                    context=context,
+                    team_name=team_context.name,
+                    plugin_name=plugin.plugin_id,
+                    hook_name="post_hook",
+                )
+                if hook is not None:
+                    _logger.debug(f"Found post hook for team {team_context.name} plugin {plugin.plugin_id}")
+                    hook(plugin.plugin_id, context, team_context, plugin.parameters)
 
 
 def destroy_all(context: "Context") -> None:

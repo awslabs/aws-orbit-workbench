@@ -24,6 +24,7 @@ from aws_orbit.services import s3
 from aws_orbit.utils import boto3_client
 
 CHANGESET_PREFIX = "aws-orbit-cli-deploy-"
+SSM_CONTEXT: Dict[str, str] = {}
 
 _logger: logging.Logger = logging.getLogger(__name__)
 

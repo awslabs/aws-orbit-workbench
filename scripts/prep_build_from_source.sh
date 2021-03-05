@@ -62,4 +62,7 @@ if [ $PLUGINS -eq 1 ]; then
     ${DIR}/update_repo.sh plugins/team_script_launcher aws-orbit-team-script-launcher \
         && echo "Updated team_script_launcher codeartifact repository" \
         || (echo "ERROR: Failed to update team_script_launcher codeartifact repository"; exit 1)
+    ${DIR}/update_repo.sh plugins/custom_cfn aws_orbit_custom_cfn \
+        && echo "Updated custom_cfn codeartifact repository" \
+        || (echo "ERROR: Failed to update custom_cfn codeartifact repository"; exit 1)
 fi
