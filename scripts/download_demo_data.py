@@ -39,7 +39,7 @@ def _download_demo_data(bucket_name: str, bucket_key_prefix: str, download_files
                 # Uploading to S3 data files path
                 remote_src_file = os.path.join(remote_dir, file_name)
                 s3_key_prefix = f"{bucket_key_prefix}{file_name}"
-                _logger.info(f"uploading {remote_src_file} to s3 {bucket_name}/{s3_key_prefix")
+                _logger.info(f"uploading {remote_src_file} to s3 {bucket_name}/{s3_key_prefix}")
                 s3.upload_file(remote_src_file, bucket_name, s3_key_prefix)
         _logger.info(f"Downloaded CSM data from {downloaded_files}")
     else:
