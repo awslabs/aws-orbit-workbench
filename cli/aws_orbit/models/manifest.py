@@ -54,6 +54,8 @@ class TeamManifest:
     name: str
     policies: List[str] = field(default_factory=list)
     grant_sudo: bool = False
+    fargate: bool = True
+    k8_admin: bool = False
     jupyterhub_inbound_ranges: List[str] = field(default_factory=lambda: ["0.0.0.0/0"])
     image: Optional[str] = None
     plugins: List[PluginManifest] = field(default_factory=list)

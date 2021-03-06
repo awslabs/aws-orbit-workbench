@@ -1,8 +1,6 @@
 {
     "compute": {
-        "compute_type": "eks",
-        "node_type": "fargate",
-        "add_ebs": "True",
+        "node_type": "ec2",
         "container": {
             "p_concurrent" :1
         }
