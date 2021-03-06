@@ -39,9 +39,6 @@ def build_image(args: Tuple[str, ...]) -> None:
     _logger.debug("args: %s", args)
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
 
-    plugins.PLUGINS_REGISTRIES.load_plugins(context=context, plugin_changesets=[], teams_changeset=None)
-    _logger.debug("Plugins loaded")
-
     docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
 
