@@ -174,7 +174,7 @@ def build_image(
         build_args = [] if build_args is None else build_args
         buildspec = codebuild.generate_spec(
             context=context,
-            plugins=True,
+            plugins=False,
             cmds_build=[
                 f"orbit remote --command build_image {env} {name} {script_str} {teams_str} {' '.join(build_args)}"
             ],
