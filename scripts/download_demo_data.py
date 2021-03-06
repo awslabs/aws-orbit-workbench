@@ -64,16 +64,16 @@ def _prepare_demo_data(bucket_name) -> None:
         "https://www.cms.gov/Research-Statistics-Data-and-Systems/Downloadable-Public-Use-Files/SynPUFs/Downloads/DE1_0_2009_Beneficiary_Summary_File_Sample_1.zip",  # noqa
         "https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/SynPUFs/Downloads/DE1_0_2010_Beneficiary_Summary_File_Sample_20.zip",  # noqa
     ]
-    _download_demo_data(bucket_name=bucket_name, bucket_key_prefix="data/cms/", download_files=cms_files)
+    _download_demo_data(bucket_name=bucket_name, bucket_key_prefix="landing/data/cms/", download_files=cms_files)
     _logger.debug("Adding SageMaker regression notebooks data sets")
     sagemaker_files: List[str] = [
         "https://archive.ics.uci.edu/ml/machine-learning-databases/breast-cancer-wisconsin/wdbc.data",
         "https://github.com/mnielsen/neural-networks-and-deep-learning/raw/master/data/mnist.pkl.gz",
     ]
-    _download_demo_data(bucket_name=bucket_name, bucket_key_prefix="data/sagemaker/", download_files=sagemaker_files)
+    _download_demo_data(bucket_name=bucket_name, bucket_key_prefix="landing/data/sagemaker/", download_files=sagemaker_files)
     _logger.debug("Adding CSM schema files")
     cms_schema_files = os.path.join(ORBIT_CLI_ROOT, "data", "cms", "schema")
-    schema_key_prefix = "cms/schema/"
+    schema_key_prefix = "landing/cms/schema/"
     sh.run(f"aws s3 cp --recursive {cms_schema_files} s3://{bucket_name}/{schema_key_prefix}")
 
 
