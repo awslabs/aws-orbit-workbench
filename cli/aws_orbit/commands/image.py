@@ -21,7 +21,7 @@ import botocore
 from kubernetes import config
 from slugify import slugify
 
-from aws_orbit import bundle, plugins, remote, sh, utils
+from aws_orbit import bundle, remote, sh, utils
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.env import DEFAULT_IMAGES, DEFAULT_ISOLATED_IMAGES
@@ -99,8 +99,6 @@ def delete_profile(env: str, team: str, profile_name: str, debug: bool) -> None:
 
 
 def list_profiles(env: str, team: str, debug: bool) -> None:
-    ssm.cleanup_changeset(env_name=env)
-    ssm.cleanup_manifest(env_name=env)
     print("Team profiles:")
     profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
     _logger.debug("Existing user profiles for team %s: %s", team, profiles)
@@ -161,22 +159,12 @@ def build_image(
     debug: bool,
 ) -> None:
     with MessagesContext("Deploying Docker Image", debug=debug) as msg_ctx:
-        ssm.cleanup_changeset(env_name=env)
-        ssm.cleanup_manifest(env_name=env)
         context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
         msg_ctx.info("Manifest loaded")
         if cfn.does_stack_exist(stack_name=f"orbit-{context.name}") is False:
             msg_ctx.error("Please, deploy your environment before deploying any additional docker image")
             return
         msg_ctx.progress(3)
-
-        plugins.PLUGINS_REGISTRIES.load_plugins(
-            context=context,
-            msg_ctx=msg_ctx,
-            plugin_changesets=[],
-            teams_changeset=None,
-        )
-        msg_ctx.progress(4)
 
         bundle_path = bundle.generate_bundle(command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)])
         msg_ctx.progress(5)
@@ -186,7 +174,7 @@ def build_image(
         build_args = [] if build_args is None else build_args
         buildspec = codebuild.generate_spec(
             context=context,
-            plugins=True,
+            plugins=False,
             cmds_build=[
                 f"orbit remote --command build_image {env} {name} {script_str} {teams_str} {' '.join(build_args)}"
             ],
