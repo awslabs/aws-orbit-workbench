@@ -1,4 +1,4 @@
-Name: dev-env
+Name: !ENV ${ENV_NAME::dev-env}
 CodeartifactDomain: aws-orbit
 CodeartifactRepository: python-repository
 Images:
