@@ -5,7 +5,7 @@ Images:
     CodeBuild:
         Repository: !ENV ${CODE_BUILD_IMAGE::aws-orbit-code-build-base}
         Source: !ENV ${IMAGE_SOURCE::code}
-        Path: !ENV ${IMAGE_PATH::../aws-eks-data-maker/images/code-build-image}
+        Path: !ENV ${IMAGE_PATH::../images/code-build-image}
         Version: latest
 Networking:
     Data:
