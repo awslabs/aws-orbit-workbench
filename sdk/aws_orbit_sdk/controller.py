@@ -128,7 +128,7 @@ def _get_execution_history_from_local(notebook_basedir: str, src_notebook: str, 
         executions.append((str(nb), datetime.fromtimestamp(nb.stat().st_mtime), notebook_dir))
 
     if not executions:
-        print(f"No output notebooks founds at: {notebook_dir}")
+        _logger.info(f"No output notebooks founds at: {notebook_dir}")
 
     df = pd.DataFrame(executions, columns=["relativePath", "timestamp", "path"])
     return df
@@ -157,7 +157,7 @@ def _get_execution_history_from_s3(notebookBaseDir: str, srcNotebook: str, props
             timestamp = key["LastModified"]
             executions.append((notebookName, timestamp, s3path))
     else:
-        print("No output notebooks founds at: s3://{}/{}".format(props["AWS_ORBIT_S3_BUCKET"], path))
+        _logger.info("No output notebooks founds at: s3://{}/{}".format(props["AWS_ORBIT_S3_BUCKET"], path))
 
     df = pd.DataFrame(executions, columns=["relativePath", "timestamp", "s3path"])
     return df
@@ -348,6 +348,153 @@ def _make_create_pvc_request(team_constants: TeamConstants, pvc):
             raise
 
 
+def list_team_running_jobs():
+    return list_running_jobs(True)
+
+
+def list_my_running_jobs():
+    return list_running_jobs(False)
+
+
+def list_running_jobs(team_only: bool = False):
+    props = get_properties()
+    global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
+    env_name = props["AWS_ORBIT_ENV"]
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    load_kube_config()
+    username = os.environ["JUPYTERHUB_USER"] if os.environ["JUPYTERHUB_USER"] else os.environ["USERNAME"]
+    api_instance = BatchV1Api()
+    field_selector = "status.successful!=1"
+    if team_only:
+        operand = "!="
+    else:
+        operand = "="
+
+    label_selector = f"app=orbit-runner,username{operand}{username}"
+    try:
+        api_response = api_instance.list_namespaced_job(
+            namespace=team_name,
+            _preload_content=False,
+            label_selector=label_selector,
+            field_selector=field_selector,
+            watch=False,
+        )
+        res = json.loads(api_response.data)
+    except ApiException as e:
+        _logger.info("Exception when calling BatchV1Api->list_namespaced_job: %s\n" % e)
+        raise e
+
+    if "items" not in res:
+        return []
+
+    return res["items"]
+
+
+def list_current_pods(label_selector: str = None):
+    props = get_properties()
+    global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
+    env_name = props["AWS_ORBIT_ENV"]
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    load_kube_config()
+    api_instance = CoreV1Api()
+    try:
+        params = dict()
+        params["namespace"] = team_name
+        params["_preload_content"] = False
+        if label_selector:
+            params["label_selector"] = label_selector
+
+        api_response = api_instance.list_namespaced_pod(**params)
+        res = json.loads(api_response.data)
+    except ApiException as e:
+        _logger.info("Exception when calling BatchV1Api->list_namespaced_job: %s\n" % e)
+        raise e
+
+    if "items" not in res:
+        return []
+
+    return res["items"]
+
+
+def delete_job(job_name: str, grace_period_seconds: int = 30):
+    props = get_properties()
+    global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
+    env_name = props["AWS_ORBIT_ENV"]
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    load_kube_config()
+    api_instance = BatchV1Api()
+    try:
+        api_response = api_instance.delete_namespaced_job(
+            name=job_name,
+            namespace=team_name,
+            _preload_content=False,
+            grace_period_seconds=grace_period_seconds,
+            orphan_dependents=False,
+        )
+    except ApiException as e:
+        _logger.info("Exception when calling BatchV1Api->list_namespaced_job: %s\n" % e)
+        raise e
+
+
+def delete_cronjob(job_name: str, grace_period_seconds: int = 30):
+    props = get_properties()
+    global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
+    env_name = props["AWS_ORBIT_ENV"]
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    load_kube_config()
+    api_instance = BatchV1beta1Api()
+    try:
+        api_response = api_instance.delete_namespaced_cron_job(
+            name=job_name,
+            namespace=team_name,
+            _preload_content=False,
+            grace_period_seconds=grace_period_seconds,
+            orphan_dependents=False,
+        )
+    except ApiException as e:
+        _logger.info("Exception when calling BatchV1Api->delete_namespaced_cron_job: %s\n" % e)
+        raise e
+
+
+def delete_all_my_jobs():
+    props = get_properties()
+    global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
+    env_name = props["AWS_ORBIT_ENV"]
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    username = os.environ["JUPYTERHUB_USER"] if os.environ["JUPYTERHUB_USER"] else os.environ["USERNAME"]
+    load_kube_config()
+    api_instance = BatchV1Api()
+    label_selector = f"app=orbit-runner,username={username}"
+    try:
+        api_response = api_instance.delete_collection_namespaced_job(
+            namespace=team_name, _preload_content=False, orphan_dependents=False
+        )
+    except ApiException as e:
+        _logger.info("Exception when calling BatchV1Api->delete_collection_namespaced_job: %s\n" % e)
+        raise e
+
+
+def list_running_cronjobs():
+    props = get_properties()
+    global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
+    env_name = props["AWS_ORBIT_ENV"]
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    load_kube_config()
+    api_instance = BatchV1beta1Api()
+
+    try:
+        api_response = api_instance.list_namespaced_cron_job(namespace=team_name, _preload_content=False)
+        res = json.loads(api_response.data)
+    except ApiException as e:
+        _logger.info("Exception when calling BatchV1beta1Api->list_namespaced_cron_job: %s\n" % e)
+        raise e
+
+    if "items" not in res:
+        return []
+
+    return res["items"]
+
+
 def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_constants: TeamConstants) -> V1JobSpec:
     """
     Runs Task in Python in a notebook using lambda.
@@ -501,12 +648,9 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
     """
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
-
+    username = os.environ["JUPYTERHUB_USER"] if os.environ["JUPYTERHUB_USER"] else os.environ["USERNAME"]
     node_type = get_node_type(taskConfiguration)
-    labels = {
-        "app": f"orbit-runner",
-        "orbit/node-type": node_type,
-    }
+    labels = {"app": f"orbit-runner", "orbit/node-type": node_type, "username": username}
     if node_type == "ec2":
         labels["orbit/attach-security-group"] = "yes"
     team_constants: TeamConstants = TeamConstants()
@@ -660,11 +804,9 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     node_type = get_node_type(taskConfiguration)
-    labels = {
-        "app": f"orbit-runner",
-        "orbit/node-type": node_type,
-    }
     username = os.environ["JUPYTERHUB_USER"] if os.environ["JUPYTERHUB_USER"] else os.environ["USERNAME"]
+    cronjob_id = f"orbit-{team_name}-{triggerName}"
+    labels = {"app": f"orbit-runner", "orbit/node-type": node_type, "username": username, "cronjob_id": cronjob_id}
     team_constants: TeamConstants = TeamConstants(username)
     job_spec = _create_eks_job_spec(taskConfiguration, labels=labels, team_constants=team_constants)
     cron_job_template: V1beta1JobTemplateSpec = V1beta1JobTemplateSpec(spec=job_spec)
@@ -672,7 +814,7 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     job = V1beta1CronJob(
         api_version="batch/v1beta1",
         kind="CronJob",
-        metadata=V1ObjectMeta(name=f"orbit-{team_name}-{triggerName}", labels=labels, namespace=team_name),
+        metadata=V1ObjectMeta(name=cronjob_id, labels=labels, namespace=team_name),
         status=V1beta1CronJobStatus(),
         spec=cron_job_spec,
     )
@@ -776,8 +918,8 @@ def wait_for_tasks_to_complete(
                 )
             except exceptions.ApiException as e:
                 _logger.error("Error during list jobs for %s: %s", team_name, e)
-                # try again after 30 seconds.
-                time.sleep(30)
+                # try again after 5 seconds.
+                time.sleep(5)
                 current_jobs: V1JobList = BatchV1Api().list_namespaced_job(
                     namespace=team_name, label_selector=f"app=orbit-runner"
                 )
@@ -885,7 +1027,7 @@ def logEvents(paginator: Any, logGroupName: Any, logStreams: Any, fromTime: Any)
             for e in page["events"]:
                 t = datetime.fromtimestamp(e["timestamp"] / 1000).strftime("%Y-%m-%d %H:%M:%S")
                 m = e["message"]
-                print(t, m)
+                _logger.info(t, m)
                 lastTime = e["timestamp"]
 
             if "nextToken" in page.keys():
