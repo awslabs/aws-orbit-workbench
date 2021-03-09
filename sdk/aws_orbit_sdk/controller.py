@@ -776,8 +776,8 @@ def wait_for_tasks_to_complete(
                 )
             except exceptions.ApiException as e:
                 _logger.error("Error during list jobs for %s: %s", team_name, e)
-                # try again after 5 seconds.
-                time.sleep(5)
+                # try again after 30 seconds.
+                time.sleep(30)
                 current_jobs: V1JobList = BatchV1Api().list_namespaced_job(
                     namespace=team_name, label_selector=f"app=orbit-runner"
                 )
