@@ -42,8 +42,8 @@ ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge
     LocalStorageSize: 128
-    NodesNumDesired: 2
-    NodesNumMax: 3
+    NodesNumDesired: 3
+    NodesNumMax: 4
     NodesNumMin: 1
     Labels:
         instance-type: m5.2xlarge
@@ -51,7 +51,9 @@ Teams:
 -   Name: lake-creator
     Policies:
     - orbit-dev-env-demo-lake-creator-add-policy
-    GrantSudo: false
+    GrantSudo: true
+    Fargate: false
+    K8Admin: true
     JupyterhubInboundRanges:
     - 0.0.0.0/0
     Plugins: !include lake-creator-plugins.yaml
