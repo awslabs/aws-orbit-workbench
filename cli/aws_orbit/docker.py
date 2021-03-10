@@ -151,6 +151,10 @@ def deploy_image_from_source(
     build_args: Optional[List[str]] = None,
 ) -> None:
     _logger.debug("Adding CodeArtifact login to build environment, used by Dockerfile")
+    if not os.path.exists(dir):
+        bundle_dir = os.path.join("bundle", dir)
+        if os.path.exists(bundle_dir):
+            dir = bundle_dir
     if context.codeartifact_domain and context.codeartifact_repository:
         ca_domain: str = context.codeartifact_domain
         ca_repo: str = context.codeartifact_repository

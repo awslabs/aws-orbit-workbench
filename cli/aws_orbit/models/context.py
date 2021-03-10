@@ -161,6 +161,9 @@ class TeamContext:
     team_kms_key_arn: Optional[str] = None
     elbs: Optional[Dict[str, Dict[str, Any]]] = None
     team_security_group_id: Optional[str] = None
+    # added with defaults for backward compatability
+    fargate: bool = True
+    k8_admin: bool = False
 
     def fetch_team_data(self) -> None:
         _logger.debug("Fetching Team %s data...", self.name)

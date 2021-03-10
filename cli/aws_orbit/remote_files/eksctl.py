@@ -379,20 +379,22 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
     _logger.debug("Synthetizing the EKSCTL Teams manifest")
     cluster_name = f"orbit-{context.name}"
     if cfn.does_stack_exist(stack_name=final_eks_stack_name) and context.teams:
-        subnets = (
-            context.networking.private_subnets
-            if context.networking.data.internet_accessible
-            else context.networking.isolated_subnets
-        )
-        subnets_ids = [s.subnet_id for s in subnets]
-        eks.create_fargate_profile(
-            profile_name=f"orbit-{context.name}-{team_context.name}",
-            cluster_name=f"orbit-{context.name}",
-            role_arn=cast(str, context.eks_fargate_profile_role_arn),
-            subnets=subnets_ids,
-            namespace=team_context.name,
-            selector_labels={"team": team_context.name, "orbit/node-type": "fargate"},
-        )
+        if team_context.fargate:
+            subnets = (
+                context.networking.private_subnets
+                if context.networking.data.internet_accessible
+                else context.networking.isolated_subnets
+            )
+            subnets_ids = [s.subnet_id for s in subnets]
+
+            eks.create_fargate_profile(
+                profile_name=f"orbit-{context.name}-{team_context.name}",
+                cluster_name=f"orbit-{context.name}",
+                role_arn=cast(str, context.eks_fargate_profile_role_arn),
+                subnets=subnets_ids,
+                namespace=team_context.name,
+                selector_labels={"team": team_context.name, "orbit/node-type": "fargate"},
+            )
 
         username = f"orbit-{context.name}-{team_context.name}-runner"
         arn = f"arn:aws:iam::{context.account_id}:role/{username}"

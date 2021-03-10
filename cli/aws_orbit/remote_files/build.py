@@ -13,11 +13,11 @@
 #    limitations under the License.
 
 import logging
-from typing import TYPE_CHECKING, List, Optional, Tuple, cast
+from typing import List, Optional, Tuple, cast
 
 from boto3 import client
 
-from aws_orbit import docker, plugins, sh
+from aws_orbit import docker, sh
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.models.manifest import ImageManifest
 from aws_orbit.remote_files import teams as team_utils
@@ -38,9 +38,6 @@ def build_image(args: Tuple[str, ...]) -> None:
 
     _logger.debug("args: %s", args)
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
-
-    plugins.PLUGINS_REGISTRIES.load_plugins(context=context, plugin_changesets=[], teams_changeset=None)
-    _logger.debug("Plugins loaded")
 
     docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
