@@ -80,6 +80,16 @@ RUN rm /etc/pip.conf
 RUN conda run pip install --no-deps jupyterhub-kubespawner~=0.15.0
 RUN echo "" > `conda run pip  show jupyterhub-kubespawner | grep "Location:" | cut -d ':' -f 2`/kubespawner/__init__.py
 
+# add the boostrap script and change permission to jovyan
+RUN mkdir -p /home/jovyan/.orbit
+ADD bootstrap.sh /home/jovyan/.orbit/bootstrap.sh
+RUN chown -R jovyan /home/jovyan/.orbit
+RUN chmod a+xr /home/jovyan/.orbit/bootstrap.sh
+
+# add bundle with docker image sources
+COPY aws-orbit_jupyter-user.tar.gz /home/jovyan/.orbit/aws-orbit_jupyter-user.tar.gz
+RUN chown jovyan /home/jovyan/.orbit/aws-orbit_jupyter-user.tar.gz
+
 # ######################################
 # # Jupyter Lab extensions
 # ######################################
