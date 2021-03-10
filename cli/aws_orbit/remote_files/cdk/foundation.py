@@ -188,11 +188,6 @@ class FoundationStack(Stack):
                 ec2.SubnetConfiguration(name="Private", subnet_type=ec2.SubnetType.PRIVATE, cidr_mask=21),
                 ec2.SubnetConfiguration(name="Isolated", subnet_type=ec2.SubnetType.ISOLATED, cidr_mask=21),
             ],
-            flow_logs={
-                "all-traffic": ec2.FlowLogOptions(
-                    destination=ec2.FlowLogDestination.to_cloud_watch_logs(), traffic_type=ec2.FlowLogTrafficType.ALL
-                )
-            },
         )
         return vpc
 
@@ -281,12 +276,18 @@ class FoundationStack(Stack):
                 ],
             )
 
+        self._vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
+        # Adding ingress rule to VPC CIDR
+        self._vpc_security_group.add_ingress_rule(
+            peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block), connection=ec2.Port.all_tcp()
+        )
         for name, interface_service in vpc_interface_endpoints.items():
             self.vpc.add_interface_endpoint(
                 id=name,
                 service=interface_service,
                 subnets=ec2.SubnetSelection(subnets=self.nodes_subnets.subnets),
                 private_dns_enabled=True,
+                security_groups=[self._vpc_security_group],
             )
         # Adding CodeArtifact VPC endpoints
         self.vpc.add_interface_endpoint(
@@ -296,22 +297,18 @@ class FoundationStack(Stack):
             ),
             subnets=ec2.SubnetSelection(subnets=self.nodes_subnets.subnets),
             private_dns_enabled=False,
+            security_groups=[self._vpc_security_group],
         )
         self.vpc.add_interface_endpoint(
             id="code_artifact_api_endpoint",
             service=cast(ec2.IInterfaceVpcEndpointService, ec2.InterfaceVpcEndpointAwsService("codeartifact.api")),
             subnets=ec2.SubnetSelection(subnets=self.nodes_subnets.subnets),
             private_dns_enabled=False,
+            security_groups=[self._vpc_security_group],
         )
 
         # Adding Lambda and Redshift endpoints with CDK low level APIs
         endpoint_url_template = "com.amazonaws.{}.{}"
-        self._vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
-        # Adding ingress rule to VPC CIDR
-        self._vpc_security_group.add_ingress_rule(
-            peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block), connection=ec2.Port.all_tcp()
-        )
-
         ec2.CfnVPCEndpoint(
             self,
             "redshift_endpoint",
