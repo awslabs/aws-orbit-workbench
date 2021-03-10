@@ -1,4 +1,4 @@
-Name: !ENV ${ENV_NAME::dev-env}
+Name: !ENV ${ORBIT_ENV_NAME::dev-env}
 CodeartifactDomain: aws-orbit
 CodeartifactRepository: python-repository
 EksSystemMastersRoles:
