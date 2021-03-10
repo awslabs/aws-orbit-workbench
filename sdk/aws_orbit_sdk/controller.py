@@ -315,39 +315,6 @@ def run_notebooks(taskConfiguration: dict) -> Any:
         raise RuntimeError("Unsupported compute_type '%s'", taskConfiguration["compute_type"])
 
 
-def _make_create_pvc_request(team_constants: TeamConstants, pvc):
-    # Try and create the pvc. If it succeeds we are good. If
-    # returns a 409 indicating it already exists we are good. If
-    # it returns a 403, indicating potential quota issue we need
-    # to see if pvc already exists before we decide to raise the
-    # error for quota being exceeded. This is because quota is
-    # checked before determining if the PVC needed to be
-    # created.
-    try:
-        pvc_instance = CoreV1Api().create_namespaced_persistent_volume_claim(
-            namespace=team_constants.team_name, body=pvc
-        )
-        _logger.info("Created PVC: %s", pvc)
-        metadata: V1ObjectMeta = pvc_instance.metadata
-        return True
-    except ApiException as e:
-        if e.status == 409:
-            _logger.debug("PVC " + pvc.metadata.name + " already exists, so did not create new pvc.")
-            return True
-        elif e.status == 403:
-            t, v, tb = sys.exc_info()
-            try:
-                CoreV1Api().read_namespaced_persistent_volume_claim_status(
-                    namespace=team_constants.team_name, name=pvc.metadata.name
-                )
-            except ApiException as e:
-                raise v.with_traceback(tb)
-            _logger.warning("PVC " + pvc.metadata.name + " already exists, possibly have reached quota though.")
-            return True
-        else:
-            raise
-
-
 def list_team_running_jobs():
     return list_running_jobs(True)
 
@@ -358,11 +325,9 @@ def list_my_running_jobs():
 
 def list_running_jobs(team_only: bool = False):
     props = get_properties()
-    global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
-    env_name = props["AWS_ORBIT_ENV"]
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     load_kube_config()
-    username = os.environ["JUPYTERHUB_USER"] if os.environ["JUPYTERHUB_USER"] else os.environ["USERNAME"]
+    username = os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))
     api_instance = BatchV1Api()
     field_selector = "status.successful!=1"
     if team_only:
@@ -392,8 +357,6 @@ def list_running_jobs(team_only: bool = False):
 
 def list_current_pods(label_selector: str = None):
     props = get_properties()
-    global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
-    env_name = props["AWS_ORBIT_ENV"]
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     load_kube_config()
     api_instance = CoreV1Api()
@@ -403,7 +366,6 @@ def list_current_pods(label_selector: str = None):
         params["_preload_content"] = False
         if label_selector:
             params["label_selector"] = label_selector
-
         api_response = api_instance.list_namespaced_pod(**params)
         res = json.loads(api_response.data)
     except ApiException as e:
@@ -424,7 +386,7 @@ def delete_job(job_name: str, grace_period_seconds: int = 30):
     load_kube_config()
     api_instance = BatchV1Api()
     try:
-        api_response = api_instance.delete_namespaced_job(
+        api_instance.delete_namespaced_job(
             name=job_name,
             namespace=team_name,
             _preload_content=False,
@@ -438,13 +400,11 @@ def delete_job(job_name: str, grace_period_seconds: int = 30):
 
 def delete_cronjob(job_name: str, grace_period_seconds: int = 30):
     props = get_properties()
-    global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
-    env_name = props["AWS_ORBIT_ENV"]
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     load_kube_config()
     api_instance = BatchV1beta1Api()
     try:
-        api_response = api_instance.delete_namespaced_cron_job(
+        api_instance.delete_namespaced_cron_job(
             name=job_name,
             namespace=team_name,
             _preload_content=False,
@@ -458,16 +418,14 @@ def delete_cronjob(job_name: str, grace_period_seconds: int = 30):
 
 def delete_all_my_jobs():
     props = get_properties()
-    global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
-    env_name = props["AWS_ORBIT_ENV"]
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
-    username = os.environ["JUPYTERHUB_USER"] if os.environ["JUPYTERHUB_USER"] else os.environ["USERNAME"]
+    username = os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))
     load_kube_config()
     api_instance = BatchV1Api()
     label_selector = f"app=orbit-runner,username={username}"
     try:
-        api_response = api_instance.delete_collection_namespaced_job(
-            namespace=team_name, _preload_content=False, orphan_dependents=False
+        api_instance.delete_collection_namespaced_job(
+            namespace=team_name, _preload_content=False, orphan_dependents=False, label_selector=label_selector
         )
     except ApiException as e:
         _logger.info("Exception when calling BatchV1Api->delete_collection_namespaced_job: %s\n" % e)
@@ -476,12 +434,9 @@ def delete_all_my_jobs():
 
 def list_running_cronjobs():
     props = get_properties()
-    global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
-    env_name = props["AWS_ORBIT_ENV"]
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     load_kube_config()
     api_instance = BatchV1beta1Api()
-
     try:
         api_response = api_instance.list_namespaced_cron_job(namespace=team_name, _preload_content=False)
         res = json.loads(api_response.data)
@@ -648,7 +603,7 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
     """
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
-    username = os.environ["JUPYTERHUB_USER"] if os.environ["JUPYTERHUB_USER"] else os.environ["USERNAME"]
+    username = os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))
     node_type = get_node_type(taskConfiguration)
     labels = {"app": f"orbit-runner", "orbit/node-type": node_type, "username": username}
     if node_type == "ec2":
@@ -804,7 +759,7 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     node_type = get_node_type(taskConfiguration)
-    username = os.environ["JUPYTERHUB_USER"] if os.environ["JUPYTERHUB_USER"] else os.environ["USERNAME"]
+    username = os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))
     cronjob_id = f"orbit-{team_name}-{triggerName}"
     labels = {"app": f"orbit-runner", "orbit/node-type": node_type, "username": username, "cronjob_id": cronjob_id}
     team_constants: TeamConstants = TeamConstants(username)
