@@ -149,10 +149,13 @@ def build_profile(env: str, team: str, profile: str, debug: bool) -> None:
 
 def build_image(
     env: str,
-    dir: str,
+    dir: Optional[str],
     name: str,
     script: Optional[str],
     teams: Optional[List[str]],
+    source_registry: Optional[str],
+    source_repository: Optional[str],
+    source_version: Optional[str],
     build_args: Optional[List[str]],
     debug: bool,
 ) -> None:
@@ -163,18 +166,23 @@ def build_image(
             msg_ctx.error("Please, deploy your environment before deploying any additional docker image")
             return
         msg_ctx.progress(3)
-
-        bundle_path = bundle.generate_bundle(command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)])
+        if dir:
+            dirs = [(dir, name)]
+        else:
+            dirs = None
+        bundle_path = bundle.generate_bundle(command_name=f"deploy_image-{name}", context=context, dirs=dirs)
         msg_ctx.progress(5)
 
+
         script_str = "NO_SCRIPT" if script is None else script
+        source_str = "NO_REPO" if source_registry is None else f"{source_registry} {source_repository} {source_version}"
         teams_str = "NO_TEAMS" if not teams else ",".join(teams)
         build_args = [] if build_args is None else build_args
         buildspec = codebuild.generate_spec(
             context=context,
             plugins=False,
             cmds_build=[
-                f"orbit remote --command build_image {env} {name} {script_str} {teams_str} {' '.join(build_args)}"
+                f"orbit remote --command build_image {env} {name} {script_str} {teams_str} {source_str} {' '.join(build_args)}"
             ],
             changeset=None,
         )

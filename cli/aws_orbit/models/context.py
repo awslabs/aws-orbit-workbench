@@ -494,7 +494,12 @@ class ContextSerDe(Generic[T, V]):
     def load_context_from_ssm(env_name: str, type: Type[V]) -> V:
         if type is Context:
             context_parameter_name: str = f"/orbit/{env_name}/context"
-            main = ssm.get_parameter(name=context_parameter_name)
+            if ssm.does_parameter_exist(context_parameter_name):
+                main = ssm.get_parameter(name=context_parameter_name)
+            else:
+                msg = f"SSM parameter {context_parameter_name} not found for env {env_name}"
+                _logger.error(msg)
+                raise Exception(msg)
             teams_parameters = ssm.list_parameters(prefix=f"/orbit/{env_name}/teams/")
             _logger.debug("teams_parameters: %s", teams_parameters)
             teams = [ssm.get_parameter_if_exists(name=p) for p in teams_parameters if p.endswith("/context")]

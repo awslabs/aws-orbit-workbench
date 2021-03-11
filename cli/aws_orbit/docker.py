@@ -176,14 +176,20 @@ def replicate_image(
     context: "Context",
     deployed_name: str,
     image_name: str,
+    source: Optional[str],
+    source_repository: Optional[str],
+    source_version: Optional[str],
 ) -> None:
     _logger.debug("Logged in")
     _logger.debug(f"Context: {vars(context)}")
 
     attr_name: str = image_name.replace("-", "_")
-    source = getattr(context.images, attr_name).source
-    source_repository = getattr(context.images, attr_name).repository
-    source_version = getattr(context.images, attr_name).version
+    if not source:
+        source = getattr(context.images, attr_name).source
+    if not source_repository:
+        source_repository = getattr(context.images, attr_name).repository
+    if not source_version:
+        source_version = getattr(context.images, attr_name).version
     if source == "dockerhub":
         dockerhub_pull(name=source_repository, tag=source_version)
         _logger.debug("Pulled DockerHub Image")
