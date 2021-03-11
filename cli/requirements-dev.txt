@@ -4,17 +4,17 @@
 #
 #    pip-compile requirements-dev.in
 #
--e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/plugins/code_commit
+-e ../plugins/code_commit
     # via -r requirements-dev.in
--e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/plugins/hello_world
+-e ../plugins/hello_world
     # via -r requirements-dev.in
--e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/plugins/redshift
+-e ../plugins/redshift
     # via -r requirements-dev.in
--e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/sdk
+-e ../sdk
     # via -r requirements-dev.in
--e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/plugins/team_script_launcher
+-e ../plugins/team_script_launcher
     # via -r requirements-dev.in
--e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/cli
+-e .
     # via -r requirements-dev.in
 appdirs==1.4.4
     # via black
