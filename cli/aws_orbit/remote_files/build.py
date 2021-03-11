@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import logging
+import os
 from typing import List, Optional, Tuple, cast
 
 from boto3 import client
@@ -58,7 +59,14 @@ def build_image(args: Tuple[str, ...]) -> None:
     _logger.debug("image def: %s", image_def)
 
     if image_def is None or getattr(context.images, image_name).source == "code":
-        path = image_name
+        path = os.path.join(os.getcwd(), image_name)
+        if not os.path.exists(path):
+            bundle_dir = os.path.join(os.getcwd(), "bundle", image_name)
+            if os.path.exists(bundle_dir):
+                path = bundle_dir
+            else:
+                raise RuntimeError(f"Unable to locate source in {path} or {bundle_dir}")
+
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
