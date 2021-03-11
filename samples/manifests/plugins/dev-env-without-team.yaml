@@ -1,40 +1,42 @@
-Name: dev-env
+Name: !ENV ${ORBIT_ENV_NAME::dev-env}
 CodeartifactDomain: aws-orbit
 CodeartifactRepository: python-repository
-ScratchBucketArn: !SSM ${/orbit/dev-env/demo::ScratchBucketArn}
-UserPoolId: !SSM ${/orbit/dev-env/demo::UserPoolId}
-SharedEfsFsId: !SSM ${/orbit/dev-env/demo::SharedEfsFsId}
-SharedEfsSgId: !SSM ${/orbit/dev-env/demo::SharedEfsSgId}
+EksSystemMastersRoles:
+-   !ENV ${ORBIT_ADMIN_ROLE::Admin}
+ScratchBucketArn: !SSM ${/orbit-foundation/dev-env/resources::ScratchBucketArn}
+UserPoolId: !SSM ${/orbit-foundation/dev-env/resources::UserPoolId}
+SharedEfsFsId: !SSM ${/orbit-foundation/dev-env/resources::SharedEfsFsId}
+SharedEfsSgId: !SSM ${/orbit-foundation/dev-env/resources::SharedEfsSgId}
 Images:
     JupyterHub:
-        Repository: aws-orbit-jupyter-hub
-        Source: code
-        Path: ../images/jupyter-hub
+        Repository: !ENV ${JUPYTER_HUB_REPO::aws-orbit-jupyter-hub}
+        Source: !ENV ${IMAGE_SOURCE::code}
+        Path: !ENV ${IMAGE_PATH::../images/jupyter-hub}
         Version: latest
     JupyterUser:
-        Repository: aws-orbit-jupyter-user
-        Source: code
-        Path: ../images/jupyter-user
+        Repository: !ENV ${JUPYTER_USER_REPO::aws-orbit-jupyter-user}
+        Source: !ENV ${IMAGE_SOURCE::code}
+        Path: !ENV ${IMAGE_PATH::../images/jupyter-user}
         Version: latest
     LandingPage:
-        Repository: aws-orbit-landing-page
-        Source: code
-        Path: ../images/landing-page
+        Repository: !ENV ${LANDING_PAGE_REPO::aws-orbit-landing-page}
+        Source: !ENV ${IMAGE_SOURCE::code}
+        Path: !ENV ${IMAGE_PATH::../images/landing-page}
         Version: latest
     CodeBuild:
-        Repository: aws-orbit-code-build-base
-        Source: code
-        Path: ../images/code-build-image
+        Repository: !ENV ${CODE_BUILD_IMAGE::aws-orbit-code-build-base}
+        Source: !ENV ${IMAGE_SOURCE::code}
+        Path: !ENV ${IMAGE_PATH::../images/code-build-image}
         Version: latest
 Networking:
-    VpcId: !SSM ${/orbit/dev-env/demo::VpcId}
-    PublicSubnets: !SSM ${/orbit/dev-env/demo::PublicSubnets}
-    PrivateSubnets: !SSM ${/orbit/dev-env/demo::PrivateSubnets}
-    IsolatedSubnets: !SSM ${/orbit/dev-env/demo::IsolatedSubnets}
+    VpcId: !SSM ${/orbit-foundation/dev-env/resources::VpcId}
+    PublicSubnets: !SSM ${/orbit-foundation/dev-env/resources::PublicSubnets}
+    PrivateSubnets: !SSM ${/orbit-foundation/dev-env/resources::PrivateSubnets}
+    IsolatedSubnets: !SSM ${/orbit-foundation/dev-env/resources::IsolatedSubnets}
     Data:
         InternetAccessible: false
-        NodesSubnets: !SSM ${/orbit/dev-env/demo::NodesSubnets}
+        NodesSubnets: !SSM ${/orbit-foundation/dev-env/resources::NodesSubnets}
     Frontend:
-        LoadBalancersSubnets: !SSM ${/orbit/dev-env/demo::LoadBalancersSubnets}
+        LoadBalancersSubnets: !SSM ${/orbit-foundation/dev-env/resources::LoadBalancersSubnets}
 ManagedNodegroups: []
 Teams: []
