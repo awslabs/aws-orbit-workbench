@@ -1,2 +1,4 @@
 pip.conf
-notes.txt
+./notes.txt
+.venv
+dev
