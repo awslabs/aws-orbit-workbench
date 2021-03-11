@@ -176,37 +176,48 @@ def replicate_image(
     context: "Context",
     deployed_name: str,
     image_name: str,
-    source: Optional[str],
-    source_repository: Optional[str],
-    source_version: Optional[str],
+    source: Optional[str] = None,
+    source_repository: Optional[str] = None,
+    source_version: Optional[str] = None,
 ) -> None:
     _logger.debug("Logged in")
     _logger.debug(f"Context: {vars(context)}")
 
     attr_name: str = image_name.replace("-", "_")
     if not source:
-        source = getattr(context.images, attr_name).source
+        final_source = getattr(context.images, attr_name).source
+    else:
+        final_source = source
     if not source_repository:
         source_repository = getattr(context.images, attr_name).repository
+    else:
+        final_source_repository = source_repository
     if not source_version:
         source_version = getattr(context.images, attr_name).version
+    else:
+        final_source_version = source_version
+
     if source == "dockerhub":
-        dockerhub_pull(name=source_repository, tag=source_version)
+        dockerhub_pull(name=final_source_repository, tag=final_source_version)
         _logger.debug("Pulled DockerHub Image")
     elif source in ["ecr", "ecr-internal", "ecr-public"]:
-        ecr_pull(context=context, name=source_repository, tag=source_version)
+        ecr_pull(context=context, name=final_source_repository, tag=final_source_version)
         _logger.debug("Pulled ECR Image")
     elif source == "ecr-external":
-        ecr_pull_external(context=context, repository=source_repository, tag=source_version)
+        ecr_pull_external(context=context, repository=final_source_repository, tag=final_source_version)
         _logger.debug("Pulled external ECR Image")
     else:
         e = ValueError(
-            f"Invalid Image Source: {source}. Valid values are: code, dockerhub, ecr, ecr-internal, ecr-public"
+            f"Invalid Image Source: {final_source}. Valid values are: code, dockerhub, ecr, ecr-internal, ecr-public"
         )
         _logger.error(e)
         raise e
 
     tag_image(
-        context=context, remote_name=source_repository, remote_source=source, name=deployed_name, tag=source_version
+        context=context,
+        remote_name=final_source_repository,
+        remote_source=final_source,
+        name=deployed_name,
+        tag=final_source_version,
     )
-    push(context=context, name=deployed_name, tag=source_version)
+    push(context=context, name=deployed_name, tag=final_source_version)

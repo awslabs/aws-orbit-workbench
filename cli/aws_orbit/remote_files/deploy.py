@@ -135,7 +135,7 @@ def deploy_images_remotely(context: "Context") -> None:
             ("aws-efs-csi-driver", None, None, []),
             ("livenessprobe", None, None, []),
             ("csi-node-driver-registrar", None, None, []),
-            ("k8_dashboard", None, None, [])
+            ("k8_dashboard", None, None, []),
         ]
     _logger.debug("Building the second images batch")
     if images:

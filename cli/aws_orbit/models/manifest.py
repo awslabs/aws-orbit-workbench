@@ -125,17 +125,21 @@ class CsiNodeDriverRegistrarImageManifest(ImageManifest):
     source: Optional[str] = "ecr-external"
     version: Optional[str] = "v1.3.0"
 
-#https://github.com/kubernetes/dashboard/releases
+
+# https://github.com/kubernetes/dashboard/releases
 @dataclass(base_schema=BaseSchema, frozen=True)
 class K8Dashboard(ImageManifest):
     repository: Optional[str] = "kubernetesui/dashboard"
     source: Optional[str] = "dockerhub"
     version: Optional[str] = "v2.2.0"
 
+
+@dataclass(base_schema=BaseSchema, frozen=True)
 class MetricsScraper(ImageManifest):
     repository: Optional[str] = "kubernetesui/metrics-scraper"
     source: Optional[str] = "dockerhub"
     version: Optional[str] = "v1.0.6"
+
 
 # https://github.com/kubernetes-sigs/metrics-server/releases
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -167,9 +171,9 @@ class ImagesManifest:
     aws_efs_csi_driver: AwsEfsDriverImageManifest = AwsEfsDriverImageManifest()
     livenessprobe: LivenessprobeImageManifest = LivenessprobeImageManifest()
     csi_node_driver_registrar: CsiNodeDriverRegistrarImageManifest = CsiNodeDriverRegistrarImageManifest()
-    k8_dashboard: K8Dashboard()
-    k8_metrics_scraper: MetricsScraper()
-    k8_metrics_server: MetricsServer()
+    k8_dashboard: K8Dashboard = K8Dashboard()
+    k8_metrics_scraper: MetricsScraper = MetricsScraper()
+    k8_metrics_server: MetricsServer = MetricsServer()
     names: List[str] = field(
         metadata=dict(load_only=True),
         default_factory=lambda: [
@@ -182,7 +186,7 @@ class ImagesManifest:
             "csi_node_driver_registrar",
             "k8_dashboard",
             "k8_metrics_scraper",
-            "k8_metrics_server"
+            "k8_metrics_server",
         ],
     )
 

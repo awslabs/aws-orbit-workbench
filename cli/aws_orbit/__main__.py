@@ -380,10 +380,12 @@ def deploy_image_cli(
     _logger.debug("debug: %s", debug)
     build_image(dir=dir, name=name, env=env, script=script, teams=team, build_args=build_arg, debug=debug)
 
+
 @click.group(name="replicate")
 def replicate() -> None:
     """Replicate images from external respositories into ECR"""
     pass
+
 
 @replicate.command(name="image")
 @click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
@@ -465,10 +467,19 @@ def replicate_image_cli(
     _logger.debug("script: %s", script)
     _logger.debug("teams: %s", team)
     _logger.debug("debug: %s", debug)
-    build_image(dir=None, name=name, env=env, script=script, teams=team,
-                source_registry=source_registry,source_repository=source_repository,
-                source_version=source_version,
-                build_args=build_arg, debug=debug)
+    build_image(
+        dir=None,
+        name=name,
+        env=env,
+        script=script,
+        teams=team,
+        source_registry=source_registry,
+        source_repository=source_repository,
+        source_version=source_version,
+        build_args=build_arg,
+        debug=debug,
+    )
+
 
 @build.command(name="profile")
 @click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
