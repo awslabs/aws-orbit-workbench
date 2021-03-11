@@ -45,7 +45,6 @@ def get_credential(context: T) -> Tuple[str, str]:
         raise ex
 
 
-
 def store_credential(context: "Context", username: str, password: str) -> None:
     if context.toolkit.s3_bucket is None:
         raise ValueError(f"context.toolkit.s3_bucket: {context.toolkit.s3_bucket}")

@@ -306,7 +306,9 @@ def create_team_context_from_manifest(manifest: "Manifest", team_manifest: "Team
     ssm_parameter_name: str = f"/orbit/{manifest.name}/teams/{team_manifest.name}/context"
     if team_manifest.image is None:
         version = manifest.images.jupyter_user.version
-        base_image_address: str = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-jupyter-user:{version}"
+        base_image_address: str = (
+            f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-jupyter-user:{version}"
+        )
     else:
         base_image_address = (
             f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.image}-jupyter-user"
