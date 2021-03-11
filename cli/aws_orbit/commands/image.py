@@ -18,14 +18,12 @@ import os
 from typing import Any, Dict, List, Optional, cast
 
 import botocore
-from kubernetes import config
 from slugify import slugify
 
-from aws_orbit import bundle, remote, sh, utils
+from aws_orbit import bundle, remote, utils
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.env import DEFAULT_IMAGES, DEFAULT_ISOLATED_IMAGES
-from aws_orbit.remote_files.utils import get_k8s_context
 from aws_orbit.services import cfn, codebuild, ssm
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -62,20 +60,6 @@ def write_context_ssm(profiles: PROFILES_TYPE, env_name: str, team_name: str) ->
     )
 
 
-def restart_jupyterhub(env: str, team: str, msg_ctx: MessagesContext) -> None:
-    ssm.cleanup_manifest(env_name=env)
-    context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
-    msg_ctx.tip("JupyterHub update...")
-    msg_ctx.tip("JupyterHub and notebooks in your namespace will be restarted. Please close notebook and login again")
-    try:
-        k8s_context = get_k8s_context(context=context)
-        sh.run(f"kubectl rollout restart deployment jupyterhub  --namespace {team} --context {k8s_context}")
-    except config.config_exception.ConfigException:
-        # no context , use kubectl without context
-        sh.run(f"kubectl rollout restart deployment jupyterhub  --namespace {team}")
-    msg_ctx.tip("JupyterHub restarted")
-
-
 def delete_profile(env: str, team: str, profile_name: str, debug: bool) -> None:
     with MessagesContext("Profile Deleted", debug=debug) as msg_ctx:
         ssm.cleanup_changeset(env_name=env)
@@ -90,8 +74,6 @@ def delete_profile(env: str, team: str, profile_name: str, debug: bool) -> None:
                 _logger.debug("Updated user profiles for team %s: %s", team, profiles)
                 write_context_ssm(profiles, env, team)
                 msg_ctx.tip("Profile deleted")
-                msg_ctx.progress(90)
-                restart_jupyterhub(env, team, msg_ctx)
                 msg_ctx.progress(100)
 
                 return

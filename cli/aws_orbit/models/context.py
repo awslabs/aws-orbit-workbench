@@ -237,6 +237,7 @@ class Context:
     cognito_external_provider_redirect: Optional[str] = None
     cognito_external_provider_domain: Optional[str] = None
     landing_page_url: Optional[str] = None
+    k8_dashboard_url: Optional[str] = None
     codeartifact_domain: Optional[str] = None
     codeartifact_repository: Optional[str] = None
     cognito_external_provider: Optional[str] = None

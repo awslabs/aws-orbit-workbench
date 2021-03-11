@@ -189,21 +189,21 @@ def replicate_image(
     else:
         final_source = source
     if not source_repository:
-        source_repository = getattr(context.images, attr_name).repository
+        final_source_repository = getattr(context.images, attr_name).repository
     else:
         final_source_repository = source_repository
     if not source_version:
-        source_version = getattr(context.images, attr_name).version
+        final_source_version = getattr(context.images, attr_name).version
     else:
         final_source_version = source_version
 
-    if source == "dockerhub":
+    if final_source == "dockerhub":
         dockerhub_pull(name=final_source_repository, tag=final_source_version)
         _logger.debug("Pulled DockerHub Image")
-    elif source in ["ecr", "ecr-internal", "ecr-public"]:
+    elif final_source in ["ecr", "ecr-internal", "ecr-public"]:
         ecr_pull(context=context, name=final_source_repository, tag=final_source_version)
         _logger.debug("Pulled ECR Image")
-    elif source == "ecr-external":
+    elif final_source == "ecr-external":
         ecr_pull_external(context=context, repository=final_source_repository, tag=final_source_version)
         _logger.debug("Pulled external ECR Image")
     else:

@@ -22,6 +22,7 @@ from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.models.manifest import ImagesManifest
 from aws_orbit.remote_files.utils import get_k8s_context
 from aws_orbit.services import cfn, elb
+from aws_orbit.utils import resolve_parameters
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -65,10 +66,7 @@ def _k8_dashboard(context: "Context", output_path: str) -> None:
     with open(input, "r") as file:
         content: str = file.read()
     _logger.debug("using for k8 dashboard images: \n%s \n%s", dashboard_image, scraper_image)
-    content = content.replace("$", "").format(
-        dashboard_image=dashboard_image,
-        scraper_image=scraper_image,
-    )
+    content = resolve_parameters(content, parameters=dict(dashboard_image=dashboard_image, scraper_image=scraper_image))
     with open(output, "w") as file:
         file.write(content)
 
@@ -88,9 +86,7 @@ def _metrics_server(context: "Context", output_path: str) -> None:
     with open(input, "r") as file:
         content: str = file.read()
     _logger.debug("using %s for k8 dashboard image", image)
-    content = content.replace("$", "").format(
-        image=image,
-    )
+    content = content.replace("$", "").format(image=image)
     with open(output, "w") as file:
         file.write(content)
 
@@ -257,7 +253,13 @@ def fetch_kubectl_data(context: "Context", k8s_context: str, include_teams: bool
     landing_page_url: str = k8s.get_service_hostname(
         name="landing-page-public", k8s_context=k8s_context, namespace="env"
     )
+    k8_dashboard_url: str = k8s.get_service_hostname(
+        name="kubernetes-dashboard", k8s_context=k8s_context, namespace="kubernetes-dashboard"
+    )
+
     context.landing_page_url = f"http://{landing_page_url}"
+    context.k8_dashboard_url = f"http://{k8_dashboard_url}"
+
     _update_elbs(context=context)
 
     ContextSerDe.dump_context_to_ssm(context=context)
