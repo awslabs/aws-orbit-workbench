@@ -117,8 +117,6 @@ def list_profiles(env: str, team: str, debug: bool) -> None:
 
 def build_profile(env: str, team: str, profile: str, debug: bool) -> None:
     with MessagesContext("Adding profile", debug=debug) as msg_ctx:
-        ssm.cleanup_changeset(env_name=env)
-        ssm.cleanup_manifest(env_name=env)
         msg_ctx.info("Retrieving existing profiles")
         profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
         _logger.debug("Existing user profiles for team %s: %s", team, profiles)
