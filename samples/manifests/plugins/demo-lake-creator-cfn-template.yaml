@@ -103,6 +103,9 @@ Resources:
           - Action: 'glue:*'
             Effect: Allow
             Resource: '*'
+          - Action: 'ec2:*'
+            Effect: Allow
+            Resource: '*'
         Version: 2012-10-17
       Description: ''
       ManagedPolicyName: !Join
