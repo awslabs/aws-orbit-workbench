@@ -125,15 +125,15 @@ Resources:
       Type: String
       Value: !Join
         - ''
-        - - '{"LakeBucket": '
+        - - '{"LakeBucket": "'
           - !GetAtt
             - LakeBucket
             - Arn
-          - '"SecuredLakeBucket": '
+          - '", "SecuredLakeBucket": "'
           - !GetAtt
             - SecuredLakeBucket
             - Arn
-          - '}'
+          - '"}'
       Description: Orbit Workbench Demo resources.
       Name: !Join
         - ''
