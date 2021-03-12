@@ -27,7 +27,7 @@ def _jupyter_labextension_paths():
     return [{"src": "labextension", "dest": data["name"]}]
 
 
-from .handlers import setup_handlers  # noqa: F401, E402
+from .url_router import setup_handlers  # noqa: F401, E402
 
 
 def _jupyter_server_extension_points():

@@ -10,6 +10,7 @@ import { RUNNING_CLASS, SECTION_CLASS } from './common/styles';
 import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
+import { K8ContainersLeftList } from './compute/k8Containers';
 
 const NAME = 'Compute';
 const ICON: LabIcon = computeIcon;
@@ -63,6 +64,7 @@ class LeftWidget extends ReactWidget {
           refreshCallback={refreshCallback}
           openCallback={this.launchCallback}
         />
+        <K8ContainersLeftList/>
         <div />
       </div>
     );
