@@ -48,7 +48,8 @@
     "@jupyterlab/launcher": "^3.0.5",
     "@jupyterlab/mainmenu": "^3.0.5",
     "@jupyterlab/services": "^6.0.0-rc.13",
-    "@jupyterlab/ui-components": "^3.0.4"
+    "@jupyterlab/ui-components": "^3.0.4",
+    "antd": "^4.13.1"
   },
   "devDependencies": {
     "@jupyterlab/builder": "^3.0.0-rc.13",
