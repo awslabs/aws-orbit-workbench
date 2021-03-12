@@ -408,7 +408,7 @@ def replicate() -> None:
     required=False,
 )
 @click.option(
-    "--source_registry",
+    "--source-registry",
     "-y",
     type=str,
     multiple=False,
@@ -417,7 +417,7 @@ def replicate() -> None:
     required=True,
 )
 @click.option(
-    "--source_repository",
+    "--source-repository",
     "-r",
     type=str,
     multiple=False,
@@ -426,7 +426,7 @@ def replicate() -> None:
     required=True,
 )
 @click.option(
-    "--source_version",
+    "--source-version",
     "-v",
     type=str,
     multiple=False,
