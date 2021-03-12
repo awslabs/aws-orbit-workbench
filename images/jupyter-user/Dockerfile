@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=jupyter/base-notebook:python-3.8.6
+ARG BASE_IMAGE=jupyter/base-notebook:python-3.8.8
 FROM $BASE_IMAGE
 
 ######################################
@@ -30,7 +30,7 @@ RUN update-alternatives --install /usr/bin/nano nano /bin/nano-tiny 10
 # Kubectl installation
 ######################################
 RUN cd /usr/local/bin \
-    && sudo curl -k -sS -O https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.9/2020-11-02/bin/linux/amd64/kubectl \
+    && sudo curl -k -sS -O https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl \
     && sudo chmod 755 /usr/local/bin/kubectl
 
 ######################################
@@ -97,7 +97,7 @@ RUN chown jovyan /home/jovyan/.orbit/aws-orbit_jupyter-user.tar.gz
 ENV JUPYTER_ENABLE_LAB yes
 RUN jupyter serverextension enable --py jupyterlab --sys-prefix && \
     jupyter nbextension enable --py widgetsnbextension --sys-prefix && \
-    jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build --no-build && \
+    jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build && \
     jupyter labextension install jupyter-matplotlib --no-build && \
     jupyter lab build --dev-build=False -y && \
     jupyter lab clean -y && \
@@ -106,5 +106,9 @@ RUN jupyter serverextension enable --py jupyterlab --sys-prefix && \
     rm -rf "/home/${NB_USER}/.node-gyp" && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
+
+ADD extensions/jupyterlab_orbit/ /etc/extensions/jupyterlab_orbit/
+RUN conda run pip install /etc/extensions/jupyterlab_orbit/
+RUN jupyter labextension build /etc/extensions/jupyterlab_orbit
 
 USER $NB_UID

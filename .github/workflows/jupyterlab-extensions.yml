@@ -1,0 +1,33 @@
+name: JupyterLab Extentions
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  JupyterLabExtension:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+    defaults:
+      run:
+        working-directory: images/jupyter-user/extensions/jupyterlab_orbit
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Install node
+      uses: actions/setup-node@v1
+      with:
+       node-version: '10.x'
+    - name: Install dependencies
+      run: python -m pip install jupyterlab
+    - name: Build the extension
+      run: |
+        jlpm
+        jlpm run eslint:check
+        python -m pip install .
