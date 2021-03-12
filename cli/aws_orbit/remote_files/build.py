@@ -35,8 +35,19 @@ def build_image(args: Tuple[str, ...]) -> None:
     image_name: str = args[1]
     script: Optional[str] = args[2] if args[2] != "NO_SCRIPT" else None
     teams: Optional[List[str]] = list(set(args[3].split(","))) if args[3] != "NO_TEAMS" else None
-    build_args = args[4:]
-
+    source_registry: Optional[str]
+    if args[4] != "NO_REPO":
+        if len(args) < 7:
+            raise Exception("Source registry is defined without 'source_repository' or 'source_version' ")
+        source_registry = args[4]
+        source_repository: str = args[5]
+        source_version: str = args[6]
+        build_args = args[7:]
+        _logger.info("replicating image %s: %s %s:%s", image_name, source_registry, source_repository, source_version)
+    else:
+        _logger.info("building image %s: %s %s:%s", image_name, script)
+        build_args = args[5:]
+        source_registry = None
     _logger.debug("args: %s", args)
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
 
@@ -58,7 +69,16 @@ def build_image(args: Tuple[str, ...]) -> None:
     image_def: Optional["ImageManifest"] = getattr(context.images, image_name, None)
     _logger.debug("image def: %s", image_def)
 
-    if image_def is None or getattr(context.images, image_name).source == "code":
+    if source_registry:
+        docker.replicate_image(
+            context=context,
+            image_name=image_name,
+            deployed_name=ecr_repo,
+            source=source_registry,
+            source_repository=source_repository,
+            source_version=source_version,
+        )
+    elif image_def is None or getattr(context.images, image_name).source == "code":
         path = os.path.join(os.getcwd(), image_name)
         if not os.path.exists(path):
             bundle_dir = os.path.join(os.getcwd(), "bundle", image_name)

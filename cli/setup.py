@@ -45,6 +45,7 @@ setup(
         "marshmallow_dataclass[enum,union]~=8.3.0",
         "cfn-flip~=1.2.3",
         "python-slugify~=4.0.1",
+        "kubernetes~=12.0.1",
     ],
     entry_points={"console_scripts": ["orbit = aws_orbit.__main__:main"]},
     classifiers=[

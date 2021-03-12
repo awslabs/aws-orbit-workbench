@@ -11,23 +11,19 @@ Images:
     JupyterHub:
         Repository: !ENV ${JUPYTER_HUB_REPO::aws-orbit-jupyter-hub}
         Source: !ENV ${IMAGE_SOURCE::code}
-        Path: !ENV ${IMAGE_PATH::../images/jupyter-hub}
+        Path: !ENV ${IMAGE_PATH::../../../images/jupyter-hub}
         Version: latest
     JupyterUser:
         Repository: !ENV ${JUPYTER_USER_REPO::aws-orbit-jupyter-user}
         Source: !ENV ${IMAGE_SOURCE::code}
-        Path: !ENV ${IMAGE_PATH::../images/jupyter-user}
+        Path: !ENV ${IMAGE_PATH::../../../images/jupyter-user}
         Version: latest
     LandingPage:
         Repository: !ENV ${LANDING_PAGE_REPO::aws-orbit-landing-page}
         Source: !ENV ${IMAGE_SOURCE::code}
-        Path: !ENV ${IMAGE_PATH::../images/landing-page}
+        Path: !ENV ${IMAGE_PATH::../../../images/landing-page}
         Version: latest
-    CodeBuild:
-        Repository: !ENV ${CODE_BUILD_IMAGE::aws-orbit-code-build-base}
-        Source: !ENV ${IMAGE_SOURCE::code}
-        Path: !ENV ${IMAGE_PATH::../images/code-build-image}
-        Version: latest
+
 Networking:
     VpcId: !SSM ${/orbit-foundation/dev-env/resources::VpcId}
     PublicSubnets: !SSM ${/orbit-foundation/dev-env/resources::PublicSubnets}

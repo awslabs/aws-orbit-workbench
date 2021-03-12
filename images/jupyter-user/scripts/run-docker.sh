@@ -15,18 +15,46 @@
 #   limitations under the License.
 #
 
+#!/usr/bin/env bash
 set -ex
 
-AWS_ACCESS_KEY_ID=$(aws --profile default configure get aws_access_key_id)
-AWS_SECRET_ACCESS_KEY=$(aws --profile default configure get aws_secret_access_key)
-AWS_DEFAULT_REGION=$(aws configure get region)
+if [[ -z "$AWS_ORBIT_ENV" ]]; then
+    echo "Must provide AWS_ORBIT_ENV in environment" 1>&2
+    exit 1
+fi
+
+if [[ -z "$AWS_ORBIT_TEAM_SPACE" ]]; then
+    echo "Must provide AWS_ORBIT_TEAM_SPACE in environment" 1>&2
+    exit 1
+fi
+
+if [[ -z "$AWS_DEFAULT_REGION" ]]; then
+    echo "Must provide AWS_DEFAULT_REGION in environment" 1>&2
+    exit 1
+fi
+
+if [[ -z "$AWS_ACCESS_KEY_ID" ]]; then
+    echo "Must provide AWS_ACCESS_KEY_ID in environment" 1>&2
+    exit 1
+fi
+
+if [[ -z "$AWS_SECRET_ACCESS_KEY" ]]; then
+    echo "Must provide AWS_SECRET_ACCESS_KEY in environment" 1>&2
+    exit 1
+fi
+
+if [ -d "extensions" ]; then
+  echo "Starting Jupyter lab"
+else
+  echo "must be inside images/jupyter-user directory"
+fi
 
 docker run \
     -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
     -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
     -e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} \
-    -e TEAM=lake-creator \
-    -e ENV_NAME=dev-env \
+    -e AWS_ORBIT_TEAM_SPACE=$AWS_ORBIT_TEAM_SPACE \
+    -e AWS_ORBIT_ENV=$AWS_ORBIT_ENV \
     -p 8888:8888 \
     --rm \
     -it \

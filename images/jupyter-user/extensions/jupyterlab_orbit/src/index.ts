@@ -23,7 +23,7 @@ const extension: JupyterFrontEndPlugin<void> = {
     launcher: ILauncher | null,
     menu: IMainMenu | null
   ) => {
-    console.log('AWS Orbit Workbench extension is activated!!!');
+    console.log('AWS Orbit Workbench extension is activated!');
 
     const { commands } = app;
     const orbitMenu: Menu = new Menu({ commands });

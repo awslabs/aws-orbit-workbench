@@ -9,7 +9,6 @@ flake8~=3.8.4
 mypy~=0.790
 cfn-lint~=0.44.3
 pydot~=1.4.1
-kubernetes~=12.0.1
 aws_cdk.core~=1.67.0
 aws-cdk.aws-ec2~=1.67.0
 aws-cdk.aws-s3~=1.67.0
@@ -31,4 +30,5 @@ python-slugify~=4.0.1
 -e ../plugins/code_commit
 -e ../plugins/team_script_launcher
 -e ../plugins/redshift
+-e ../plugins/custom_cfn
 -e ../sdk
