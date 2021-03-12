@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import logging
+import os
 from typing import List, Optional, Tuple, cast
 
 from boto3 import client
@@ -67,6 +68,7 @@ def build_image(args: Tuple[str, ...]) -> None:
 
     image_def: Optional["ImageManifest"] = getattr(context.images, image_name, None)
     _logger.debug("image def: %s", image_def)
+
     if source_registry:
         docker.replicate_image(
             context=context,
@@ -77,7 +79,14 @@ def build_image(args: Tuple[str, ...]) -> None:
             source_version=source_version,
         )
     elif image_def is None or getattr(context.images, image_name).source == "code":
-        path = image_name
+        path = os.path.join(os.getcwd(), image_name)
+        if not os.path.exists(path):
+            bundle_dir = os.path.join(os.getcwd(), "bundle", image_name)
+            if os.path.exists(bundle_dir):
+                path = bundle_dir
+            else:
+                raise RuntimeError(f"Unable to locate source in {path} or {bundle_dir}")
+
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)

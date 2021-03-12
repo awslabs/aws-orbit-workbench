@@ -15,12 +15,27 @@
 #   limitations under the License.
 #
 
-# THIS SCRIPT IS ONLY NECESSARY WHILE WE DON'T HAVE A BETTER MECHANISM TO ADDRESS THAT (i.e. PLUGINS)
-
-set -ex
+set -x
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+ARCHIVE_DIR=${DIR}/aws-orbit_jupyter-user
 
-aws codeartifact login --tool pip --domain aws-orbit --repository python-repository
-cp ~/.config/pip/pip.conf ${DIR}/
-${DIR}/bundle.sh
+rm -r ${ARCHIVE_DIR}
+rm ${ARCHIVE_DIR}.tar.gz
+
+mkdir -p ${ARCHIVE_DIR}
+
+cp -r ${DIR}/python-utils ${ARCHIVE_DIR}/
+cp -r ${DIR}/transformations ${ARCHIVE_DIR}/
+cp -r ${DIR}/extensions ${ARCHIVE_DIR}/
+cp ${DIR}/jupyter_server_config.py ${ARCHIVE_DIR}/
+cp ${DIR}/requirements.txt ${ARCHIVE_DIR}/
+cp ${DIR}/bootstrap.sh ${ARCHIVE_DIR}/
+cp ${DIR}/bundle.sh ${ARCHIVE_DIR}/
+cp ${DIR}/Dockerfile ${ARCHIVE_DIR}/
+cp ${DIR}/VERSION ${ARCHIVE_DIR}/
+
+touch ${ARCHIVE_DIR}/pip.conf
+
+cd ${DIR}
+tar czvf aws-orbit_jupyter-user.tar.gz ./aws-orbit_jupyter-user
