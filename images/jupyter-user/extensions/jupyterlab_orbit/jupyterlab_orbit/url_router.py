@@ -14,7 +14,7 @@
 
 from jupyter_server.utils import url_path_join
 
-from .handlers.catalog import CatalogRouteHandler
+from .handlers.catalog import CatalogRouteHandler, TreeRouteHandler
 from .handlers.containers import ContainersRouteHandler
 
 
@@ -22,6 +22,7 @@ def setup_handlers(web_app):
     base_url: str = web_app.settings["base_url"]
     handlers = [
         (url_path_join(base_url, "jupyterlab_orbit", "catalog"), CatalogRouteHandler),
+        (url_path_join(base_url, "jupyterlab_orbit", "tree"), TreeRouteHandler),
         (url_path_join(base_url, "jupyterlab_orbit", "containers"), ContainersRouteHandler),
     ]
 

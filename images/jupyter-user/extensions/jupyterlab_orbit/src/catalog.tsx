@@ -10,6 +10,7 @@ import {
 } from '@jupyterlab/apputils';
 import { LabIcon, closeIcon } from '@jupyterlab/ui-components';
 import { Menu } from '@lumino/widgets';
+import { Tree } from 'antd';
 
 import { catalogIcon, orbitIcon } from './common/icons';
 import {
@@ -36,6 +37,7 @@ interface IItem {
 
 interface IUseItemsReturn {
   items: JSX.Element;
+  treeItems: any[];
   closeAllCallback: (name: string) => void;
   refreshCallback: () => void;
 }
@@ -107,7 +109,6 @@ const useItems = (): IUseItemsReturn => {
     const fetchData = async () => {
       setData(await request('catalog'));
     };
-
     fetchData();
   }, []);
 
@@ -142,11 +143,23 @@ const useItems = (): IUseItemsReturn => {
 
   const items = <Items data={data} closeItemCallback={closeItemCallback} />;
 
-  return { items, closeAllCallback, refreshCallback };
+  const [treeItems, setTreeItems] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      setTreeItems(await request('tree'));
+    };
+    fetchData();
+  }, []);
+
+  return { items, treeItems, closeAllCallback, refreshCallback };
+};
+
+const onSelect = (selectedKeys: React.Key[], info: any) => {
+  console.log('selected', selectedKeys, info);
 };
 
 const CentralWidgetComponent = (): JSX.Element => {
-  const { items, closeAllCallback, refreshCallback } = useItems();
+  const { items, treeItems, closeAllCallback, refreshCallback } = useItems();
   return (
     <div className={SECTION_CLASS}>
       <CentralWidgetHeader
@@ -165,6 +178,13 @@ const CentralWidgetComponent = (): JSX.Element => {
         items={items}
         shutdownAllLabel="Shut Down All"
         closeAllCallback={closeAllCallback}
+      />
+      <Tree
+        showLine={true}
+        showIcon={false}
+        defaultExpandedKeys={['0-0-0']}
+        onSelect={onSelect}
+        treeData={treeItems}
       />
     </div>
 
