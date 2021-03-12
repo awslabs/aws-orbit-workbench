@@ -155,12 +155,19 @@ const CentralWidgetComponent = (): JSX.Element => {
         refreshCallback={refreshCallback}
       />
       <ListView
-        name={'Section'}
+        name={'Section1'}
+        items={items}
+        shutdownAllLabel="Shut Down All"
+        closeAllCallback={closeAllCallback}
+      />
+      <ListView
+        name={'Section2'}
         items={items}
         shutdownAllLabel="Shut Down All"
         closeAllCallback={closeAllCallback}
       />
     </div>
+
   );
 };
 
@@ -194,7 +201,13 @@ const LeftWidgetComponent = (props: {
       />
 
       <ListView
-        name={'Section'}
+        name={'Section3'}
+        items={items}
+        shutdownAllLabel="Shut Down All"
+        closeAllCallback={closeAllCallback}
+      />
+      <ListView
+        name={'Section4'}
         items={items}
         shutdownAllLabel="Shut Down All"
         closeAllCallback={closeAllCallback}

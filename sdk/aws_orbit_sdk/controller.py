@@ -336,6 +336,7 @@ def list_running_jobs(team_only: bool = False):
         operand = "="
 
     label_selector = f"app=orbit-runner,username{operand}{username}"
+    _logger.info("using job selector %s", label_selector)
     try:
         api_response = api_instance.list_namespaced_job(
             namespace=team_name,
