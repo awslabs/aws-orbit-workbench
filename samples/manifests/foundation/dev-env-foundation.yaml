@@ -1,9 +1,0 @@
-Name: !ENV ${ORBIT_ENV_NAME::dev-env}
-CodeartifactDomain: aws-orbit
-CodeartifactRepository: python-repository
-Networking:
-    Data:
-        InternetAccessible: false
-        NodesSubnets: []
-    Frontend:
-        LoadBalancersSubnets: []
