@@ -19,7 +19,7 @@ from jupyter_server.base.handlers import APIHandler
 from jupyter_server.utils import url_path_join
 from tornado import web
 
-DATA: Dict[str, str] = {"foo": "foo description", "boo": "boo description", "bar": "bar description"}
+DATA: Dict[str, str] = {"foo": "foo description", "boo1": "boo description", "bar": "bar description"}
 
 
 class CatalogRouteHandler(APIHandler):
