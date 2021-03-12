@@ -15,6 +15,7 @@ else
 fi
 
 source .venv/bin/activate
+pip install -U pip
 pip install -r requirements-dev.txt
 jupyter labextension develop extensions/jupyterlab_orbit --overwrite
 

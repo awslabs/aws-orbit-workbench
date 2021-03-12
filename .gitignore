@@ -384,3 +384,4 @@ cli/conf/
 .orbit.out
 images/jupyter-user/notes.txt
 images/jupyter-user-spark/notes.txt
+images/jupyter-user/.workspace/shared/samples

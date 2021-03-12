@@ -13,12 +13,55 @@
 #    limitations under the License.
 
 import json
-from typing import Dict
+from typing import Any, Dict, List
 
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
 
 DATA: Dict[str, str] = {"foo": "foo description", "boo1": "boo description", "bar": "bar description"}
+
+DATA2: List[Dict[str, Any]] = [
+    {
+        "title": "Database A",
+        "key": "0-0",
+        "children": [
+            {
+                "title": "Table A",
+                "key": "0-0-0",
+                "children": [
+                    {
+                        "title": "Column A",
+                        "key": "0-0-0-0",
+                    },
+                    {
+                        "title": "Column B",
+                        "key": "0-0-0-1",
+                    },
+                ],
+            }
+        ],
+    },
+    {
+        "title": "Database B",
+        "key": "1-0",
+        "children": [
+            {
+                "title": "Table A",
+                "key": "1-0-0",
+                "children": [
+                    {
+                        "title": "Column A",
+                        "key": "1-0-0-0",
+                    },
+                    {
+                        "title": "Column B",
+                        "key": "1-0-0-1",
+                    },
+                ],
+            }
+        ],
+    },
+]
 
 
 class CatalogRouteHandler(APIHandler):
@@ -37,3 +80,10 @@ class CatalogRouteHandler(APIHandler):
         self.log.info(f"DELETE - {self.__class__} - %s", input_data)
         DATA.pop(input_data["name"])
         self.finish(self.dump())
+
+
+class TreeRouteHandler(APIHandler):
+    @web.authenticated
+    def get(self):
+        self.log.info("GET - Tree")
+        self.finish(json.dumps(DATA2))
