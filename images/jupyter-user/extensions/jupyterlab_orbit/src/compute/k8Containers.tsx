@@ -127,12 +127,14 @@ const useItems = (): IUseItemsReturn => {
 };
 
 export const K8ContainersLeftList = (props: {
+    title: string;
+    type: string;
 }): JSX.Element => {
   const {items, closeAllCallback} = useItems();
   return (
       <div className={SECTION_CLASS}>
         <ListView
-            name={'Your Containers'}
+            name={props.title}
             items={items}
             shutdownAllLabel="Shut Down All"
             closeAllCallback={closeAllCallback}

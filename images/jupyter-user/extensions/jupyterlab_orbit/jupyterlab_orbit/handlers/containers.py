@@ -14,17 +14,16 @@
 
 import json
 from typing import Dict, List
-
+import os
 from aws_orbit_sdk import controller
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
-
+from pathlib import Path
 DATA: List[Dict[str, str]] = []
 
 
 class ContainersRouteHandler(APIHandler):
     def _dump(self) -> str:
-        self.log.info(json.dumps(DATA))
         data: List[Dict[str, str]] = []
         for c in DATA:
             container: Dict[str, str] = dict()
@@ -42,14 +41,29 @@ class ContainersRouteHandler(APIHandler):
     @web.authenticated
     def get(self):
         global DATA
-        DATA = controller.list_my_running_jobs()
         self.log.info(f"GET - {self.__class__}")
+        if 'MOCK' not in os.environ or os.environ['MOCK'] == '0':
+            DATA = controller.list_my_running_jobs()
+            self.log.info(json.dumps(DATA))
+            if 'MOCK' in os.environ:
+                with open('./extensions/jupyterlab_orbit/jupyterlab_orbit/mockup/your_containers.json', 'w') as outfile:
+                    json.dump(DATA, outfile)
+        else:
+            path = Path(__file__).parent  / "../mockup/your_containers.json"
+            with open(path) as f:
+                DATA = json.load(f)
+
         self.finish(self._dump())
 
     @web.authenticated
     def delete(self):
         global DATA
         input_data = self.get_json_body()
-        self.log.info(f"DELETE - {self.__class__} - %s", input_data)
-        DATA.pop(input_data["name"])
+        job_name = input_data["name"]
+        self.log.info(f"DELETE - {self.__class__} - %s", job_name)
+        controller.delete_job(job_name)
+        for c in DATA:
+            if c["metadata"]["name"] == job_name:
+                DATA.remove(c)
+
         self.finish(self._dump())
