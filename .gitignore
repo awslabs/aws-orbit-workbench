@@ -385,3 +385,4 @@ cli/conf/
 images/jupyter-user/notes.txt
 images/jupyter-user-spark/notes.txt
 images/jupyter-user/.workspace/shared/samples
+/images/jupyter-user/*.mine
