@@ -54,11 +54,11 @@ def list_images(env: str, region: Optional[str]) -> None:
 def list_env(variable: str) -> None:
     ssm = utils.boto3_client("ssm")
     params = ssm.get_parameters_by_path(Path="/orbit", Recursive=True)["Parameters"]
-
     env_info: Dict[str, str] = {}
     for p in params:
         if not p["Name"].endswith("context") or "teams" in p["Name"]:
             continue
+
         env_name = p["Name"].split("/")[2]
         context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
         _logger.debug(f"found env: {env_name}")
@@ -72,13 +72,10 @@ def list_env(variable: str) -> None:
             teams_list = ""
         if variable == "landing-page":
             print(context.landing_page_url)
-            return
         elif variable == "toolkitbucket":
             print(context.toolkit.s3_bucket)
-            return
         elif variable == "teams":
             print(f"[{teams_list}]")
-            return
         elif variable == "all":
             env_info[env_name] = (
                 f"LandingPage={context.landing_page_url}, "
