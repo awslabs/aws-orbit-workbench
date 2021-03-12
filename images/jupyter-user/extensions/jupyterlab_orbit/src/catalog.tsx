@@ -192,6 +192,7 @@ const LeftWidgetComponent = (props: {
         refreshCallback={refreshCallback}
         openCallback={props.launchCallback}
       />
+
       <ListView
         name={'Section'}
         items={items}
