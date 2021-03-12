@@ -35,9 +35,14 @@ def get_credential(context: T) -> Tuple[str, str]:
         raise ValueError("context.toolkit.s3_bucket is None!")
     client_s3 = boto3_client(service_name="s3")
     _logger.debug(f"TOOLKIT BUCKET: {context.toolkit.s3_bucket}")
-    obj = client_s3.get_object(Bucket=context.toolkit.s3_bucket, Key="cli/dockerhub.json")
-    obj_json: Dict[str, str] = json.loads(obj["Body"].read())
-    return obj_json["username"], obj_json["password"]
+    try:
+        obj = client_s3.get_object(Bucket=context.toolkit.s3_bucket, Key="cli/dockerhub.json")
+        obj_json: Dict[str, str] = json.loads(obj["Body"].read())
+        return obj_json["username"], obj_json["password"]
+    except botocore.exceptions.ClientError as ex:
+        if ex.response["ResponseMetadata"]["HTTPStatusCode"] == 404:
+            return "", ""
+        raise ex
 
 
 def store_credential(context: "Context", username: str, password: str) -> None:
