@@ -13,12 +13,14 @@
 #    limitations under the License.
 
 import json
-from typing import Dict, List
 import os
+from pathlib import Path
+from typing import Dict, List
+
 from aws_orbit_sdk import controller
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
-from pathlib import Path
+
 DATA: List[Dict[str, str]] = []
 
 
@@ -42,14 +44,14 @@ class ContainersRouteHandler(APIHandler):
     def get(self):
         global DATA
         self.log.info(f"GET - {self.__class__}")
-        if 'MOCK' not in os.environ or os.environ['MOCK'] == '0':
+        if "MOCK" not in os.environ or os.environ["MOCK"] == "0":
             DATA = controller.list_my_running_jobs()
             self.log.info(json.dumps(DATA))
-            if 'MOCK' in os.environ:
-                with open('./extensions/jupyterlab_orbit/jupyterlab_orbit/mockup/your_containers.json', 'w') as outfile:
+            if "MOCK" in os.environ:
+                with open("./extensions/jupyterlab_orbit/jupyterlab_orbit/mockup/your_containers.json", "w") as outfile:
                     json.dump(DATA, outfile)
         else:
-            path = Path(__file__).parent  / "../mockup/your_containers.json"
+            path = Path(__file__).parent / "../mockup/your_containers.json"
             with open(path) as f:
                 DATA = json.load(f)
 
