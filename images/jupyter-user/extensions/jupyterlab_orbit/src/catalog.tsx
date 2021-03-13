@@ -187,7 +187,6 @@ const CentralWidgetComponent = (): JSX.Element => {
         treeData={treeItems}
       />
     </div>
-
   );
 };
 

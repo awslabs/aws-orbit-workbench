@@ -64,18 +64,9 @@ class LeftWidget extends ReactWidget {
           refreshCallback={refreshCallback}
           openCallback={this.launchCallback}
         />
-        <K8ContainersLeftList
-            title={"Your Jobs"}
-            type={'user'}
-        />
-        <K8ContainersLeftList
-            title={"Team Jobs"}
-            type={'team'}
-        />
-        <K8ContainersLeftList
-            title={"Cron Jobs"}
-            type={'cron'}
-        />
+        <K8ContainersLeftList title={'Your Jobs'} type={'user'} />
+        <K8ContainersLeftList title={'Team Jobs'} type={'team'} />
+        <K8ContainersLeftList title={'Cron Jobs'} type={'cron'} />
         <div />
       </div>
     );
