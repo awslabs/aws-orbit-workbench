@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
@@ -85,5 +85,8 @@ class CatalogRouteHandler(APIHandler):
 class TreeRouteHandler(APIHandler):
     @web.authenticated
     def get(self):
-        self.log.info("GET - Tree")
+        self.log.info(f"GET - {self.__class__}")
+        foo: Optional[int] = self.get_argument("foo", default=None)
+        boo: Optional[str] = self.get_argument("boo", default=None)
+        self.log.info(f"GET - {self.__class__} - foo: {foo} | boo: {boo}")
         self.finish(json.dumps(DATA2))
