@@ -13,13 +13,13 @@
 #    limitations under the License.
 
 import json
-from aws_orbit_sdk import glue_catalog
 from typing import Any, Dict, List, Optional
 
+from aws_orbit_sdk import glue_catalog
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
 
-DATA: Dict[str, str] = {"foo": "foo description", "boo1": "boo description", "bar": "bar description"}
+MYJOBS: Dict[str, str] = {"foo": "foo description", "boo1": "boo description", "bar": "bar description"}
 
 DATA2: List[Dict[str, Any]] = [
     {
@@ -68,7 +68,7 @@ DATA2: List[Dict[str, Any]] = [
 class CatalogRouteHandler(APIHandler):
     @staticmethod
     def dump() -> str:
-        return json.dumps([{"name": k, "description": v} for k, v in DATA.items()])
+        return json.dumps([{"name": k, "description": v} for k, v in MYJOBS.items()])
 
     @web.authenticated
     def get(self):
@@ -79,7 +79,7 @@ class CatalogRouteHandler(APIHandler):
     def delete(self):
         input_data = self.get_json_body()
         self.log.info(f"DELETE - {self.__class__} - %s", input_data)
-        DATA.pop(input_data["name"])
+        MYJOBS.pop(input_data["name"])
         self.finish(self.dump())
 
 
@@ -90,9 +90,5 @@ class TreeRouteHandler(APIHandler):
         global DATA2
         DATA2 = glue_catalog.getCatalogAsDict()
 
-        self.log.info(DATA2)
         self.log.info(f"GET - {self.__class__}")
-        foo: Optional[int] = self.get_argument("foo", default=None)
-        boo: Optional[str] = self.get_argument("boo", default=None)
-        self.log.info(f"GET - {self.__class__} - foo: {foo} | boo: {boo}")
         self.finish(json.dumps(DATA2))

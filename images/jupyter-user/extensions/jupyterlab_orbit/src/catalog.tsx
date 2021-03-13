@@ -175,15 +175,16 @@ const CentralWidgetComponent = (): JSX.Element => {
       <ListView
         name={'Section1'}
         items={items}
-        shutdownAllLabel="Shut Down All"
+        refreshCallback={refreshCallback}
         closeAllCallback={closeAllCallback}
       />
       <ListView
         name={'Section2'}
         items={items}
-        shutdownAllLabel="Shut Down All"
+        refreshCallback={refreshCallback}
         closeAllCallback={closeAllCallback}
       />
+
       <Tree
         showLine={true}
         showIcon={false}
