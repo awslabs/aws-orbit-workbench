@@ -208,7 +208,7 @@ class CentralWidget extends ReactWidget {
 const LeftWidgetComponent = (props: {
   launchCallback: () => void;
 }): JSX.Element => {
-  const { items, closeAllCallback, refreshCallback } = useItems();
+  const { treeItems, refreshCallback } = useItems();
 
   return (
     <div className={SECTION_CLASS}>
@@ -218,18 +218,12 @@ const LeftWidgetComponent = (props: {
         refreshCallback={refreshCallback}
         openCallback={props.launchCallback}
       />
-
-      <ListView
-        name={'Section3'}
-        items={items}
-        shutdownAllLabel="Shut Down All"
-        closeAllCallback={closeAllCallback}
-      />
-      <ListView
-        name={'Section4'}
-        items={items}
-        shutdownAllLabel="Shut Down All"
-        closeAllCallback={closeAllCallback}
+      <Tree
+        showLine={true}
+        showIcon={false}
+        defaultExpandedKeys={['0-0-0']}
+        onSelect={onSelect}
+        treeData={treeItems}
       />
     </div>
   );

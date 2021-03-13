@@ -14,7 +14,7 @@
 
 import json
 from typing import Any, Dict, List
-
+from aws_orbit_sdk import glue_catalog
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
 
@@ -86,4 +86,8 @@ class TreeRouteHandler(APIHandler):
     @web.authenticated
     def get(self):
         self.log.info("GET - Tree")
+        global DATA2
+        DATA2 = glue_catalog.getCatalogAsDict()
+
+        self.log.info(DATA2)
         self.finish(json.dumps(DATA2))

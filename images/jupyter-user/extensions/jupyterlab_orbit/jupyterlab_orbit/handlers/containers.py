@@ -44,7 +44,7 @@ class ContainersRouteHandler(APIHandler):
         self.log.info(f"GET - {self.__class__}")
         if 'MOCK' not in os.environ or os.environ['MOCK'] == '0':
             DATA = controller.list_my_running_jobs()
-            self.log.info(json.dumps(DATA))
+            # self.log.info(json.dumps(DATA))
             if 'MOCK' in os.environ:
                 with open('./extensions/jupyterlab_orbit/jupyterlab_orbit/mockup/your_containers.json', 'w') as outfile:
                     json.dump(DATA, outfile)
