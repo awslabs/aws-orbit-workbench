@@ -11,7 +11,7 @@ import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
 
-const NAME = 'Team';
+const NAME = 'Your Team';
 const ICON: LabIcon = teamIcon;
 
 const refreshCallback = () => {

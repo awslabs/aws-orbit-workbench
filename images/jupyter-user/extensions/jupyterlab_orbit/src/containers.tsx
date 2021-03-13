@@ -5,15 +5,15 @@ import { ReactWidget, ICommandPalette } from '@jupyterlab/apputils';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { Menu } from '@lumino/widgets';
 
-import { computeIcon } from './common/icons';
+import { containersIcon } from './common/icons';
 import { RUNNING_CLASS, SECTION_CLASS } from './common/styles';
 import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
-import { RedshiftCategoryLeftList } from './compute/redshift';
+import { ContainerCategoryLeftList } from './containers/containersCategory';
 
-const NAME = 'Compute';
-const ICON: LabIcon = computeIcon;
+const NAME = 'Containers';
+const ICON: LabIcon = containersIcon;
 
 const refreshCallback = () => {
   console.log(`[${NAME}] Refresh!`);
@@ -64,17 +64,16 @@ class LeftWidget extends ReactWidget {
           refreshCallback={refreshCallback}
           openCallback={this.launchCallback}
         />
-        <RedshiftCategoryLeftList
-          title={'Your Redshift Clusters'}
-          type={'user'}
-        />
+        <ContainerCategoryLeftList title={'Your Jobs'} type={'user'} />
+        <ContainerCategoryLeftList title={'Team Jobs'} type={'team'} />
+        <ContainerCategoryLeftList title={'Cron Jobs'} type={'cron'} />
         <div />
       </div>
     );
   }
 }
 
-export const activateCompute = (
+export const activateContainers = (
   app: JupyterFrontEnd,
   palette: ICommandPalette,
   launcher: ILauncher | null,

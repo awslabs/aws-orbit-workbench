@@ -18,7 +18,7 @@ import { ListView } from '../common/listView';
 import { request } from '../common/backend';
 import { IDictionary } from '../typings/utils';
 
-const NAME = 'K8Containers';
+const NAME = 'Redshift';
 
 interface IItem {
   name: string;
@@ -87,7 +87,7 @@ const deleteItem = async (name: string, type: string): Promise<IItem[]> => {
     });
     return reply;
   } catch (reason) {
-    console.error(`Error on DELETE /catalog ${dataToSend}.\n${reason}`);
+    console.error(`Error on DELETE /containers ${dataToSend}.\n${reason}`);
     return [];
   }
 };
@@ -144,7 +144,7 @@ const useItems = (type: string): IUseItemsReturn => {
   return { items, closeAllCallback, refreshCallback };
 };
 
-export const K8ContainersLeftList = (props: {
+export const RedshiftCategoryLeftList = (props: {
   title: string;
   type: string;
 }): JSX.Element => {
