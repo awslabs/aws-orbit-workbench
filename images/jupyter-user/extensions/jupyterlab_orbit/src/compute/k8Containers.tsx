@@ -1,19 +1,28 @@
-import React, {useEffect, useState} from 'react';
-import {closeIcon} from '@jupyterlab/ui-components';
-import {Dialog, showDialog, ToolbarButtonComponent} from '@jupyterlab/apputils';
+import React, { useEffect, useState } from 'react';
+import { closeIcon } from '@jupyterlab/ui-components';
+import {
+  Dialog,
+  showDialog,
+  ToolbarButtonComponent
+} from '@jupyterlab/apputils';
 import { orbitIcon } from '../common/icons';
-import {ITEM_CLASS, ITEM_DETAIL_CLASS, ITEM_LABEL_CLASS, SECTION_CLASS, SHUTDOWN_BUTTON_CLASS} from "../common/styles";
+import {
+  ITEM_CLASS,
+  ITEM_DETAIL_CLASS,
+  ITEM_LABEL_CLASS,
+  SECTION_CLASS,
+  SHUTDOWN_BUTTON_CLASS
+} from '../common/styles';
 
-import {ListView} from "../common/listView";
-import {request} from "../common/backend";
-
+import { ListView } from '../common/listView';
+import { request } from '../common/backend';
 
 const NAME = 'K8Containers';
 
 interface IItem {
   name: string;
   start_time: string;
-  node_type:string
+  node_type: string;
 }
 
 interface IUseItemsReturn {
@@ -127,16 +136,18 @@ const useItems = (): IUseItemsReturn => {
 };
 
 export const K8ContainersLeftList = (props: {
+  title: string;
+  type: string;
 }): JSX.Element => {
-  const {items, closeAllCallback} = useItems();
+  const { items, closeAllCallback } = useItems();
   return (
-      <div className={SECTION_CLASS}>
-        <ListView
-            name={'Your Containers'}
-            items={items}
-            shutdownAllLabel="Shut Down All"
-            closeAllCallback={closeAllCallback}
-        />
-      </div>
+    <div className={SECTION_CLASS}>
+      <ListView
+        name={props.title}
+        items={items}
+        shutdownAllLabel="Shut Down All"
+        closeAllCallback={closeAllCallback}
+      />
+    </div>
   );
 };

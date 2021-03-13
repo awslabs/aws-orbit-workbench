@@ -26,6 +26,7 @@ import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
 import { request } from './common/backend';
 import { ListView } from './common/listView';
+import { IDictionary } from './typings/utils';
 
 const NAME = 'Catalog';
 const ICON: LabIcon = catalogIcon;
@@ -144,9 +145,13 @@ const useItems = (): IUseItemsReturn => {
   const items = <Items data={data} closeItemCallback={closeItemCallback} />;
 
   const [treeItems, setTreeItems] = useState([]);
+  const parameters: IDictionary<number | string> = {
+    foo: 1,
+    boo: 'bar'
+  };
   useEffect(() => {
     const fetchData = async () => {
-      setTreeItems(await request('tree'));
+      setTreeItems(await request('tree', parameters));
     };
     fetchData();
   }, []);
@@ -187,7 +192,6 @@ const CentralWidgetComponent = (): JSX.Element => {
         treeData={treeItems}
       />
     </div>
-
   );
 };
 
@@ -209,7 +213,7 @@ class CentralWidget extends ReactWidget {
 const LeftWidgetComponent = (props: {
   launchCallback: () => void;
 }): JSX.Element => {
-  const { items, closeAllCallback, refreshCallback } = useItems();
+  const { treeItems, refreshCallback } = useItems();
 
   return (
     <div className={SECTION_CLASS}>
@@ -219,18 +223,12 @@ const LeftWidgetComponent = (props: {
         refreshCallback={refreshCallback}
         openCallback={props.launchCallback}
       />
-
-      <ListView
-        name={'Section3'}
-        items={items}
-        shutdownAllLabel="Shut Down All"
-        closeAllCallback={closeAllCallback}
-      />
-      <ListView
-        name={'Section4'}
-        items={items}
-        shutdownAllLabel="Shut Down All"
-        closeAllCallback={closeAllCallback}
+      <Tree
+        showLine={true}
+        showIcon={false}
+        defaultExpandedKeys={['0-0-0']}
+        onSelect={onSelect}
+        treeData={treeItems}
       />
     </div>
   );
