@@ -26,6 +26,7 @@ import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
 import { request } from './common/backend';
 import { ListView } from './common/listView';
+import { IDictionary } from './typings/utils';
 
 const NAME = 'Catalog';
 const ICON: LabIcon = catalogIcon;
@@ -144,9 +145,13 @@ const useItems = (): IUseItemsReturn => {
   const items = <Items data={data} closeItemCallback={closeItemCallback} />;
 
   const [treeItems, setTreeItems] = useState([]);
+  const parameters: IDictionary<number | string> = {
+    foo: 1,
+    boo: 'bar'
+  };
   useEffect(() => {
     const fetchData = async () => {
-      setTreeItems(await request('tree'));
+      setTreeItems(await request('tree', parameters));
     };
     fetchData();
   }, []);
