@@ -1,21 +1,69 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { ILauncher } from '@jupyterlab/launcher';
 import { ReactWidget, ICommandPalette } from '@jupyterlab/apputils';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { Menu } from '@lumino/widgets';
 
-import { teamIcon } from './common/icons';
-import { RUNNING_CLASS, SECTION_CLASS } from './common/styles';
+import { orbitIcon, teamIcon } from './common/icons';
+import {
+  ITEM_CLASS,
+  ITEM_DETAIL_CLASS,
+  ITEM_LABEL_CLASS,
+  RUNNING_CLASS,
+  SECTION_CLASS
+} from './common/styles';
 import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
-
+import { request } from './common/backend';
+import { ListViewWithoutToolbar } from './common/listViewWithoutToolbar';
 const NAME = 'Your Team';
 const ICON: LabIcon = teamIcon;
 
 const refreshCallback = () => {
   console.log(`[${NAME}] Refresh!`);
+};
+
+interface IItem {
+  name: string;
+  value: string;
+}
+
+interface IUseItemsReturn {
+  items: JSX.Element;
+}
+
+const Item = (props: { item: IItem }) => (
+  <li className={ITEM_CLASS}>
+    <orbitIcon.react tag="span" stylesheet="runningItem" />
+    <span className={ITEM_LABEL_CLASS} title={props.item.name}>
+      {props.item.name}
+    </span>
+    <span className={ITEM_DETAIL_CLASS}>{props.item.value}</span>
+  </li>
+);
+
+const Items = (props: { data: IItem[] }) => (
+  <>
+    {' '}
+    {props.data.map(x => (
+      <Item item={x} />
+    ))}{' '}
+  </>
+);
+
+const useItems = (): IUseItemsReturn => {
+  const [data, setData] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      setData(await request('team'));
+    };
+    fetchData();
+  }, []);
+
+  const items = <Items data={data} />;
+  return { items };
 };
 
 class CentralWidget extends ReactWidget {
@@ -55,6 +103,7 @@ class LeftWidget extends ReactWidget {
   }
 
   render(): JSX.Element {
+    const { items } = useItems();
     return (
       <div className={SECTION_CLASS}>
         <LeftWidgetHeader
@@ -63,7 +112,7 @@ class LeftWidget extends ReactWidget {
           refreshCallback={refreshCallback}
           openCallback={this.launchCallback}
         />
-        <div />
+        <ListViewWithoutToolbar name={'Section2'} items={items} />
       </div>
     );
   }
