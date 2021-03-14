@@ -21,51 +21,103 @@ from aws_orbit_sdk import controller
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
 
-DATA: List[Dict[str, str]] = []
+MYJOBS: List[Dict[str, str]] = []
+TEAMJOBS: List[Dict[str, str]] = []
+CRONJOBS: List[Dict[str, str]] = []
 
 
 class ContainersRouteHandler(APIHandler):
-    def _dump(self) -> str:
+    @staticmethod
+    def _dump(clist, type) -> str:
         data: List[Dict[str, str]] = []
-        for c in DATA:
+        for c in clist:
             container: Dict[str, str] = dict()
             container["name"] = c["metadata"]["name"]
+            if type == "cron":
+                job_template = c["spec"]["jobTemplate"]["spec"]["template"]
+                container["schedule"] = c["spec"]["schedule"]
+                schedule = f'schedule: {c["spec"]["schedule"]}'
+            else:
+                job_template = c["spec"]["template"]
+                schedule = ""
+
+            envs = job_template["spec"]["containers"][0]["env"]
+            tasks = json.loads([e["value"] for e in envs if e["name"] == "tasks"][0])
+            container["hint"] = schedule + "\n" + json.dumps(tasks, indent=4)
+            container["tasks"] = tasks
             container["start_time"] = c["metadata"]["creationTimestamp"]
             if "labels" in c["metadata"] and "orbit/node-type" in c["metadata"]["labels"]:
                 container["node_type"] = c["metadata"]["labels"]["orbit/node-type"]
             else:
                 container["node_type"] = "unknown"
 
-            # c['notebooks'] = ''
             data.append(container)
         return json.dumps(data)
 
     @web.authenticated
     def get(self):
-        global DATA
-        self.log.info(f"GET - {self.__class__}")
+        global MYJOBS
+        type: Optional[string] = self.get_argument("type", default="")
+        self.log.info(f"GET - {self.__class__} - {type}")
         if "MOCK" not in os.environ or os.environ["MOCK"] == "0":
-            DATA = controller.list_my_running_jobs()
-            #self.log.info(json.dumps(DATA))
+            if type == "user":
+                MYJOBS = controller.list_my_running_jobs()
+                data = MYJOBS
+            elif type == "team":
+                TEAMJOBS = controller.list_team_running_jobs()
+                data = TEAMJOBS
+            elif type == "cron":
+                CRONJOBS = controller.list_running_cronjobs()
+                data = CRONJOBS
+            else:
+                raise Exception("Unknown type: %s", type)
+            # self.log.info(json.dumps(DATA))
             if "MOCK" in os.environ:
-                with open("./extensions/jupyterlab_orbit/jupyterlab_orbit/mockup/your_containers.json", "w") as outfile:
-                    json.dump(DATA, outfile)
+                with open(
+                    f"./extensions/jupyterlab_orbit/jupyterlab_orbit/mockup/containers-{type}.json", "w"
+                ) as outfile:
+                    json.dump(data, outfile, indent=4)
         else:
-            path = Path(__file__).parent / "../mockup/your_containers.json"
+            path = Path(__file__).parent / f"../mockup/containers-{type}.json"
             with open(path) as f:
-                DATA = json.load(f)
+                if type == "user":
+                    MYJOBS = json.load(f)
+                    data = MYJOBS
+                elif type == "team":
+                    TEAMJOBS = json.load(f)
+                    data = TEAMJOBS
+                elif type == "cron":
+                    CRONJOBS = json.load(f)
+                    data = CRONJOBS
+                else:
+                    raise Exception("Unknown type: %s", type)
 
-        self.finish(self._dump())
+        self.finish(self._dump(data, type))
+
+    @staticmethod
+    def _delete(job_name, data):
+        for c in data:
+            if c["metadata"]["name"] == job_name:
+                MYJOBS.remove(c)
 
     @web.authenticated
     def delete(self):
-        global DATA
+        global MYJOBS
         input_data = self.get_json_body()
         job_name = input_data["name"]
+        type: Optional[string] = self.get_argument("type", default="")
         self.log.info(f"DELETE - {self.__class__} - %s", job_name)
-        controller.delete_job(job_name)
-        for c in DATA:
-            if c["metadata"]["name"] == job_name:
-                DATA.remove(c)
+        if type == "user":
+            MYJOBS = controller.delete_job(job_name)
+            data = MYJOBS
+        elif type == "team":
+            TEAMJOBS = controller.delete_job(job_name)
+            data = TEAMJOBS
+        elif type == "cron":
+            CRONJOBS = controller.delete_cronjob(job_name)
+            data = CRONJOBS
+        else:
+            raise Exception("Unknown type: %s", type)
 
+        _delete(job_name, data)
         self.finish(self._dump())
