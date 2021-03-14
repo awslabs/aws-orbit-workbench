@@ -7,11 +7,12 @@ import { ICommandPalette } from '@jupyterlab/apputils';
 import { ILauncher } from '@jupyterlab/launcher';
 import { IMainMenu } from '@jupyterlab/mainmenu';
 import { Menu } from '@lumino/widgets';
-import { activateCatalog } from './catalog';
-import { activateCompute } from './compute';
-import { activateStorage } from './storage';
-import { activateTeam } from './team';
-import { activateTests } from './tests';
+// import { activateCatalog } from './catalog';
+// import { activateCompute } from './compute';
+// import { activateStorage } from './storage';
+// import { activateTeam } from './team';
+// import { activateTests } from './tests';
+import { activateTable } from './table';
 
 const extension: JupyterFrontEndPlugin<void> = {
   id: 'aws-orbit-workbench',
@@ -31,11 +32,13 @@ const extension: JupyterFrontEndPlugin<void> = {
     orbitMenu.title.label = 'AWS Orbit Workbench';
     menu.addMenu(orbitMenu, { rank: 80 });
 
-    activateCatalog(app, palette, launcher, orbitMenu, 901);
-    activateCompute(app, palette, launcher, orbitMenu, 902);
-    activateStorage(app, palette, launcher, orbitMenu, 903);
-    activateTeam(app, palette, launcher, orbitMenu, 904);
-    activateTests(app, palette, launcher, orbitMenu, 905);
+    // activateCatalog(app, palette, launcher, orbitMenu, 901);
+    // activateCompute(app, palette, launcher, orbitMenu, 902);
+    // activateStorage(app, palette, launcher, orbitMenu, 903);
+    // activateTeam(app, palette, launcher, orbitMenu, 904);
+    // activateTests(app, palette, launcher, orbitMenu, 905);
+
+    activateTable(app, launcher);
   }
 };
 
