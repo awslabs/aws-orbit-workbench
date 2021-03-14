@@ -90,6 +90,11 @@ class TeamCentralWidget extends ReactWidget {
   }
 }
 
+const MyReactComponentFunc = (): JSX.Element => {
+  const { items } = useItems();
+  return <ListViewWithoutToolbar name={'Section2'} items={items} />
+}
+
 class TeamLeftWidget extends ReactWidget {
   launchCallback: () => void;
 
@@ -103,7 +108,6 @@ class TeamLeftWidget extends ReactWidget {
   }
 
   render(): JSX.Element {
-    const { items } = useItems();
     return (
       <div className={SECTION_CLASS}>
         <LeftWidgetHeader
@@ -112,7 +116,7 @@ class TeamLeftWidget extends ReactWidget {
           refreshCallback={refreshCallback}
           openCallback={this.launchCallback}
         />
-        <ListViewWithoutToolbar name={'Section2'} items={items} />
+        <MyReactComponentFunc />
       </div>
     );
   }
