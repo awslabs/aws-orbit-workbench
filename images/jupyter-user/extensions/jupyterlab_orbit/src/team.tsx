@@ -4,7 +4,6 @@ import { ILauncher } from '@jupyterlab/launcher';
 import { ReactWidget, ICommandPalette } from '@jupyterlab/apputils';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { Menu } from '@lumino/widgets';
-
 import { teamIcon } from './common/icons';
 import {
   ITEM_CLASS,
@@ -16,7 +15,7 @@ import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
 import { request } from './common/backend';
-import { ListViewWithoutToolbar } from './common/listViewWithoutToolbar';
+import { ListViewWithoutToolbar, TreeView } from './common/categoryViews';
 const NAME = 'Your Team';
 const ICON: LabIcon = teamIcon;
 
@@ -31,7 +30,9 @@ interface IItem {
 
 interface IUseItemsReturn {
   common_items: JSX.Element;
-  security_items: JSX.Element;
+  security_items: any;
+  profiles: any;
+  other: any;
 }
 
 const Item = (props: { item: IItem }) => (
@@ -53,7 +54,12 @@ const Items = (props: { data: IItem[] }) => (
 );
 
 const useItems = (): IUseItemsReturn => {
-  const [data, setData] = useState({ common: [], security: [] });
+  const [data, setData] = useState({
+    common: [],
+    security: {},
+    profiles: {},
+    other: {}
+  });
   useEffect(() => {
     const fetchData = async () => {
       setData(await request('team'));
@@ -61,8 +67,10 @@ const useItems = (): IUseItemsReturn => {
     fetchData();
   }, []);
   const common_items = <Items data={data.common} />;
-  const security_items = <Items data={data.security} />;
-  return { common_items, security_items };
+  const security_items = data.security;
+  const profiles = data.profiles;
+  const other = data.other;
+  return { common_items, security_items, profiles, other };
 };
 
 class TeamCentralWidget extends ReactWidget {
@@ -83,6 +91,7 @@ class TeamCentralWidget extends ReactWidget {
           icon={ICON}
           refreshCallback={refreshCallback}
         />
+        <TeamComponentFunc />
         <div />
       </div>
     );
@@ -90,11 +99,19 @@ class TeamCentralWidget extends ReactWidget {
 }
 
 const TeamComponentFunc = (): JSX.Element => {
-  const { common_items, security_items } = useItems();
+  const { common_items, security_items, profiles, other } = useItems();
   return (
     <div>
       <ListViewWithoutToolbar name={'Team'} items={common_items} />;
-      <ListViewWithoutToolbar name={'Security'} items={security_items} />;
+      <TreeView
+        name={'Security'}
+        item={security_items}
+        root_name={'security'}
+      />
+      ;
+      <TreeView name={'Profiles'} item={profiles} root_name={'team profiles'} />
+      ;
+      <TreeView name={'Other'} item={other} root_name={'properties'} />;
     </div>
   );
 };

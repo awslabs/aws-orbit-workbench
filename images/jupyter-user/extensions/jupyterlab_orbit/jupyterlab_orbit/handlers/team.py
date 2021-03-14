@@ -21,32 +21,34 @@ from aws_orbit_sdk.common import get_workspace
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
 
-DATA: Dict[str, List[Dict[str, str]]] = {"common": [{"name": "foo", "value": "bar"}, {"name": "foo2", "value": "bar2"}]}
-
+DATA: Dict[str, List[Dict[str, str]]] = {}
 
 class TeamRouteHandler(APIHandler):
     @staticmethod
     def _dump(data) -> str:
         ret = {}
-        common_props = ["K8Admin", "Fargate", "GrantSudo", "ScratchBucket"]
-        security_props = ["TeamKmsKeyArn", "TeamKmsKeyArn", "TeamSecurityGroupId"]
+        common_props = ["Fargate", "ScratchBucket"]
+        security_props = ["EksPodRoleArn", "TeamKmsKeyArn", "TeamSecurityGroupId", "GrantSudo","K8Admin"]
         ret["common"] = [{"name": "team name", "value": data["team_space"]}]
         for key, value in data.items():
             if key in common_props:
                 ret["common"].append({"name": key, "value": str(value)})
 
-        ret["security"] = []
+        ret["security"] = {}
         for key, value in data.items():
             if key in security_props:
-                ret["security"].append({"name": key, "value": str(value)})
+                ret["security"][key] = value
 
+        ret["profiles"] = {}
         if "Profiles" in data:
-            ret["profiles"] = data["Profiles"]
+            for p in data["Profiles"]:
+                ret["profiles"][p["slug"]] = p
 
         ret["other"] = {}
         for key, value in data.items():
-            if key not in security_props and key not in common_props:
-                ret["other"][key] = str(value)
+            if key not in security_props and key not in common_props and \
+                    key not in ["Profiles", "StackName", "SsmParameterName", "JupyterhubInboundRanges"] and value:
+                ret["other"][key] = value
 
         return json.dumps(ret)
 

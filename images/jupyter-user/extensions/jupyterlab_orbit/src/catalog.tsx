@@ -25,7 +25,7 @@ import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
 import { request } from './common/backend';
-import { ListView } from './common/listView';
+import { CategoryViews } from './common/categoryViews';
 import { TableOutlined } from '@ant-design/icons';
 const NAME = 'Catalog';
 const ICON: LabIcon = catalogIcon;
@@ -177,13 +177,13 @@ const CentralWidgetComponent = (): JSX.Element => {
         icon={ICON}
         refreshCallback={refreshCallback}
       />
-      <ListView
+      <CategoryViews
         name={'Section1'}
         items={items}
         refreshCallback={refreshCallback}
         closeAllCallback={closeAllCallback}
       />
-      <ListView
+      <CategoryViews
         name={'Section2'}
         items={items}
         refreshCallback={refreshCallback}
