@@ -26,8 +26,7 @@ import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
 import { request } from './common/backend';
 import { ListView } from './common/listView';
-import { IDictionary } from './typings/utils';
-
+import { TableOutlined } from '@ant-design/icons';
 const NAME = 'Catalog';
 const ICON: LabIcon = catalogIcon;
 
@@ -145,13 +144,19 @@ const useItems = (): IUseItemsReturn => {
   const items = <Items data={data} closeItemCallback={closeItemCallback} />;
 
   const [treeItems, setTreeItems] = useState([]);
-  const parameters: IDictionary<number | string> = {
-    foo: 1,
-    boo: 'bar'
+  const update_icon = (data: any[]) => {
+    data.forEach(database => {
+      database.children.forEach((table: { icon: JSX.Element }) => {
+        table.icon = <TableOutlined />;
+      });
+    });
   };
+
   useEffect(() => {
     const fetchData = async () => {
-      setTreeItems(await request('tree', parameters));
+      const ret: any[] = await request('tree');
+      update_icon(ret);
+      setTreeItems(ret);
     };
     fetchData();
   }, []);
@@ -226,7 +231,7 @@ const LeftWidgetComponent = (props: {
       />
       <Tree
         showLine={true}
-        showIcon={false}
+        showIcon={true}
         defaultExpandedKeys={['0-0-0']}
         onSelect={onSelect}
         treeData={treeItems}

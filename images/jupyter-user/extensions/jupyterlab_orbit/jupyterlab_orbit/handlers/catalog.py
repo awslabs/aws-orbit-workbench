@@ -45,6 +45,5 @@ class TreeRouteHandler(APIHandler):
         self.log.info("GET - Tree")
         global DATA
         DATA = glue_catalog.getCatalogAsDict()
-
         self.log.info(f"GET - {self.__class__}")
         self.finish(json.dumps(DATA))
