@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from aws_orbit_sdk import glue_catalog
 from jupyter_server.base.handlers import APIHandler
@@ -21,10 +21,13 @@ from tornado import web
 
 DATA: List[Dict[str, Any]] = []
 
+DATA2: Dict[str, Any] = {}
+
+
 class CatalogRouteHandler(APIHandler):
     @staticmethod
     def dump() -> str:
-        return json.dumps([{"name": k, "description": v} for k, v in DATA.items()])
+        return json.dumps([{"name": k, "description": v} for k, v in DATA2.items()])
 
     @web.authenticated
     def get(self):

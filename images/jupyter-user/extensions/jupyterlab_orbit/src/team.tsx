@@ -5,11 +5,10 @@ import { ReactWidget, ICommandPalette } from '@jupyterlab/apputils';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { Menu } from '@lumino/widgets';
 
-import { orbitIcon, teamIcon } from './common/icons';
+import { teamIcon } from './common/icons';
 import {
   ITEM_CLASS,
   ITEM_DETAIL_CLASS,
-  ITEM_LABEL_CLASS,
   RUNNING_CLASS,
   SECTION_CLASS
 } from './common/styles';
@@ -31,13 +30,13 @@ interface IItem {
 }
 
 interface IUseItemsReturn {
-  items: JSX.Element;
+  common_items: JSX.Element;
+  security_items: JSX.Element;
 }
 
 const Item = (props: { item: IItem }) => (
   <li className={ITEM_CLASS}>
-    <orbitIcon.react tag="span" stylesheet="runningItem" />
-    <span className={ITEM_LABEL_CLASS} title={props.item.name}>
+    <span className={ITEM_DETAIL_CLASS} title={props.item.name}>
       {props.item.name}
     </span>
     <span className={ITEM_DETAIL_CLASS}>{props.item.value}</span>
@@ -54,16 +53,16 @@ const Items = (props: { data: IItem[] }) => (
 );
 
 const useItems = (): IUseItemsReturn => {
-  const [data, setData] = useState([]);
+  const [data, setData] = useState({ common: [], security: [] });
   useEffect(() => {
     const fetchData = async () => {
       setData(await request('team'));
     };
     fetchData();
   }, []);
-
-  const items = <Items data={data} />;
-  return { items };
+  const common_items = <Items data={data.common} />;
+  const security_items = <Items data={data.security} />;
+  return { common_items, security_items };
 };
 
 class TeamCentralWidget extends ReactWidget {
@@ -90,10 +89,15 @@ class TeamCentralWidget extends ReactWidget {
   }
 }
 
-const MyReactComponentFunc = (): JSX.Element => {
-  const { items } = useItems();
-  return <ListViewWithoutToolbar name={'Section2'} items={items} />
-}
+const TeamComponentFunc = (): JSX.Element => {
+  const { common_items, security_items } = useItems();
+  return (
+    <div>
+      <ListViewWithoutToolbar name={'Team'} items={common_items} />;
+      <ListViewWithoutToolbar name={'Security'} items={security_items} />;
+    </div>
+  );
+};
 
 class TeamLeftWidget extends ReactWidget {
   launchCallback: () => void;
@@ -116,7 +120,7 @@ class TeamLeftWidget extends ReactWidget {
           refreshCallback={refreshCallback}
           openCallback={this.launchCallback}
         />
-        <MyReactComponentFunc />
+        <TeamComponentFunc />
       </div>
     );
   }

@@ -33,18 +33,18 @@ class ContainersRouteHandler(APIHandler):
         for c in clist:
             container: Dict[str, str] = dict()
             container["name"] = c["metadata"]["name"]
-            if type == 'cron':
-                job_template = c["spec"]['jobTemplate']['spec']['template']
+            if type == "cron":
+                job_template = c["spec"]["jobTemplate"]["spec"]["template"]
                 container["schedule"] = c["spec"]["schedule"]
                 schedule = f'schedule: {c["spec"]["schedule"]}'
             else:
                 job_template = c["spec"]["template"]
-                schedule = ''
+                schedule = ""
 
             envs = job_template["spec"]["containers"][0]["env"]
             tasks = json.loads([e["value"] for e in envs if e["name"] == "tasks"][0])
-            container["hint"] = schedule + '\n'+ json.dumps(tasks, indent=4)
-            container['tasks'] = tasks
+            container["hint"] = schedule + "\n" + json.dumps(tasks, indent=4)
+            container["tasks"] = tasks
             container["start_time"] = c["metadata"]["creationTimestamp"]
             if "labels" in c["metadata"] and "orbit/node-type" in c["metadata"]["labels"]:
                 container["node_type"] = c["metadata"]["labels"]["orbit/node-type"]

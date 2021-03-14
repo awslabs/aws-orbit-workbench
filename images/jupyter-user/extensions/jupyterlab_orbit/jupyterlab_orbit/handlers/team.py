@@ -21,13 +21,34 @@ from aws_orbit_sdk.common import get_workspace
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
 
-DATA: List[Dict[str, str]] = [{'namm':'foo','value': 'bar'}]
+DATA: Dict[str, List[Dict[str, str]]] = {"common": [{"name": "foo", "value": "bar"}, {"name": "foo2", "value": "bar2"}]}
 
 
 class TeamRouteHandler(APIHandler):
     @staticmethod
     def _dump(data) -> str:
-        return json.dumps(data)
+        ret = {}
+        common_props = ["K8Admin", "Fargate", "GrantSudo", "ScratchBucket"]
+        security_props = ["TeamKmsKeyArn", "TeamKmsKeyArn", "TeamSecurityGroupId"]
+        ret["common"] = [{"name": "team name", "value": data["team_space"]}]
+        for key, value in data.items():
+            if key in common_props:
+                ret["common"].append({"name": key, "value": str(value)  })
+
+        ret["security"] = []
+        for key, value in data.items():
+            if key in security_props:
+                ret["security"].append({"name": key, "value": str(value)})
+
+        if "Profiles" in data:
+            ret["profiles"] = data["Profiles"]
+
+        ret["other"] = {}
+        for key, value in data.items():
+            if key not in security_props and key not in common_props:
+                ret["other"][key] = str(value)
+
+        return json.dumps(ret)
 
     @web.authenticated
     def get(self):
@@ -35,20 +56,18 @@ class TeamRouteHandler(APIHandler):
         self.log.info(f"GET - {self.__class__}")
         DATA = get_workspace()
         # hide some details
-        if 'Elbs' in DATA:
-            del DATA['Elbs']
-        if 'Plugins' in DATA:
-            del DATA['Plugins']
+        if "Elbs" in DATA:
+            del DATA["Elbs"]
+        if "Plugins" in DATA:
+            del DATA["Plugins"]
         if "MOCK" not in os.environ or os.environ["MOCK"] == "0":
             if "MOCK" in os.environ:
-                path = Path(__file__).parent / f"../mockup/team.json", "w"
+                path = f"{Path(__file__).parent}/../mockup/team.json"
                 self.log.info(f"writing mockup data to {path}")
-                with open(
-                        path
-                ) as outfile:
-                    json.dump(data, outfile, indent=4)
+                with open(path, "w") as outfile:
+                    json.dump(DATA, outfile, indent=4)
         else:
-            path = Path(__file__).parent / f"../mockup/team.json"
+            path = f"{Path(__file__).parent}/../mockup/team.json"
             DATA = json.load(f)
 
             with open(path) as f:
