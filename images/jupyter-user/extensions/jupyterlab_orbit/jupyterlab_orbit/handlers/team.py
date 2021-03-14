@@ -33,7 +33,7 @@ class TeamRouteHandler(APIHandler):
         ret["common"] = [{"name": "team name", "value": data["team_space"]}]
         for key, value in data.items():
             if key in common_props:
-                ret["common"].append({"name": key, "value": str(value)  })
+                ret["common"].append({"name": key, "value": str(value)})
 
         ret["security"] = []
         for key, value in data.items():
