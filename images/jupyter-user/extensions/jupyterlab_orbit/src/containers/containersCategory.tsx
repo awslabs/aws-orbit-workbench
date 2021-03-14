@@ -14,7 +14,7 @@ import {
   SHUTDOWN_BUTTON_CLASS
 } from '../common/styles';
 
-import { ListView } from '../common/listView';
+import { CategoryViews } from '../common/categoryViews';
 import { request } from '../common/backend';
 import { IDictionary } from '../typings/utils';
 
@@ -151,7 +151,7 @@ export const ContainerCategoryLeftList = (props: {
   const { items, closeAllCallback, refreshCallback } = useItems(props.type);
   return (
     <div className={SECTION_CLASS}>
-      <ListView
+      <CategoryViews
         name={props.title}
         items={items}
         refreshCallback={refreshCallback}
