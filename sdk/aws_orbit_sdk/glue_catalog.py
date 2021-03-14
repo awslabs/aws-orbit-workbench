@@ -364,5 +364,5 @@ def getCatalogAsDict(database: Optional[str] = None) -> Dict:
                 table["children"].append(col)
                 col["title"] = c["Name"]
                 col["type"] = c["Type"]
-                col[key] = key
+                col["key"] = key
     return schemas

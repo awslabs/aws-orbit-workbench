@@ -22,6 +22,10 @@ from tornado import web
 DATA: List[Dict[str, Any]] = []
 
 class CatalogRouteHandler(APIHandler):
+    @staticmethod
+    def dump() -> str:
+        return json.dumps([{"name": k, "description": v} for k, v in DATA.items()])
+
     @web.authenticated
     def get(self):
         self.log.info(f"GET - {self.__class__}")
@@ -31,8 +35,9 @@ class CatalogRouteHandler(APIHandler):
     def delete(self):
         input_data = self.get_json_body()
         self.log.info(f"DELETE - {self.__class__} - %s", input_data)
-        MYJOBS.pop(input_data["name"])
+        DATA.pop(input_data["name"])
         self.finish(self.dump())
+
 
 class TreeRouteHandler(APIHandler):
     @web.authenticated

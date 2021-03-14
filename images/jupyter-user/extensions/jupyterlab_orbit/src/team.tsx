@@ -66,7 +66,7 @@ const useItems = (): IUseItemsReturn => {
   return { items };
 };
 
-class CentralWidget extends ReactWidget {
+class TeamCentralWidget extends ReactWidget {
   constructor() {
     super();
     this.addClass('jp-ReactWidget');
@@ -90,7 +90,7 @@ class CentralWidget extends ReactWidget {
   }
 }
 
-class LeftWidget extends ReactWidget {
+class TeamLeftWidget extends ReactWidget {
   launchCallback: () => void;
 
   constructor({ openCallback }: { openCallback: () => void }) {
@@ -131,7 +131,7 @@ export const activateTeam = (
     name: NAME,
     icon: ICON,
     app: app,
-    widgetCreation: () => new CentralWidget()
+    widgetCreation: () => new TeamCentralWidget()
   });
 
   registerGeneral({
@@ -141,7 +141,7 @@ export const activateTeam = (
     menu: menu,
     rank: rank,
     launchCommand: launchCommand,
-    leftWidget: new LeftWidget({
+    leftWidget: new TeamLeftWidget({
       openCallback: () => {
         commands.execute(launchCommand);
       }

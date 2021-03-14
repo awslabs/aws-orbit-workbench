@@ -27,4 +27,4 @@ else
   echo "must be inside images/jupyter-user directory"
 fi
 
-jupyter lab --notebook-dir=.workspace
+jupyter lab --notebook-dir=.workspace --debug

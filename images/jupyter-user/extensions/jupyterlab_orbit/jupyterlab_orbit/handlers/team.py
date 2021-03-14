@@ -21,14 +21,12 @@ from aws_orbit_sdk.common import get_workspace
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
 
-DATA: List[Dict[str, str]] = []
+DATA: List[Dict[str, str]] = [{'namm':'foo','value': 'bar'}]
 
 
 class TeamRouteHandler(APIHandler):
     @staticmethod
     def _dump(data) -> str:
-        data: List[Dict[str, str]] = []
-        data.append({'namm':'foo','value': 'bar'})
         return json.dumps(data)
 
     @web.authenticated
