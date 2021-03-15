@@ -220,7 +220,8 @@ def deploy_env(
 @click.option(
     "--internet-accessibility/--no-internet-accessibility",
     default=True,
-    help="Configure for deployment to Private (internet accessibility) or Isolated (no internet accessibility) subnets.",
+    help="Configure for deployment to Private (internet accessibility) "
+    "or Isolated (no internet accessibility) subnets.",
     show_default=True,
 )
 @click.option(
