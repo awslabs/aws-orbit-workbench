@@ -226,7 +226,7 @@
                             "containers": [
                                 {
                                     "name": "notebook",
-                                    "image": "495869084367.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
+                                    "image": ****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
                                     "args": [
                                         "bash",
                                         "-c",
@@ -262,7 +262,7 @@
                                         },
                                         {
                                             "name": "AWS_ORBIT_S3_BUCKET",
-                                            "value": "orbit-dev-env-toolkit-495869084367-b81a1f"
+                                            "value": "orbit-dev-env-toolkit****************b81a1f"
                                         },
                                         {
                                             "name": "task_type",
@@ -555,7 +555,7 @@
                             "containers": [
                                 {
                                     "name": "notebook",
-                                    "image": "495869084367.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
+                                    "image": ****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
                                     "args": [
                                         "bash",
                                         "-c",
@@ -591,7 +591,7 @@
                                         },
                                         {
                                             "name": "AWS_ORBIT_S3_BUCKET",
-                                            "value": "orbit-dev-env-toolkit-495869084367-b81a1f"
+                                            "value": "orbit-dev-env-toolkit****************b81a1f"
                                         },
                                         {
                                             "name": "task_type",
