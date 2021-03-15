@@ -118,7 +118,10 @@ Resources:
     Properties:
       UserPoolId: !Ref envcognitouserpoolid
       Description: The Lake User Group Name.
-      GroupName: lake-user
+      GroupName: !Join
+        - ''
+        - - !Ref envname
+          - '-lake-user'
 
 Outputs:
   LakeUserAdditionalPolicy:

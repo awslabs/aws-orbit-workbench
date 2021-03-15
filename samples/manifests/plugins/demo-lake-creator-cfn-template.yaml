@@ -120,7 +120,10 @@ Resources:
     Properties:
       UserPoolId: !Ref envcognitouserpoolid
       Description: lake-creator users group.
-      GroupName: lake-creator
+      GroupName: !Join
+        - ''
+        - - !Ref envname
+          - '-lake-creator'
 
   DemoParams:
     Type: 'AWS::SSM::Parameter'

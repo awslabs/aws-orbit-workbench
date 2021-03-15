@@ -45,7 +45,7 @@ ManagedNodegroups:
 Teams:
 -   Name: lake-creator
     Policies:
-    - orbit-dev-env-demo-lake-creator-add-policy
+    - !ENV ${ORBIT_LAKE_CREATOR_POLICY::orbit-dev-env-demo-lake-creator-add-policy}
     GrantSudo: true
     Fargate: false
     K8Admin: true
