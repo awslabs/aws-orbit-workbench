@@ -1,5 +1,5 @@
 {
-    "BaseImageAddress": ****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user",
+    "BaseImageAddress": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user",
     "BootstrapS3Prefix": "teams/dev-env/bootstrap/",
     "ContainerDefaults": {
         "cpu": 4,
@@ -13,7 +13,7 @@
     "EksK8SApiArn": null,
     "EksPodRoleArn": "arn:aws:iam:****************role/orbit-dev-env-lake-user-role",
     "Fargate": true,
-    "FinalImageAddress": ****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user",
+    "FinalImageAddress": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user",
     "GrantSudo": true,
     "Image": null,
     "JupyterUrl": "a998ba260e2fe4fae97dd7b0dbc54b5f-1823011548.us-west-2.elb.amazonaws.com",

@@ -15,7 +15,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Any
 
 from aws_orbit_sdk.common import get_workspace
 from jupyter_server.base.handlers import APIHandler
@@ -27,7 +27,7 @@ DATA: Dict[str, List[Dict[str, str]]] = {}
 class TeamRouteHandler(APIHandler):
     @staticmethod
     def _dump(data) -> str:
-        ret = {}
+        ret: Dict[str, Any] = {}
         common_props = ["Fargate", "ScratchBucket"]
         security_props = ["EksPodRoleArn", "TeamKmsKeyArn", "TeamSecurityGroupId", "GrantSudo", "K8Admin"]
         ret["common"] = [{"name": "team name", "value": data["team_space"]}]
@@ -75,8 +75,6 @@ class TeamRouteHandler(APIHandler):
                     json.dump(DATA, outfile, indent=4)
         else:
             path = f"{Path(__file__).parent}/../mockup/team.json"
-            DATA = json.load(f)
-
             with open(path) as f:
                 DATA = json.load(f)
 

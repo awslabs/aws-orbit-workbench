@@ -227,7 +227,7 @@
                             "containers": [
                                 {
                                     "name": "notebook",
-                                    "image": ****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
+                                    "image": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
                                     "args": [
                                         "bash",
                                         "-c",
@@ -566,7 +566,7 @@
                             "containers": [
                                 {
                                     "name": "notebook",
-                                    "image": ****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
+                                    "image": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
                                     "args": [
                                         "bash",
                                         "-c",
