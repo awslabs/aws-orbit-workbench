@@ -50,7 +50,8 @@
     "@jupyterlab/services": "^6.0.0-rc.13",
     "@jupyterlab/ui-components": "^3.0.4",
     "antd": "^4.13.1",
-    "react-json-view": "1.21.3"
+    "react-json-view": "1.21.3",
+    "react-table": "7.6.3"
   },
   "devDependencies": {
     "@jupyterlab/builder": "^3.0.0-rc.13",
