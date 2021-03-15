@@ -218,9 +218,9 @@ def deploy_env(
     help="CodeArtifact Repository to pull packages from.",
 )
 @click.option(
-    "--internet-accessiblity/--no-internet-accessiblity",
+    "--internet-accessibility/--no-internet-accessibility",
     default=True,
-    help="Configure for deployment to Private (internet accessiblity) or Isolated (no internet accessibility) subnets.",
+    help="Configure for deployment to Private (internet accessibility) or Isolated (no internet accessibility) subnets.",
     show_default=True,
 )
 @click.option(
