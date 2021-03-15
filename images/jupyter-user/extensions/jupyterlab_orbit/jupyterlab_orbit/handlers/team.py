@@ -75,8 +75,6 @@ class TeamRouteHandler(APIHandler):
                     json.dump(DATA, outfile, indent=4)
         else:
             path = f"{Path(__file__).parent}/../mockup/team.json"
-            DATA = json.load(f)
-
             with open(path) as f:
                 DATA = json.load(f)
 

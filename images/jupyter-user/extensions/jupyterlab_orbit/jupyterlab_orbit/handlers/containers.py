@@ -83,14 +83,14 @@ class ContainersRouteHandler(APIHandler):
                 data = CRONJOBS
             else:
                 raise Exception("Unknown type: %s", type)
-            # self.log.info(json.dumps(DATA))
             if "MOCK" in os.environ:
                 with open(
                     f"./extensions/jupyterlab_orbit/jupyterlab_orbit/mockup/containers-{type}.json", "w"
                 ) as outfile:
                     json.dump(data, outfile, indent=4)
         else:
-            path = Path(__file__).parent / f"../mockup/containers-{type}.json"
+            path = f"./extensions/jupyterlab_orbit/jupyterlab_orbit/mockup/containers-{type}.json"
+            self.log.info(f"LOADING MOCKED DATA from: {os.path.abspath(path)}")
             with open(path) as f:
                 if type == "user":
                     MYJOBS = json.load(f)
