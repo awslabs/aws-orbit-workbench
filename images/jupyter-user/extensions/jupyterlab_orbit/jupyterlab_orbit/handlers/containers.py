@@ -91,7 +91,8 @@ class ContainersRouteHandler(APIHandler):
                     data = CRONJOBS
                 else:
                     raise Exception("Unknown type: %s", type)
-
+        import pprint
+        pprint.pprint(f"container_data={data}")
         self.finish(self._dump(data, type))
 
     @staticmethod

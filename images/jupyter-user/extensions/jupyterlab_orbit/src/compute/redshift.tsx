@@ -23,8 +23,10 @@ const NAME = 'Redshift';
 interface IItem {
   name: string;
   hint: string;
+  state: string;
   start_time: string;
   node_type: string;
+  nodes: string;
 }
 
 interface IUseItemsReturn {
@@ -51,8 +53,9 @@ const Item = (props: {
     >
       {props.item.name}
     </span>
-    {/*<span className={ITEM_DETAIL_CLASS}>{props.item.start_time}</span> */}
+    <span className={ITEM_DETAIL_CLASS}>{props.item.start_time}</span>
     <span className={ITEM_DETAIL_CLASS}>{props.item.node_type}</span>
+    <span className={ITEM_DETAIL_CLASS}>{props.item.nodes}</span>
     <ToolbarButtonComponent
       className={SHUTDOWN_BUTTON_CLASS}
       icon={closeIcon}
@@ -100,8 +103,9 @@ const useItems = (type: string): IUseItemsReturn => {
       const parameters: IDictionary<number | string> = {
         type: type
       };
-
-      setData(await request('redshift', parameters));
+      console.log(`Parameter ${parameters}`);
+      // setData(await request('redshift', parameters));
+      setData(await request('redshift'));
     };
 
     fetchData();
@@ -109,7 +113,7 @@ const useItems = (type: string): IUseItemsReturn => {
 
   const closeAllCallback = (name: string) => {
     void showDialog({
-      title: `Delete all ${name} jobs`,
+      title: `Delete all ${name} redshift clusters`,
       body: 'Are you sure about it?',
       buttons: [
         Dialog.cancelButton({ label: 'Cancel' }),
@@ -128,15 +132,17 @@ const useItems = (type: string): IUseItemsReturn => {
 
   const refreshCallback = async () => {
     console.log(`[${NAME}] Refresh!`);
-    const parameters: IDictionary<number | string> = {
-      type: type
-    };
-    setData(await request('containers', parameters));
+    // const parameters: IDictionary<number | string> = {
+    //   type: type
+    // };
+    // setData(await request('containers', parameters));
+    setData(await request('redshift'));
   };
 
   const closeItemCallback = async (name: string) => {
     console.log(`[${NAME}] Close Item ${name}!`);
-    setData(await deleteItem(name, type));
+    // MYTODO - Pass specific parameter to delete the cluster.
+    //setData(await deleteItem(name, type));
   };
 
   const items = <Items data={data} closeItemCallback={closeItemCallback} />;
@@ -145,6 +151,23 @@ const useItems = (type: string): IUseItemsReturn => {
 };
 
 export const RedshiftCategoryLeftList = (props: {
+  title: string;
+  type: string;
+}): JSX.Element => {
+  const { items, closeAllCallback, refreshCallback } = useItems(props.type);
+  return (
+    <div className={SECTION_CLASS}>
+      <CategoryViews
+        name={props.title}
+        items={items}
+        refreshCallback={refreshCallback}
+        closeAllCallback={closeAllCallback}
+      />
+    </div>
+  );
+};
+
+export const RedshiftCategoryCentralList = (props: {
   title: string;
   type: string;
 }): JSX.Element => {
