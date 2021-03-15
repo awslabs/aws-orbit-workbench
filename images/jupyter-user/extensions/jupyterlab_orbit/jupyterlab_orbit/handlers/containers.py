@@ -35,22 +35,31 @@ class ContainersRouteHandler(APIHandler):
             container["name"] = c["metadata"]["name"]
             if type == "cron":
                 job_template = c["spec"]["jobTemplate"]["spec"]["template"]
-                container["schedule"] = c["spec"]["schedule"]
-                schedule = f'schedule: {c["spec"]["schedule"]}'
+                container["time"] = c["spec"]["schedule"]
             else:
                 job_template = c["spec"]["template"]
-                schedule = ""
+                container["time"] = c["metadata"]["creationTimestamp"]
 
             envs = job_template["spec"]["containers"][0]["env"]
             tasks = json.loads([e["value"] for e in envs if e["name"] == "tasks"][0])
-            container["hint"] = schedule + "\n" + json.dumps(tasks, indent=4)
+            container["hint"] = json.dumps(tasks, indent=4)
             container["tasks"] = tasks
-            container["start_time"] = c["metadata"]["creationTimestamp"]
+
             if "labels" in c["metadata"] and "orbit/node-type" in c["metadata"]["labels"]:
                 container["node_type"] = c["metadata"]["labels"]["orbit/node-type"]
             else:
                 container["node_type"] = "unknown"
 
+            if "status" in c and "failed" in c["status"] and c["status"]["failed"] == 1:
+                container['job_state'] = 'failed'
+            elif "active" in c and "active" in c["status"] and c["status"]["active"] == 1:
+                container['job_state'] = 'running'
+            elif "succeeded" in c and "succeeded" in c["status"] and c["status"]["succeeded"] == 1:
+                container['job_state'] = 'succeeded'
+            else:
+                container['job_state'] = 'unknown'
+
+            container['info'] = c
             data.append(container)
         return json.dumps(data)
 
@@ -58,7 +67,7 @@ class ContainersRouteHandler(APIHandler):
     def get(self):
         global MYJOBS
         type: Optional[string] = self.get_argument("type", default="")
-        self.log.info(f"GET - {self.__class__} - {type}")
+        self.log.info(f"GET - {self.__class__} - {type} {format}")
         if "MOCK" not in os.environ or os.environ["MOCK"] == "0":
             if type == "user":
                 MYJOBS = controller.list_my_running_jobs()

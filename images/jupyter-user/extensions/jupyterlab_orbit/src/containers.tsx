@@ -11,7 +11,7 @@ import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
 import { ContainerCategoryLeftList } from './containers/containersCategory';
-
+import { ContainerCentralPanel } from './containers/containersCentral';
 const NAME = 'Containers';
 const ICON: LabIcon = containersIcon;
 
@@ -37,6 +37,8 @@ class CentralWidget extends ReactWidget {
           icon={ICON}
           refreshCallback={refreshCallback}
         />
+        <ContainerCentralPanel title={'Your Jobs'} type={'user'} />
+        <ContainerCentralPanel title={'Your Jobs'} type={'team'} />
         <div />
       </div>
     );

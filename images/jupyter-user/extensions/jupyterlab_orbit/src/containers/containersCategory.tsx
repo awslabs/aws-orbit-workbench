@@ -23,7 +23,7 @@ const NAME = 'K8Containers';
 interface IItem {
   name: string;
   hint: string;
-  start_time: string;
+  time: string;
   node_type: string;
 }
 
@@ -51,7 +51,7 @@ const Item = (props: {
     >
       {props.item.name}
     </span>
-    <span className={ITEM_DETAIL_CLASS}>{props.item.start_time}</span>
+    <span className={ITEM_DETAIL_CLASS}>{props.item.time}</span>
     <span className={ITEM_DETAIL_CLASS}>{props.item.node_type}</span>
     <ToolbarButtonComponent
       className={SHUTDOWN_BUTTON_CLASS}
