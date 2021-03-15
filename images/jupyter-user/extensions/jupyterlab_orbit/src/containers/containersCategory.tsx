@@ -1,19 +1,30 @@
-import React, {useEffect, useState} from 'react';
-import {closeIcon} from '@jupyterlab/ui-components';
-import {Dialog, showDialog, ToolbarButtonComponent} from '@jupyterlab/apputils';
+import React, { useEffect, useState } from 'react';
+import { closeIcon } from '@jupyterlab/ui-components';
+import {
+  Dialog,
+  showDialog,
+  ToolbarButtonComponent
+} from '@jupyterlab/apputils';
 import { orbitIcon } from '../common/icons';
-import {ITEM_CLASS, ITEM_DETAIL_CLASS, ITEM_LABEL_CLASS, SECTION_CLASS, SHUTDOWN_BUTTON_CLASS} from "../common/styles";
+import {
+  ITEM_CLASS,
+  ITEM_DETAIL_CLASS,
+  ITEM_LABEL_CLASS,
+  SECTION_CLASS,
+  SHUTDOWN_BUTTON_CLASS
+} from '../common/styles';
 
-import {ListView} from "../common/listView";
-import {request} from "../common/backend";
-
+import { CategoryViews } from '../common/categoryViews';
+import { request } from '../common/backend';
+import { IDictionary } from '../typings/utils';
 
 const NAME = 'K8Containers';
 
 interface IItem {
   name: string;
+  hint: string;
   start_time: string;
-  node_type:string
+  node_type: string;
 }
 
 interface IUseItemsReturn {
@@ -35,7 +46,7 @@ const Item = (props: {
     <orbitIcon.react tag="span" stylesheet="runningItem" />
     <span
       className={ITEM_LABEL_CLASS}
-      title={'TITLE'}
+      title={props.item.hint}
       onClick={() => props.openItemCallback(props.item.name)}
     >
       {props.item.name}
@@ -67,7 +78,7 @@ const Items = (props: {
   </>
 );
 
-const deleteItem = async (name: string): Promise<IItem[]> => {
+const deleteItem = async (name: string, type: string): Promise<IItem[]> => {
   const dataToSend = { name: name };
   try {
     const reply: IItem[] | undefined = await request('containers', {
@@ -76,17 +87,21 @@ const deleteItem = async (name: string): Promise<IItem[]> => {
     });
     return reply;
   } catch (reason) {
-    console.error(`Error on DELETE /catalog ${dataToSend}.\n${reason}`);
+    console.error(`Error on DELETE /containers ${dataToSend}.\n${reason}`);
     return [];
   }
 };
 
-const useItems = (): IUseItemsReturn => {
+const useItems = (type: string): IUseItemsReturn => {
   const [data, setData] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
-      setData(await request('containers'));
+      const parameters: IDictionary<number | string> = {
+        type: type
+      };
+
+      setData(await request('containers', parameters));
     };
 
     fetchData();
@@ -94,7 +109,7 @@ const useItems = (): IUseItemsReturn => {
 
   const closeAllCallback = (name: string) => {
     void showDialog({
-      title: `General ${name} shut down`,
+      title: `Delete all ${name} jobs`,
       body: 'Are you sure about it?',
       buttons: [
         Dialog.cancelButton({ label: 'Cancel' }),
@@ -104,7 +119,7 @@ const useItems = (): IUseItemsReturn => {
       if (result.button.accept) {
         console.log('SHUTDOWN ALL!');
         data.map(async x => {
-          await deleteItem(x.name);
+          await deleteItem(x.name, type);
         });
         setData([]);
       }
@@ -113,12 +128,15 @@ const useItems = (): IUseItemsReturn => {
 
   const refreshCallback = async () => {
     console.log(`[${NAME}] Refresh!`);
-    setData(await request('containers'));
+    const parameters: IDictionary<number | string> = {
+      type: type
+    };
+    setData(await request('containers', parameters));
   };
 
   const closeItemCallback = async (name: string) => {
     console.log(`[${NAME}] Close Item ${name}!`);
-    setData(await deleteItem(name));
+    setData(await deleteItem(name, type));
   };
 
   const items = <Items data={data} closeItemCallback={closeItemCallback} />;
@@ -126,17 +144,19 @@ const useItems = (): IUseItemsReturn => {
   return { items, closeAllCallback, refreshCallback };
 };
 
-export const K8ContainersLeftList = (props: {
+export const ContainerCategoryLeftList = (props: {
+  title: string;
+  type: string;
 }): JSX.Element => {
-  const {items, closeAllCallback} = useItems();
+  const { items, closeAllCallback, refreshCallback } = useItems(props.type);
   return (
-      <div className={SECTION_CLASS}>
-        <ListView
-            name={'Your Containers'}
-            items={items}
-            shutdownAllLabel="Shut Down All"
-            closeAllCallback={closeAllCallback}
-        />
-      </div>
+    <div className={SECTION_CLASS}>
+      <CategoryViews
+        name={props.title}
+        items={items}
+        refreshCallback={refreshCallback}
+        closeAllCallback={closeAllCallback}
+      />
+    </div>
   );
 };

@@ -25,8 +25,8 @@ import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
 import { request } from './common/backend';
-import { ListView } from './common/listView';
-
+import { CategoryViews } from './common/categoryViews';
+import { TableOutlined } from '@ant-design/icons';
 const NAME = 'Catalog';
 const ICON: LabIcon = catalogIcon;
 
@@ -144,9 +144,19 @@ const useItems = (): IUseItemsReturn => {
   const items = <Items data={data} closeItemCallback={closeItemCallback} />;
 
   const [treeItems, setTreeItems] = useState([]);
+  const update_icon = (data: any[]) => {
+    data.forEach(database => {
+      database.children.forEach((table: { icon: JSX.Element }) => {
+        table.icon = <TableOutlined />;
+      });
+    });
+  };
+
   useEffect(() => {
     const fetchData = async () => {
-      setTreeItems(await request('tree'));
+      const ret: any[] = await request('tree');
+      update_icon(ret);
+      setTreeItems(ret);
     };
     fetchData();
   }, []);
@@ -167,18 +177,19 @@ const CentralWidgetComponent = (): JSX.Element => {
         icon={ICON}
         refreshCallback={refreshCallback}
       />
-      <ListView
+      <CategoryViews
         name={'Section1'}
         items={items}
-        shutdownAllLabel="Shut Down All"
+        refreshCallback={refreshCallback}
         closeAllCallback={closeAllCallback}
       />
-      <ListView
+      <CategoryViews
         name={'Section2'}
         items={items}
-        shutdownAllLabel="Shut Down All"
+        refreshCallback={refreshCallback}
         closeAllCallback={closeAllCallback}
       />
+
       <Tree
         showLine={true}
         showIcon={false}
@@ -187,7 +198,6 @@ const CentralWidgetComponent = (): JSX.Element => {
         treeData={treeItems}
       />
     </div>
-
   );
 };
 
@@ -209,7 +219,7 @@ class CentralWidget extends ReactWidget {
 const LeftWidgetComponent = (props: {
   launchCallback: () => void;
 }): JSX.Element => {
-  const { items, closeAllCallback, refreshCallback } = useItems();
+  const { treeItems, refreshCallback } = useItems();
 
   return (
     <div className={SECTION_CLASS}>
@@ -219,18 +229,12 @@ const LeftWidgetComponent = (props: {
         refreshCallback={refreshCallback}
         openCallback={props.launchCallback}
       />
-
-      <ListView
-        name={'Section3'}
-        items={items}
-        shutdownAllLabel="Shut Down All"
-        closeAllCallback={closeAllCallback}
-      />
-      <ListView
-        name={'Section4'}
-        items={items}
-        shutdownAllLabel="Shut Down All"
-        closeAllCallback={closeAllCallback}
+      <Tree
+        showLine={true}
+        showIcon={true}
+        defaultExpandedKeys={['0-0-0']}
+        onSelect={onSelect}
+        treeData={treeItems}
       />
     </div>
   );

@@ -15,59 +15,19 @@
 import json
 from typing import Any, Dict, List
 
+from aws_orbit_sdk import glue_catalog
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
 
-DATA: Dict[str, str] = {"foo": "foo description", "boo1": "boo description", "bar": "bar description"}
+DATA: List[Dict[str, Any]] = []
 
-DATA2: List[Dict[str, Any]] = [
-    {
-        "title": "Database A",
-        "key": "0-0",
-        "children": [
-            {
-                "title": "Table A",
-                "key": "0-0-0",
-                "children": [
-                    {
-                        "title": "Column A",
-                        "key": "0-0-0-0",
-                    },
-                    {
-                        "title": "Column B",
-                        "key": "0-0-0-1",
-                    },
-                ],
-            }
-        ],
-    },
-    {
-        "title": "Database B",
-        "key": "1-0",
-        "children": [
-            {
-                "title": "Table A",
-                "key": "1-0-0",
-                "children": [
-                    {
-                        "title": "Column A",
-                        "key": "1-0-0-0",
-                    },
-                    {
-                        "title": "Column B",
-                        "key": "1-0-0-1",
-                    },
-                ],
-            }
-        ],
-    },
-]
+DATA2: Dict[str, Any] = {}
 
 
 class CatalogRouteHandler(APIHandler):
     @staticmethod
     def dump() -> str:
-        return json.dumps([{"name": k, "description": v} for k, v in DATA.items()])
+        return json.dumps([{"name": k, "description": v} for k, v in DATA2.items()])
 
     @web.authenticated
     def get(self):
@@ -86,4 +46,7 @@ class TreeRouteHandler(APIHandler):
     @web.authenticated
     def get(self):
         self.log.info("GET - Tree")
-        self.finish(json.dumps(DATA2))
+        global DATA
+        DATA = glue_catalog.getCatalogAsDict()
+        self.log.info(f"GET - {self.__class__}")
+        self.finish(json.dumps(DATA))

@@ -27,16 +27,18 @@ export const LeftWidgetHeader = (props: {
         </div>
         <h2 style={{ fontWeight: 'bold' }}> {props.name} </h2>
       </div>
-      <ToolbarButtonComponent
-        tooltip={'Open'}
-        icon={launcherIcon}
-        onClick={props.openCallback}
-      />
-      <ToolbarButtonComponent
-        tooltip={'Refresh List'}
-        icon={refreshIcon}
-        onClick={props.refreshCallback}
-      />
+      <div style={{ display: 'flex', alignItems: 'right' }}>
+        <ToolbarButtonComponent
+          tooltip={'Open'}
+          icon={launcherIcon}
+          onClick={props.openCallback}
+        />
+        <ToolbarButtonComponent
+          tooltip={'Refresh List'}
+          icon={refreshIcon}
+          onClick={props.refreshCallback}
+        />
+      </div>
     </header>
   </div>
 );
