@@ -134,7 +134,6 @@ def build_image(
     dir: Optional[str],
     name: str,
     script: Optional[str],
-    teams: Optional[List[str]],
     build_args: Optional[List[str]],
     debug: bool = False,
     source_registry: Optional[str] = None,
@@ -157,14 +156,13 @@ def build_image(
 
         script_str = "NO_SCRIPT" if script is None else script
         source_str = "NO_REPO" if source_registry is None else f"{source_registry} {source_repository} {source_version}"
-        teams_str = "NO_TEAMS" if not teams else ",".join(teams)
         build_args = [] if build_args is None else build_args
         buildspec = codebuild.generate_spec(
             context=context,
             plugins=False,
             cmds_build=[
                 f"orbit remote --command build_image "
-                f"{env} {name} {script_str} {teams_str} {source_str} {' '.join(build_args)}"
+                f"{env} {name} {script_str} {source_str} {' '.join(build_args)}"
             ],
             changeset=None,
         )

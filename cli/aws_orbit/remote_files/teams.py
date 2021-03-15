@@ -160,8 +160,6 @@ def deploy_team(context: "Context", manifest: Manifest, team_manifest: TeamManif
         team_context.fetch_team_data()
         context.teams.append(team_context)
     ContextSerDe.dump_context_to_ssm(context=context)
-    _deploy_team_image(context=context, team_context=team_context, image="jupyter-user")
-    _deploy_team_bootstrap(context=context, team_context=team_context)
 
 
 def destroy_team(context: "Context", team_context: "TeamContext") -> None:

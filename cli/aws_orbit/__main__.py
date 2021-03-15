@@ -339,15 +339,6 @@ def build() -> None:
     required=False,
 )
 @click.option(
-    "--team",
-    "-t",
-    type=str,
-    multiple=True,
-    default=[],
-    help="One or more Teams to deploy the image to (can de declared multiple times).",
-    required=False,
-)
-@click.option(
     "--build-arg",
     type=str,
     multiple=True,
@@ -366,7 +357,6 @@ def deploy_image_cli(
     dir: str,
     name: str,
     script: Optional[str],
-    team: Optional[List[str]],
     build_arg: Optional[List[str]],
     debug: bool,
 ) -> None:
@@ -377,9 +367,8 @@ def deploy_image_cli(
     _logger.debug("dir: %s", dir)
     _logger.debug("name: %s", name)
     _logger.debug("script: %s", script)
-    _logger.debug("teams: %s", team)
     _logger.debug("debug: %s", debug)
-    build_image(dir=dir, name=name, env=env, script=script, teams=team, build_args=build_arg, debug=debug)
+    build_image(dir=dir, name=name, env=env, script=script, build_args=build_arg, debug=debug)
 
 
 @click.group(name="replicate")
@@ -397,15 +386,6 @@ def replicate() -> None:
     type=str,
     default=None,
     help="Build script to run before the image build.",
-    required=False,
-)
-@click.option(
-    "--team",
-    "-t",
-    type=str,
-    multiple=True,
-    default=[],
-    help="One or more Teams to deploy the image to (can de declared multiple times).",
     required=False,
 )
 @click.option(
@@ -453,7 +433,6 @@ def replicate_image_cli(
     env: str,
     name: str,
     script: Optional[str],
-    team: Optional[List[str]],
     source_registry: str,
     source_repository: str,
     source_version: str,
@@ -466,14 +445,12 @@ def replicate_image_cli(
     _logger.debug("env: %s", env)
     _logger.debug("name: %s", name)
     _logger.debug("script: %s", script)
-    _logger.debug("teams: %s", team)
     _logger.debug("debug: %s", debug)
     build_image(
         dir=None,
         name=name,
         env=env,
         script=script,
-        teams=team,
         source_registry=source_registry,
         source_repository=source_repository,
         source_version=source_version,

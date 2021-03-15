@@ -34,19 +34,18 @@ def build_image(args: Tuple[str, ...]) -> None:
     env: str = args[0]
     image_name: str = args[1]
     script: Optional[str] = args[2] if args[2] != "NO_SCRIPT" else None
-    teams: Optional[List[str]] = list(set(args[3].split(","))) if args[3] != "NO_TEAMS" else None
     source_registry: Optional[str]
-    if args[4] != "NO_REPO":
-        if len(args) < 7:
+    if args[3] != "NO_REPO":
+        if len(args) < 6:
             raise Exception("Source registry is defined without 'source_repository' or 'source_version' ")
-        source_registry = args[4]
-        source_repository: str = args[5]
-        source_version: str = args[6]
-        build_args = args[7:]
+        source_registry = args[3]
+        source_repository: str = args[4]
+        source_version: str = args[5]
+        build_args = args[6:]
         _logger.info("replicating image %s: %s %s:%s", image_name, source_registry, source_repository, source_version)
     else:
         _logger.info("building image %s: %s %s:%s", image_name, script)
-        build_args = args[5:]
+        build_args = args[4:]
         source_registry = None
     _logger.debug("args: %s", args)
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
@@ -96,15 +95,6 @@ def build_image(args: Tuple[str, ...]) -> None:
     else:
         docker.replicate_image(context=context, image_name=image_name, deployed_name=ecr_repo)
     _logger.debug("Docker Image Deployed to ECR")
-
-    if teams:
-        _logger.debug(f"Building and Deploying Team images: {teams}")
-        for team_name in teams:
-            team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_name)
-            if team_context:
-                team_utils._deploy_team_image(context=context, team_context=team_context, image=image_name)
-            else:
-                _logger.debug(f"Skipped unknown Team: {team_name}")
 
 
 def _create_repository(env_name: str, ecr: client, ecr_repo: str) -> None:
