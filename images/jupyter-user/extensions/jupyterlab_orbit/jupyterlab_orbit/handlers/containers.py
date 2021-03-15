@@ -52,17 +52,17 @@ class ContainersRouteHandler(APIHandler):
 
             if "status" in c:
                 if "failed" in c["status"] and c["status"]["failed"] == 1:
-                    container['job_state'] = 'failed'
+                    container["job_state"] = "failed"
                 elif "active" in c["status"] and c["status"]["active"] == 1:
-                    container['job_state'] = 'running'
+                    container["job_state"] = "running"
                 elif "succeeded" in c["status"] and c["status"]["succeeded"] == 1:
-                    container['job_state'] = 'succeeded'
+                    container["job_state"] = "succeeded"
                 else:
-                    container['job_state'] = 'unknown'
+                    container["job_state"] = "unknown"
             else:
-                container['job_state'] = 'unknown'
+                container["job_state"] = "unknown"
 
-            container['info'] = c
+            container["info"] = c
             data.append(container)
         return json.dumps(data)
 
