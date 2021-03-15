@@ -28,17 +28,14 @@ class RedshiftRouteHandler(APIHandler):
         pprint.pprint(DATA)
         for cid, cdetails in DATA.keys():
             ddirct = {
-             'Name': cdetails['Name'],
-             'cluster_id': cdetails['cluster_id']
+             "name": cdetails['Name'],
+             "cluster_id": cdetails['cluster_id'],
+             "state": cdetails["ClusterStatus"],
+             "nodetype": cdetails["instances"]["NodeType"]
             }
             data.append(ddirct)
         pprint.pprint(data)
         #self.log.info(json.dumps(DATA))
-        # for c in DATA:
-        #     container: Dict[str, str] = dict()
-        #     container["name"] = c["ClusterIdentifier"]
-        #     data.append(container)
-
         return json.dumps(data)
 
     def sdk_get_team_clusters(self):
@@ -47,7 +44,6 @@ class RedshiftRouteHandler(APIHandler):
     @web.authenticated
     def get(self):
         global DATA
-        #DATA = controller.list_my_running_jobs()
         rs = RedshiftUtils()
         DATA = rs.get_team_clusters()
         self.log.info("************")

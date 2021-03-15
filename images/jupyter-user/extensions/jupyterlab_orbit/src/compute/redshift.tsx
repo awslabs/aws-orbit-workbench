@@ -51,7 +51,7 @@ const Item = (props: {
     >
       {props.item.name}
     </span>
-    <span className={ITEM_DETAIL_CLASS}>{props.item.start_time}</span>
+    {/*<span className={ITEM_DETAIL_CLASS}>{props.item.start_time}</span> */}
     <span className={ITEM_DETAIL_CLASS}>{props.item.node_type}</span>
     <ToolbarButtonComponent
       className={SHUTDOWN_BUTTON_CLASS}
@@ -101,7 +101,7 @@ const useItems = (type: string): IUseItemsReturn => {
         type: type
       };
 
-      setData(await request('containers', parameters));
+      setData(await request('redshift', parameters));
     };
 
     fetchData();
