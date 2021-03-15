@@ -38,7 +38,7 @@ class CentralWidget extends ReactWidget {
           refreshCallback={refreshCallback}
         />
         <ContainerCentralPanel title={'Your Jobs'} type={'user'} />
-        <ContainerCentralPanel title={'Your Jobs'} type={'team'} />
+        <ContainerCentralPanel title={'Team Jobs'} type={'team'} />
         <div />
       </div>
     );

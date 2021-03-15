@@ -50,12 +50,15 @@ class ContainersRouteHandler(APIHandler):
             else:
                 container["node_type"] = "unknown"
 
-            if "status" in c and "failed" in c["status"] and c["status"]["failed"] == 1:
-                container['job_state'] = 'failed'
-            elif "active" in c and "active" in c["status"] and c["status"]["active"] == 1:
-                container['job_state'] = 'running'
-            elif "succeeded" in c and "succeeded" in c["status"] and c["status"]["succeeded"] == 1:
-                container['job_state'] = 'succeeded'
+            if "status" in c:
+                if "failed" in c["status"] and c["status"]["failed"] == 1:
+                    container['job_state'] = 'failed'
+                elif "active" in c["status"] and c["status"]["active"] == 1:
+                    container['job_state'] = 'running'
+                elif "succeeded" in c["status"] and c["status"]["succeeded"] == 1:
+                    container['job_state'] = 'succeeded'
+                else:
+                    container['job_state'] = 'unknown'
             else:
                 container['job_state'] = 'unknown'
 
