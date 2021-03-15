@@ -329,7 +329,7 @@ def list_running_jobs(team_only: bool = False):
     load_kube_config()
     username = os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))
     api_instance = BatchV1Api()
-    field_selector = "status.successful!=1"
+    # field_selector = "status.successful!=1"
     if team_only:
         operand = "!="
     else:
@@ -342,7 +342,7 @@ def list_running_jobs(team_only: bool = False):
             namespace=team_name,
             _preload_content=False,
             label_selector=label_selector,
-            field_selector=field_selector,
+            # field_selector=field_selector,
             watch=False,
         )
         res = json.loads(api_response.data)
