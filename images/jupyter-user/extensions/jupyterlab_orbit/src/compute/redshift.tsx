@@ -85,13 +85,13 @@ const Items = (props: {
 
 const deleteItem = async (name: string): Promise<IItem[]> => {
   const dataToSend = { name: name };
-  console.log(`Deleting Redshift Cluster`)
+  console.log('Deleting Redshift Cluster');
   console.log(`DeleteItem ${JSON.stringify(dataToSend)}`);
   try {
     const reply: IItem[] | undefined = await request(
-        'redshift',
-        { body: JSON.stringify(dataToSend), method : 'DELETE' },
-        {}
+      'redshift',
+      {},
+      { body: JSON.stringify(dataToSend), method: 'DELETE' }
     );
     return reply;
   } catch (reason) {
@@ -136,7 +136,7 @@ const useItems = (type: string): IUseItemsReturn => {
 
   const createCallback = () => {
     void showDialog({
-      title: `Create Redshift Cluster`,
+      title: 'Create Redshift Cluster',
       body: 'Create Redshift Cluster',
       buttons: [
         Dialog.cancelButton({ label: 'Cancel' }),
@@ -169,7 +169,9 @@ export const RedshiftCategoryLeftList = (props: {
   title: string;
   type: string;
 }): JSX.Element => {
-  const { items, closeAllCallback, refreshCallback, createCallback } = useItems(props.type);
+  const { items, closeAllCallback, refreshCallback, createCallback } = useItems(
+    props.type
+  );
   return (
     <div className={SECTION_CLASS}>
       <CategoryViewsWithCreate
@@ -187,7 +189,9 @@ export const RedshiftCategoryCentralList = (props: {
   title: string;
   type: string;
 }): JSX.Element => {
-  const { items, closeAllCallback, refreshCallback, createCallback } = useItems(props.type);
+  const { items, closeAllCallback, refreshCallback, createCallback } = useItems(
+    props.type
+  );
   return (
     <div className={SECTION_CLASS}>
       <CategoryViewsWithCreate
