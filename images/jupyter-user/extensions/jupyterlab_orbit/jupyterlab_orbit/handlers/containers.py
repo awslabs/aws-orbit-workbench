@@ -15,7 +15,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from aws_orbit_sdk import controller
 from jupyter_server.base.handlers import APIHandler
@@ -69,7 +69,7 @@ class ContainersRouteHandler(APIHandler):
     @web.authenticated
     def get(self):
         global MYJOBS
-        type: Optional[string] = self.get_argument("type", default="")
+        type: Optional[str] = self.get_argument("type", default="")
         self.log.info(f"GET - {self.__class__} - {type} {format}")
         if "MOCK" not in os.environ or os.environ["MOCK"] == "0":
             if type == "user":
@@ -89,8 +89,8 @@ class ContainersRouteHandler(APIHandler):
                 ) as outfile:
                     json.dump(data, outfile, indent=4)
         else:
-            path = f"./extensions/jupyterlab_orbit/jupyterlab_orbit/mockup/containers-{type}.json"
-            self.log.info(f"LOADING MOCKED DATA from: {os.path.abspath(path)}")
+            path = Path(__file__).parent / f"../mockup/containers-{type}.json"
+            self.log.info("Path: %s", path)
             with open(path) as f:
                 if type == "user":
                     MYJOBS = json.load(f)
@@ -103,7 +103,6 @@ class ContainersRouteHandler(APIHandler):
                     data = CRONJOBS
                 else:
                     raise Exception("Unknown type: %s", type)
-
         self.finish(self._dump(data, type))
 
     @staticmethod
@@ -117,7 +116,7 @@ class ContainersRouteHandler(APIHandler):
         global MYJOBS
         input_data = self.get_json_body()
         job_name = input_data["name"]
-        type: Optional[string] = self.get_argument("type", default="")
+        type: Optional[str] = self.get_argument("type", default="")
         self.log.info(f"DELETE - {self.__class__} - %s", job_name)
         if type == "user":
             MYJOBS = controller.delete_job(job_name)
@@ -131,5 +130,5 @@ class ContainersRouteHandler(APIHandler):
         else:
             raise Exception("Unknown type: %s", type)
 
-        _delete(job_name, data)
+        self._delete(job_name, data)
         self.finish(self._dump())

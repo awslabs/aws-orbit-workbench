@@ -15,7 +15,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from aws_orbit_sdk.common import get_workspace
 from jupyter_server.base.handlers import APIHandler
@@ -27,7 +27,7 @@ DATA: Dict[str, List[Dict[str, str]]] = {}
 class TeamRouteHandler(APIHandler):
     @staticmethod
     def _dump(data) -> str:
-        ret = {}
+        ret: Dict[str, Any] = {}
         common_props = ["Fargate", "ScratchBucket"]
         security_props = ["EksPodRoleArn", "TeamKmsKeyArn", "TeamSecurityGroupId", "GrantSudo", "K8Admin"]
         ret["common"] = [{"name": "team name", "value": data["team_space"]}]
@@ -61,13 +61,14 @@ class TeamRouteHandler(APIHandler):
     def get(self):
         global DATA
         self.log.info(f"GET - {self.__class__}")
-        DATA = get_workspace()
-        # hide some details
-        if "Elbs" in DATA:
-            del DATA["Elbs"]
-        if "Plugins" in DATA:
-            del DATA["Plugins"]
         if "MOCK" not in os.environ or os.environ["MOCK"] == "0":
+            DATA = get_workspace()
+            # hide some details
+            if "Elbs" in DATA:
+                del DATA["Elbs"]
+            if "Plugins" in DATA:
+                del DATA["Plugins"]
+
             if "MOCK" in os.environ:
                 path = f"{Path(__file__).parent}/../mockup/team.json"
                 self.log.info(f"writing mockup data to {path}")
