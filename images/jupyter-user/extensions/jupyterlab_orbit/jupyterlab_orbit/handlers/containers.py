@@ -68,7 +68,6 @@ class ContainersRouteHandler(APIHandler):
 
     @web.authenticated
     def get(self):
-        print("Entered containers GET method")
         global MYJOBS
         type: Optional[str] = self.get_argument("type", default="")
         self.log.info(f"GET - {self.__class__} - {type} {format}")
@@ -115,7 +114,6 @@ class ContainersRouteHandler(APIHandler):
 
     @web.authenticated
     def delete(self):
-        self.log.info("Entered containers Delete method")
         global MYJOBS
         input_data = self.get_json_body()
         job_name = input_data["name"]
