@@ -12,24 +12,24 @@ Images:
         Repository: !ENV ${JUPYTER_HUB_REPO::aws-orbit-jupyter-hub}
         Source: !ENV ${IMAGE_SOURCE::code}
         Path: !ENV ${IMAGE_PATH::../../../images/jupyter-hub}
-        Version: latest
+        Version: !ENV ${VERSION::latest}
     JupyterUser:
         Repository: !ENV ${JUPYTER_USER_REPO::aws-orbit-jupyter-user}
         Source: !ENV ${IMAGE_SOURCE::code}
         Path: !ENV ${IMAGE_PATH::../../../images/jupyter-user}
-        Version: latest
+        Version: !ENV ${VERSION::latest}
     LandingPage:
         Repository: !ENV ${LANDING_PAGE_REPO::aws-orbit-landing-page}
         Source: !ENV ${IMAGE_SOURCE::code}
         Path: !ENV ${IMAGE_PATH::../../../images/landing-page}
-        Version: latest
+        Version: !ENV ${VERSION::latest}
 Networking:
     VpcId: !SSM ${/orbit-foundation/dev-env/resources::VpcId}
     PublicSubnets: !SSM ${/orbit-foundation/dev-env/resources::PublicSubnets}
     PrivateSubnets: !SSM ${/orbit-foundation/dev-env/resources::PrivateSubnets}
     IsolatedSubnets: !SSM ${/orbit-foundation/dev-env/resources::IsolatedSubnets}
     Data:
-        InternetAccessible: false
+        InternetAccessible: !ENV ${INTERNET_ACCESSIBLE::false}
         NodesSubnets: !SSM ${/orbit-foundation/dev-env/resources::NodesSubnets}
     Frontend:
         LoadBalancersSubnets: !SSM ${/orbit-foundation/dev-env/resources::LoadBalancersSubnets}
