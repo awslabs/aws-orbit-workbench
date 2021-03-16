@@ -39,7 +39,10 @@ class ContainersRouteHandler(APIHandler):
             else:
                 job_template = c["spec"]["template"]
                 container["time"] = c["metadata"]["creationTimestamp"]
-
+                if "status" in c and "completionTime" in c["status"]:
+                    container["completionTime"] = c["status"]["completionTime"]
+                else:
+                    container["completionTime"] = ''
             envs = job_template["spec"]["containers"][0]["env"]
             tasks = json.loads([e["value"] for e in envs if e["name"] == "tasks"][0])
             container["hint"] = json.dumps(tasks, indent=4)
@@ -61,6 +64,9 @@ class ContainersRouteHandler(APIHandler):
                     container["job_state"] = "unknown"
             else:
                 container["job_state"] = "unknown"
+
+            container["notebook"] = tasks["tasks"][0]["notebookName"] if "notebookName" in tasks["tasks"][0]\
+                else f'{tasks["tasks"][0]["moduleName"]}.{tasks["tasks"][0]["functionName"]}'
 
             container["info"] = c
             data.append(container)

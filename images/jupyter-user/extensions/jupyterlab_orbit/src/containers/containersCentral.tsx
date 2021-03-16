@@ -2,7 +2,8 @@ import React from 'react';
 import * as utils from '../typings/utils';
 import { TableWidget } from './table/table';
 import ReactJson from 'react-json-view';
-import { IUseItemsReturn } from '../containers';
+import { IUseItemsReturn, getStateIcon, getNodeType } from '../containers';
+import { Tooltip } from 'antd';
 
 const columns = [
   {
@@ -10,15 +11,36 @@ const columns = [
     dataIndex: 'name',
     sorter: {
       compare: utils.Sorter.DEFAULT,
-      multiple: 3
+      multiple: 2
     }
   },
   {
     title: 'Status',
     dataIndex: 'job_state',
+    defaultSortOrder: 'descend',
     sorter: {
-      compare: utils.Sorter.DEFAULT,
-      multiple: 3
+      compare: (a: string, b: string) => {
+        console.log(`Sorting a=${a} b=${b}`);
+        if (a === b) {
+          return 0;
+        }
+        if (a === 'running') {
+          return 1;
+        }
+        if (b === 'running') {
+          return 2;
+        }
+        return 0;
+      },
+      multiple: 1
+    },
+    render: (text: any, record: any) => {
+      const { title, color, icon } = getStateIcon(text);
+      return (
+        <Tooltip placement="topLeft" title={title} color={color} key={'Orbit'}>
+          <span> {icon} </span>
+        </Tooltip>
+      );
     }
   },
   {
@@ -29,7 +51,15 @@ const columns = [
       multiple: 3
     },
     render: (text: any, record: any) => {
-      return `${JSON.stringify(text)}`;
+      return (
+        <Tooltip
+          placement="topLeft"
+          title={`${JSON.stringify(text)}`}
+          key={'Orbit'}
+        >
+          <span> record.notebook </span>
+        </Tooltip>
+      );
     }
   },
   {
@@ -41,11 +71,27 @@ const columns = [
     }
   },
   {
+    title: 'Completion Time',
+    dataIndex: 'completionTime',
+    sorter: {
+      compare: utils.Sorter.DEFAULT,
+      multiple: 3
+    }
+  },
+  {
     title: 'Node Type',
     dataIndex: 'node_type',
     sorter: {
       compare: utils.Sorter.DEFAULT,
-      multiple: 3
+      multiple: 4
+    },
+    render: (text: any, record: any) => {
+      const { title, color, icon } = getNodeType(text);
+      return (
+        <Tooltip placement="topLeft" title={title} color={color} key={'Orbit'}>
+          <span> {icon} </span>
+        </Tooltip>
+      );
     }
   }
 ];

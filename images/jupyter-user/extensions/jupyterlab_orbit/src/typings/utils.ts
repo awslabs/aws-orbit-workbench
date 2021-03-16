@@ -3,12 +3,13 @@ import moment from 'moment';
 export interface IDictionary<TValue> {
   [id: string]: TValue;
 }
-
+export const TS_FORMAT = 'yyyy-mm-ddThh:mm:ssZ';
 /**
  * @param {string} dateA - a date, represented in string format
  * @param {string} dateB - a date, represented in string format
  */
-const dateSort = (dateA: any, dateB: any) => moment(dateA).diff(moment(dateB));
+const dateSort = (dateA: any, dateB: any) =>
+  moment(dateA, TS_FORMAT).diff(moment(dateB, TS_FORMAT));
 
 /**
  *

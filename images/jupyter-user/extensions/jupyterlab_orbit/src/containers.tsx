@@ -10,7 +10,7 @@ import {
 import { LabIcon } from '@jupyterlab/ui-components';
 import { Menu } from '@lumino/widgets';
 
-import { containersIcon } from './common/icons';
+import { containersIcon, fargateIcon, ec2Icon } from './common/icons';
 import { ORBIT_COLOR, RUNNING_CLASS, SECTION_CLASS } from './common/styles';
 import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
@@ -29,6 +29,9 @@ import { IDictionary } from './typings/utils';
 
 const NAME = 'Containers';
 const ICON: LabIcon = containersIcon;
+
+const FARGATE_ICON: LabIcon = fargateIcon;
+const EC2_ICON: LabIcon = ec2Icon;
 
 const refreshCallback = () => {
   console.log(`[${NAME}] Refresh!`);
@@ -83,6 +86,33 @@ export const getStateIcon = (
       break;
     default:
       console.error(`job_state: ${jobState}`);
+  }
+  return { title, color, icon };
+};
+
+export const getNodeType = (
+  nodeType: string
+): {
+  title: string;
+  color: string;
+  icon: JSX.Element;
+} => {
+  let title = 'Unknown State';
+  let color = 'gray';
+  let icon: JSX.Element = <QuestionOutlined style={{ color: color }} />;
+  switch (nodeType) {
+    case 'fargate':
+      title = 'Fargate';
+      color = 'white';
+      icon = <FARGATE_ICON.react />;
+      break;
+    case 'ec2':
+      title = 'EC2';
+      color = 'white';
+      icon = <EC2_ICON.react />;
+      break;
+    default:
+      console.error(`node_type: ${nodeType}`);
   }
   return { title, color, icon };
 };
