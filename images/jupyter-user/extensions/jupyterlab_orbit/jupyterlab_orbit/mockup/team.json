@@ -1,5 +1,5 @@
 {
-    "BaseImageAddress": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user",
+    "BaseImageAddress": "495869084367.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user",
     "BootstrapS3Prefix": "teams/dev-env/bootstrap/",
     "ContainerDefaults": {
         "cpu": 4,
@@ -11,9 +11,9 @@
     "EfsId": "fs-2854b42f",
     "EfsLifeCycle": "AFTER_7_DAYS",
     "EksK8SApiArn": null,
-    "EksPodRoleArn": "arn:aws:iam:****************role/orbit-dev-env-lake-user-role",
+    "EksPodRoleArn": "arn:aws:iam::495869084367:role/orbit-dev-env-lake-user-role",
     "Fargate": true,
-    "FinalImageAddress": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user",
+    "FinalImageAddress": "495869084367.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user",
     "GrantSudo": true,
     "Image": null,
     "JupyterUrl": "a998ba260e2fe4fae97dd7b0dbc54b5f-1823011548.us-west-2.elb.amazonaws.com",
@@ -74,10 +74,10 @@
             "slug": "small-spark"
         }
     ],
-    "ScratchBucket": "orbit-foundation-dev-env-scratch****************77f116",
+    "ScratchBucket": "orbit-foundation-dev-env-scratch-495869084367-77f116",
     "SsmParameterName": "/orbit/dev-env/teams/lake-user/context",
     "StackName": "orbit-dev-env-lake-user",
-    "TeamKmsKeyArn": "arn:aws:kms:us-west-2****************key/2a4c7ec4-5c2b-4a85-9828-4d9b25cb9b09",
+    "TeamKmsKeyArn": "arn:aws:kms:us-west-2:495869084367:key/2a4c7ec4-5c2b-4a85-9828-4d9b25cb9b09",
     "TeamSecurityGroupId": "sg-08ec5db15eef12980",
     "TeamSsmParameterName": "/orbit/dev-env/teams/lake-user/team",
     "region": "us-west-2",

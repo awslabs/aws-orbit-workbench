@@ -16,8 +16,8 @@ from jupyter_server.utils import url_path_join
 
 from .handlers.catalog import CatalogRouteHandler, TreeRouteHandler
 from .handlers.containers import ContainersRouteHandler
-from .handlers.team import TeamRouteHandler
 from .handlers.redshift import RedshiftRouteHandler
+from .handlers.team import TeamRouteHandler
 
 
 def setup_handlers(web_app):

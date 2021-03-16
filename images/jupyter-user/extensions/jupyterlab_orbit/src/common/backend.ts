@@ -13,8 +13,8 @@ const encodeQueryData = (data: IDictionary<any>): string => {
 
 export async function request<T>(
   endPoint = '',
-  init: RequestInit = {},
-  parameters: IDictionary<any> = {}
+  parameters: IDictionary<any> = {},
+  init: RequestInit = {}
 ): Promise<T> {
   const settings = ServerConnection.makeSettings();
   let requestUrl = URLExt.join(settings.baseUrl, 'jupyterlab_orbit', endPoint);

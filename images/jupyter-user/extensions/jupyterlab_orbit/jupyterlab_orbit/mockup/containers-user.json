@@ -230,7 +230,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
+                            "image": "495869084367.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -266,7 +266,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit****************b81a1f"
+                                    "value": "orbit-dev-env-toolkit-495869084367-b81a1f"
                                 },
                                 {
                                     "name": "task_type",
@@ -567,7 +567,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
+                            "image": "495869084367.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -603,7 +603,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit****************b81a1f"
+                                    "value": "orbit-dev-env-toolkit-495869084367-b81a1f"
                                 },
                                 {
                                     "name": "task_type",
@@ -904,7 +904,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
+                            "image": "495869084367.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -940,7 +940,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit****************b81a1f"
+                                    "value": "orbit-dev-env-toolkit-495869084367-b81a1f"
                                 },
                                 {
                                     "name": "task_type",
@@ -1241,7 +1241,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
+                            "image": "495869084367.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -1277,7 +1277,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit****************b81a1f"
+                                    "value": "orbit-dev-env-toolkit-495869084367-b81a1f"
                                 },
                                 {
                                     "name": "task_type",
@@ -1349,17 +1349,17 @@
     },
     {
         "metadata": {
-            "name": "orbit-lake-user-ttt-1615818120",
+            "name": "orbit-lake-user-ttt-1615910040",
             "namespace": "lake-user",
-            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-ttt-1615818120",
-            "uid": "115569a5-086b-48dd-bcd3-16fd42abac68",
-            "resourceVersion": "993056",
-            "creationTimestamp": "2021-03-15T14:22:04Z",
+            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-ttt-1615910040",
+            "uid": "651380f4-5f25-4cf8-8978-8f9b5a27a1f7",
+            "resourceVersion": "1352674",
+            "creationTimestamp": "2021-03-16T15:54:05Z",
             "labels": {
                 "app": "orbit-runner",
-                "controller-uid": "115569a5-086b-48dd-bcd3-16fd42abac68",
+                "controller-uid": "651380f4-5f25-4cf8-8978-8f9b5a27a1f7",
                 "cronjob_id": "orbit-lake-user-ttt",
-                "job-name": "orbit-lake-user-ttt-1615818120",
+                "job-name": "orbit-lake-user-ttt-1615910040",
                 "orbit/node-type": "fargate",
                 "username": "amirbo"
             },
@@ -1378,7 +1378,7 @@
                     "manager": "kube-controller-manager",
                     "operation": "Update",
                     "apiVersion": "batch/v1",
-                    "time": "2021-03-15T14:22:37Z",
+                    "time": "2021-03-16T15:54:35Z",
                     "fieldsType": "FieldsV1",
                     "fieldsV1": {
                         "f:metadata": {
@@ -1567,7 +1567,7 @@
             "backoffLimit": 0,
             "selector": {
                 "matchLabels": {
-                    "controller-uid": "115569a5-086b-48dd-bcd3-16fd42abac68"
+                    "controller-uid": "651380f4-5f25-4cf8-8978-8f9b5a27a1f7"
                 }
             },
             "template": {
@@ -1576,9 +1576,9 @@
                     "creationTimestamp": null,
                     "labels": {
                         "app": "orbit-runner",
-                        "controller-uid": "115569a5-086b-48dd-bcd3-16fd42abac68",
+                        "controller-uid": "651380f4-5f25-4cf8-8978-8f9b5a27a1f7",
                         "cronjob_id": "orbit-lake-user-ttt",
-                        "job-name": "orbit-lake-user-ttt-1615818120",
+                        "job-name": "orbit-lake-user-ttt-1615910040",
                         "orbit/node-type": "fargate",
                         "username": "amirbo"
                     }
@@ -1595,7 +1595,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
+                            "image": "495869084367.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -1631,7 +1631,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit****************b81a1f"
+                                    "value": "orbit-dev-env-toolkit-495869084367-b81a1f"
                                 },
                                 {
                                     "name": "task_type",
@@ -1692,28 +1692,28 @@
                 {
                     "type": "Complete",
                     "status": "True",
-                    "lastProbeTime": "2021-03-15T14:22:37Z",
-                    "lastTransitionTime": "2021-03-15T14:22:37Z"
+                    "lastProbeTime": "2021-03-16T15:54:35Z",
+                    "lastTransitionTime": "2021-03-16T15:54:35Z"
                 }
             ],
-            "startTime": "2021-03-15T14:22:04Z",
-            "completionTime": "2021-03-15T14:22:37Z",
+            "startTime": "2021-03-16T15:54:05Z",
+            "completionTime": "2021-03-16T15:54:35Z",
             "succeeded": 1
         }
     },
     {
         "metadata": {
-            "name": "orbit-lake-user-ttt-1615818240",
+            "name": "orbit-lake-user-ttt-1615910160",
             "namespace": "lake-user",
-            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-ttt-1615818240",
-            "uid": "d81baf1b-8ac6-42a6-8d7e-8ff6fd44fe47",
-            "resourceVersion": "993530",
-            "creationTimestamp": "2021-03-15T14:24:05Z",
+            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-ttt-1615910160",
+            "uid": "20451b23-10ab-42a0-915c-6956597bc761",
+            "resourceVersion": "1353135",
+            "creationTimestamp": "2021-03-16T15:56:05Z",
             "labels": {
                 "app": "orbit-runner",
-                "controller-uid": "d81baf1b-8ac6-42a6-8d7e-8ff6fd44fe47",
+                "controller-uid": "20451b23-10ab-42a0-915c-6956597bc761",
                 "cronjob_id": "orbit-lake-user-ttt",
-                "job-name": "orbit-lake-user-ttt-1615818240",
+                "job-name": "orbit-lake-user-ttt-1615910160",
                 "orbit/node-type": "fargate",
                 "username": "amirbo"
             },
@@ -1732,7 +1732,7 @@
                     "manager": "kube-controller-manager",
                     "operation": "Update",
                     "apiVersion": "batch/v1",
-                    "time": "2021-03-15T14:24:36Z",
+                    "time": "2021-03-16T15:56:35Z",
                     "fieldsType": "FieldsV1",
                     "fieldsV1": {
                         "f:metadata": {
@@ -1921,7 +1921,7 @@
             "backoffLimit": 0,
             "selector": {
                 "matchLabels": {
-                    "controller-uid": "d81baf1b-8ac6-42a6-8d7e-8ff6fd44fe47"
+                    "controller-uid": "20451b23-10ab-42a0-915c-6956597bc761"
                 }
             },
             "template": {
@@ -1930,9 +1930,9 @@
                     "creationTimestamp": null,
                     "labels": {
                         "app": "orbit-runner",
-                        "controller-uid": "d81baf1b-8ac6-42a6-8d7e-8ff6fd44fe47",
+                        "controller-uid": "20451b23-10ab-42a0-915c-6956597bc761",
                         "cronjob_id": "orbit-lake-user-ttt",
-                        "job-name": "orbit-lake-user-ttt-1615818240",
+                        "job-name": "orbit-lake-user-ttt-1615910160",
                         "orbit/node-type": "fargate",
                         "username": "amirbo"
                     }
@@ -1949,7 +1949,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
+                            "image": "495869084367.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -1985,7 +1985,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit****************b81a1f"
+                                    "value": "orbit-dev-env-toolkit-495869084367-b81a1f"
                                 },
                                 {
                                     "name": "task_type",
@@ -2046,28 +2046,28 @@
                 {
                     "type": "Complete",
                     "status": "True",
-                    "lastProbeTime": "2021-03-15T14:24:36Z",
-                    "lastTransitionTime": "2021-03-15T14:24:36Z"
+                    "lastProbeTime": "2021-03-16T15:56:35Z",
+                    "lastTransitionTime": "2021-03-16T15:56:35Z"
                 }
             ],
-            "startTime": "2021-03-15T14:24:05Z",
-            "completionTime": "2021-03-15T14:24:36Z",
+            "startTime": "2021-03-16T15:56:05Z",
+            "completionTime": "2021-03-16T15:56:35Z",
             "succeeded": 1
         }
     },
     {
         "metadata": {
-            "name": "orbit-lake-user-ttt-1615818360",
+            "name": "orbit-lake-user-ttt-1615910280",
             "namespace": "lake-user",
-            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-ttt-1615818360",
-            "uid": "034e69cb-f15c-4dca-996b-b80638175211",
-            "resourceVersion": "993989",
-            "creationTimestamp": "2021-03-15T14:26:05Z",
+            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-ttt-1615910280",
+            "uid": "d485e23e-ba6d-410e-9ac8-dc07b5a1f767",
+            "resourceVersion": "1353606",
+            "creationTimestamp": "2021-03-16T15:58:06Z",
             "labels": {
                 "app": "orbit-runner",
-                "controller-uid": "034e69cb-f15c-4dca-996b-b80638175211",
+                "controller-uid": "d485e23e-ba6d-410e-9ac8-dc07b5a1f767",
                 "cronjob_id": "orbit-lake-user-ttt",
-                "job-name": "orbit-lake-user-ttt-1615818360",
+                "job-name": "orbit-lake-user-ttt-1615910280",
                 "orbit/node-type": "fargate",
                 "username": "amirbo"
             },
@@ -2086,7 +2086,7 @@
                     "manager": "kube-controller-manager",
                     "operation": "Update",
                     "apiVersion": "batch/v1",
-                    "time": "2021-03-15T14:26:35Z",
+                    "time": "2021-03-16T15:58:35Z",
                     "fieldsType": "FieldsV1",
                     "fieldsV1": {
                         "f:metadata": {
@@ -2275,7 +2275,7 @@
             "backoffLimit": 0,
             "selector": {
                 "matchLabels": {
-                    "controller-uid": "034e69cb-f15c-4dca-996b-b80638175211"
+                    "controller-uid": "d485e23e-ba6d-410e-9ac8-dc07b5a1f767"
                 }
             },
             "template": {
@@ -2284,9 +2284,9 @@
                     "creationTimestamp": null,
                     "labels": {
                         "app": "orbit-runner",
-                        "controller-uid": "034e69cb-f15c-4dca-996b-b80638175211",
+                        "controller-uid": "d485e23e-ba6d-410e-9ac8-dc07b5a1f767",
                         "cronjob_id": "orbit-lake-user-ttt",
-                        "job-name": "orbit-lake-user-ttt-1615818360",
+                        "job-name": "orbit-lake-user-ttt-1615910280",
                         "orbit/node-type": "fargate",
                         "username": "amirbo"
                     }
@@ -2303,7 +2303,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
+                            "image": "495869084367.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -2339,7 +2339,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit****************b81a1f"
+                                    "value": "orbit-dev-env-toolkit-495869084367-b81a1f"
                                 },
                                 {
                                     "name": "task_type",
@@ -2400,28 +2400,28 @@
                 {
                     "type": "Complete",
                     "status": "True",
-                    "lastProbeTime": "2021-03-15T14:26:35Z",
-                    "lastTransitionTime": "2021-03-15T14:26:35Z"
+                    "lastProbeTime": "2021-03-16T15:58:35Z",
+                    "lastTransitionTime": "2021-03-16T15:58:35Z"
                 }
             ],
-            "startTime": "2021-03-15T14:26:05Z",
-            "completionTime": "2021-03-15T14:26:35Z",
+            "startTime": "2021-03-16T15:58:06Z",
+            "completionTime": "2021-03-16T15:58:35Z",
             "succeeded": 1
         }
     },
     {
         "metadata": {
-            "name": "orbit-lake-user-ttt-1615818480",
+            "name": "orbit-lake-user-yyy-1615909500",
             "namespace": "lake-user",
-            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-ttt-1615818480",
-            "uid": "b035ee1d-e08f-4197-add8-4b0324abc42a",
-            "resourceVersion": "994341",
-            "creationTimestamp": "2021-03-15T14:28:05Z",
+            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-yyy-1615909500",
+            "uid": "8129d785-43b8-42d8-ab1b-2918f19f80cd",
+            "resourceVersion": "1351640",
+            "creationTimestamp": "2021-03-16T15:45:03Z",
             "labels": {
                 "app": "orbit-runner",
-                "controller-uid": "b035ee1d-e08f-4197-add8-4b0324abc42a",
-                "cronjob_id": "orbit-lake-user-ttt",
-                "job-name": "orbit-lake-user-ttt-1615818480",
+                "controller-uid": "8129d785-43b8-42d8-ab1b-2918f19f80cd",
+                "cronjob_id": "orbit-lake-user-yyy",
+                "job-name": "orbit-lake-user-yyy-1615909500",
                 "orbit/node-type": "fargate",
                 "username": "amirbo"
             },
@@ -2429,8 +2429,8 @@
                 {
                     "apiVersion": "batch/v1beta1",
                     "kind": "CronJob",
-                    "name": "orbit-lake-user-ttt",
-                    "uid": "3d63ceea-66e0-4481-91f0-6a4f74261b9e",
+                    "name": "orbit-lake-user-yyy",
+                    "uid": "21827aef-c6a4-460e-b2c9-3ddc58806e1b",
                     "controller": true,
                     "blockOwnerDeletion": true
                 }
@@ -2440,7 +2440,7 @@
                     "manager": "kube-controller-manager",
                     "operation": "Update",
                     "apiVersion": "batch/v1",
-                    "time": "2021-03-15T14:28:06Z",
+                    "time": "2021-03-16T15:50:12Z",
                     "fieldsType": "FieldsV1",
                     "fieldsV1": {
                         "f:metadata": {
@@ -2453,7 +2453,1069 @@
                             },
                             "f:ownerReferences": {
                                 ".": {},
-                                "k:{\"uid\":\"3d63ceea-66e0-4481-91f0-6a4f74261b9e\"}": {
+                                "k:{\"uid\":\"21827aef-c6a4-460e-b2c9-3ddc58806e1b\"}": {
+                                    ".": {},
+                                    "f:apiVersion": {},
+                                    "f:blockOwnerDeletion": {},
+                                    "f:controller": {},
+                                    "f:kind": {},
+                                    "f:name": {},
+                                    "f:uid": {}
+                                }
+                            }
+                        },
+                        "f:spec": {
+                            "f:backoffLimit": {},
+                            "f:completions": {},
+                            "f:parallelism": {},
+                            "f:template": {
+                                "f:metadata": {
+                                    "f:labels": {
+                                        ".": {},
+                                        "f:app": {},
+                                        "f:cronjob_id": {},
+                                        "f:orbit/node-type": {},
+                                        "f:username": {}
+                                    },
+                                    "f:name": {}
+                                },
+                                "f:spec": {
+                                    "f:containers": {
+                                        "k:{\"name\":\"notebook\"}": {
+                                            ".": {},
+                                            "f:args": {},
+                                            "f:env": {
+                                                ".": {},
+                                                "k:{\"name\":\"AWS_ORBIT_ENV\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"AWS_ORBIT_S3_BUCKET\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"AWS_ORBIT_TEAM_SPACE\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"AWS_STS_REGIONAL_ENDPOINTS\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"JUPYTERHUB_USER\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"USERNAME\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"compute\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"task_type\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"tasks\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                }
+                                            },
+                                            "f:image": {},
+                                            "f:imagePullPolicy": {},
+                                            "f:lifecycle": {},
+                                            "f:name": {},
+                                            "f:ports": {
+                                                ".": {},
+                                                "k:{\"containerPort\":22,\"protocol\":\"TCP\"}": {
+                                                    ".": {},
+                                                    "f:containerPort": {},
+                                                    "f:name": {},
+                                                    "f:protocol": {}
+                                                }
+                                            },
+                                            "f:resources": {
+                                                ".": {},
+                                                "f:limits": {
+                                                    ".": {},
+                                                    "f:cpu": {},
+                                                    "f:memory": {}
+                                                },
+                                                "f:requests": {
+                                                    ".": {},
+                                                    "f:cpu": {},
+                                                    "f:memory": {}
+                                                }
+                                            },
+                                            "f:securityContext": {
+                                                ".": {},
+                                                "f:runAsGroup": {},
+                                                "f:runAsUser": {}
+                                            },
+                                            "f:terminationMessagePath": {},
+                                            "f:terminationMessagePolicy": {},
+                                            "f:volumeMounts": {
+                                                ".": {},
+                                                "k:{\"mountPath\":\"/efs\"}": {
+                                                    ".": {},
+                                                    "f:mountPath": {},
+                                                    "f:name": {}
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "f:dnsPolicy": {},
+                                    "f:nodeSelector": {
+                                        ".": {},
+                                        "f:orbit/usage": {}
+                                    },
+                                    "f:restartPolicy": {},
+                                    "f:schedulerName": {},
+                                    "f:securityContext": {
+                                        ".": {},
+                                        "f:fsGroup": {}
+                                    },
+                                    "f:serviceAccount": {},
+                                    "f:serviceAccountName": {},
+                                    "f:terminationGracePeriodSeconds": {},
+                                    "f:volumes": {
+                                        ".": {},
+                                        "k:{\"name\":\"efs-volume\"}": {
+                                            ".": {},
+                                            "f:name": {},
+                                            "f:persistentVolumeClaim": {
+                                                ".": {},
+                                                "f:claimName": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "f:ttlSecondsAfterFinished": {}
+                        },
+                        "f:status": {
+                            "f:completionTime": {},
+                            "f:conditions": {
+                                ".": {},
+                                "k:{\"type\":\"Complete\"}": {
+                                    ".": {},
+                                    "f:lastProbeTime": {},
+                                    "f:lastTransitionTime": {},
+                                    "f:status": {},
+                                    "f:type": {}
+                                }
+                            },
+                            "f:startTime": {},
+                            "f:succeeded": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "spec": {
+            "parallelism": 1,
+            "completions": 1,
+            "backoffLimit": 0,
+            "selector": {
+                "matchLabels": {
+                    "controller-uid": "8129d785-43b8-42d8-ab1b-2918f19f80cd"
+                }
+            },
+            "template": {
+                "metadata": {
+                    "name": "run-jupyter",
+                    "creationTimestamp": null,
+                    "labels": {
+                        "app": "orbit-runner",
+                        "controller-uid": "8129d785-43b8-42d8-ab1b-2918f19f80cd",
+                        "cronjob_id": "orbit-lake-user-yyy",
+                        "job-name": "orbit-lake-user-yyy-1615909500",
+                        "orbit/node-type": "fargate",
+                        "username": "amirbo"
+                    }
+                },
+                "spec": {
+                    "volumes": [
+                        {
+                            "name": "efs-volume",
+                            "persistentVolumeClaim": {
+                                "claimName": "jupyterhub"
+                            }
+                        }
+                    ],
+                    "containers": [
+                        {
+                            "name": "notebook",
+                            "image": "495869084367.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
+                            "args": [
+                                "bash",
+                                "-c",
+                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
+                            ],
+                            "ports": [
+                                {
+                                    "name": "notebook-port",
+                                    "containerPort": 22,
+                                    "protocol": "TCP"
+                                }
+                            ],
+                            "env": [
+                                {
+                                    "name": "AWS_ORBIT_ENV",
+                                    "value": "dev-env"
+                                },
+                                {
+                                    "name": "AWS_ORBIT_TEAM_SPACE",
+                                    "value": "lake-user"
+                                },
+                                {
+                                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
+                                    "value": "regional"
+                                },
+                                {
+                                    "name": "JUPYTERHUB_USER",
+                                    "value": "amirbo"
+                                },
+                                {
+                                    "name": "USERNAME",
+                                    "value": "amirbo"
+                                },
+                                {
+                                    "name": "AWS_ORBIT_S3_BUCKET",
+                                    "value": "orbit-dev-env-toolkit-495869084367-b81a1f"
+                                },
+                                {
+                                    "name": "task_type",
+                                    "value": "jupyter"
+                                },
+                                {
+                                    "name": "tasks",
+                                    "value": "{\"tasks\": [{\"notebookName\": \"forever.ipynb\", \"sourcePath\": \"shared/samples/notebooks/B-DataAnalyst\", \"targetPath\": \"shared/regression/notebooks/B-DataAnalyst\", \"targetPrefix\": \"ttt\", \"params\": {\"glue_db\": \"cms_raw_db\", \"target_db\": \"users\"}}]}"
+                                },
+                                {
+                                    "name": "compute",
+                                    "value": "{\"compute\": {\"compute_type\": \"eks\", \"node_type\": \"fargate\"}}"
+                                }
+                            ],
+                            "resources": {
+                                "limits": {
+                                    "cpu": "2",
+                                    "memory": "2G"
+                                },
+                                "requests": {
+                                    "cpu": "2",
+                                    "memory": "2G"
+                                }
+                            },
+                            "volumeMounts": [
+                                {
+                                    "name": "efs-volume",
+                                    "mountPath": "/efs"
+                                }
+                            ],
+                            "lifecycle": {},
+                            "terminationMessagePath": "/dev/termination-log",
+                            "terminationMessagePolicy": "File",
+                            "imagePullPolicy": "Always",
+                            "securityContext": {
+                                "runAsUser": 1000,
+                                "runAsGroup": 100
+                            }
+                        }
+                    ],
+                    "restartPolicy": "Never",
+                    "terminationGracePeriodSeconds": 30,
+                    "dnsPolicy": "ClusterFirst",
+                    "nodeSelector": {
+                        "orbit/usage": "teams"
+                    },
+                    "serviceAccountName": "lake-user",
+                    "serviceAccount": "lake-user",
+                    "securityContext": {
+                        "fsGroup": 100
+                    },
+                    "schedulerName": "default-scheduler"
+                }
+            }
+        },
+        "status": {
+            "conditions": [
+                {
+                    "type": "Complete",
+                    "status": "True",
+                    "lastProbeTime": "2021-03-16T15:50:12Z",
+                    "lastTransitionTime": "2021-03-16T15:50:12Z"
+                }
+            ],
+            "startTime": "2021-03-16T15:45:03Z",
+            "completionTime": "2021-03-16T15:50:12Z",
+            "succeeded": 1
+        }
+    },
+    {
+        "metadata": {
+            "name": "orbit-lake-user-yyy-1615909680",
+            "namespace": "lake-user",
+            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-yyy-1615909680",
+            "uid": "95895960-0d28-4b10-bdf0-8a5bd9240b92",
+            "resourceVersion": "1352342",
+            "creationTimestamp": "2021-03-16T15:48:04Z",
+            "labels": {
+                "app": "orbit-runner",
+                "controller-uid": "95895960-0d28-4b10-bdf0-8a5bd9240b92",
+                "cronjob_id": "orbit-lake-user-yyy",
+                "job-name": "orbit-lake-user-yyy-1615909680",
+                "orbit/node-type": "fargate",
+                "username": "amirbo"
+            },
+            "ownerReferences": [
+                {
+                    "apiVersion": "batch/v1beta1",
+                    "kind": "CronJob",
+                    "name": "orbit-lake-user-yyy",
+                    "uid": "21827aef-c6a4-460e-b2c9-3ddc58806e1b",
+                    "controller": true,
+                    "blockOwnerDeletion": true
+                }
+            ],
+            "managedFields": [
+                {
+                    "manager": "kube-controller-manager",
+                    "operation": "Update",
+                    "apiVersion": "batch/v1",
+                    "time": "2021-03-16T15:53:12Z",
+                    "fieldsType": "FieldsV1",
+                    "fieldsV1": {
+                        "f:metadata": {
+                            "f:labels": {
+                                ".": {},
+                                "f:app": {},
+                                "f:cronjob_id": {},
+                                "f:orbit/node-type": {},
+                                "f:username": {}
+                            },
+                            "f:ownerReferences": {
+                                ".": {},
+                                "k:{\"uid\":\"21827aef-c6a4-460e-b2c9-3ddc58806e1b\"}": {
+                                    ".": {},
+                                    "f:apiVersion": {},
+                                    "f:blockOwnerDeletion": {},
+                                    "f:controller": {},
+                                    "f:kind": {},
+                                    "f:name": {},
+                                    "f:uid": {}
+                                }
+                            }
+                        },
+                        "f:spec": {
+                            "f:backoffLimit": {},
+                            "f:completions": {},
+                            "f:parallelism": {},
+                            "f:template": {
+                                "f:metadata": {
+                                    "f:labels": {
+                                        ".": {},
+                                        "f:app": {},
+                                        "f:cronjob_id": {},
+                                        "f:orbit/node-type": {},
+                                        "f:username": {}
+                                    },
+                                    "f:name": {}
+                                },
+                                "f:spec": {
+                                    "f:containers": {
+                                        "k:{\"name\":\"notebook\"}": {
+                                            ".": {},
+                                            "f:args": {},
+                                            "f:env": {
+                                                ".": {},
+                                                "k:{\"name\":\"AWS_ORBIT_ENV\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"AWS_ORBIT_S3_BUCKET\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"AWS_ORBIT_TEAM_SPACE\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"AWS_STS_REGIONAL_ENDPOINTS\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"JUPYTERHUB_USER\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"USERNAME\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"compute\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"task_type\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"tasks\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                }
+                                            },
+                                            "f:image": {},
+                                            "f:imagePullPolicy": {},
+                                            "f:lifecycle": {},
+                                            "f:name": {},
+                                            "f:ports": {
+                                                ".": {},
+                                                "k:{\"containerPort\":22,\"protocol\":\"TCP\"}": {
+                                                    ".": {},
+                                                    "f:containerPort": {},
+                                                    "f:name": {},
+                                                    "f:protocol": {}
+                                                }
+                                            },
+                                            "f:resources": {
+                                                ".": {},
+                                                "f:limits": {
+                                                    ".": {},
+                                                    "f:cpu": {},
+                                                    "f:memory": {}
+                                                },
+                                                "f:requests": {
+                                                    ".": {},
+                                                    "f:cpu": {},
+                                                    "f:memory": {}
+                                                }
+                                            },
+                                            "f:securityContext": {
+                                                ".": {},
+                                                "f:runAsGroup": {},
+                                                "f:runAsUser": {}
+                                            },
+                                            "f:terminationMessagePath": {},
+                                            "f:terminationMessagePolicy": {},
+                                            "f:volumeMounts": {
+                                                ".": {},
+                                                "k:{\"mountPath\":\"/efs\"}": {
+                                                    ".": {},
+                                                    "f:mountPath": {},
+                                                    "f:name": {}
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "f:dnsPolicy": {},
+                                    "f:nodeSelector": {
+                                        ".": {},
+                                        "f:orbit/usage": {}
+                                    },
+                                    "f:restartPolicy": {},
+                                    "f:schedulerName": {},
+                                    "f:securityContext": {
+                                        ".": {},
+                                        "f:fsGroup": {}
+                                    },
+                                    "f:serviceAccount": {},
+                                    "f:serviceAccountName": {},
+                                    "f:terminationGracePeriodSeconds": {},
+                                    "f:volumes": {
+                                        ".": {},
+                                        "k:{\"name\":\"efs-volume\"}": {
+                                            ".": {},
+                                            "f:name": {},
+                                            "f:persistentVolumeClaim": {
+                                                ".": {},
+                                                "f:claimName": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "f:ttlSecondsAfterFinished": {}
+                        },
+                        "f:status": {
+                            "f:completionTime": {},
+                            "f:conditions": {
+                                ".": {},
+                                "k:{\"type\":\"Complete\"}": {
+                                    ".": {},
+                                    "f:lastProbeTime": {},
+                                    "f:lastTransitionTime": {},
+                                    "f:status": {},
+                                    "f:type": {}
+                                }
+                            },
+                            "f:startTime": {},
+                            "f:succeeded": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "spec": {
+            "parallelism": 1,
+            "completions": 1,
+            "backoffLimit": 0,
+            "selector": {
+                "matchLabels": {
+                    "controller-uid": "95895960-0d28-4b10-bdf0-8a5bd9240b92"
+                }
+            },
+            "template": {
+                "metadata": {
+                    "name": "run-jupyter",
+                    "creationTimestamp": null,
+                    "labels": {
+                        "app": "orbit-runner",
+                        "controller-uid": "95895960-0d28-4b10-bdf0-8a5bd9240b92",
+                        "cronjob_id": "orbit-lake-user-yyy",
+                        "job-name": "orbit-lake-user-yyy-1615909680",
+                        "orbit/node-type": "fargate",
+                        "username": "amirbo"
+                    }
+                },
+                "spec": {
+                    "volumes": [
+                        {
+                            "name": "efs-volume",
+                            "persistentVolumeClaim": {
+                                "claimName": "jupyterhub"
+                            }
+                        }
+                    ],
+                    "containers": [
+                        {
+                            "name": "notebook",
+                            "image": "495869084367.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
+                            "args": [
+                                "bash",
+                                "-c",
+                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
+                            ],
+                            "ports": [
+                                {
+                                    "name": "notebook-port",
+                                    "containerPort": 22,
+                                    "protocol": "TCP"
+                                }
+                            ],
+                            "env": [
+                                {
+                                    "name": "AWS_ORBIT_ENV",
+                                    "value": "dev-env"
+                                },
+                                {
+                                    "name": "AWS_ORBIT_TEAM_SPACE",
+                                    "value": "lake-user"
+                                },
+                                {
+                                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
+                                    "value": "regional"
+                                },
+                                {
+                                    "name": "JUPYTERHUB_USER",
+                                    "value": "amirbo"
+                                },
+                                {
+                                    "name": "USERNAME",
+                                    "value": "amirbo"
+                                },
+                                {
+                                    "name": "AWS_ORBIT_S3_BUCKET",
+                                    "value": "orbit-dev-env-toolkit-495869084367-b81a1f"
+                                },
+                                {
+                                    "name": "task_type",
+                                    "value": "jupyter"
+                                },
+                                {
+                                    "name": "tasks",
+                                    "value": "{\"tasks\": [{\"notebookName\": \"forever.ipynb\", \"sourcePath\": \"shared/samples/notebooks/B-DataAnalyst\", \"targetPath\": \"shared/regression/notebooks/B-DataAnalyst\", \"targetPrefix\": \"ttt\", \"params\": {\"glue_db\": \"cms_raw_db\", \"target_db\": \"users\"}}]}"
+                                },
+                                {
+                                    "name": "compute",
+                                    "value": "{\"compute\": {\"compute_type\": \"eks\", \"node_type\": \"fargate\"}}"
+                                }
+                            ],
+                            "resources": {
+                                "limits": {
+                                    "cpu": "2",
+                                    "memory": "2G"
+                                },
+                                "requests": {
+                                    "cpu": "2",
+                                    "memory": "2G"
+                                }
+                            },
+                            "volumeMounts": [
+                                {
+                                    "name": "efs-volume",
+                                    "mountPath": "/efs"
+                                }
+                            ],
+                            "lifecycle": {},
+                            "terminationMessagePath": "/dev/termination-log",
+                            "terminationMessagePolicy": "File",
+                            "imagePullPolicy": "Always",
+                            "securityContext": {
+                                "runAsUser": 1000,
+                                "runAsGroup": 100
+                            }
+                        }
+                    ],
+                    "restartPolicy": "Never",
+                    "terminationGracePeriodSeconds": 30,
+                    "dnsPolicy": "ClusterFirst",
+                    "nodeSelector": {
+                        "orbit/usage": "teams"
+                    },
+                    "serviceAccountName": "lake-user",
+                    "serviceAccount": "lake-user",
+                    "securityContext": {
+                        "fsGroup": 100
+                    },
+                    "schedulerName": "default-scheduler"
+                }
+            }
+        },
+        "status": {
+            "conditions": [
+                {
+                    "type": "Complete",
+                    "status": "True",
+                    "lastProbeTime": "2021-03-16T15:53:12Z",
+                    "lastTransitionTime": "2021-03-16T15:53:12Z"
+                }
+            ],
+            "startTime": "2021-03-16T15:48:04Z",
+            "completionTime": "2021-03-16T15:53:12Z",
+            "succeeded": 1
+        }
+    },
+    {
+        "metadata": {
+            "name": "orbit-lake-user-yyy-1615909860",
+            "namespace": "lake-user",
+            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-yyy-1615909860",
+            "uid": "c5d922f3-22cd-42f1-818c-e88d50294dc4",
+            "resourceVersion": "1353051",
+            "creationTimestamp": "2021-03-16T15:51:04Z",
+            "labels": {
+                "app": "orbit-runner",
+                "controller-uid": "c5d922f3-22cd-42f1-818c-e88d50294dc4",
+                "cronjob_id": "orbit-lake-user-yyy",
+                "job-name": "orbit-lake-user-yyy-1615909860",
+                "orbit/node-type": "fargate",
+                "username": "amirbo"
+            },
+            "ownerReferences": [
+                {
+                    "apiVersion": "batch/v1beta1",
+                    "kind": "CronJob",
+                    "name": "orbit-lake-user-yyy",
+                    "uid": "21827aef-c6a4-460e-b2c9-3ddc58806e1b",
+                    "controller": true,
+                    "blockOwnerDeletion": true
+                }
+            ],
+            "managedFields": [
+                {
+                    "manager": "kube-controller-manager",
+                    "operation": "Update",
+                    "apiVersion": "batch/v1",
+                    "time": "2021-03-16T15:56:13Z",
+                    "fieldsType": "FieldsV1",
+                    "fieldsV1": {
+                        "f:metadata": {
+                            "f:labels": {
+                                ".": {},
+                                "f:app": {},
+                                "f:cronjob_id": {},
+                                "f:orbit/node-type": {},
+                                "f:username": {}
+                            },
+                            "f:ownerReferences": {
+                                ".": {},
+                                "k:{\"uid\":\"21827aef-c6a4-460e-b2c9-3ddc58806e1b\"}": {
+                                    ".": {},
+                                    "f:apiVersion": {},
+                                    "f:blockOwnerDeletion": {},
+                                    "f:controller": {},
+                                    "f:kind": {},
+                                    "f:name": {},
+                                    "f:uid": {}
+                                }
+                            }
+                        },
+                        "f:spec": {
+                            "f:backoffLimit": {},
+                            "f:completions": {},
+                            "f:parallelism": {},
+                            "f:template": {
+                                "f:metadata": {
+                                    "f:labels": {
+                                        ".": {},
+                                        "f:app": {},
+                                        "f:cronjob_id": {},
+                                        "f:orbit/node-type": {},
+                                        "f:username": {}
+                                    },
+                                    "f:name": {}
+                                },
+                                "f:spec": {
+                                    "f:containers": {
+                                        "k:{\"name\":\"notebook\"}": {
+                                            ".": {},
+                                            "f:args": {},
+                                            "f:env": {
+                                                ".": {},
+                                                "k:{\"name\":\"AWS_ORBIT_ENV\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"AWS_ORBIT_S3_BUCKET\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"AWS_ORBIT_TEAM_SPACE\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"AWS_STS_REGIONAL_ENDPOINTS\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"JUPYTERHUB_USER\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"USERNAME\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"compute\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"task_type\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                },
+                                                "k:{\"name\":\"tasks\"}": {
+                                                    ".": {},
+                                                    "f:name": {},
+                                                    "f:value": {}
+                                                }
+                                            },
+                                            "f:image": {},
+                                            "f:imagePullPolicy": {},
+                                            "f:lifecycle": {},
+                                            "f:name": {},
+                                            "f:ports": {
+                                                ".": {},
+                                                "k:{\"containerPort\":22,\"protocol\":\"TCP\"}": {
+                                                    ".": {},
+                                                    "f:containerPort": {},
+                                                    "f:name": {},
+                                                    "f:protocol": {}
+                                                }
+                                            },
+                                            "f:resources": {
+                                                ".": {},
+                                                "f:limits": {
+                                                    ".": {},
+                                                    "f:cpu": {},
+                                                    "f:memory": {}
+                                                },
+                                                "f:requests": {
+                                                    ".": {},
+                                                    "f:cpu": {},
+                                                    "f:memory": {}
+                                                }
+                                            },
+                                            "f:securityContext": {
+                                                ".": {},
+                                                "f:runAsGroup": {},
+                                                "f:runAsUser": {}
+                                            },
+                                            "f:terminationMessagePath": {},
+                                            "f:terminationMessagePolicy": {},
+                                            "f:volumeMounts": {
+                                                ".": {},
+                                                "k:{\"mountPath\":\"/efs\"}": {
+                                                    ".": {},
+                                                    "f:mountPath": {},
+                                                    "f:name": {}
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "f:dnsPolicy": {},
+                                    "f:nodeSelector": {
+                                        ".": {},
+                                        "f:orbit/usage": {}
+                                    },
+                                    "f:restartPolicy": {},
+                                    "f:schedulerName": {},
+                                    "f:securityContext": {
+                                        ".": {},
+                                        "f:fsGroup": {}
+                                    },
+                                    "f:serviceAccount": {},
+                                    "f:serviceAccountName": {},
+                                    "f:terminationGracePeriodSeconds": {},
+                                    "f:volumes": {
+                                        ".": {},
+                                        "k:{\"name\":\"efs-volume\"}": {
+                                            ".": {},
+                                            "f:name": {},
+                                            "f:persistentVolumeClaim": {
+                                                ".": {},
+                                                "f:claimName": {}
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "f:ttlSecondsAfterFinished": {}
+                        },
+                        "f:status": {
+                            "f:completionTime": {},
+                            "f:conditions": {
+                                ".": {},
+                                "k:{\"type\":\"Complete\"}": {
+                                    ".": {},
+                                    "f:lastProbeTime": {},
+                                    "f:lastTransitionTime": {},
+                                    "f:status": {},
+                                    "f:type": {}
+                                }
+                            },
+                            "f:startTime": {},
+                            "f:succeeded": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "spec": {
+            "parallelism": 1,
+            "completions": 1,
+            "backoffLimit": 0,
+            "selector": {
+                "matchLabels": {
+                    "controller-uid": "c5d922f3-22cd-42f1-818c-e88d50294dc4"
+                }
+            },
+            "template": {
+                "metadata": {
+                    "name": "run-jupyter",
+                    "creationTimestamp": null,
+                    "labels": {
+                        "app": "orbit-runner",
+                        "controller-uid": "c5d922f3-22cd-42f1-818c-e88d50294dc4",
+                        "cronjob_id": "orbit-lake-user-yyy",
+                        "job-name": "orbit-lake-user-yyy-1615909860",
+                        "orbit/node-type": "fargate",
+                        "username": "amirbo"
+                    }
+                },
+                "spec": {
+                    "volumes": [
+                        {
+                            "name": "efs-volume",
+                            "persistentVolumeClaim": {
+                                "claimName": "jupyterhub"
+                            }
+                        }
+                    ],
+                    "containers": [
+                        {
+                            "name": "notebook",
+                            "image": "495869084367.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
+                            "args": [
+                                "bash",
+                                "-c",
+                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
+                            ],
+                            "ports": [
+                                {
+                                    "name": "notebook-port",
+                                    "containerPort": 22,
+                                    "protocol": "TCP"
+                                }
+                            ],
+                            "env": [
+                                {
+                                    "name": "AWS_ORBIT_ENV",
+                                    "value": "dev-env"
+                                },
+                                {
+                                    "name": "AWS_ORBIT_TEAM_SPACE",
+                                    "value": "lake-user"
+                                },
+                                {
+                                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
+                                    "value": "regional"
+                                },
+                                {
+                                    "name": "JUPYTERHUB_USER",
+                                    "value": "amirbo"
+                                },
+                                {
+                                    "name": "USERNAME",
+                                    "value": "amirbo"
+                                },
+                                {
+                                    "name": "AWS_ORBIT_S3_BUCKET",
+                                    "value": "orbit-dev-env-toolkit-495869084367-b81a1f"
+                                },
+                                {
+                                    "name": "task_type",
+                                    "value": "jupyter"
+                                },
+                                {
+                                    "name": "tasks",
+                                    "value": "{\"tasks\": [{\"notebookName\": \"forever.ipynb\", \"sourcePath\": \"shared/samples/notebooks/B-DataAnalyst\", \"targetPath\": \"shared/regression/notebooks/B-DataAnalyst\", \"targetPrefix\": \"ttt\", \"params\": {\"glue_db\": \"cms_raw_db\", \"target_db\": \"users\"}}]}"
+                                },
+                                {
+                                    "name": "compute",
+                                    "value": "{\"compute\": {\"compute_type\": \"eks\", \"node_type\": \"fargate\"}}"
+                                }
+                            ],
+                            "resources": {
+                                "limits": {
+                                    "cpu": "2",
+                                    "memory": "2G"
+                                },
+                                "requests": {
+                                    "cpu": "2",
+                                    "memory": "2G"
+                                }
+                            },
+                            "volumeMounts": [
+                                {
+                                    "name": "efs-volume",
+                                    "mountPath": "/efs"
+                                }
+                            ],
+                            "lifecycle": {},
+                            "terminationMessagePath": "/dev/termination-log",
+                            "terminationMessagePolicy": "File",
+                            "imagePullPolicy": "Always",
+                            "securityContext": {
+                                "runAsUser": 1000,
+                                "runAsGroup": 100
+                            }
+                        }
+                    ],
+                    "restartPolicy": "Never",
+                    "terminationGracePeriodSeconds": 30,
+                    "dnsPolicy": "ClusterFirst",
+                    "nodeSelector": {
+                        "orbit/usage": "teams"
+                    },
+                    "serviceAccountName": "lake-user",
+                    "serviceAccount": "lake-user",
+                    "securityContext": {
+                        "fsGroup": 100
+                    },
+                    "schedulerName": "default-scheduler"
+                }
+            }
+        },
+        "status": {
+            "conditions": [
+                {
+                    "type": "Complete",
+                    "status": "True",
+                    "lastProbeTime": "2021-03-16T15:56:13Z",
+                    "lastTransitionTime": "2021-03-16T15:56:13Z"
+                }
+            ],
+            "startTime": "2021-03-16T15:51:04Z",
+            "completionTime": "2021-03-16T15:56:13Z",
+            "succeeded": 1
+        }
+    },
+    {
+        "metadata": {
+            "name": "orbit-lake-user-yyy-1615910040",
+            "namespace": "lake-user",
+            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-yyy-1615910040",
+            "uid": "c8a13a7b-3fc1-4ce3-9691-ceafb23841f9",
+            "resourceVersion": "1352550",
+            "creationTimestamp": "2021-03-16T15:54:05Z",
+            "labels": {
+                "app": "orbit-runner",
+                "controller-uid": "c8a13a7b-3fc1-4ce3-9691-ceafb23841f9",
+                "cronjob_id": "orbit-lake-user-yyy",
+                "job-name": "orbit-lake-user-yyy-1615910040",
+                "orbit/node-type": "fargate",
+                "username": "amirbo"
+            },
+            "ownerReferences": [
+                {
+                    "apiVersion": "batch/v1beta1",
+                    "kind": "CronJob",
+                    "name": "orbit-lake-user-yyy",
+                    "uid": "21827aef-c6a4-460e-b2c9-3ddc58806e1b",
+                    "controller": true,
+                    "blockOwnerDeletion": true
+                }
+            ],
+            "managedFields": [
+                {
+                    "manager": "kube-controller-manager",
+                    "operation": "Update",
+                    "apiVersion": "batch/v1",
+                    "time": "2021-03-16T15:54:05Z",
+                    "fieldsType": "FieldsV1",
+                    "fieldsV1": {
+                        "f:metadata": {
+                            "f:labels": {
+                                ".": {},
+                                "f:app": {},
+                                "f:cronjob_id": {},
+                                "f:orbit/node-type": {},
+                                "f:username": {}
+                            },
+                            "f:ownerReferences": {
+                                ".": {},
+                                "k:{\"uid\":\"21827aef-c6a4-460e-b2c9-3ddc58806e1b\"}": {
                                     ".": {},
                                     "f:apiVersion": {},
                                     "f:blockOwnerDeletion": {},
@@ -2618,7 +3680,7 @@
             "backoffLimit": 0,
             "selector": {
                 "matchLabels": {
-                    "controller-uid": "b035ee1d-e08f-4197-add8-4b0324abc42a"
+                    "controller-uid": "c8a13a7b-3fc1-4ce3-9691-ceafb23841f9"
                 }
             },
             "template": {
@@ -2627,9 +3689,9 @@
                     "creationTimestamp": null,
                     "labels": {
                         "app": "orbit-runner",
-                        "controller-uid": "b035ee1d-e08f-4197-add8-4b0324abc42a",
-                        "cronjob_id": "orbit-lake-user-ttt",
-                        "job-name": "orbit-lake-user-ttt-1615818480",
+                        "controller-uid": "c8a13a7b-3fc1-4ce3-9691-ceafb23841f9",
+                        "cronjob_id": "orbit-lake-user-yyy",
+                        "job-name": "orbit-lake-user-yyy-1615910040",
                         "orbit/node-type": "fargate",
                         "username": "amirbo"
                     }
@@ -2646,7 +3708,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
+                            "image": "495869084367.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -2682,7 +3744,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit****************b81a1f"
+                                    "value": "orbit-dev-env-toolkit-495869084367-b81a1f"
                                 },
                                 {
                                     "name": "task_type",
@@ -2690,7 +3752,7 @@
                                 },
                                 {
                                     "name": "tasks",
-                                    "value": "{\"tasks\": [{\"notebookName\": \"Example-1-SQL-Analysis-Athena.ipynb\", \"sourcePath\": \"shared/samples/notebooks/B-DataAnalyst\", \"targetPath\": \"shared/regression/notebooks/B-DataAnalyst\", \"targetPrefix\": \"ttt\", \"params\": {\"glue_db\": \"cms_raw_db\", \"target_db\": \"users\"}}]}"
+                                    "value": "{\"tasks\": [{\"notebookName\": \"forever.ipynb\", \"sourcePath\": \"shared/samples/notebooks/B-DataAnalyst\", \"targetPath\": \"shared/regression/notebooks/B-DataAnalyst\", \"targetPrefix\": \"ttt\", \"params\": {\"glue_db\": \"cms_raw_db\", \"target_db\": \"users\"}}]}"
                                 },
                                 {
                                     "name": "compute",
@@ -2739,23 +3801,23 @@
             }
         },
         "status": {
-            "startTime": "2021-03-15T14:28:05Z",
+            "startTime": "2021-03-16T15:54:05Z",
             "active": 1
         }
     },
     {
         "metadata": {
-            "name": "orbit-lake-user-yyy-1615817700",
+            "name": "orbit-lake-user-yyy-1615910220",
             "namespace": "lake-user",
-            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-yyy-1615817700",
-            "uid": "7e8c1fc8-db19-4b4c-a9ea-f1c74bfb3b7d",
-            "resourceVersion": "992486",
-            "creationTimestamp": "2021-03-15T14:15:03Z",
+            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-yyy-1615910220",
+            "uid": "1c1efd33-4762-4061-973b-ceb81f35fe58",
+            "resourceVersion": "1353258",
+            "creationTimestamp": "2021-03-16T15:57:06Z",
             "labels": {
                 "app": "orbit-runner",
-                "controller-uid": "7e8c1fc8-db19-4b4c-a9ea-f1c74bfb3b7d",
+                "controller-uid": "1c1efd33-4762-4061-973b-ceb81f35fe58",
                 "cronjob_id": "orbit-lake-user-yyy",
-                "job-name": "orbit-lake-user-yyy-1615817700",
+                "job-name": "orbit-lake-user-yyy-1615910220",
                 "orbit/node-type": "fargate",
                 "username": "amirbo"
             },
@@ -2774,1069 +3836,7 @@
                     "manager": "kube-controller-manager",
                     "operation": "Update",
                     "apiVersion": "batch/v1",
-                    "time": "2021-03-15T14:20:12Z",
-                    "fieldsType": "FieldsV1",
-                    "fieldsV1": {
-                        "f:metadata": {
-                            "f:labels": {
-                                ".": {},
-                                "f:app": {},
-                                "f:cronjob_id": {},
-                                "f:orbit/node-type": {},
-                                "f:username": {}
-                            },
-                            "f:ownerReferences": {
-                                ".": {},
-                                "k:{\"uid\":\"21827aef-c6a4-460e-b2c9-3ddc58806e1b\"}": {
-                                    ".": {},
-                                    "f:apiVersion": {},
-                                    "f:blockOwnerDeletion": {},
-                                    "f:controller": {},
-                                    "f:kind": {},
-                                    "f:name": {},
-                                    "f:uid": {}
-                                }
-                            }
-                        },
-                        "f:spec": {
-                            "f:backoffLimit": {},
-                            "f:completions": {},
-                            "f:parallelism": {},
-                            "f:template": {
-                                "f:metadata": {
-                                    "f:labels": {
-                                        ".": {},
-                                        "f:app": {},
-                                        "f:cronjob_id": {},
-                                        "f:orbit/node-type": {},
-                                        "f:username": {}
-                                    },
-                                    "f:name": {}
-                                },
-                                "f:spec": {
-                                    "f:containers": {
-                                        "k:{\"name\":\"notebook\"}": {
-                                            ".": {},
-                                            "f:args": {},
-                                            "f:env": {
-                                                ".": {},
-                                                "k:{\"name\":\"AWS_ORBIT_ENV\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"AWS_ORBIT_S3_BUCKET\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"AWS_ORBIT_TEAM_SPACE\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"AWS_STS_REGIONAL_ENDPOINTS\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"JUPYTERHUB_USER\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"USERNAME\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"compute\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"task_type\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"tasks\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                }
-                                            },
-                                            "f:image": {},
-                                            "f:imagePullPolicy": {},
-                                            "f:lifecycle": {},
-                                            "f:name": {},
-                                            "f:ports": {
-                                                ".": {},
-                                                "k:{\"containerPort\":22,\"protocol\":\"TCP\"}": {
-                                                    ".": {},
-                                                    "f:containerPort": {},
-                                                    "f:name": {},
-                                                    "f:protocol": {}
-                                                }
-                                            },
-                                            "f:resources": {
-                                                ".": {},
-                                                "f:limits": {
-                                                    ".": {},
-                                                    "f:cpu": {},
-                                                    "f:memory": {}
-                                                },
-                                                "f:requests": {
-                                                    ".": {},
-                                                    "f:cpu": {},
-                                                    "f:memory": {}
-                                                }
-                                            },
-                                            "f:securityContext": {
-                                                ".": {},
-                                                "f:runAsGroup": {},
-                                                "f:runAsUser": {}
-                                            },
-                                            "f:terminationMessagePath": {},
-                                            "f:terminationMessagePolicy": {},
-                                            "f:volumeMounts": {
-                                                ".": {},
-                                                "k:{\"mountPath\":\"/efs\"}": {
-                                                    ".": {},
-                                                    "f:mountPath": {},
-                                                    "f:name": {}
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "f:dnsPolicy": {},
-                                    "f:nodeSelector": {
-                                        ".": {},
-                                        "f:orbit/usage": {}
-                                    },
-                                    "f:restartPolicy": {},
-                                    "f:schedulerName": {},
-                                    "f:securityContext": {
-                                        ".": {},
-                                        "f:fsGroup": {}
-                                    },
-                                    "f:serviceAccount": {},
-                                    "f:serviceAccountName": {},
-                                    "f:terminationGracePeriodSeconds": {},
-                                    "f:volumes": {
-                                        ".": {},
-                                        "k:{\"name\":\"efs-volume\"}": {
-                                            ".": {},
-                                            "f:name": {},
-                                            "f:persistentVolumeClaim": {
-                                                ".": {},
-                                                "f:claimName": {}
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            "f:ttlSecondsAfterFinished": {}
-                        },
-                        "f:status": {
-                            "f:completionTime": {},
-                            "f:conditions": {
-                                ".": {},
-                                "k:{\"type\":\"Complete\"}": {
-                                    ".": {},
-                                    "f:lastProbeTime": {},
-                                    "f:lastTransitionTime": {},
-                                    "f:status": {},
-                                    "f:type": {}
-                                }
-                            },
-                            "f:startTime": {},
-                            "f:succeeded": {}
-                        }
-                    }
-                }
-            ]
-        },
-        "spec": {
-            "parallelism": 1,
-            "completions": 1,
-            "backoffLimit": 0,
-            "selector": {
-                "matchLabels": {
-                    "controller-uid": "7e8c1fc8-db19-4b4c-a9ea-f1c74bfb3b7d"
-                }
-            },
-            "template": {
-                "metadata": {
-                    "name": "run-jupyter",
-                    "creationTimestamp": null,
-                    "labels": {
-                        "app": "orbit-runner",
-                        "controller-uid": "7e8c1fc8-db19-4b4c-a9ea-f1c74bfb3b7d",
-                        "cronjob_id": "orbit-lake-user-yyy",
-                        "job-name": "orbit-lake-user-yyy-1615817700",
-                        "orbit/node-type": "fargate",
-                        "username": "amirbo"
-                    }
-                },
-                "spec": {
-                    "volumes": [
-                        {
-                            "name": "efs-volume",
-                            "persistentVolumeClaim": {
-                                "claimName": "jupyterhub"
-                            }
-                        }
-                    ],
-                    "containers": [
-                        {
-                            "name": "notebook",
-                            "image": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
-                            "args": [
-                                "bash",
-                                "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
-                            ],
-                            "ports": [
-                                {
-                                    "name": "notebook-port",
-                                    "containerPort": 22,
-                                    "protocol": "TCP"
-                                }
-                            ],
-                            "env": [
-                                {
-                                    "name": "AWS_ORBIT_ENV",
-                                    "value": "dev-env"
-                                },
-                                {
-                                    "name": "AWS_ORBIT_TEAM_SPACE",
-                                    "value": "lake-user"
-                                },
-                                {
-                                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
-                                    "value": "regional"
-                                },
-                                {
-                                    "name": "JUPYTERHUB_USER",
-                                    "value": "amirbo"
-                                },
-                                {
-                                    "name": "USERNAME",
-                                    "value": "amirbo"
-                                },
-                                {
-                                    "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit****************b81a1f"
-                                },
-                                {
-                                    "name": "task_type",
-                                    "value": "jupyter"
-                                },
-                                {
-                                    "name": "tasks",
-                                    "value": "{\"tasks\": [{\"notebookName\": \"forever.ipynb\", \"sourcePath\": \"shared/samples/notebooks/B-DataAnalyst\", \"targetPath\": \"shared/regression/notebooks/B-DataAnalyst\", \"targetPrefix\": \"ttt\", \"params\": {\"glue_db\": \"cms_raw_db\", \"target_db\": \"users\"}}]}"
-                                },
-                                {
-                                    "name": "compute",
-                                    "value": "{\"compute\": {\"compute_type\": \"eks\", \"node_type\": \"fargate\"}}"
-                                }
-                            ],
-                            "resources": {
-                                "limits": {
-                                    "cpu": "2",
-                                    "memory": "2G"
-                                },
-                                "requests": {
-                                    "cpu": "2",
-                                    "memory": "2G"
-                                }
-                            },
-                            "volumeMounts": [
-                                {
-                                    "name": "efs-volume",
-                                    "mountPath": "/efs"
-                                }
-                            ],
-                            "lifecycle": {},
-                            "terminationMessagePath": "/dev/termination-log",
-                            "terminationMessagePolicy": "File",
-                            "imagePullPolicy": "Always",
-                            "securityContext": {
-                                "runAsUser": 1000,
-                                "runAsGroup": 100
-                            }
-                        }
-                    ],
-                    "restartPolicy": "Never",
-                    "terminationGracePeriodSeconds": 30,
-                    "dnsPolicy": "ClusterFirst",
-                    "nodeSelector": {
-                        "orbit/usage": "teams"
-                    },
-                    "serviceAccountName": "lake-user",
-                    "serviceAccount": "lake-user",
-                    "securityContext": {
-                        "fsGroup": 100
-                    },
-                    "schedulerName": "default-scheduler"
-                }
-            }
-        },
-        "status": {
-            "conditions": [
-                {
-                    "type": "Complete",
-                    "status": "True",
-                    "lastProbeTime": "2021-03-15T14:20:12Z",
-                    "lastTransitionTime": "2021-03-15T14:20:12Z"
-                }
-            ],
-            "startTime": "2021-03-15T14:15:03Z",
-            "completionTime": "2021-03-15T14:20:12Z",
-            "succeeded": 1
-        }
-    },
-    {
-        "metadata": {
-            "name": "orbit-lake-user-yyy-1615817880",
-            "namespace": "lake-user",
-            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-yyy-1615817880",
-            "uid": "0f1e81f9-4273-4867-89cf-ca12a010dc6b",
-            "resourceVersion": "993197",
-            "creationTimestamp": "2021-03-15T14:18:03Z",
-            "labels": {
-                "app": "orbit-runner",
-                "controller-uid": "0f1e81f9-4273-4867-89cf-ca12a010dc6b",
-                "cronjob_id": "orbit-lake-user-yyy",
-                "job-name": "orbit-lake-user-yyy-1615817880",
-                "orbit/node-type": "fargate",
-                "username": "amirbo"
-            },
-            "ownerReferences": [
-                {
-                    "apiVersion": "batch/v1beta1",
-                    "kind": "CronJob",
-                    "name": "orbit-lake-user-yyy",
-                    "uid": "21827aef-c6a4-460e-b2c9-3ddc58806e1b",
-                    "controller": true,
-                    "blockOwnerDeletion": true
-                }
-            ],
-            "managedFields": [
-                {
-                    "manager": "kube-controller-manager",
-                    "operation": "Update",
-                    "apiVersion": "batch/v1",
-                    "time": "2021-03-15T14:23:13Z",
-                    "fieldsType": "FieldsV1",
-                    "fieldsV1": {
-                        "f:metadata": {
-                            "f:labels": {
-                                ".": {},
-                                "f:app": {},
-                                "f:cronjob_id": {},
-                                "f:orbit/node-type": {},
-                                "f:username": {}
-                            },
-                            "f:ownerReferences": {
-                                ".": {},
-                                "k:{\"uid\":\"21827aef-c6a4-460e-b2c9-3ddc58806e1b\"}": {
-                                    ".": {},
-                                    "f:apiVersion": {},
-                                    "f:blockOwnerDeletion": {},
-                                    "f:controller": {},
-                                    "f:kind": {},
-                                    "f:name": {},
-                                    "f:uid": {}
-                                }
-                            }
-                        },
-                        "f:spec": {
-                            "f:backoffLimit": {},
-                            "f:completions": {},
-                            "f:parallelism": {},
-                            "f:template": {
-                                "f:metadata": {
-                                    "f:labels": {
-                                        ".": {},
-                                        "f:app": {},
-                                        "f:cronjob_id": {},
-                                        "f:orbit/node-type": {},
-                                        "f:username": {}
-                                    },
-                                    "f:name": {}
-                                },
-                                "f:spec": {
-                                    "f:containers": {
-                                        "k:{\"name\":\"notebook\"}": {
-                                            ".": {},
-                                            "f:args": {},
-                                            "f:env": {
-                                                ".": {},
-                                                "k:{\"name\":\"AWS_ORBIT_ENV\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"AWS_ORBIT_S3_BUCKET\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"AWS_ORBIT_TEAM_SPACE\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"AWS_STS_REGIONAL_ENDPOINTS\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"JUPYTERHUB_USER\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"USERNAME\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"compute\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"task_type\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"tasks\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                }
-                                            },
-                                            "f:image": {},
-                                            "f:imagePullPolicy": {},
-                                            "f:lifecycle": {},
-                                            "f:name": {},
-                                            "f:ports": {
-                                                ".": {},
-                                                "k:{\"containerPort\":22,\"protocol\":\"TCP\"}": {
-                                                    ".": {},
-                                                    "f:containerPort": {},
-                                                    "f:name": {},
-                                                    "f:protocol": {}
-                                                }
-                                            },
-                                            "f:resources": {
-                                                ".": {},
-                                                "f:limits": {
-                                                    ".": {},
-                                                    "f:cpu": {},
-                                                    "f:memory": {}
-                                                },
-                                                "f:requests": {
-                                                    ".": {},
-                                                    "f:cpu": {},
-                                                    "f:memory": {}
-                                                }
-                                            },
-                                            "f:securityContext": {
-                                                ".": {},
-                                                "f:runAsGroup": {},
-                                                "f:runAsUser": {}
-                                            },
-                                            "f:terminationMessagePath": {},
-                                            "f:terminationMessagePolicy": {},
-                                            "f:volumeMounts": {
-                                                ".": {},
-                                                "k:{\"mountPath\":\"/efs\"}": {
-                                                    ".": {},
-                                                    "f:mountPath": {},
-                                                    "f:name": {}
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "f:dnsPolicy": {},
-                                    "f:nodeSelector": {
-                                        ".": {},
-                                        "f:orbit/usage": {}
-                                    },
-                                    "f:restartPolicy": {},
-                                    "f:schedulerName": {},
-                                    "f:securityContext": {
-                                        ".": {},
-                                        "f:fsGroup": {}
-                                    },
-                                    "f:serviceAccount": {},
-                                    "f:serviceAccountName": {},
-                                    "f:terminationGracePeriodSeconds": {},
-                                    "f:volumes": {
-                                        ".": {},
-                                        "k:{\"name\":\"efs-volume\"}": {
-                                            ".": {},
-                                            "f:name": {},
-                                            "f:persistentVolumeClaim": {
-                                                ".": {},
-                                                "f:claimName": {}
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            "f:ttlSecondsAfterFinished": {}
-                        },
-                        "f:status": {
-                            "f:completionTime": {},
-                            "f:conditions": {
-                                ".": {},
-                                "k:{\"type\":\"Complete\"}": {
-                                    ".": {},
-                                    "f:lastProbeTime": {},
-                                    "f:lastTransitionTime": {},
-                                    "f:status": {},
-                                    "f:type": {}
-                                }
-                            },
-                            "f:startTime": {},
-                            "f:succeeded": {}
-                        }
-                    }
-                }
-            ]
-        },
-        "spec": {
-            "parallelism": 1,
-            "completions": 1,
-            "backoffLimit": 0,
-            "selector": {
-                "matchLabels": {
-                    "controller-uid": "0f1e81f9-4273-4867-89cf-ca12a010dc6b"
-                }
-            },
-            "template": {
-                "metadata": {
-                    "name": "run-jupyter",
-                    "creationTimestamp": null,
-                    "labels": {
-                        "app": "orbit-runner",
-                        "controller-uid": "0f1e81f9-4273-4867-89cf-ca12a010dc6b",
-                        "cronjob_id": "orbit-lake-user-yyy",
-                        "job-name": "orbit-lake-user-yyy-1615817880",
-                        "orbit/node-type": "fargate",
-                        "username": "amirbo"
-                    }
-                },
-                "spec": {
-                    "volumes": [
-                        {
-                            "name": "efs-volume",
-                            "persistentVolumeClaim": {
-                                "claimName": "jupyterhub"
-                            }
-                        }
-                    ],
-                    "containers": [
-                        {
-                            "name": "notebook",
-                            "image": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
-                            "args": [
-                                "bash",
-                                "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
-                            ],
-                            "ports": [
-                                {
-                                    "name": "notebook-port",
-                                    "containerPort": 22,
-                                    "protocol": "TCP"
-                                }
-                            ],
-                            "env": [
-                                {
-                                    "name": "AWS_ORBIT_ENV",
-                                    "value": "dev-env"
-                                },
-                                {
-                                    "name": "AWS_ORBIT_TEAM_SPACE",
-                                    "value": "lake-user"
-                                },
-                                {
-                                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
-                                    "value": "regional"
-                                },
-                                {
-                                    "name": "JUPYTERHUB_USER",
-                                    "value": "amirbo"
-                                },
-                                {
-                                    "name": "USERNAME",
-                                    "value": "amirbo"
-                                },
-                                {
-                                    "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit****************b81a1f"
-                                },
-                                {
-                                    "name": "task_type",
-                                    "value": "jupyter"
-                                },
-                                {
-                                    "name": "tasks",
-                                    "value": "{\"tasks\": [{\"notebookName\": \"forever.ipynb\", \"sourcePath\": \"shared/samples/notebooks/B-DataAnalyst\", \"targetPath\": \"shared/regression/notebooks/B-DataAnalyst\", \"targetPrefix\": \"ttt\", \"params\": {\"glue_db\": \"cms_raw_db\", \"target_db\": \"users\"}}]}"
-                                },
-                                {
-                                    "name": "compute",
-                                    "value": "{\"compute\": {\"compute_type\": \"eks\", \"node_type\": \"fargate\"}}"
-                                }
-                            ],
-                            "resources": {
-                                "limits": {
-                                    "cpu": "2",
-                                    "memory": "2G"
-                                },
-                                "requests": {
-                                    "cpu": "2",
-                                    "memory": "2G"
-                                }
-                            },
-                            "volumeMounts": [
-                                {
-                                    "name": "efs-volume",
-                                    "mountPath": "/efs"
-                                }
-                            ],
-                            "lifecycle": {},
-                            "terminationMessagePath": "/dev/termination-log",
-                            "terminationMessagePolicy": "File",
-                            "imagePullPolicy": "Always",
-                            "securityContext": {
-                                "runAsUser": 1000,
-                                "runAsGroup": 100
-                            }
-                        }
-                    ],
-                    "restartPolicy": "Never",
-                    "terminationGracePeriodSeconds": 30,
-                    "dnsPolicy": "ClusterFirst",
-                    "nodeSelector": {
-                        "orbit/usage": "teams"
-                    },
-                    "serviceAccountName": "lake-user",
-                    "serviceAccount": "lake-user",
-                    "securityContext": {
-                        "fsGroup": 100
-                    },
-                    "schedulerName": "default-scheduler"
-                }
-            }
-        },
-        "status": {
-            "conditions": [
-                {
-                    "type": "Complete",
-                    "status": "True",
-                    "lastProbeTime": "2021-03-15T14:23:13Z",
-                    "lastTransitionTime": "2021-03-15T14:23:13Z"
-                }
-            ],
-            "startTime": "2021-03-15T14:18:03Z",
-            "completionTime": "2021-03-15T14:23:13Z",
-            "succeeded": 1
-        }
-    },
-    {
-        "metadata": {
-            "name": "orbit-lake-user-yyy-1615818060",
-            "namespace": "lake-user",
-            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-yyy-1615818060",
-            "uid": "c09576ea-de7a-4b82-9c5a-49e6d862db69",
-            "resourceVersion": "993900",
-            "creationTimestamp": "2021-03-15T14:21:04Z",
-            "labels": {
-                "app": "orbit-runner",
-                "controller-uid": "c09576ea-de7a-4b82-9c5a-49e6d862db69",
-                "cronjob_id": "orbit-lake-user-yyy",
-                "job-name": "orbit-lake-user-yyy-1615818060",
-                "orbit/node-type": "fargate",
-                "username": "amirbo"
-            },
-            "ownerReferences": [
-                {
-                    "apiVersion": "batch/v1beta1",
-                    "kind": "CronJob",
-                    "name": "orbit-lake-user-yyy",
-                    "uid": "21827aef-c6a4-460e-b2c9-3ddc58806e1b",
-                    "controller": true,
-                    "blockOwnerDeletion": true
-                }
-            ],
-            "managedFields": [
-                {
-                    "manager": "kube-controller-manager",
-                    "operation": "Update",
-                    "apiVersion": "batch/v1",
-                    "time": "2021-03-15T14:26:13Z",
-                    "fieldsType": "FieldsV1",
-                    "fieldsV1": {
-                        "f:metadata": {
-                            "f:labels": {
-                                ".": {},
-                                "f:app": {},
-                                "f:cronjob_id": {},
-                                "f:orbit/node-type": {},
-                                "f:username": {}
-                            },
-                            "f:ownerReferences": {
-                                ".": {},
-                                "k:{\"uid\":\"21827aef-c6a4-460e-b2c9-3ddc58806e1b\"}": {
-                                    ".": {},
-                                    "f:apiVersion": {},
-                                    "f:blockOwnerDeletion": {},
-                                    "f:controller": {},
-                                    "f:kind": {},
-                                    "f:name": {},
-                                    "f:uid": {}
-                                }
-                            }
-                        },
-                        "f:spec": {
-                            "f:backoffLimit": {},
-                            "f:completions": {},
-                            "f:parallelism": {},
-                            "f:template": {
-                                "f:metadata": {
-                                    "f:labels": {
-                                        ".": {},
-                                        "f:app": {},
-                                        "f:cronjob_id": {},
-                                        "f:orbit/node-type": {},
-                                        "f:username": {}
-                                    },
-                                    "f:name": {}
-                                },
-                                "f:spec": {
-                                    "f:containers": {
-                                        "k:{\"name\":\"notebook\"}": {
-                                            ".": {},
-                                            "f:args": {},
-                                            "f:env": {
-                                                ".": {},
-                                                "k:{\"name\":\"AWS_ORBIT_ENV\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"AWS_ORBIT_S3_BUCKET\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"AWS_ORBIT_TEAM_SPACE\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"AWS_STS_REGIONAL_ENDPOINTS\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"JUPYTERHUB_USER\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"USERNAME\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"compute\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"task_type\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"tasks\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                }
-                                            },
-                                            "f:image": {},
-                                            "f:imagePullPolicy": {},
-                                            "f:lifecycle": {},
-                                            "f:name": {},
-                                            "f:ports": {
-                                                ".": {},
-                                                "k:{\"containerPort\":22,\"protocol\":\"TCP\"}": {
-                                                    ".": {},
-                                                    "f:containerPort": {},
-                                                    "f:name": {},
-                                                    "f:protocol": {}
-                                                }
-                                            },
-                                            "f:resources": {
-                                                ".": {},
-                                                "f:limits": {
-                                                    ".": {},
-                                                    "f:cpu": {},
-                                                    "f:memory": {}
-                                                },
-                                                "f:requests": {
-                                                    ".": {},
-                                                    "f:cpu": {},
-                                                    "f:memory": {}
-                                                }
-                                            },
-                                            "f:securityContext": {
-                                                ".": {},
-                                                "f:runAsGroup": {},
-                                                "f:runAsUser": {}
-                                            },
-                                            "f:terminationMessagePath": {},
-                                            "f:terminationMessagePolicy": {},
-                                            "f:volumeMounts": {
-                                                ".": {},
-                                                "k:{\"mountPath\":\"/efs\"}": {
-                                                    ".": {},
-                                                    "f:mountPath": {},
-                                                    "f:name": {}
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "f:dnsPolicy": {},
-                                    "f:nodeSelector": {
-                                        ".": {},
-                                        "f:orbit/usage": {}
-                                    },
-                                    "f:restartPolicy": {},
-                                    "f:schedulerName": {},
-                                    "f:securityContext": {
-                                        ".": {},
-                                        "f:fsGroup": {}
-                                    },
-                                    "f:serviceAccount": {},
-                                    "f:serviceAccountName": {},
-                                    "f:terminationGracePeriodSeconds": {},
-                                    "f:volumes": {
-                                        ".": {},
-                                        "k:{\"name\":\"efs-volume\"}": {
-                                            ".": {},
-                                            "f:name": {},
-                                            "f:persistentVolumeClaim": {
-                                                ".": {},
-                                                "f:claimName": {}
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            "f:ttlSecondsAfterFinished": {}
-                        },
-                        "f:status": {
-                            "f:completionTime": {},
-                            "f:conditions": {
-                                ".": {},
-                                "k:{\"type\":\"Complete\"}": {
-                                    ".": {},
-                                    "f:lastProbeTime": {},
-                                    "f:lastTransitionTime": {},
-                                    "f:status": {},
-                                    "f:type": {}
-                                }
-                            },
-                            "f:startTime": {},
-                            "f:succeeded": {}
-                        }
-                    }
-                }
-            ]
-        },
-        "spec": {
-            "parallelism": 1,
-            "completions": 1,
-            "backoffLimit": 0,
-            "selector": {
-                "matchLabels": {
-                    "controller-uid": "c09576ea-de7a-4b82-9c5a-49e6d862db69"
-                }
-            },
-            "template": {
-                "metadata": {
-                    "name": "run-jupyter",
-                    "creationTimestamp": null,
-                    "labels": {
-                        "app": "orbit-runner",
-                        "controller-uid": "c09576ea-de7a-4b82-9c5a-49e6d862db69",
-                        "cronjob_id": "orbit-lake-user-yyy",
-                        "job-name": "orbit-lake-user-yyy-1615818060",
-                        "orbit/node-type": "fargate",
-                        "username": "amirbo"
-                    }
-                },
-                "spec": {
-                    "volumes": [
-                        {
-                            "name": "efs-volume",
-                            "persistentVolumeClaim": {
-                                "claimName": "jupyterhub"
-                            }
-                        }
-                    ],
-                    "containers": [
-                        {
-                            "name": "notebook",
-                            "image": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
-                            "args": [
-                                "bash",
-                                "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
-                            ],
-                            "ports": [
-                                {
-                                    "name": "notebook-port",
-                                    "containerPort": 22,
-                                    "protocol": "TCP"
-                                }
-                            ],
-                            "env": [
-                                {
-                                    "name": "AWS_ORBIT_ENV",
-                                    "value": "dev-env"
-                                },
-                                {
-                                    "name": "AWS_ORBIT_TEAM_SPACE",
-                                    "value": "lake-user"
-                                },
-                                {
-                                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
-                                    "value": "regional"
-                                },
-                                {
-                                    "name": "JUPYTERHUB_USER",
-                                    "value": "amirbo"
-                                },
-                                {
-                                    "name": "USERNAME",
-                                    "value": "amirbo"
-                                },
-                                {
-                                    "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit****************b81a1f"
-                                },
-                                {
-                                    "name": "task_type",
-                                    "value": "jupyter"
-                                },
-                                {
-                                    "name": "tasks",
-                                    "value": "{\"tasks\": [{\"notebookName\": \"forever.ipynb\", \"sourcePath\": \"shared/samples/notebooks/B-DataAnalyst\", \"targetPath\": \"shared/regression/notebooks/B-DataAnalyst\", \"targetPrefix\": \"ttt\", \"params\": {\"glue_db\": \"cms_raw_db\", \"target_db\": \"users\"}}]}"
-                                },
-                                {
-                                    "name": "compute",
-                                    "value": "{\"compute\": {\"compute_type\": \"eks\", \"node_type\": \"fargate\"}}"
-                                }
-                            ],
-                            "resources": {
-                                "limits": {
-                                    "cpu": "2",
-                                    "memory": "2G"
-                                },
-                                "requests": {
-                                    "cpu": "2",
-                                    "memory": "2G"
-                                }
-                            },
-                            "volumeMounts": [
-                                {
-                                    "name": "efs-volume",
-                                    "mountPath": "/efs"
-                                }
-                            ],
-                            "lifecycle": {},
-                            "terminationMessagePath": "/dev/termination-log",
-                            "terminationMessagePolicy": "File",
-                            "imagePullPolicy": "Always",
-                            "securityContext": {
-                                "runAsUser": 1000,
-                                "runAsGroup": 100
-                            }
-                        }
-                    ],
-                    "restartPolicy": "Never",
-                    "terminationGracePeriodSeconds": 30,
-                    "dnsPolicy": "ClusterFirst",
-                    "nodeSelector": {
-                        "orbit/usage": "teams"
-                    },
-                    "serviceAccountName": "lake-user",
-                    "serviceAccount": "lake-user",
-                    "securityContext": {
-                        "fsGroup": 100
-                    },
-                    "schedulerName": "default-scheduler"
-                }
-            }
-        },
-        "status": {
-            "conditions": [
-                {
-                    "type": "Complete",
-                    "status": "True",
-                    "lastProbeTime": "2021-03-15T14:26:13Z",
-                    "lastTransitionTime": "2021-03-15T14:26:13Z"
-                }
-            ],
-            "startTime": "2021-03-15T14:21:04Z",
-            "completionTime": "2021-03-15T14:26:13Z",
-            "succeeded": 1
-        }
-    },
-    {
-        "metadata": {
-            "name": "orbit-lake-user-yyy-1615818240",
-            "namespace": "lake-user",
-            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-yyy-1615818240",
-            "uid": "b23b4472-fef2-443c-b819-b68b32746a52",
-            "resourceVersion": "993399",
-            "creationTimestamp": "2021-03-15T14:24:05Z",
-            "labels": {
-                "app": "orbit-runner",
-                "controller-uid": "b23b4472-fef2-443c-b819-b68b32746a52",
-                "cronjob_id": "orbit-lake-user-yyy",
-                "job-name": "orbit-lake-user-yyy-1615818240",
-                "orbit/node-type": "fargate",
-                "username": "amirbo"
-            },
-            "ownerReferences": [
-                {
-                    "apiVersion": "batch/v1beta1",
-                    "kind": "CronJob",
-                    "name": "orbit-lake-user-yyy",
-                    "uid": "21827aef-c6a4-460e-b2c9-3ddc58806e1b",
-                    "controller": true,
-                    "blockOwnerDeletion": true
-                }
-            ],
-            "managedFields": [
-                {
-                    "manager": "kube-controller-manager",
-                    "operation": "Update",
-                    "apiVersion": "batch/v1",
-                    "time": "2021-03-15T14:24:05Z",
+                    "time": "2021-03-16T15:57:06Z",
                     "fieldsType": "FieldsV1",
                     "fieldsV1": {
                         "f:metadata": {
@@ -4014,7 +4014,7 @@
             "backoffLimit": 0,
             "selector": {
                 "matchLabels": {
-                    "controller-uid": "b23b4472-fef2-443c-b819-b68b32746a52"
+                    "controller-uid": "1c1efd33-4762-4061-973b-ceb81f35fe58"
                 }
             },
             "template": {
@@ -4023,9 +4023,9 @@
                     "creationTimestamp": null,
                     "labels": {
                         "app": "orbit-runner",
-                        "controller-uid": "b23b4472-fef2-443c-b819-b68b32746a52",
+                        "controller-uid": "1c1efd33-4762-4061-973b-ceb81f35fe58",
                         "cronjob_id": "orbit-lake-user-yyy",
-                        "job-name": "orbit-lake-user-yyy-1615818240",
+                        "job-name": "orbit-lake-user-yyy-1615910220",
                         "orbit/node-type": "fargate",
                         "username": "amirbo"
                     }
@@ -4042,7 +4042,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
+                            "image": "495869084367.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -4078,7 +4078,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit****************b81a1f"
+                                    "value": "orbit-dev-env-toolkit-495869084367-b81a1f"
                                 },
                                 {
                                     "name": "task_type",
@@ -4135,341 +4135,7 @@
             }
         },
         "status": {
-            "startTime": "2021-03-15T14:24:05Z",
-            "active": 1
-        }
-    },
-    {
-        "metadata": {
-            "name": "orbit-lake-user-yyy-1615818420",
-            "namespace": "lake-user",
-            "selfLink": "/apis/batch/v1/namespaces/lake-user/jobs/orbit-lake-user-yyy-1615818420",
-            "uid": "f53e72cc-9ae2-4b6f-8d18-2b73fca4a55f",
-            "resourceVersion": "994108",
-            "creationTimestamp": "2021-03-15T14:27:05Z",
-            "labels": {
-                "app": "orbit-runner",
-                "controller-uid": "f53e72cc-9ae2-4b6f-8d18-2b73fca4a55f",
-                "cronjob_id": "orbit-lake-user-yyy",
-                "job-name": "orbit-lake-user-yyy-1615818420",
-                "orbit/node-type": "fargate",
-                "username": "amirbo"
-            },
-            "ownerReferences": [
-                {
-                    "apiVersion": "batch/v1beta1",
-                    "kind": "CronJob",
-                    "name": "orbit-lake-user-yyy",
-                    "uid": "21827aef-c6a4-460e-b2c9-3ddc58806e1b",
-                    "controller": true,
-                    "blockOwnerDeletion": true
-                }
-            ],
-            "managedFields": [
-                {
-                    "manager": "kube-controller-manager",
-                    "operation": "Update",
-                    "apiVersion": "batch/v1",
-                    "time": "2021-03-15T14:27:05Z",
-                    "fieldsType": "FieldsV1",
-                    "fieldsV1": {
-                        "f:metadata": {
-                            "f:labels": {
-                                ".": {},
-                                "f:app": {},
-                                "f:cronjob_id": {},
-                                "f:orbit/node-type": {},
-                                "f:username": {}
-                            },
-                            "f:ownerReferences": {
-                                ".": {},
-                                "k:{\"uid\":\"21827aef-c6a4-460e-b2c9-3ddc58806e1b\"}": {
-                                    ".": {},
-                                    "f:apiVersion": {},
-                                    "f:blockOwnerDeletion": {},
-                                    "f:controller": {},
-                                    "f:kind": {},
-                                    "f:name": {},
-                                    "f:uid": {}
-                                }
-                            }
-                        },
-                        "f:spec": {
-                            "f:backoffLimit": {},
-                            "f:completions": {},
-                            "f:parallelism": {},
-                            "f:template": {
-                                "f:metadata": {
-                                    "f:labels": {
-                                        ".": {},
-                                        "f:app": {},
-                                        "f:cronjob_id": {},
-                                        "f:orbit/node-type": {},
-                                        "f:username": {}
-                                    },
-                                    "f:name": {}
-                                },
-                                "f:spec": {
-                                    "f:containers": {
-                                        "k:{\"name\":\"notebook\"}": {
-                                            ".": {},
-                                            "f:args": {},
-                                            "f:env": {
-                                                ".": {},
-                                                "k:{\"name\":\"AWS_ORBIT_ENV\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"AWS_ORBIT_S3_BUCKET\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"AWS_ORBIT_TEAM_SPACE\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"AWS_STS_REGIONAL_ENDPOINTS\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"JUPYTERHUB_USER\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"USERNAME\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"compute\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"task_type\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                },
-                                                "k:{\"name\":\"tasks\"}": {
-                                                    ".": {},
-                                                    "f:name": {},
-                                                    "f:value": {}
-                                                }
-                                            },
-                                            "f:image": {},
-                                            "f:imagePullPolicy": {},
-                                            "f:lifecycle": {},
-                                            "f:name": {},
-                                            "f:ports": {
-                                                ".": {},
-                                                "k:{\"containerPort\":22,\"protocol\":\"TCP\"}": {
-                                                    ".": {},
-                                                    "f:containerPort": {},
-                                                    "f:name": {},
-                                                    "f:protocol": {}
-                                                }
-                                            },
-                                            "f:resources": {
-                                                ".": {},
-                                                "f:limits": {
-                                                    ".": {},
-                                                    "f:cpu": {},
-                                                    "f:memory": {}
-                                                },
-                                                "f:requests": {
-                                                    ".": {},
-                                                    "f:cpu": {},
-                                                    "f:memory": {}
-                                                }
-                                            },
-                                            "f:securityContext": {
-                                                ".": {},
-                                                "f:runAsGroup": {},
-                                                "f:runAsUser": {}
-                                            },
-                                            "f:terminationMessagePath": {},
-                                            "f:terminationMessagePolicy": {},
-                                            "f:volumeMounts": {
-                                                ".": {},
-                                                "k:{\"mountPath\":\"/efs\"}": {
-                                                    ".": {},
-                                                    "f:mountPath": {},
-                                                    "f:name": {}
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "f:dnsPolicy": {},
-                                    "f:nodeSelector": {
-                                        ".": {},
-                                        "f:orbit/usage": {}
-                                    },
-                                    "f:restartPolicy": {},
-                                    "f:schedulerName": {},
-                                    "f:securityContext": {
-                                        ".": {},
-                                        "f:fsGroup": {}
-                                    },
-                                    "f:serviceAccount": {},
-                                    "f:serviceAccountName": {},
-                                    "f:terminationGracePeriodSeconds": {},
-                                    "f:volumes": {
-                                        ".": {},
-                                        "k:{\"name\":\"efs-volume\"}": {
-                                            ".": {},
-                                            "f:name": {},
-                                            "f:persistentVolumeClaim": {
-                                                ".": {},
-                                                "f:claimName": {}
-                                            }
-                                        }
-                                    }
-                                }
-                            },
-                            "f:ttlSecondsAfterFinished": {}
-                        },
-                        "f:status": {
-                            "f:active": {},
-                            "f:startTime": {}
-                        }
-                    }
-                }
-            ]
-        },
-        "spec": {
-            "parallelism": 1,
-            "completions": 1,
-            "backoffLimit": 0,
-            "selector": {
-                "matchLabels": {
-                    "controller-uid": "f53e72cc-9ae2-4b6f-8d18-2b73fca4a55f"
-                }
-            },
-            "template": {
-                "metadata": {
-                    "name": "run-jupyter",
-                    "creationTimestamp": null,
-                    "labels": {
-                        "app": "orbit-runner",
-                        "controller-uid": "f53e72cc-9ae2-4b6f-8d18-2b73fca4a55f",
-                        "cronjob_id": "orbit-lake-user-yyy",
-                        "job-name": "orbit-lake-user-yyy-1615818420",
-                        "orbit/node-type": "fargate",
-                        "username": "amirbo"
-                    }
-                },
-                "spec": {
-                    "volumes": [
-                        {
-                            "name": "efs-volume",
-                            "persistentVolumeClaim": {
-                                "claimName": "jupyterhub"
-                            }
-                        }
-                    ],
-                    "containers": [
-                        {
-                            "name": "notebook",
-                            "image": "****************dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user:latest",
-                            "args": [
-                                "bash",
-                                "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
-                            ],
-                            "ports": [
-                                {
-                                    "name": "notebook-port",
-                                    "containerPort": 22,
-                                    "protocol": "TCP"
-                                }
-                            ],
-                            "env": [
-                                {
-                                    "name": "AWS_ORBIT_ENV",
-                                    "value": "dev-env"
-                                },
-                                {
-                                    "name": "AWS_ORBIT_TEAM_SPACE",
-                                    "value": "lake-user"
-                                },
-                                {
-                                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
-                                    "value": "regional"
-                                },
-                                {
-                                    "name": "JUPYTERHUB_USER",
-                                    "value": "amirbo"
-                                },
-                                {
-                                    "name": "USERNAME",
-                                    "value": "amirbo"
-                                },
-                                {
-                                    "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit****************b81a1f"
-                                },
-                                {
-                                    "name": "task_type",
-                                    "value": "jupyter"
-                                },
-                                {
-                                    "name": "tasks",
-                                    "value": "{\"tasks\": [{\"notebookName\": \"forever.ipynb\", \"sourcePath\": \"shared/samples/notebooks/B-DataAnalyst\", \"targetPath\": \"shared/regression/notebooks/B-DataAnalyst\", \"targetPrefix\": \"ttt\", \"params\": {\"glue_db\": \"cms_raw_db\", \"target_db\": \"users\"}}]}"
-                                },
-                                {
-                                    "name": "compute",
-                                    "value": "{\"compute\": {\"compute_type\": \"eks\", \"node_type\": \"fargate\"}}"
-                                }
-                            ],
-                            "resources": {
-                                "limits": {
-                                    "cpu": "2",
-                                    "memory": "2G"
-                                },
-                                "requests": {
-                                    "cpu": "2",
-                                    "memory": "2G"
-                                }
-                            },
-                            "volumeMounts": [
-                                {
-                                    "name": "efs-volume",
-                                    "mountPath": "/efs"
-                                }
-                            ],
-                            "lifecycle": {},
-                            "terminationMessagePath": "/dev/termination-log",
-                            "terminationMessagePolicy": "File",
-                            "imagePullPolicy": "Always",
-                            "securityContext": {
-                                "runAsUser": 1000,
-                                "runAsGroup": 100
-                            }
-                        }
-                    ],
-                    "restartPolicy": "Never",
-                    "terminationGracePeriodSeconds": 30,
-                    "dnsPolicy": "ClusterFirst",
-                    "nodeSelector": {
-                        "orbit/usage": "teams"
-                    },
-                    "serviceAccountName": "lake-user",
-                    "serviceAccount": "lake-user",
-                    "securityContext": {
-                        "fsGroup": 100
-                    },
-                    "schedulerName": "default-scheduler"
-                }
-            }
-        },
-        "status": {
-            "startTime": "2021-03-15T14:27:05Z",
+            "startTime": "2021-03-16T15:57:06Z",
             "active": 1
         }
     }

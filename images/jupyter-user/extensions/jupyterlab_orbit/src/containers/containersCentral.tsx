@@ -20,10 +20,14 @@ interface IUseItemsReturn {
 const deleteItem = async (name: string, type: string): Promise<any> => {
   const dataToSend = { name: name };
   try {
-    const reply: any | undefined = await request('containers', {
-      body: JSON.stringify(dataToSend),
-      method: 'DELETE'
-    });
+    const reply: any | undefined = await request(
+      'containers',
+      {},
+      {
+        body: JSON.stringify(dataToSend),
+        method: 'DELETE'
+      }
+    );
     return reply;
   } catch (reason) {
     console.error(`Error on DELETE /containers ${dataToSend}.\n${reason}`);

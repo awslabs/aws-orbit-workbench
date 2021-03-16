@@ -14,7 +14,7 @@
 
 import json
 from typing import Dict, List
-import pprint
+
 from aws_orbit_sdk.database import RedshiftUtils
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
@@ -28,16 +28,14 @@ class RedshiftRouteHandler(APIHandler):
         data = []
         for cid, cdetails in DATA.items():
             ddirct = {
-             "name": cdetails['Name'],
-             "hint": cdetails['Name'],
-             "state": cdetails["State"],
-             "node_type": cdetails["instances"]["node_type"],
-             "nodes": cdetails["instances"]["nodes"]
+                "name": cdetails["Name"],
+                "hint": cdetails["Name"],
+                "state": cdetails["State"],
+                "node_type": cdetails["instances"]["node_type"],
+                "nodes": cdetails["instances"]["nodes"],
             }
             if "ClusterCreateTime" in cdetails["info"]:
-                ddirct.update({
-                    "start_time": str(cdetails["info"]["ClusterCreateTime"].strftime("%Y-%m-%d %H:%M %Z"))
-                })
+                ddirct.update({"start_time": str(cdetails["info"]["ClusterCreateTime"].strftime("%Y-%m-%d %H:%M %Z"))})
 
             data.append(ddirct)
         return json.dumps(data, default=str)
