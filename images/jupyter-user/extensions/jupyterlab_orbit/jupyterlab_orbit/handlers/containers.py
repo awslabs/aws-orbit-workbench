@@ -43,7 +43,7 @@ class ContainersRouteHandler(APIHandler):
             envs = job_template["spec"]["containers"][0]["env"]
             tasks = json.loads([e["value"] for e in envs if e["name"] == "tasks"][0])
             container["hint"] = json.dumps(tasks, indent=4)
-            container["tasks"] = tasks
+            container["tasks"] = tasks["tasks"]
 
             if "labels" in c["metadata"] and "orbit/node-type" in c["metadata"]["labels"]:
                 container["node_type"] = c["metadata"]["labels"]["orbit/node-type"]
