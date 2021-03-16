@@ -89,8 +89,9 @@ def build_image(args: Tuple[str, ...]) -> None:
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
+        tag = getattr(context.images, image_name).version
         docker.deploy_image_from_source(
-            context=context, dir=path, name=ecr_repo, build_args=cast(Optional[List[str]], build_args)
+            context=context, dir=path, name=ecr_repo, tag=tag, build_args=cast(Optional[List[str]], build_args)
         )
     else:
         docker.replicate_image(context=context, image_name=image_name, deployed_name=ecr_repo)
