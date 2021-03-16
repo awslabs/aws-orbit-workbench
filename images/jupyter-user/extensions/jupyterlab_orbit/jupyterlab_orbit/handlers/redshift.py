@@ -31,7 +31,7 @@ class RedshiftRouteHandler(APIHandler):
              "name": cdetails['Name'],
              "hint": json.dumps(cdetails["info"]["Endpoint"], indent=4),
              "state": cdetails["info"]["ClusterStatus"],
-             "start_time": str(cdetails["info"]["ClusterCreateTime"]),
+             "start_time": str(cdetails["info"]["ClusterCreateTime"].strftime("%Y-%m-%d %H:%M %Z")),
              "node_type": cdetails["instances"]["node_type"],
              "nodes": cdetails["instances"]["nodes"]
             }
@@ -52,7 +52,9 @@ class RedshiftRouteHandler(APIHandler):
 
     @web.authenticated
     def delete(self):
+        global DATA
         input_data = self.get_json_body()
         self.log.info(f"DELETE - {self.__class__} - %s", input_data)
         RedshiftUtils().delete_redshift_cluster(cluster_name=input_data["name"])
+        DATA = RedshiftUtils().get_team_clusters()
         self.finish(self._dump())

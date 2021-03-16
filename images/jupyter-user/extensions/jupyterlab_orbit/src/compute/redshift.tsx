@@ -14,7 +14,7 @@ import {
   SHUTDOWN_BUTTON_CLASS
 } from '../common/styles';
 
-import { CategoryViews } from '../common/categoryViews';
+import { CategoryViews, CategoryViewsTest } from '../common/categoryViews';
 import { request } from '../common/backend';
 import { IDictionary } from '../typings/utils';
 
@@ -33,6 +33,7 @@ interface IUseItemsReturn {
   items: JSX.Element;
   closeAllCallback: (name: string) => void;
   refreshCallback: () => void;
+  createCallback: () => void;
 }
 
 const openItemCallback = (name: string) => {
@@ -81,23 +82,24 @@ const Items = (props: {
   </>
 );
 
-const deleteItem = async (name: string, type: string): Promise<IItem[]> => {
+const deleteItem = async (name: string): Promise<IItem[]> => {
   const dataToSend = { name: name };
+  console.log(`Deleting Redshift Cluster`)
+  console.log(`DeleteItem ${dataToSend}`);
   try {
-    const reply: IItem[] | undefined = await request('containers', {
+    const reply: IItem[] | undefined = await request('redshift', {
       body: JSON.stringify(dataToSend),
       method: 'DELETE'
     });
     return reply;
   } catch (reason) {
-    console.error(`Error on DELETE /containers ${dataToSend}.\n${reason}`);
+    console.error(`Error on DELETE /redshift ${dataToSend}.\n${reason}`);
     return [];
   }
 };
 
 const useItems = (type: string): IUseItemsReturn => {
   const [data, setData] = useState([]);
-
   useEffect(() => {
     const fetchData = async () => {
       const parameters: IDictionary<number | string> = {
@@ -123,8 +125,24 @@ const useItems = (type: string): IUseItemsReturn => {
       if (result.button.accept) {
         console.log('SHUTDOWN ALL!');
         data.map(async x => {
-          await deleteItem(x.name, type);
+          await deleteItem(x.name);
         });
+        setData([]);
+      }
+    });
+  };
+
+  const createCallback = () => {
+    void showDialog({
+      title: `Create Redshift Cluster`,
+      body: 'Create Redshift Cluster',
+      buttons: [
+        Dialog.cancelButton({ label: 'Cancel' }),
+        Dialog.warnButton({ label: 'Create' })
+      ]
+    }).then(result => {
+      if (result.button.accept) {
+        console.log('CREATE REDSHIFT CLUSTER!');
         setData([]);
       }
     });
@@ -141,20 +159,20 @@ const useItems = (type: string): IUseItemsReturn => {
 
   const closeItemCallback = async (name: string) => {
     console.log(`[${NAME}] Close Item ${name}!`);
-    // MYTODO - Pass specific parameter to delete the cluster.
-    //setData(await deleteItem(name, type));
+    setData(await deleteItem(name));
+    //setData(await request('redshift'));
   };
 
   const items = <Items data={data} closeItemCallback={closeItemCallback} />;
 
-  return { items, closeAllCallback, refreshCallback };
+  return { items, closeAllCallback, refreshCallback, createCallback };
 };
 
 export const RedshiftCategoryLeftList = (props: {
   title: string;
   type: string;
 }): JSX.Element => {
-  const { items, closeAllCallback, refreshCallback } = useItems(props.type);
+  const { items, closeAllCallback, refreshCallback, createCallback } = useItems(props.type);
   return (
     <div className={SECTION_CLASS}>
       <CategoryViews
@@ -162,6 +180,7 @@ export const RedshiftCategoryLeftList = (props: {
         items={items}
         refreshCallback={refreshCallback}
         closeAllCallback={closeAllCallback}
+        createCallback={createCallback}
       />
     </div>
   );
@@ -171,7 +190,7 @@ export const RedshiftCategoryCentralList = (props: {
   title: string;
   type: string;
 }): JSX.Element => {
-  const { items, closeAllCallback, refreshCallback } = useItems(props.type);
+  const { items, closeAllCallback, refreshCallback, createCallback } = useItems(props.type);
   return (
     <div className={SECTION_CLASS}>
       <CategoryViews
@@ -179,6 +198,7 @@ export const RedshiftCategoryCentralList = (props: {
         items={items}
         refreshCallback={refreshCallback}
         closeAllCallback={closeAllCallback}
+        createCallback={createCallback}
       />
     </div>
   );
