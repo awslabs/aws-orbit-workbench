@@ -15,7 +15,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 from aws_orbit_sdk.common import get_workspace
 from jupyter_server.base.handlers import APIHandler
