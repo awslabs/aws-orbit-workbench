@@ -165,10 +165,6 @@ def deploy_team(context: "Context", manifest: Manifest, team_manifest: TeamManif
 def destroy_team(context: "Context", team_context: "TeamContext") -> None:
     _logger.debug("Stack name: %s", team_context.stack_name)
     if cfn.does_stack_exist(stack_name=context.toolkit.stack_name):
-        try:
-            ecr.delete_repo(repo=f"orbit-{context.name}-{team_context.name}-jupyter-user")
-        except Exception as ex:
-            _logger.error("Skipping Team ECR Repository deletion. Cause: %s", ex)
         if cfn.does_stack_exist(stack_name=team_context.stack_name):
             args: List[str] = [context.name, team_context.name]
             cdk.destroy(

@@ -561,10 +561,3 @@ class ContextSerDe(Generic[T, V]):
             f"{top_level}-{context.name}-cdk-toolkit-{context.account_id}-{context.toolkit.deploy_id}"
         )
         _logger.debug("Toolkit data fetched successfully.")
-
-
-def construct_ecr_repository_name(env_name: str, image: Optional[str]) -> str:
-    image = image if image is not None else "jupyter-user:latest"
-    if ":" not in image:
-        image += ":latest"
-    return f"orbit-{env_name}-{image}"
