@@ -234,7 +234,7 @@ def deploy_foundation(
     filename: Optional[str] = None,
     name: Optional[str] = None,
     debug: bool = False,
-    internet_accessiblity: bool = True,
+    internet_accessibility: bool = True,
     username: Optional[str] = None,
     password: Optional[str] = None,
     codeartifact_domain: Optional[str] = None,
@@ -262,7 +262,7 @@ def deploy_foundation(
         username=username,
         password=password,
         debug=debug,
-        internet_accessiblity=internet_accessiblity,
+        internet_accessibility=internet_accessibility,
     )
 
 
