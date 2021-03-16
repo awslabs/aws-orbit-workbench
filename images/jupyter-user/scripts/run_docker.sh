@@ -28,21 +28,6 @@ if [[ -z "$AWS_ORBIT_TEAM_SPACE" ]]; then
     exit 1
 fi
 
-if [[ -z "$AWS_DEFAULT_REGION" ]]; then
-    echo "Must provide AWS_DEFAULT_REGION in environment" 1>&2
-    exit 1
-fi
-
-if [[ -z "$AWS_ACCESS_KEY_ID" ]]; then
-    echo "Must provide AWS_ACCESS_KEY_ID in environment" 1>&2
-    exit 1
-fi
-
-if [[ -z "$AWS_SECRET_ACCESS_KEY" ]]; then
-    echo "Must provide AWS_SECRET_ACCESS_KEY in environment" 1>&2
-    exit 1
-fi
-
 if [ -d "extensions" ]; then
   echo "Starting Jupyter lab"
 else

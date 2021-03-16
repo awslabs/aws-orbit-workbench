@@ -5,15 +5,17 @@ import {
   showDialog,
   ToolbarButtonComponent
 } from '@jupyterlab/apputils';
-import { orbitIcon } from '../common/icons';
+import { CheckOutlined, CloseOutlined, QuestionOutlined, LoadingOutlined } from "@ant-design/icons";
+import { Tooltip } from "antd";
+
 import {
   ITEM_CLASS,
   ITEM_DETAIL_CLASS,
   ITEM_LABEL_CLASS,
   SECTION_CLASS,
-  SHUTDOWN_BUTTON_CLASS
+  SHUTDOWN_BUTTON_CLASS,
+  ORBIT_COLOR
 } from '../common/styles';
-
 import { CategoryViews } from '../common/categoryViews';
 import { request } from '../common/backend';
 import { IDictionary } from '../typings/utils';
@@ -23,8 +25,9 @@ const NAME = 'K8Containers';
 interface IItem {
   name: string;
   hint: string;
-  start_time: string;
+  time: string;
   node_type: string;
+  job_state: string;
 }
 
 interface IUseItemsReturn {
@@ -37,30 +40,73 @@ const openItemCallback = (name: string) => {
   console.log(`[${NAME}] Open Item ${name}!`);
 };
 
+const getStateIcon = (job_state: string): {
+  title: string;
+  color: string;
+  icon: JSX.Element;
+} => {
+  let title: string = 'Unknown State'
+  let color: string = 'gray'
+  let icon: JSX.Element = <QuestionOutlined style={{ color: color }} />
+  switch (job_state) {
+    case 'failed':
+      title = 'Failed!'
+      color = "red"
+      icon = <CloseOutlined style={{ color: color }} />
+      break;
+    case 'running':
+      title = 'Running...'
+      color = ORBIT_COLOR
+      icon = <LoadingOutlined style={{ color: color }} />
+      break;
+    case 'succeeded':
+      title = 'Succeeded!'
+      color = "green"
+      icon = <CheckOutlined style={{ color: color }} />
+      break;
+    case 'unknown':
+      break;
+    default:
+      console.error(`job_state: ${job_state}`)
+  }
+  return { title, color, icon }
+}
+
 const Item = (props: {
   item: IItem;
   openItemCallback: (name: string) => void;
   closeItemCallback: (name: string) => void;
-}) => (
-  <li className={ITEM_CLASS}>
-    <orbitIcon.react tag="span" stylesheet="runningItem" />
-    <span
-      className={ITEM_LABEL_CLASS}
-      title={props.item.hint}
-      onClick={() => props.openItemCallback(props.item.name)}
+}) => {
+  const { title, color, icon } = getStateIcon(props.item.job_state)
+  return (
+    <Tooltip
+      placement="topLeft"
+      title={title}
+      color={color}
+      key={"Orbit"}
     >
-      {props.item.name}
-    </span>
-    <span className={ITEM_DETAIL_CLASS}>{props.item.start_time}</span>
-    <span className={ITEM_DETAIL_CLASS}>{props.item.node_type}</span>
-    <ToolbarButtonComponent
-      className={SHUTDOWN_BUTTON_CLASS}
-      icon={closeIcon}
-      onClick={() => props.closeItemCallback(props.item.name)}
-      tooltip={'Shut Down!'}
-    />
-  </li>
-);
+      <li className={ITEM_CLASS}>
+          <span> {icon} </span>
+          <span
+            className={ITEM_LABEL_CLASS}
+            title={props.item.hint}
+            onClick={() => props.openItemCallback(props.item.name)}
+          >
+            {props.item.name}
+          </span>
+          <span className={ITEM_DETAIL_CLASS}>{props.item.time}</span>
+          <span className={ITEM_DETAIL_CLASS}>{props.item.node_type}</span>
+          <ToolbarButtonComponent
+            className={SHUTDOWN_BUTTON_CLASS}
+            icon={closeIcon}
+            onClick={() => props.closeItemCallback(props.item.name)}
+            tooltip={'Shut Down!'}
+          />
+        
+      </li>
+    </Tooltip>
+  )
+}
 
 const Items = (props: {
   data: IItem[];
@@ -74,7 +120,8 @@ const Items = (props: {
         openItemCallback={openItemCallback}
         closeItemCallback={props.closeItemCallback}
       />
-    ))}{' '}
+    ))}
+    {' '}
   </>
 );
 
@@ -100,7 +147,6 @@ const useItems = (type: string): IUseItemsReturn => {
       const parameters: IDictionary<number | string> = {
         type: type
       };
-
       setData(await request('containers', parameters));
     };
 

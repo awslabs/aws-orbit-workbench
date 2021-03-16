@@ -15,7 +15,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from aws_orbit_sdk import controller
 from jupyter_server.base.handlers import APIHandler
@@ -35,22 +35,34 @@ class ContainersRouteHandler(APIHandler):
             container["name"] = c["metadata"]["name"]
             if type == "cron":
                 job_template = c["spec"]["jobTemplate"]["spec"]["template"]
-                container["schedule"] = c["spec"]["schedule"]
-                schedule = f'schedule: {c["spec"]["schedule"]}'
+                container["time"] = c["spec"]["schedule"]
             else:
                 job_template = c["spec"]["template"]
-                schedule = ""
+                container["time"] = c["metadata"]["creationTimestamp"]
 
             envs = job_template["spec"]["containers"][0]["env"]
             tasks = json.loads([e["value"] for e in envs if e["name"] == "tasks"][0])
-            container["hint"] = schedule + "\n" + json.dumps(tasks, indent=4)
+            container["hint"] = json.dumps(tasks, indent=4)
             container["tasks"] = tasks
-            container["start_time"] = c["metadata"]["creationTimestamp"]
+
             if "labels" in c["metadata"] and "orbit/node-type" in c["metadata"]["labels"]:
                 container["node_type"] = c["metadata"]["labels"]["orbit/node-type"]
             else:
                 container["node_type"] = "unknown"
 
+            if "status" in c:
+                if "failed" in c["status"] and c["status"]["failed"] == 1:
+                    container["job_state"] = "failed"
+                elif "active" in c["status"] and c["status"]["active"] == 1:
+                    container["job_state"] = "running"
+                elif "succeeded" in c["status"] and c["status"]["succeeded"] == 1:
+                    container["job_state"] = "succeeded"
+                else:
+                    container["job_state"] = "unknown"
+            else:
+                container["job_state"] = "unknown"
+
+            container["info"] = c
             data.append(container)
         return json.dumps(data)
 
@@ -58,8 +70,8 @@ class ContainersRouteHandler(APIHandler):
     def get(self):
         print("Entered containers GET method")
         global MYJOBS
-        type: Optional[string] = self.get_argument("type", default="")
-        self.log.info(f"GET - {self.__class__} - {type}")
+        type: Optional[str] = self.get_argument("type", default="")
+        self.log.info(f"GET - {self.__class__} - {type} {format}")
         if "MOCK" not in os.environ or os.environ["MOCK"] == "0":
             if type == "user":
                 MYJOBS = controller.list_my_running_jobs()
@@ -80,6 +92,7 @@ class ContainersRouteHandler(APIHandler):
                     json.dump(data, outfile, indent=4)
         else:
             path = Path(__file__).parent / f"../mockup/containers-{type}.json"
+            self.log.info("Path: %s", path)
             with open(path) as f:
                 if type == "user":
                     MYJOBS = json.load(f)
@@ -106,7 +119,7 @@ class ContainersRouteHandler(APIHandler):
         global MYJOBS
         input_data = self.get_json_body()
         job_name = input_data["name"]
-        type: Optional[string] = self.get_argument("type", default="")
+        type: Optional[str] = self.get_argument("type", default="")
         self.log.info(f"DELETE - {self.__class__} - %s", job_name)
         if type == "user":
             MYJOBS = controller.delete_job(job_name)
@@ -120,5 +133,5 @@ class ContainersRouteHandler(APIHandler):
         else:
             raise Exception("Unknown type: %s", type)
 
-        _delete(job_name, data)
+        self._delete(job_name, data)
         self.finish(self._dump())
