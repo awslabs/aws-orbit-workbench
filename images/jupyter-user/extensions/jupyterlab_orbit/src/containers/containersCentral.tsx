@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, showDialog } from '@jupyterlab/apputils';
 
-import { TreeView } from '../common/categoryViews';
 import { request } from '../common/backend';
 import { IDictionary } from '../typings/utils';
 import { TableWidget } from './table/table';
@@ -67,7 +66,7 @@ const useItems = (type: string): IUseItemsReturn => {
     }).then(result => {
       if (result.button.accept) {
         console.log('SHUTDOWN ALL!');
-        your_jobs.map(async x => {
+        your_jobs.map(async (x: { name: string }) => {
           await deleteItem(x.name, type);
         });
         setData([]);
@@ -115,7 +114,7 @@ const columns = [
       compare: utils.Sorter.DEFAULT,
       multiple: 3
     },
-    render: (text, record) => {
+    render: (text: any, record: any) => {
       return `${JSON.stringify(text)}`;
     }
   },
@@ -139,11 +138,11 @@ const columns = [
 
 const expandable = (): {} => {
   return {
-    expandedRowRender: record => (
+    expandedRowRender: (record: { info: object }) => (
       <p>
         <ReactJson
           src={record.info}
-          name={'info'}
+          name={'job description'}
           collapsed={1}
           displayDataTypes={false}
         />
@@ -169,9 +168,6 @@ export const ContainerCentralPanel = (props: {
           columns={columns}
           expandable={expandable}
         />
-      </div>
-      <div>
-        <TreeView name={'Your jobs'} item={your_jobs} root_name={'jobs'} />;
       </div>
     </div>
   );

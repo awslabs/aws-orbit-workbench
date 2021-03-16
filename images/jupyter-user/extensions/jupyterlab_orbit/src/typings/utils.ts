@@ -8,14 +8,14 @@ export interface IDictionary<TValue> {
  * @param {string} dateA - a date, represented in string format
  * @param {string} dateB - a date, represented in string format
  */
-const dateSort = (dateA, dateB) => moment(dateA).diff(moment(dateB));
+const dateSort = (dateA: any, dateB: any) => moment(dateA).diff(moment(dateB));
 
 /**
  *
  * @param {number|string} a
  * @param {number|string} b
  */
-const defaultSort = (a, b) => {
+const defaultSort = (a: any, b: any) => {
   if (a < b) {
     return -1;
   }
