@@ -10,7 +10,7 @@ import { RUNNING_CLASS, SECTION_CLASS } from './common/styles';
 import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
-import { RedshiftCategoryLeftList } from './compute/redshift';
+import {RedshiftCategoryCentralList, RedshiftCategoryLeftList} from './compute/redshift';
 
 const NAME = 'Compute';
 const ICON: LabIcon = computeIcon;
@@ -37,7 +37,11 @@ class CentralWidget extends ReactWidget {
           icon={ICON}
           refreshCallback={refreshCallback}
         />
-        <div />
+
+        <RedshiftCategoryCentralList
+          title={'Your Redshift Clusters'}
+          type={'user'}
+        />
       </div>
     );
   }

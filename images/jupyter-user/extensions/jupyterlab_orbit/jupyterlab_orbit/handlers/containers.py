@@ -104,7 +104,6 @@ class ContainersRouteHandler(APIHandler):
                     data = CRONJOBS
                 else:
                     raise Exception("Unknown type: %s", type)
-
         self.finish(self._dump(data, type))
 
     @staticmethod
