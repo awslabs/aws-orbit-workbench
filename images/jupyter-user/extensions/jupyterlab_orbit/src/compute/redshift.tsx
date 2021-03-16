@@ -14,7 +14,7 @@ import {
   SHUTDOWN_BUTTON_CLASS
 } from '../common/styles';
 
-import { CategoryViews, CategoryViewsTest } from '../common/categoryViews';
+import { CategoryViewsWithCreate } from '../common/categoryViews';
 import { request } from '../common/backend';
 import { IDictionary } from '../typings/utils';
 
@@ -54,6 +54,7 @@ const Item = (props: {
     >
       {props.item.name}
     </span>
+    <span className={ITEM_DETAIL_CLASS}>{props.item.state}</span>
     <span className={ITEM_DETAIL_CLASS}>{props.item.start_time}</span>
     <span className={ITEM_DETAIL_CLASS}>{props.item.node_type}</span>
     <span className={ITEM_DETAIL_CLASS}>{props.item.nodes}</span>
@@ -85,7 +86,7 @@ const Items = (props: {
 const deleteItem = async (name: string): Promise<IItem[]> => {
   const dataToSend = { name: name };
   console.log(`Deleting Redshift Cluster`)
-  console.log(`DeleteItem ${dataToSend}`);
+  console.log(`DeleteItem ${JSON.stringify(dataToSend)}`);
   try {
     const reply: IItem[] | undefined = await request('redshift', {
       body: JSON.stringify(dataToSend),
@@ -150,10 +151,6 @@ const useItems = (type: string): IUseItemsReturn => {
 
   const refreshCallback = async () => {
     console.log(`[${NAME}] Refresh!`);
-    // const parameters: IDictionary<number | string> = {
-    //   type: type
-    // };
-    // setData(await request('containers', parameters));
     setData(await request('redshift'));
   };
 
@@ -175,7 +172,7 @@ export const RedshiftCategoryLeftList = (props: {
   const { items, closeAllCallback, refreshCallback, createCallback } = useItems(props.type);
   return (
     <div className={SECTION_CLASS}>
-      <CategoryViews
+      <CategoryViewsWithCreate
         name={props.title}
         items={items}
         refreshCallback={refreshCallback}
@@ -193,7 +190,7 @@ export const RedshiftCategoryCentralList = (props: {
   const { items, closeAllCallback, refreshCallback, createCallback } = useItems(props.type);
   return (
     <div className={SECTION_CLASS}>
-      <CategoryViews
+      <CategoryViewsWithCreate
         name={props.title}
         items={items}
         refreshCallback={refreshCallback}

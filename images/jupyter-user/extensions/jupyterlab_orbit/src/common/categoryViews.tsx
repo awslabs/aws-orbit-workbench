@@ -13,6 +13,36 @@ export const CategoryViews = (props: {
   items: JSX.Element;
   refreshCallback: (name: string) => any;
   closeAllCallback: (name: string) => void;
+}) => {
+  return (
+    <div className={SECTION_CLASS}>
+      <header className={SECTION_HEADER_CLASS}>
+        <h2>{props.name}</h2>
+        <div style={{ display: 'flex', alignItems: 'right' }}>
+          <ToolbarButtonComponent
+            tooltip={'Refresh List'}
+            icon={refreshIcon}
+            onClick={() => props.refreshCallback(props.name)}
+          />
+          <ToolbarButtonComponent
+            tooltip={'Close All'}
+            icon={closeIcon}
+            onClick={() => props.closeAllCallback(props.name)}
+          />
+        </div>
+      </header>
+      <div className={CONTAINER_CLASS}>
+        <ul className={LIST_CLASS}> {props.items} </ul>
+      </div>
+    </div>
+  );
+};
+
+export const CategoryViewsWithCreate = (props: {
+  name: string;
+  items: JSX.Element;
+  refreshCallback: (name: string) => any;
+  closeAllCallback: (name: string) => void;
   createCallback: () => any;
 }) => {
   return (
