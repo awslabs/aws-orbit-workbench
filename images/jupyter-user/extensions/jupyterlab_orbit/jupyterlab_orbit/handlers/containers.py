@@ -56,6 +56,7 @@ class ContainersRouteHandler(APIHandler):
 
     @web.authenticated
     def get(self):
+        print("Entered containers GET method")
         global MYJOBS
         type: Optional[string] = self.get_argument("type", default="")
         self.log.info(f"GET - {self.__class__} - {type}")
@@ -91,8 +92,6 @@ class ContainersRouteHandler(APIHandler):
                     data = CRONJOBS
                 else:
                     raise Exception("Unknown type: %s", type)
-        import pprint
-        pprint.pprint(f"container_data={data}")
         self.finish(self._dump(data, type))
 
     @staticmethod
@@ -103,6 +102,7 @@ class ContainersRouteHandler(APIHandler):
 
     @web.authenticated
     def delete(self):
+        self.log.info("Entered containers Delete method")
         global MYJOBS
         input_data = self.get_json_body()
         job_name = input_data["name"]

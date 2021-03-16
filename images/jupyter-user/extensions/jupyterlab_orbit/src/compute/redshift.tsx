@@ -88,10 +88,11 @@ const deleteItem = async (name: string): Promise<IItem[]> => {
   console.log(`Deleting Redshift Cluster`)
   console.log(`DeleteItem ${JSON.stringify(dataToSend)}`);
   try {
-    const reply: IItem[] | undefined = await request('redshift', {
-      body: JSON.stringify(dataToSend),
-      method: 'DELETE'
-    });
+    const reply: IItem[] | undefined = await request(
+        'redshift',
+        { body: JSON.stringify(dataToSend), method : 'DELETE' },
+        {}
+    );
     return reply;
   } catch (reason) {
     console.error(`Error on DELETE /redshift ${dataToSend}.\n${reason}`);
@@ -157,7 +158,6 @@ const useItems = (type: string): IUseItemsReturn => {
   const closeItemCallback = async (name: string) => {
     console.log(`[${NAME}] Close Item ${name}!`);
     setData(await deleteItem(name));
-    //setData(await request('redshift'));
   };
 
   const items = <Items data={data} closeItemCallback={closeItemCallback} />;

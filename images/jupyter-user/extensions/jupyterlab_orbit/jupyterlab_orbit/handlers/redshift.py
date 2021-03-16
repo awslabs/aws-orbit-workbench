@@ -26,40 +26,35 @@ class RedshiftRouteHandler(APIHandler):
     @staticmethod
     def _dump() -> str:
         data = []
-        #pprint.pprint(DATA)
         for cid, cdetails in DATA.items():
             ddirct = {
              "name": cdetails['Name'],
              "hint": cdetails['Name'],
              "state": cdetails["State"],
-             "start_time": str(cdetails["info"]["ClusterCreateTime"].strftime("%Y-%m-%d %H:%M %Z")),
              "node_type": cdetails["instances"]["node_type"],
              "nodes": cdetails["instances"]["nodes"]
             }
-            data.append(ddirct)
-        #pprint.pprint(data)
-        #self.log.info(json.dumps(DATA))
-        return json.dumps(data, default=str)
+            if "ClusterCreateTime" in cdetails["info"]:
+                ddirct.update({
+                    "start_time": str(cdetails["info"]["ClusterCreateTime"].strftime("%Y-%m-%d %H:%M %Z"))
+                })
 
-    def sdk_get_team_clusters(self):
-        pass
+            data.append(ddirct)
+        return json.dumps(data, default=str)
 
     @web.authenticated
     def get(self):
-        print("Entered GET method")
         global DATA
         DATA = RedshiftUtils().get_team_clusters()
         self.log.info(f"GET - {self.__class__}")
         self.finish(self._dump())
-        self.log.info("End of Get")
 
     @web.authenticated
     def delete(self):
-        self.log.info("Entered Delete method")
-        #global DATA
+        global DATA
         input_data = self.get_json_body()
         self.log.info(f"DELETE - {self.__class__} - %s", input_data)
         RedshiftUtils().delete_redshift_cluster(cluster_name=input_data["name"])
-        #DATA = RedshiftUtils().get_team_clusters()
-        #self.finish(self._dump())
-        self.log.info("End of Delete")
+        # Refresh the data to get latest status of the redshift clusters
+        DATA = RedshiftUtils().get_team_clusters()
+        self.finish(self._dump())
