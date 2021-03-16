@@ -61,13 +61,14 @@ class TeamRouteHandler(APIHandler):
     def get(self):
         global DATA
         self.log.info(f"GET - {self.__class__}")
-        DATA = get_workspace()
-        # hide some details
-        if "Elbs" in DATA:
-            del DATA["Elbs"]
-        if "Plugins" in DATA:
-            del DATA["Plugins"]
         if "MOCK" not in os.environ or os.environ["MOCK"] == "0":
+            DATA = get_workspace()
+            # hide some details
+            if "Elbs" in DATA:
+                del DATA["Elbs"]
+            if "Plugins" in DATA:
+                del DATA["Plugins"]
+
             if "MOCK" in os.environ:
                 path = f"{Path(__file__).parent}/../mockup/team.json"
                 self.log.info(f"writing mockup data to {path}")
