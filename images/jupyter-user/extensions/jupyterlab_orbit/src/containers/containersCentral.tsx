@@ -66,7 +66,7 @@ const columns = [
     title: 'Start Time',
     dataIndex: 'time',
     sorter: {
-      compare: utils.Sorter.DEFAULT,
+      compare: utils.Sorter.DATE,
       multiple: 3
     }
   },

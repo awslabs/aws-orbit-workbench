@@ -18,6 +18,8 @@ source .venv/bin/activate
 pip install -U pip
 pip install -r requirements-dev.txt
 cd extensions/jupyterlab_orbit
+pip install -e .
+
 jlpm install
 jupyter labextension develop . --overwrite
 cd ../..

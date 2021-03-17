@@ -28,14 +28,37 @@ if [[ -z "$AWS_ORBIT_TEAM_SPACE" ]]; then
     exit 1
 fi
 
+if [[ -z "$AWS_DEFAULT_REGION" ]]; then
+    echo "Must provide AWS_DEFAULT_REGION in environment" 1>&2
+    exit 1
+fi
+
+if [[ -z "$AWS_SECRET_ACCESS_KEY" ]]; then
+    echo "Must provide AWS_SECRET_ACCESS_KEY in environment" 1>&2
+    exit 1
+fi
+
+if [[ -z "$AWS_ACCESS_KEY_ID" ]]; then
+    echo "Must provide AWS_ACCESS_KEY_ID in environment" 1>&2
+    exit 1
+fi
+if [[ -z "$AWS_SESSION_TOKEN" ]]; then
+    echo "Must provide AWS_SESSION_TOKEN in environment" 1>&2
+    exit 1
+fi
+
+
 if [ -d "extensions" ]; then
   echo "Starting Jupyter lab"
 else
   echo "must be inside images/jupyter-user directory"
 fi
 
+aws eks update-kubeconfig --name orbit-dev-env --role-arn arn:aws:iam::`aws sts get-caller-identity --query Account --output text`:role/orbit-dev-env-admin --region us-west-2
+
 docker run \
     -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+    -e AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN} \
     -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
     -e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} \
     -e AWS_ORBIT_TEAM_SPACE=$AWS_ORBIT_TEAM_SPACE \
