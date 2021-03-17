@@ -40,7 +40,8 @@ const fetchParameters = async (groups, jwt) => {
   let urls = [];
   if (Array.isArray(groups) && groups.length) {
     const params = {
-      Names: groups.map((x) => `/orbit/${window.REACT_APP_ENV_NAME}/teams/${x.replace(window.REACT_APP_ENV_NAME + '-', '')}/context`),
+      Names: groups.map(
+          (x) => `/orbit/${window.REACT_APP_ENV_NAME}/teams/${x.replace(window.REACT_APP_ENV_NAME + '-', '')}/context`),
     };
     const ssm = new AWS.SSM();
     // await new Promise(r => setTimeout(r, 3000));
