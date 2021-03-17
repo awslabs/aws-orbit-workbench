@@ -10,7 +10,8 @@ import {
 import { LabIcon } from '@jupyterlab/ui-components';
 import { Menu } from '@lumino/widgets';
 
-import { containersIcon, fargateIcon, ec2Icon } from './common/icons';
+import { containersIcon } from './common/icons';
+import { Ec2Icon, FargateIcon } from './common/reactIcons';
 import { ORBIT_COLOR, RUNNING_CLASS, SECTION_CLASS } from './common/styles';
 import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
@@ -30,9 +31,6 @@ import { IDictionary } from './typings/utils';
 
 const NAME = 'Containers';
 const ICON: LabIcon = containersIcon;
-
-const FARGATE_ICON: LabIcon = fargateIcon;
-const EC2_ICON: LabIcon = ec2Icon;
 
 const refreshCallback = () => {
   console.log(`[${NAME}] Refresh!`);
@@ -109,13 +107,13 @@ export const getNodeType = (
   switch (nodeType) {
     case 'fargate':
       title = 'Fargate';
-      color = 'white';
-      icon = <FARGATE_ICON.react />;
+      color = 'orange';
+      icon = <FargateIcon  style={{ maxHeight: '32px' }} />;
       break;
     case 'ec2':
       title = 'EC2';
-      color = 'white';
-      icon = <EC2_ICON.react />;
+      color = 'yellow';
+      icon = <Ec2Icon  style={{ maxHeight: '32px' }} />;
       break;
     default:
       console.error(`node_type: ${nodeType}`);

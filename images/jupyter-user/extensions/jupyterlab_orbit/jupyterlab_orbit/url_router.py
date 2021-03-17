@@ -14,11 +14,12 @@
 
 from jupyter_server.utils import url_path_join
 
+from .handlers.athena import AthenaRouteHandler
 from .handlers.catalog import CatalogRouteHandler, TreeRouteHandler
 from .handlers.containers import ContainersRouteHandler
 from .handlers.redshift import RedshiftRouteHandler
 from .handlers.team import TeamRouteHandler
-from .handlers.athena import AthenaRouteHandler
+
 
 def setup_handlers(web_app):
     base_url: str = web_app.settings["base_url"]

@@ -89,7 +89,7 @@ const columns = [
       const { title, color, icon } = getNodeType(text);
       return (
         <Tooltip placement="topLeft" title={title} color={color} key={'Orbit'}>
-          <span> {icon} </span>
+          <div> {icon} </div>
         </Tooltip>
       );
     }
