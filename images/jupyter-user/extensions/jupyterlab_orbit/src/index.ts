@@ -13,6 +13,7 @@ import { activateStorage } from './storage';
 import { activateContainers } from './containers';
 import { activateTeam } from './team';
 // import { activateTests } from './tests';
+import { activateCreate } from './create';
 
 const extension: JupyterFrontEndPlugin<void> = {
   id: 'aws-orbit-workbench',
@@ -38,6 +39,7 @@ const extension: JupyterFrontEndPlugin<void> = {
     activateCompute(app, palette, launcher, orbitMenu, 904);
     activateStorage(app, palette, launcher, orbitMenu, 905);
     // activateTests(app, palette, launcher, orbitMenu, 906);
+    activateCreate(app, palette, launcher, orbitMenu, 906);
   }
 };
 

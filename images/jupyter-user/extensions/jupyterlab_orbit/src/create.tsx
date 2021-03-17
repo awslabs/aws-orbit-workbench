@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { ILauncher } from '@jupyterlab/launcher';
 import { ReactWidget, ICommandPalette } from '@jupyterlab/apputils';
@@ -10,19 +10,32 @@ import { RUNNING_CLASS, SECTION_CLASS } from './common/styles';
 import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
-import {
-  RedshiftCategoryCentralList,
-  RedshiftCategoryLeftList
-} from './compute/redshift';
 
-const NAME = 'Compute';
+const NAME = 'CreateRedshiftCluster';
 const ICON: LabIcon = computeIcon;
 
 const refreshCallback = () => {
   console.log(`[${NAME}] Refresh!`);
 };
 
-class CentralWidget extends ReactWidget {
+const CounterComponent = (): JSX.Element => {
+  const [counter, setCounter] = useState(0);
+
+  return (
+    <div>
+      <p>You clicked {counter} times!</p>
+      <button
+        onClick={(): void => {
+          setCounter(counter + 1);
+        }}
+      >
+        Increment
+      </button>
+    </div>
+  );
+};
+
+export class CentralWidget extends ReactWidget {
   constructor() {
     super();
     this.addClass('jp-ReactWidget');
@@ -41,10 +54,7 @@ class CentralWidget extends ReactWidget {
           refreshCallback={refreshCallback}
         />
 
-        <RedshiftCategoryCentralList
-          title={'Your Redshift Clusters'}
-          type={'user'}
-        />
+        <CounterComponent />
       </div>
     );
   }
@@ -71,16 +81,13 @@ class LeftWidget extends ReactWidget {
           refreshCallback={refreshCallback}
           openCallback={this.launchCallback}
         />
-        <RedshiftCategoryLeftList
-          title={'Your Redshift Clusters'}
-          type={'user'}
-        />
+        <CounterComponent />
       </div>
     );
   }
 }
 
-export const activateCompute = (
+export const activateCreate = (
   app: JupyterFrontEnd,
   palette: ICommandPalette,
   launcher: ILauncher | null,
