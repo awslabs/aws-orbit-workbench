@@ -8,6 +8,7 @@ const SECTION_CLASS = 'jp-RunningSessions-section';
 const SECTION_HEADER_CLASS = 'jp-RunningSessions-sectionHeader';
 const CONTAINER_CLASS = 'jp-RunningSessions-sectionContainer';
 const LIST_CLASS = 'jp-RunningSessions-sectionList';
+
 const { Panel } = Collapse;
 function callback(key: any) {
   console.log(key);
@@ -21,7 +22,7 @@ export const CategoryViews = (props: {
   key: string;
 }) => {
   const genExtra = () => (
-    <div className={SECTION_HEADER_CLASS}>
+    <div>
       <div style={{ display: 'flex', alignItems: 'right' }}>
         <ToolbarButtonComponent
           tooltip={'Refresh List'}
@@ -39,14 +40,12 @@ export const CategoryViews = (props: {
 
   return (
     <Collapse
-      className={CONTAINER_CLASS}
       defaultActiveKey={['1']}
       onChange={callback}
     >
       <Panel
         header={props.name}
         key={props.key}
-        className={CONTAINER_CLASS}
         extra={genExtra()}
       >
         <div className={CONTAINER_CLASS}>
