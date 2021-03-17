@@ -1001,14 +1001,16 @@ class AthenaUtils(DatabaseCommon):
 
         return display_json(schemas, root="glue databases")
 
-    def get_sample_data(self, database: str, table: str, sample: int):
+    def get_sample_data(self, database: str, table: str, sample: int, field: str, direction: str):
         workspace = get_workspace()
-
+        logger.info(f"query staging location: s3://{workspace['ScratchBucket']}/athena/query/")
         conn = pyathena.connect(s3_staging_dir=f"s3://{workspace['ScratchBucket']}/athena/query/",
-                                region_name=workspace["region"]).cursor()
-        query = f"SELECT * FROM {database}.{table} LIMIT {sample}"
-
+                                region_name=workspace["region"])
+        if field and len(field) > 0:
+            query = f"SELECT * FROM {database}.{table} order by {field} desc LIMIT {sample}"
+        else:
+            query = f"SELECT * FROM {database}.{table} LIMIT {sample}"
         df = pd.read_sql(query, conn)
-
-        return df;
+        result = df.to_json(orient="records")
+        return result;
 

@@ -52,7 +52,8 @@
     "antd": "^4.14.0",
     "@ant-design/icons": "4.5.0",
     "react-json-view": "1.21.3",
-    "react-table": "7.6.3"
+    "react-table": "7.6.3",
+    "@langleyfoxall/react-dynamic-data-table": "^7.17.0"
   },
   "devDependencies": {
     "@jupyterlab/builder": "^3.0.0-rc.13",

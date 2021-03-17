@@ -19,15 +19,19 @@ from aws_orbit_sdk.database import AthenaUtils
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
 
+athena = AthenaUtils()
 
 class AthenaRouteHandler(APIHandler):
     @web.authenticated
     def get(self):
+
         database: Optional[str] = self.get_argument("database", default="")
         table: Optional[str] = self.get_argument("table", default="")
+        field: Optional[str] = self.get_argument("field", default="")
+        direction: Optional[str] = self.get_argument("direction", default="")
         sample_size = 100
 
-        df = AthenaUtils.get_sample_data(database, table, sample_size)
-        result = df.to_json(orient="records")
+        json_data = athena.get_sample_data(database=database, table=table, sample=sample_size, field=field, direction=direction)
+
         self.log.info(f"GET - {self.__class__}")
-        self.finish(result)
+        self.finish(json_data)
