@@ -14,9 +14,11 @@
 
 import json
 from typing import Optional
+
 from aws_orbit_sdk.database import AthenaUtils
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
+
 
 class AthenaRouteHandler(APIHandler):
     @web.authenticated
@@ -25,7 +27,7 @@ class AthenaRouteHandler(APIHandler):
         table: Optional[str] = self.get_argument("table", default="")
         sample_size = 100
 
-        df = AthenaUtils.get_sample_data(database,table,sample_size)
+        df = AthenaUtils.get_sample_data(database, table, sample_size)
         result = df.to_json(orient="records")
         self.log.info(f"GET - {self.__class__}")
         self.finish(result)

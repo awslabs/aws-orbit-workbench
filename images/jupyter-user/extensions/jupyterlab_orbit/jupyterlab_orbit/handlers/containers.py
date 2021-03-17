@@ -43,7 +43,7 @@ class ContainersRouteHandler(APIHandler):
                 if "status" in c and "completionTime" in c["status"]:
                     container["completionTime"] = c["status"]["completionTime"]
                 else:
-                    container["completionTime"] = ''
+                    container["completionTime"] = ""
                 if "status" in c:
                     if "failed" in c["status"] and c["status"]["failed"] == 1:
                         container["job_state"] = "failed"
@@ -63,8 +63,11 @@ class ContainersRouteHandler(APIHandler):
             else:
                 container["node_type"] = "unknown"
 
-            container["notebook"] = tasks["tasks"][0]["notebookName"] if "notebookName" in tasks["tasks"][0]\
+            container["notebook"] = (
+                tasks["tasks"][0]["notebookName"]
+                if "notebookName" in tasks["tasks"][0]
                 else f'{tasks["tasks"][0]["moduleName"]}.{tasks["tasks"][0]["functionName"]}'
+            )
 
             container["info"] = c
             data.append(container)
@@ -88,9 +91,7 @@ class ContainersRouteHandler(APIHandler):
             else:
                 raise Exception("Unknown type: %s", type)
             if "MOCK" in os.environ:
-                with open(
-                        f"{Path(__file__).parent.parent.parent}/test/mockup/containers-{type}.json", "w"
-                ) as outfile:
+                with open(f"{Path(__file__).parent.parent.parent}/test/mockup/containers-{type}.json", "w") as outfile:
                     json.dump(data, outfile, indent=4)
         else:
             path = f"{Path(__file__).parent.parent.parent}/test/mockup/containers-{type}.json"
