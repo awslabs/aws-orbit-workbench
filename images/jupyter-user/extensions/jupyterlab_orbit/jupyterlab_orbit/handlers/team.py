@@ -70,12 +70,12 @@ class TeamRouteHandler(APIHandler):
                 del DATA["Plugins"]
 
             if "MOCK" in os.environ:
-                path = f"{Path(__file__).parent}/../mockup/team.json"
+                path = f"{Path(__file__).parent.parent.parent}/test/mockup/mockup/team.json"
                 self.log.info(f"writing mockup data to {path}")
                 with open(path, "w") as outfile:
                     json.dump(DATA, outfile, indent=4)
         else:
-            path = f"{Path(__file__).parent}/../mockup/team.json"
+            path = f"{Path(__file__).parent.parent.parent}/test/mockup/team.json"
             with open(path) as f:
                 DATA = json.load(f)
 

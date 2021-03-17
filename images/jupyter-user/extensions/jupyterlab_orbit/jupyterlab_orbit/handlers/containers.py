@@ -89,11 +89,11 @@ class ContainersRouteHandler(APIHandler):
                 raise Exception("Unknown type: %s", type)
             if "MOCK" in os.environ:
                 with open(
-                    f"./extensions/jupyterlab_orbit/jupyterlab_orbit/mockup/containers-{type}.json", "w"
+                        f"{Path(__file__).parent.parent.parent}/test/mockup/containers-{type}.json", "w"
                 ) as outfile:
                     json.dump(data, outfile, indent=4)
         else:
-            path = Path(__file__).parent / f"../mockup/containers-{type}.json"
+            path = f"{Path(__file__).parent.parent.parent}/test/mockup/containers-{type}.json"
             self.log.info("Path: %s", path)
             with open(path) as f:
                 if type == "user":
@@ -107,6 +107,7 @@ class ContainersRouteHandler(APIHandler):
                     data = CRONJOBS
                 else:
                     raise Exception("Unknown type: %s", type)
+
         self.finish(self._dump(data, type))
 
     @staticmethod
