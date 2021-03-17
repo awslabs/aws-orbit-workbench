@@ -161,8 +161,7 @@ def build_image(
             context=context,
             plugins=False,
             cmds_build=[
-                f"orbit remote --command build_image "
-                f"{env} {name} {script_str} {source_str} {' '.join(build_args)}"
+                f"orbit remote --command build_image " f"{env} {name} {script_str} {source_str} {' '.join(build_args)}"
             ],
             changeset=None,
         )

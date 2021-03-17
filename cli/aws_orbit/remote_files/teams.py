@@ -22,7 +22,7 @@ import boto3
 from aws_orbit import ORBIT_CLI_ROOT, cdk, docker, plugins
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext, create_team_context_from_manifest
 from aws_orbit.models.manifest import Manifest, TeamManifest
-from aws_orbit.services import cfn, ecr
+from aws_orbit.services import cfn
 from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)

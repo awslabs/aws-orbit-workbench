@@ -19,9 +19,8 @@ from typing import List, Optional, Tuple, cast
 from boto3 import client
 
 from aws_orbit import docker, sh
-from aws_orbit.models.context import Context, ContextSerDe, TeamContext
+from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.models.manifest import ImageManifest
-from aws_orbit.remote_files import teams as team_utils
 from aws_orbit.remote_files.env import DEFAULT_IMAGES, DEFAULT_ISOLATED_IMAGES
 from aws_orbit.utils import boto3_client
 
