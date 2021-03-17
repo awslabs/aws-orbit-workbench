@@ -2,39 +2,58 @@ import React from 'react';
 import { ToolbarButtonComponent } from '@jupyterlab/apputils';
 import { refreshIcon, closeIcon, addIcon } from '@jupyterlab/ui-components';
 import ReactJson from 'react-json-view';
+import { Collapse } from 'antd';
 
 const SECTION_CLASS = 'jp-RunningSessions-section';
 const SECTION_HEADER_CLASS = 'jp-RunningSessions-sectionHeader';
 const CONTAINER_CLASS = 'jp-RunningSessions-sectionContainer';
 const LIST_CLASS = 'jp-RunningSessions-sectionList';
+const { Panel } = Collapse;
+function callback(key: any) {
+  console.log(key);
+}
 
 export const CategoryViews = (props: {
   name: string;
   items: JSX.Element;
   refreshCallback: (name: string) => any;
   closeAllCallback: (name: string) => void;
+  key: string;
 }) => {
-  return (
-    <div className={SECTION_CLASS}>
-      <header className={SECTION_HEADER_CLASS}>
-        <h2>{props.name}</h2>
-        <div style={{ display: 'flex', alignItems: 'right' }}>
-          <ToolbarButtonComponent
-            tooltip={'Refresh List'}
-            icon={refreshIcon}
-            onClick={() => props.refreshCallback(props.name)}
-          />
-          <ToolbarButtonComponent
-            tooltip={'Close All'}
-            icon={closeIcon}
-            onClick={() => props.closeAllCallback(props.name)}
-          />
-        </div>
-      </header>
-      <div className={CONTAINER_CLASS}>
-        <ul className={LIST_CLASS}> {props.items} </ul>
+  const genExtra = () => (
+    <div className={SECTION_HEADER_CLASS}>
+      <div style={{ display: 'flex', alignItems: 'right' }}>
+        <ToolbarButtonComponent
+          tooltip={'Refresh List'}
+          icon={refreshIcon}
+          onClick={() => props.refreshCallback(props.name)}
+        />
+        <ToolbarButtonComponent
+          tooltip={'Close All'}
+          icon={closeIcon}
+          onClick={() => props.closeAllCallback(props.name)}
+        />
       </div>
     </div>
+  );
+
+  return (
+    <Collapse
+      className={CONTAINER_CLASS}
+      defaultActiveKey={['1']}
+      onChange={callback}
+    >
+      <Panel
+        header={props.name}
+        key={props.key}
+        className={CONTAINER_CLASS}
+        extra={genExtra()}
+      >
+        <div className={CONTAINER_CLASS}>
+          <ul className={LIST_CLASS}> {props.items} </ul>
+        </div>
+      </Panel>
+    </Collapse>
   );
 };
 

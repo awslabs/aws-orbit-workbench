@@ -21,7 +21,8 @@ import {
   CheckOutlined,
   CloseOutlined,
   LoadingOutlined,
-  QuestionOutlined
+  QuestionOutlined,
+  ScheduleOutlined
 } from '@ant-design/icons';
 
 import { request } from './common/backend';
@@ -63,7 +64,7 @@ export const getStateIcon = (
   color: string;
   icon: JSX.Element;
 } => {
-  let title = 'Unknown State';
+  let title = 'Unknown State: ' + jobState;
   let color = 'gray';
   let icon: JSX.Element = <QuestionOutlined style={{ color: color }} />;
   switch (jobState) {
@@ -81,6 +82,11 @@ export const getStateIcon = (
       title = 'Succeeded!';
       color = 'green';
       icon = <CheckOutlined style={{ color: color }} />;
+      break;
+    case 'active':
+      title = 'Active!';
+      color = 'green';
+      icon = <ScheduleOutlined style={{ color: color }} />;
       break;
     case 'unknown':
       break;
@@ -247,16 +253,19 @@ class LeftWidget extends ReactWidget {
           title={'Your Jobs'}
           type={'user'}
           useItems={useItems}
+          key="1"
         />
         <ContainerCategoryLeftList
           title={'Team Jobs'}
           type={'team'}
           useItems={useItems}
+          key="2"
         />
         <ContainerCategoryLeftList
           title={'Cron Jobs'}
           type={'cron'}
           useItems={useItems}
+          key="3"
         />
         <div />
       </div>

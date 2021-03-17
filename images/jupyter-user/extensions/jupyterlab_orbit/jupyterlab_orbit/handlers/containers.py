@@ -36,6 +36,7 @@ class ContainersRouteHandler(APIHandler):
             if type == "cron":
                 job_template = c["spec"]["jobTemplate"]["spec"]["template"]
                 container["time"] = c["spec"]["schedule"]
+                container["job_state"] = "active"
             else:
                 job_template = c["spec"]["template"]
                 container["time"] = c["metadata"]["creationTimestamp"]
@@ -43,6 +44,15 @@ class ContainersRouteHandler(APIHandler):
                     container["completionTime"] = c["status"]["completionTime"]
                 else:
                     container["completionTime"] = ''
+                if "status" in c:
+                    if "failed" in c["status"] and c["status"]["failed"] == 1:
+                        container["job_state"] = "failed"
+                    elif "active" in c["status"] and c["status"]["active"] == 1:
+                        container["job_state"] = "running"
+                    elif "succeeded" in c["status"] and c["status"]["succeeded"] == 1:
+                        container["job_state"] = "succeeded"
+                    else:
+                        container["job_state"] = "unknown"
             envs = job_template["spec"]["containers"][0]["env"]
             tasks = json.loads([e["value"] for e in envs if e["name"] == "tasks"][0])
             container["hint"] = json.dumps(tasks, indent=4)
@@ -52,18 +62,6 @@ class ContainersRouteHandler(APIHandler):
                 container["node_type"] = c["metadata"]["labels"]["orbit/node-type"]
             else:
                 container["node_type"] = "unknown"
-
-            if "status" in c:
-                if "failed" in c["status"] and c["status"]["failed"] == 1:
-                    container["job_state"] = "failed"
-                elif "active" in c["status"] and c["status"]["active"] == 1:
-                    container["job_state"] = "running"
-                elif "succeeded" in c["status"] and c["status"]["succeeded"] == 1:
-                    container["job_state"] = "succeeded"
-                else:
-                    container["job_state"] = "unknown"
-            else:
-                container["job_state"] = "unknown"
 
             container["notebook"] = tasks["tasks"][0]["notebookName"] if "notebookName" in tasks["tasks"][0]\
                 else f'{tasks["tasks"][0]["moduleName"]}.{tasks["tasks"][0]["functionName"]}'

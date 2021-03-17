@@ -69,6 +69,7 @@ export const ContainerCategoryLeftList = (props: {
   title: string;
   type: string;
   useItems: (type: string) => IUseItemsReturn;
+  key: string;
 }): JSX.Element => {
   const { data, closeAllCallback, refreshCallback, setData } = props.useItems(
     props.type
@@ -86,6 +87,7 @@ export const ContainerCategoryLeftList = (props: {
         items={items}
         refreshCallback={refreshCallback}
         closeAllCallback={closeAllCallback}
+        key={props.key}
       />
     </div>
   );

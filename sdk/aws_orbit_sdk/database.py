@@ -6,7 +6,7 @@ import time
 import urllib.parse
 from typing import Dict, List, Optional, Tuple, Union
 from urllib.parse import quote_plus
-
+import pandas as pd
 import boto3
 import IPython.core.display
 import sqlalchemy as sa
@@ -20,6 +20,7 @@ from aws_orbit_sdk.common import *
 from aws_orbit_sdk.glue_catalog import run_crawler
 from aws_orbit_sdk.json import display_json
 from aws_orbit_sdk.magics.database import AthenaMagics, RedshiftMagics
+import pyathena
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -196,11 +197,11 @@ class RedshiftUtils(DatabaseCommon):
     """
 
     def get_connection_to_redshift(
-        self,
-        clusterIdentifier: str,
-        DbName: str,
-        DbUser: str,
-        lambdaName: Optional[str] = None,
+            self,
+            clusterIdentifier: str,
+            DbName: str,
+            DbUser: str,
+            lambdaName: Optional[str] = None,
     ) -> Dict[str, Union[str, sa.engine.Engine]]:
         """
         Connect to an existing cluster or create a new cluster if it does not exists.
@@ -336,13 +337,13 @@ class RedshiftUtils(DatabaseCommon):
         self.execute_ddl(createSchemaSql, dict())
 
     def create_external_table(
-        self,
-        select: str,
-        database_name: str,
-        table_name: str,
-        format: Optional[str] = "Parquet",
-        s3_location: Optional[str] = None,
-        options: Optional[str] = "",
+            self,
+            select: str,
+            database_name: str,
+            table_name: str,
+            format: Optional[str] = "Parquet",
+            s3_location: Optional[str] = None,
+            options: Optional[str] = "",
     ) -> IPython.core.display.JSON:
         """
         Creates a new external table in the given database and runs a glue crawler to populate glue catalog tables with
@@ -430,11 +431,11 @@ class RedshiftUtils(DatabaseCommon):
         return display_json(s, root="cols")
 
     def connect_to_redshift(
-        self,
-        cluster_name: str,
-        reuseCluster: Optional[str] = True,
-        startCluster: Optional[str] = False,
-        clusterArgs: Optional[Dict[str, str]] = dict(),
+            self,
+            cluster_name: str,
+            reuseCluster: Optional[str] = True,
+            startCluster: Optional[str] = False,
+            clusterArgs: Optional[Dict[str, str]] = dict(),
     ) -> Dict[str, Union[str, sa.engine.Engine, bool]]:
         """
         Connects to a Redshift Cluster and returns connection information once redshift cluster is available for use.
@@ -646,11 +647,11 @@ class RedshiftUtils(DatabaseCommon):
             token = response["NextMarker"] if "NextMarker" in response else None
             for func in response["Functions"]:
                 if (
-                    namespace in func["FunctionName"]
-                    and "Environment" in func
-                    and "Variables" in func["Environment"]
-                    and "RedshiftClusterParameterGroup" in func["Environment"]["Variables"]
-                    and "StartRedshift" in func["FunctionName"]
+                        namespace in func["FunctionName"]
+                        and "Environment" in func
+                        and "Variables" in func["Environment"]
+                        and "RedshiftClusterParameterGroup" in func["Environment"]["Variables"]
+                        and "StartRedshift" in func["FunctionName"]
                 ):
                     funcs.append(func)
             if token == None:
@@ -659,7 +660,7 @@ class RedshiftUtils(DatabaseCommon):
         func_descs = {}
 
         for f in funcs:
-            user_name = f["FunctionName"][f["FunctionName"].index("StartRedshift") + len("StartRedshift-") :]
+            user_name = f["FunctionName"][f["FunctionName"].index("StartRedshift") + len("StartRedshift-"):]
             func_desc = f["Environment"]["Variables"]
             del func_desc["RedshiftClusterParameterGroup"]
             del func_desc["RedshiftClusterSubnetGroup"]
@@ -674,11 +675,11 @@ class RedshiftUtils(DatabaseCommon):
         return func_descs
 
     def _start_and_wait_for_redshift(
-        self,
-        redshift: boto3.client("redshift"),
-        cluster_name: str,
-        props: Dict[str, str],
-        clusterArgs: Dict[str, str],
+            self,
+            redshift: boto3.client("redshift"),
+            cluster_name: str,
+            props: Dict[str, str],
+            clusterArgs: Dict[str, str],
     ) -> Tuple[str, str]:
         """
         Starts the Redshift Cluster and waits until cluster is available for use.
@@ -716,12 +717,12 @@ class RedshiftUtils(DatabaseCommon):
         return (cluster_id, user)
 
     def _add_json_schema(
-        self,
-        s3: boto3.client("s3"),
-        glue: boto3.client("glue"),
-        table: str,
-        database_name: str,
-        table_name: str,
+            self,
+            s3: boto3.client("s3"),
+            glue: boto3.client("glue"),
+            table: str,
+            database_name: str,
+            table_name: str,
     ) -> None:
         """
         Updates schema of specified table based on Glue Catalog metadata.
@@ -758,7 +759,7 @@ class RedshiftUtils(DatabaseCommon):
                     raise Exception(f"Cannot access {table_name} schema file at: {schema_path}")
 
     def getCatalog(
-        self, schema_name: Optional[str] = None, table_name: Optional[str] = None
+            self, schema_name: Optional[str] = None, table_name: Optional[str] = None
     ) -> IPython.core.display.JSON:
         """
         Get Glue Catalog metadata of a specific Database table.
@@ -833,7 +834,7 @@ class RedshiftUtils(DatabaseCommon):
         return display_json(schemas, root="glue databases")
 
     def get_team_clusters(
-        self, cluster_id: Optional[str] = None
+            self, cluster_id: Optional[str] = None
     ) -> Dict[str, Dict[str, Union[str, Dict[str, Union[str, int]]]]]:
         """
         Retrieves Redshift Cluster information for the Team Cluster.
@@ -899,10 +900,10 @@ class AthenaUtils(DatabaseCommon):
     """
 
     def get_connection_to_athena(
-        self,
-        DbName: str,
-        region_name: Optional[str] = None,
-        S3QueryResultsLocation: Optional[str] = None,
+            self,
+            DbName: str,
+            region_name: Optional[str] = None,
+            S3QueryResultsLocation: Optional[str] = None,
     ) -> Dict[str, Union[str, sa.engine.Engine]]:
         """
         Connect Athena to an existing database
@@ -999,3 +1000,15 @@ class AthenaUtils(DatabaseCommon):
                 col["type"] = c["Type"]
 
         return display_json(schemas, root="glue databases")
+
+    def get_sample_data(self, database: str, table: str, sample: int):
+        workspace = get_workspace()
+
+        conn = pyathena.connect(s3_staging_dir=f"s3://{workspace['ScratchBucket']}/athena/query/",
+                                region_name=workspace["region"]).cursor()
+        query = f"SELECT * FROM {database}.{table} LIMIT {sample}"
+
+        df = pd.read_sql(query, conn)
+
+        return df;
+

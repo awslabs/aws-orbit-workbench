@@ -18,7 +18,7 @@ from .handlers.catalog import CatalogRouteHandler, TreeRouteHandler
 from .handlers.containers import ContainersRouteHandler
 from .handlers.redshift import RedshiftRouteHandler
 from .handlers.team import TeamRouteHandler
-
+from .handlers.athena import AthenaRouteHandler
 
 def setup_handlers(web_app):
     base_url: str = web_app.settings["base_url"]
@@ -28,6 +28,7 @@ def setup_handlers(web_app):
         (url_path_join(base_url, "jupyterlab_orbit", "containers"), ContainersRouteHandler),
         (url_path_join(base_url, "jupyterlab_orbit", "team"), TeamRouteHandler),
         (url_path_join(base_url, "jupyterlab_orbit", "redshift"), RedshiftRouteHandler),
+        (url_path_join(base_url, "jupyterlab_orbit", "athena"), AthenaRouteHandler),
     ]
 
     host_pattern: str = ".*$"
