@@ -129,7 +129,7 @@ def deploy_foundation(
     filename: Optional[str] = None,
     name: Optional[str] = None,
     debug: bool = False,
-    internet_accessiblity: bool = True,
+    internet_accessibility: bool = True,
     codeartifact_domain: Optional[str] = None,
     codeartifact_repository: Optional[str] = None,
     username: Optional[str] = None,
@@ -153,7 +153,7 @@ def deploy_foundation(
                 codeartifact_domain=codeartifact_domain,
                 codeartifact_repository=codeartifact_repository,
                 ssm_parameter_name=f"/orbit-foundation/{name}/manifest",
-                networking=NetworkingManifest(data=DataNetworkingManifest(internet_accessible=internet_accessiblity)),
+                networking=NetworkingManifest(data=DataNetworkingManifest(internet_accessible=internet_accessibility)),
             )
         else:
             msg_ctx.error('One of "filename" or "name" is required')
