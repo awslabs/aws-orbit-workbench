@@ -1,6 +1,11 @@
 import React from 'react';
 import { ToolbarButtonComponent } from '@jupyterlab/apputils';
-import { refreshIcon, closeIcon, addIcon } from '@jupyterlab/ui-components';
+import {
+  refreshIcon,
+  closeIcon,
+  addIcon,
+  launcherIcon
+} from '@jupyterlab/ui-components';
 import ReactJson from 'react-json-view';
 import { Collapse } from 'antd';
 
@@ -20,6 +25,7 @@ export const CategoryViews = (props: {
   refreshCallback: (name: string) => any;
   closeAllCallback: (name: string) => void;
   key: string;
+  openCallback: (name: string) => any;
 }) => {
   const handleRefresh = (e: React.FormEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -31,6 +37,11 @@ export const CategoryViews = (props: {
   const genExtra = () => (
     <div>
       <div style={{ display: 'flex', alignItems: 'right' }}>
+        <ToolbarButtonComponent
+          tooltip={'Open'}
+          icon={launcherIcon}
+          onClick={() => props.openCallback(props.name)}
+        />
         <ToolbarButtonComponent
           tooltip={'Refresh List'}
           icon={refreshIcon}

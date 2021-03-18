@@ -70,6 +70,7 @@ export const ContainerCategoryLeftList = (props: {
   type: string;
   useItems: (type: string) => IUseItemsReturn;
   key: string;
+  openCallback: (name: string) => any;
 }): JSX.Element => {
   const { data, closeAllCallback, refreshCallback, setData } = props.useItems(
     props.type
@@ -88,6 +89,7 @@ export const ContainerCategoryLeftList = (props: {
         refreshCallback={refreshCallback}
         closeAllCallback={closeAllCallback}
         key={props.key}
+        openCallback={props.openCallback}
       />
     </div>
   );

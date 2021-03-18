@@ -5,7 +5,8 @@ import {
   Dialog,
   ICommandPalette,
   ReactWidget,
-  showDialog
+  showDialog,
+  MainAreaWidget
 } from '@jupyterlab/apputils';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { Menu } from '@lumino/widgets';
@@ -196,14 +197,88 @@ const useItems = (type: string): IUseItemsReturn => {
   return { data, closeAllCallback, refreshCallback, setData };
 };
 
+const Sections = (props: { app: JupyterFrontEnd }): JSX.Element => {
+  
+  const launchSectionWidget = (title: string, type: string) => {
+    const centralWidget = new MainAreaWidget<ReactWidget>({
+      content: new CentralWidgetSection(title, type)
+    });
+    props.app.shell.add(centralWidget, 'main');
+  };
+
+  return (
+    <>
+      <ContainerCategoryLeftList
+        title={'Your Jobs'}
+        type={'user'}
+        useItems={useItems}
+        key="1"
+        openCallback={() => launchSectionWidget('Your Jobs', 'user')}
+      />
+      <ContainerCategoryLeftList
+        title={'Team Jobs'}
+        type={'team'}
+        useItems={useItems}
+        key="2"
+        openCallback={() => launchSectionWidget('Team Jobs', 'team')}
+      />
+      <ContainerCategoryLeftList
+        title={'Cron Jobs'}
+        type={'cron'}
+        useItems={useItems}
+        key="3"
+        openCallback={() => launchSectionWidget('Cron Jobs', 'cron')}
+      />
+    </>
+  );
+};
+
+class CentralWidgetSection extends ReactWidget {
+  headerTitle: string;
+  type: string;
+
+  constructor(title: string, type: string) {
+    super();
+    this.addClass('jp-ReactWidget');
+    this.addClass(RUNNING_CLASS);
+    this.title.caption = `AWS Orbit Workbench - ${NAME} - ${title}`;
+    this.title.label = `${NAME} - ${title}`;
+    this.title.icon = ICON;
+    this.headerTitle = title;
+    this.type = type;
+    console.log(title);
+  }
+
+  render(): JSX.Element {
+    return (
+      <div className={SECTION_CLASS}>
+        <CentralWidgetHeader
+          name={this.title.label}
+          icon={ICON}
+          refreshCallback={refreshCallback}
+        />
+        <ContainerCentralPanel
+          title={this.headerTitle}
+          type={this.type}
+          useItems={useItems}
+        />
+        <div />
+      </div>
+    );
+  }
+}
+
 class CentralWidget extends ReactWidget {
-  constructor() {
+  app: JupyterFrontEnd;
+
+  constructor({ app }: { app: JupyterFrontEnd }) {
     super();
     this.addClass('jp-ReactWidget');
     this.addClass(RUNNING_CLASS);
     this.title.caption = `AWS Orbit Workbench - ${NAME}`;
     this.title.label = `Orbit - ${NAME}`;
     this.title.icon = ICON;
+    this.app = app;
   }
 
   render(): JSX.Element {
@@ -214,12 +289,7 @@ class CentralWidget extends ReactWidget {
           icon={ICON}
           refreshCallback={refreshCallback}
         />
-        <ContainerCentralPanel
-          title={'Your Jobs'}
-          type={'user'}
-          useItems={useItems}
-        />
-        {/*<ContainerCentralPanel title={'Team Jobs'} type={'team'} />*/}
+        <Sections app={this.app} />
         <div />
       </div>
     );
@@ -228,14 +298,22 @@ class CentralWidget extends ReactWidget {
 
 class LeftWidget extends ReactWidget {
   launchCallback: () => void;
+  app: JupyterFrontEnd;
 
-  constructor({ openCallback }: { openCallback: () => void }) {
+  constructor({
+    openCallback,
+    app
+  }: {
+    openCallback: () => void;
+    app: JupyterFrontEnd;
+  }) {
     super();
     this.addClass('jp-ReactWidget');
     this.addClass(RUNNING_CLASS);
     this.title.caption = `AWS Orbit Workbench - ${NAME}`;
     this.title.icon = ICON;
     this.launchCallback = openCallback;
+    this.app = app;
   }
 
   render(): JSX.Element {
@@ -247,24 +325,7 @@ class LeftWidget extends ReactWidget {
           refreshCallback={refreshCallback}
           openCallback={this.launchCallback}
         />
-        <ContainerCategoryLeftList
-          title={'Your Jobs'}
-          type={'user'}
-          useItems={useItems}
-          key="1"
-        />
-        <ContainerCategoryLeftList
-          title={'Team Jobs'}
-          type={'team'}
-          useItems={useItems}
-          key="2"
-        />
-        <ContainerCategoryLeftList
-          title={'Cron Jobs'}
-          type={'cron'}
-          useItems={useItems}
-          key="3"
-        />
+        <Sections app={this.app} />
         <div />
       </div>
     );
@@ -284,7 +345,7 @@ export const activateContainers = (
     name: NAME,
     icon: ICON,
     app: app,
-    widgetCreation: () => new CentralWidget()
+    widgetCreation: () => new CentralWidget({ app: app })
   });
 
   registerGeneral({
@@ -297,7 +358,8 @@ export const activateContainers = (
     leftWidget: new LeftWidget({
       openCallback: () => {
         commands.execute(launchCommand);
-      }
+      },
+      app: app
     })
   });
 };
