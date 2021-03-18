@@ -21,7 +21,7 @@ from typing import Any, List, Optional, Tuple, cast
 from aws_orbit import bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, TeamContext
-from aws_orbit.models.manifest import Manifest, ManifestSerDe
+from aws_orbit.models.manifest import ImageManifest, Manifest, ManifestSerDe
 from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, kubectl, teams
 from aws_orbit.services import codebuild
 
@@ -45,13 +45,14 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
     _logger.debug("DockerHub and ECR Logged in")
     _logger.debug("Deploying the %s Docker image", image_name)
 
-    if getattr(context.images, image_name.replace("-", "_")).source == "code":
+    image_def: ImageManifest = getattr(context.images, image_name.replace("-", "_"))
+    if image_def.source == "code":
         _logger.debug("Building and deploy docker image from source...")
         path = os.path.join(os.getcwd(), "bundle", dir)
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
-        tag = getattr(context.images, image_name.replace("-", "_")).version
+        tag = image_def.version
         docker.deploy_image_from_source(
             context=context,
             dir=path,
@@ -60,7 +61,7 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
             tag=tag,
         )
     else:
-        _logger.debug("Replicating docker iamge to ECR...")
+        _logger.debug("Replicating docker image to ECR...")
         docker.replicate_image(
             context=context, image_name=image_name, deployed_name=f"orbit-{context.name}-{image_name}"
         )
