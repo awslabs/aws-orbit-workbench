@@ -29,8 +29,8 @@ interface IItem {
 }
 
 interface IUseItemsReturn {
-  common_items: JSX.Element;
-  security_items: any;
+  commonItems: JSX.Element;
+  securityItems: any;
   profiles: any;
   other: any;
 }
@@ -66,11 +66,11 @@ const useItems = (): IUseItemsReturn => {
     };
     fetchData();
   }, []);
-  const common_items = <Items data={data.common} />;
-  const security_items = data.security;
+  const commonItems = <Items data={data.common} />;
+  const securityItems = data.security;
   const profiles = data.profiles;
   const other = data.other;
-  return { common_items, security_items, profiles, other };
+  return { commonItems, securityItems, profiles, other };
 };
 
 class TeamCentralWidget extends ReactWidget {
@@ -99,18 +99,12 @@ class TeamCentralWidget extends ReactWidget {
 }
 
 const TeamComponentFunc = (): JSX.Element => {
-  const { common_items, security_items, profiles, other } = useItems();
+  const { commonItems, securityItems, profiles, other } = useItems();
   return (
     <div>
-      <ListViewWithoutToolbar name={'Team'} items={common_items} />;
-      <TreeView
-        name={'Security'}
-        item={security_items}
-        root_name={'security'}
-      />
-      ;
+      <ListViewWithoutToolbar name={'Team'} items={commonItems} />;
+      <TreeView name={'Security'} item={securityItems} root_name={'security'} />
       <TreeView name={'Profiles'} item={profiles} root_name={'team profiles'} />
-      ;
       <TreeView name={'Other'} item={other} root_name={'properties'} />;
     </div>
   );

@@ -39,15 +39,8 @@ export const CategoryViews = (props: {
   );
 
   return (
-    <Collapse
-      defaultActiveKey={['1']}
-      onChange={callback}
-    >
-      <Panel
-        header={props.name}
-        key={props.key}
-        extra={genExtra()}
-      >
+    <Collapse defaultActiveKey={['1']} onChange={callback}>
+      <Panel header={props.name} key={props.key} extra={genExtra()}>
         <div className={CONTAINER_CLASS}>
           <ul className={LIST_CLASS}> {props.items} </ul>
         </div>
@@ -124,7 +117,7 @@ export const TreeView = (props: {
         <ReactJson
           src={props.item}
           name={props.root_name}
-          collapsed={1}
+          collapsed={true}
           displayDataTypes={false}
         />
       </div>

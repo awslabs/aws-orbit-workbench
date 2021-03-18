@@ -68,9 +68,15 @@ class ContainersRouteHandler(APIHandler):
                 if "notebookName" in tasks["tasks"][0]
                 else f'{tasks["tasks"][0]["moduleName"]}.{tasks["tasks"][0]["functionName"]}'
             )
-
+            if container["job_state"] == "running":
+                container["rank"] = 1
+            else:
+                container["rank"] = 2
             container["info"] = c
             data.append(container)
+
+        data = sorted(data, key=lambda i: (i['rank'], i['creationTimestamp'] if 'creationTimestamp' in i else i['name']))
+
         return json.dumps(data)
 
     @web.authenticated

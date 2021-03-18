@@ -52,10 +52,6 @@ const useItems = (): IUseItemsReturn => {
   return { treeItems, refreshCallback };
 };
 
-const onSelect = (selectedKeys: React.Key[], info: any) => {
-  console.log('selected', selectedKeys, info);
-};
-
 const CentralWidgetComponent = (): JSX.Element => {
   const database = 'cms_raw_db';
   const table = 'beneficiary_summary';
@@ -149,6 +145,14 @@ const LeftWidgetComponent = (props: {
   launchCallback: () => void;
 }): JSX.Element => {
   const { treeItems, refreshCallback } = useItems();
+  const [state, setState] = useState<boolean | React.Key[] | any>([
+    { selectedKeys: undefined, info: undefined }
+  ]);
+
+  const onSelect = (selectedKeys: React.Key[], info: any) => {
+    setState({ selectedKeys: selectedKeys, info: info });
+    console.log('selected', state.selectedKeys, state.info);
+  };
 
   return (
     <div className={SECTION_CLASS}>
