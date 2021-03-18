@@ -552,7 +552,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
 def resolve_image(__CURRENT_TEAM_MANIFEST__, profile):
     if not profile or "kubespawner_override" not in profile or "image" not in profile["kubespawner_override"]:
         repository = __CURRENT_TEAM_MANIFEST__["FinalImageAddress"]
-        image = f"{repository}:latest"
+        image = f"{repository}"
     else:
         image = profile["kubespawner_override"]["image"]
     return image

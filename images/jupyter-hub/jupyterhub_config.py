@@ -53,7 +53,7 @@ c.Spawner.cmd = ["/usr/local/bin/start-singleuser.sh", "-e", "CHOWN_EXTRA=/home/
 c.Spawner.args = [
     "--SingleUserServerApp.default_url=/lab",
 ]
-c.KubeSpawner.start_timeout = 360
+c.KubeSpawner.start_timeout = 600
 c.KubeSpawner.common_labels = {"orbit/node-type": "ec2", "orbit/attach-security-group": "yes"}
 c.KubeSpawner.namespace = TEAM
 c.KubeSpawner.environment = {
