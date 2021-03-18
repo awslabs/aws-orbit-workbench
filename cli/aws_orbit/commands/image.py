@@ -135,6 +135,7 @@ def build_image(
     name: str,
     script: Optional[str],
     build_args: Optional[List[str]],
+    timeout: int = 30,
     debug: bool = False,
     source_registry: Optional[str] = None,
     source_repository: Optional[str] = None,
@@ -173,7 +174,7 @@ def build_image(
             bundle_path=bundle_path,
             buildspec=buildspec,
             codebuild_log_callback=msg_ctx.progress_bar_callback,
-            timeout=30,
+            timeout=timeout,
         )
         msg_ctx.info("Docker Image deploy into ECR")
         if name in DEFAULT_IMAGES or name in DEFAULT_ISOLATED_IMAGES:

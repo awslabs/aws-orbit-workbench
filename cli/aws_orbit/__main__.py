@@ -15,6 +15,7 @@
 import json
 import logging
 import os
+from socket import timeout
 import sys
 from typing import List, Optional, TextIO, Tuple
 
@@ -330,6 +331,7 @@ def build() -> None:
 @click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
 @click.option("--dir", "-d", type=str, help="Dockerfile directory.", required=True)
 @click.option("--name", "-n", type=str, help="Image name.", required=True)
+@click.option("--timeout", type=int, help="CodeBuild Timeout", default=30, show_default=True)
 @click.option(
     "--script",
     "-s",
@@ -356,6 +358,7 @@ def deploy_image_cli(
     env: str,
     dir: str,
     name: str,
+    timeout: Optional[int],
     script: Optional[str],
     build_arg: Optional[List[str]],
     debug: bool,
@@ -367,8 +370,9 @@ def deploy_image_cli(
     _logger.debug("dir: %s", dir)
     _logger.debug("name: %s", name)
     _logger.debug("script: %s", script)
+    _logger.debug("timeout: %s", timeout )
     _logger.debug("debug: %s", debug)
-    build_image(dir=dir, name=name, env=env, script=script, build_args=build_arg, debug=debug)
+    build_image(dir=dir, name=name, env=env, timeout=timeout, script=script, build_args=build_arg, debug=debug)
 
 
 @click.group(name="replicate")
