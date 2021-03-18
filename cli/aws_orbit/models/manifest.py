@@ -129,24 +129,18 @@ class CsiNodeDriverRegistrarImageManifest(ImageManifest):
 # https://github.com/kubernetes/dashboard/releases
 @dataclass(base_schema=BaseSchema, frozen=True)
 class K8Dashboard(ImageManifest):
-    repository: Optional[str] = "kubernetesui/dashboard"
-    source: Optional[str] = "dockerhub"
-    version: Optional[str] = "v2.2.0"
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/kubernetesui/dashboard"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class MetricsScraper(ImageManifest):
-    repository: Optional[str] = "kubernetesui/metrics-scraper"
-    source: Optional[str] = "dockerhub"
-    version: Optional[str] = "v1.0.6"
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/kubernetesui/metrics-scraper"
 
 
 # https://github.com/kubernetes-sigs/metrics-server/releases
 @dataclass(base_schema=BaseSchema, frozen=True)
 class MetricsServer(ImageManifest):
-    repository: Optional[str] = "k8s.gcr.io/metrics-server/metrics-server"
-    source: Optional[str] = "dockerhub"
-    version: Optional[str] = "v0.4.2"
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s.gcr.io/metrics-server/metrics-server"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
