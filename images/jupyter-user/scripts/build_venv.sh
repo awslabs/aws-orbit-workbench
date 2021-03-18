@@ -17,12 +17,8 @@ fi
 source .venv/bin/activate
 pip install -U pip
 pip install -r requirements-dev.txt
-cd extensions/jupyterlab_orbit
-pip install -e "."
+#jupyter labextension develop extensions/jupyterlab_orbit --overwrite
 
-jlpm install
-jupyter labextension develop . --overwrite
-cd ../..
 
 mkdir -p .workspace
 mkdir -p .workspace/shared

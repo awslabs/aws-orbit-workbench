@@ -21,13 +21,21 @@ export const CategoryViews = (props: {
   closeAllCallback: (name: string) => void;
   key: string;
 }) => {
+  const handleRefresh = (e: React.FormEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('stop propagation');
+    props.refreshCallback(props.name);
+  };
+
   const genExtra = () => (
     <div>
       <div style={{ display: 'flex', alignItems: 'right' }}>
         <ToolbarButtonComponent
           tooltip={'Refresh List'}
           icon={refreshIcon}
-          onClick={() => props.refreshCallback(props.name)}
+          onClick={() => handleRefresh}
+          actualOnClick={true}
         />
         <ToolbarButtonComponent
           tooltip={'Close All'}

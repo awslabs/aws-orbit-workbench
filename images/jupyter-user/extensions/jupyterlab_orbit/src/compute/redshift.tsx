@@ -45,7 +45,7 @@ const Item = (props: {
   openItemCallback: (name: string) => void;
   closeItemCallback: (name: string) => void;
 }) => (
-  <li className={ITEM_CLASS}>
+  <li className={ITEM_CLASS} draggable={true}>
     <orbitIcon.react tag="span" stylesheet="runningItem" />
     <span
       className={ITEM_LABEL_CLASS}
