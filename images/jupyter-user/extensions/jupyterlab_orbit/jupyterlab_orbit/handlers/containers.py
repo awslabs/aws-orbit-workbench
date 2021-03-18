@@ -82,6 +82,8 @@ class ContainersRouteHandler(APIHandler):
     @web.authenticated
     def get(self):
         global MYJOBS
+        global TEAMJOBS
+        global CRONJOBS
         type: Optional[str] = self.get_argument("type", default="")
         self.log.info(f"GET - {self.__class__} - {type} {format}")
         if "MOCK" not in os.environ or os.environ["MOCK"] == "0":
@@ -121,26 +123,28 @@ class ContainersRouteHandler(APIHandler):
     def _delete(job_name, data):
         for c in data:
             if c["metadata"]["name"] == job_name:
-                MYJOBS.remove(c)
+                data.remove(c)
 
     @web.authenticated
     def delete(self):
         global MYJOBS
+        global TEAMJOBS
+        global CRONJOBS
         input_data = self.get_json_body()
         job_name = input_data["name"]
-        type: Optional[str] = self.get_argument("type", default="")
-        self.log.info(f"DELETE - {self.__class__} - %s", job_name)
-        if type == "user":
-            MYJOBS = controller.delete_job(job_name)
+        job_type: Optional[str] = self.get_argument("type", default="")
+        self.log.info(f"DELETE - {self.__class__} - %s type: %s", job_name,job_type)
+        if job_type == "user":
+            controller.delete_job(job_name)
             data = MYJOBS
-        elif type == "team":
-            TEAMJOBS = controller.delete_job(job_name)
+        elif job_type == "team":
+            controller.delete_job(job_name)
             data = TEAMJOBS
-        elif type == "cron":
-            CRONJOBS = controller.delete_cronjob(job_name)
+        elif job_type == "cron":
+            controller.delete_cronjob(job_name)
             data = CRONJOBS
         else:
-            raise Exception("Unknown type: %s", type)
+            raise Exception("Unknown job_type: %s", job_type)
 
         self._delete(job_name, data)
-        self.finish(self._dump())
+        self.finish(self._dump(data, type))
