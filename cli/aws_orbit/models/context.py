@@ -305,18 +305,9 @@ def create_team_context_from_manifest(manifest: "Manifest", team_manifest: "Team
     account_id: str = utils.get_account_id()
     region: str = utils.get_region()
     ssm_parameter_name: str = f"/orbit/{manifest.name}/teams/{team_manifest.name}/context"
-    if team_manifest.image is None:
-        version = manifest.images.jupyter_user.version
-        base_image_address: str = (
-            f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-jupyter-user:{version}"
-        )
-    else:
-        base_image_address = (
-            f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.image}-jupyter-user"
-        )
-    final_image_address: str = (
-        f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}-jupyter-user"
-    )
+    version = manifest.images.jupyter_user.version
+    base_image_address = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-jupyter-user:{version}"
+    final_image_address = base_image_address
     return TeamContext(
         base_image_address=base_image_address,
         final_image_address=final_image_address,
@@ -570,10 +561,3 @@ class ContextSerDe(Generic[T, V]):
             f"{top_level}-{context.name}-cdk-toolkit-{context.account_id}-{context.toolkit.deploy_id}"
         )
         _logger.debug("Toolkit data fetched successfully.")
-
-
-def construct_ecr_repository_name(env_name: str, image: Optional[str]) -> str:
-    image = image if image is not None else "jupyter-user:latest"
-    if ":" not in image:
-        image += ":latest"
-    return f"orbit-{env_name}-{image}"

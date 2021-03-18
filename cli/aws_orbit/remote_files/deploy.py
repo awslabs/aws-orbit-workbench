@@ -51,11 +51,13 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
+        tag = getattr(context.images, image_name.replace("-", "_")).version
         docker.deploy_image_from_source(
             context=context,
             dir=path,
             name=f"orbit-{context.name}-{image_name}",
             build_args=cast(Optional[List[str]], build_args),
+            tag=tag,
         )
     else:
         _logger.debug("Replicating docker iamge to ECR...")
