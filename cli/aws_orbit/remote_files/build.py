@@ -43,7 +43,7 @@ def build_image(args: Tuple[str, ...]) -> None:
         build_args = args[6:]
         _logger.info("replicating image %s: %s %s:%s", image_name, source_registry, source_repository, source_version)
     else:
-        _logger.info("building image %s: %s %s:%s", image_name, script)
+        _logger.info("building image %s: %s", image_name, script)
         build_args = args[4:]
         source_registry = None
     _logger.debug("args: %s", args)
