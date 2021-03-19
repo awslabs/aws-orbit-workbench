@@ -1,152 +1,107 @@
 import React, { useState, useEffect } from 'react';
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { ILauncher } from '@jupyterlab/launcher';
-import {
-  ReactWidget,
-  ICommandPalette,
-  showDialog,
-  Dialog,
-  ToolbarButtonComponent
-} from '@jupyterlab/apputils';
-import { LabIcon, closeIcon } from '@jupyterlab/ui-components';
+import { ReactWidget, ICommandPalette } from '@jupyterlab/apputils';
+import { LabIcon } from '@jupyterlab/ui-components';
 import { Menu } from '@lumino/widgets';
-
-import { catalogIcon, orbitIcon } from './common/icons';
-import {
-  RUNNING_CLASS,
-  SECTION_CLASS,
-  ITEM_CLASS,
-  ITEM_LABEL_CLASS,
-  ITEM_DETAIL_CLASS,
-  SHUTDOWN_BUTTON_CLASS
-} from './common/styles';
+import { Tree } from 'antd';
+import { IDictionary } from './typings/utils';
+import { catalogIcon } from './common/icons';
+import { RUNNING_CLASS, SECTION_CLASS } from './common/styles';
 import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
 import { request } from './common/backend';
-import { ListView } from './common/listView';
+import { TableOutlined } from '@ant-design/icons';
+import DynamicDataTable from '@langleyfoxall/react-dynamic-data-table';
 
 const NAME = 'Catalog';
 const ICON: LabIcon = catalogIcon;
 
-interface IItem {
-  name: string;
-  description: string;
-}
-
 interface IUseItemsReturn {
-  items: JSX.Element;
-  closeAllCallback: (name: string) => void;
+  treeItems: any[];
   refreshCallback: () => void;
 }
 
-const openItemCallback = (name: string) => {
-  console.log(`[${NAME}] Open Item ${name}!`);
-};
-
-const Item = (props: {
-  name: string;
-  description: string;
-  openItemCallback: (name: string) => void;
-  closeItemCallback: (name: string) => void;
-}) => (
-  <li className={ITEM_CLASS}>
-    <orbitIcon.react tag="span" stylesheet="runningItem" />
-    <span
-      className={ITEM_LABEL_CLASS}
-      title={'TITLE'}
-      onClick={() => props.openItemCallback(props.name)}
-    >
-      {props.name}
-    </span>
-    <span className={ITEM_DETAIL_CLASS}>{props.description}</span>
-    <ToolbarButtonComponent
-      className={SHUTDOWN_BUTTON_CLASS}
-      icon={closeIcon}
-      onClick={() => props.closeItemCallback(props.name)}
-      tooltip={'Shut Down!'}
-    />
-  </li>
-);
-
-const Items = (props: {
-  data: IItem[];
-  closeItemCallback: (name: string) => void;
-}) => (
-  <>
-    {' '}
-    {props.data.map(x => (
-      <Item
-        name={x.name}
-        description={x.description}
-        openItemCallback={openItemCallback}
-        closeItemCallback={props.closeItemCallback}
-      />
-    ))}{' '}
-  </>
-);
-
-const deleteItem = async (name: string): Promise<IItem[]> => {
-  const dataToSend = { name: name };
-  try {
-    const reply: IItem[] | undefined = await request('catalog', {
-      body: JSON.stringify(dataToSend),
-      method: 'DELETE'
-    });
-    return reply;
-  } catch (reason) {
-    console.error(`Error on DELETE /catalog ${dataToSend}.\n${reason}`);
-    return [];
-  }
-};
-
 const useItems = (): IUseItemsReturn => {
-  const [data, setData] = useState([]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setData(await request('catalog'));
-    };
-
-    fetchData();
-  }, []);
-
-  const closeAllCallback = (name: string) => {
-    void showDialog({
-      title: `General ${name} shut down`,
-      body: 'Are you sure about it?',
-      buttons: [
-        Dialog.cancelButton({ label: 'Cancel' }),
-        Dialog.warnButton({ label: 'Shut Down All' })
-      ]
-    }).then(result => {
-      if (result.button.accept) {
-        console.log('SHUTDOWN ALL!');
-        data.map(async x => {
-          await deleteItem(x.name);
-        });
-        setData([]);
-      }
+  const [treeItems, setTreeItems] = useState([]);
+  const updateList = (data: any[]) => {
+    data.forEach(database => {
+      database.children.forEach((table: { icon: JSX.Element }) => {
+        table.icon = <TableOutlined />;
+      });
     });
   };
 
   const refreshCallback = async () => {
     console.log(`[${NAME}] Refresh!`);
-    setData(await request('catalog'));
+    const ret: any[] = await request('tree');
+    updateList(ret);
+    setTreeItems(ret);
   };
 
-  const closeItemCallback = async (name: string) => {
-    console.log(`[${NAME}] Close Item ${name}!`);
-    setData(await deleteItem(name));
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      const ret: any[] = await request('tree');
+      updateList(ret);
+      setTreeItems(ret);
+    };
+    fetchData();
+  }, []);
 
-  const items = <Items data={data} closeItemCallback={closeItemCallback} />;
-
-  return { items, closeAllCallback, refreshCallback };
+  return { treeItems, refreshCallback };
 };
 
 const CentralWidgetComponent = (): JSX.Element => {
-  const { items, closeAllCallback, refreshCallback } = useItems();
+  const database = 'cms_raw_db';
+  const table = 'beneficiary_summary';
+
+  const refreshCallback = async () => {
+    console.log(`[${NAME}] Refresh!`);
+  };
+
+  const [state, setState] = useState({
+    orderByField: '',
+    orderByDirection: 'asc',
+    items: []
+  });
+  //
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const parameters: IDictionary<number | string> = {
+        database: database,
+        table: table,
+        field: state.orderByField,
+        direction: state.orderByField
+      };
+      const sorted: any[] = await request('athena', parameters);
+      setState({
+        orderByField: state.orderByField,
+        orderByDirection: state.orderByField,
+        items: sorted
+      });
+    };
+
+    fetchData();
+  }, []);
+
+  const changeOrder = async (field: string, direction: string) => {
+    console.log(`SORT: [${field}] [${direction}]`);
+    const parameters: IDictionary<number | string> = {
+      database: database,
+      table: table,
+      field: field,
+      direction: direction
+    };
+    const sorted: any[] = await request('athena', parameters);
+    setState({
+      orderByField: field,
+      orderByDirection: direction,
+      items: sorted
+    });
+  };
+
   return (
     <div className={SECTION_CLASS}>
       <CentralWidgetHeader
@@ -154,12 +109,19 @@ const CentralWidgetComponent = (): JSX.Element => {
         icon={ICON}
         refreshCallback={refreshCallback}
       />
-      <ListView
-        name={'Section'}
-        items={items}
-        shutdownAllLabel="Shut Down All"
-        closeAllCallback={closeAllCallback}
-      />
+      {/*  https://github.com/langleyfoxall/react-dynamic-data-table  */}
+      <div style={{ display: 'flex' }}>
+        <DynamicDataTable
+          className="table table-sm table-bordered"
+          rows={state.items}
+          orderByField={state.orderByField}
+          orderByDirection={state.orderByDirection}
+          changeOrder={(field: string, direction: string) =>
+            changeOrder(field, direction)
+          }
+          buttons={[]}
+        />
+      </div>
     </div>
   );
 };
@@ -182,7 +144,15 @@ class CentralWidget extends ReactWidget {
 const LeftWidgetComponent = (props: {
   launchCallback: () => void;
 }): JSX.Element => {
-  const { items, closeAllCallback, refreshCallback } = useItems();
+  const { treeItems, refreshCallback } = useItems();
+  const [state, setState] = useState<boolean | React.Key[] | any>([
+    { selectedKeys: undefined, info: undefined }
+  ]);
+
+  const onSelect = (selectedKeys: React.Key[], info: any) => {
+    setState({ selectedKeys: selectedKeys, info: info });
+    console.log('selected', state.selectedKeys, state.info);
+  };
 
   return (
     <div className={SECTION_CLASS}>
@@ -192,11 +162,12 @@ const LeftWidgetComponent = (props: {
         refreshCallback={refreshCallback}
         openCallback={props.launchCallback}
       />
-      <ListView
-        name={'Section'}
-        items={items}
-        shutdownAllLabel="Shut Down All"
-        closeAllCallback={closeAllCallback}
+      <Tree
+        showLine={true}
+        showIcon={true}
+        defaultExpandedKeys={['0-0-0']}
+        onSelect={onSelect}
+        treeData={treeItems}
       />
     </div>
   );

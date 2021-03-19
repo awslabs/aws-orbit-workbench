@@ -15,6 +15,11 @@ if [[ -z "$AWS_DEFAULT_REGION" ]]; then
     echo "Must provide AWS_DEFAULT_REGION in environment" 1>&2
     exit 1
 fi
+if [[ -z "$JUPYTERHUB_USER" ]]; then
+    echo "Must provide JUPYTERHUB_USER in environment" 1>&2
+    exit 1
+fi
+
 
 if [ -d "extensions" ]; then
   echo "Starting Jupyter lab"
