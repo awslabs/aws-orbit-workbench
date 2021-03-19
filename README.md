@@ -1,6 +1,6 @@
 # AWS Orbit Workbench
 
-Data & ML Unified Development and Production Environment.
+Build Your Own Data & ML Unified Development and Production Environment.
 
 > One-stop-shop solution for data engineers, scientists and analysts powered by AWS
 
