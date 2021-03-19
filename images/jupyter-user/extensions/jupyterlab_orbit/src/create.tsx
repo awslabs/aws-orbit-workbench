@@ -21,6 +21,16 @@ const refreshCallback = () => {
 const CounterComponent = (): JSX.Element => {
   const [counter, setCounter] = useState(0);
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log(e);
+    setCounter(counter + 10);
+  };
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    console.log(e);
+    alert('Form submitted');
+  };
+
   return (
     <div>
       <p>You clicked {counter} times!</p>
@@ -31,6 +41,29 @@ const CounterComponent = (): JSX.Element => {
       >
         Increment
       </button>
+      <form
+        onSubmit={(e): void => {
+          setCounter(counter + 5);
+          handleSubmit(e);
+        }}
+      >
+        <label>
+          Redshift Cluster Name:
+          <input type="text" value={counter} onChange={handleChange} />
+        </label>
+        <br />
+        <label>
+          Number of Nodes:
+          <input type="text" value={counter} onChange={handleChange} />
+        </label>
+        <br />
+        <label>
+          Node Types:
+          <input type="text" value={counter} onChange={handleChange} />
+        </label>
+        <br />
+        <input type="submit" value="Submit" />
+      </form>
     </div>
   );
 };
@@ -94,6 +127,7 @@ export const activateCreate = (
   menu: Menu,
   rank: number
 ) => {
+  console.log('Registering create widget');
   const { commands } = app;
 
   const launchCommand: string = registerLaunchCommand({
