@@ -198,7 +198,6 @@ const useItems = (type: string): IUseItemsReturn => {
 };
 
 const Sections = (props: { app: JupyterFrontEnd }): JSX.Element => {
-  
   const launchSectionWidget = (title: string, type: string) => {
     const centralWidget = new MainAreaWidget<ReactWidget>({
       content: new CentralWidgetSection(title, type)
