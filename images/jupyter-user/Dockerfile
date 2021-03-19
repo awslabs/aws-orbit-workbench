@@ -107,9 +107,8 @@ RUN jupyter serverextension enable --py jupyterlab --sys-prefix && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
 
-# FIXME Commenting out the extention for now until it is ready for prime time
-#ADD extensions/jupyterlab_orbit/ /etc/extensions/jupyterlab_orbit/
-#RUN conda run pip install /etc/extensions/jupyterlab_orbit/
-#RUN jupyter labextension build /etc/extensions/jupyterlab_orbit
+ADD extensions/jupyterlab_orbit/ /etc/extensions/jupyterlab_orbit/
+RUN conda run pip install /etc/extensions/jupyterlab_orbit/
+RUN jupyter labextension build /etc/extensions/jupyterlab_orbit
 
 USER $NB_UID

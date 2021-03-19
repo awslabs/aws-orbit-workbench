@@ -1,0 +1,86 @@
+{
+    "BaseImageAddress": "****************.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user",
+    "BootstrapS3Prefix": "teams/dev-env/bootstrap/",
+    "ContainerDefaults": {
+        "cpu": 4,
+        "memory": 16384
+    },
+    "ContainerRunnerArn": null,
+    "EcsClusterName": null,
+    "EfsApId": "fsap-0e2bf6ad915db3af1",
+    "EfsId": "fs-2854b42f",
+    "EfsLifeCycle": "AFTER_7_DAYS",
+    "EksK8SApiArn": null,
+    "EksPodRoleArn": "arn:aws:iam::****************:role/orbit-dev-env-lake-user-role",
+    "Fargate": true,
+    "FinalImageAddress": "****************.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-lake-user-jupyter-user",
+    "GrantSudo": true,
+    "Image": null,
+    "JupyterUrl": "a998ba260e2fe4fae97dd7b0dbc54b5f-1823011548.us-west-2.elb.amazonaws.com",
+    "JupyterhubInboundRanges": [
+        "0.0.0.0/0"
+    ],
+    "K8Admin": false,
+    "Name": "lake-user",
+    "Policies": [
+        "orbit-dev-env-demo-lake-user-add-policy"
+    ],
+    "Profiles": [
+        {
+            "description": "1 CPU + 1G MEM",
+            "display_name": "Nano",
+            "kubespawner_override": {
+                "cpu_guarantee": 1,
+                "cpu_limit": 1,
+                "mem_guarantee": "1G",
+                "mem_limit": "1G"
+            },
+            "slug": "nano"
+        },
+        {
+            "default": "True",
+            "description": "2 CPU + 2G MEM",
+            "display_name": "Micro",
+            "kubespawner_override": {
+                "cpu_guarantee": 2,
+                "cpu_limit": 2,
+                "mem_guarantee": "2G",
+                "mem_limit": "2G"
+            },
+            "slug": "micro"
+        },
+        {
+            "description": "1 CPU + 1G MEM with Custom Image1",
+            "display_name": "Custom Image1",
+            "kubespawner_override": {
+                "cpu_guarantee": 1,
+                "cpu_limit": 1,
+                "image": "${account}.dkr.ecr.${region}.amazonaws.com/orbit-${env}-custom_image1",
+                "mem_guarantee": "1G",
+                "mem_limit": "1G"
+            },
+            "slug": "custom1"
+        },
+        {
+            "description": "4 CPU + 8G MEM",
+            "display_name": "Small (Apache Spark)",
+            "kubespawner_override": {
+                "cpu_guarantee": 4,
+                "cpu_limit": 4,
+                "image": "${account}.dkr.ecr.${region}.amazonaws.com/orbit-${env}-lake-user-spark",
+                "mem_guarantee": "8G",
+                "mem_limit": "8G"
+            },
+            "slug": "small-spark"
+        }
+    ],
+    "ScratchBucket": "orbit-foundation-dev-env-scratch-****************-77f116",
+    "SsmParameterName": "/orbit/dev-env/teams/lake-user/context",
+    "StackName": "orbit-dev-env-lake-user",
+    "TeamKmsKeyArn": "arn:aws:kms:us-west-2:****************:key/2a4c7ec4-5c2b-4a85-9828-4d9b25cb9b09",
+    "TeamSecurityGroupId": "sg-08ec5db15eef12980",
+    "TeamSsmParameterName": "/orbit/dev-env/teams/lake-user/team",
+    "region": "us-west-2",
+    "env_name": "dev-env",
+    "team_space": "lake-user"
+}

@@ -15,10 +15,15 @@ else
 fi
 
 source .venv/bin/activate
+pip install -U pip
 pip install -r requirements-dev.txt
-cd extensions/jupyterlab_orbit
-jupyter labextension develop . --overwrite
+#jupyter labextension develop extensions/jupyterlab_orbit --overwrite
+
+
 mkdir -p .workspace
 mkdir -p .workspace/shared
 mkdir -p .workspace/private
-ln -s ../../../../samples .workspace/shared/samples
+ln -sf ../../../../samples .workspace/shared/samples
+
+pip install --no-deps jupyterhub-kubespawner~=0.15.0
+echo "" > `pip  show jupyterhub-kubespawner | grep "Location:" | cut -d ':' -f 2`/kubespawner/__init__.py

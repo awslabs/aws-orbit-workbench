@@ -13,36 +13,40 @@
 #    limitations under the License.
 
 import json
-from typing import Dict
+from typing import Any, Dict, List
 
+from aws_orbit_sdk import glue_catalog
 from jupyter_server.base.handlers import APIHandler
-from jupyter_server.utils import url_path_join
 from tornado import web
 
-DATA: Dict[str, str] = {"foo": "foo description", "boo1": "boo description", "bar": "bar description"}
+DATA: List[Dict[str, Any]] = []
+
+DATA2: Dict[str, Any] = {}
 
 
 class CatalogRouteHandler(APIHandler):
     @staticmethod
     def dump() -> str:
-        return json.dumps([{"name": k, "description": v} for k, v in DATA.items()])
+        return json.dumps([{"name": k, "description": v} for k, v in DATA2.items()])
 
     @web.authenticated
     def get(self):
-        self.log.info("GET - Catalog")
+        self.log.info(f"GET - {self.__class__}")
         self.finish(self.dump())
 
     @web.authenticated
     def delete(self):
         input_data = self.get_json_body()
-        self.log.info("DELETE - Catalog - %s", input_data)
+        self.log.info(f"DELETE - {self.__class__} - %s", input_data)
         DATA.pop(input_data["name"])
         self.finish(self.dump())
 
 
-def setup_handlers(web_app):
-    base_url: str = web_app.settings["base_url"]
-    handlers = [(url_path_join(base_url, "jupyterlab_orbit", "catalog"), CatalogRouteHandler)]
-
-    host_pattern: str = ".*$"
-    web_app.add_handlers(host_pattern, handlers)
+class TreeRouteHandler(APIHandler):
+    @web.authenticated
+    def get(self):
+        self.log.info("GET - Tree")
+        global DATA
+        DATA = glue_catalog.getCatalogAsDict()
+        self.log.info(f"GET - {self.__class__}")
+        self.finish(json.dumps(DATA))
