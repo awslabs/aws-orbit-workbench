@@ -27,7 +27,7 @@ setup(
     packages=find_packages(include=["custom_cfn", "custom_cfn.*"]),
     python_requires=">=3.6, <3.9",
     install_requires=[
-        "aws_cdk.core~=1.67.0",
+        "aws-cdk.core~=1.67.0",
     ],
     include_package_data=True,
 )
