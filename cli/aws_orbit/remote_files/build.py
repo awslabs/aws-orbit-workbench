@@ -43,7 +43,7 @@ def build_image(args: Tuple[str, ...]) -> None:
         build_args = args[6:]
         _logger.info("replicating image %s: %s %s:%s", image_name, source_registry, source_repository, source_version)
     else:
-        _logger.info("building image %s: %s %s:%s", image_name, script)
+        _logger.info("building image %s: %s", image_name, script)
         build_args = args[4:]
         source_registry = None
     _logger.debug("args: %s", args)
@@ -64,7 +64,7 @@ def build_image(args: Tuple[str, ...]) -> None:
     except ecr.exceptions.RepositoryNotFoundException:
         _create_repository(context.name, ecr, ecr_repo)
 
-    image_def: Optional["ImageManifest"] = getattr(context.images, image_name, None)
+    image_def: Optional["ImageManifest"] = getattr(context.images, image_name.replace("-", "_"), None)
     _logger.debug("image def: %s", image_def)
 
     if source_registry:
@@ -76,7 +76,7 @@ def build_image(args: Tuple[str, ...]) -> None:
             source_repository=source_repository,
             source_version=source_version,
         )
-    elif image_def is None or getattr(context.images, image_name).source == "code":
+    elif image_def is None or image_def.source == "code":
         path = os.path.join(os.getcwd(), image_name)
         if not os.path.exists(path):
             bundle_dir = os.path.join(os.getcwd(), "bundle", image_name)
@@ -88,7 +88,7 @@ def build_image(args: Tuple[str, ...]) -> None:
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
-        tag = getattr(context.images, image_name).version
+        tag = cast(str, image_def.version if image_def else "latest")
         docker.deploy_image_from_source(
             context=context, dir=path, name=ecr_repo, tag=tag, build_args=cast(Optional[List[str]], build_args)
         )
