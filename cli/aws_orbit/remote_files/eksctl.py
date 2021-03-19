@@ -108,7 +108,7 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
         {
             "name": "env",
             "privateNetworking": True,
-            "instanceType": "t3.medium",
+            "instanceType": "t3a.xlarge",
             "minSize": 2,
             "desiredCapacity": 2,
             "maxSize": 2,

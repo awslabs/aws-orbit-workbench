@@ -51,18 +51,8 @@ def _k8_dashboard(context: "Context", output_path: str) -> None:
     input = os.path.join(MODELS_PATH, "apps", filename)
     output = os.path.join(output_path, filename)
 
-    if context.networking.data.internet_accessible is False:
-        dashboard_image = (
-            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
-            f"orbit-{context.name}-k8_dashboard:{ImagesManifest.k8_dashboard.version}"
-        )
-        scraper_image = (
-            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
-            f"orbit-{context.name}-k8_metrics_scraper:{ImagesManifest.k8_dashboard.version}"
-        )
-    else:
-        dashboard_image = f"{ImagesManifest.k8_dashboard.repository}:{ImagesManifest.k8_dashboard.version}"
-        scraper_image = f"{ImagesManifest.k8_metrics_scraper.repository}:{ImagesManifest.k8_metrics_scraper.version}"
+    dashboard_image = f"{ImagesManifest.k8_dashboard.repository}:{ImagesManifest.k8_dashboard.version}"
+    scraper_image = f"{ImagesManifest.k8_metrics_scraper.repository}:{ImagesManifest.k8_metrics_scraper.version}"
     with open(input, "r") as file:
         content: str = file.read()
     _logger.debug("using for k8 dashboard images: \n%s \n%s", dashboard_image, scraper_image)
