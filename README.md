@@ -2,7 +2,7 @@
 
 Build Your Own Data & ML Unified Development and Production Environment.
 
-> One-stop-shop solution for data engineers, scientists and analysts powered by AWS
+> One-stop-shop for data engineers, scientists, and analysts powered by AWS.
 
 [![Python Version](https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-brightgreen.svg)](https://github.com/awslabs/aws-eks-data-maker)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
