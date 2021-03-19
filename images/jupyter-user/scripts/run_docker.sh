@@ -54,8 +54,6 @@ else
   echo "must be inside images/jupyter-user directory"
 fi
 
-aws eks update-kubeconfig --name orbit-dev-env --role-arn arn:aws:iam::`aws sts get-caller-identity --query Account --output text`:role/orbit-dev-env-admin --region us-west-2
-
 docker run \
     -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
     -e AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN} \

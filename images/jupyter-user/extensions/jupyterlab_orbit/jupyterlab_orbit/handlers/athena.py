@@ -12,7 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import json
 from typing import Optional
 
 from aws_orbit_sdk.database import AthenaUtils
@@ -20,6 +19,7 @@ from jupyter_server.base.handlers import APIHandler
 from tornado import web
 
 athena = AthenaUtils()
+
 
 class AthenaRouteHandler(APIHandler):
     @web.authenticated
@@ -31,7 +31,9 @@ class AthenaRouteHandler(APIHandler):
         direction: Optional[str] = self.get_argument("direction", default="")
         sample_size = 100
 
-        json_data = athena.get_sample_data(database=database, table=table, sample=sample_size, field=field, direction=direction)
+        json_data = athena.get_sample_data(
+            database=database, table=table, sample=sample_size, field=field, direction=direction
+        )
 
         self.log.info(f"GET - {self.__class__}")
         self.finish(json_data)

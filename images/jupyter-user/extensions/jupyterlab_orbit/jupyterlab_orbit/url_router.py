@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from jupyter_server.utils import url_path_join
+from notebook.utils import url_path_join
 
 from .handlers.athena import AthenaRouteHandler
 from .handlers.catalog import CatalogRouteHandler, TreeRouteHandler

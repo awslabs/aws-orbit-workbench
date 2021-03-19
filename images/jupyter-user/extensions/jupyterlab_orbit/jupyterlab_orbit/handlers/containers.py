@@ -75,7 +75,9 @@ class ContainersRouteHandler(APIHandler):
             container["info"] = c
             data.append(container)
 
-        data = sorted(data, key=lambda i: (i['rank'], i['creationTimestamp'] if 'creationTimestamp' in i else i['name']))
+        data = sorted(
+            data, key=lambda i: (i["rank"], i["creationTimestamp"] if "creationTimestamp" in i else i["name"])
+        )
 
         return json.dumps(data)
 
@@ -133,7 +135,7 @@ class ContainersRouteHandler(APIHandler):
         input_data = self.get_json_body()
         job_name = input_data["name"]
         job_type: Optional[str] = self.get_argument("type", default="")
-        self.log.info(f"DELETE - {self.__class__} - %s type: %s", job_name,job_type)
+        self.log.info(f"DELETE - {self.__class__} - %s type: %s", job_name, job_type)
         if job_type == "user":
             controller.delete_job(job_name)
             data = MYJOBS
