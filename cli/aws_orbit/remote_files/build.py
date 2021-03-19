@@ -88,7 +88,7 @@ def build_image(args: Tuple[str, ...]) -> None:
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
-        tag = image_def.version if image_def else "latest"
+        tag = cast(str, image_def.version if image_def else "latest")
         docker.deploy_image_from_source(
             context=context, dir=path, name=ecr_repo, tag=tag, build_args=cast(Optional[List[str]], build_args)
         )

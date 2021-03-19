@@ -15,9 +15,8 @@
 import json
 import logging
 import os
-from socket import timeout
 import sys
-from typing import List, Optional, TextIO, Tuple
+from typing import List, Optional, TextIO, Tuple, cast
 
 import click
 
@@ -370,9 +369,11 @@ def deploy_image_cli(
     _logger.debug("dir: %s", dir)
     _logger.debug("name: %s", name)
     _logger.debug("script: %s", script)
-    _logger.debug("timeout: %s", timeout )
+    _logger.debug("timeout: %s", timeout)
     _logger.debug("debug: %s", debug)
-    build_image(dir=dir, name=name, env=env, timeout=timeout, script=script, build_args=build_arg, debug=debug)
+    build_image(
+        dir=dir, name=name, env=env, timeout=cast(int, timeout), script=script, build_args=build_arg, debug=debug
+    )
 
 
 @click.group(name="replicate")

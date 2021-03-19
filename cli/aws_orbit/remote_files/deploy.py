@@ -52,7 +52,7 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
-        tag = image_def.version
+        tag = cast(str, image_def.version)
         docker.deploy_image_from_source(
             context=context,
             dir=path,
