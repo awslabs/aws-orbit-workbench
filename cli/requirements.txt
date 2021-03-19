@@ -11,19 +11,33 @@ botocore==1.20.14
     #   aws-orbit (setup.py)
     #   boto3
     #   s3transfer
+cachetools==4.2.1
+    # via google-auth
+certifi==2020.12.5
+    # via
+    #   kubernetes
+    #   requests
 cfn-flip==1.2.3
     # via aws-orbit (setup.py)
+chardet==4.0.0
+    # via requests
 click==7.1.2
     # via
     #   aws-orbit (setup.py)
     #   cfn-flip
 decorator==4.4.2
     # via jsonpath-ng
+google-auth==1.27.1
+    # via kubernetes
+idna==2.10
+    # via requests
 jmespath==0.10.0
     # via
     #   boto3
     #   botocore
 jsonpath-ng==1.5.2
+    # via aws-orbit (setup.py)
+kubernetes==12.0.1
     # via aws-orbit (setup.py)
 marshmallow-dataclass[enum,union]==8.3.1
     # via aws-orbit (setup.py)
@@ -35,10 +49,20 @@ marshmallow==3.10.0
     #   marshmallow-enum
 mypy-extensions==0.4.3
     # via typing-inspect
+oauthlib==3.1.0
+    # via requests-oauthlib
 ply==3.11
     # via jsonpath-ng
+pyasn1-modules==0.2.8
+    # via google-auth
+pyasn1==0.4.8
+    # via
+    #   pyasn1-modules
+    #   rsa
 python-dateutil==2.8.1
-    # via botocore
+    # via
+    #   botocore
+    #   kubernetes
 python-slugify==4.0.1
     # via aws-orbit (setup.py)
 pyyaml-include==1.2.post2
@@ -47,14 +71,26 @@ pyyaml==5.3.1
     # via
     #   aws-orbit (setup.py)
     #   cfn-flip
+    #   kubernetes
     #   pyyaml-include
+requests-oauthlib==1.3.0
+    # via kubernetes
+requests==2.25.1
+    # via
+    #   kubernetes
+    #   requests-oauthlib
+rsa==4.7.2
+    # via google-auth
 s3transfer==0.3.4
     # via boto3
 six==1.15.0
     # via
     #   cfn-flip
+    #   google-auth
     #   jsonpath-ng
+    #   kubernetes
     #   python-dateutil
+    #   websocket-client
 text-unidecode==1.3
     # via python-slugify
 tqdm==4.56.2
@@ -66,4 +102,12 @@ typing-extensions==3.7.4.3
 typing-inspect==0.6.0
     # via marshmallow-dataclass
 urllib3==1.26.3
-    # via botocore
+    # via
+    #   botocore
+    #   kubernetes
+    #   requests
+websocket-client==0.58.0
+    # via kubernetes
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools

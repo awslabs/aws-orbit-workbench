@@ -237,6 +237,7 @@ class Context:
     cognito_external_provider_redirect: Optional[str] = None
     cognito_external_provider_domain: Optional[str] = None
     landing_page_url: Optional[str] = None
+    k8_dashboard_url: Optional[str] = None
     codeartifact_domain: Optional[str] = None
     codeartifact_repository: Optional[str] = None
     cognito_external_provider: Optional[str] = None
@@ -304,15 +305,9 @@ def create_team_context_from_manifest(manifest: "Manifest", team_manifest: "Team
     account_id: str = utils.get_account_id()
     region: str = utils.get_region()
     ssm_parameter_name: str = f"/orbit/{manifest.name}/teams/{team_manifest.name}/context"
-    if team_manifest.image is None:
-        base_image_address: str = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-jupyter-user"
-    else:
-        base_image_address = (
-            f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.image}-jupyter-user"
-        )
-    final_image_address: str = (
-        f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-{team_manifest.name}-jupyter-user"
-    )
+    version = manifest.images.jupyter_user.version
+    base_image_address = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-jupyter-user:{version}"
+    final_image_address = base_image_address
     return TeamContext(
         base_image_address=base_image_address,
         final_image_address=final_image_address,
@@ -494,7 +489,12 @@ class ContextSerDe(Generic[T, V]):
     def load_context_from_ssm(env_name: str, type: Type[V]) -> V:
         if type is Context:
             context_parameter_name: str = f"/orbit/{env_name}/context"
-            main = ssm.get_parameter(name=context_parameter_name)
+            if ssm.does_parameter_exist(context_parameter_name):
+                main = ssm.get_parameter(name=context_parameter_name)
+            else:
+                msg = f"SSM parameter {context_parameter_name} not found for env {env_name}"
+                _logger.error(msg)
+                raise Exception(msg)
             teams_parameters = ssm.list_parameters(prefix=f"/orbit/{env_name}/teams/")
             _logger.debug("teams_parameters: %s", teams_parameters)
             teams = [ssm.get_parameter_if_exists(name=p) for p in teams_parameters if p.endswith("/context")]
@@ -561,10 +561,3 @@ class ContextSerDe(Generic[T, V]):
             f"{top_level}-{context.name}-cdk-toolkit-{context.account_id}-{context.toolkit.deploy_id}"
         )
         _logger.debug("Toolkit data fetched successfully.")
-
-
-def construct_ecr_repository_name(env_name: str, image: Optional[str]) -> str:
-    image = image if image is not None else "jupyter-user:latest"
-    if ":" not in image:
-        image += ":latest"
-    return f"orbit-{env_name}-{image}"

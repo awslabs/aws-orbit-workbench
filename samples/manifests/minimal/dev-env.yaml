@@ -1,47 +1,44 @@
-Name: dev-env
+Name: !ENV ${ORBIT_ENV_NAME::dev-env}
 CodeartifactDomain: aws-orbit
 CodeartifactRepository: python-repository
-ScratchBucketArn: !SSM ${/orbit/dev-env/demo::ScratchBucketArn}
-UserPoolId: !SSM ${/orbit/dev-env/demo::UserPoolId}
-SharedEfsFsId: !SSM ${/orbit/dev-env/demo::SharedEfsFsId}
-SharedEfsSgId: !SSM ${/orbit/dev-env/demo::SharedEfsSgId}
+EksSystemMastersRoles:
+-   !ENV ${ORBIT_ADMIN_ROLE::Admin}
+ScratchBucketArn: !SSM ${/orbit-foundation/dev-env/resources::ScratchBucketArn}
+UserPoolId: !SSM ${/orbit-foundation/dev-env/resources::UserPoolId}
+SharedEfsFsId: !SSM ${/orbit-foundation/dev-env/resources::SharedEfsFsId}
+SharedEfsSgId: !SSM ${/orbit-foundation/dev-env/resources::SharedEfsSgId}
 Images:
     JupyterHub:
-        Repository: aws-orbit-jupyter-hub
-        Source: code
-        Path: ../images/jupyter-hub
-        Version: latest
+        Repository: !ENV ${JUPYTER_HUB_REPO::aws-orbit-jupyter-hub}
+        Source: !ENV ${IMAGE_SOURCE::code}
+        Path: !ENV ${IMAGE_PATH::../../../images/jupyter-hub}
+        Version: !ENV ${VERSION::latest}
     JupyterUser:
-        Repository: aws-orbit-jupyter-user
-        Source: code
-        Path: ../images/jupyter-user
-        Version: latest
+        Repository: !ENV ${JUPYTER_USER_REPO::aws-orbit-jupyter-user}
+        Source: !ENV ${IMAGE_SOURCE::code}
+        Path: !ENV ${IMAGE_PATH::../../../images/jupyter-user}
+        Version: !ENV ${VERSION::latest}
     LandingPage:
-        Repository: aws-orbit-landing-page
-        Source: code
-        Path: ../images/landing-page
-        Version: latest
-    CodeBuild:
-        Repository: aws-orbit-code-build-base
-        Source: code
-        Path: ../images/code-build-image
-        Version: latest
+        Repository: !ENV ${LANDING_PAGE_REPO::aws-orbit-landing-page}
+        Source: !ENV ${IMAGE_SOURCE::code}
+        Path: !ENV ${IMAGE_PATH::../../../images/landing-page}
+        Version: !ENV ${VERSION::latest}
 Networking:
-    VpcId: !SSM ${/orbit/dev-env/demo::VpcId}
-    PublicSubnets: !SSM ${/orbit/dev-env/demo::PublicSubnets}
-    PrivateSubnets: !SSM ${/orbit/dev-env/demo::PrivateSubnets}
-    IsolatedSubnets: !SSM ${/orbit/dev-env/demo::IsolatedSubnets}
+    VpcId: !SSM ${/orbit-foundation/dev-env/resources::VpcId}
+    PublicSubnets: !SSM ${/orbit-foundation/dev-env/resources::PublicSubnets}
+    PrivateSubnets: !SSM ${/orbit-foundation/dev-env/resources::PrivateSubnets}
+    IsolatedSubnets: !SSM ${/orbit-foundation/dev-env/resources::IsolatedSubnets}
     Data:
-        InternetAccessible: false
-        NodesSubnets: !SSM ${/orbit/dev-env/demo::NodesSubnets}
+        InternetAccessible: !ENV ${INTERNET_ACCESSIBLE::false}
+        NodesSubnets: !SSM ${/orbit-foundation/dev-env/resources::NodesSubnets}
     Frontend:
-        LoadBalancersSubnets: !SSM ${/orbit/dev-env/demo::LoadBalancersSubnets}
+        LoadBalancersSubnets: !SSM ${/orbit-foundation/dev-env/resources::LoadBalancersSubnets}
 ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge
     LocalStorageSize: 128
-    NodesNumDesired: 2
-    NodesNumMax: 3
+    NodesNumDesired: 4
+    NodesNumMax: 4
     NodesNumMin: 1
     Labels:
         instance-type: m5.2xlarge
@@ -50,6 +47,8 @@ Teams:
     Policies:
     - orbit-dev-env-demo-lake-bucket-fullaccess
     GrantSudo: true
+    Fargate: false
+    K8Admin: true
     JupyterhubInboundRanges:
     - 0.0.0.0/0
 -   Name: lake-user

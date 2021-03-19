@@ -19,8 +19,10 @@ from typing import Any, Dict, List, Optional
 
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, plugins, sh, utils
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
+from aws_orbit.models.manifest import ImagesManifest
 from aws_orbit.remote_files.utils import get_k8s_context
 from aws_orbit.services import cfn, elb
+from aws_orbit.utils import resolve_parameters
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -40,6 +42,41 @@ def _commons(context: "Context", output_path: str) -> None:
         region=context.region,
         env_name=context.name,
     )
+    with open(output, "w") as file:
+        file.write(content)
+
+
+def _k8_dashboard(context: "Context", output_path: str) -> None:
+    filename = "05-dashboard.yaml"
+    input = os.path.join(MODELS_PATH, "apps", filename)
+    output = os.path.join(output_path, filename)
+
+    dashboard_image = f"{ImagesManifest.k8_dashboard.repository}:{ImagesManifest.k8_dashboard.version}"
+    scraper_image = f"{ImagesManifest.k8_metrics_scraper.repository}:{ImagesManifest.k8_metrics_scraper.version}"
+    with open(input, "r") as file:
+        content: str = file.read()
+    _logger.debug("using for k8 dashboard images: \n%s \n%s", dashboard_image, scraper_image)
+    content = resolve_parameters(content, parameters=dict(dashboard_image=dashboard_image, scraper_image=scraper_image))
+    with open(output, "w") as file:
+        file.write(content)
+
+
+def _metrics_server(context: "Context", output_path: str) -> None:
+    filename = "06-metrics-server.yaml"
+    input = os.path.join(MODELS_PATH, "apps", filename)
+    output = os.path.join(output_path, filename)
+
+    if context.networking.data.internet_accessible is False:
+        image = (
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
+            f"orbit-{context.name}-k8_metrics_server:{ImagesManifest.k8_metrics_server.version}"
+        )
+    else:
+        image = f"{ImagesManifest.k8_metrics_server.repository}:{ImagesManifest.k8_metrics_server.version}"
+    with open(input, "r") as file:
+        content: str = file.read()
+    _logger.debug("using %s for k8 dashboard image", image)
+    content = content.replace("$", "").format(image=image)
     with open(output, "w") as file:
         file.write(content)
 
@@ -158,6 +195,7 @@ def _generate_env_manifest(context: "Context", clean_up: bool = True) -> str:
         raise ValueError("context.identity_pool_id is None!")
 
     _landing_page(output_path=output_path, context=context)
+    _k8_dashboard(output_path=output_path, context=context)
 
     return output_path
 
@@ -205,7 +243,13 @@ def fetch_kubectl_data(context: "Context", k8s_context: str, include_teams: bool
     landing_page_url: str = k8s.get_service_hostname(
         name="landing-page-public", k8s_context=k8s_context, namespace="env"
     )
+    k8_dashboard_url: str = k8s.get_service_hostname(
+        name="kubernetes-dashboard", k8s_context=k8s_context, namespace="kubernetes-dashboard"
+    )
+
     context.landing_page_url = f"http://{landing_page_url}"
+    context.k8_dashboard_url = f"http://{k8_dashboard_url}"
+
     _update_elbs(context=context)
 
     ContextSerDe.dump_context_to_ssm(context=context)
@@ -269,6 +313,7 @@ def deploy_env(context: "Context") -> None:
         output_path = _generate_env_manifest(context=context)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
         sh.run(f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} ENABLE_POD_ENI=true")
+
         fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=False)
 
 

@@ -27,7 +27,14 @@ if TYPE_CHECKING:
 _logger: logging.Logger = logging.getLogger(__name__)
 
 DEFAULT_IMAGES: List[str] = ["landing-page", "jupyter-hub", "jupyter-user"]
-DEFAULT_ISOLATED_IMAGES: List[str] = ["aws-efs-csi-driver", "livenessprobe", "csi-node-driver-registrar"]
+DEFAULT_ISOLATED_IMAGES: List[str] = [
+    "aws-efs-csi-driver",
+    "livenessprobe",
+    "csi-node-driver-registrar",
+    "k8-dashboard",
+    "k8-metrics-scraper",
+    "k8-metrics-server",
+]
 
 
 def _filter_repos(env_name: str, page: Dict[str, Any]) -> Iterator[str]:

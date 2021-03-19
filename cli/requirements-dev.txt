@@ -6,6 +6,8 @@
 #
 -e ../plugins/code_commit
     # via -r requirements-dev.in
+-e ../plugins/custom_cfn
+    # via -r requirements-dev.in
 -e ../plugins/hello_world
     # via -r requirements-dev.in
 -e ../plugins/redshift
@@ -13,8 +15,6 @@
 -e ../sdk
     # via -r requirements-dev.in
 -e ../plugins/team_script_launcher
-    # via -r requirements-dev.in
--e ../plugins/custom_cfn
     # via -r requirements-dev.in
 -e .
     # via -r requirements-dev.in
@@ -27,22 +27,6 @@ attrs==20.3.0
     #   cattrs
     #   jsii
     #   jsonschema
-aws-cdk-aws-events-targets==1.67.0
-    # via aws-orbit-redshift
-aws-cdk-aws-events==1.67.0
-    # via aws-orbit-redshift
-aws-cdk-aws-iam==1.67.0
-    # via aws-orbit-redshift
-aws-cdk-aws-kms==1.67.0
-    # via aws-orbit-redshift
-aws-cdk-aws-lambda==1.67.0
-    # via aws-orbit-redshift
-aws-cdk-aws-redshift==1.67.0
-    # via aws-orbit-redshift
-aws-cdk-aws-sns-subscriptions==1.67.0
-    # via aws-orbit-redshift
-aws-cdk-aws-sns==1.67.0
-    # via aws-orbit-redshift
 aws-cdk.assets==1.67.0
     # via
     #   aws-cdk.aws-apigateway
@@ -55,7 +39,6 @@ aws-cdk.aws-apigateway==1.67.0
     # via aws-cdk.aws-route53-targets
 aws-cdk.aws-applicationautoscaling==1.67.0
     # via
-    #   aws-cdk-aws-lambda
     #   aws-cdk.aws-dynamodb
     #   aws-cdk.aws-ecs
     #   aws-cdk.aws-lambda
@@ -71,7 +54,7 @@ aws-cdk.aws-autoscaling==1.67.0
     #   aws-cdk.aws-ecs
 aws-cdk.aws-batch==1.67.0
     # via
-    #   aws-cdk-aws-events-targets
+    #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-stepfunctions-tasks
 aws-cdk.aws-certificatemanager==1.67.0
     # via
@@ -86,8 +69,6 @@ aws-cdk.aws-cloudfront==1.67.0
     # via aws-cdk.aws-route53-targets
 aws-cdk.aws-cloudwatch==1.67.0
     # via
-    #   aws-cdk-aws-lambda
-    #   aws-cdk-aws-sns
     #   aws-cdk.aws-applicationautoscaling
     #   aws-cdk.aws-autoscaling
     #   aws-cdk.aws-codebuild
@@ -103,18 +84,16 @@ aws-cdk.aws-cloudwatch==1.67.0
     #   aws-cdk.aws-stepfunctions-tasks
 aws-cdk.aws-codebuild==1.67.0
     # via
-    #   aws-cdk-aws-events-targets
+    #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-stepfunctions-tasks
 aws-cdk.aws-codecommit==1.67.0
     # via
     #   aws-cdk.aws-codebuild
     #   aws-orbit-code-commit
 aws-cdk.aws-codeguruprofiler==1.67.0
-    # via
-    #   aws-cdk-aws-lambda
-    #   aws-cdk.aws-lambda
+    # via aws-cdk.aws-lambda
 aws-cdk.aws-codepipeline==1.67.0
-    # via aws-cdk-aws-events-targets
+    # via aws-cdk.aws-events-targets
 aws-cdk.aws-cognito==1.67.0
     # via
     #   -r requirements-dev.in
@@ -124,9 +103,6 @@ aws-cdk.aws-dynamodb==1.67.0
 aws-cdk.aws-ec2==1.67.0
     # via
     #   -r requirements-dev.in
-    #   aws-cdk-aws-events-targets
-    #   aws-cdk-aws-lambda
-    #   aws-cdk-aws-redshift
     #   aws-cdk.aws-apigateway
     #   aws-cdk.aws-autoscaling
     #   aws-cdk.aws-batch
@@ -135,8 +111,10 @@ aws-cdk.aws-ec2==1.67.0
     #   aws-cdk.aws-efs
     #   aws-cdk.aws-elasticloadbalancing
     #   aws-cdk.aws-elasticloadbalancingv2
+    #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-lambda
     #   aws-cdk.aws-lambda-python
+    #   aws-cdk.aws-redshift
     #   aws-cdk.aws-route53
     #   aws-cdk.aws-route53-targets
     #   aws-cdk.aws-secretsmanager
@@ -158,13 +136,12 @@ aws-cdk.aws-ecr==1.67.0
 aws-cdk.aws-ecs==1.67.0
     # via
     #   -r requirements-dev.in
-    #   aws-cdk-aws-events-targets
     #   aws-cdk.aws-batch
+    #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-stepfunctions-tasks
 aws-cdk.aws-efs==1.67.0
     # via
     #   -r requirements-dev.in
-    #   aws-cdk-aws-lambda
     #   aws-cdk.aws-lambda
 aws-cdk.aws-elasticloadbalancing==1.67.0
     # via
@@ -178,31 +155,25 @@ aws-cdk.aws-elasticloadbalancingv2==1.67.0
     #   aws-cdk.aws-ecs
     #   aws-cdk.aws-route53-targets
     #   aws-cdk.aws-servicediscovery
+aws-cdk.aws-events-targets==1.67.0
+    # via aws-orbit-redshift
 aws-cdk.aws-events==1.67.0
     # via
-    #   aws-cdk-aws-events-targets
-    #   aws-cdk-aws-lambda
-    #   aws-cdk-aws-sns
     #   aws-cdk.aws-codebuild
     #   aws-cdk.aws-codecommit
     #   aws-cdk.aws-codepipeline
     #   aws-cdk.aws-ecr
+    #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-lambda
     #   aws-cdk.aws-s3
     #   aws-cdk.aws-sns
     #   aws-cdk.aws-stepfunctions
+    #   aws-orbit-redshift
 aws-cdk.aws-glue==1.67.0
     # via aws-cdk.aws-stepfunctions-tasks
 aws-cdk.aws-iam==1.67.0
     # via
     #   -r requirements-dev.in
-    #   aws-cdk-aws-events
-    #   aws-cdk-aws-events-targets
-    #   aws-cdk-aws-kms
-    #   aws-cdk-aws-lambda
-    #   aws-cdk-aws-redshift
-    #   aws-cdk-aws-sns
-    #   aws-cdk-aws-sns-subscriptions
     #   aws-cdk.aws-apigateway
     #   aws-cdk.aws-applicationautoscaling
     #   aws-cdk.aws-autoscaling
@@ -225,11 +196,13 @@ aws-cdk.aws-iam==1.67.0
     #   aws-cdk.aws-ecs
     #   aws-cdk.aws-elasticloadbalancingv2
     #   aws-cdk.aws-events
+    #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-glue
     #   aws-cdk.aws-kinesis
     #   aws-cdk.aws-kms
     #   aws-cdk.aws-lambda
     #   aws-cdk.aws-logs
+    #   aws-cdk.aws-redshift
     #   aws-cdk.aws-route53-targets
     #   aws-cdk.aws-s3
     #   aws-cdk.aws-s3-assets
@@ -242,13 +215,12 @@ aws-cdk.aws-iam==1.67.0
     #   aws-cdk.aws-stepfunctions-tasks
     #   aws-cdk.custom-resources
     #   aws-orbit-code-commit
+    #   aws-orbit-redshift
 aws-cdk.aws-kinesis==1.67.0
-    # via aws-cdk-aws-events-targets
+    # via aws-cdk.aws-events-targets
 aws-cdk.aws-kms==1.67.0
     # via
     #   -r requirements-dev.in
-    #   aws-cdk-aws-redshift
-    #   aws-cdk-aws-sns
     #   aws-cdk.aws-autoscaling-hooktargets
     #   aws-cdk.aws-cloudfront
     #   aws-cdk.aws-codebuild
@@ -259,6 +231,7 @@ aws-cdk.aws-kms==1.67.0
     #   aws-cdk.aws-efs
     #   aws-cdk.aws-glue
     #   aws-cdk.aws-kinesis
+    #   aws-cdk.aws-redshift
     #   aws-cdk.aws-s3
     #   aws-cdk.aws-s3-assets
     #   aws-cdk.aws-secretsmanager
@@ -266,13 +239,12 @@ aws-cdk.aws-kms==1.67.0
     #   aws-cdk.aws-sqs
     #   aws-cdk.aws-ssm
     #   aws-cdk.aws-stepfunctions-tasks
+    #   aws-orbit-redshift
 aws-cdk.aws-lambda-python==1.67.0
     # via -r requirements-dev.in
 aws-cdk.aws-lambda==1.67.0
     # via
     #   -r requirements-dev.in
-    #   aws-cdk-aws-events-targets
-    #   aws-cdk-aws-sns-subscriptions
     #   aws-cdk.aws-apigateway
     #   aws-cdk.aws-autoscaling-hooktargets
     #   aws-cdk.aws-certificatemanager
@@ -283,14 +255,15 @@ aws-cdk.aws-lambda==1.67.0
     #   aws-cdk.aws-ecr-assets
     #   aws-cdk.aws-ecs
     #   aws-cdk.aws-elasticloadbalancingv2
+    #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-lambda-python
     #   aws-cdk.aws-secretsmanager
     #   aws-cdk.aws-sns-subscriptions
     #   aws-cdk.aws-stepfunctions-tasks
     #   aws-cdk.custom-resources
+    #   aws-orbit-redshift
 aws-cdk.aws-logs==1.67.0
     # via
-    #   aws-cdk-aws-lambda
     #   aws-cdk.aws-apigateway
     #   aws-cdk.aws-ec2
     #   aws-cdk.aws-ecs
@@ -299,6 +272,8 @@ aws-cdk.aws-logs==1.67.0
     #   aws-cdk.aws-route53
     #   aws-cdk.aws-stepfunctions
     #   aws-cdk.custom-resources
+aws-cdk.aws-redshift==1.67.0
+    # via aws-orbit-redshift
 aws-cdk.aws-route53-targets==1.67.0
     # via aws-cdk.aws-ecs
 aws-cdk.aws-route53==1.67.0
@@ -309,7 +284,6 @@ aws-cdk.aws-route53==1.67.0
     #   aws-cdk.aws-servicediscovery
 aws-cdk.aws-s3-assets==1.67.0
     # via
-    #   aws-cdk-aws-lambda
     #   aws-cdk.aws-apigateway
     #   aws-cdk.aws-codebuild
     #   aws-cdk.aws-ec2
@@ -318,8 +292,6 @@ aws-cdk.aws-s3-assets==1.67.0
 aws-cdk.aws-s3==1.67.0
     # via
     #   -r requirements-dev.in
-    #   aws-cdk-aws-lambda
-    #   aws-cdk-aws-redshift
     #   aws-cdk.aws-apigateway
     #   aws-cdk.aws-cloudformation
     #   aws-cdk.aws-cloudfront
@@ -330,6 +302,7 @@ aws-cdk.aws-s3==1.67.0
     #   aws-cdk.aws-elasticloadbalancingv2
     #   aws-cdk.aws-glue
     #   aws-cdk.aws-lambda
+    #   aws-cdk.aws-redshift
     #   aws-cdk.aws-route53-targets
     #   aws-cdk.aws-s3-assets
     #   aws-cdk.aws-stepfunctions-tasks
@@ -339,34 +312,32 @@ aws-cdk.aws-sam==1.67.0
     # via aws-cdk.aws-secretsmanager
 aws-cdk.aws-secretsmanager==1.67.0
     # via
-    #   aws-cdk-aws-redshift
     #   aws-cdk.aws-codebuild
     #   aws-cdk.aws-ecs
+    #   aws-cdk.aws-redshift
 aws-cdk.aws-servicediscovery==1.67.0
     # via aws-cdk.aws-ecs
 aws-cdk.aws-sns-subscriptions==1.67.0
     # via
-    #   aws-cdk-aws-events-targets
     #   aws-cdk.aws-autoscaling-hooktargets
+    #   aws-cdk.aws-events-targets
+    #   aws-orbit-redshift
 aws-cdk.aws-sns==1.67.0
     # via
-    #   aws-cdk-aws-events-targets
-    #   aws-cdk-aws-sns-subscriptions
     #   aws-cdk.aws-autoscaling
     #   aws-cdk.aws-autoscaling-hooktargets
     #   aws-cdk.aws-cloudformation
     #   aws-cdk.aws-ecs
+    #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-sns-subscriptions
     #   aws-cdk.aws-stepfunctions-tasks
     #   aws-cdk.custom-resources
+    #   aws-orbit-redshift
 aws-cdk.aws-sqs==1.67.0
     # via
-    #   aws-cdk-aws-events-targets
-    #   aws-cdk-aws-lambda
-    #   aws-cdk-aws-sns
-    #   aws-cdk-aws-sns-subscriptions
     #   aws-cdk.aws-autoscaling-hooktargets
     #   aws-cdk.aws-ecs
+    #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-lambda
     #   aws-cdk.aws-sns
     #   aws-cdk.aws-sns-subscriptions
@@ -382,7 +353,7 @@ aws-cdk.aws-stepfunctions-tasks==1.67.0
 aws-cdk.aws-stepfunctions==1.67.0
     # via
     #   -r requirements-dev.in
-    #   aws-cdk-aws-events-targets
+    #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-stepfunctions-tasks
 aws-cdk.cloud-assembly-schema==1.67.0
     # via
@@ -395,14 +366,6 @@ aws-cdk.cloud-assembly-schema==1.67.0
 aws-cdk.core==1.67.0
     # via
     #   -r requirements-dev.in
-    #   aws-cdk-aws-events
-    #   aws-cdk-aws-events-targets
-    #   aws-cdk-aws-iam
-    #   aws-cdk-aws-kms
-    #   aws-cdk-aws-lambda
-    #   aws-cdk-aws-redshift
-    #   aws-cdk-aws-sns
-    #   aws-cdk-aws-sns-subscriptions
     #   aws-cdk.assets
     #   aws-cdk.aws-apigateway
     #   aws-cdk.aws-applicationautoscaling
@@ -428,6 +391,7 @@ aws-cdk.core==1.67.0
     #   aws-cdk.aws-elasticloadbalancing
     #   aws-cdk.aws-elasticloadbalancingv2
     #   aws-cdk.aws-events
+    #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-glue
     #   aws-cdk.aws-iam
     #   aws-cdk.aws-kinesis
@@ -435,6 +399,7 @@ aws-cdk.core==1.67.0
     #   aws-cdk.aws-lambda
     #   aws-cdk.aws-lambda-python
     #   aws-cdk.aws-logs
+    #   aws-cdk.aws-redshift
     #   aws-cdk.aws-route53
     #   aws-cdk.aws-route53-targets
     #   aws-cdk.aws-s3
@@ -449,6 +414,7 @@ aws-cdk.core==1.67.0
     #   aws-cdk.aws-stepfunctions
     #   aws-cdk.aws-stepfunctions-tasks
     #   aws-cdk.custom-resources
+    #   aws-orbit-custom-cfn
     #   aws-orbit-hello-world
     #   aws-orbit-redshift
 aws-cdk.custom-resources==1.67.0
@@ -458,7 +424,6 @@ aws-cdk.custom-resources==1.67.0
     #   aws-cdk.aws-ecr
 aws-cdk.cx-api==1.67.0
     # via
-    #   aws-cdk-aws-lambda
     #   aws-cdk.assets
     #   aws-cdk.aws-apigateway
     #   aws-cdk.aws-cloudformation
@@ -471,7 +436,6 @@ aws-cdk.cx-api==1.67.0
     #   aws-cdk.core
 aws-cdk.region-info==1.67.0
     # via
-    #   aws-cdk-aws-iam
     #   aws-cdk.aws-codebuild
     #   aws-cdk.aws-ec2
     #   aws-cdk.aws-elasticloadbalancingv2
@@ -524,14 +488,6 @@ colorama==0.4.4
     # via twine
 constructs==3.3.37
     # via
-    #   aws-cdk-aws-events
-    #   aws-cdk-aws-events-targets
-    #   aws-cdk-aws-iam
-    #   aws-cdk-aws-kms
-    #   aws-cdk-aws-lambda
-    #   aws-cdk-aws-redshift
-    #   aws-cdk-aws-sns
-    #   aws-cdk-aws-sns-subscriptions
     #   aws-cdk.assets
     #   aws-cdk.aws-apigateway
     #   aws-cdk.aws-applicationautoscaling
@@ -557,6 +513,7 @@ constructs==3.3.37
     #   aws-cdk.aws-elasticloadbalancing
     #   aws-cdk.aws-elasticloadbalancingv2
     #   aws-cdk.aws-events
+    #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-glue
     #   aws-cdk.aws-iam
     #   aws-cdk.aws-kinesis
@@ -564,6 +521,7 @@ constructs==3.3.37
     #   aws-cdk.aws-lambda
     #   aws-cdk.aws-lambda-python
     #   aws-cdk.aws-logs
+    #   aws-cdk.aws-redshift
     #   aws-cdk.aws-route53
     #   aws-cdk.aws-route53-targets
     #   aws-cdk.aws-s3
@@ -610,14 +568,6 @@ jmespath==0.10.0
     #   botocore
 jsii==1.22.0
     # via
-    #   aws-cdk-aws-events
-    #   aws-cdk-aws-events-targets
-    #   aws-cdk-aws-iam
-    #   aws-cdk-aws-kms
-    #   aws-cdk-aws-lambda
-    #   aws-cdk-aws-redshift
-    #   aws-cdk-aws-sns
-    #   aws-cdk-aws-sns-subscriptions
     #   aws-cdk.assets
     #   aws-cdk.aws-apigateway
     #   aws-cdk.aws-applicationautoscaling
@@ -643,6 +593,7 @@ jsii==1.22.0
     #   aws-cdk.aws-elasticloadbalancing
     #   aws-cdk.aws-elasticloadbalancingv2
     #   aws-cdk.aws-events
+    #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-glue
     #   aws-cdk.aws-iam
     #   aws-cdk.aws-kinesis
@@ -650,6 +601,7 @@ jsii==1.22.0
     #   aws-cdk.aws-lambda
     #   aws-cdk.aws-lambda-python
     #   aws-cdk.aws-logs
+    #   aws-cdk.aws-redshift
     #   aws-cdk.aws-route53
     #   aws-cdk.aws-route53-targets
     #   aws-cdk.aws-s3
@@ -685,7 +637,7 @@ keyring==22.0.1
     # via twine
 kubernetes==12.0.1
     # via
-    #   -r requirements-dev.in
+    #   aws-orbit
     #   aws-orbit-sdk
 marshmallow-dataclass[enum,union]==8.3.1
     # via aws-orbit
@@ -740,14 +692,6 @@ ptyprocess==0.7.0
     # via pexpect
 publication==0.0.3
     # via
-    #   aws-cdk-aws-events
-    #   aws-cdk-aws-events-targets
-    #   aws-cdk-aws-iam
-    #   aws-cdk-aws-kms
-    #   aws-cdk-aws-lambda
-    #   aws-cdk-aws-redshift
-    #   aws-cdk-aws-sns
-    #   aws-cdk-aws-sns-subscriptions
     #   aws-cdk.assets
     #   aws-cdk.aws-apigateway
     #   aws-cdk.aws-applicationautoscaling
@@ -773,6 +717,7 @@ publication==0.0.3
     #   aws-cdk.aws-elasticloadbalancing
     #   aws-cdk.aws-elasticloadbalancingv2
     #   aws-cdk.aws-events
+    #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-glue
     #   aws-cdk.aws-iam
     #   aws-cdk.aws-kinesis
@@ -780,6 +725,7 @@ publication==0.0.3
     #   aws-cdk.aws-lambda
     #   aws-cdk.aws-lambda-python
     #   aws-cdk.aws-logs
+    #   aws-cdk.aws-redshift
     #   aws-cdk.aws-route53
     #   aws-cdk.aws-route53-targets
     #   aws-cdk.aws-s3

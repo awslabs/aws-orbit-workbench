@@ -178,7 +178,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -383,3 +382,7 @@ cli/*.yaml
 cli/.orbit.out
 cli/conf/
 .orbit.out
+images/jupyter-user/notes.txt
+images/jupyter-user-spark/notes.txt
+images/jupyter-user/.workspace/shared/samples
+/images/jupyter-user/*.mine

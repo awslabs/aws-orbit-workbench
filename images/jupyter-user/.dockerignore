@@ -1,4 +1,14 @@
 **/node_modules/
 **/__pycache__/
+**/.ipynb_checkpoints/
+.ipynb_checkpoints/
 .venv
 .vscode
+dev/
+extensions/jupyterlab_orbit/.ipynb_checkpoints/
+extensions/jupyterlab_orbit/lib/
+extensions/jupyterlab_orbit/node_modules/
+extensions/jupyterlab_orbit/tsconfig.tsbuildinfo
+extensions/jupyterlab_orbit/jupyterlab_orbit/labextension/
+.DS_Store
+**.egg-info

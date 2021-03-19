@@ -15,19 +15,22 @@
 #   limitations under the License.
 #
 
+#!/usr/bin/env bash
 set -ex
 
-AWS_ACCESS_KEY_ID=$(aws --profile default configure get aws_access_key_id)
-AWS_SECRET_ACCESS_KEY=$(aws --profile default configure get aws_secret_access_key)
-AWS_DEFAULT_REGION=$(aws configure get region)
+if [[ -z "$AWS_ORBIT_ENV" ]]; then
+    echo "Must provide AWS_ORBIT_ENV in environment" 1>&2
+    exit 1
+fi
 
-docker run \
-    -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-    -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-    -e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} \
-    -e TEAM=lake-creator \
-    -e ENV_NAME=dev-env \
-    -p 8888:8888 \
-    --rm \
-    -it \
-    jupyter-user
+LOCAL_NAME=jupyter-user
+AWS_REPO_NAME=orbit-$AWS_ORBIT_ENV-jupyter-user
+
+REGION=$(aws configure get region)
+ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+ECR_ADDRESS="${ACCOUNT_ID}".dkr.ecr."${REGION}".amazonaws.com
+REPO_ADDRESS="${ECR_ADDRESS}"/"${AWS_REPO_NAME}"
+
+aws ecr get-login-password --region "${REGION}" | docker login --username AWS --password-stdin "${ECR_ADDRESS}"
+docker pull "${REPO_ADDRESS}"
+docker tag "${REPO_ADDRESS}" "${LOCAL_NAME}"

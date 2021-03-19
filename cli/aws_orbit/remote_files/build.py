@@ -13,14 +13,14 @@
 #    limitations under the License.
 
 import logging
+import os
 from typing import List, Optional, Tuple, cast
 
 from boto3 import client
 
 from aws_orbit import docker, sh
-from aws_orbit.models.context import Context, ContextSerDe, TeamContext
+from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.models.manifest import ImageManifest
-from aws_orbit.remote_files import teams as team_utils
 from aws_orbit.remote_files.env import DEFAULT_IMAGES, DEFAULT_ISOLATED_IMAGES
 from aws_orbit.utils import boto3_client
 
@@ -33,9 +33,19 @@ def build_image(args: Tuple[str, ...]) -> None:
     env: str = args[0]
     image_name: str = args[1]
     script: Optional[str] = args[2] if args[2] != "NO_SCRIPT" else None
-    teams: Optional[List[str]] = list(set(args[3].split(","))) if args[3] != "NO_TEAMS" else None
-    build_args = args[4:]
-
+    source_registry: Optional[str]
+    if args[3] != "NO_REPO":
+        if len(args) < 6:
+            raise Exception("Source registry is defined without 'source_repository' or 'source_version' ")
+        source_registry = args[3]
+        source_repository: str = args[4]
+        source_version: str = args[5]
+        build_args = args[6:]
+        _logger.info("replicating image %s: %s %s:%s", image_name, source_registry, source_repository, source_version)
+    else:
+        _logger.info("building image %s: %s", image_name, script)
+        build_args = args[4:]
+        source_registry = None
     _logger.debug("args: %s", args)
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
 
@@ -54,29 +64,37 @@ def build_image(args: Tuple[str, ...]) -> None:
     except ecr.exceptions.RepositoryNotFoundException:
         _create_repository(context.name, ecr, ecr_repo)
 
-    image_def: Optional["ImageManifest"] = getattr(context.images, image_name, None)
+    image_def: Optional["ImageManifest"] = getattr(context.images, image_name.replace("-", "_"), None)
     _logger.debug("image def: %s", image_def)
 
-    if image_def is None or getattr(context.images, image_name).source == "code":
-        path = image_name
+    if source_registry:
+        docker.replicate_image(
+            context=context,
+            image_name=image_name,
+            deployed_name=ecr_repo,
+            source=source_registry,
+            source_repository=source_repository,
+            source_version=source_version,
+        )
+    elif image_def is None or image_def.source == "code":
+        path = os.path.join(os.getcwd(), image_name)
+        if not os.path.exists(path):
+            bundle_dir = os.path.join(os.getcwd(), "bundle", image_name)
+            if os.path.exists(bundle_dir):
+                path = bundle_dir
+            else:
+                raise RuntimeError(f"Unable to locate source in {path} or {bundle_dir}")
+
         _logger.debug("path: %s", path)
         if script is not None:
             sh.run(f"sh {script}", cwd=path)
+        tag = cast(str, image_def.version if image_def else "latest")
         docker.deploy_image_from_source(
-            context=context, dir=path, name=ecr_repo, build_args=cast(Optional[List[str]], build_args)
+            context=context, dir=path, name=ecr_repo, tag=tag, build_args=cast(Optional[List[str]], build_args)
         )
     else:
         docker.replicate_image(context=context, image_name=image_name, deployed_name=ecr_repo)
     _logger.debug("Docker Image Deployed to ECR")
-
-    if teams:
-        _logger.debug(f"Building and Deploying Team images: {teams}")
-        for team_name in teams:
-            team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_name)
-            if team_context:
-                team_utils._deploy_team_image(context=context, team_context=team_context, image=image_name)
-            else:
-                _logger.debug(f"Skipped unknown Team: {team_name}")
 
 
 def _create_repository(env_name: str, ecr: client, ecr_repo: str) -> None:

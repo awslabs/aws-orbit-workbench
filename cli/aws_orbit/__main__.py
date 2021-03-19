@@ -16,7 +16,7 @@ import json
 import logging
 import os
 import sys
-from typing import List, Optional, TextIO, Tuple
+from typing import List, Optional, TextIO, Tuple, cast
 
 import click
 
@@ -218,9 +218,10 @@ def deploy_env(
     help="CodeArtifact Repository to pull packages from.",
 )
 @click.option(
-    "--internet-accessiblity/--no-internet-accessiblity",
+    "--internet-accessibility/--no-internet-accessibility",
     default=True,
-    help="Configure for deployment to Private (internet accessiblity) or Isolated (no internet accessibility) subnets.",
+    help="Configure for deployment to Private (internet accessibility) "
+    "or Isolated (no internet accessibility) subnets.",
     show_default=True,
 )
 @click.option(
@@ -233,7 +234,7 @@ def deploy_foundation(
     filename: Optional[str] = None,
     name: Optional[str] = None,
     debug: bool = False,
-    internet_accessiblity: bool = True,
+    internet_accessibility: bool = True,
     username: Optional[str] = None,
     password: Optional[str] = None,
     codeartifact_domain: Optional[str] = None,
@@ -261,7 +262,7 @@ def deploy_foundation(
         username=username,
         password=password,
         debug=debug,
-        internet_accessiblity=internet_accessiblity,
+        internet_accessibility=internet_accessibility,
     )
 
 
@@ -329,21 +330,13 @@ def build() -> None:
 @click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
 @click.option("--dir", "-d", type=str, help="Dockerfile directory.", required=True)
 @click.option("--name", "-n", type=str, help="Image name.", required=True)
+@click.option("--timeout", type=int, help="CodeBuild Timeout", default=30, show_default=True)
 @click.option(
     "--script",
     "-s",
     type=str,
     default=None,
     help="Build script to run before the image build.",
-    required=False,
-)
-@click.option(
-    "--team",
-    "-t",
-    type=str,
-    multiple=True,
-    default=[],
-    help="One or more Teams to deploy the image to (can de declared multiple times).",
     required=False,
 )
 @click.option(
@@ -364,8 +357,8 @@ def deploy_image_cli(
     env: str,
     dir: str,
     name: str,
+    timeout: Optional[int],
     script: Optional[str],
-    team: Optional[List[str]],
     build_arg: Optional[List[str]],
     debug: bool,
 ) -> None:
@@ -376,9 +369,99 @@ def deploy_image_cli(
     _logger.debug("dir: %s", dir)
     _logger.debug("name: %s", name)
     _logger.debug("script: %s", script)
-    _logger.debug("teams: %s", team)
+    _logger.debug("timeout: %s", timeout)
     _logger.debug("debug: %s", debug)
-    build_image(dir=dir, name=name, env=env, script=script, teams=team, build_args=build_arg, debug=debug)
+    build_image(
+        dir=dir, name=name, env=env, timeout=cast(int, timeout), script=script, build_args=build_arg, debug=debug
+    )
+
+
+@click.group(name="replicate")
+def replicate() -> None:
+    """Replicate images from external respositories into ECR"""
+    pass
+
+
+@replicate.command(name="image")
+@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
+@click.option("--name", "-n", type=str, help="Image name.", required=True)
+@click.option(
+    "--script",
+    "-s",
+    type=str,
+    default=None,
+    help="Build script to run before the image build.",
+    required=False,
+)
+@click.option(
+    "--source-registry",
+    "-y",
+    type=str,
+    multiple=False,
+    default=None,
+    help="One or more Teams to deploy the image to (can de declared multiple times).",
+    required=True,
+)
+@click.option(
+    "--source-repository",
+    "-r",
+    type=str,
+    multiple=False,
+    default=None,
+    help="One or more Teams to deploy the image to (can de declared multiple times).",
+    required=True,
+)
+@click.option(
+    "--source-version",
+    "-v",
+    type=str,
+    multiple=False,
+    default=None,
+    help="One or more Teams to deploy the image to (can de declared multiple times).",
+    required=True,
+)
+@click.option(
+    "--build-arg",
+    type=str,
+    multiple=True,
+    default=[],
+    help="One or more --build-arg parameters to pass to the Docker build command.",
+    required=False,
+)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def replicate_image_cli(
+    env: str,
+    name: str,
+    script: Optional[str],
+    source_registry: str,
+    source_repository: str,
+    source_version: str,
+    build_arg: Optional[List[str]],
+    debug: bool,
+) -> None:
+    """Build and Deploy a new Docker image into ECR."""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    _logger.debug("env: %s", env)
+    _logger.debug("name: %s", name)
+    _logger.debug("script: %s", script)
+    _logger.debug("debug: %s", debug)
+    build_image(
+        dir=None,
+        name=name,
+        env=env,
+        script=script,
+        source_registry=source_registry,
+        source_repository=source_repository,
+        source_version=source_version,
+        build_args=build_arg,
+        debug=debug,
+    )
 
 
 @build.command(name="profile")
@@ -708,5 +791,6 @@ def main() -> int:
     cli.add_command(build)
     cli.add_command(delete)
     cli.add_command(list)
+    cli.add_command(replicate)
     cli()
     return 0

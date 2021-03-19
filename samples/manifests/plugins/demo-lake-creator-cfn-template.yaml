@@ -103,6 +103,9 @@ Resources:
           - Action: 'glue:*'
             Effect: Allow
             Resource: '*'
+          - Action: 'ec2:*'
+            Effect: Allow
+            Resource: '*'
         Version: 2012-10-17
       Description: ''
       ManagedPolicyName: !Join
@@ -117,7 +120,10 @@ Resources:
     Properties:
       UserPoolId: !Ref envcognitouserpoolid
       Description: lake-creator users group.
-      GroupName: lake-creator
+      GroupName: !Join
+        - ''
+        - - !Ref envname
+          - '-lake-creator'
 
   DemoParams:
     Type: 'AWS::SSM::Parameter'
@@ -125,15 +131,15 @@ Resources:
       Type: String
       Value: !Join
         - ''
-        - - '{"LakeBucket": '
+        - - '{"LakeBucket": "'
           - !GetAtt
             - LakeBucket
             - Arn
-          - '"SecuredLakeBucket": '
+          - '", "SecuredLakeBucket": "'
           - !GetAtt
             - SecuredLakeBucket
             - Arn
-          - '}'
+          - '"}'
       Description: Orbit Workbench Demo resources.
       Name: !Join
         - ''
