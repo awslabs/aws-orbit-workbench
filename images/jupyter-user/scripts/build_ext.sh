@@ -7,4 +7,4 @@ else
 fi
 
 cd extensions/jupyterlab_orbit
-jlpm run build
+jlpm run build --no-minimize --dev-build --source-map=True

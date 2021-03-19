@@ -27,7 +27,7 @@ def _jupyter_labextension_paths():
     return [{"src": "labextension", "dest": data["name"]}]
 
 
-from .handlers import setup_handlers  # noqa: F401, E402
+from .url_router import setup_handlers  # noqa: F401, E402
 
 
 def _jupyter_server_extension_points():
@@ -43,4 +43,4 @@ def _load_jupyter_server_extension(server_app):
         JupyterLab application instance
     """
     setup_handlers(server_app.web_app)
-    server_app.log.info("Registered HelloWorld extension at URL path /jupyterlab_orbit")
+    server_app.log.info("Registered Orbit extension at URL path /jupyterlab_orbit")

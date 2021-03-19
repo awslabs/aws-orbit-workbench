@@ -1,24 +1,79 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { ILauncher } from '@jupyterlab/launcher';
 import { ReactWidget, ICommandPalette } from '@jupyterlab/apputils';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { Menu } from '@lumino/widgets';
-
 import { teamIcon } from './common/icons';
-import { RUNNING_CLASS, SECTION_CLASS } from './common/styles';
+import {
+  ITEM_CLASS,
+  ITEM_DETAIL_CLASS,
+  RUNNING_CLASS,
+  SECTION_CLASS
+} from './common/styles';
 import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
-
-const NAME = 'Team';
+import { request } from './common/backend';
+import { ListViewWithoutToolbar, TreeView } from './common/categoryViews';
+const NAME = 'Your Team';
 const ICON: LabIcon = teamIcon;
 
 const refreshCallback = () => {
   console.log(`[${NAME}] Refresh!`);
 };
 
-class CentralWidget extends ReactWidget {
+interface IItem {
+  name: string;
+  value: string;
+}
+
+interface IUseItemsReturn {
+  commonItems: JSX.Element;
+  securityItems: any;
+  profiles: any;
+  other: any;
+}
+
+const Item = (props: { item: IItem }) => (
+  <li className={ITEM_CLASS}>
+    <span className={ITEM_DETAIL_CLASS} title={props.item.name}>
+      {props.item.name}
+    </span>
+    <span className={ITEM_DETAIL_CLASS}>{props.item.value}</span>
+  </li>
+);
+
+const Items = (props: { data: IItem[] }) => (
+  <>
+    {' '}
+    {props.data.map(x => (
+      <Item item={x} />
+    ))}{' '}
+  </>
+);
+
+const useItems = (): IUseItemsReturn => {
+  const [data, setData] = useState({
+    common: [],
+    security: {},
+    profiles: {},
+    other: {}
+  });
+  useEffect(() => {
+    const fetchData = async () => {
+      setData(await request('team'));
+    };
+    fetchData();
+  }, []);
+  const commonItems = <Items data={data.common} />;
+  const securityItems = data.security;
+  const profiles = data.profiles;
+  const other = data.other;
+  return { commonItems, securityItems, profiles, other };
+};
+
+class TeamCentralWidget extends ReactWidget {
   constructor() {
     super();
     this.addClass('jp-ReactWidget');
@@ -36,13 +91,26 @@ class CentralWidget extends ReactWidget {
           icon={ICON}
           refreshCallback={refreshCallback}
         />
+        <TeamComponentFunc />
         <div />
       </div>
     );
   }
 }
 
-class LeftWidget extends ReactWidget {
+const TeamComponentFunc = (): JSX.Element => {
+  const { commonItems, securityItems, profiles, other } = useItems();
+  return (
+    <div>
+      <ListViewWithoutToolbar name={'Team'} items={commonItems} />;
+      <TreeView name={'Security'} item={securityItems} root_name={'security'} />
+      <TreeView name={'Profiles'} item={profiles} root_name={'team profiles'} />
+      <TreeView name={'Other'} item={other} root_name={'properties'} />;
+    </div>
+  );
+};
+
+class TeamLeftWidget extends ReactWidget {
   launchCallback: () => void;
 
   constructor({ openCallback }: { openCallback: () => void }) {
@@ -63,7 +131,7 @@ class LeftWidget extends ReactWidget {
           refreshCallback={refreshCallback}
           openCallback={this.launchCallback}
         />
-        <div />
+        <TeamComponentFunc />
       </div>
     );
   }
@@ -82,7 +150,7 @@ export const activateTeam = (
     name: NAME,
     icon: ICON,
     app: app,
-    widgetCreation: () => new CentralWidget()
+    widgetCreation: () => new TeamCentralWidget()
   });
 
   registerGeneral({
@@ -92,7 +160,7 @@ export const activateTeam = (
     menu: menu,
     rank: rank,
     launchCommand: launchCommand,
-    leftWidget: new LeftWidget({
+    leftWidget: new TeamLeftWidget({
       openCallback: () => {
         commands.execute(launchCommand);
       }

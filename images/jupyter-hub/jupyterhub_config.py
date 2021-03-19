@@ -57,6 +57,7 @@ c.KubeSpawner.start_timeout = 600
 c.KubeSpawner.common_labels = {"orbit/node-type": "ec2", "orbit/attach-security-group": "yes"}
 c.KubeSpawner.namespace = TEAM
 c.KubeSpawner.environment = {
+    "JUPYTERHUB_SINGLEUSER_APP": "jupyter_server.serverapp.ServerApp",
     "USERNAME": lambda spawner: str(spawner.user.name),
     "JUPYTER_ENABLE_LAB": "yes",
     "AWS_ORBIT_TEAM_SPACE": TEAM,
@@ -155,26 +156,24 @@ c.Spawner.auth_state_hook = userdata_hook
 
 
 def per_user_profiles(spawner):
-    team = spawner.environment["AWS_ORBIT_TEAM_SPACE"]
-    env = spawner.environment["AWS_ORBIT_ENV"]
     ssm = boto3.Session().client("ssm")
     app_log.info("Getting profiles...")
-    ssm_parameter_name: str = f"/orbit/{env}/teams/{team}/context"
+    ssm_parameter_name: str = f"/orbit/{ENV_NAME}/teams/{TEAM}/context"
     json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
-
+    profiles = []
     team_manifest_dic = json.loads(json_str)
     if team_manifest_dic.get("Profiles"):
-        default_profiles = team_manifest_dic["Profiles"]
+        profiles.extend(team_manifest_dic["Profiles"])
     else:
         app_log.info("No default profiles found")
-        default_profiles = profile_list_default
+        profiles.extend(profile_list_default)
 
-    ssm_parameter_name: str = f"/orbit/{env}/teams/{team}/user/profiles"
+    ssm_parameter_name: str = f"/orbit/{ENV_NAME}/teams/{TEAM}/user/profiles"
     json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
 
     user_profiles: PROFILES_TYPE = cast(PROFILES_TYPE, json.loads(json_str))
-    default_profiles.extend(user_profiles)
-    return default_profiles
+    profiles.extend(user_profiles)
+    return profiles
 
 
 c.KubeSpawner.profile_list = per_user_profiles
