@@ -22,7 +22,7 @@ import boto3
 from aws_orbit import ORBIT_CLI_ROOT, cdk, docker, plugins
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext, create_team_context_from_manifest
 from aws_orbit.models.manifest import Manifest, TeamManifest
-from aws_orbit.services import cfn, ecr
+from aws_orbit.services import cfn
 from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -160,17 +160,11 @@ def deploy_team(context: "Context", manifest: Manifest, team_manifest: TeamManif
         team_context.fetch_team_data()
         context.teams.append(team_context)
     ContextSerDe.dump_context_to_ssm(context=context)
-    _deploy_team_image(context=context, team_context=team_context, image="jupyter-user")
-    _deploy_team_bootstrap(context=context, team_context=team_context)
 
 
 def destroy_team(context: "Context", team_context: "TeamContext") -> None:
     _logger.debug("Stack name: %s", team_context.stack_name)
     if cfn.does_stack_exist(stack_name=context.toolkit.stack_name):
-        try:
-            ecr.delete_repo(repo=f"orbit-{context.name}-{team_context.name}-jupyter-user")
-        except Exception as ex:
-            _logger.error("Skipping Team ECR Repository deletion. Cause: %s", ex)
         if cfn.does_stack_exist(stack_name=team_context.stack_name):
             args: List[str] = [context.name, team_context.name]
             cdk.destroy(
