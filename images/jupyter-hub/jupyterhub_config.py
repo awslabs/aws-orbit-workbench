@@ -57,6 +57,7 @@ c.KubeSpawner.start_timeout = 600
 c.KubeSpawner.common_labels = {"orbit/node-type": "ec2", "orbit/attach-security-group": "yes"}
 c.KubeSpawner.namespace = TEAM
 c.KubeSpawner.environment = {
+    "JUPYTERHUB_SINGLEUSER_APP": "jupyter_server.serverapp.ServerApp",
     "USERNAME": lambda spawner: str(spawner.user.name),
     "JUPYTER_ENABLE_LAB": "yes",
     "AWS_ORBIT_TEAM_SPACE": TEAM,
