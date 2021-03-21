@@ -1006,7 +1006,7 @@ class AthenaUtils(DatabaseCommon):
         workspace = get_workspace()
         logger.info(f"query staging location: s3://{workspace['ScratchBucket']}/athena/query/")
         conn = pyathena.connect(
-            s3_staging_dir=f"s3://{workspace['ScratchBucket']}/athena/query/", region_name=workspace["region"]
+            s3_staging_dir=f"s3://{workspace['ScratchBucket']}/{workspace['team_space']}/athena/query/", region_name=workspace["region"]
         )
         if field and len(field) > 0:
             query = f"SELECT * FROM {database}.{table} order by {field} desc LIMIT {sample}"
