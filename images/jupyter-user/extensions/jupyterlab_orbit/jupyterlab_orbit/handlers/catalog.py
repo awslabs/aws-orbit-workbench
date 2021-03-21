@@ -23,6 +23,7 @@ DATA: List[Dict[str, Any]] = []
 
 DATA2: Dict[str, Any] = {}
 
+
 class CatalogRouteHandler(APIHandler):
     @web.authenticated
     def get(self):
