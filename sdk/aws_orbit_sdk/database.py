@@ -1009,9 +1009,9 @@ class AthenaUtils(DatabaseCommon):
             s3_staging_dir=f"s3://{workspace['ScratchBucket']}/{workspace['team_space']}/athena/query/", region_name=workspace["region"]
         )
         if field and len(field) > 0:
-            query = f"SELECT * FROM {database}.{table} order by {field} desc LIMIT {sample}"
+            query = f'SELECT * FROM "{database}"."{table}" order by {field} desc LIMIT {sample}'
         else:
-            query = f"SELECT * FROM {database}.{table} LIMIT {sample}"
+            query = f'SELECT * FROM "{database}"."{table}" LIMIT {sample}'
         df = pd.read_sql(query, conn)
         result = df.to_json(orient="records")
         return result

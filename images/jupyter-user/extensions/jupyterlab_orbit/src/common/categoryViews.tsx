@@ -29,7 +29,6 @@ export const CategoryViews = (props: {
 }) => {
   const stopPropagation = (event: { stopPropagation: () => void }) => {
     event.stopPropagation();
-    console.log('stop propagation');
   };
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
