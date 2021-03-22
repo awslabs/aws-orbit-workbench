@@ -3,24 +3,24 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@aws-amplify/ui-components": "^0.9.3",
-    "@aws-amplify/ui-react": "^0.2.28",
-    "antd": "^4.8.4",
-    "aws-amplify": "^3.3.8",
-    "aws-sdk": "^2.792.0",
+    "@aws-amplify/ui-components": "^0.10.4",
+    "@aws-amplify/ui-react": "^0.2.38",
+    "antd": "^4.14.1",
+    "aws-amplify": "^3.3.25",
+    "aws-sdk": "^2.868.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "web-vitals": "^0.2.4"
   },
   "devDependencies": {
     "eslint-config-prettier": "^6.15.0",
-    "eslint-plugin-prettier": "^3.1.4",
-    "prettier": "^2.1.2",
-    "eslint-plugin-react": "^7.21.5",
-    "@testing-library/jest-dom": "^5.11.4",
-    "@testing-library/react": "^11.1.0",
-    "@testing-library/user-event": "^12.1.10",
-    "react-scripts": "4.0.0"
+    "eslint-plugin-prettier": "^3.3.1",
+    "prettier": "^2.2.1",
+    "eslint-plugin-react": "^7.22.0",
+    "@testing-library/jest-dom": "^5.11.9",
+    "@testing-library/react": "^11.2.5",
+    "@testing-library/user-event": "^13.0.7",
+    "react-scripts": "^4.0.3"
   },
   "scripts": {
     "start": "BROWSER=firefox react-scripts start",
