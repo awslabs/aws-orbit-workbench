@@ -25,27 +25,9 @@ DATA2: Dict[str, Any] = {}
 
 
 class CatalogRouteHandler(APIHandler):
-    @staticmethod
-    def dump() -> str:
-        return json.dumps([{"name": k, "description": v} for k, v in DATA2.items()])
-
     @web.authenticated
     def get(self):
         self.log.info(f"GET - {self.__class__}")
-        self.finish(self.dump())
-
-    @web.authenticated
-    def delete(self):
-        input_data = self.get_json_body()
-        self.log.info(f"DELETE - {self.__class__} - %s", input_data)
-        DATA.pop(input_data["name"])
-        self.finish(self.dump())
-
-
-class TreeRouteHandler(APIHandler):
-    @web.authenticated
-    def get(self):
-        self.log.info("GET - Tree")
         global DATA
         DATA = glue_catalog.getCatalogAsDict()
         self.log.info(f"GET - {self.__class__}")
