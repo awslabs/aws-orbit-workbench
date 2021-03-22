@@ -14,10 +14,11 @@
 
 import json
 from typing import Any, Dict, List
-
+from pathlib import Path
 from aws_orbit_sdk import glue_catalog
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
+import os
 
 DATA: List[Dict[str, Any]] = []
 
@@ -29,6 +30,17 @@ class CatalogRouteHandler(APIHandler):
     def get(self):
         self.log.info(f"GET - {self.__class__}")
         global DATA
-        DATA = glue_catalog.getCatalogAsDict()
-        self.log.info(f"GET - {self.__class__}")
+        if "MOCK" not in os.environ or os.environ["MOCK"] == "0":
+            DATA = glue_catalog.getCatalogAsDict()
+            self.log.info(f"GET - {self.__class__}")
+            if "MOCK" in os.environ:
+                path = f"{Path(__file__).parent.parent.parent}/test/mockup/catalog.json"
+                self.log.info(f"writing mockup data to {path}")
+                with open(path, "w") as outfile:
+                    json.dump(DATA, outfile, indent=4)
+        else:
+            path = f"{Path(__file__).parent.parent.parent}/test/mockup/catalog.json"
+            with open(path) as f:
+                DATA = json.load(f)
+
         self.finish(json.dumps(DATA))
