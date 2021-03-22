@@ -53,44 +53,50 @@ def list_images(env: str, region: Optional[str]) -> None:
 
 def list_env(variable: str) -> None:
     ssm = utils.boto3_client("ssm")
-    params = ssm.get_parameters_by_path(Path="/orbit", Recursive=True)["Parameters"]
+    res = ssm.get_parameters_by_path(Path="/orbit", Recursive=True)
     env_info: Dict[str, str] = {}
-    for p in params:
-        if not p["Name"].endswith("context") or "teams" in p["Name"]:
-            continue
+    while True:
+        params = res["Parameters"]
+        for p in params:
+            if not p["Name"].endswith("context") or "teams" in p["Name"]:
+                continue
+            env_name = p["Name"].split("/")[2]
+            context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
+            _logger.debug(f"found env: {env_name}")
+            if context.k8_dashboard_url:
+                k8_dashboard_url = context.k8_dashboard_url
+            else:
+                k8_dashboard_url = ""
+            if len(context.teams) > 0:
+                teams_list: str = ",".join([x.name for x in context.teams])
+            else:
+                teams_list = ""
 
-        env_name = p["Name"].split("/")[2]
-        context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
-        _logger.debug(f"found env: {env_name}")
-        if context.k8_dashboard_url:
-            k8_dashboard_url = context.k8_dashboard_url
-        else:
-            k8_dashboard_url = ""
-        if len(context.teams) > 0:
-            teams_list: str = ",".join([x.name for x in context.teams])
-        else:
-            teams_list = ""
-        if variable == "landing-page":
-            print(context.landing_page_url)
-        elif variable == "toolkitbucket":
-            print(context.toolkit.s3_bucket)
-        elif variable == "teams":
-            print(f"[{teams_list}]")
-        elif variable == "all":
-            env_info[env_name] = (
-                f"LandingPage={context.landing_page_url}, "
-                f"Teams=[{teams_list}], "
-                f"ToolkitBucket={context.toolkit.s3_bucket}"
-                f"K8Dashboard={k8_dashboard_url}"
-            )
+            if variable == "landing-page":
+                print(context.landing_page_url)
+            elif variable == "toolkitbucket":
+                print(context.toolkit.s3_bucket)
+            elif variable == "teams":
+                print(f"[{teams_list}]")
+            elif variable == "all":
+                env_info[env_name] = (
+                    f"LandingPage={context.landing_page_url}, "
+                    f"Teams=[{teams_list}], "
+                    f"ToolkitBucket={context.toolkit.s3_bucket}"
+                    f"K8Dashboard={k8_dashboard_url}"
+                )
+            else:
+                raise Exception(f"Unknown --variable option {variable}")
 
-            if len(env_info) == 0:
-                click.echo("There are no Orbit environments available")
-                return
-
-            print_list(
-                tittle="Available Orbit environments:",
-                items=[f"Name={k}{stylize(',')}{v}" for k, v in env_info.items()],
-            )
+        if "NextToken" in res:
+            res = ssm.get_parameters_by_path(Path="/orbit", Recursive=True, NextToken=res["NextToken"])
         else:
-            raise Exception(f"Unknown --variable option {variable}")
+            break
+    if len(env_info) == 0:
+        click.echo("There are no Orbit environments available")
+        return
+    else:
+        print_list(
+            tittle="Available Orbit environments:",
+            items=[f"Name={k}{stylize(',')}{v}" for k, v in env_info.items()],
+        )
