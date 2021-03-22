@@ -95,7 +95,8 @@ def list_env(variable: str) -> None:
     if len(env_info) == 0:
         click.echo("There are no Orbit environments available")
         return
-    else:
+
+    if variable == "all":
         print_list(
             tittle="Available Orbit environments:",
             items=[f"Name={k}{stylize(',')}{v}" for k, v in env_info.items()],
