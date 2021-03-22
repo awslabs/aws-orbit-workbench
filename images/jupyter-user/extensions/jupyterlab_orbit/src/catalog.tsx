@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { ILauncher } from '@jupyterlab/launcher';
-import { ReactWidget, ICommandPalette } from '@jupyterlab/apputils';
+import {
+  ReactWidget,
+  ICommandPalette,
+  MainAreaWidget
+} from '@jupyterlab/apputils';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { Menu } from '@lumino/widgets';
 import { Tree } from 'antd';
@@ -35,14 +39,14 @@ const useItems = (): IUseItemsReturn => {
 
   const refreshCallback = async () => {
     console.log(`[${NAME}] Refresh!`);
-    const ret: any[] = await request('tree');
+    const ret: any[] = await request('catalog');
     updateList(ret);
     setTreeItems(ret);
   };
 
   useEffect(() => {
     const fetchData = async () => {
-      const ret: any[] = await request('tree');
+      const ret: any[] = await request('catalog');
       updateList(ret);
       setTreeItems(ret);
     };
@@ -52,12 +56,12 @@ const useItems = (): IUseItemsReturn => {
   return { treeItems, refreshCallback };
 };
 
-const CentralWidgetComponent = (): JSX.Element => {
-  const database = 'cms_raw_db';
-  const table = 'beneficiary_summary';
-
+const CentralWidgetComponent = (props: {
+  database: string;
+  table: string;
+}): JSX.Element => {
   const refreshCallback = async () => {
-    console.log(`[${NAME}] Refresh!`);
+    console.log(`[${props.database}.${props.table}] Refresh!`);
   };
 
   const [state, setState] = useState({
@@ -70,8 +74,8 @@ const CentralWidgetComponent = (): JSX.Element => {
   useEffect(() => {
     const fetchData = async () => {
       const parameters: IDictionary<number | string> = {
-        database: database,
-        table: table,
+        database: props.database,
+        table: props.table,
         field: state.orderByField,
         direction: state.orderByField
       };
@@ -89,8 +93,8 @@ const CentralWidgetComponent = (): JSX.Element => {
   const changeOrder = async (field: string, direction: string) => {
     console.log(`SORT: [${field}] [${direction}]`);
     const parameters: IDictionary<number | string> = {
-      database: database,
-      table: table,
+      database: props.database,
+      table: props.table,
       field: field,
       direction: direction
     };
@@ -105,7 +109,7 @@ const CentralWidgetComponent = (): JSX.Element => {
   return (
     <div className={SECTION_CLASS}>
       <CentralWidgetHeader
-        name={NAME}
+        name={`TABLE ${props.table}`}
         icon={ICON}
         refreshCallback={refreshCallback}
       />
@@ -127,40 +131,53 @@ const CentralWidgetComponent = (): JSX.Element => {
 };
 
 class CentralWidget extends ReactWidget {
-  constructor() {
+  database: string;
+  table: string;
+  constructor(database: string, table: string) {
     super();
     this.addClass('jp-ReactWidget');
     this.addClass(RUNNING_CLASS);
-    this.title.caption = `AWS Orbit Workbench - ${NAME}`;
-    this.title.label = `Orbit - ${NAME}`;
+    this.title.caption = `AWS Orbit Workbench - ${table}`;
+    this.title.label = `Orbit - ${database}.${table}`;
     this.title.icon = ICON;
+    this.database = database;
+    this.table = table;
   }
 
   render(): JSX.Element {
-    return <CentralWidgetComponent />;
+    return (
+      <CentralWidgetComponent database={this.database} table={this.table} />
+    );
   }
 }
 
 const LeftWidgetComponent = (props: {
   launchCallback: () => void;
+  app: JupyterFrontEnd;
 }): JSX.Element => {
   const { treeItems, refreshCallback } = useItems();
-  const [state, setState] = useState<boolean | React.Key[] | any>([
-    { selectedKeys: undefined, info: undefined }
+  const [state, setState] = useState<any>([
+    { database: undefined, table: undefined }
   ]);
 
   const onSelect = (selectedKeys: React.Key[], info: any) => {
-    setState({ selectedKeys: selectedKeys, info: info });
-    console.log('selected', state.selectedKeys, state.info);
+    setState({ database: info.node.db, table: info.node.table });
+    console.log('selected', state.database, state.table);
   };
 
+  const launchSectionWidget = () => {
+    const centralWidget = new MainAreaWidget<ReactWidget>({
+      content: new CentralWidget(state.database, state.table)
+    });
+    props.app.shell.add(centralWidget, 'main');
+  };
   return (
     <div className={SECTION_CLASS}>
       <LeftWidgetHeader
         name={NAME}
         icon={ICON}
         refreshCallback={refreshCallback}
-        openCallback={props.launchCallback}
+        openCallback={() => launchSectionWidget()}
       />
       <Tree
         showLine={true}
@@ -175,18 +192,30 @@ const LeftWidgetComponent = (props: {
 
 class LeftWidget extends ReactWidget {
   launchCallback: () => void;
-
-  constructor({ launchCallback }: { launchCallback: () => void }) {
+  app: JupyterFrontEnd;
+  constructor({
+    launchCallback,
+    app
+  }: {
+    launchCallback: () => void;
+    app: JupyterFrontEnd;
+  }) {
     super();
     this.addClass('jp-ReactWidget');
     this.addClass(RUNNING_CLASS);
     this.title.caption = `AWS Orbit Workbench - ${NAME}`;
     this.title.icon = ICON;
     this.launchCallback = launchCallback;
+    this.app = app;
   }
 
   render(): JSX.Element {
-    return <LeftWidgetComponent launchCallback={this.launchCallback} />;
+    return (
+      <LeftWidgetComponent
+        launchCallback={this.launchCallback}
+        app={this.app}
+      />
+    );
   }
 }
 
@@ -203,7 +232,7 @@ export const activateCatalog = (
     name: NAME,
     icon: ICON,
     app: app,
-    widgetCreation: () => new CentralWidget()
+    widgetCreation: () => new CentralWidget('', NAME)
   });
 
   registerGeneral({
@@ -216,7 +245,8 @@ export const activateCatalog = (
     leftWidget: new LeftWidget({
       launchCallback: () => {
         commands.execute(launchCommand);
-      }
+      },
+      app: app
     })
   });
 };

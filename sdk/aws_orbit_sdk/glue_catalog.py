@@ -348,17 +348,20 @@ def getCatalogAsDict(database: Optional[str] = None) -> Dict:
     key: int = 0
     for db in response["DatabaseList"]:
         key += 1
-        database = {"title": db["Name"], "key": str(key), "children": [], "_class": "database"}
+        database = {"title": db["Name"], "key": str(key), "qname": db["Name"], "children": [], "_class": "database"}
         schemas.append(database)
         response = glue.get_tables(DatabaseName=db["Name"], MaxResults=50)
         for t in response["TableList"]:
             key += 1
             table = dict()
             table["title"] = t["Name"]
+            table["key"] = str(key)
             table["location"] = t["StorageDescriptor"]["Location"]
             table["children"] = []
-            table["key"] = key
+            table["key"] = str(key)
             table["_class"] = "table"
+            table["db"] = db["Name"]
+            table["table"] = t["Name"]
             database["children"].append(table)
             for c in t["StorageDescriptor"]["Columns"]:
                 col = dict()
@@ -366,6 +369,8 @@ def getCatalogAsDict(database: Optional[str] = None) -> Dict:
                 table["children"].append(col)
                 col["title"] = c["Name"]
                 col["type"] = c["Type"]
-                col["key"] = key
+                col["key"] = str(key)
                 col["_class"] = "column"
+                col["db"] = db["Name"]
+                col["table"] = t["Name"]
     return schemas
