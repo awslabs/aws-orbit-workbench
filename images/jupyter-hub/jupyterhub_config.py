@@ -72,30 +72,13 @@ if GRANT_SUDO == "yes":
     c.KubeSpawner.uid = 0
 
 c.KubeSpawner.image = IMAGE
-# TODO we want to remove this 'Always' from production code
-c.KubeSpawner.image_pull_policy = "Always"
-c.KubeSpawner.storage_class = f"ebs-{TEAM}-gp2"
-c.KubeSpawner.storage_access_modes = ["ReadWriteOnce"]
-c.KubeSpawner.storage_capacity = "5Gi"
-c.KubeSpawner.storage_pvc_ensure = True
+# can below if need to force image pull
+# c.KubeSpawner.image_pull_policy = "Always"
 c.KubeSpawner.extra_annotations = {"AWS_ORBIT_TEAM_SPACE": TEAM, "AWS_ORBIT_ENV": ENV_NAME}
 pvc_name_template = "orbit-{username}-{servername}"
 c.KubeSpawner.pvc_name_template = pvc_name_template
-c.KubeSpawner.volumes = [
-    {"name": "efs-volume", "persistentVolumeClaim": {"claimName": "jupyterhub"}},
-    {"name": "ebs-volume", "persistentVolumeClaim": {"claimName": pvc_name_template}},
-]
-c.KubeSpawner.volume_mounts = [{"mountPath": "/efs", "name": "efs-volume"}, {"mountPath": "/ebs", "name": "ebs-volume"}]
-# This will allow Jovyan to write to the ebs volume
-c.KubeSpawner.init_containers = [
-    {
-        "name": "take-ebs-dir-ownership",
-        "image": IMAGE,
-        "command": ["sh", "-c", "sudo chmod -R 777 /ebs"],
-        "securityContext": {"runAsUser": 0},
-        "volumeMounts": [{"mountPath": "/ebs", "name": "ebs-volume"}],
-    }
-]
+c.KubeSpawner.volumes = [{"name": "efs-volume", "persistentVolumeClaim": {"claimName": "jupyterhub"}}]
+c.KubeSpawner.volume_mounts = [{"mountPath": "/efs", "name": "efs-volume"}]
 c.KubeSpawner.fs_gid = 100
 c.KubeSpawner.lifecycle_hooks = {"postStart": {"exec": {"command": ["/bin/sh", "/home/jovyan/.orbit/bootstrap.sh"]}}}
 c.KubeSpawner.node_selector = {"orbit/usage": "teams", "orbit/node-type": "ec2"}
