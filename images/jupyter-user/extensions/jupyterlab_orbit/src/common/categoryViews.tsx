@@ -27,16 +27,18 @@ export const CategoryViews = (props: {
   key: string;
   openCallback: (name: string) => any;
 }) => {
-  const handleRefresh = (e: React.FormEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('stop propagation');
-    props.refreshCallback(props.name);
+  const stopPropagation = (event: { stopPropagation: () => void }) => {
+    event.stopPropagation();
   };
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+  // @ts-ignore
   const genExtra = () => (
     <div>
-      <div style={{ display: 'flex', alignItems: 'right' }}>
+      <div
+        style={{ display: 'flex', alignItems: 'right' }}
+        onClick={stopPropagation}
+      >
         <ToolbarButtonComponent
           tooltip={'Open'}
           icon={launcherIcon}
@@ -45,8 +47,7 @@ export const CategoryViews = (props: {
         <ToolbarButtonComponent
           tooltip={'Refresh List'}
           icon={refreshIcon}
-          onClick={() => handleRefresh}
-          actualOnClick={true}
+          onClick={() => props.refreshCallback(props.name)}
         />
         <ToolbarButtonComponent
           tooltip={'Close All'}
