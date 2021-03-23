@@ -43,20 +43,24 @@
     "watch:labextension": "jupyter labextension watch ."
   },
   "dependencies": {
+    "@ant-design/icons": "4.5.0",
     "@jupyterlab/application": "^3.0.0-rc.13",
     "@jupyterlab/coreutils": "^5.0.0-rc.13",
     "@jupyterlab/launcher": "^3.0.5",
     "@jupyterlab/mainmenu": "^3.0.5",
     "@jupyterlab/services": "^6.0.0-rc.13",
     "@jupyterlab/ui-components": "^3.0.4",
+    "@langleyfoxall/react-dynamic-data-table": "^7.17.0",
+    "@types/react": "^17.0.3",
+    "@types/react-dom": "^17.0.2",
     "antd": "^4.14.0",
-    "@ant-design/icons": "4.5.0",
     "react-json-view": "1.21.3",
     "react-table": "7.6.3",
-    "@langleyfoxall/react-dynamic-data-table": "^7.17.0"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@jupyterlab/builder": "^3.0.0-rc.13",
+    "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "^2.27.0",
     "@typescript-eslint/parser": "^2.27.0",
     "eslint": "^7.21.0",

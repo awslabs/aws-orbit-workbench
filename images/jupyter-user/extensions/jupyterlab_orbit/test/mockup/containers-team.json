@@ -4814,7 +4814,7 @@
             "creationTimestamp": "2021-03-12T16:41:59Z",
             "labels": {
                 "app": "orbit-runner",
-                "orbit/node-type": "fargate",
+                "orbit/node-type": "ec2",
                 "username": "regression"
             },
             "managedFields": [
