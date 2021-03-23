@@ -212,6 +212,7 @@ class Env(Stack):
                 iam.ManagedPolicy.from_aws_managed_policy_name(
                     managed_policy_name="AmazonEC2ContainerRegistryReadOnly"
                 ),
+                # iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonSSMManagedInstanceCore"),
             ],
         )
         return role
