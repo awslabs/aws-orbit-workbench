@@ -51,7 +51,7 @@ def list_images(env: str, region: Optional[str]) -> None:
         click.echo(f"Thre is no docker images into the {stylize(context.name)} env.")
 
 
-def list_env(variable: str) -> None:
+def list_env(env: str, variable: str) -> None:
     ssm = utils.boto3_client("ssm")
     res = ssm.get_parameters_by_path(Path="/orbit", Recursive=True)
     env_info: Dict[str, str] = {}
@@ -59,6 +59,8 @@ def list_env(variable: str) -> None:
         params = res["Parameters"]
         for p in params:
             if not p["Name"].endswith("context") or "teams" in p["Name"]:
+                continue
+            if len(env) > 0 and p["Name"].startswith(f"//orbit/{env}"):
                 continue
             env_name = p["Name"].split("/")[2]
             context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
@@ -92,11 +94,13 @@ def list_env(variable: str) -> None:
             res = ssm.get_parameters_by_path(Path="/orbit", Recursive=True, NextToken=res["NextToken"])
         else:
             break
-    if len(env_info) == 0:
-        click.echo("There are no Orbit environments available")
-        return
-    else:
-        print_list(
-            tittle="Available Orbit environments:",
-            items=[f"Name={k}{stylize(',')}{v}" for k, v in env_info.items()],
-        )
+
+    if variable == "all":
+        if len(env_info) == 0:
+            click.echo("There are no Orbit environments available")
+            return
+        else:
+            print_list(
+                tittle="Available Orbit environments:",
+                items=[f"Name={k}{stylize(',')}{v}" for k, v in env_info.items()],
+            )
