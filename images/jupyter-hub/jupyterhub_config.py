@@ -167,6 +167,8 @@ AUTH
 
 c.JupyterHub.authenticator_class = OrbitWorkbenchAuthenticator
 c.Authenticator.auto_login = True
+# Try to validate session / refresh token every 10 minutes
+c.Authenticator.auth_refresh_age = 600
 
 """
 EXTRAS
