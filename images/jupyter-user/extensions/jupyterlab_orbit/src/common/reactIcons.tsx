@@ -14,12 +14,7 @@ const ec2Svg = () => {
           <stop stopColor="#FF9900" offset="100%" />
         </linearGradient>
       </defs>
-      <g
-        stroke="none"
-        strokeWidth="1"
-        fill="none"
-        fillRule="evenodd"
-      >
+      <g stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
         <g fill={'url(#' + gradientId + ')'}>
           <rect x="0" y="0" width="40" height="40" />
         </g>
@@ -68,6 +63,8 @@ const fargateIcon = () => {
 };
 
 export const Ec2Icon = (props: React.SVGProps<SVGSVGElement>): JSX.Element => {
+  // NickC - adding eslint ignore on next line as Icon type doesn't match to JSX.Element
+  // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
   // @ts-ignore
   return <Icon component={ec2Svg} {...props} />;
 };
@@ -75,6 +72,8 @@ export const Ec2Icon = (props: React.SVGProps<SVGSVGElement>): JSX.Element => {
 export const FargateIcon = (
   props: React.SVGProps<SVGSVGElement>
 ): JSX.Element => {
+  // NickC - adding eslint ignore on next line as Icon type doesn't match to JSX.Element
+  // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
   // @ts-ignore
   return <Icon component={fargateIcon} {...props} />;
 };
