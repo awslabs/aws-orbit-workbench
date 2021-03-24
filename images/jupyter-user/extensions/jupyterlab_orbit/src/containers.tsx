@@ -143,9 +143,6 @@ export const deleteItem = async (
   }
 };
 
-// function delay(ms: number) {
-//   return new Promise(resolve => setTimeout(resolve, ms));
-// }
 const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
   const [data, setData] = useState([]);
 
