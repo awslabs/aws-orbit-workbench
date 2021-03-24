@@ -50,6 +50,7 @@ export interface IUseItemsReturn {
   closeAllCallback: (name: string) => void;
   refreshCallback: () => void;
   setData: Dispatch<SetStateAction<any[]>>;
+  connect: (container: string) => Promise<void>;
 }
 
 export const openItemCallback = (name: string) => {
@@ -142,7 +143,10 @@ export const deleteItem = async (
   }
 };
 
-const useItems = (type: string): IUseItemsReturn => {
+// function delay(ms: number) {
+//   return new Promise(resolve => setTimeout(resolve, ms));
+// }
+const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
   const [data, setData] = useState([]);
 
   const updateData = (data: any[]) => {
@@ -151,6 +155,26 @@ const useItems = (type: string): IUseItemsReturn => {
       r.key = i;
       i += 1;
     });
+  };
+
+  const connect = async (container: string): Promise<void> => {
+    console.log('HERE');
+
+    const session = await app.serviceManager.terminals.startNew();
+    const terminal = await app.commands.execute('terminal:create-new', {
+      name: session.name
+    });
+    // await delay(20000);
+    const command =
+      'kubectl -n $AWS_ORBIT_TEAM_SPACE exec --stdin --tty `kubectl get pods -n $AWS_ORBIT_TEAM_SPACE -l job-name=' +
+      container +
+      ' -o=name` -- /bin/bash \n';
+    terminal.content.session.send({
+      type: 'stdin',
+      content: [command]
+    });
+    console.log('session', terminal.content.session);
+    console.log('terminal', terminal);
   };
 
   useEffect(() => {
@@ -194,7 +218,7 @@ const useItems = (type: string): IUseItemsReturn => {
     setData(await request('containers', parameters));
   };
 
-  return { data, closeAllCallback, refreshCallback, setData };
+  return { data, closeAllCallback, refreshCallback, setData, connect };
 };
 
 const Sections = (props: { app: JupyterFrontEnd }): JSX.Element => {
@@ -213,6 +237,7 @@ const Sections = (props: { app: JupyterFrontEnd }): JSX.Element => {
         useItems={useItems}
         key="1"
         openCallback={() => launchSectionWidget('Your Jobs', 'user')}
+        app={props.app}
       />
       <ContainerCategoryLeftList
         title={'Team Jobs'}
@@ -220,6 +245,7 @@ const Sections = (props: { app: JupyterFrontEnd }): JSX.Element => {
         useItems={useItems}
         key="2"
         openCallback={() => launchSectionWidget('Team Jobs', 'team')}
+        app={props.app}
       />
       <ContainerCategoryLeftList
         title={'Cron Jobs'}
@@ -227,6 +253,7 @@ const Sections = (props: { app: JupyterFrontEnd }): JSX.Element => {
         useItems={useItems}
         key="3"
         openCallback={() => launchSectionWidget('Cron Jobs', 'cron')}
+        app={props.app}
       />
     </>
   );
@@ -316,6 +343,7 @@ class LeftWidget extends ReactWidget {
   }
 
   render(): JSX.Element {
+    console.log('app', this.app);
     return (
       <div className={SECTION_CLASS}>
         <LeftWidgetHeader
@@ -323,6 +351,7 @@ class LeftWidget extends ReactWidget {
           icon={ICON}
           refreshCallback={refreshCallback}
           openCallback={this.launchCallback}
+          app={this.app}
         />
         <Sections app={this.app} />
         <div />

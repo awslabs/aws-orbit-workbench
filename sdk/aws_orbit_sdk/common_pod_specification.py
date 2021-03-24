@@ -95,8 +95,7 @@ class TeamConstants:
                     "cpu_guarantee": 1,
                     "cpu_limit": 1,
                     "mem_guarantee": "1G",
-                    "mem_limit": "1G",
-                    "storage_capacity": "2Gi",
+                    "mem_limit": "1G"
                 },
             },
             {
