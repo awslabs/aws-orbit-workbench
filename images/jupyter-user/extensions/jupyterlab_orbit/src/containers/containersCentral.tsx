@@ -4,6 +4,7 @@ import { TableWidget } from './table/table';
 import ReactJson from 'react-json-view';
 import { IUseItemsReturn, getStateIcon, getNodeType } from '../containers';
 import { Tooltip } from 'antd';
+import { JupyterFrontEnd } from '@jupyterlab/application';
 
 const columns = [
   {
@@ -115,7 +116,7 @@ const expandable = (): {} => {
 export const ContainerCentralPanel = (props: {
   title: string;
   type: string;
-  useItems: (type: string) => IUseItemsReturn;
+  useItems: (type: string, app: JupyterFrontEnd) => IUseItemsReturn;
 }): JSX.Element => {
   // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
   // @ts-ignore

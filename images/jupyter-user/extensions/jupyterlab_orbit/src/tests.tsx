@@ -44,14 +44,21 @@ class CentralWidget extends ReactWidget {
 
 class LeftWidget extends ReactWidget {
   launchCallback: () => void;
-
-  constructor({ openCallback }: { openCallback: () => void }) {
+  app: JupyterFrontEnd;
+  constructor({
+    openCallback,
+    app
+  }: {
+    openCallback: () => void;
+    app: JupyterFrontEnd;
+  }) {
     super();
     this.addClass('jp-ReactWidget');
     this.addClass(RUNNING_CLASS);
     this.title.caption = `AWS Orbit Workbench - ${NAME}`;
     this.title.icon = ICON;
     this.launchCallback = openCallback;
+    this.app = app;
   }
 
   render(): JSX.Element {
@@ -62,6 +69,7 @@ class LeftWidget extends ReactWidget {
           icon={ICON}
           refreshCallback={refreshCallback}
           openCallback={this.launchCallback}
+          app={this.app}
         />
         <div />
       </div>
@@ -95,7 +103,8 @@ export const activateTests = (
     leftWidget: new LeftWidget({
       openCallback: () => {
         commands.execute(launchCommand);
-      }
+      },
+      app
     })
   });
 };
