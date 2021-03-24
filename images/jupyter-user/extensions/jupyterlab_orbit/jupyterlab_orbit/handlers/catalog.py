@@ -13,12 +13,13 @@
 #    limitations under the License.
 
 import json
-from typing import Any, Dict, List
+import os
 from pathlib import Path
+from typing import Any, Dict, List
+
 from aws_orbit_sdk import glue_catalog
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
-import os
 
 DATA: List[Dict[str, Any]] = []
 
