@@ -62,7 +62,7 @@ export const CategoryViews = (props: {
     <Collapse defaultActiveKey={['1']} onChange={callback}>
       <Panel header={props.name} key={props.key} extra={genExtra()}>
         <div className={CONTAINER_CLASS}>
-          <ul className={LIST_CLASS}> {props.items} </ul>
+          <ul className={LIST_CLASS}>{props.items}</ul>
         </div>
       </Panel>
     </Collapse>

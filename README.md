@@ -5,8 +5,7 @@
 ![Static Checking](https://github.com/awslabs/aws-eks-data-maker/workflows/Static%20Checking/badge.svg?branch=main)
 
 
-<a href="url"><img src="https://github.com/awslabs/aws-orbit-workbench/blob/main/images/landing-page/src/images/orbit1.jpg?raw=true" align="middle" height="80%" width="80%" ></a>
-
+<a href="url"><img src="https://github.com/awslabs/aws-orbit-workbench/blob/main/images/landing-page/src/images/orbit1.jpg?raw=true" align="right" height="30%" width="30%" style="float:right"></a>
 
 Orbit Workbench is an open framework for building team-based secured data environment. Orbit workbench is built on Kubernetes using Amazon Managed Kubernetes Service (EKS), and provides both a command line tool for rapid deployment as well as Python SDK, Jupyter Plugins and more to accelerate data analysis and ML by integration with AWS analytics services such as Amazon Redshift, Amazon Athena, Amazon EMR, Amazon SageMaker and more. 
 
@@ -21,6 +20,41 @@ Contributors are welcome!
 
 Please see our [./Home.md](././Home.md) for installation and usage guides.
 
+##  Feature List 
+(for detailed feature list by release, please see our release page in the wiki tab)
+
+- Collaborative Team Spaces
+  - Isolated Team spaces with pre-provisioned access to data sources
+  - Team isolation enforced by EKS Namespace as well as AWS constructs such as security groups and roles
+  - Shared file system between team users via EFS
+  - Scratch shared space for your team only on S3 with defined expiration time 
+  - Jupyter Plugin to support users with Kubernetes (Jobs, Pods, Volumes and more ) 
+    and AWS resources (Athena, Redshift, Glue Catalog, S3, and more)
+
+- Compute
+  - Build your own docker image using Orbit CLI on a remote AWS codebuild and into ECR Repository
+  - Support for GPU Node pools 
+  - Support Dockers with GPU drivers for use of PyTorch, TensorFlow, and others
+  - Shared node pools for all teams with storage isolation
+  - Auto-Scaling EKS Node pools (coming soon)
+    
+- Security
+  - Jupyter Hub integration with SSO Providers via Cognito
+  - Ability to map SSO Group to a team to control authentication     
+
+- Deployment
+  - Deployment of all AWS and EKS resources via a simple declarative manifest
+  - Ability to add and remove teams dynamically 
+  - Support for Kubernetes Administrative Teams 
+
+- AWS Analytic Services Integrations
+  - Amazon Redshift
+  - Amazon SageMaker (api calls)
+  - Amazon EMR (coming soon)
+  - Amazon Athena
+  - AWS Glue 
+  - AWS Lake Formation (coming soon)
+    
 ## Contributing
 
 Contributing Guidelines: [./CONTRIBUTING.md](././CONTRIBUTING.md)

@@ -102,7 +102,6 @@ profile_list_default = [
             "cpu_limit": 1,
             "mem_guarantee": "1G",
             "mem_limit": "1G",
-            "storage_capacity": "2Gi",
         },
     },
     {
