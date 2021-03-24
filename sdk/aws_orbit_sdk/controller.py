@@ -863,8 +863,8 @@ def wait_for_tasks_to_complete(
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
 
     incomplete_tasks = []
-    _logger.info("Waiting for %s tasks %s", len(tasks), tasks)
-
+    _logger.info("Waiting2 for %s tasks %s", len(tasks), tasks)
+    load_kube_config()
     while True:
         for task in tasks:
             _logger.debug("Checking execution state of: %s", task)
@@ -915,6 +915,7 @@ def wait_for_tasks_to_complete(
         else:
             _logger.info("waiting for %s", tasks)
             time.sleep(delay)
+            load_kube_config()
 
 
 def tail_logs(team_name, tasks) -> None:
