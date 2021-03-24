@@ -49,7 +49,7 @@ else:
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-setup_args = dict(
+setuptools.setup(
     name=name,
     version=version,
     url="https://github.com/awslabs/aws-orbit-workbench",
@@ -77,7 +77,3 @@ setup_args = dict(
         "Framework :: Jupyter",
     ],
 )
-
-
-if __name__ == "__main__":
-    setuptools.setup(**setup_args)
