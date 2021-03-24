@@ -18,10 +18,9 @@ If you are looking to build your own Data & ML Platform for your company on AWS,
 
 Contributors are welcome!
 
-Please see our [./Home.md](././Home.md) for installation and usage guides.
+Please see our [Home](../../wiki) for installation and usage guides.
 
-##  Feature List 
-(for detailed feature list by release, please see our release page in the wiki tab)
+##  Feature List <sup>[**](#myfootnote1)</sup>
 
 - Collaborative Team Spaces
   - Isolated Team spaces with pre-provisioned access to data sources
@@ -63,3 +62,5 @@ Contributing Guidelines: [./CONTRIBUTING.md](././CONTRIBUTING.md)
 ## License
 
 This project is licensed under the Apache-2.0 License.
+
+<a name="myfootnote1">**</a>: for detailed feature list by release, please see our release page in the wiki tab
