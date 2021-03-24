@@ -1,0 +1,6 @@
+include *.in
+include *.sh
+include *.toml
+include *.txt
+include VERSION
+recursive-include redshift *.py
