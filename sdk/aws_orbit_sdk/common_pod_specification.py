@@ -91,13 +91,7 @@ class TeamConstants:
                 "display_name": "Nano",
                 "slug": "nano",
                 "description": "1 CPU + 1G MEM",
-                "kubespawner_override": {
-                    "cpu_guarantee": 1,
-                    "cpu_limit": 1,
-                    "mem_guarantee": "1G",
-                    "mem_limit": "1G",
-                    "storage_capacity": "2Gi",
-                },
+                "kubespawner_override": {"cpu_guarantee": 1, "cpu_limit": 1, "mem_guarantee": "1G", "mem_limit": "1G"},
             },
             {
                 "display_name": "Micro",
