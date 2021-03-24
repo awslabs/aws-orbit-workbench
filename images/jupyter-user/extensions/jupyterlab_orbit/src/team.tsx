@@ -102,10 +102,10 @@ const TeamComponentFunc = (): JSX.Element => {
   const { commonItems, securityItems, profiles, other } = useItems();
   return (
     <div>
-      <ListViewWithoutToolbar name={'Team'} items={commonItems} />;
+      <ListViewWithoutToolbar name={'Team'} items={commonItems} />
       <TreeView name={'Security'} item={securityItems} root_name={'security'} />
       <TreeView name={'Profiles'} item={profiles} root_name={'team profiles'} />
-      <TreeView name={'Other'} item={other} root_name={'properties'} />;
+      <TreeView name={'Other'} item={other} root_name={'properties'} />
     </div>
   );
 };

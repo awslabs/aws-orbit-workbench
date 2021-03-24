@@ -8,6 +8,7 @@ SED=${SED:-sed}
 # Paths where pip-compile generates requirements files #
 paths=(
     "${ROOT_PATH}/cli"
+    "${ROOT_PATH}/jupyter-user/extensions/jupyterlab_orbit"
     "${ROOT_PATH}/plugins/code_commit"
     "${ROOT_PATH}/plugins/hello_world"
     "${ROOT_PATH}/plugins/redshift"
