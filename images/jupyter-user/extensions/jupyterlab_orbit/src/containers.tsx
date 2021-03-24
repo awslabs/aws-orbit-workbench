@@ -110,12 +110,12 @@ export const getNodeType = (
     case 'fargate':
       title = 'Fargate';
       color = 'orange';
-      icon = <FargateIcon style={{ maxHeight: '32px' }} />;
+      icon = <FargateIcon />;
       break;
     case 'ec2':
       title = 'EC2';
       color = 'yellow';
-      icon = <Ec2Icon style={{ maxHeight: '32px' }} />;
+      icon = <Ec2Icon />;
       break;
     default:
       console.error(`node_type: ${nodeType}`);

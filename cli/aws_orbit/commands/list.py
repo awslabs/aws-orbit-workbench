@@ -94,12 +94,13 @@ def list_env(env: str, variable: str) -> None:
             res = ssm.get_parameters_by_path(Path="/orbit", Recursive=True, NextToken=res["NextToken"])
         else:
             break
-    if len(env_info) == 0:
-        click.echo("There are no Orbit environments available")
-        return
 
     if variable == "all":
-        print_list(
-            tittle="Available Orbit environments:",
-            items=[f"Name={k}{stylize(',')}{v}" for k, v in env_info.items()],
-        )
+        if len(env_info) == 0:
+            click.echo("There are no Orbit environments available")
+            return
+        else:
+            print_list(
+                tittle="Available Orbit environments:",
+                items=[f"Name={k}{stylize(',')}{v}" for k, v in env_info.items()],
+            )

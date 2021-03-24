@@ -316,15 +316,7 @@ Resources:
             Action: sts:AssumeRole
           - Effect: Allow
             Principal:
-              Service: ec2.amazonaws.com
-            Action: sts:AssumeRole
-          - Effect: Allow
-            Principal:
               Service: cloudformation.amazonaws.com
-            Action: sts:AssumeRole
-          - Effect: Allow
-            Principal:
-              Service: sagemaker.amazonaws.com
             Action: sts:AssumeRole
   CodeBuild:
     Type: AWS::CodeBuild::Project

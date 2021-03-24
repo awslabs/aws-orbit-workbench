@@ -58,7 +58,7 @@ const columns = [
           title={`${JSON.stringify(text)}`}
           key={'Orbit'}
         >
-          <span> record.notebook </span>
+          <span>{record.notebook}</span>
         </Tooltip>
       );
     }
@@ -82,6 +82,7 @@ const columns = [
   {
     title: 'Node Type',
     dataIndex: 'node_type',
+    align: 'center',
     sorter: {
       compare: utils.Sorter.DEFAULT,
       multiple: 4
@@ -90,7 +91,7 @@ const columns = [
       const { title, color, icon } = getNodeType(text);
       return (
         <Tooltip placement="topLeft" title={title} color={color} key={'Orbit'}>
-          <div> {icon} </div>
+          <div>{icon}</div>
         </Tooltip>
       );
     }

@@ -27,6 +27,23 @@ data:
         log_stream_prefix fluent-bit-
         auto_create_group On
 ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app: orbit-users
+  name: jupyter-user-system-access
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumes
+      - nodes
+    verbs:
+      - get
+      - watch
+      - list
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
