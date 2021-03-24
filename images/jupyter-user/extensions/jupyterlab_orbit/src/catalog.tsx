@@ -178,6 +178,7 @@ const LeftWidgetComponent = (props: {
         icon={ICON}
         refreshCallback={refreshCallback}
         openCallback={() => launchSectionWidget()}
+        app={props.app}
       />
       <Tree
         showLine={true}
