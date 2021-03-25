@@ -383,7 +383,7 @@ def list_storage_pvc():
     api_instance = CoreV1Api()
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
-    _logger.debug(f"Listing pvc for {team_name} namespace")
+    _logger.debug(f"Listing {team_name} namespace persistent volume claims")
     params = dict()
     params["namespace"] = team_name
     params["_preload_content"] = False
@@ -392,6 +392,42 @@ def list_storage_pvc():
         res = json.loads(api_response.data)
     except ApiException as e:
         _logger.info("Exception when calling CoreV1Api->list persistent volume claims: %s\n" % e)
+        raise e
+
+    if "items" not in res:
+        return []
+
+    return res["items"]
+
+def list_storage_pv():
+    load_kube_config()
+    api_instance = CoreV1Api()
+    _logger.debug(f"Listing cluster persistent volumes")
+    params = dict()
+    params["_preload_content"] = False
+    try:
+        api_response = api_instance.list_persistent_volume(**params)
+        res = json.loads(api_response.data)
+    except ApiException as e:
+        _logger.info("Exception when calling CoreV1Api->list persistent volumes : %s\n" % e)
+        raise e
+
+    if "items" not in res:
+        return []
+
+    return res["items"]
+
+def list_storage_class():
+    load_kube_config()
+    api_instance = StorageV1Api()
+    _logger.debug(f"Listing cluster storage classes")
+    params = dict()
+    params["_preload_content"] = False
+    try:
+        api_response = api_instance.list_storage_class(**params)
+        res = json.loads(api_response.data)
+    except ApiException as e:
+        _logger.info("Exception when calling StorageV1Api->list storage class : %s\n" % e)
         raise e
 
     if "items" not in res:
