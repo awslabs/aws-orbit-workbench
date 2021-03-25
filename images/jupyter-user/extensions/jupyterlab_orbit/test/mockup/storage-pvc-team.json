@@ -1,0 +1,201 @@
+[
+    {
+        "metadata": {
+            "name": "jupyterhub",
+            "namespace": "lake-creator",
+            "selfLink": "/api/v1/namespaces/lake-creator/persistentvolumeclaims/jupyterhub",
+            "uid": "e47ed28d-4d06-4ea1-84a9-56af5602f655",
+            "resourceVersion": "10099",
+            "creationTimestamp": "2021-03-19T14:52:49Z",
+            "annotations": {
+                "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"PersistentVolumeClaim\",\"metadata\":{\"annotations\":{},\"name\":\"jupyterhub\",\"namespace\":\"lake-creator\"},\"spec\":{\"accessModes\":[\"ReadWriteMany\"],\"resources\":{\"requests\":{\"storage\":\"5Gi\"}},\"storageClassName\":\"efs-storage-class\",\"volumeName\":\"jupyterhub-lake-creator\"}}\n",
+                "pv.kubernetes.io/bind-completed": "yes"
+            },
+            "finalizers": [
+                "kubernetes.io/pvc-protection"
+            ],
+            "managedFields": [
+                {
+                    "manager": "kubectl-client-side-apply",
+                    "operation": "Update",
+                    "apiVersion": "v1",
+                    "time": "2021-03-19T14:52:49Z",
+                    "fieldsType": "FieldsV1",
+                    "fieldsV1": {
+                        "f:metadata": {
+                            "f:annotations": {
+                                ".": {},
+                                "f:kubectl.kubernetes.io/last-applied-configuration": {}
+                            }
+                        },
+                        "f:spec": {
+                            "f:accessModes": {},
+                            "f:resources": {
+                                "f:requests": {
+                                    ".": {},
+                                    "f:storage": {}
+                                }
+                            },
+                            "f:storageClassName": {},
+                            "f:volumeMode": {},
+                            "f:volumeName": {}
+                        }
+                    }
+                },
+                {
+                    "manager": "kube-controller-manager",
+                    "operation": "Update",
+                    "apiVersion": "v1",
+                    "time": "2021-03-19T14:53:01Z",
+                    "fieldsType": "FieldsV1",
+                    "fieldsV1": {
+                        "f:metadata": {
+                            "f:annotations": {
+                                "f:pv.kubernetes.io/bind-completed": {}
+                            }
+                        },
+                        "f:status": {
+                            "f:accessModes": {},
+                            "f:capacity": {
+                                ".": {},
+                                "f:storage": {}
+                            },
+                            "f:phase": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "spec": {
+            "accessModes": [
+                "ReadWriteMany"
+            ],
+            "resources": {
+                "requests": {
+                    "storage": "5Gi"
+                }
+            },
+            "volumeName": "jupyterhub-lake-creator",
+            "storageClassName": "efs-storage-class",
+            "volumeMode": "Filesystem"
+        },
+        "status": {
+            "phase": "Bound",
+            "accessModes": [
+                "ReadWriteMany"
+            ],
+            "capacity": {
+                "storage": "5Gi"
+            }
+        }
+    },
+    {
+        "metadata": {
+            "name": "orbit-stthoom",
+            "namespace": "lake-creator",
+            "selfLink": "/api/v1/namespaces/lake-creator/persistentvolumeclaims/orbit-stthoom",
+            "uid": "be291cf4-4f9c-477d-8f00-61113eed726b",
+            "resourceVersion": "13812",
+            "creationTimestamp": "2021-03-19T15:09:39Z",
+            "labels": {
+                "component": "singleuser-storage",
+                "orbit/attach-security-group": "yes",
+                "orbit/node-type": "ec2"
+            },
+            "annotations": {
+                "hub.jupyter.org/username": "stthoom",
+                "pv.kubernetes.io/bind-completed": "yes",
+                "pv.kubernetes.io/bound-by-controller": "yes",
+                "volume.beta.kubernetes.io/storage-class": "ebs-lake-creator-gp2",
+                "volume.beta.kubernetes.io/storage-provisioner": "kubernetes.io/aws-ebs"
+            },
+            "finalizers": [
+                "kubernetes.io/pvc-protection"
+            ],
+            "managedFields": [
+                {
+                    "manager": "OpenAPI-Generator",
+                    "operation": "Update",
+                    "apiVersion": "v1",
+                    "time": "2021-03-19T15:09:39Z",
+                    "fieldsType": "FieldsV1",
+                    "fieldsV1": {
+                        "f:metadata": {
+                            "f:annotations": {
+                                ".": {},
+                                "f:hub.jupyter.org/username": {},
+                                "f:volume.beta.kubernetes.io/storage-class": {}
+                            },
+                            "f:labels": {
+                                ".": {},
+                                "f:component": {},
+                                "f:orbit/attach-security-group": {},
+                                "f:orbit/node-type": {}
+                            }
+                        },
+                        "f:spec": {
+                            "f:accessModes": {},
+                            "f:resources": {
+                                "f:requests": {
+                                    ".": {},
+                                    "f:storage": {}
+                                }
+                            },
+                            "f:storageClassName": {},
+                            "f:volumeMode": {}
+                        }
+                    }
+                },
+                {
+                    "manager": "kube-controller-manager",
+                    "operation": "Update",
+                    "apiVersion": "v1",
+                    "time": "2021-03-19T15:09:44Z",
+                    "fieldsType": "FieldsV1",
+                    "fieldsV1": {
+                        "f:metadata": {
+                            "f:annotations": {
+                                "f:pv.kubernetes.io/bind-completed": {},
+                                "f:pv.kubernetes.io/bound-by-controller": {},
+                                "f:volume.beta.kubernetes.io/storage-provisioner": {}
+                            }
+                        },
+                        "f:spec": {
+                            "f:volumeName": {}
+                        },
+                        "f:status": {
+                            "f:accessModes": {},
+                            "f:capacity": {
+                                ".": {},
+                                "f:storage": {}
+                            },
+                            "f:phase": {}
+                        }
+                    }
+                }
+            ]
+        },
+        "spec": {
+            "accessModes": [
+                "ReadWriteOnce"
+            ],
+            "resources": {
+                "requests": {
+                    "storage": "5Gi"
+                }
+            },
+            "volumeName": "pvc-be291cf4-4f9c-477d-8f00-61113eed726b",
+            "storageClassName": "ebs-lake-creator-gp2",
+            "volumeMode": "Filesystem"
+        },
+        "status": {
+            "phase": "Bound",
+            "accessModes": [
+                "ReadWriteOnce"
+            ],
+            "capacity": {
+                "storage": "5Gi"
+            }
+        }
+    }
+]
