@@ -67,7 +67,7 @@ python-slugify==4.0.1
     # via aws-orbit (setup.py)
 pyyaml-include==1.2.post2
     # via aws-orbit (setup.py)
-pyyaml==5.3.1
+pyyaml==5.4
     # via
     #   aws-orbit (setup.py)
     #   cfn-flip
