@@ -24,7 +24,7 @@ import useUrls from "../hooks/use-urls";
 const { Title } = Typography;
 
 const TeamSpaces = ({ userInfo }) => {
-  const [urls, isLoading] = useUrls(userInfo.groups, userInfo.jwt);
+  const [urls, isLoading] = useUrls(userInfo.groups, userInfo.jwt, userInfo.refreshToken);
 
   const JupyterIcon = (props) => <Icon component={JupyterLogo} {...props} />;
   return (
