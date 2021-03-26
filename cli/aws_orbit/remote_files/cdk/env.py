@@ -227,6 +227,7 @@ class Env(Stack):
         return cognito.UserPoolClient(
             scope=self,
             id="user-pool-client",
+            access_token_validity=Duration.days(1),
             user_pool=self.user_pool,
             auth_flows=cognito.AuthFlow(user_srp=True, admin_user_password=False, custom=False),
             generate_secret=False,

@@ -13,9 +13,7 @@
 #    limitations under the License.
 
 import json
-import os
-from typing import Any, Dict, Tuple, Union, cast
-import requests
+from typing import Any, Dict, Tuple, cast
 
 import boto3
 from jupyterhub.auth import Authenticator
@@ -54,58 +52,64 @@ class OrbitWorkbenchAuthenticator(Authenticator):  # type: ignore
         return cast(str, response["cognito:username"])
 
     async def refresh_user(self, user, handler=None):
-         """Refresh auth data for a given user
+        """Refresh auth data for a given user
 
-         Allows refreshing or invalidating auth data.
+        Allows refreshing or invalidating auth data.
 
-         Only override if your authenticator needs
-         to refresh its data about users once in a while.
+        Only override if your authenticator needs
+        to refresh its data about users once in a while.
 
-         .. versionadded: 1.0
+        .. versionadded: 1.0
 
-         Args:
-             user (User): the user to refresh
-             handler (tornado.web.RequestHandler or None): the current request handler
-         Returns:
-             auth_data (bool or dict):
-                 Return **True** if auth data for the user is up-to-date
-                 and no updates are required.
+        Args:
+         user (User): the user to refresh
+         handler (tornado.web.RequestHandler or None): the current request handler
+        Returns:
+         auth_data (bool or dict):
+             Return **True** if auth data for the user is up-to-date
+             and no updates are required.
 
-                 Return **False** if the user's auth data has expired,
-                 and they should be required to login again.
+             Return **False** if the user's auth data has expired,
+             and they should be required to login again.
 
-                 Return a **dict** of auth data if some values should be updated.
-                 This dict should have the same structure as that returned
-                 by :meth:`.authenticate()` when it returns a dict.
-                 Any fields present will refresh the value for the user.
-                 Any fields not present will be left unchanged.
-                 This can include updating `.admin` or `.auth_state` fields.
-         """
+             Return a **dict** of auth data if some values should be updated.
+             This dict should have the same structure as that returned
+             by :meth:`.authenticate()` when it returns a dict.
+             Any fields present will refresh the value for the user.
+             Any fields not present will be left unchanged.
+             This can include updating `.admin` or `.auth_state` fields.
+        """
 
-         """
-          1. Get current refresh token from user
-          2. Check validate if still valid
-          3. Get new token and save (TODO)
-          4. If expired, redirect to Landing Page (TODO)
-         """
+        auth_state = yield user.get_auth_state()
 
-         auth_state = yield user.get_auth_state()
+        response: Dict[str, Any] = boto3.client("lambda").invoke(
+            FunctionName=f"orbit-{ENV_NAME}-token-validation"
+            InvocationType="RequestResponse",
+            Payload=json.dumps({"token": auth_state['access_token']}).encode("utf-8"),
+        )
 
-         response: Dict[str, Any] = boto3.client("lambda").invoke(
-             FunctionName="orbit-token-validation",
-             InvocationType="RequestResponse",
-             Payload=json.dumps({"token": auth_state['access_token']}).encode("utf-8"),
-         )
-
-         if response is None:
+        if response is None:
+            app_log.error(f"Invalid Lambda response:\n{response}")
             return False
 
-         return True
+        app_log.info("claims: %s", response)
+            if "cognito:username" not in response or response.get("cognito:username") is None:
+                if "errorMessage" in response:
+                    app_log.error(f"Failed authentication with error: {response['errorMessage']}")
+                    return False
+                else:
+                    app_log.error(f"Failed authentication with unknown return: {response}")
+                    return False
+
+        if response is None:
+            return False
+
+        return True
 
     @staticmethod
     def _get_token(url: str) -> str:
         app_log.info("url: %s", url)
-        parts: Tuple[str, ...] = tuple(url.split(sep="/login?next=%2Fhub%2Fhome&token=", maxsplit=1))
+        parts: Tuple[str, ...] = tuple(url.split(sep="/login?next=%2Fhub%2Fhome&id_token=", maxsplit=1))
         if len(parts) != 2:
             app_log.error("url:\n%s", url)
             raise HTTPError(500, f"url: {url}")

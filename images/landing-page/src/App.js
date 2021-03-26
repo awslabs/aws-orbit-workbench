@@ -54,7 +54,6 @@ const getUserInfo = (userSession) => {
     username: payload["cognito:username"],
     groups: groups,
     idToken: userSession.idToken.jwtToken,
-    refreshToken: userSession.refreshToken.jwtToken,
   };
   console.log("userInfo", userInfo);
   return userInfo;

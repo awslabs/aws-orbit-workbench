@@ -26,7 +26,7 @@ const toTitleCase = (phrase) => {
     .join(" ");
 };
 
-const fetchParameters = async (groups, idToken, refreshToken) => {
+const fetchParameters = async (groups, idToken) => {
   const session = await Auth.currentSession();
   AWS.config.region = window.REACT_APP_REGION;
   AWS.config.credentials = new AWS.CognitoIdentityCredentials({
@@ -48,14 +48,14 @@ const fetchParameters = async (groups, idToken, refreshToken) => {
     const response = await ssm.getParameters(params).promise();
     urls = response.Parameters.map((x) => ({
       title: toTitleCase(x.Name.slice(x.Name.slice(0, -8).lastIndexOf("/") + 1, -8).replace("-", " ")),
-      url: `http://${JSON.parse(x.Value)["JupyterUrl"]}/hub/login?next=%2Fhub%2Fhome&id_token=${idToken}&refresh_token=${refreshToken}`,
+      url: `http://${JSON.parse(x.Value)["JupyterUrl"]}/hub/login?next=%2Fhub%2Fhome&id_token=${idToken}`,
     }));
   }
   console.log("urls", urls);
   return urls;
 };
 
-const useUrls = (groups, idToken, refreshToken) => {
+const useUrls = (groups, idToken) => {
   let default_urls = [];
   if (Array.isArray(groups) && groups.length) {
     default_urls = groups.map((x) => ({
@@ -69,12 +69,12 @@ const useUrls = (groups, idToken, refreshToken) => {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-      setUrls(await fetchParameters(groups, idToken, refreshToken));
+      setUrls(await fetchParameters(groups, idToken));
       setIsLoading(false);
     };
 
     fetchData();
-  }, [groups, idToken, refreshToken]);
+  }, [groups, idToken]);
 
   return [urls, isLoading];
 };
