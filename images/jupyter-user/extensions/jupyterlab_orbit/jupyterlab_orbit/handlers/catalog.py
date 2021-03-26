@@ -13,8 +13,6 @@
 #    limitations under the License.
 
 import json
-import os
-from pathlib import Path
 from typing import Any, Dict, List
 from pathlib import Path
 from aws_orbit_sdk import glue_catalog
