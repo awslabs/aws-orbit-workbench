@@ -83,7 +83,7 @@ class OrbitWorkbenchAuthenticator(Authenticator):  # type: ignore
         auth_state = yield user.get_auth_state()
 
         response: Dict[str, Any] = boto3.client("lambda").invoke(
-            FunctionName=f"orbit-{ENV_NAME}-token-validation"
+            FunctionName=f"orbit-{ENV_NAME}-token-validation",
             InvocationType="RequestResponse",
             Payload=json.dumps({"token": auth_state['access_token']}).encode("utf-8"),
         )
@@ -93,13 +93,13 @@ class OrbitWorkbenchAuthenticator(Authenticator):  # type: ignore
             return False
 
         app_log.info("claims: %s", response)
-            if "cognito:username" not in response or response.get("cognito:username") is None:
-                if "errorMessage" in response:
-                    app_log.error(f"Failed authentication with error: {response['errorMessage']}")
-                    return False
-                else:
-                    app_log.error(f"Failed authentication with unknown return: {response}")
-                    return False
+        if "cognito:username" not in response or response.get("cognito:username") is None:
+            if "errorMessage" in response:
+                app_log.error(f"Failed authentication with error: {response['errorMessage']}")
+                return False
+            else:
+                app_log.error(f"Failed authentication with unknown return: {response}")
+                return False
 
         if response is None:
             return False
