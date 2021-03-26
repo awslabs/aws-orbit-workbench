@@ -110,4 +110,3 @@ class OrbitWorkbenchAuthenticator(Authenticator):  # type: ignore
             app_log.error("url:\n%s", url)
             raise HTTPError(500, f"url: {url}")
         return parts[1]
-        
