@@ -102,24 +102,31 @@ const TeamComponentFunc = (): JSX.Element => {
   const { commonItems, securityItems, profiles, other } = useItems();
   return (
     <div>
-      <ListViewWithoutToolbar name={'Team'} items={commonItems} />;
+      <ListViewWithoutToolbar name={'Team'} items={commonItems} />
       <TreeView name={'Security'} item={securityItems} root_name={'security'} />
       <TreeView name={'Profiles'} item={profiles} root_name={'team profiles'} />
-      <TreeView name={'Other'} item={other} root_name={'properties'} />;
+      <TreeView name={'Other'} item={other} root_name={'properties'} />
     </div>
   );
 };
 
 class TeamLeftWidget extends ReactWidget {
   launchCallback: () => void;
-
-  constructor({ openCallback }: { openCallback: () => void }) {
+  app: JupyterFrontEnd;
+  constructor({
+    openCallback,
+    app
+  }: {
+    openCallback: () => void;
+    app: JupyterFrontEnd;
+  }) {
     super();
     this.addClass('jp-ReactWidget');
     this.addClass(RUNNING_CLASS);
     this.title.caption = `AWS Orbit Workbench - ${NAME}`;
     this.title.icon = ICON;
     this.launchCallback = openCallback;
+    this.app = app;
   }
 
   render(): JSX.Element {
@@ -130,6 +137,7 @@ class TeamLeftWidget extends ReactWidget {
           icon={ICON}
           refreshCallback={refreshCallback}
           openCallback={this.launchCallback}
+          app={this.app}
         />
         <TeamComponentFunc />
       </div>
@@ -163,7 +171,8 @@ export const activateTeam = (
     leftWidget: new TeamLeftWidget({
       openCallback: () => {
         commands.execute(launchCommand);
-      }
+      },
+      app
     })
   });
 };
