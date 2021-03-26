@@ -378,6 +378,7 @@ def list_current_pods(label_selector: str = None):
 
     return res["items"]
 
+
 def list_storage_pvc():
     load_kube_config()
     api_instance = CoreV1Api()
@@ -399,10 +400,34 @@ def list_storage_pvc():
 
     return res["items"]
 
+
+def delete_storage_pvc(pvc_name: str):
+    load_kube_config()
+    api_instance = CoreV1Api()
+    props = get_properties()
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    _logger.debug(f"Deleting {team_name} namespace persistent volume claim {pvc_name}")
+    params = dict()
+    params["name"] = pvc_name
+    params["namespace"] = team_name
+    params["_preload_content"] = False
+    try:
+        api_response = api_instance.delete_namespaced_persistent_volume_claim(**params)
+        res = json.loads(api_response.data)
+    except ApiException as e:
+        _logger.info("Exception when calling CoreV1Api->delete persistent volume claim: %s\n" % e)
+        raise e
+
+    if "items" not in res:
+        return []
+
+    return res["items"]
+
+
 def list_storage_pv():
     load_kube_config()
     api_instance = CoreV1Api()
-    _logger.debug(f"Listing cluster persistent volumes")
+    _logger.debug("Listing cluster persistent volumes")
     params = dict()
     params["_preload_content"] = False
     try:
@@ -417,10 +442,31 @@ def list_storage_pv():
 
     return res["items"]
 
+
+def delete_storage_pv(pv_name: str):
+    load_kube_config()
+    api_instance = CoreV1Api()
+    _logger.debug(f"Deleting cluster persistent volume {pv_name}")
+    params = dict()
+    params["name"] = pv_name
+    params["_preload_content"] = False
+    try:
+        api_response = api_instance.delete_persistent_volume(**params)
+        res = json.loads(api_response.data)
+    except ApiException as e:
+        _logger.info("Exception when calling CoreV1Api->delete persistent volume : %s\n" % e)
+        raise e
+
+    if "items" not in res:
+        return []
+
+    return res["items"]
+
+
 def list_storage_class():
     load_kube_config()
     api_instance = StorageV1Api()
-    _logger.debug(f"Listing cluster storage classes")
+    _logger.debug("Listing cluster storage classes")
     params = dict()
     params["_preload_content"] = False
     try:
@@ -434,6 +480,27 @@ def list_storage_class():
         return []
 
     return res["items"]
+
+
+def delete_storage_class(sc_name: str):
+    load_kube_config()
+    api_instance = StorageV1Api()
+    _logger.debug(f"Deleting cluster storage classes {sc_name}")
+    params = dict()
+    params["name"] = sc_name
+    params["_preload_content"] = False
+    try:
+        api_response = api_instance.delete_storage_class(**params)
+        res = json.loads(api_response.data)
+    except ApiException as e:
+        _logger.info("Exception when deleting StorageV1Api->delete storage class : %s\n" % e)
+        raise e
+
+    if "items" not in res:
+        return []
+
+    return res["items"]
+
 
 def delete_job(job_name: str, grace_period_seconds: int = 30):
     props = get_properties()

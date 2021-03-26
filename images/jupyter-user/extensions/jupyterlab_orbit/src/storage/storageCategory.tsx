@@ -23,7 +23,7 @@ const Item = (props: {
       >
         {props.item.name}
       </span>
-      <span className={ITEM_DETAIL_CLASS}>{props.item.time}</span>
+      <span className={ITEM_DETAIL_CLASS}>{props.item.creationTimestamp}</span>
       <span className={ITEM_DETAIL_CLASS}>{props.item.size}</span>
     </li>
   );

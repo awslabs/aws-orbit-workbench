@@ -16,56 +16,83 @@ import json
 import os
 from pathlib import Path
 from typing import Dict, List, Optional
-
+import pprint
 from aws_orbit_sdk import controller
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
 
-TEAMPVCS: List[Dict[str, str]] = []
-ALLPVCS: List[Dict[str, str]] = []
+TEAM_PVCS: List[Dict[str, str]] = []
+CLUSTER_PVS: List[Dict[str, str]] = []
+CLUSTER_STORAGECLASSES: List[Dict[str, str]] = []
 
 class StorageRouteHandler(APIHandler):
     @staticmethod
-    def _dump(pvclist, type) -> str:
+    def _dump(slist, type) -> str:
+        data: List[Dict[str, str]] = []
+        for s in slist:
+            pass
+            storage: Dict[str, str] = dict()
+            storage["name"] = s["metadata"]["name"]
+            storage["creationTimestamp"] = s["metadata"]["creationTimestamp"]
+            if type == "teampvc":
+                storage["hint"] = json.dumps(s["spec"], indent=4)
+            elif type == "clusterpv":
+                storage["hint"] = json.dumps(s["spec"], indent=4)
+            elif type == "clusterstorageclass":
+                storage["hint"] = ""
+            else:
+                pass
+            storage["info"] = s
+            data.append(storage)
         data = sorted(
-            pvclist, key=lambda i: (i["metadata"]["creationTimestamp"]
-                                    if "creationTimestamp" in i["metadata"]
-                                    else i["metadata"]["name"])
+            data, key=lambda i: (i["creationTimestamp"]
+                                    if "creationTimestamp" in i
+                                    else i["name"])
         )
 
+        pprint.pprint(data)
         return json.dumps(data)
 
     @web.authenticated
     def get(self):
         self.log.debug("Entered storage GET")
-        global TEAMPVCS
+        global TEAM_PVCS
+        global CLUSTER_PVS
+        global CLUSTER_STORAGECLASSES
         type: Optional[str] = self.get_argument("type", default="")
         self.log.info(f"GET - {self.__class__} - {type} {format}")
         if "MOCK" not in os.environ or os.environ["MOCK"] == "0":
-            if type == "team":
-                TEAMPVCS = controller.list_storage_pvc(all=False)
-                data = TEAMPVCS
-            elif type == "all":
-                ALLPVCS = controller.list_storage_pvc(all=True)
-                data = ALLPVCS
+            if type == "teampvc":
+                self.log.debug("***teampvc***")
+                TEAM_PVCS = controller.list_storage_pvc()
+                data = TEAM_PVCS
+            elif type == "clusterpv":
+                self.log.debug("***clusterpv***")
+                CLUSTER_PVS = controller.list_storage_pv()
+                data = CLUSTER_PVS
+            elif type == "clusterstorageclass":
+                self.log.debug("***clusterstorageclass***")
+                CLUSTER_STORAGECLASSES = controller.list_storage_class()
+                data = CLUSTER_STORAGECLASSES
             else:
                 raise Exception("Unknown type: %s", type)
-                #TEAMPVCS = controller.list_storage_pvc(all=False)
-                #data = TEAMPVCS
 
             if "MOCK" in os.environ:
-                with open(f"{Path(__file__).parent.parent.parent}/test/mockup/storage-pvc-{type}.json", "w") as outfile:
+                with open(f"{Path(__file__).parent.parent.parent}/test/mockup/storage-{type}.json", "w") as outfile:
                     json.dump(data, outfile, indent=4)
         else:
-            path = f"{Path(__file__).parent.parent.parent}/test/mockup/storage-pvc-{type}.json"
+            path = f"{Path(__file__).parent.parent.parent}/test/mockup/storage-{type}.json"
             self.log.info("Path: %s", path)
             with open(path) as f:
-                if type == "team":
-                    TEAMPVCS = json.load(f)
-                    data = TEAMPVCS
-                elif type == "all":
-                    ALLPVCS = json.load(f)
-                    data = ALLPVCS
+                if type == "teampvc":
+                    TEAM_PVCS = json.load(f)
+                    data = TEAM_PVCS
+                elif type == "clusterpv":
+                    CLUSTER_PVS = json.load(f)
+                    data = CLUSTER_PVS
+                elif type == "clusterstorageclass":
+                    CLUSTER_STORAGECLASSES = json.load(f)
+                    data = CLUSTER_STORAGECLASSES
                 else:
                     raise Exception("Unknown type: %s", type)
 

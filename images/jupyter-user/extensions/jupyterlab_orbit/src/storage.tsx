@@ -29,7 +29,7 @@ const refreshCallback = () => {
 export interface IItem {
   name: string;
   hint: string;
-  time: string;
+  creationTimestamp: string;
   size: string;
 }
 
@@ -78,7 +78,7 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
   return { data, refreshCallback };
 };
 
-const Sections = (props: { app: JupyterFrontEnd }): JSX.Element => {
+const StorageSections = (props: { app: JupyterFrontEnd }): JSX.Element => {
   const launchSectionWidget = (title: string, type: string) => {
     const centralWidget = new MainAreaWidget<ReactWidget>({
       content: new CentralWidgetSection(title, type)
@@ -89,28 +89,32 @@ const Sections = (props: { app: JupyterFrontEnd }): JSX.Element => {
   return (
     <>
       <StorageCategoryLeftList
-        title={'Your Jobs'}
-        type={'user'}
+        title={'Team PersistentVolumeClaim(PVC)'}
+        type={'teampvc'}
         useItems={useItems}
         key="1"
-        openCallback={() => launchSectionWidget('Team PVC', 'team')}
+        openCallback={() =>
+          launchSectionWidget('Team PersistentVolumeClaim(PVC)', 'teampvc')
+        }
         app={props.app}
       />
       <StorageCategoryLeftList
-        title={'Team Jobs'}
-        type={'team'}
+        title={'Cluster PersistentVolume(PV)'}
+        type={'clusterpv'}
         useItems={useItems}
         key="2"
-        openCallback={() => launchSectionWidget('Cluster PV', 'pv')}
+        openCallback={() =>
+          launchSectionWidget('Cluster PersistentVolume(PV)', 'clusterpv')
+        }
         app={props.app}
       />
       <StorageCategoryLeftList
-        title={'Cron Jobs'}
-        type={'cron'}
+        title={'Cluster StorageClass'}
+        type={'clusterstorageclass'}
         useItems={useItems}
         key="3"
         openCallback={() =>
-          launchSectionWidget('Cluster Storage Class', 'storageclass')
+          launchSectionWidget('Cluster StorageClass', 'clusterstorageclass')
         }
         app={props.app}
       />
@@ -153,7 +157,7 @@ class CentralWidgetSection extends ReactWidget {
   }
 }
 
-class CentralWidget extends ReactWidget {
+class StorageCentralWidget extends ReactWidget {
   app: JupyterFrontEnd;
 
   constructor({ app }: { app: JupyterFrontEnd }) {
@@ -174,14 +178,14 @@ class CentralWidget extends ReactWidget {
           icon={ICON}
           refreshCallback={refreshCallback}
         />
-        <Sections app={this.app} />
+        <StorageSections app={this.app} />
         <div />
       </div>
     );
   }
 }
 
-class LeftWidget extends ReactWidget {
+class StorageLeftWidget extends ReactWidget {
   launchCallback: () => void;
   app: JupyterFrontEnd;
 
@@ -211,7 +215,7 @@ class LeftWidget extends ReactWidget {
           openCallback={this.launchCallback}
           app={this.app}
         />
-        <Sections app={this.app} />
+        <StorageSections app={this.app} />
         <div />
       </div>
     );
@@ -231,7 +235,7 @@ export const activateStorage = (
     name: NAME,
     icon: ICON,
     app: app,
-    widgetCreation: () => new CentralWidget({ app: app })
+    widgetCreation: () => new StorageCentralWidget({ app: app })
   });
 
   registerGeneral({
@@ -241,7 +245,7 @@ export const activateStorage = (
     menu: menu,
     rank: rank,
     launchCommand: launchCommand,
-    leftWidget: new LeftWidget({
+    leftWidget: new StorageLeftWidget({
       openCallback: () => {
         commands.execute(launchCommand);
       },

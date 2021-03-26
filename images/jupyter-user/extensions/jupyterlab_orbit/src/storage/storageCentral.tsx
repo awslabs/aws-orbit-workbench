@@ -16,7 +16,7 @@ const columns = [
   },
   {
     title: 'Creation Timestamp',
-    dataIndex: 'time',
+    dataIndex: 'creationTimestamp',
     sorter: {
       compare: utils.Sorter.DATE,
       multiple: 1
