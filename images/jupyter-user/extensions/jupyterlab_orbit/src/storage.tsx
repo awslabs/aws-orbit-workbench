@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useState} from 'react';
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { ILauncher } from '@jupyterlab/launcher';
 import {
   ReactWidget,
   ICommandPalette,
-  MainAreaWidget
+  MainAreaWidget,
+  showDialog,
+  Dialog
 } from '@jupyterlab/apputils';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { Menu } from '@lumino/widgets';
@@ -18,6 +20,7 @@ import { request } from './common/backend';
 import { IDictionary } from './typings/utils';
 import { StorageCentralPanel } from './storage/storageCentral';
 import { StorageCategoryLeftList } from './storage/storageCategory';
+import { deleteItem } from './containers';
 
 const NAME = 'Storage';
 const ICON: LabIcon = storageIcon;
@@ -35,7 +38,9 @@ export interface IItem {
 
 export interface IUseItemsReturn {
   data: any[];
+  closeAllCallback: (name: string) => void;
   refreshCallback: () => void;
+  setData: Dispatch<SetStateAction<any[]>>;
 }
 
 export const openItemCallback = (name: string) => {
@@ -67,6 +72,25 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
     fetchData();
   }, []);
 
+  const closeAllCallback = (name: string) => {
+    void showDialog({
+      title: `Delete all ${name} storage`,
+      body: 'Are you sure about it?',
+      buttons: [
+        Dialog.cancelButton({ label: 'Cancel' }),
+        Dialog.warnButton({ label: 'Delete All' })
+      ]
+    }).then(result => {
+      if (result.button.accept) {
+        console.log('DELETE ALL!');
+        data.map(async x => {
+          await deleteItem(x.name, type);
+        });
+        setData([]);
+      }
+    });
+  };
+
   const refreshCallback = async () => {
     console.log(`[${NAME}] Refresh!`);
     const parameters: IDictionary<number | string> = {
@@ -75,7 +99,7 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
     setData(await request('storage', parameters));
   };
 
-  return { data, refreshCallback };
+  return { data, closeAllCallback, refreshCallback, setData };
 };
 
 const StorageSections = (props: { app: JupyterFrontEnd }): JSX.Element => {

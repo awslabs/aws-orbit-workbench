@@ -482,26 +482,6 @@ def list_storage_class():
     return res["items"]
 
 
-def delete_storage_class(sc_name: str):
-    load_kube_config()
-    api_instance = StorageV1Api()
-    _logger.debug(f"Deleting cluster storage classes {sc_name}")
-    params = dict()
-    params["name"] = sc_name
-    params["_preload_content"] = False
-    try:
-        api_response = api_instance.delete_storage_class(**params)
-        res = json.loads(api_response.data)
-    except ApiException as e:
-        _logger.info("Exception when deleting StorageV1Api->delete storage class : %s\n" % e)
-        raise e
-
-    if "items" not in res:
-        return []
-
-    return res["items"]
-
-
 def delete_job(job_name: str, grace_period_seconds: int = 30):
     props = get_properties()
     global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__

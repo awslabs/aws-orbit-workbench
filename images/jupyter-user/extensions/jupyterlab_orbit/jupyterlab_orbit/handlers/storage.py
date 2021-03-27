@@ -34,10 +34,9 @@ class StorageRouteHandler(APIHandler):
             storage: Dict[str, str] = dict()
             storage["name"] = s["metadata"]["name"]
             storage["creationTimestamp"] = s["metadata"]["creationTimestamp"]
-            if type == "teampvc":
+            if type == "teampvc" or type == "clusterpv":
                 storage["hint"] = json.dumps(s["spec"], indent=4)
-            elif type == "clusterpv":
-                storage["hint"] = json.dumps(s["spec"], indent=4)
+                storage["size"] = s["spec"]["capacity"]["storage"]
             elif type == "clusterstorageclass":
                 storage["hint"] = ""
             else:
@@ -99,4 +98,28 @@ class StorageRouteHandler(APIHandler):
         self.finish(self._dump(data, type))
         self.log.debug("Exit storage GET")
 
+    @staticmethod
+    def _delete(name, data):
+        for s in data:
+            if s["metadata"]["name"] == name:
+                data.remove(s)
 
+    @web.authenticated
+    def delete(self):
+        global TEAM_PVCS
+        global CLUSTER_PVS
+        input_data = self.get_json_body()
+        name = input_data["name"]
+        type: Optional[str] = self.get_argument("type", default="")
+        self.log.info(f"DELETE - {self.__class__} - %s type: %s", name, type)
+        if type == "teampvc":
+            controller.delete_storage_pvc(name)
+            data = TEAM_PVCS
+        elif type == "clusterpv":
+            controller.delete_storage_pv(name)
+            data = CLUSTER_PVS
+        else:
+            raise Exception("Unknown type: %s", type)
+
+        self._delete(name, data)
+        self.finish(self._dump(data, type))
