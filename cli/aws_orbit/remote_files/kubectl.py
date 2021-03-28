@@ -58,7 +58,7 @@ def _k8_dashboard(context: "Context", output_path: str) -> None:
         )
         scraper_image = (
             f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
-            f"orbit-{context.name}-k8-metrics-scraper:{ImagesManifest.k8_dashboard.version}"
+            f"orbit-{context.name}-k8-metrics-scraper:{ImagesManifest.k8_metrics_scraper.version}"
         )
     else:
         dashboard_image = f"{ImagesManifest.k8_dashboard.repository}:{ImagesManifest.k8_dashboard.version}"

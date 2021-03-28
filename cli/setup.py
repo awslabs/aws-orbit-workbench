@@ -30,9 +30,14 @@ with open("VERSION", "r") as version_file:
 setup(
     name=about["__title__"],
     version=version,
+    author="AWS Professional Services",
+    author_email="aws-proserve-opensource@amazon.com",
+    url="https://github.com/awslabs/aws-orbit-workbench",
+    project_urls={"Org Site": "https://aws.amazon.com/professional-services/"},
     description=about["__description__"],
     license=about["__license__"],
     packages=find_packages(include=["aws_orbit", "aws_orbit.*"]),
+    keywords=["aws", "cdk"],
     python_requires=">=3.7, <3.9",
     install_requires=[
         "boto3~=1.12",
@@ -49,8 +54,16 @@ setup(
     ],
     entry_points={"console_scripts": ["orbit = aws_orbit.__main__:main"]},
     classifiers=[
+        "Development Status :: 4 - Beta",
+        "Framework :: Jupyter",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Information Technology",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Typing :: Typed",
     ],
     package_data={
         "aws_orbit": [
