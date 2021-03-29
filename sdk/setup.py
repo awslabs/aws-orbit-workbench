@@ -21,7 +21,7 @@ setuptools.setup(
     package_dir={"aws_orbit_sdk": "aws_orbit_sdk"},
     packages=setuptools.find_packages(),
     include_package_data=True,
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     install_requires=[
         "boto3>=1.12.49,<2.0.0",
         "pyyaml~=5.4",
