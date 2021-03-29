@@ -84,7 +84,7 @@ def list_env(env: str, variable: str) -> None:
                 env_info[env_name] = (
                     f"LandingPage={context.landing_page_url}, "
                     f"Teams=[{teams_list}], "
-                    f"ToolkitBucket={context.toolkit.s3_bucket}"
+                    f"ToolkitBucket={context.toolkit.s3_bucket},"
                     f"K8Dashboard={k8_dashboard_url}"
                 )
             else:

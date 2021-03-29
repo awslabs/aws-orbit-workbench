@@ -14,6 +14,7 @@ paths=(
     "${ROOT_PATH}/plugins/redshift"
     "${ROOT_PATH}/plugins/team_script_launcher"
     "${ROOT_PATH}/plugins/custom_cfn"
+    "${ROOT_PATH}/plugins/emr_on_eks"
     "${ROOT_PATH}/sdk"
 )
 
