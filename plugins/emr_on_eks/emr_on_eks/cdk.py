@@ -56,24 +56,22 @@ class Team(Stack):
                             "emr-containers:ListJobRuns",
                             "emr-containers:DescribeJobRun",
                             "emr-containers:CancelJobRun",
-                            "emr-containers:TagResource"
+                            "emr-containers:TagResource",
                         ],
-                        resources=[parameters['virtual_arn']],
+                        resources=[parameters["virtual_arn"]],
                     ),
                     iam.PolicyStatement(
                         effect=iam.Effect.ALLOW,
-                        actions=["emr-containers:Get*",
-                                 "emr-containers:Describe*",
-                                 "emr-containers:List*",
-                                 "elasticmapreduce:CreatePersistentAppUI",
-                                 "elasticmapreduce:DescribePersistentAppUI",
-                                 "elasticmapreduce:GetPersistentAppUIPresignedURL"
-                                 ],
-                        resources=[
-                            "*"
+                        actions=[
+                            "emr-containers:Get*",
+                            "emr-containers:Describe*",
+                            "emr-containers:List*",
+                            "elasticmapreduce:CreatePersistentAppUI",
+                            "elasticmapreduce:DescribePersistentAppUI",
+                            "elasticmapreduce:GetPersistentAppUIPresignedURL",
                         ],
+                        resources=["*"],
                     ),
-
                 ],
             )
         )

@@ -63,10 +63,10 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
             tags={"Env": context.name, "TeamSpace": team_context.name},
         )
 
-        _logger.debug('create_virtual_cluster:', response)
-        parameters['virtual_cluster_id'] = response['id']
-        parameters['virtual_name'] = response['name']
-        parameters['virtual_arn'] = response['arn']
+        _logger.debug("create_virtual_cluster:", response)
+        parameters["virtual_cluster_id"] = response["id"]
+        parameters["virtual_name"] = response["name"]
+        parameters["virtual_arn"] = response["arn"]
         cdk_deploy(
             stack_name=f"orbit-{context.name}-{team_context.name}-emr-on-eks",
             app_filename=os.path.join(ORBIT_EMR_ON_EKS_ROOT, "cdk.py"),
@@ -97,10 +97,8 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
     for c in response["virtualClusters"]:
         if c["name"] == virtual_cluster_name:
             try:
-                response = emr.delete_virtual_cluster(
-                    id=c["id"]
-                )
-                _logger.debug('delete_virtual_cluster:', response)
+                response = emr.delete_virtual_cluster(id=c["id"])
+                _logger.debug("delete_virtual_cluster:", response)
             except Exception as e:
                 _logger.warning(e)
                 pass
