@@ -1,12 +1,12 @@
-import React, { Dispatch, SetStateAction, useEffect, useState} from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { JupyterFrontEnd } from '@jupyterlab/application';
 import { ILauncher } from '@jupyterlab/launcher';
 import {
   ReactWidget,
   ICommandPalette,
   MainAreaWidget,
-  showDialog,
-  Dialog
+  // showDialog,
+  // Dialog
 } from '@jupyterlab/apputils';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { Menu } from '@lumino/widgets';
@@ -20,7 +20,6 @@ import { request } from './common/backend';
 import { IDictionary } from './typings/utils';
 import { StorageCentralPanel } from './storage/storageCentral';
 import { StorageCategoryLeftList } from './storage/storageCategory';
-import { deleteItem } from './containers';
 
 const NAME = 'Storage';
 const ICON: LabIcon = storageIcon;
@@ -34,11 +33,18 @@ export interface IItem {
   hint: string;
   creationTimestamp: string;
   size: string;
+  provisioner: string;
+}
+
+export interface IItemDeleteResponse {
+  status: string;
+  reason: string;
+  message: string;
 }
 
 export interface IUseItemsReturn {
   data: any[];
-  closeAllCallback: (name: string) => void;
+  // closeAllCallback: (name: string) => void;
   refreshCallback: () => void;
   setData: Dispatch<SetStateAction<any[]>>;
 }
@@ -46,6 +52,54 @@ export interface IUseItemsReturn {
 export const openItemCallback = (name: string) => {
   console.log(`[${NAME} Open Item ${name}!`);
 };
+
+export const deleteItem = async (
+  name: string,
+  type: string
+): Promise<IItemDeleteResponse> => {
+  const dataToSend = { name: name };
+  try {
+    const parameters: IDictionary<number | string> = {
+      type: type
+    };
+    const reply: IItemDeleteResponse | undefined = await request(
+      'storage',
+      parameters,
+      {
+        body: JSON.stringify(dataToSend),
+        method: 'DELETE'
+      }
+    );
+    return reply;
+  } catch (reason) {
+    console.error(`Error on DELETE ${dataToSend}.\n${reason}`);
+    return { message: '', reason: '', status: '' };
+  }
+};
+
+// export const deleteItem = async (
+//   name: string,
+//   type: string
+// ): Promise<IItem[]> => {
+//   const dataToSend = { name: name };
+//   try {
+//     const parameters: IDictionary<number | string> = {
+//       type: type
+//     };
+//     const reply: IItem[] | undefined = await request(
+//       'storage',
+//       parameters,
+//       {
+//         body: JSON.stringify(dataToSend),
+//         method: 'DELETE'
+//       }
+//     );
+//     return reply;
+//   } catch (reason) {
+//     console.error(`Error on DELETE ${dataToSend}.\n${reason}`);
+//     return [];
+//   }
+// };
 
 const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
   const [data, setData] = useState([]);
@@ -72,24 +126,24 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
     fetchData();
   }, []);
 
-  const closeAllCallback = (name: string) => {
-    void showDialog({
-      title: `Delete all ${name} storage`,
-      body: 'Are you sure about it?',
-      buttons: [
-        Dialog.cancelButton({ label: 'Cancel' }),
-        Dialog.warnButton({ label: 'Delete All' })
-      ]
-    }).then(result => {
-      if (result.button.accept) {
-        console.log('DELETE ALL!');
-        data.map(async x => {
-          await deleteItem(x.name, type);
-        });
-        setData([]);
-      }
-    });
-  };
+  // const closeAllCallback = (name: string) => {
+  //   void showDialog({
+  //     title: `Delete all ${name} storage`,
+  //     body: 'Are you sure about it?',
+  //     buttons: [
+  //       Dialog.cancelButton({ label: 'Cancel' }),
+  //       Dialog.warnButton({ label: 'Delete All' })
+  //     ]
+  //   }).then(result => {
+  //     if (result.button.accept) {
+  //       console.log('DELETE ALL!');
+  //       data.map(async x => {
+  //         await deleteItem(x.name, type);
+  //       });
+  //       setData([]);
+  //     }
+  //   });
+  // };
 
   const refreshCallback = async () => {
     console.log(`[${NAME}] Refresh!`);
@@ -99,7 +153,7 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
     setData(await request('storage', parameters));
   };
 
-  return { data, closeAllCallback, refreshCallback, setData };
+  return { data, refreshCallback, setData };
 };
 
 const StorageSections = (props: { app: JupyterFrontEnd }): JSX.Element => {

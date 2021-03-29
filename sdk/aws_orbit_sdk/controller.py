@@ -413,15 +413,21 @@ def delete_storage_pvc(pvc_name: str):
     params["_preload_content"] = False
     try:
         api_response = api_instance.delete_namespaced_persistent_volume_claim(**params)
-        res = json.loads(api_response.data)
+        response = {
+            "status": str(api_response.status),
+            "reason": api_response.reason,
+            "message": f"Successfully deleted persistent volume claim={pvc_name}"
+        }
     except ApiException as e:
         _logger.info("Exception when calling CoreV1Api->delete persistent volume claim: %s\n" % e)
-        raise e
+        e_body = json.loads(e.body)
+        response = {
+            "status": str(e_body["code"]),
+            "reason": e_body["reason"],
+            "message": e_body["message"]
+        }
 
-    if "items" not in res:
-        return []
-
-    return res["items"]
+    return response
 
 
 def list_storage_pv():
@@ -452,15 +458,21 @@ def delete_storage_pv(pv_name: str):
     params["_preload_content"] = False
     try:
         api_response = api_instance.delete_persistent_volume(**params)
-        res = json.loads(api_response.data)
+        response = {
+            "status": str(api_response.status),
+            "reason": api_response.reason,
+            "message": f"Successfully deleted persistent volume={pv_name}"
+        }
     except ApiException as e:
         _logger.info("Exception when calling CoreV1Api->delete persistent volume : %s\n" % e)
-        raise e
+        e_body = json.loads(e.body)
+        response = {
+            "status": str(e_body["code"]),
+            "reason": e_body["reason"],
+            "message": e_body["message"]
+        }
 
-    if "items" not in res:
-        return []
-
-    return res["items"]
+    return response
 
 
 def list_storage_class():

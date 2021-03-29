@@ -7,12 +7,23 @@ import {
   SECTION_CLASS,
   SHUTDOWN_BUTTON_CLASS
 } from '../common/styles';
-import { IUseItemsReturn, IItem, openItemCallback } from '../storage';
-import { CategoryViews, CategoryViewsNoClose } from '../common/categoryViews';
+import {
+  IUseItemsReturn,
+  IItem,
+  openItemCallback,
+  IItemDeleteResponse
+} from '../storage';
+import { CategoryViewsNoClose } from '../common/categoryViews';
 import { JupyterFrontEnd } from '@jupyterlab/application';
-import { deleteItem } from '../containers';
-import { ToolbarButtonComponent } from '@jupyterlab/apputils';
+import { deleteItem } from '../storage';
+import {
+  ToolbarButtonComponent,
+  showDialog,
+  Dialog
+} from '@jupyterlab/apputils';
 import { closeIcon } from '@jupyterlab/ui-components';
+import { request } from '../common/backend';
+import { IDictionary } from '../typings/utils';
 
 const Item = (props: {
   item: IItem;
@@ -64,40 +75,46 @@ export const StorageCategoryLeftList = (props: {
   openCallback: (name: string) => any;
   app: JupyterFrontEnd;
 }): JSX.Element => {
-  const { data, closeAllCallback, refreshCallback, setData } = props.useItems(
+  const { data, refreshCallback, setData } = props.useItems(
     props.type,
     props.app
   );
 
   const closeItemCallback = async (name: string) => {
-    setData(await deleteItem(name, props.type));
+    const response: IItemDeleteResponse = await deleteItem(name, props.type);
+    console.log(response);
+    if (response.status.toString() === '200') {
+      console.log(`Storage ${props.type} ${name} delete succeded`);
+      const parameters: IDictionary<number | string> = {
+        type: props.type
+      };
+      console.log(`Fetching latest storage ${props.type} details`);
+      setData(await request('storage', parameters));
+    } else {
+      console.log(`Error deleting storage ${props.type} ${name}`);
+      console.log(response);
+      void (await showDialog({
+        title: 'Storage Error',
+        body: response.message,
+        buttons: [Dialog.cancelButton({ label: 'Close' })]
+      }));
+    }
   };
 
+  // const closeItemCallback = async (name: string) => {
+  //      setData(await deleteItem(name, props.type));
+  // };
+
   const items = <Items data={data} closeItemCallback={closeItemCallback} />;
-  if (props.type === 'clusterstorageclass') {
-    return (
-      <div className={SECTION_CLASS}>
-        <CategoryViews
-          name={props.title}
-          items={items}
-          refreshCallback={refreshCallback}
-          closeAllCallback={closeAllCallback}
-          key={props.key}
-          openCallback={props.openCallback}
-        />
-      </div>
-    );
-  } else {
-    return (
-      <div className={SECTION_CLASS}>
-        <CategoryViewsNoClose
-          name={props.title}
-          items={items}
-          refreshCallback={refreshCallback}
-          key={props.key}
-          openCallback={props.openCallback}
-        />
-      </div>
-    );
-  }
+  return (
+    <div className={SECTION_CLASS}>
+      <CategoryViewsNoClose
+        name={props.title}
+        items={items}
+        refreshCallback={refreshCallback}
+        key={props.key}
+        openCallback={props.openCallback}
+      />
+    </div>
+  );
 };

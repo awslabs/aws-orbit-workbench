@@ -37,6 +37,24 @@ export const TableWidget = (props: {
     }
   );
 
+  // console.log('******************************');
+  // console.log(typeof props.data);
+  // console.log(props.data);
+  // console.log('******************************');
+  // let i = 0;
+  // const columnsTest = Object.keys(props.data[0]).map(colName => ({
+  //   title: colName,
+  //   dataIndex: colName,
+  //   sorter: {
+  //     compare: colName.includes('time')
+  //       ? utils.Sorter.DATE
+  //       : utils.Sorter.DEFAULT,
+  //     multiple: ++i
+  //   }
+  // }));
+  // console.log(columnsTest);
+  // console.log('******************************');
+
   return (
     <Table
       bordered={false}
