@@ -28,8 +28,7 @@ RUN curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-hel
 
 RUN npm install -g aws-cdk@$CDK_VERSION yarn
 
-RUN pip install kubernetes~=12.0.0 \
-                aws_cdk.core~=$CDK_VERSION \
+RUN pip install aws_cdk.core~=$CDK_VERSION \
                 aws-cdk.aws-codecommit~=$CDK_VERSION \
                 aws-cdk.aws-ec2~=$CDK_VERSION \
                 aws-cdk.aws-s3~=$CDK_VERSION \
