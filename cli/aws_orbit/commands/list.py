@@ -14,7 +14,7 @@
 
 import json
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import click
 
@@ -55,7 +55,7 @@ def list_images(env: str, region: Optional[str]) -> None:
 def list_env(env: str, variable: str) -> None:
     ssm = utils.boto3_client("ssm")
     res = ssm.get_parameters_by_path(Path="/orbit", Recursive=True)
-    env_info: Dict[str, any] = {}
+    env_info: Dict[str, Any] = {}
     if env and len(env) > 0:
         _logger.debug(f"looking for {env}")
     while True:
@@ -76,7 +76,7 @@ def list_env(env: str, variable: str) -> None:
             if len(context.teams) > 0:
                 teams_list: List[str] = [x.name for x in context.teams]
             else:
-                teams_list = ""
+                teams_list = []
 
             if variable == "landing-page":
                 print(context.landing_page_url)
