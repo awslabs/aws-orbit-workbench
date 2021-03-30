@@ -14,7 +14,7 @@
 
 import logging
 from typing import Dict, List, Optional
-
+import json
 import click
 
 from aws_orbit import utils
@@ -54,13 +54,16 @@ def list_images(env: str, region: Optional[str]) -> None:
 def list_env(env: str, variable: str) -> None:
     ssm = utils.boto3_client("ssm")
     res = ssm.get_parameters_by_path(Path="/orbit", Recursive=True)
-    env_info: Dict[str, str] = {}
+    env_info: Dict[str, any] = {}
+    if env and len(env) > 0:
+        _logger.debug(f"looking for {env}")
     while True:
         params = res["Parameters"]
         for p in params:
             if not p["Name"].endswith("context") or "teams" in p["Name"]:
                 continue
-            if len(env) > 0 and p["Name"].startswith(f"//orbit/{env}"):
+            env_name = p["Name"].split('/')[2]
+            if len(env) > 0 and not env_name == env:
                 continue
             env_name = p["Name"].split("/")[2]
             context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
@@ -70,7 +73,7 @@ def list_env(env: str, variable: str) -> None:
             else:
                 k8_dashboard_url = ""
             if len(context.teams) > 0:
-                teams_list: str = ",".join([x.name for x in context.teams])
+                teams_list: List[str] = [x.name for x in context.teams]
             else:
                 teams_list = ""
 
@@ -78,15 +81,13 @@ def list_env(env: str, variable: str) -> None:
                 print(context.landing_page_url)
             elif variable == "toolkitbucket":
                 print(context.toolkit.s3_bucket)
-            elif variable == "teams":
-                print(f"[{teams_list}]")
             elif variable == "all":
-                env_info[env_name] = (
-                    f"LandingPage={context.landing_page_url}, "
-                    f"Teams=[{teams_list}], "
-                    f"ToolkitBucket={context.toolkit.s3_bucket},"
-                    f"K8Dashboard={k8_dashboard_url}"
-                )
+                env_info[env_name] = {
+                    'LandingPage' : context.landing_page_url,
+                    'Teams': teams_list,
+                    'ToolkitBucket': context.toolkit.s3_bucket,
+                    'K8Dashboard': k8_dashboard_url,
+                }
             else:
                 raise Exception(f"Unknown --variable option {variable}")
 
@@ -100,7 +101,5 @@ def list_env(env: str, variable: str) -> None:
             click.echo("There are no Orbit environments available")
             return
         else:
-            print_list(
-                tittle="Available Orbit environments:",
-                items=[f"Name={k}{stylize(',')}{v}" for k, v in env_info.items()],
-            )
+            print("Available Orbit environments:")
+            print(json.dumps(env_info, indent=4, sort_keys=True))

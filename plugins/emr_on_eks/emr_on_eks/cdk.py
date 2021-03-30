@@ -59,6 +59,16 @@ class Team(Stack):
                             "emr-containers:TagResource",
                         ],
                         resources=[parameters["virtual_arn"]],
+                    ),system-access
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW,
+                        actions=[
+                            "logs:*",
+                        ],
+                        resources=[
+                            f"arn:aws:logs:{context.region}:{context.account_id}:log-group:/orbit/emr/*",
+                            f"arn:aws:logs:{context.region}:{context.account_id}:log-group:/orbit/emr/*:log-stream:*",
+                        ],
                     ),
                     iam.PolicyStatement(
                         effect=iam.Effect.ALLOW,
