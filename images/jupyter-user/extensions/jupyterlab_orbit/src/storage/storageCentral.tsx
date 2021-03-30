@@ -56,6 +56,68 @@ export const StorageCentralPanel = (props: {
   // @ts-ignore
   const { data, refreshCallback } = props.useItems(props.type);
 
+  const getColumns = () => {
+    let columns: IDictionary<any> = [];
+    console.log(`Storage type=${props.type}`);
+    if (props.type === 'teampvc' || props.type === 'clusterpv') {
+      columns = [
+        {
+          title: 'Name',
+          dataIndex: 'name',
+          sorter: {
+            compare: utils.Sorter.DEFAULT,
+            multiple: 2
+          }
+        },
+        {
+          title: 'Creation Timestamp',
+          dataIndex: 'creationTimestamp',
+          sorter: {
+            compare: utils.Sorter.DATE,
+            multiple: 1
+          }
+        },
+        {
+          title: 'Size',
+          dataIndex: 'size',
+          sorter: {
+            compare: utils.Sorter.DEFAULT,
+            multiple: 3
+          }
+        }
+      ];
+    } else if (props.type === 'clusterstorageclass') {
+      columns = [
+        {
+          title: 'Name',
+          dataIndex: 'name',
+          sorter: {
+            compare: utils.Sorter.DEFAULT,
+            multiple: 2
+          }
+        },
+        {
+          title: 'Creation Timestamp',
+          dataIndex: 'creationTimestamp',
+          sorter: {
+            compare: utils.Sorter.DATE,
+            multiple: 1
+          }
+        },
+        {
+          title: 'Provisioner',
+          dataIndex: 'provisioner',
+          sorter: {
+            compare: utils.Sorter.DEFAULT,
+            multiple: 3
+          }
+        }
+      ];
+    }
+
+    return columns;
+  };
+
   return (
     <div>
       <div>
@@ -63,7 +125,7 @@ export const StorageCentralPanel = (props: {
           type={props.type}
           title={props.title}
           data={data}
-          columns={columns}
+          columns={getColumns()}
           expandable={expandable}
         />
       </div>

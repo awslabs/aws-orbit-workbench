@@ -130,15 +130,29 @@ class StorageRouteHandler(APIHandler):
 
     @web.authenticated
     def delete(self):
+        global TEAM_PVCS
+        global CLUSTER_PVS
         input_data = self.get_json_body()
         name = input_data["name"]
         type: Optional[str] = self.get_argument("type", default="")
         self.log.info(f"DELETE - {self.__class__} - %s type: %s", name, type)
-        if type == "teampvc":
-            response = controller.delete_storage_pvc(name)
-        elif type == "clusterpv":
-            response = controller.delete_storage_pv(name)
+        if "MOCK" not in os.environ or os.environ["MOCK"] == "0":
+            if type == "teampvc":
+                response = controller.delete_storage_pvc(name)
+            else:
+                raise Exception("Unknown type: %s", type)
         else:
-            raise Exception("Unknown type: %s", type)
+            if type == "teampvc":
+                data = TEAM_PVCS
+                TEAM_PVCS = [r for r in data if r["name"] != name]
+            else:
+                raise Exception("Unknown type: %s", type)
+
+            response = {
+                "status": "200",
+                "reason": "OK",
+                "message": f"Successfully deleted ={name}"
+            }
+
         self.log.info(f"Delete response={response}")
         self.finish(json.dumps(response))
