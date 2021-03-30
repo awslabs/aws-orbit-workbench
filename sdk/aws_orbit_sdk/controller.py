@@ -416,16 +416,12 @@ def delete_storage_pvc(pvc_name: str):
         response = {
             "status": str(api_response.status),
             "reason": api_response.reason,
-            "message": f"Successfully deleted persistent volume claim={pvc_name}"
+            "message": f"Successfully deleted persistent volume claim={pvc_name}",
         }
     except ApiException as e:
         _logger.info("Exception when calling CoreV1Api->delete persistent volume claim: %s\n" % e)
         e_body = json.loads(e.body)
-        response = {
-            "status": str(e_body["code"]),
-            "reason": e_body["reason"],
-            "message": e_body["message"]
-        }
+        response = {"status": str(e_body["code"]), "reason": e_body["reason"], "message": e_body["message"]}
 
     return response
 
