@@ -170,6 +170,7 @@ def _landing_page(output_path: str, context: "Context") -> None:
         user_pool_id=context.user_pool_id,
         user_pool_client_id=context.user_pool_client_id,
         identity_pool_id=context.identity_pool_id,
+        ssl_cert_arn=context.networking.frontend.ssl_cert_arn,
         tag=context.images.landing_page.version,
         cognito_external_provider=context.cognito_external_provider,
         cognito_external_provider_label=label,
@@ -257,7 +258,7 @@ def fetch_kubectl_data(context: "Context", k8s_context: str, include_teams: bool
         name="kubernetes-dashboard", k8s_context=k8s_context, namespace="kubernetes-dashboard"
     )
 
-    context.landing_page_url = f"http://{landing_page_url}"
+    context.landing_page_url = f"https://{landing_page_url}"
     context.k8_dashboard_url = f"http://{k8_dashboard_url}"
 
     _update_elbs(context=context)

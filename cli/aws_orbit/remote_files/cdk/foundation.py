@@ -19,13 +19,13 @@ import shutil
 import sys
 from typing import Any, Dict, List, cast
 
-import aws_cdk.aws_cognito as cognito
-import aws_cdk.aws_kms as kms
-import aws_cdk.aws_s3 as s3
-import aws_cdk.core as core
+from aws_cdk import aws_cognito as cognito  # aws_codeartifact as codeartifact
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
+from aws_cdk import aws_kms as kms
+from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_ssm as ssm
+from aws_cdk import core
 from aws_cdk.core import App, CfnOutput, Construct, Duration, Stack, Tags
 
 from aws_orbit.models.context import ContextSerDe, FoundationContext
@@ -36,9 +36,12 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 class FoundationStack(Stack):
-    def __init__(self, scope: Construct, id: str, context: "FoundationContext", **kwargs: Any) -> None:
+    def __init__(
+        self, scope: Construct, id: str, context: "FoundationContext", ssl_cert_arn: str, **kwargs: Any
+    ) -> None:
         self.env_name = context.name
         self.context = context
+        self.ssl_cert_arn = ssl_cert_arn
         super().__init__(scope, id, **kwargs)
         Tags.of(scope=cast(core.IConstruct, self)).add(key="Env", value=f"orbit-{self.env_name}")
         self.vpc: ec2.Vpc = self._create_vpc()
@@ -93,6 +96,23 @@ class FoundationStack(Stack):
 
         self.user_pool: cognito.UserPool = self._create_user_pool()
 
+        # self.artifacts_domain = codeartifact.CfnDomain(
+        #     self,
+        #     'ArtifactDomain',
+        #     domain_name='orbitdomain'
+        # )
+
+        # self.artifacts_repo = codeartifact.CfnRepository(
+        #     self,
+        #     'ArtifactRepo',
+        #     repository_name='orbitpyrepo',
+        #     external_connections=['public:pypi'],
+        #     domain_name=artifact_domain.domain_name,
+        #     description="AWS Orbit CodeArtifact pypi repository"
+        # )
+
+        # self.artifacts_repo.add_depends_on(self.artifacts_domain)
+
         self._ssm_parameter = ssm.StringParameter(
             self,
             id="/orbit/DemoParams",
@@ -111,6 +131,7 @@ class FoundationStack(Stack):
                     "UserPoolId": self.user_pool.user_pool_id,
                     "SharedEfsSgId": self._vpc_security_group.security_group_id,
                     "UserPoolProviderName": self.user_pool.user_pool_provider_name,
+                    "SslCertArn": self.ssl_cert_arn,
                 }
             ),
             type=ssm.ParameterType.STRING,
@@ -333,8 +354,12 @@ class FoundationStack(Stack):
 
 def main() -> None:
     _logger.debug("sys.argv: %s", sys.argv)
-    if len(sys.argv) == 2:
+    if len(sys.argv) == 3:
         context: "FoundationContext" = ContextSerDe.load_context_from_ssm(env_name=sys.argv[1], type=FoundationContext)
+        ssl_cert_arn: str = sys.argv[2]
+    elif len(sys.argv) == 2:
+        context: "FoundationContext" = ContextSerDe.load_context_from_ssm(env_name=sys.argv[1], type=FoundationContext)
+        ssl_cert_arn: str = ""
     else:
         raise ValueError("Unexpected number of values in sys.argv.")
 
@@ -343,7 +368,7 @@ def main() -> None:
     shutil.rmtree(outdir)
 
     app = App(outdir=outdir)
-    FoundationStack(scope=app, id=cast(str, context.stack_name), context=context)
+    FoundationStack(scope=app, id=cast(str, context.stack_name), context=context, ssl_cert_arn=ssl_cert_arn)
     app.synth(force=True)
 
 
