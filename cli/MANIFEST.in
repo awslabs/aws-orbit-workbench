@@ -1,0 +1,11 @@
+include *.in
+include *.sh
+include *.toml
+include *.txt
+include *.yml
+include VERSION
+recursive-include aws_orbit *.json
+recursive-include aws_orbit *.txt
+recursive-include aws_orbit *.typed
+recursive-include aws_orbit *.yaml
+recursive-include docs *.md
