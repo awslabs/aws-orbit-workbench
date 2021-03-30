@@ -28,19 +28,24 @@ RUN curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-hel
 
 RUN npm install -g aws-cdk@$CDK_VERSION yarn
 
-RUN pip install kubernetes~=12.0.0 \
-                aws_cdk.core~=$CDK_VERSION \
+RUN pip install aws_cdk.core~=$CDK_VERSION \
+                aws-cdk.aws-codecommit~=$CDK_VERSION \
                 aws-cdk.aws-ec2~=$CDK_VERSION \
                 aws-cdk.aws-s3~=$CDK_VERSION \
                 aws-cdk.aws-iam~=$CDK_VERSION \
                 aws-cdk.aws-efs~=$CDK_VERSION \
                 aws-cdk.aws-ecr~=$CDK_VERSION \
                 aws-cdk.aws-ecs~=$CDK_VERSION \
+                aws-cdk.aws-events~=$CDK_VERSION \
+                aws-cdk.aws-events-targets~=$CDK_VERSION \
                 aws-cdk.aws-ssm~=$CDK_VERSION \
                 aws-cdk.aws-kms~=$CDK_VERSION \
                 aws-cdk.aws-cognito~=$CDK_VERSION \
                 aws-cdk.aws-lambda~=$CDK_VERSION \
                 aws-cdk.aws-lambda-python~=$CDK_VERSION \
+                aws-cdk.aws-redshift~=$CDK_VERSION \
+                aws-cdk.aws-sns~=$CDK_VERSION \
+                aws-cdk.aws-sns-subscriptions~=$CDK_VERSION \
                 aws-cdk.aws-stepfunctions~=$CDK_VERSION \
                 aws-cdk.aws-stepfunctions-tasks~=$CDK_VERSION
 

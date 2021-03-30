@@ -4,9 +4,9 @@
 #
 #    pip-compile
 #
-boto3==1.17.14
+boto3==1.17.39
     # via aws-orbit (setup.py)
-botocore==1.20.14
+botocore==1.20.39
     # via
     #   aws-orbit (setup.py)
     #   boto3
@@ -27,7 +27,7 @@ click==7.1.2
     #   cfn-flip
 decorator==4.4.2
     # via jsonpath-ng
-google-auth==1.27.1
+google-auth==1.28.0
     # via kubernetes
 idna==2.10
     # via requests
@@ -39,11 +39,11 @@ jsonpath-ng==1.5.2
     # via aws-orbit (setup.py)
 kubernetes==12.0.1
     # via aws-orbit (setup.py)
-marshmallow-dataclass[enum,union]==8.3.1
+marshmallow-dataclass[enum,union]==8.3.2
     # via aws-orbit (setup.py)
 marshmallow-enum==1.5.1
     # via marshmallow-dataclass
-marshmallow==3.10.0
+marshmallow==3.11.0
     # via
     #   marshmallow-dataclass
     #   marshmallow-enum
@@ -67,7 +67,7 @@ python-slugify==4.0.1
     # via aws-orbit (setup.py)
 pyyaml-include==1.2.post2
     # via aws-orbit (setup.py)
-pyyaml==5.3.1
+pyyaml==5.4.1
     # via
     #   aws-orbit (setup.py)
     #   cfn-flip
@@ -81,7 +81,7 @@ requests==2.25.1
     #   requests-oauthlib
 rsa==4.7.2
     # via google-auth
-s3transfer==0.3.4
+s3transfer==0.3.6
     # via boto3
 six==1.15.0
     # via
@@ -101,7 +101,7 @@ typing-extensions==3.7.4.3
     # via typing-inspect
 typing-inspect==0.6.0
     # via marshmallow-dataclass
-urllib3==1.26.3
+urllib3==1.26.4
     # via
     #   botocore
     #   kubernetes

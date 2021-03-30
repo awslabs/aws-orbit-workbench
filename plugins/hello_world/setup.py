@@ -30,7 +30,7 @@ setup(
     keywords=["aws", "cdk"],
     license="Apache License 2.0",
     packages=["hello_world"],
-    python_requires=">=3.6, <3.9",
+    python_requires=">=3.7, <3.9",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Framework :: Jupyter",
@@ -43,10 +43,6 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Typing :: Typed",
     ],
-    install_requires=[
-        "aws_cdk.core~=1.67.0",
-        "aws-cdk.aws-s3~=1.67.0",
-        "aws-cdk.aws-ssm~=1.67.0",
-    ],
+    install_requires=[],
     include_package_data=True,
 )

@@ -1,0 +1,174 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  Orbit Workbench Lake Creator demo stack
+Parameters:
+  envname:
+    Type: String
+    Default: dev-env
+    Description: Orbit Environemnt Name
+  envdeployid:
+    Type: String
+    Description: Orbit Deployment ID
+  envcognitouserpoolid:
+    Type: String
+    Description: Orbit Cognito Userpool ID
+  CfnTemplatePath:
+    Type: String
+    Description: Orbit Lake Creator CloudFormation template path
+Resources:
+
+  LakeBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'AES256'
+      BucketName: !Join
+        - ''
+        - - 'orbit-'
+          - !Ref envname
+          - '-demo-lake-'
+          - !Ref 'AWS::AccountId'
+          - '-'
+          - !Ref envdeployid
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 90
+            Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Env
+          Value: !Join
+            - ''
+            - - 'orbit-'
+              - !Ref envname
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+  SecuredLakeBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      AccessControl: BucketOwnerFullControl
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'AES256'
+      BucketName: !Join
+        - ''
+        - - 'orbit-'
+          - !Ref envname
+          - '-secured-demo-lake-'
+          - !Ref 'AWS::AccountId'
+          - '-'
+          - !Ref envdeployid
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 90
+            Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Env
+          Value: !Join
+            - ''
+            - - 'orbit-'
+              - !Ref envname
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+  LakeCreatorAdditionalPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action: 's3:*'
+            Effect: Allow
+            Resource:
+              - !GetAtt
+                - LakeBucket
+                - Arn
+              - !Join
+                - ''
+                - - !GetAtt
+                    - LakeBucket
+                    - Arn
+                  - '/*'
+          - Action: 'glue:*'
+            Effect: Allow
+            Resource: '*'
+          - Action: 'ec2:*'
+            Effect: Allow
+            Resource: '*'
+        Version: 2012-10-17
+      Description: ''
+      ManagedPolicyName: !Join
+        - ''
+        - - 'orbit-'
+          - !Ref envname
+          - '-demo-lake-creator-add-policy'
+      Path: /
+
+  LakeCreatorGroup:
+    Type: 'AWS::Cognito::UserPoolGroup'
+    Properties:
+      UserPoolId: !Ref envcognitouserpoolid
+      Description: lake-creator users group.
+      GroupName: lake-creator
+
+  DemoParams:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+      Type: String
+      Value: !Join
+        - ''
+        - - '{"LakeBucket": "'
+          - !GetAtt
+            - LakeBucket
+            - Arn
+          - '", "SecuredLakeBucket": "'
+          - !GetAtt
+            - SecuredLakeBucket
+            - Arn
+          - '"}'
+      Description: Orbit Workbench Demo resources.
+      Name: !Join
+        - ''
+        - - '/orbit/'
+          - !Ref envname
+          - '/demo'
+      Tags:
+        Env: !Join
+          - ''
+          - - 'orbit-'
+            - !Ref envname
+      Tier: Intelligent-Tiering
+
+
+Outputs:
+  LakeBucketName:
+    Description: The name of the S3 bucket owned by the CDK toolkit stack
+    Value:
+      Ref: LakeBucket
+  SecuredLakeBucketName:
+    Description: The name of the S3 bucket owned by the CDK toolkit stack
+    Value:
+      Ref: SecuredLakeBucket
+  LakeCreatorAdditionalPolicy:
+    Description: The Lake Creator Additional Policy
+    Value:
+      Ref: LakeCreatorAdditionalPolicy
+  LakeCreatorGroupName:
+    Description: The Lake Creator Group Name
+    Value:
+      Ref: LakeCreatorGroup
+  DemoParamsName:
+    Description: DemoParams
+    Value:
+      Ref: DemoParams

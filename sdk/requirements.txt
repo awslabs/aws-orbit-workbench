@@ -4,13 +4,11 @@
 #
 #    pip-compile
 #
-appnope==0.1.2
-    # via ipython
 backcall==0.2.0
     # via ipython
-boto3==1.17.14
+boto3==1.17.39
     # via aws-orbit-sdk (setup.py)
-botocore==1.20.14
+botocore==1.20.39
     # via
     #   boto3
     #   s3transfer
@@ -24,7 +22,7 @@ chardet==4.0.0
     # via requests
 decorator==4.4.2
     # via ipython
-google-auth==1.27.0
+google-auth==1.28.0
     # via kubernetes
 idna==2.10
     # via requests
@@ -40,7 +38,7 @@ jmespath==0.10.0
     #   botocore
 kubernetes==12.0.1
     # via aws-orbit-sdk (setup.py)
-numpy==1.20.1
+numpy==1.20.2
     # via pandas
 oauthlib==3.1.0
     # via requests-oauthlib
@@ -52,7 +50,7 @@ pexpect==4.8.0
     # via ipython
 pickleshare==0.7.5
     # via ipython
-prompt-toolkit==3.0.16
+prompt-toolkit==3.0.18
     # via ipython
 psycopg2-binary==2.8.6
     # via aws-orbit-sdk (setup.py)
@@ -64,7 +62,7 @@ pyasn1==0.4.8
     # via
     #   pyasn1-modules
     #   rsa
-pygments==2.8.0
+pygments==2.8.1
     # via ipython
 python-dateutil==2.8.1
     # via
@@ -75,7 +73,7 @@ python-slugify==4.0.1
     # via aws-orbit-sdk (setup.py)
 pytz==2021.1
     # via pandas
-pyyaml==5.3.1
+pyyaml==5.4.1
     # via
     #   aws-orbit-sdk (setup.py)
     #   kubernetes
@@ -86,9 +84,9 @@ requests==2.25.1
     #   aws-orbit-sdk (setup.py)
     #   kubernetes
     #   requests-oauthlib
-rsa==4.7.1
+rsa==4.7.2
     # via google-auth
-s3transfer==0.3.4
+s3transfer==0.3.6
     # via boto3
 six==1.15.0
     # via
@@ -106,14 +104,14 @@ text-unidecode==1.3
     # via python-slugify
 traitlets==5.0.5
     # via ipython
-urllib3==1.26.3
+urllib3==1.26.4
     # via
     #   botocore
     #   kubernetes
     #   requests
 wcwidth==0.2.5
     # via prompt-toolkit
-websocket-client==0.57.0
+websocket-client==0.58.0
     # via kubernetes
 
 # The following packages are considered to be unsafe in a requirements file:
