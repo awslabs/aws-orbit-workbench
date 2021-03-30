@@ -4,9 +4,7 @@ import { ILauncher } from '@jupyterlab/launcher';
 import {
   ReactWidget,
   ICommandPalette,
-  MainAreaWidget,
-  // showDialog,
-  // Dialog
+  MainAreaWidget
 } from '@jupyterlab/apputils';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { Menu } from '@lumino/widgets';
@@ -44,7 +42,6 @@ export interface IItemDeleteResponse {
 
 export interface IUseItemsReturn {
   data: any[];
-  // closeAllCallback: (name: string) => void;
   refreshCallback: () => void;
   setData: Dispatch<SetStateAction<any[]>>;
 }
@@ -77,30 +74,6 @@ export const deleteItem = async (
   }
 };
 
-// export const deleteItem = async (
-//   name: string,
-//   type: string
-// ): Promise<IItem[]> => {
-//   const dataToSend = { name: name };
-//   try {
-//     const parameters: IDictionary<number | string> = {
-//       type: type
-//     };
-//     const reply: IItem[] | undefined = await request(
-//       'storage',
-//       parameters,
-//       {
-//         body: JSON.stringify(dataToSend),
-//         method: 'DELETE'
-//       }
-//     );
-//     return reply;
-//   } catch (reason) {
-//     console.error(`Error on DELETE ${dataToSend}.\n${reason}`);
-//     return [];
-//   }
-// };
-
 const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
   const [data, setData] = useState([]);
 
@@ -125,25 +98,6 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
 
     fetchData();
   }, []);
-
-  // const closeAllCallback = (name: string) => {
-  //   void showDialog({
-  //     title: `Delete all ${name} storage`,
-  //     body: 'Are you sure about it?',
-  //     buttons: [
-  //       Dialog.cancelButton({ label: 'Cancel' }),
-  //       Dialog.warnButton({ label: 'Delete All' })
-  //     ]
-  //   }).then(result => {
-  //     if (result.button.accept) {
-  //       console.log('DELETE ALL!');
-  //       data.map(async x => {
-  //         await deleteItem(x.name, type);
-  //       });
-  //       setData([]);
-  //     }
-  //   });
-  // };
 
   const refreshCallback = async () => {
     console.log(`[${NAME}] Refresh!`);
