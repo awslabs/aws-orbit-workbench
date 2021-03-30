@@ -59,7 +59,7 @@ class Team(Stack):
                             "emr-containers:TagResource",
                         ],
                         resources=[parameters["virtual_arn"]],
-                    ),system-access
+                    ),
                     iam.PolicyStatement(
                         effect=iam.Effect.ALLOW,
                         actions=[
