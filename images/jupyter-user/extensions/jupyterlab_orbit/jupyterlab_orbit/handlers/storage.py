@@ -100,12 +100,6 @@ class StorageRouteHandler(APIHandler):
         self.finish(self._dump(data, type))
         self.log.debug("Exit storage GET")
 
-    @staticmethod
-    def _delete(name, data):
-        for s in data:
-            if s["metadata"]["name"] == name:
-                data.remove(s)
-
 
     @web.authenticated
     def delete(self):
