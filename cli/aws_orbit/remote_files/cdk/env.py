@@ -223,17 +223,20 @@ class Env(Stack):
             cognito.UserPool.from_user_pool_arn(scope=self, id="orbit-user-pool", user_pool_arn=user_pool_arn),
         )
 
-    def _create_user_pool_client(self) -> cognito.UserPoolClient:
-        return cognito.UserPoolClient(
+    def _create_user_pool_client(self) -> cognito.CfnUserPoolClient:
+        return cognito.CfnUserPoolClient(
             scope=self,
             id="user-pool-client",
-            access_token_validity=Duration.days(1),
-            refresh_token_validity=Duration.days(1),
-            user_pool=self.user_pool,
-            auth_flows=cognito.AuthFlow(user_srp=True, admin_user_password=False, custom=False),
+            # access token expiry expressed in hours
+            access_token_validity=24,
+            # refresh token expiry expressed in days
+            # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cognito-userpoolclient.html#cfn-cognito-userpoolclient-tokenvalidityunits
+            refresh_token_validity=1,
+            user_pool_id=str(self.context.user_pool_id),
+            explicit_auth_flows=["ALLOW_USER_SRP_AUTH"],
             generate_secret=False,
-            prevent_user_existence_errors=True,
-            user_pool_client_name="orbit",
+            prevent_user_existence_errors="Enabled",
+            client_name="orbit",
         )
 
     def _create_identity_pool(self) -> cognito.CfnIdentityPool:
@@ -252,7 +255,7 @@ class Env(Stack):
             cognito_identity_providers=[
                 cognito.CfnIdentityPool.CognitoIdentityProviderProperty(
                     provider_name=provider_name,
-                    client_id=self.user_pool_client.user_pool_client_id,
+                    client_id=self.user_pool_client.ref,
                 )
             ],
         )
@@ -347,7 +350,7 @@ class Env(Stack):
             environment={
                 "COGNITO_USER_POOL_ID": self.user_pool.user_pool_id,
                 "REGION": self.context.region,
-                "COGNITO_USER_POOL_CLIENT_ID": self.user_pool_client.user_pool_client_id,
+                "COGNITO_USER_POOL_CLIENT_ID": self.user_pool_client.ref,
             },
             initial_policy=[
                 iam.PolicyStatement(
@@ -368,7 +371,7 @@ class Env(Stack):
                     "EksFargateProfileRoleArn": self.role_fargate_profile.role_arn,
                     "EksEnvNodegroupRoleArn": self.role_eks_env_nodegroup.role_arn,
                     "UserPoolId": self.user_pool.user_pool_id,
-                    "UserPoolClientId": self.user_pool_client.user_pool_client_id,
+                    "UserPoolClientId": self.user_pool_client.ref,
                     "IdentityPoolId": self.identity_pool.ref,
                     "ClusterPodSecurityGroupId": self.cluster_pod_security_group.security_group_id,
                 }
