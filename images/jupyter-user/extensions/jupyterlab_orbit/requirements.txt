@@ -4,11 +4,12 @@
 #
 #    pip-compile
 #
-
 anyio==2.2.0
     # via jupyter-server
 argon2-cffi==20.1.0
-    # via notebook
+    # via
+    #   jupyter-server
+    #   notebook
 async-generator==1.10
     # via nbclient
 attrs==20.3.0
@@ -35,9 +36,9 @@ idna==2.10
     # via
     #   anyio
     #   requests
-importlib-metadata==3.7.3
+importlib-metadata==3.10.0
     # via jsonschema
-ipykernel==5.5.0
+ipykernel==5.5.3
     # via notebook
 ipython-genutils==0.2.0
     # via
@@ -45,7 +46,7 @@ ipython-genutils==0.2.0
     #   nbformat
     #   notebook
     #   traitlets
-ipython==7.21.0
+ipython==7.22.0
     # via
     #   ipykernel
     #   jupyterlab
@@ -80,14 +81,14 @@ jupyter-core==4.7.1
     #   notebook
 jupyter-packaging==0.7.12
     # via jupyterlab
-jupyter-server==1.4.1
+jupyter-server==1.5.1
     # via
     #   jupyterlab
     #   jupyterlab-server
     #   nbclassic
 jupyterlab-pygments==0.1.2
     # via nbconvert
-jupyterlab-server==2.3.0
+jupyterlab-server==2.4.0
     # via jupyterlab
 jupyterlab==3.0.12
     # via jupyterlab_orbit (setup.py)
@@ -171,7 +172,7 @@ six==1.15.0
     #   python-dateutil
 sniffio==1.2.0
     # via anyio
-terminado==0.9.3
+terminado==0.9.4
     # via
     #   jupyter-server
     #   notebook

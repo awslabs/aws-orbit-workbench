@@ -14,9 +14,9 @@ black==20.8b1
     # via -r requirements-dev.in
 bleach==3.3.0
     # via readme-renderer
-boto3==1.17.39
+boto3==1.17.40
     # via aws-orbit-sdk
-botocore==1.20.39
+botocore==1.20.40
     # via
     #   boto3
     #   s3transfer
@@ -54,7 +54,7 @@ google-auth==1.28.0
     # via kubernetes
 idna==2.10
     # via requests
-importlib-metadata==3.9.1
+importlib-metadata==3.10.0
     # via
     #   build
     #   flake8
@@ -131,14 +131,14 @@ pycparser==2.20
     # via cffi
 pyflakes==2.2.0
     # via flake8
-pygments==2.5.2
+pygments==2.8.1
     # via
     #   ipython
     #   pyroma
     #   readme-renderer
 pyparsing==2.4.7
     # via packaging
-pyroma==2.6.1
+pyroma==3.1
     # via -r requirements-dev.in
 python-dateutil==2.8.1
     # via
