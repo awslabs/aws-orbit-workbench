@@ -320,3 +320,57 @@ def untag_columns(
         logger.info(f"untagging table {table_name}")
         glue.update_table(DatabaseName=database, TableInput=update_table)
     return update_table
+
+
+def getCatalogAsDict(database: Optional[str] = None) -> Dict:
+    """
+    Get Data Catalog of a specific Database
+
+    Parameters
+    ----------
+    database : str
+        Name of database to catalog.
+
+    Returns
+    -------
+     schema : IPython.core.display.JSON
+        An IPython JSON display representing the schema metadata for a database
+
+    Example
+    --------
+    >>> from aws.utils.notebooks.database import AthenaUtils
+    >>> from aws.utils.notebooks.json import display_json
+    >>> AthenaUtils.getCatalog(database="my_database")
+    """
+    glue = boto3.client("glue")
+    schemas: List[Dict[str, Any]] = []
+    response = glue.get_databases()
+    key: int = 0
+    for db in response["DatabaseList"]:
+        key += 1
+        database = {"title": db["Name"], "key": str(key), "qname": db["Name"], "children": [], "_class": "database"}
+        schemas.append(database)
+        response = glue.get_tables(DatabaseName=db["Name"], MaxResults=50)
+        for t in response["TableList"]:
+            key += 1
+            table = dict()
+            table["title"] = t["Name"]
+            table["key"] = str(key)
+            table["location"] = t["StorageDescriptor"]["Location"]
+            table["children"] = []
+            table["key"] = str(key)
+            table["_class"] = "table"
+            table["db"] = db["Name"]
+            table["table"] = t["Name"]
+            database["children"].append(table)
+            for c in t["StorageDescriptor"]["Columns"]:
+                col = dict()
+                key += 1
+                table["children"].append(col)
+                col["title"] = c["Name"]
+                col["type"] = c["Type"]
+                col["key"] = str(key)
+                col["_class"] = "column"
+                col["db"] = db["Name"]
+                col["table"] = t["Name"]
+    return schemas

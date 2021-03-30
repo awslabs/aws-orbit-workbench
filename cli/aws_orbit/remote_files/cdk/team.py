@@ -20,7 +20,6 @@ import sys
 from typing import List, Optional, cast
 
 import aws_cdk.aws_ec2 as ec2
-import aws_cdk.aws_ecr as ecr
 import aws_cdk.aws_efs as efs
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_kms as kms
@@ -33,7 +32,6 @@ from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.models.manifest import Manifest, ManifestSerDe, TeamManifest
 from aws_orbit.remote_files.cdk.team_builders.ec2 import Ec2Builder
-from aws_orbit.remote_files.cdk.team_builders.ecr import EcrBuilder
 from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
 from aws_orbit.remote_files.cdk.team_builders.iam import IamBuilder
 
@@ -101,12 +99,6 @@ class Team(Stack):
         self.team_security_group: ec2.SecurityGroup = Ec2Builder.build_team_security_group(
             scope=self, context=context, team_name=self.team_name, vpc=self.i_vpc
         )
-        self.ecr_repo: ecr.Repository = ecr.Repository(
-            scope=self,
-            id="repo",
-            repository_name=f"orbit-{self.context.name}-{self.team_name}-jupyter-user",
-        )
-
         self.policies: List[str] = self.team_policies
         if self.context.scratch_bucket_arn:
             self.scratch_bucket: s3.Bucket = cast(
@@ -151,8 +143,6 @@ class Team(Stack):
         self.efs_ap: efs.AccessPoint = EfsBuilder.build_file_system_access_point(
             scope=self, team_name=team_name, shared_fs=self.shared_fs
         )
-
-        self.ecr_image = EcrBuilder.build_ecr_image(scope=self, context=context, image=self.image)
 
         team_ssm_parameter_name: str = f"/orbit/{context.name}/teams/{self.team_name}/team"
         self.context_parameter: ssm.StringParameter = ssm.StringParameter(

@@ -329,19 +329,20 @@ def list_running_jobs(team_only: bool = False):
     load_kube_config()
     username = os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))
     api_instance = BatchV1Api()
-    field_selector = "status.successful!=1"
+    # field_selector = "status.successful!=1"
     if team_only:
         operand = "!="
     else:
         operand = "="
 
     label_selector = f"app=orbit-runner,username{operand}{username}"
+    _logger.info("using job selector %s", label_selector)
     try:
         api_response = api_instance.list_namespaced_job(
             namespace=team_name,
             _preload_content=False,
             label_selector=label_selector,
-            field_selector=field_selector,
+            # field_selector=field_selector,
             watch=False,
         )
         res = json.loads(api_response.data)
@@ -370,6 +371,91 @@ def list_current_pods(label_selector: str = None):
         res = json.loads(api_response.data)
     except ApiException as e:
         _logger.info("Exception when calling BatchV1Api->list_namespaced_job: %s\n" % e)
+        raise e
+
+    if "items" not in res:
+        return []
+
+    return res["items"]
+
+
+def list_storage_pvc():
+    load_kube_config()
+    api_instance = CoreV1Api()
+    props = get_properties()
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    _logger.debug(f"Listing {team_name} namespace persistent volume claims")
+    params = dict()
+    params["namespace"] = team_name
+    params["_preload_content"] = False
+    try:
+        api_response = api_instance.list_namespaced_persistent_volume_claim(**params)
+        res = json.loads(api_response.data)
+    except ApiException as e:
+        _logger.info("Exception when calling CoreV1Api->list persistent volume claims: %s\n" % e)
+        raise e
+
+    if "items" not in res:
+        return []
+
+    return res["items"]
+
+
+def delete_storage_pvc(pvc_name: str):
+    load_kube_config()
+    api_instance = CoreV1Api()
+    props = get_properties()
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    _logger.debug(f"Deleting {team_name} namespace persistent volume claim {pvc_name}")
+    params = dict()
+    params["name"] = pvc_name
+    params["namespace"] = team_name
+    params["_preload_content"] = False
+    try:
+        api_response = api_instance.delete_namespaced_persistent_volume_claim(**params)
+        response = {
+            "status": str(api_response.status),
+            "reason": api_response.reason,
+            "message": f"Successfully deleted persistent volume claim={pvc_name}",
+        }
+    except ApiException as e:
+        _logger.info("Exception when calling CoreV1Api->delete persistent volume claim: %s\n" % e)
+        e_body = json.loads(e.body)
+        response = {"status": str(e_body["code"]), "reason": e_body["reason"], "message": e_body["message"]}
+
+    return response
+
+
+def list_storage_pv():
+    load_kube_config()
+    api_instance = CoreV1Api()
+    _logger.debug("Listing cluster persistent volumes")
+    params = dict()
+    params["_preload_content"] = False
+    try:
+        api_response = api_instance.list_persistent_volume(**params)
+        res = json.loads(api_response.data)
+    except ApiException as e:
+        _logger.info("Exception when calling CoreV1Api->list persistent volumes : %s\n" % e)
+        raise e
+
+    if "items" not in res:
+        return []
+
+    return res["items"]
+
+
+def list_storage_class():
+    load_kube_config()
+    api_instance = StorageV1Api()
+    _logger.debug("Listing cluster storage classes")
+    params = dict()
+    params["_preload_content"] = False
+    try:
+        api_response = api_instance.list_storage_class(**params)
+        res = json.loads(api_response.data)
+    except ApiException as e:
+        _logger.info("Exception when calling StorageV1Api->list storage class : %s\n" % e)
         raise e
 
     if "items" not in res:
@@ -552,7 +638,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
 def resolve_image(__CURRENT_TEAM_MANIFEST__, profile):
     if not profile or "kubespawner_override" not in profile or "image" not in profile["kubespawner_override"]:
         repository = __CURRENT_TEAM_MANIFEST__["FinalImageAddress"]
-        image = f"{repository}:latest"
+        image = f"{repository}"
     else:
         image = profile["kubespawner_override"]["image"]
     return image
@@ -862,8 +948,8 @@ def wait_for_tasks_to_complete(
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
 
     incomplete_tasks = []
-    _logger.info("Waiting for %s tasks %s", len(tasks), tasks)
-
+    _logger.info("Waiting2 for %s tasks %s", len(tasks), tasks)
+    load_kube_config()
     while True:
         for task in tasks:
             _logger.debug("Checking execution state of: %s", task)
@@ -914,6 +1000,7 @@ def wait_for_tasks_to_complete(
         else:
             _logger.info("waiting for %s", tasks)
             time.sleep(delay)
+            load_kube_config()
 
 
 def tail_logs(team_name, tasks) -> None:

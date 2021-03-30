@@ -49,7 +49,7 @@ else:
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-setup_args = dict(
+setuptools.setup(
     name=name,
     version=version,
     url="https://github.com/awslabs/aws-orbit-workbench",
@@ -64,20 +64,15 @@ setup_args = dict(
     ],
     zip_safe=False,
     include_package_data=True,
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     license="Apache License 2.0",
     platforms="Linux, Mac OS X, Windows",
     keywords=["Jupyter", "JupyterLab", "JupyterLab3"],
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Framework :: Jupyter",
     ],
 )
-
-
-if __name__ == "__main__":
-    setuptools.setup(**setup_args)

@@ -24,7 +24,7 @@ from aws_orbit import bundle, remote, utils
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.env import DEFAULT_IMAGES, DEFAULT_ISOLATED_IMAGES
-from aws_orbit.services import cfn, codebuild, ssm
+from aws_orbit.services import cfn, codebuild
 
 _logger: logging.Logger = logging.getLogger(__name__)
 PROFILES_TYPE = List[Dict[str, Any]]
@@ -62,8 +62,6 @@ def write_context_ssm(profiles: PROFILES_TYPE, env_name: str, team_name: str) ->
 
 def delete_profile(env: str, team: str, profile_name: str, debug: bool) -> None:
     with MessagesContext("Profile Deleted", debug=debug) as msg_ctx:
-        ssm.cleanup_changeset(env_name=env)
-        ssm.cleanup_manifest(env_name=env)
         msg_ctx.info("Retrieving existing profiles")
         profiles: List[Dict[str, Any]] = read_user_profiles_ssm(env, team)
         _logger.debug("Existing user profiles for team %s: %s", team, profiles)
@@ -134,8 +132,8 @@ def build_image(
     dir: Optional[str],
     name: str,
     script: Optional[str],
-    teams: Optional[List[str]],
     build_args: Optional[List[str]],
+    timeout: int = 30,
     debug: bool = False,
     source_registry: Optional[str] = None,
     source_repository: Optional[str] = None,
@@ -157,14 +155,12 @@ def build_image(
 
         script_str = "NO_SCRIPT" if script is None else script
         source_str = "NO_REPO" if source_registry is None else f"{source_registry} {source_repository} {source_version}"
-        teams_str = "NO_TEAMS" if not teams else ",".join(teams)
         build_args = [] if build_args is None else build_args
         buildspec = codebuild.generate_spec(
             context=context,
             plugins=False,
             cmds_build=[
-                f"orbit remote --command build_image "
-                f"{env} {name} {script_str} {teams_str} {source_str} {' '.join(build_args)}"
+                f"orbit remote --command build_image " f"{env} {name} {script_str} {source_str} {' '.join(build_args)}"
             ],
             changeset=None,
         )
@@ -176,7 +172,7 @@ def build_image(
             bundle_path=bundle_path,
             buildspec=buildspec,
             codebuild_log_callback=msg_ctx.progress_bar_callback,
-            timeout=30,
+            timeout=timeout,
         )
         msg_ctx.info("Docker Image deploy into ECR")
         if name in DEFAULT_IMAGES or name in DEFAULT_ISOLATED_IMAGES:

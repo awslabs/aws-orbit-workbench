@@ -270,6 +270,8 @@ class PluginRegistries:
 
     def get_hook(self, context: "Context", team_name: str, plugin_name: str, hook_name: str) -> HOOK_TYPE:
         self._context = context
+        if plugin_name not in self._registries[team_name]:
+            return cast(HOOK_TYPE, None)
         return cast(HOOK_TYPE, self._registries[team_name][plugin_name].__getattribute__(hook_name))
 
     def destroy_plugin(self, context: "Context", team_context: "TeamContext", plugin_id: str) -> None:

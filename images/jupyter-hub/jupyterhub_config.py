@@ -53,10 +53,11 @@ c.Spawner.cmd = ["/usr/local/bin/start-singleuser.sh", "-e", "CHOWN_EXTRA=/home/
 c.Spawner.args = [
     "--SingleUserServerApp.default_url=/lab",
 ]
-c.KubeSpawner.start_timeout = 360
+c.KubeSpawner.start_timeout = 600
 c.KubeSpawner.common_labels = {"orbit/node-type": "ec2", "orbit/attach-security-group": "yes"}
 c.KubeSpawner.namespace = TEAM
 c.KubeSpawner.environment = {
+    "JUPYTERHUB_SINGLEUSER_APP": "jupyter_server.serverapp.ServerApp",
     "USERNAME": lambda spawner: str(spawner.user.name),
     "JUPYTER_ENABLE_LAB": "yes",
     "AWS_ORBIT_TEAM_SPACE": TEAM,
@@ -71,30 +72,13 @@ if GRANT_SUDO == "yes":
     c.KubeSpawner.uid = 0
 
 c.KubeSpawner.image = IMAGE
-# TODO we want to remove this 'Always' from production code
-c.KubeSpawner.image_pull_policy = "Always"
-c.KubeSpawner.storage_class = f"ebs-{TEAM}-gp2"
-c.KubeSpawner.storage_access_modes = ["ReadWriteOnce"]
-c.KubeSpawner.storage_capacity = "5Gi"
-c.KubeSpawner.storage_pvc_ensure = True
+# can below if need to force image pull
+# c.KubeSpawner.image_pull_policy = "Always"
 c.KubeSpawner.extra_annotations = {"AWS_ORBIT_TEAM_SPACE": TEAM, "AWS_ORBIT_ENV": ENV_NAME}
 pvc_name_template = "orbit-{username}-{servername}"
 c.KubeSpawner.pvc_name_template = pvc_name_template
-c.KubeSpawner.volumes = [
-    {"name": "efs-volume", "persistentVolumeClaim": {"claimName": "jupyterhub"}},
-    {"name": "ebs-volume", "persistentVolumeClaim": {"claimName": pvc_name_template}},
-]
-c.KubeSpawner.volume_mounts = [{"mountPath": "/efs", "name": "efs-volume"}, {"mountPath": "/ebs", "name": "ebs-volume"}]
-# This will allow Jovyan to write to the ebs volume
-c.KubeSpawner.init_containers = [
-    {
-        "name": "take-ebs-dir-ownership",
-        "image": IMAGE,
-        "command": ["sh", "-c", "sudo chmod -R 777 /ebs"],
-        "securityContext": {"runAsUser": 0},
-        "volumeMounts": [{"mountPath": "/ebs", "name": "ebs-volume"}],
-    }
-]
+c.KubeSpawner.volumes = [{"name": "efs-volume", "persistentVolumeClaim": {"claimName": "jupyterhub"}}]
+c.KubeSpawner.volume_mounts = [{"mountPath": "/efs", "name": "efs-volume"}]
 c.KubeSpawner.fs_gid = 100
 c.KubeSpawner.lifecycle_hooks = {"postStart": {"exec": {"command": ["/bin/sh", "/home/jovyan/.orbit/bootstrap.sh"]}}}
 c.KubeSpawner.node_selector = {"orbit/usage": "teams", "orbit/node-type": "ec2"}
@@ -118,7 +102,6 @@ profile_list_default = [
             "cpu_limit": 1,
             "mem_guarantee": "1G",
             "mem_limit": "1G",
-            "storage_capacity": "2Gi",
         },
     },
     {
@@ -155,26 +138,24 @@ c.Spawner.auth_state_hook = userdata_hook
 
 
 def per_user_profiles(spawner):
-    team = spawner.environment["AWS_ORBIT_TEAM_SPACE"]
-    env = spawner.environment["AWS_ORBIT_ENV"]
     ssm = boto3.Session().client("ssm")
     app_log.info("Getting profiles...")
-    ssm_parameter_name: str = f"/orbit/{env}/teams/{team}/context"
+    ssm_parameter_name: str = f"/orbit/{ENV_NAME}/teams/{TEAM}/context"
     json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
-
+    profiles = []
     team_manifest_dic = json.loads(json_str)
     if team_manifest_dic.get("Profiles"):
-        default_profiles = team_manifest_dic["Profiles"]
+        profiles.extend(team_manifest_dic["Profiles"])
     else:
         app_log.info("No default profiles found")
-        default_profiles = profile_list_default
+        profiles.extend(profile_list_default)
 
-    ssm_parameter_name: str = f"/orbit/{env}/teams/{team}/user/profiles"
+    ssm_parameter_name: str = f"/orbit/{ENV_NAME}/teams/{TEAM}/user/profiles"
     json_str: str = ssm.get_parameter(Name=ssm_parameter_name)["Parameter"]["Value"]
 
     user_profiles: PROFILES_TYPE = cast(PROFILES_TYPE, json.loads(json_str))
-    default_profiles.extend(user_profiles)
-    return default_profiles
+    profiles.extend(user_profiles)
+    return profiles
 
 
 c.KubeSpawner.profile_list = per_user_profiles

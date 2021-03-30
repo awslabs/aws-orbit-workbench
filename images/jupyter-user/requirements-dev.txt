@@ -7,3 +7,4 @@ tornado==6.1
 -r "requirements.txt"
 -e ../../sdk
 -e ../../cli
+-e ./extensions/jupyterlab_orbit

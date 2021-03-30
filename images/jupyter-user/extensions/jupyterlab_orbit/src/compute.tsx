@@ -10,6 +10,10 @@ import { RUNNING_CLASS, SECTION_CLASS } from './common/styles';
 import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
+import {
+  RedshiftCategoryCentralList,
+  RedshiftCategoryLeftList
+} from './compute/redshift';
 
 const NAME = 'Compute';
 const ICON: LabIcon = computeIcon;
@@ -36,7 +40,11 @@ class CentralWidget extends ReactWidget {
           icon={ICON}
           refreshCallback={refreshCallback}
         />
-        <div />
+
+        <RedshiftCategoryCentralList
+          title={'Your Redshift Clusters'}
+          type={'user'}
+        />
       </div>
     );
   }
@@ -44,14 +52,21 @@ class CentralWidget extends ReactWidget {
 
 class LeftWidget extends ReactWidget {
   launchCallback: () => void;
-
-  constructor({ openCallback }: { openCallback: () => void }) {
+  app: JupyterFrontEnd;
+  constructor({
+    openCallback,
+    app
+  }: {
+    openCallback: () => void;
+    app: JupyterFrontEnd;
+  }) {
     super();
     this.addClass('jp-ReactWidget');
     this.addClass(RUNNING_CLASS);
     this.title.caption = `AWS Orbit Workbench - ${NAME}`;
     this.title.icon = ICON;
     this.launchCallback = openCallback;
+    this.app = app;
   }
 
   render(): JSX.Element {
@@ -62,6 +77,11 @@ class LeftWidget extends ReactWidget {
           icon={ICON}
           refreshCallback={refreshCallback}
           openCallback={this.launchCallback}
+          app={this.app}
+        />
+        <RedshiftCategoryLeftList
+          title={'Your Redshift Clusters'}
+          type={'user'}
         />
         <div />
       </div>
@@ -95,7 +115,8 @@ export const activateCompute = (
     leftWidget: new LeftWidget({
       openCallback: () => {
         commands.execute(launchCommand);
-      }
+      },
+      app
     })
   });
 };

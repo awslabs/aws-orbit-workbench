@@ -54,11 +54,11 @@ def _k8_dashboard(context: "Context", output_path: str) -> None:
     if context.networking.data.internet_accessible is False:
         dashboard_image = (
             f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
-            f"orbit-{context.name}-k8_dashboard:{ImagesManifest.k8_dashboard.version}"
+            f"orbit-{context.name}-k8-dashboard:{ImagesManifest.k8_dashboard.version}"
         )
         scraper_image = (
             f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
-            f"orbit-{context.name}-k8_metrics_scraper:{ImagesManifest.k8_dashboard.version}"
+            f"orbit-{context.name}-k8-metrics-scraper:{ImagesManifest.k8_metrics_scraper.version}"
         )
     else:
         dashboard_image = f"{ImagesManifest.k8_dashboard.repository}:{ImagesManifest.k8_dashboard.version}"
@@ -79,7 +79,7 @@ def _metrics_server(context: "Context", output_path: str) -> None:
     if context.networking.data.internet_accessible is False:
         image = (
             f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
-            f"orbit-{context.name}-k8_metrics_server:{ImagesManifest.k8_metrics_server.version}"
+            f"orbit-{context.name}-k8-metrics-server:{ImagesManifest.k8_metrics_server.version}"
         )
     else:
         image = f"{ImagesManifest.k8_metrics_server.repository}:{ImagesManifest.k8_metrics_server.version}"

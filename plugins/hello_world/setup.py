@@ -21,15 +21,28 @@ with open("VERSION", "r") as version_file:
 
 setup(
     name="aws-orbit-hello-world",
+    author="AWS Professional Services",
+    author_email="aws-proserve-opensource@amazon.com",
+    url="https://github.com/awslabs/aws-orbit-workbench",
+    project_urls={"Org Site": "https://aws.amazon.com/professional-services/"},
     version=version,
     description="Minimal Orbit Workbench Plugin.",
+    keywords=["aws", "cdk"],
     license="Apache License 2.0",
     packages=["hello_world"],
-    python_requires=">=3.6, <3.9",
-    install_requires=[
-        "aws_cdk.core~=1.67.0",
-        "aws-cdk.aws-s3~=1.67.0",
-        "aws-cdk.aws-ssm~=1.67.0",
+    python_requires=">=3.7, <3.9",
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "Framework :: Jupyter",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Information Technology",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Typing :: Typed",
     ],
+    install_requires=[],
     include_package_data=True,
 )

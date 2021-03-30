@@ -108,7 +108,7 @@ def build(
             cache_str = f"--cache-from {repo_address}"
         except exceptions.FailedShellCommand:
             _logger.debug(f"Docker cache not found at ECR {name}:{tag}")
-    sh.run(f"docker build {pull_str} {cache_str} {build_args_str} --tag {name} .", cwd=dir)
+    sh.run(f"docker build {pull_str} {cache_str} {build_args_str} --tag {name}:{tag} .", cwd=dir)
 
 
 def push(context: "Context", name: str, tag: str = "latest") -> None:
