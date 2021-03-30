@@ -449,32 +449,6 @@ def list_storage_pv():
     return res["items"]
 
 
-def delete_storage_pv(pv_name: str):
-    load_kube_config()
-    api_instance = CoreV1Api()
-    _logger.debug(f"Deleting cluster persistent volume {pv_name}")
-    params = dict()
-    params["name"] = pv_name
-    params["_preload_content"] = False
-    try:
-        api_response = api_instance.delete_persistent_volume(**params)
-        response = {
-            "status": str(api_response.status),
-            "reason": api_response.reason,
-            "message": f"Successfully deleted persistent volume={pv_name}"
-        }
-    except ApiException as e:
-        _logger.info("Exception when calling CoreV1Api->delete persistent volume : %s\n" % e)
-        e_body = json.loads(e.body)
-        response = {
-            "status": str(e_body["code"]),
-            "reason": e_body["reason"],
-            "message": e_body["message"]
-        }
-
-    return response
-
-
 def list_storage_class():
     load_kube_config()
     api_instance = StorageV1Api()

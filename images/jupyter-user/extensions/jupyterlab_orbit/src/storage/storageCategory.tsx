@@ -29,6 +29,7 @@ const Item = (props: {
   item: IItem;
   openItemCallback: (name: string) => void;
   closeItemCallback: (name: string) => void;
+  type: string;
 }) => {
   return (
     <li className={ITEM_CLASS}>
@@ -41,12 +42,14 @@ const Item = (props: {
       </span>
       <span className={ITEM_DETAIL_CLASS}>{props.item.creationTimestamp}</span>
       <span className={ITEM_DETAIL_CLASS}>{props.item.size}</span>
-      <ToolbarButtonComponent
-        className={SHUTDOWN_BUTTON_CLASS}
-        icon={closeIcon}
-        onClick={() => props.closeItemCallback(props.item.name)}
-        tooltip={'Shut Down!'}
-      />
+      {props.type === 'teampvc' && (
+        <ToolbarButtonComponent
+          className={SHUTDOWN_BUTTON_CLASS}
+          icon={closeIcon}
+          onClick={() => props.closeItemCallback(props.item.name)}
+          tooltip={'Shut Down!'}
+        />
+      )}
     </li>
   );
 };
@@ -54,6 +57,7 @@ const Item = (props: {
 const Items = (props: {
   data: IItem[];
   closeItemCallback: (name: string) => void;
+  type: string;
 }) => (
   <>
     {' '}
@@ -62,6 +66,7 @@ const Items = (props: {
         item={x}
         openItemCallback={openItemCallback}
         closeItemCallback={props.closeItemCallback}
+        type={props.type}
       />
     ))}{' '}
   </>
@@ -101,11 +106,13 @@ export const StorageCategoryLeftList = (props: {
     }
   };
 
-  // const closeItemCallback = async (name: string) => {
-  //      setData(await deleteItem(name, props.type));
-  // };
-
-  const items = <Items data={data} closeItemCallback={closeItemCallback} />;
+  const items = (
+    <Items
+      data={data}
+      closeItemCallback={closeItemCallback}
+      type={props.type}
+    />
+  );
   return (
     <div className={SECTION_CLASS}>
       <CategoryViewsNoClose

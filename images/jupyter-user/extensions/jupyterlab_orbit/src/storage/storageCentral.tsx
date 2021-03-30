@@ -4,33 +4,7 @@ import { TableWidget } from '../common/table';
 import ReactJson from 'react-json-view';
 import { IUseItemsReturn } from '../storage';
 import { JupyterFrontEnd } from '@jupyterlab/application';
-
-const columns = [
-  {
-    title: 'Name',
-    dataIndex: 'name',
-    sorter: {
-      compare: utils.Sorter.DEFAULT,
-      multiple: 2
-    }
-  },
-  {
-    title: 'Creation Timestamp',
-    dataIndex: 'creationTimestamp',
-    sorter: {
-      compare: utils.Sorter.DATE,
-      multiple: 1
-    }
-  },
-  {
-    title: 'Size',
-    dataIndex: 'size',
-    sorter: {
-      compare: utils.Sorter.DEFAULT,
-      multiple: 3
-    }
-  }
-];
+import { IDictionary } from '../typings/utils';
 
 const expandable = (): {} => {
   return {
