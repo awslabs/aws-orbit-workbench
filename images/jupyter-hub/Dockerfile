@@ -9,6 +9,7 @@ RUN apt-get -y update && \
 RUN python3 -m pip install --upgrade pip wheel awscli botocore
 
 # JupyterHub Utils
+ADD runJupyterHub.sh /etc/jupyterhub/runJupyterHub.sh
 ADD utils/setup.py /etc/jupyterhub/utils/setup.py
 ADD utils/requirements.txt /etc/jupyterhub/utils/requirements.txt
 ADD utils/jupyterhub_utils /etc/jupyterhub/utils/jupyterhub_utils
@@ -22,4 +23,4 @@ EXPOSE 8000
 EXPOSE 8001
 EXPOSE 8081
 
-CMD ["jupyterhub", "-f", "/etc/jupyterhub/jupyterhub_config.py"]
+CMD ["./runJupyterHub.sh"]
