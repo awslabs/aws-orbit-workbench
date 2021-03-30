@@ -17,4 +17,5 @@ python-slugify~=4.0.1
 -e ../plugins/team_script_launcher
 -e ../plugins/redshift
 -e ../plugins/custom_cfn
+-e ../plugins/emr_on_eks
 -e ../sdk

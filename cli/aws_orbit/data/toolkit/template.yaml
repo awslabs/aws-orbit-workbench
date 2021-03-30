@@ -88,6 +88,8 @@ Resources:
               - codecommit:ListRepositories
               - cognito-idp:DescribeUserPool
               - cognito-idp:DescribeUserPoolClient
+              - emr-containers:CreateVirtualCluster
+              - emr-containers:TagResource
             Resource: '*'
           - Effect: Allow
             Action:
@@ -244,6 +246,7 @@ Resources:
             Resource:
               - arn:aws:iam::${account_id}:role/aws-service-role/eks-nodegroup.amazonaws.com/AWSServiceRoleForAmazonEKSNodegroup
               - arn:aws:iam::${account_id}:role/aws-service-role/eks-fargate.amazonaws.com/AWSServiceRoleForAmazonEKSForFargate
+              - arn:aws:iam::${account_id}:role/aws-service-role/emr-containers.amazonaws.com/AWSServiceRoleForAmazonEMRContainers
           - Effect: Allow
             Action:
               - iam:AddClientIDToOpenIDConnectProvider
