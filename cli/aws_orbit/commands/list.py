@@ -12,9 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import logging
 from typing import Dict, List, Optional
-import json
+
 import click
 
 from aws_orbit import utils
@@ -62,7 +63,7 @@ def list_env(env: str, variable: str) -> None:
         for p in params:
             if not p["Name"].endswith("context") or "teams" in p["Name"]:
                 continue
-            env_name = p["Name"].split('/')[2]
+            env_name = p["Name"].split("/")[2]
             if len(env) > 0 and not env_name == env:
                 continue
             env_name = p["Name"].split("/")[2]
@@ -83,10 +84,10 @@ def list_env(env: str, variable: str) -> None:
                 print(context.toolkit.s3_bucket)
             elif variable == "all":
                 env_info[env_name] = {
-                    'LandingPage' : context.landing_page_url,
-                    'Teams': teams_list,
-                    'ToolkitBucket': context.toolkit.s3_bucket,
-                    'K8Dashboard': k8_dashboard_url,
+                    "LandingPage": context.landing_page_url,
+                    "Teams": teams_list,
+                    "ToolkitBucket": context.toolkit.s3_bucket,
+                    "K8Dashboard": k8_dashboard_url,
                 }
             else:
                 raise Exception(f"Unknown --variable option {variable}")
