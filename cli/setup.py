@@ -42,7 +42,7 @@ setup(
     install_requires=[
         "boto3~=1.12",
         "botocore~=1.15",
-        "PyYAML~=5.3.0",
+        "PyYAML~=5.4",
         "click~=7.1.0",
         "tqdm~=4.56.0",
         "pyyaml-include~=1.2",

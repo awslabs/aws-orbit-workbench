@@ -30,7 +30,7 @@ setup(
     license="Apache License 2.0",
     packages=find_packages(include=["redshift", "redshift.*"]),
     keywords=["aws", "cdk"],
-    python_requires=">=3.6, <3.9",
+    python_requires=">=3.7, <3.9",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Framework :: Jupyter",
@@ -43,18 +43,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Typing :: Typed",
     ],
-    install_requires=[
-        "aws_cdk.core~=1.67.0",
-        "aws-cdk.aws-s3~=1.67.0",
-        "aws-cdk.aws-lambda~=1.67.0",
-        "aws-cdk.aws-redshift~=1.67.0",
-        "aws-cdk.aws-events~=1.67.0",
-        "aws-cdk.aws-events-targets~=1.67.0",
-        "aws-cdk.aws-iam~=1.67.0",
-        "aws-cdk.aws-kms~=1.67.0",
-        "aws-cdk.aws-sns~=1.67.0",
-        "aws-cdk.aws-sns-subscriptions~=1.67.0",
-    ],
+    install_requires=[],
     package_data={"redshift": ["lambda_sources/redshift_db_creator/*.py"]},
     include_package_data=True,
 )

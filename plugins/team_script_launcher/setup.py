@@ -30,7 +30,7 @@ setup(
     license="Apache License 2.0",
     keywords=["aws", "cdk"],
     packages=["team_script_launcher"],
-    python_requires=">=3.6, <3.9",
+    python_requires=">=3.7, <3.9",
     install_requires=[],
     include_package_data=True,
     classifiers=[
