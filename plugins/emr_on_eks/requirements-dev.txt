@@ -4,9 +4,9 @@
 #
 #    pip-compile requirements-dev.in
 #
--e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/plugins/emr_on_eks
+-e .
     # via -r requirements-dev.in
--e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/cli
+-e ../../cli
     # via -r requirements-dev.in
 appdirs==1.4.4
     # via black
