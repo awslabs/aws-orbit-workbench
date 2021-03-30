@@ -7,7 +7,7 @@
             {
                 "title": "beneficiary_summary",
                 "key": "2",
-                "location": "s3://orbit-dev-env-demo-lake-750821335976-827207/cms_raw_db/Beneficiary_Summary",
+                "location": "s3://orbit-dev-env-demo-lake-*******-827207/cms_raw_db/Beneficiary_Summary",
                 "children": [
                     {
                         "title": "desynpuf_id",
@@ -273,7 +273,7 @@
             {
                 "title": "beneficiary_summary_raw",
                 "key": "35",
-                "location": "s3://orbit-dev-env-demo-lake-750821335976-827207/extracted/Beneficiary_Summary",
+                "location": "s3://orbit-dev-env-demo-lake-*******-827207/extracted/Beneficiary_Summary",
                 "children": [
                     {
                         "title": "desynpuf_id",
@@ -539,7 +539,7 @@
             {
                 "title": "carrier_claims",
                 "key": "68",
-                "location": "s3://orbit-dev-env-demo-lake-750821335976-827207/cms_raw_db/Carrier_Claims",
+                "location": "s3://orbit-dev-env-demo-lake-*******-827207/cms_raw_db/Carrier_Claims",
                 "children": [
                     {
                         "title": "desynpuf_id",
@@ -1685,7 +1685,7 @@
             {
                 "title": "carrier_claims_raw",
                 "key": "211",
-                "location": "s3://orbit-dev-env-demo-lake-750821335976-827207/extracted/Carrier_Claims",
+                "location": "s3://orbit-dev-env-demo-lake-*******-827207/extracted/Carrier_Claims",
                 "children": [
                     {
                         "title": "desynpuf_id",
@@ -2831,7 +2831,7 @@
             {
                 "title": "inpatient_claims",
                 "key": "354",
-                "location": "s3://orbit-dev-env-demo-lake-750821335976-827207/cms_raw_db/Inpatient_Claims",
+                "location": "s3://orbit-dev-env-demo-lake-*******-827207/cms_raw_db/Inpatient_Claims",
                 "children": [
                     {
                         "title": "desynpuf_id",
@@ -3489,7 +3489,7 @@
             {
                 "title": "inpatient_claims_raw",
                 "key": "436",
-                "location": "s3://orbit-dev-env-demo-lake-750821335976-827207/extracted/Inpatient_Claims",
+                "location": "s3://orbit-dev-env-demo-lake-*******-827207/extracted/Inpatient_Claims",
                 "children": [
                     {
                         "title": "desynpuf_id",
@@ -4147,7 +4147,7 @@
             {
                 "title": "outpatient_claims",
                 "key": "518",
-                "location": "s3://orbit-dev-env-demo-lake-750821335976-827207/cms_raw_db/Outpatient_Claims",
+                "location": "s3://orbit-dev-env-demo-lake-*******-827207/cms_raw_db/Outpatient_Claims",
                 "children": [
                     {
                         "title": "desynpuf_id",
@@ -4765,7 +4765,7 @@
             {
                 "title": "outpatient_claims_raw",
                 "key": "595",
-                "location": "s3://orbit-dev-env-demo-lake-750821335976-827207/extracted/Outpatient_Claims",
+                "location": "s3://orbit-dev-env-demo-lake-*******-827207/extracted/Outpatient_Claims",
                 "children": [
                     {
                         "title": "desynpuf_id",
@@ -5383,7 +5383,7 @@
             {
                 "title": "prescription_drug_events",
                 "key": "672",
-                "location": "s3://orbit-dev-env-demo-lake-750821335976-827207/cms_raw_db/Prescription_Drug_Events",
+                "location": "s3://orbit-dev-env-demo-lake-*******-827207/cms_raw_db/Prescription_Drug_Events",
                 "children": [
                     {
                         "title": "desynpuf_id",
@@ -5457,7 +5457,7 @@
             {
                 "title": "prescription_drug_events_raw",
                 "key": "681",
-                "location": "s3://orbit-dev-env-demo-lake-750821335976-827207/extracted/Prescription_Drug_Events",
+                "location": "s3://orbit-dev-env-demo-lake-*******-827207/extracted/Prescription_Drug_Events",
                 "children": [
                     {
                         "title": "desynpuf_id",
@@ -7997,7 +7997,7 @@
             {
                 "title": "myctastable",
                 "key": "992",
-                "location": "s3://orbit-foundation-dev-env-scratch-750821335976-beec8a/lake-user/scratch_db_dev_env_lake_user/myctastable",
+                "location": "s3://orbit-foundation-dev-env-scratch-*******-beec8a/lake-user/scratch_db_dev_env_lake_user/myctastable",
                 "children": [
                     {
                         "title": "desynpuf_id",
@@ -8263,7 +8263,7 @@
             {
                 "title": "mytemptable",
                 "key": "1025",
-                "location": "s3://orbit-foundation-dev-env-scratch-750821335976-beec8a/lake-user/scratch_db_dev_env_lake_user/myTempTable/",
+                "location": "s3://orbit-foundation-dev-env-scratch-*******-beec8a/lake-user/scratch_db_dev_env_lake_user/myTempTable/",
                 "children": [
                     {
                         "title": "age",
@@ -8311,7 +8311,7 @@
             {
                 "title": "population_by_age",
                 "key": "1031",
-                "location": "s3://orbit-foundation-dev-env-scratch-750821335976-beec8a/lake-user/athena/tables/75d5d19f-555f-4d40-b686-b9f4c01cf81c",
+                "location": "s3://orbit-foundation-dev-env-scratch-*******-beec8a/lake-user/athena/tables/75d5d19f-555f-4d40-b686-b9f4c01cf81c",
                 "children": [
                     {
                         "title": "age",

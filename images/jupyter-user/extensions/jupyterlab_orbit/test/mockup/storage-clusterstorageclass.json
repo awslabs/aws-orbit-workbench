@@ -7,7 +7,7 @@
             "resourceVersion": "15685",
             "creationTimestamp": "2021-03-25T18:16:18Z",
             "annotations": {
-                "kubectl.kubernetes.io/last-applied-configuration": "{\"allowVolumeExpansion\":true,\"apiVersion\":\"storage.k8s.io/v1\",\"kind\":\"StorageClass\",\"metadata\":{\"annotations\":{},\"name\":\"ebs-lake-creator-gp2\"},\"parameters\":{\"encrypted\":\"true\",\"fsType\":\"ext4\",\"kmsKeyId\":\"arn:aws:kms:us-west-2:750821335976:key/71ee162b-bdff-46b0-8359-eec1e3d40813\",\"type\":\"gp2\"},\"provisioner\":\"kubernetes.io/aws-ebs\",\"reclaimPolicy\":\"Delete\",\"volumeBindingMode\":\"Immediate\"}\n"
+                "kubectl.kubernetes.io/last-applied-configuration": "{\"allowVolumeExpansion\":true,\"apiVersion\":\"storage.k8s.io/v1\",\"kind\":\"StorageClass\",\"metadata\":{\"annotations\":{},\"name\":\"ebs-lake-creator-gp2\"},\"parameters\":{\"encrypted\":\"true\",\"fsType\":\"ext4\",\"kmsKeyId\":\"arn:aws:kms:us-west-2:*******:key/71ee162b-bdff-46b0-8359-eec1e3d40813\",\"type\":\"gp2\"},\"provisioner\":\"kubernetes.io/aws-ebs\",\"reclaimPolicy\":\"Delete\",\"volumeBindingMode\":\"Immediate\"}\n"
             },
             "managedFields": [
                 {
@@ -42,7 +42,7 @@
         "parameters": {
             "encrypted": "true",
             "fsType": "ext4",
-            "kmsKeyId": "arn:aws:kms:us-west-2:750821335976:key/71ee162b-bdff-46b0-8359-eec1e3d40813",
+            "kmsKeyId": "arn:aws:kms:us-west-2:*******:key/71ee162b-bdff-46b0-8359-eec1e3d40813",
             "type": "gp2"
         },
         "reclaimPolicy": "Delete",
@@ -57,7 +57,7 @@
             "resourceVersion": "17786",
             "creationTimestamp": "2021-03-25T18:25:14Z",
             "annotations": {
-                "kubectl.kubernetes.io/last-applied-configuration": "{\"allowVolumeExpansion\":true,\"apiVersion\":\"storage.k8s.io/v1\",\"kind\":\"StorageClass\",\"metadata\":{\"annotations\":{},\"name\":\"ebs-lake-user-gp2\"},\"parameters\":{\"encrypted\":\"true\",\"fsType\":\"ext4\",\"kmsKeyId\":\"arn:aws:kms:us-west-2:750821335976:key/7d4be531-c4df-4aa1-b384-5bcafa2d5257\",\"type\":\"gp2\"},\"provisioner\":\"kubernetes.io/aws-ebs\",\"reclaimPolicy\":\"Delete\",\"volumeBindingMode\":\"Immediate\"}\n"
+                "kubectl.kubernetes.io/last-applied-configuration": "{\"allowVolumeExpansion\":true,\"apiVersion\":\"storage.k8s.io/v1\",\"kind\":\"StorageClass\",\"metadata\":{\"annotations\":{},\"name\":\"ebs-lake-user-gp2\"},\"parameters\":{\"encrypted\":\"true\",\"fsType\":\"ext4\",\"kmsKeyId\":\"arn:aws:kms:us-west-2:*******:key/7d4be531-c4df-4aa1-b384-5bcafa2d5257\",\"type\":\"gp2\"},\"provisioner\":\"kubernetes.io/aws-ebs\",\"reclaimPolicy\":\"Delete\",\"volumeBindingMode\":\"Immediate\"}\n"
             },
             "managedFields": [
                 {
@@ -92,7 +92,7 @@
         "parameters": {
             "encrypted": "true",
             "fsType": "ext4",
-            "kmsKeyId": "arn:aws:kms:us-west-2:750821335976:key/7d4be531-c4df-4aa1-b384-5bcafa2d5257",
+            "kmsKeyId": "arn:aws:kms:us-west-2:*******:key/7d4be531-c4df-4aa1-b384-5bcafa2d5257",
             "type": "gp2"
         },
         "reclaimPolicy": "Delete",
