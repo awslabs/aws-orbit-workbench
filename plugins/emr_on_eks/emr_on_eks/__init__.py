@@ -98,7 +98,7 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
         if c["name"] == virtual_cluster_name:
             try:
                 delete_response = emr.delete_virtual_cluster(id=c["id"])
-                _logger.debug("delete_virtual_cluster:", response)
+                _logger.debug("delete_virtual_cluster:", delete_response)
                 parameters["virtual_cluster_id"] = c["id"]
                 parameters["virtual_name"] = c["name"]
                 parameters["virtual_arn"] = c["arn"]
