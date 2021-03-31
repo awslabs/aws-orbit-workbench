@@ -71,6 +71,7 @@ class Env(Stack):
         self.role_eks_cluster = self._create_role_cluster()
         self.role_eks_env_nodegroup = self._create_env_nodegroup_role()
         self.role_fargate_profile = self._create_role_fargate_profile()
+        self.role_cluster_autoscaler = self._create_cluster_autoscaler_role()
         if self.context.user_pool_id:
             self.context.cognito_users_url = orbit_cognito.get_users_url(
                 user_pool_id=self.context.user_pool_id, region=self.context.region
@@ -216,6 +217,34 @@ class Env(Stack):
             ],
         )
         return role
+
+    def _create_cluster_autoscaler_role(self) -> iam.Role:
+        name: str = f"orbit-{self.context.name}-cluster-autoscaler-role"
+        return iam.Role(
+            scope=self,
+            id=name,
+            role_name=name,
+            assumed_by=iam.ServicePrincipal("eks.amazonaws.com"),
+            inline_policies={
+                "Logging": iam.PolicyDocument(
+                    statements=[
+                        iam.PolicyStatement(
+                            effect=iam.Effect.ALLOW,
+                            actions=[
+                                "autoscaling:DescribeAutoScalingGroups",
+                                "autoscaling:DescribeAutoScalingInstances",
+                                "autoscaling:DescribeLaunchConfigurations",
+                                "autoscaling:DescribeTags",
+                                "autoscaling:SetDesiredCapacity",
+                                "autoscaling:TerminateInstanceInAutoScalingGroup",
+                                "ec2:DescribeLaunchTemplateVersions",
+                            ],
+                            resources=["*"],
+                        )
+                    ]
+                )
+            },
+        )
 
     def _get_user_pool(self, user_pool_arn: str) -> cognito.UserPool:
         return cast(
@@ -365,6 +394,7 @@ class Env(Stack):
                     "EksClusterRoleArn": self.role_eks_cluster.role_arn,
                     "EksFargateProfileRoleArn": self.role_fargate_profile.role_arn,
                     "EksEnvNodegroupRoleArn": self.role_eks_env_nodegroup.role_arn,
+                    "EksClusterAutoscalerRoleArn": self.role_cluster_autoscaler.role_arn,
                     "UserPoolId": self.user_pool.user_pool_id,
                     "UserPoolClientId": self.user_pool_client.user_pool_client_id,
                     "IdentityPoolId": self.identity_pool.ref,

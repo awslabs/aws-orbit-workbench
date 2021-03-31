@@ -88,6 +88,8 @@ Resources:
               - codecommit:ListRepositories
               - cognito-idp:DescribeUserPool
               - cognito-idp:DescribeUserPoolClient
+              - autoscaling:DescribeAutoScalingGroups
+              - autoscaling:UpdateAutoScalingGroup
               - emr-containers:CreateVirtualCluster
               - emr-containers:TagResource
               - emr-containers:ListVirtualClusters

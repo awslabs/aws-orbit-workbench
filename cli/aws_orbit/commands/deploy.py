@@ -14,7 +14,7 @@
 
 import logging
 import os
-import uuid
+import random
 from typing import List, Optional, Tuple, cast
 
 import click
@@ -103,7 +103,7 @@ def deploy_toolkit(
             )
             credential_exist = True
     else:
-        context.toolkit.deploy_id = uuid.uuid4().hex[:6]
+        context.toolkit.deploy_id = "%06x" % random.randrange(16 ** 6)
         if credential_required and not credential_received:
             username, password = _request_dockerhub_credential(msg_ctx=msg_ctx)
             credential_exist = False
