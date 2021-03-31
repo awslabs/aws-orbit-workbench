@@ -19,7 +19,6 @@ import logging
 import os
 import re
 from typing import Any, ClassVar, Dict, Generic, List, Optional, Set, Type, TypeVar, Union, cast
-from warnings import simplefilter
 
 import jsonpath_ng as jsonpath_ng
 import yaml
@@ -31,7 +30,6 @@ from yamlinclude import YamlIncludeConstructor
 import aws_orbit
 from aws_orbit import utils
 from aws_orbit.models.common import BaseSchema
-from aws_orbit.remote_files.kubectl import _cluster_autoscaler
 from aws_orbit.services import ssm
 from aws_orbit.utils import boto3_client
 
@@ -150,9 +148,7 @@ class MetricsServer(ImageManifest):
 # https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/aws
 @dataclass(base_schema=BaseSchema, frozen=True)
 class ClusterAutoscaler(ImageManifest):
-    # repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s.gcr.io/autoscaling/cluster-autoscaler"
-    repository: Optional[str] = "k8s.gcr.io/autoscaling/cluster-autoscaler"
-    source: Optional[str] = "dockerhub"
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s.gcr.io/autoscaling/cluster-autoscaler"
     version: Optional[str] = "v1.18.3"
 
 
