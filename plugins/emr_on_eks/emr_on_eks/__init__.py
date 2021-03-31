@@ -97,16 +97,22 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
     for c in response["virtualClusters"]:
         if c["name"] == virtual_cluster_name:
             try:
-                response = emr.delete_virtual_cluster(id=c["id"])
+                delete_response = emr.delete_virtual_cluster(id=c["id"])
                 _logger.debug("delete_virtual_cluster:", response)
+                parameters["virtual_cluster_id"] = c["id"]
+                parameters["virtual_name"] = c["name"]
+                parameters["virtual_arn"] = c["arn"]
+                cdk_destroy(
+                    stack_name=f"orbit-{context.name}-{team_context.name}-emr-on-eks",
+                    app_filename=os.path.join(ORBIT_EMR_ON_EKS_ROOT, "cdk.py"),
+                    context=context,
+                    team_context=team_context,
+                    parameters=parameters,
+                )
+
+                return
             except Exception as e:
                 _logger.warning(e)
                 pass
 
-    cdk_destroy(
-        stack_name=f"orbit-{context.name}-{team_context.name}-emr-on-eks",
-        app_filename=os.path.join(ORBIT_EMR_ON_EKS_ROOT, "cdk.py"),
-        context=context,
-        team_context=team_context,
-        parameters=parameters,
-    )
+
