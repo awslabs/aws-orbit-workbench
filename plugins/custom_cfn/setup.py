@@ -30,7 +30,7 @@ setup(
     keywords=["aws", "cdk"],
     license="Apache License 2.0",
     packages=find_packages(include=["custom_cfn", "custom_cfn.*"]),
-    python_requires=">=3.6, <3.9",
+    python_requires=">=3.7, <3.9",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Framework :: Jupyter",
@@ -43,8 +43,6 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Typing :: Typed",
     ],
-    install_requires=[
-        "aws-cdk.core~=1.67.0",
-    ],
+    install_requires=[],
     include_package_data=True,
 )

@@ -235,7 +235,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "750821335976.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
+                            "image": "*******.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -271,7 +271,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit-750821335976-827207"
+                                    "value": "orbit-dev-env-toolkit-*******-827207"
                                 },
                                 {
                                     "name": "task_type",
@@ -279,7 +279,7 @@
                                 },
                                 {
                                     "name": "tasks",
-                                    "value": "{\"tasks\": [{\"notebookName\": \"Example-3-Load-Database-Athena.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"targetPrefix\": \"unsecured-4\", \"params\": {\"source_bucket_name\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"target_bucket_name\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"database_name\": \"cms_raw_db\", \"schema_dir\": \"landing/cms/schema\", \"file_path\": \"extracted/Outpatient_Claims\", \"region\": \"us-west-2\"}}]}"
+                                    "value": "{\"tasks\": [{\"notebookName\": \"Example-3-Load-Database-Athena.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"targetPrefix\": \"unsecured-4\", \"params\": {\"source_bucket_name\": \"orbit-dev-env-demo-lake-*******-827207\", \"target_bucket_name\": \"orbit-dev-env-demo-lake-*******-827207\", \"database_name\": \"cms_raw_db\", \"schema_dir\": \"landing/cms/schema\", \"file_path\": \"extracted/Outpatient_Claims\", \"region\": \"us-west-2\"}}]}"
                                 },
                                 {
                                     "name": "compute",
@@ -579,7 +579,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "750821335976.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
+                            "image": "*******.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -615,7 +615,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit-750821335976-827207"
+                                    "value": "orbit-dev-env-toolkit-*******-827207"
                                 },
                                 {
                                     "name": "task_type",
@@ -923,7 +923,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "750821335976.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
+                            "image": "*******.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -959,7 +959,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit-750821335976-827207"
+                                    "value": "orbit-dev-env-toolkit-*******-827207"
                                 },
                                 {
                                     "name": "task_type",
@@ -1266,7 +1266,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "750821335976.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
+                            "image": "*******.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -1302,7 +1302,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit-750821335976-827207"
+                                    "value": "orbit-dev-env-toolkit-*******-827207"
                                 },
                                 {
                                     "name": "task_type",
@@ -1310,7 +1310,7 @@
                                 },
                                 {
                                     "name": "tasks",
-                                    "value": "{\"tasks\": [{\"notebookName\": \"Example-2-Extract-Files.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"params\": {\"bucketName\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"zipFileName\": \"landing/data/cms/DE1_0_2008_Beneficiary_Summary_File_Sample_1.zip\", \"targetFolder\": \"s3://orbit-dev-env-demo-lake-750821335976-827207/extracted/Beneficiary_Summary\", \"use_subdirs\": false}}, {\"notebookName\": \"Example-2-Extract-Files.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"params\": {\"bucketName\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"zipFileName\": \"landing/data/cms/DE1_0_2008_to_2010_Carrier_Claims_Sample_1A.zip\", \"targetFolder\": \"s3://orbit-dev-env-demo-lake-750821335976-827207/extracted/Carrier_Claims\", \"use_subdirs\": false}}, {\"notebookName\": \"Example-2-Extract-Files.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"params\": {\"bucketName\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"zipFileName\": \"landing/data/cms/DE1_0_2008_to_2010_Carrier_Claims_Sample_1B.zip\", \"targetFolder\": \"s3://orbit-dev-env-demo-lake-750821335976-827207/extracted/Carrier_Claims\", \"use_subdirs\": false}}, {\"notebookName\": \"Example-2-Extract-Files.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"params\": {\"bucketName\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"zipFileName\": \"landing/data/cms/DE1_0_2008_to_2010_Inpatient_Claims_Sample_1.zip\", \"targetFolder\": \"s3://orbit-dev-env-demo-lake-750821335976-827207/extracted/Inpatient_Claims\", \"use_subdirs\": false}}, {\"notebookName\": \"Example-2-Extract-Files.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"params\": {\"bucketName\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"zipFileName\": \"landing/data/cms/DE1_0_2008_to_2010_Outpatient_Claims_Sample_1.zip\", \"targetFolder\": \"s3://orbit-dev-env-demo-lake-750821335976-827207/extracted/Outpatient_Claims\", \"use_subdirs\": false}}, {\"notebookName\": \"Example-2-Extract-Files.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"params\": {\"bucketName\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"zipFileName\": \"landing/data/cms/DE1_0_2008_to_2010_Prescription_Drug_Events_Sample_1.zip\", \"targetFolder\": \"s3://orbit-dev-env-demo-lake-750821335976-827207/extracted/Prescription_Drug_Events\", \"use_subdirs\": false}}, {\"notebookName\": \"Example-2-Extract-Files.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"params\": {\"bucketName\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"zipFileName\": \"landing/data/cms/DE1_0_2009_Beneficiary_Summary_File_Sample_1.zip\", \"targetFolder\": \"s3://orbit-dev-env-demo-lake-750821335976-827207/extracted/Beneficiary_Summary\", \"use_subdirs\": false}}, {\"notebookName\": \"Example-2-Extract-Files.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"params\": {\"bucketName\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"zipFileName\": \"landing/data/cms/DE1_0_2010_Beneficiary_Summary_File_Sample_20.zip\", \"targetFolder\": \"s3://orbit-dev-env-demo-lake-750821335976-827207/extracted/Beneficiary_Summary\", \"use_subdirs\": false}}]}"
+                                    "value": "{\"tasks\": [{\"notebookName\": \"Example-2-Extract-Files.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"params\": {\"bucketName\": \"orbit-dev-env-demo-lake-*******-827207\", \"zipFileName\": \"landing/data/cms/DE1_0_2008_Beneficiary_Summary_File_Sample_1.zip\", \"targetFolder\": \"s3://orbit-dev-env-demo-lake-*******-827207/extracted/Beneficiary_Summary\", \"use_subdirs\": false}}, {\"notebookName\": \"Example-2-Extract-Files.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"params\": {\"bucketName\": \"orbit-dev-env-demo-lake-*******-827207\", \"zipFileName\": \"landing/data/cms/DE1_0_2008_to_2010_Carrier_Claims_Sample_1A.zip\", \"targetFolder\": \"s3://orbit-dev-env-demo-lake-*******-827207/extracted/Carrier_Claims\", \"use_subdirs\": false}}, {\"notebookName\": \"Example-2-Extract-Files.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"params\": {\"bucketName\": \"orbit-dev-env-demo-lake-*******-827207\", \"zipFileName\": \"landing/data/cms/DE1_0_2008_to_2010_Carrier_Claims_Sample_1B.zip\", \"targetFolder\": \"s3://orbit-dev-env-demo-lake-*******-827207/extracted/Carrier_Claims\", \"use_subdirs\": false}}, {\"notebookName\": \"Example-2-Extract-Files.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"params\": {\"bucketName\": \"orbit-dev-env-demo-lake-*******-827207\", \"zipFileName\": \"landing/data/cms/DE1_0_2008_to_2010_Inpatient_Claims_Sample_1.zip\", \"targetFolder\": \"s3://orbit-dev-env-demo-lake-*******-827207/extracted/Inpatient_Claims\", \"use_subdirs\": false}}, {\"notebookName\": \"Example-2-Extract-Files.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"params\": {\"bucketName\": \"orbit-dev-env-demo-lake-*******-827207\", \"zipFileName\": \"landing/data/cms/DE1_0_2008_to_2010_Outpatient_Claims_Sample_1.zip\", \"targetFolder\": \"s3://orbit-dev-env-demo-lake-*******-827207/extracted/Outpatient_Claims\", \"use_subdirs\": false}}, {\"notebookName\": \"Example-2-Extract-Files.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"params\": {\"bucketName\": \"orbit-dev-env-demo-lake-*******-827207\", \"zipFileName\": \"landing/data/cms/DE1_0_2008_to_2010_Prescription_Drug_Events_Sample_1.zip\", \"targetFolder\": \"s3://orbit-dev-env-demo-lake-*******-827207/extracted/Prescription_Drug_Events\", \"use_subdirs\": false}}, {\"notebookName\": \"Example-2-Extract-Files.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"params\": {\"bucketName\": \"orbit-dev-env-demo-lake-*******-827207\", \"zipFileName\": \"landing/data/cms/DE1_0_2009_Beneficiary_Summary_File_Sample_1.zip\", \"targetFolder\": \"s3://orbit-dev-env-demo-lake-*******-827207/extracted/Beneficiary_Summary\", \"use_subdirs\": false}}, {\"notebookName\": \"Example-2-Extract-Files.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"params\": {\"bucketName\": \"orbit-dev-env-demo-lake-*******-827207\", \"zipFileName\": \"landing/data/cms/DE1_0_2010_Beneficiary_Summary_File_Sample_20.zip\", \"targetFolder\": \"s3://orbit-dev-env-demo-lake-*******-827207/extracted/Beneficiary_Summary\", \"use_subdirs\": false}}]}"
                                 },
                                 {
                                     "name": "compute",
@@ -1609,7 +1609,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "750821335976.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
+                            "image": "*******.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -1645,7 +1645,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit-750821335976-827207"
+                                    "value": "orbit-dev-env-toolkit-*******-827207"
                                 },
                                 {
                                     "name": "task_type",
@@ -1653,7 +1653,7 @@
                                 },
                                 {
                                     "name": "tasks",
-                                    "value": "{\"tasks\": [{\"notebookName\": \"Example-3-Load-Database-Athena.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"targetPrefix\": \"unsecured-5\", \"params\": {\"source_bucket_name\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"target_bucket_name\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"database_name\": \"cms_raw_db\", \"schema_dir\": \"landing/cms/schema\", \"file_path\": \"extracted/Prescription_Drug_Events\", \"region\": \"us-west-2\"}}]}"
+                                    "value": "{\"tasks\": [{\"notebookName\": \"Example-3-Load-Database-Athena.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"targetPrefix\": \"unsecured-5\", \"params\": {\"source_bucket_name\": \"orbit-dev-env-demo-lake-*******-827207\", \"target_bucket_name\": \"orbit-dev-env-demo-lake-*******-827207\", \"database_name\": \"cms_raw_db\", \"schema_dir\": \"landing/cms/schema\", \"file_path\": \"extracted/Prescription_Drug_Events\", \"region\": \"us-west-2\"}}]}"
                                 },
                                 {
                                     "name": "compute",
@@ -1952,7 +1952,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "750821335976.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
+                            "image": "*******.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -1988,7 +1988,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit-750821335976-827207"
+                                    "value": "orbit-dev-env-toolkit-*******-827207"
                                 },
                                 {
                                     "name": "task_type",
@@ -1996,7 +1996,7 @@
                                 },
                                 {
                                     "name": "tasks",
-                                    "value": "{\"tasks\": [{\"notebookName\": \"Example-3-Load-Database-Athena.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"targetPrefix\": \"unsecured-2\", \"params\": {\"source_bucket_name\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"target_bucket_name\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"database_name\": \"cms_raw_db\", \"schema_dir\": \"landing/cms/schema\", \"file_path\": \"extracted/Carrier_Claims\", \"region\": \"us-west-2\"}}]}"
+                                    "value": "{\"tasks\": [{\"notebookName\": \"Example-3-Load-Database-Athena.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"targetPrefix\": \"unsecured-2\", \"params\": {\"source_bucket_name\": \"orbit-dev-env-demo-lake-*******-827207\", \"target_bucket_name\": \"orbit-dev-env-demo-lake-*******-827207\", \"database_name\": \"cms_raw_db\", \"schema_dir\": \"landing/cms/schema\", \"file_path\": \"extracted/Carrier_Claims\", \"region\": \"us-west-2\"}}]}"
                                 },
                                 {
                                     "name": "compute",
@@ -2295,7 +2295,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "750821335976.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
+                            "image": "*******.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -2331,7 +2331,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit-750821335976-827207"
+                                    "value": "orbit-dev-env-toolkit-*******-827207"
                                 },
                                 {
                                     "name": "task_type",
@@ -2638,7 +2638,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "750821335976.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
+                            "image": "*******.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -2674,7 +2674,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit-750821335976-827207"
+                                    "value": "orbit-dev-env-toolkit-*******-827207"
                                 },
                                 {
                                     "name": "task_type",
@@ -2682,7 +2682,7 @@
                                 },
                                 {
                                     "name": "tasks",
-                                    "value": "{\"tasks\": [{\"notebookName\": \"Example-3-Load-Database-Athena.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"targetPrefix\": \"unsecured-1\", \"params\": {\"source_bucket_name\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"target_bucket_name\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"database_name\": \"cms_raw_db\", \"schema_dir\": \"landing/cms/schema\", \"file_path\": \"extracted/Beneficiary_Summary\", \"region\": \"us-west-2\"}}]}"
+                                    "value": "{\"tasks\": [{\"notebookName\": \"Example-3-Load-Database-Athena.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"targetPrefix\": \"unsecured-1\", \"params\": {\"source_bucket_name\": \"orbit-dev-env-demo-lake-*******-827207\", \"target_bucket_name\": \"orbit-dev-env-demo-lake-*******-827207\", \"database_name\": \"cms_raw_db\", \"schema_dir\": \"landing/cms/schema\", \"file_path\": \"extracted/Beneficiary_Summary\", \"region\": \"us-west-2\"}}]}"
                                 },
                                 {
                                     "name": "compute",
@@ -2981,7 +2981,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "750821335976.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
+                            "image": "*******.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -3017,7 +3017,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit-750821335976-827207"
+                                    "value": "orbit-dev-env-toolkit-*******-827207"
                                 },
                                 {
                                     "name": "task_type",
@@ -3025,7 +3025,7 @@
                                 },
                                 {
                                     "name": "tasks",
-                                    "value": "{\"tasks\": [{\"notebookName\": \"Example-3-Load-Database-Athena.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"targetPrefix\": \"unsecured-3\", \"params\": {\"source_bucket_name\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"target_bucket_name\": \"orbit-dev-env-demo-lake-750821335976-827207\", \"database_name\": \"cms_raw_db\", \"schema_dir\": \"landing/cms/schema\", \"file_path\": \"extracted/Inpatient_Claims\", \"region\": \"us-west-2\"}}]}"
+                                    "value": "{\"tasks\": [{\"notebookName\": \"Example-3-Load-Database-Athena.ipynb\", \"sourcePath\": \"/efs/shared/samples/notebooks/A-LakeCreator\", \"targetPath\": \"/efs/shared/regression/notebooks/A-LakeCreator\", \"targetPrefix\": \"unsecured-3\", \"params\": {\"source_bucket_name\": \"orbit-dev-env-demo-lake-*******-827207\", \"target_bucket_name\": \"orbit-dev-env-demo-lake-*******-827207\", \"database_name\": \"cms_raw_db\", \"schema_dir\": \"landing/cms/schema\", \"file_path\": \"extracted/Inpatient_Claims\", \"region\": \"us-west-2\"}}]}"
                                 },
                                 {
                                     "name": "compute",
@@ -3325,7 +3325,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "750821335976.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
+                            "image": "*******.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -3361,7 +3361,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit-750821335976-827207"
+                                    "value": "orbit-dev-env-toolkit-*******-827207"
                                 },
                                 {
                                     "name": "task_type",
@@ -3669,7 +3669,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "750821335976.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
+                            "image": "*******.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -3705,7 +3705,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit-750821335976-827207"
+                                    "value": "orbit-dev-env-toolkit-*******-827207"
                                 },
                                 {
                                     "name": "task_type",
@@ -4012,7 +4012,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "750821335976.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
+                            "image": "*******.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -4048,7 +4048,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit-750821335976-827207"
+                                    "value": "orbit-dev-env-toolkit-*******-827207"
                                 },
                                 {
                                     "name": "task_type",
@@ -4355,7 +4355,7 @@
                     "containers": [
                         {
                             "name": "notebook",
-                            "image": "750821335976.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
+                            "image": "*******.dkr.ecr.us-west-2.amazonaws.com/orbit-dev-env-jupyter-user:latest",
                             "args": [
                                 "bash",
                                 "-c",
@@ -4391,7 +4391,7 @@
                                 },
                                 {
                                     "name": "AWS_ORBIT_S3_BUCKET",
-                                    "value": "orbit-dev-env-toolkit-750821335976-827207"
+                                    "value": "orbit-dev-env-toolkit-*******-827207"
                                 },
                                 {
                                     "name": "task_type",

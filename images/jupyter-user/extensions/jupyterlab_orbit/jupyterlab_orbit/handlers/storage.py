@@ -16,6 +16,7 @@ import json
 import os
 from pathlib import Path
 from typing import Dict, List, Optional
+
 from aws_orbit_sdk import controller
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
@@ -23,6 +24,7 @@ from tornado import web
 TEAM_PVCS: List[Dict[str, str]] = []
 CLUSTER_PVS: List[Dict[str, str]] = []
 CLUSTER_STORAGECLASSES: List[Dict[str, str]] = []
+
 
 class StorageRouteHandler(APIHandler):
     @staticmethod
@@ -46,11 +48,7 @@ class StorageRouteHandler(APIHandler):
                 pass
             storage["info"] = s
             data.append(storage)
-        data = sorted(
-            data, key=lambda i: (i["creationTimestamp"]
-                                 if "creationTimestamp" in i
-                                 else i["name"])
-        )
+        data = sorted(data, key=lambda i: (i["creationTimestamp"] if "creationTimestamp" in i else i["name"]))
 
         return json.dumps(data)
 
@@ -100,13 +98,6 @@ class StorageRouteHandler(APIHandler):
         self.finish(self._dump(data, type))
         self.log.debug("Exit storage GET")
 
-    @staticmethod
-    def _delete(name, data):
-        for s in data:
-            if s["metadata"]["name"] == name:
-                data.remove(s)
-
-
     @web.authenticated
     def delete(self):
         global TEAM_PVCS
@@ -127,11 +118,7 @@ class StorageRouteHandler(APIHandler):
             else:
                 raise Exception("Unknown type: %s", type)
 
-            response = {
-                "status": "200",
-                "reason": "OK",
-                "message": f"Successfully deleted ={name}"
-            }
+            response = {"status": "200", "reason": "OK", "message": f"Successfully deleted ={name}"}
 
         self.log.info(f"Delete response={response}")
         self.finish(json.dumps(response))
