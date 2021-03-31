@@ -91,6 +91,27 @@ def _metrics_server(context: "Context", output_path: str) -> None:
         file.write(content)
 
 
+def _cluster_autoscaler(output_path: str, context: "Context") -> None:
+    filename = "07-cluster-autoscaler-autodiscover.yaml"
+    input = os.path.join(MODELS_PATH, "apps", filename)
+    output = os.path.join(output_path, filename)
+
+    if context.networking.data.internet_accessible is False:
+        image = (
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
+            f"orbit-{context.name}-cluster-autoscaler:{ImagesManifest.cluster_autoscaler.version}"
+        )
+    else:
+        image = f"{ImagesManifest.cluster_autoscaler.repository}:{ImagesManifest.cluster_autoscaler.version}"
+    with open(input, "r") as file:
+        content: str = file.read()
+    content = content.replace("$", "").format(
+        account_id=context.account_id, env_name=context.name, cluster_name=f"orbit-{context.name}", image=image
+    )
+    with open(output, "w") as file:
+        file.write(content)
+
+
 def _team(context: "Context", team_context: "TeamContext", output_path: str) -> None:
     input = os.path.join(MODELS_PATH, "apps", "01-team.yaml")
     output = os.path.join(output_path, f"01-{team_context.name}-team.yaml")
@@ -207,6 +228,7 @@ def _generate_env_manifest(context: "Context", clean_up: bool = True) -> str:
 
     _landing_page(output_path=output_path, context=context)
     _k8_dashboard(output_path=output_path, context=context)
+    _cluster_autoscaler(output_path=output_path, context=context)
 
     return output_path
 

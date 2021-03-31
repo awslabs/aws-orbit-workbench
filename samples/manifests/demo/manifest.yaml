@@ -1,0 +1,49 @@
+Name: !ENV ${ORBIT_ENV_NAME::dev-env}
+CodeartifactDomain: aws-orbit
+CodeartifactRepository: python-repository
+EksSystemMastersRoles:
+-   !ENV ${ORBIT_ADMIN_ROLE::Admin}
+ScratchBucketArn: !SSM ${/orbit-foundation/dev-env/resources::ScratchBucketArn}
+UserPoolId: !SSM ${/orbit-foundation/dev-env/resources::UserPoolId}
+SharedEfsFsId: !SSM ${/orbit-foundation/dev-env/resources::SharedEfsFsId}
+SharedEfsSgId: !SSM ${/orbit-foundation/dev-env/resources::SharedEfsSgId}
+Networking:
+    VpcId: !SSM ${/orbit-foundation/dev-env/resources::VpcId}
+    PublicSubnets: !SSM ${/orbit-foundation/dev-env/resources::PublicSubnets}
+    PrivateSubnets: !SSM ${/orbit-foundation/dev-env/resources::PrivateSubnets}
+    IsolatedSubnets: !SSM ${/orbit-foundation/dev-env/resources::IsolatedSubnets}
+    Data:
+        InternetAccessible: false
+        NodesSubnets: !SSM ${/orbit-foundation/dev-env/resources::NodesSubnets}
+    Frontend:
+        LoadBalancersSubnets: !SSM ${/orbit-foundation/dev-env/resources::LoadBalancersSubnets}
+        SslCertArn: !SSM ${/orbit-foundation/dev-env/resources::SslCertArn}
+ManagedNodegroups:
+-   Name: primary-compute
+    InstanceType: m5.2xlarge
+    LocalStorageSize: 128
+    NodesNumDesired: 3
+    NodesNumMax: 4
+    NodesNumMin: 1
+    Labels:
+        instance-type: m5.2xlarge
+Teams:
+-   Name: lake-creator
+    Policies:
+    - orbit-dev-env-demo-lake-creator-add-policy
+    GrantSudo: true
+    Fargate: false
+    K8Admin: true
+    JupyterhubInboundRanges:
+    - 0.0.0.0/0
+    Plugins: !include lake-creator-plugins.yaml
+    EfsLifeCycle: AFTER_7_DAYS
+-   Name: lake-user
+    Policies:
+    - orbit-dev-env-demo-lake-user-add-policy
+    JupyterhubInboundRanges:
+    - 0.0.0.0/0
+    GrantSudo: true
+    Profiles: !include lake-user-profiles.json
+    Plugins: !include lake-user-plugins.yaml
+    EfsLifeCycle: AFTER_7_DAYS

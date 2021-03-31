@@ -19,7 +19,6 @@ import logging
 import os
 import re
 from typing import Any, ClassVar, Dict, Generic, List, Optional, Set, Type, TypeVar, Union, cast
-from warnings import simplefilter
 
 import jsonpath_ng as jsonpath_ng
 import yaml
@@ -146,6 +145,13 @@ class MetricsServer(ImageManifest):
     version: Optional[str] = "v0.4.2"
 
 
+# https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/aws
+@dataclass(base_schema=BaseSchema, frozen=True)
+class ClusterAutoscaler(ImageManifest):
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s.gcr.io/autoscaling/cluster-autoscaler"
+    version: Optional[str] = "v1.18.3"
+
+
 @dataclass(base_schema=BaseSchema, frozen=True)
 class FoundationImagesManifest:
     Schema: ClassVar[Type[Schema]] = Schema
@@ -171,6 +177,7 @@ class ImagesManifest:
     k8_dashboard: K8Dashboard = K8Dashboard()
     k8_metrics_scraper: MetricsScraper = MetricsScraper()
     k8_metrics_server: MetricsServer = MetricsServer()
+    cluster_autoscaler: ClusterAutoscaler = ClusterAutoscaler()
     names: List[str] = field(
         metadata=dict(load_only=True),
         default_factory=lambda: [
@@ -184,6 +191,7 @@ class ImagesManifest:
             "k8_dashboard",
             "k8_metrics_scraper",
             "k8_metrics_server",
+            "cluster_autoscaler",
         ],
     )
 

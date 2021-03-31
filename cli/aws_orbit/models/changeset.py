@@ -86,6 +86,7 @@ class ManagedNodeGroupsChangeset:
     Schema: ClassVar[Type[Schema]] = Schema
     removed_nodegroups: List[ManagedNodeGroupManifest]
     added_nodegroups: List[ManagedNodeGroupManifest]
+    modified_nodegroups: List[ManagedNodeGroupManifest]
 
 
 @dataclass(base_schema=BaseSchema)
@@ -251,15 +252,31 @@ def _check_managed_nodegroups(
     _logger.debug("ManagedNodeGroups: %s -> %s", old_nodegroups, new_nodegroups)
     removed_nodegroups: List[str] = list(set(old_nodegroups) - set(new_nodegroups))
     added_nodegroups: List[str] = list(set(new_nodegroups) - set(old_nodegroups))
-    _logger.debug("removed_roles: %s", removed_nodegroups)
-    _logger.debug("added_roles: %s", added_nodegroups)
-    if removed_nodegroups or added_nodegroups:
+
+    modified_nodegroups: List[ManagedNodeGroupManifest] = []
+    for ng in manifest.managed_nodegroups:
+        current_ng = next((ng for ng in context.managed_nodegroups if ng.name == ng.name), None)
+        if current_ng:
+            if (
+                ng.nodes_num_desired != current_ng.nodes_num_desired
+                or ng.nodes_num_max != current_ng.nodes_num_max
+                or ng.nodes_num_min != current_ng.nodes_num_min
+            ):
+                modified_nodegroups.append(ng)
+
+    _logger.debug("removed_nodegroups: %s", removed_nodegroups)
+    _logger.debug("added_nodegroups: %s", added_nodegroups)
+    _logger.debug("modified_nodegroups: %s", [ng.name for ng in modified_nodegroups])
+
+    if removed_nodegroups or added_nodegroups or modified_nodegroups:
         managed_nodegroups_changeset: Optional[ManagedNodeGroupsChangeset] = ManagedNodeGroupsChangeset(
             removed_nodegroups=[ng for ng in context.managed_nodegroups if ng.name in removed_nodegroups],
             added_nodegroups=[ng for ng in manifest.managed_nodegroups if ng.name in added_nodegroups],
+            modified_nodegroups=modified_nodegroups,
         )
         msg_ctx.info(f"Removed ManagedNodeGroups: {list(removed_nodegroups)}")
         msg_ctx.info(f"Added ManagedNodeGroups: {list(added_nodegroups)}")
+        msg_ctx.info(f"Modified ManagedNodeGroups: {[ng.name for ng in modified_nodegroups]}")
     else:
         managed_nodegroups_changeset = None
     return managed_nodegroups_changeset

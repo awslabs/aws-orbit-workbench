@@ -355,9 +355,9 @@ aws-cdk.region-info==1.67.0
     #   aws-cdk.aws-iam
     #   aws-cdk.aws-route53-targets
     #   aws-cdk.core
-cattrs==1.1.2
+cattrs==1.3.0
     # via jsii
-constructs==3.3.37
+constructs==3.3.71
     # via
     #   aws-cdk.assets
     #   aws-cdk.aws-apigateway
@@ -403,7 +403,7 @@ constructs==3.3.37
     #   aws-cdk.aws-stepfunctions
     #   aws-cdk.core
     #   aws-cdk.custom-resources
-jsii==1.22.0
+jsii==1.26.0
     # via
     #   aws-cdk.assets
     #   aws-cdk.aws-apigateway

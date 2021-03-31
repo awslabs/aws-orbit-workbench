@@ -286,6 +286,7 @@ class FoundationStack(Stack):
             "autoscaling": ec2.InterfaceVpcEndpointAwsService("autoscaling"),
             "cloudformation_endpoint": ec2.InterfaceVpcEndpointAwsService("cloudformation"),
             "codebuild_endpoint": ec2.InterfaceVpcEndpointAwsService("codebuild"),
+            "emr-containers": ec2.InterfaceVpcEndpointAwsService("emr-containers"),
         }
 
         for name, gateway_vpc_endpoint_service in vpc_gateway_endpoints.items():
