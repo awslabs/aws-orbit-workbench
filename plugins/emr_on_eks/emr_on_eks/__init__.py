@@ -114,5 +114,3 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
             except Exception as e:
                 _logger.warning(e)
                 pass
-
-
