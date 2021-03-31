@@ -91,6 +91,7 @@ Resources:
               - emr-containers:CreateVirtualCluster
               - emr-containers:TagResource
               - emr-containers:ListVirtualClusters
+              - emr-containers:DeleteVirtualCluster
             Resource: '*'
           - Effect: Allow
             Action:
