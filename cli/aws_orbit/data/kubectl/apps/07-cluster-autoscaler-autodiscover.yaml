@@ -140,8 +140,11 @@ spec:
         cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
     spec:
       serviceAccountName: cluster-autoscaler
+      nodeSelector:
+        orbit/usage: reserved
+        orbit/node-group: env
       containers:
-        - image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.18.3
+        - image: ${image}
           name: cluster-autoscaler
           resources:
             limits:

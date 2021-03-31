@@ -96,10 +96,17 @@ def _cluster_autoscaler(output_path: str, context: "Context") -> None:
     input = os.path.join(MODELS_PATH, "apps", filename)
     output = os.path.join(output_path, filename)
 
+    if context.networking.data.internet_accessible is False:
+        image = (
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
+            f"orbit-{context.name}-cluster-autoscaler:{ImagesManifest.cluster_autoscaler.version}"
+        )
+    else:
+        image = f"{ImagesManifest.cluster_autoscaler.repository}:{ImagesManifest.cluster_autoscaler.version}"
     with open(input, "r") as file:
         content: str = file.read()
     content = content.replace("$", "").format(
-        account_id=context.account_id, env_name=context.name, cluster_name=f"orbit-{context.name}"
+        account_id=context.account_id, env_name=context.name, cluster_name=f"orbit-{context.name}", image=image
     )
     with open(output, "w") as file:
         file.write(content)
