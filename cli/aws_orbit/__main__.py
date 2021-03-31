@@ -784,7 +784,8 @@ def run_notebook_container(
 
 
 def main() -> int:
-    cli.add_command(init_cli)
+    # For now , we will not support init command and the deploy page points to manifest examples to be used.
+    # cli.add_command(init_cli)
     cli.add_command(deploy)
     cli.add_command(destroy)
     cli.add_command(remote_cli)
