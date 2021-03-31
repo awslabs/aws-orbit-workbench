@@ -69,6 +69,50 @@ export const CategoryViews = (props: {
   );
 };
 
+export const CategoryViewsNoClose = (props: {
+  name: string;
+  items: JSX.Element;
+  refreshCallback: (name: string) => any;
+  key: string;
+  openCallback: (name: string) => any;
+}) => {
+  const stopPropagation = (event: { stopPropagation: () => void }) => {
+    event.stopPropagation();
+  };
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+  // @ts-ignore
+  const genExtra = () => (
+    <div>
+      <div
+        style={{ display: 'flex', alignItems: 'right' }}
+        onClick={stopPropagation}
+      >
+        <ToolbarButtonComponent
+          tooltip={'Open'}
+          icon={launcherIcon}
+          onClick={() => props.openCallback(props.name)}
+        />
+        <ToolbarButtonComponent
+          tooltip={'Refresh List'}
+          icon={refreshIcon}
+          onClick={() => props.refreshCallback(props.name)}
+        />
+      </div>
+    </div>
+  );
+
+  return (
+    <Collapse defaultActiveKey={['1']} onChange={callback}>
+      <Panel header={props.name} key={props.key} extra={genExtra()}>
+        <div className={CONTAINER_CLASS}>
+          <ul className={LIST_CLASS}>{props.items}</ul>
+        </div>
+      </Panel>
+    </Collapse>
+  );
+};
+
 export const CategoryViewsWithCreate = (props: {
   name: string;
   items: JSX.Element;
