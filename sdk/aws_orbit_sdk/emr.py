@@ -20,6 +20,21 @@ logger = logging.getLogger()
 SSM_PARAMETER_PREFIX = "/emr_launch/emr_launch_functions"
 
 
+def get_virtual_cluster_id() -> str:
+    emr = boto3.client("emr-containers")
+    props = get_properties()
+    env_name = props["AWS_ORBIT_ENV"]
+    team_space = props["AWS_ORBIT_TEAM_SPACE"]
+    response = emr.list_virtual_clusters(
+        containerProviderId=f"orbit-{env_name}", containerProviderType="EKS", states=["RUNNING"], maxResults=500
+    )
+    if "virtualClusters" not in response or len(response["virtualClusters"]) == 0:
+        raise Exception("Virtual EMR Cluster not found")
+    for c in response["virtualClusters"]:
+        if c["name"] == f"orbit-{env_name}-{team_space}":
+            return c["id"]
+
+
 def stop_cluster(cluster_id: str) -> None:
     """
     Stops a running EMR cluster.

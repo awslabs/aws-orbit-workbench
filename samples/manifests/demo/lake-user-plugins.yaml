@@ -34,6 +34,3 @@
     Path: ../plugins/custom_cfn/
     Parameters:
         CfnTemplatePath: "./bundle/plugins/demo-lake-user-cfn-template.yaml"
--   PluginId: enable_emr_on_eks
-    Module: emr_on_eks
-    Path: ../plugins/emr_on_eks/
