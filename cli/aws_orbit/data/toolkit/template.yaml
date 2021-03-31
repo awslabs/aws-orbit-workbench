@@ -90,6 +90,7 @@ Resources:
               - cognito-idp:DescribeUserPoolClient
               - emr-containers:CreateVirtualCluster
               - emr-containers:TagResource
+              - emr-containers:ListVirtualClusters
             Resource: '*'
           - Effect: Allow
             Action:
