@@ -85,7 +85,7 @@ class OrbitWorkbenchAuthenticator(Authenticator):  # type: ignore
         response: Dict[str, Any] = boto3.client("lambda").invoke(
             FunctionName=f"orbit-{ENV_NAME}-token-validation",
             InvocationType="RequestResponse",
-            Payload=json.dumps({"token": auth_state['access_token']}).encode("utf-8"),
+            Payload=json.dumps({"token": auth_state["access_token"]}).encode("utf-8"),
         )
 
         if response is None:
