@@ -19,7 +19,7 @@ import shutil
 import sys
 from typing import Any, Dict, List, cast
 
-from aws_cdk import aws_cognito as cognito  # aws_codeartifact as codeartifact
+from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_kms as kms
@@ -95,23 +95,6 @@ class FoundationStack(Stack):
         )
 
         self.user_pool: cognito.UserPool = self._create_user_pool()
-
-        # self.artifacts_domain = codeartifact.CfnDomain(
-        #     self,
-        #     'ArtifactDomain',
-        #     domain_name='orbitdomain'
-        # )
-
-        # self.artifacts_repo = codeartifact.CfnRepository(
-        #     self,
-        #     'ArtifactRepo',
-        #     repository_name='orbitpyrepo',
-        #     external_connections=['public:pypi'],
-        #     domain_name=artifact_domain.domain_name,
-        #     description="AWS Orbit CodeArtifact pypi repository"
-        # )
-
-        # self.artifacts_repo.add_depends_on(self.artifacts_domain)
 
         self._ssm_parameter = ssm.StringParameter(
             self,
@@ -355,12 +338,12 @@ class FoundationStack(Stack):
 
 def main() -> None:
     _logger.debug("sys.argv: %s", sys.argv)
+    context: "FoundationContext" = ContextSerDe.load_context_from_ssm(env_name=sys.argv[1], type=FoundationContext)
+    ssl_cert_arn: str
     if len(sys.argv) == 3:
-        context: "FoundationContext" = ContextSerDe.load_context_from_ssm(env_name=sys.argv[1], type=FoundationContext)
-        ssl_cert_arn: str = sys.argv[2]
+        ssl_cert_arn = sys.argv[2]
     elif len(sys.argv) == 2:
-        context: "FoundationContext" = ContextSerDe.load_context_from_ssm(env_name=sys.argv[1], type=FoundationContext)
-        ssl_cert_arn: str = ""
+        ssl_cert_arn = ""
     else:
         raise ValueError("Unexpected number of values in sys.argv.")
 

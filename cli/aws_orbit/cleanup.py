@@ -162,7 +162,7 @@ def delete_cert_from_iam() -> None:
     iam_client = boto3_client("iam")
     cert_name = "AWSORBIT"
     try:
-        response = iam_client.delete_server_certificate(ServerCertificateName=cert_name)
+        iam_client.delete_server_certificate(ServerCertificateName=cert_name)
     except botocore.exceptions.ClientError as ex:
         if ex.response["Error"]["Code"] == "NoSuchEntity":
             pass
