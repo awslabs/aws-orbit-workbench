@@ -263,7 +263,7 @@ def generate_spec(
             for plugin in team_context.plugins:
                 if plugin.path is not None and plugin.module is not None:
                     plugin_module_name = (plugin.module).replace("_", "-")
-                    install.append(f"pip install --upgrade aws-orbit-{plugin_module_name}")
+                    install.append(f"pip install --upgrade aws-orbit-{plugin_module_name}=={__version__}")
 
         if changeset is not None:
             for plugin_changeset in changeset.plugin_changesets:
@@ -273,14 +273,14 @@ def generate_spec(
                     module: str = plugin_changeset.old_modules[plugin_name]
                     if plugin_name not in plugin_changeset.new and module is not None:
                         plugin_module_name = (module).replace("_", "-")
-                        install.append(f"pip install --upgrade aws-orbit-{plugin_module_name}")
+                        install.append(f"pip install --upgrade aws-orbit-{plugin_module_name}=={__version__}")
 
                 # OLD
                 for plugin_name in plugin_changeset.new:
                     module = plugin_changeset.new_modules[plugin_name]
                     if plugin_name not in plugin_changeset.old and module is not None:
                         plugin_module_name = (module).replace("_", "-")
-                        install.append(f"pip install --upgrade aws-orbit-{plugin_module_name}")
+                        install.append(f"pip install --upgrade aws-orbit-{plugin_module_name}=={__version__}")
 
     if cmds_install is not None:
         install += cmds_install
