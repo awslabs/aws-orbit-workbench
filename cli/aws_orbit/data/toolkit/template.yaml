@@ -66,6 +66,9 @@ Resources:
               - iam:ListPolicyVersions
               - iam:GetRole
               - iam:GetRolePolicy
+              - iam:GetServerCertificate
+              - iam:UploadServerCertificate
+              - iam:DeleteServerCertificate
               - iam:ListRoleTags
               - iam:GetOpenIDConnectProvider
               - cognito-idp:CreateUserPool
