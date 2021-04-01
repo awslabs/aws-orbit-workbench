@@ -111,4 +111,3 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
         team_context=team_context,
         parameters=parameters,
     )
-
