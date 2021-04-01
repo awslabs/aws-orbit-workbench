@@ -20,6 +20,7 @@ from typing import Iterator, List, Optional, cast
 import boto3
 
 from aws_orbit import ORBIT_CLI_ROOT, cdk, docker, plugins
+import aws_orbit
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext, create_team_context_from_manifest
 from aws_orbit.models.manifest import Manifest, TeamManifest
 from aws_orbit.services import cfn
@@ -62,7 +63,7 @@ def _create_dockerfile(context: "Context", team_context: "TeamContext", image_na
     for plugin in team_context.plugins:
         # Adding plugin modules to image via pip
         plugin_module_name = (plugin.module).replace("_", "-")
-        cmds += [f"RUN pip install --upgrade aws-orbit-{plugin_module_name}"]
+        cmds += [f"RUN pip install --upgrade aws-orbit-{plugin_module_name}=={aws_orbit.__version__}"]
 
         hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
             context=context,

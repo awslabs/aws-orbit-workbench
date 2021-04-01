@@ -58,7 +58,7 @@ class Team(Stack):
                             "emr-containers:CancelJobRun",
                             "emr-containers:TagResource",
                         ],
-                        resources=[parameters["virtual_arn"]],
+                        resources=[parameters.get("virtual_arn", "*")],
                     ),
                     iam.PolicyStatement(
                         effect=iam.Effect.ALLOW,
