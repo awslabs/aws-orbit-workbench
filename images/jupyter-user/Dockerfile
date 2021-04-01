@@ -54,6 +54,7 @@ RUN chmod a+xr /home/jovyan/.orbit/bootstrap.sh
 
 RUN mkdir -p /home/jovyan/.local/share/jupyter
 RUN chown -R jovyan /home/jovyan/.local/share/jupyter
+ADD jupyter_server_config.py /home/jovyan/.jupyter/jupyter_server_config.py
 
 ######################################
 # Python/Conda packages
@@ -113,19 +114,5 @@ RUN jupyter serverextension enable --py jupyterlab --sys-prefix && \
 ADD extensions/jupyterlab_orbit/ /etc/extensions/jupyterlab_orbit/
 RUN conda run pip install /etc/extensions/jupyterlab_orbit/
 RUN jupyter labextension build /etc/extensions/jupyterlab_orbit
-
-######################################
-# Apps installation
-######################################
-RUN mkdir -p /home/jovyan/.orbit
-COPY apps /home/jovyan/apps
-RUN echo "TEST"
-RUN ls -R /home/jovyan/apps
-RUN chmod -R a+xr /home/jovyan/apps/*.sh
-RUN /home/jovyan/apps/install-all.sh
-
-ADD jupyter_server_config.py /home/jovyan/.jupyter/jupyter_server_config.py
-ADD jupyter_notebook_config.py /home/jovyan/.jupyter/jupyter_notebook_config.py
-RUN chown -R jovyan /home/jovyan/.local/share/
 
 USER $NB_UID

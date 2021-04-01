@@ -15,6 +15,7 @@
 #   limitations under the License.
 #
 set -ex
+cd /home/jovyan/.orbit/
 for app in $(ls -d ./apps/*/)
 do
     echo "Installing ${app} from ./${app}/install.sh"
