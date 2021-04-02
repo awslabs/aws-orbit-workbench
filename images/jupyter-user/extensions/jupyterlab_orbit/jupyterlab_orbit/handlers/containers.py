@@ -14,7 +14,6 @@
 
 import json
 import os
-import pprint
 from pathlib import Path
 from typing import Dict, List, Optional
 from datetime import datetime
@@ -32,7 +31,6 @@ class ContainersRouteHandler(APIHandler):
     @staticmethod
     def _dump(clist, type) -> str:
         data: List[Dict[str, str]] = []
-        pprint.pprint(clist)
         for c in clist:
             container: Dict[str, str] = dict()
             container["name"] = c["metadata"]["name"]
@@ -45,26 +43,24 @@ class ContainersRouteHandler(APIHandler):
                 container["time"] = c["metadata"]["creationTimestamp"]
                 response_datetime_format = '%Y-%m-%dT%H:%M:%SZ'
                 creation_dt = datetime.strptime(c["metadata"]["creationTimestamp"], response_datetime_format)
-                print("***************************************************")
-                print(c["metadata"]["creationTimestamp"])
-                print("***************************************************")
 
                 if "status" in c and "completionTime" in c["status"]:
                     container["completionTime"] = c["status"]["completionTime"]
-                    print("***************************************************")
-                    print(c["status"]["completionTime"])
-                    print("***************************************************")
                     completion_dt = datetime.strptime(c["status"]["completionTime"], response_datetime_format)
                     duration = completion_dt - creation_dt
                     container["duration"] = str(duration)
-                    print("*******Completed*******")
-                    print(container["duration"])
+                elif "status" in c and "active" in c["status"] and c["status"]["active"] == 1:
+                    duration = datetime.utcnow() - creation_dt
+                    container["duration"] = str(duration).split(".")[0]
+                    container["completionTime"] = ""
+                elif "status" in c and "failed" in c["status"] and c["status"]["failed"] == 1:
+                    last_transition_dt = datetime.strptime( c["status"]["conditions"][0]["lastTransitionTime"], response_datetime_format )
+                    duration = last_transition_dt - creation_dt
+                    container["duration"] = str(duration)
+                    container["completionTime"] = ""
                 else:
                     container["completionTime"] = ""
-                    duration = datetime.utcnow() - creation_dt
-                    container["duration"] = str(duration)
-                    print("********running****")
-                    print(container["duration"])
+                    container["duration"] = ""
 
                 if "status" in c:
                     if "failed" in c["status"] and c["status"]["failed"] == 1:
