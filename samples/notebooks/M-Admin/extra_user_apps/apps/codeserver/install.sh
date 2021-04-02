@@ -15,9 +15,8 @@
 #   limitations under the License.
 #
 set -ex
+echo `pwd`
 curl -fsSL https://code-server.dev/install.sh | sh
 code-server --install-extension ms-python.python
 code-server --install-extension ms-toolsai.jupyter
-echo `pwd`
-cd $1
 pip install .

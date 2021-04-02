@@ -5,7 +5,7 @@ def setup_codeserver():
         "timeout": 120,
         "absolute_url": False,
         "launcher_entry": {
-            "icon_path": "/home/jovyan/.orbit/apps/codebuild/favicon.svg",
+            "icon_path": "/home/jovyan/.orbit/apps/codeserver/favicon.svg",
             "title": "VS Code"
         }
     }

@@ -19,8 +19,11 @@ cd /home/jovyan/.orbit/
 for app in $(ls -d ./apps/*/)
 do
     echo "Installing ${app} from ./${app}/install.sh"
-    chmod u+x ./${app}install.sh
-    sh -c "./${app}install.sh ./${app}"
+    pwd
+    cd ./${app}
+    chmod u+x ./install.sh
+    source ./install.sh
     echo "DONE" > done.txt
+    cd /home/jovyan/.orbit
 done
 

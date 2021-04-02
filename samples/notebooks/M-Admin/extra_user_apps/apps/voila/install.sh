@@ -15,9 +15,8 @@
 #   limitations under the License.
 #
 set -ex
-cd $1
 echo `pwd`
 ls -al
 
-conda run pip install -r requirements.txt
+pip install -r requirements.txt
 pip install .

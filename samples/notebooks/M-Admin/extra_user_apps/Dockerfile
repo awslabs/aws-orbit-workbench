@@ -7,10 +7,9 @@ USER root
 ######################################
 RUN mkdir -p /home/jovyan/.orbit
 COPY apps /home/jovyan/.orbit/apps
-RUN echo "TEST"
 RUN ls -R /home/jovyan/.orbit/apps
 RUN chmod -R a+xr /home/jovyan/.orbit/apps/*.sh
 RUN /home/jovyan/.orbit/apps/install-all.sh
-RUN chown -R jovyan /home/jovyan/.local/share/
+RUN chown -R jovyan /home/jovyan
 
 USER $NB_UID

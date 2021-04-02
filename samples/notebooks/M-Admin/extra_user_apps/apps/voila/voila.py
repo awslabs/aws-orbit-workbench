@@ -5,6 +5,6 @@ def setup_voila():
         "absolute_url": False,
         "launcher_entry": {
             "icon_path": "/home/jovyan/.orbit/apps/voila/voila-logo.svg",
-            "title": "VS Code"
+            "title": "Voila"
         }
     }
