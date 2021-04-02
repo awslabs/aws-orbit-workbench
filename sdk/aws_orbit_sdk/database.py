@@ -717,12 +717,7 @@ class RedshiftUtils(DatabaseCommon):
         time.sleep(60)  # allow DB to for another min
         return (cluster_id, user)
 
-    def create_cluster(
-        self,
-        cluster_name: str,
-        number_of_nodes: str,
-        node_type: str
-    ) -> Dict[str, str]:
+    def create_cluster(self, cluster_name: str, number_of_nodes: str, node_type: str) -> Dict[str, str]:
         """
         Creates a Redshift Cluster.
 
@@ -733,11 +728,7 @@ class RedshiftUtils(DatabaseCommon):
         cluster_def_func = f"orbit-{env}-{team_space}-StartRedshift-Standard"
         cluster_identifier = f"{env}-{team_space}-{cluster_name}".lower()
 
-        cluster_args ={
-            "cluster_name": cluster_identifier,
-            "Nodes": number_of_nodes,
-            "NodeType": node_type
-        }
+        cluster_args = {"cluster_name": cluster_identifier, "Nodes": number_of_nodes, "NodeType": node_type}
 
         lambda_client = boto3.client("lambda")
         invoke_response = lambda_client.invoke(
@@ -751,16 +742,13 @@ class RedshiftUtils(DatabaseCommon):
         if "statusCode" not in response_payload or "200" != response_payload["statusCode"]:
             logger.error(response_payload)
             error_message = response_payload["errorMessage"]
-            response = {
-                "status": "400",
-                "message": f"Error creating Redshift cluster - {error_message}"
-            }
+            response = {"status": "400", "message": f"Error creating Redshift cluster - {error_message}"}
         else:
             cluster_id = response_payload["cluster_id"]
             logger.info("cluster created: %s", cluster_id)
             response = {
                 "status": str(response_payload["statusCode"]),
-                "message": f"Successfully created Redshift cluster {cluster_id}"
+                "message": f"Successfully created Redshift cluster {cluster_id}",
             }
 
         return response
@@ -921,7 +909,7 @@ class RedshiftUtils(DatabaseCommon):
             cluster_model["cluster_id"] = cluster_id
             cluster_model["Name"] = cluster_id
             cluster_model["State"] = cluster["ClusterStatus"]
-            if "Endpoint" in cluster and 'Address' in cluster['Endpoint']:
+            if "Endpoint" in cluster and "Address" in cluster["Endpoint"]:
                 cluster_model["ip"] = f"{cluster['Endpoint']['Address']}:{cluster['Endpoint']['Port']}"
 
             cluster_nodes_info = {
