@@ -3,6 +3,7 @@ import { closeIcon } from '@jupyterlab/ui-components';
 import {
   Dialog,
   showDialog,
+  showErrorMessage,
   ToolbarButtonComponent
 } from '@jupyterlab/apputils';
 import { orbitIcon } from '../common/icons';
@@ -17,6 +18,8 @@ import {
 import { CategoryViewsWithCreate } from '../common/categoryViews';
 import { request } from '../common/backend';
 import { IDictionary } from '../typings/utils';
+import { RedshiftClusterForm } from '../widgets/CreateRedshiftClusterBox';
+import { IItemDeleteResponse } from '../storage';
 
 const NAME = 'Redshift';
 
@@ -34,6 +37,11 @@ interface IUseItemsReturn {
   closeAllCallback: (name: string) => void;
   refreshCallback: () => void;
   createCallback: () => void;
+}
+
+export interface IItemCreateResponse {
+  status: string;
+  message: string;
 }
 
 const openItemCallback = (name: string) => {
@@ -134,18 +142,81 @@ const useItems = (type: string): IUseItemsReturn => {
     });
   };
 
-  const createCallback = () => {
+  // const createCallback = () => {
+  //   void showDialog({
+  //     title: 'Create Redshift Cluster',
+  //     body: 'Create Redshift Cluster',
+  //     buttons: [
+  //       Dialog.cancelButton({ label: 'Cancel' }),
+  //       Dialog.warnButton({ label: 'Create' })
+  //     ]
+  //   }).then(result => {
+  //     if (result.button.accept) {
+  //       console.log('CREATE REDSHIFT CLUSTER!');
+  //       setData([]);
+  //     }
+  //   });
+  // };
+
+  const createItem = async (
+    name: string,
+    numberofnodes: string,
+    nodetype: string
+  ): Promise<IItemDeleteResponse> => {
+    const dataToSend = {
+      name: name,
+      numberofnodes: numberofnodes,
+      nodetype: nodetype
+    };
+    try {
+      const parameters: IDictionary<number | string> = {
+        type: type
+      };
+      const reply: IItemDeleteResponse | undefined = await request(
+        'redshift',
+        parameters,
+        {
+          body: JSON.stringify(dataToSend),
+          method: 'POST'
+        }
+      );
+      return reply;
+    } catch (reason) {
+      console.error(`Error creating cluster ${dataToSend}.\n${reason}`);
+      return { message: '', reason: '', status: '' };
+    }
+  };
+
+  const createCallback = async () => {
     void showDialog({
       title: 'Create Redshift Cluster',
-      body: 'Create Redshift Cluster',
+      body: new RedshiftClusterForm(),
       buttons: [
         Dialog.cancelButton({ label: 'Cancel' }),
         Dialog.warnButton({ label: 'Create' })
       ]
-    }).then(result => {
+    }).then(async result => {
+      console.log(result.value);
       if (result.button.accept) {
+        const response: IItemCreateResponse = await createItem(
+          result.value.name,
+          result.value.numberofnodes,
+          result.value.nodetype
+        );
+        console.log(response);
+        if (response.status.toString() === '200') {
+          console.log(response.message);
+          setData(await request('redshift'));
+          showErrorMessage('Success', response.message, [
+            Dialog.warnButton({ label: 'Dismiss' })
+          ]);
+        } else {
+          console.log(response.message);
+          showErrorMessage('Error', response.message, [
+            Dialog.warnButton({ label: 'Dismiss' })
+          ]);
+        }
         console.log('CREATE REDSHIFT CLUSTER!');
-        setData([]);
       }
     });
   };
@@ -157,7 +228,20 @@ const useItems = (type: string): IUseItemsReturn => {
 
   const closeItemCallback = async (name: string) => {
     console.log(`[${NAME}] Close Item ${name}!`);
-    setData(await deleteItem(name));
+    const closeMessage = `Delete redshift cluster ${name} ?`;
+    void showDialog({
+      title: 'Delete',
+      body: closeMessage,
+      buttons: [
+        Dialog.cancelButton({ label: 'Cancel' }),
+        Dialog.warnButton({ label: 'Proceed' })
+      ]
+    }).then(async result => {
+      console.log(result.value);
+      if (result.button.accept) {
+        setData(await deleteItem(name));
+      }
+    });
   };
 
   const items = <Items data={data} closeItemCallback={closeItemCallback} />;
