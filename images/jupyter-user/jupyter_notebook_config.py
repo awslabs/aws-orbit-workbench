@@ -1,10 +1,5 @@
-
 c.ServerProxy.servers = {
-    'http.server': {
-        'command': ['python3', '-m', 'http.server', '{port}'],
-        'timeout': 60,
-        'absolute_url': False
-    },
+    "http.server": {"command": ["python3", "-m", "http.server", "{port}"], "timeout": 60, "absolute_url": False},
     # 'code-server': {
     #     'command': ['code-server', '--bind-addr', 'localhost:{port}', '--auth', 'none'],
     #     'timeout': 120,
@@ -16,4 +11,4 @@ c.ServerProxy.servers = {
     #     ),
     # }
 }
-c.NotebookApp.tornado_settings = {'autoreload': True}
+c.NotebookApp.tornado_settings = {"autoreload": True}
