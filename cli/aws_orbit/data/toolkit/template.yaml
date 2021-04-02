@@ -66,6 +66,9 @@ Resources:
               - iam:ListPolicyVersions
               - iam:GetRole
               - iam:GetRolePolicy
+              - iam:GetServerCertificate
+              - iam:UploadServerCertificate
+              - iam:DeleteServerCertificate
               - iam:ListRoleTags
               - iam:GetOpenIDConnectProvider
               - cognito-idp:CreateUserPool
@@ -88,8 +91,12 @@ Resources:
               - codecommit:ListRepositories
               - cognito-idp:DescribeUserPool
               - cognito-idp:DescribeUserPoolClient
+              - autoscaling:DescribeAutoScalingGroups
+              - autoscaling:UpdateAutoScalingGroup
               - emr-containers:CreateVirtualCluster
               - emr-containers:TagResource
+              - emr-containers:ListVirtualClusters
+              - emr-containers:DeleteVirtualCluster
             Resource: '*'
           - Effect: Allow
             Action:

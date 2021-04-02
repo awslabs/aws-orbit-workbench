@@ -91,3 +91,20 @@ def update_assume_role_roles(
     policy_body = json.dumps(assume_role_policy)
     _logger.debug("policy_body: %s", policy_body)
     iam_client.update_assume_role_policy(RoleName=role_name, PolicyDocument=policy_body)
+
+
+def add_assume_role_statement(role_name: str, statement: Dict[str, Any]) -> None:
+    _logger.debug(f"Adding AssumeRolePolicy for {role_name}, Adding: {statement}")
+
+    iam_client = boto3_client("iam")
+    assume_role_policy = iam_client.get_role(RoleName=role_name)["Role"]["AssumeRolePolicyDocument"]
+    statements = assume_role_policy["Statement"]
+
+    if statement in statements:
+        _logger.debug("Skipping Statement already contained by the AssumeRolePolicy")
+    else:
+        statements.append(statement)
+        assume_role_policy["Statement"] = statements
+        policy_body = json.dumps(assume_role_policy)
+        _logger.debug("policy_body: %s", policy_body)
+        iam_client.update_assume_role_policy(RoleName=role_name, PolicyDocument=policy_body)
