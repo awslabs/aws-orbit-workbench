@@ -142,22 +142,6 @@ const useItems = (type: string): IUseItemsReturn => {
     });
   };
 
-  // const createCallback = () => {
-  //   void showDialog({
-  //     title: 'Create Redshift Cluster',
-  //     body: 'Create Redshift Cluster',
-  //     buttons: [
-  //       Dialog.cancelButton({ label: 'Cancel' }),
-  //       Dialog.warnButton({ label: 'Create' })
-  //     ]
-  //   }).then(result => {
-  //     if (result.button.accept) {
-  //       console.log('CREATE REDSHIFT CLUSTER!');
-  //       setData([]);
-  //     }
-  //   });
-  // };
-
   const createItem = async (
     name: string,
     numberofnodes: string,
@@ -249,6 +233,8 @@ const useItems = (type: string): IUseItemsReturn => {
   return { items, closeAllCallback, refreshCallback, createCallback };
 };
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+// @ts-ignore
 export const RedshiftCategoryLeftList = (props: {
   title: string;
   type: string;
@@ -269,6 +255,8 @@ export const RedshiftCategoryLeftList = (props: {
   );
 };
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+// @ts-ignore
 export const RedshiftCategoryCentralList = (props: {
   title: string;
   type: string;
