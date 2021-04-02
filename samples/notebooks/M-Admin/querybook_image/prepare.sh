@@ -15,6 +15,6 @@
 #   limitations under the License.
 #
 set -ex
-ls -al
 
-pip install .
+curl https://codeload.github.com/pinterest/querybook/zip/refs/heads/master -o querybook.zip
+unzip -o querybook.zip
