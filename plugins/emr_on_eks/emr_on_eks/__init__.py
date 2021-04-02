@@ -32,7 +32,7 @@ ORBIT_EMR_ON_EKS_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 @hooks.deploy
 def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
-    _logger.debug("Running hello_world deploy!")
+    _logger.debug("Running emr_on_eks deploy!")
     sh.run(f"echo 'Team name: {team_context.name} | Plugin ID: {plugin_id}'")
     cluster_name = f"orbit-{context.name}"
     virtual_cluster_name = f"orbit-{context.name}-{team_context.name}"
@@ -84,7 +84,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
 
 @hooks.destroy
 def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
-    _logger.debug("Running hello_world destroy!")
+    _logger.debug("Running emr_on_eks destroy!")
     sh.run(f"echo 'Team name: {team_context.name} | Plugin ID: {plugin_id}'")
 
     virtual_cluster_name = f"orbit-{context.name}-{team_context.name}"
@@ -92,25 +92,20 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
     response = emr.list_virtual_clusters(
         containerProviderId=f"orbit-{context.name}", containerProviderType="EKS", maxResults=500
     )
-    if "virtualClusters" not in response or len(response["virtualClusters"]) == 0:
-        raise Exception("Virtual EMR Cluster not found")
-    for c in response["virtualClusters"]:
-        if c["name"] == virtual_cluster_name:
-            try:
-                delete_response = emr.delete_virtual_cluster(id=c["id"])
-                _logger.debug("delete_virtual_cluster:", delete_response)
-                parameters["virtual_cluster_id"] = c["id"]
-                parameters["virtual_name"] = c["name"]
-                parameters["virtual_arn"] = c["arn"]
-                cdk_destroy(
-                    stack_name=f"orbit-{context.name}-{team_context.name}-emr-on-eks",
-                    app_filename=os.path.join(ORBIT_EMR_ON_EKS_ROOT, "cdk.py"),
-                    context=context,
-                    team_context=team_context,
-                    parameters=parameters,
-                )
+    if "virtualClusters" in response:
+        for c in response["virtualClusters"]:
+            if c["name"] == virtual_cluster_name:
+                try:
+                    delete_response = emr.delete_virtual_cluster(id=c["id"])
+                    _logger.debug("delete_virtual_cluster:", delete_response)
+                except Exception as e:
+                    _logger.warning(e)
+                    pass
 
-                return
-            except Exception as e:
-                _logger.warning(e)
-                pass
+    cdk_destroy(
+        stack_name=f"orbit-{context.name}-{team_context.name}-emr-on-eks",
+        app_filename=os.path.join(ORBIT_EMR_ON_EKS_ROOT, "cdk.py"),
+        context=context,
+        team_context=team_context,
+        parameters=parameters,
+    )

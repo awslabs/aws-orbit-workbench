@@ -27,9 +27,9 @@ aws-cdk.aws-kms==1.67.0
     #   aws-cdk.aws-s3
     #   aws-cdk.aws-ssm
 aws-cdk.aws-s3==1.67.0
-    # via aws-orbit-hello-world
+    # via -r requirements-dev.in
 aws-cdk.aws-ssm==1.67.0
-    # via aws-orbit-hello-world
+    # via -r requirements-dev.in
 aws-cdk.cloud-assembly-schema==1.67.0
     # via
     #   aws-cdk.aws-ssm
@@ -37,12 +37,12 @@ aws-cdk.cloud-assembly-schema==1.67.0
     #   aws-cdk.cx-api
 aws-cdk.core==1.67.0
     # via
+    #   -r requirements-dev.in
     #   aws-cdk.aws-events
     #   aws-cdk.aws-iam
     #   aws-cdk.aws-kms
     #   aws-cdk.aws-s3
     #   aws-cdk.aws-ssm
-    #   aws-orbit-hello-world
 aws-cdk.cx-api==1.67.0
     # via aws-cdk.core
 aws-cdk.region-info==1.67.0
@@ -53,9 +53,9 @@ black==20.8b1
     # via -r requirements-dev.in
 bleach==3.3.0
     # via readme-renderer
-boto3==1.17.39
+boto3==1.17.43
     # via aws-orbit
-botocore==1.20.39
+botocore==1.20.43
     # via
     #   aws-orbit
     #   boto3
@@ -68,8 +68,6 @@ certifi==2020.12.5
     # via
     #   kubernetes
     #   requests
-cffi==1.14.5
-    # via cryptography
 cfn-flip==1.2.3
     # via aws-orbit
 chardet==4.0.0
@@ -90,9 +88,7 @@ constructs==3.3.71
     #   aws-cdk.aws-s3
     #   aws-cdk.aws-ssm
     #   aws-cdk.core
-cryptography==3.4.7
-    # via secretstorage
-decorator==4.4.2
+decorator==5.0.1
     # via jsonpath-ng
 docutils==0.16
     # via readme-renderer
@@ -102,17 +98,10 @@ google-auth==1.28.0
     # via kubernetes
 idna==2.10
     # via requests
-importlib-metadata==3.9.1
-    # via
-    #   flake8
-    #   keyring
-    #   twine
+importlib-metadata==3.10.0
+    # via keyring
 isort==5.6.4
     # via -r requirements-dev.in
-jeepney==0.6.0
-    # via
-    #   keyring
-    #   secretstorage
 jmespath==0.10.0
     # via
     #   boto3
@@ -139,7 +128,7 @@ marshmallow-dataclass[enum,union]==8.3.2
     # via aws-orbit
 marshmallow-enum==1.5.1
     # via marshmallow-dataclass
-marshmallow==3.11.0
+marshmallow==3.11.1
     # via
     #   marshmallow-dataclass
     #   marshmallow-enum
@@ -184,8 +173,6 @@ pyasn1==0.4.8
     #   rsa
 pycodestyle==2.6.0
     # via flake8
-pycparser==2.20
-    # via cffi
 pyflakes==2.2.0
     # via flake8
 pygments==2.8.1
@@ -227,8 +214,6 @@ rsa==4.7.2
     # via google-auth
 s3transfer==0.3.6
     # via boto3
-secretstorage==3.3.1
-    # via keyring
 six==1.15.0
     # via
     #   bleach
@@ -253,12 +238,11 @@ typed-ast==1.4.2
     # via
     #   black
     #   mypy
-typeguard==2.11.1
+typeguard==2.12.0
     # via marshmallow-dataclass
 typing-extensions==3.7.4.3
     # via
     #   black
-    #   importlib-metadata
     #   jsii
     #   mypy
     #   typing-inspect

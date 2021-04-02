@@ -1,9 +1,10 @@
 #!/bin/bash
 
+set -e
+
 # Run from the root directory #
 
 ROOT_PATH=`pwd`
-SED=${SED:-sed}
 
 # Paths where pip-compile generates requirements files #
 paths=(
@@ -18,11 +19,34 @@ paths=(
     "${ROOT_PATH}/sdk"
 )
 
+UPGRADE=""
+SED=${SED:-sed}
+
+while [ $# -gt 0 ] 
+do
+    case $1 in
+        --gsed)
+        SED="gsed"
+        shift # Remove --upgrade from processing
+        ;;
+        --upgrade)
+        UPGRADE="--upgrade"
+        shift # Remove --upgrade from processing
+        ;;
+        --path)
+        paths=("${ROOT_PATH}/${2}")
+        shift # Remove --path from processing
+        ;;
+    esac
+    shift
+done
+
+
 for path in "${paths[@]}"; do
     cd $path
 
-    pip-compile ${1}
-    pip-compile ${1} -r requirements-dev.in
+    pip-compile ${UPGRADE}
+    pip-compile ${UPGRADE} -r requirements-dev.in
 
     ${SED} -i "s|file://$path|.|g" requirements-dev.txt
 
