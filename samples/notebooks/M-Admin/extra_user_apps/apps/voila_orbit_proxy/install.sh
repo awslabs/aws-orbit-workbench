@@ -15,8 +15,6 @@
 #   limitations under the License.
 #
 set -ex
-echo `pwd`
 ls -al
 
-pip install -r requirements.txt
 pip install .

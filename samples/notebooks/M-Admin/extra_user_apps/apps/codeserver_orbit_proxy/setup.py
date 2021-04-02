@@ -1,7 +1,7 @@
 import setuptools
 
 setuptools.setup(
-  name="codeserver",
+  name="codeserver_orbit_proxy",
   # py_modules rather than packages, since we only have 1 file
   py_modules=['codeserver'],
   entry_points={
@@ -10,5 +10,5 @@ setuptools.setup(
           'code-server = codeserver:setup_codeserver',
       ]
   },
-  install_requires=['jupyter-server-proxy'],
+  install_requires=['jupyter-server-proxy~=3.0.2'],
 )
