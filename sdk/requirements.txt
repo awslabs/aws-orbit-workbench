@@ -4,11 +4,13 @@
 #
 #    pip-compile
 #
+appnope==0.1.2
+    # via ipython
 backcall==0.2.0
     # via ipython
-boto3==1.17.39
+boto3==1.17.43
     # via aws-orbit-sdk (setup.py)
-botocore==1.20.39
+botocore==1.20.43
     # via
     #   boto3
     #   s3transfer
@@ -20,7 +22,7 @@ certifi==2020.12.5
     #   requests
 chardet==4.0.0
     # via requests
-decorator==4.4.2
+decorator==5.0.1
     # via ipython
 google-auth==1.28.0
     # via kubernetes
@@ -44,7 +46,7 @@ oauthlib==3.1.0
     # via requests-oauthlib
 pandas==1.2.0
     # via aws-orbit-sdk (setup.py)
-parso==0.8.1
+parso==0.8.2
     # via jedi
 pexpect==4.8.0
     # via ipython
