@@ -35,7 +35,15 @@ class RedshiftRouteHandler(APIHandler):
                 "nodes": cdetails["instances"]["nodes"],
             }
             if "ClusterCreateTime" in cdetails["info"]:
-                ddirct.update({"start_time": str(cdetails["info"]["ClusterCreateTime"].strftime("%Y-%m-%d %H:%M:%S %Z"))})
+                ddirct.update(
+                    {
+                        "start_time": str(
+                            cdetails["info"]["ClusterCreateTime"].strftime(
+                                "%Y-%m-%d %H:%M:%S %Z"
+                            )
+                        )
+                    }
+                )
 
             data.append(ddirct)
         return json.dumps(data, default=str)
@@ -62,8 +70,9 @@ class RedshiftRouteHandler(APIHandler):
         global DATA
         input_data = self.get_json_body()
         self.log.info(f"POST - {self.__class__} - %s", input_data)
-        create_response = RedshiftUtils().create_cluster(cluster_name= input_data["name"],
-                                                         number_of_nodes= input_data["numberofnodes"],
-                                                         node_type=input_data["nodetype"]
-                                                         )
+        create_response = RedshiftUtils().create_cluster(
+            cluster_name=input_data["name"],
+            number_of_nodes=input_data["numberofnodes"],
+            node_type=input_data["nodetype"],
+        )
         self.finish(json.dumps(create_response))
