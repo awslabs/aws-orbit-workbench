@@ -1,0 +1,87 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      python: 3.8
+      nodejs: 12
+    commands:
+      - npm install -g aws-cdk@1.67.0
+      - cd $CODEBUILD_SRC_DIR_CodeSource/cli
+      - mkdir -p conf
+      - cp -R $CODEBUILD_SRC_DIR_CodeSource/samples/manifests/* conf
+      - CONF_DIR=$CODEBUILD_SRC_DIR_CodeSource/cli/conf
+      - python3 -m venv .venv
+      - . .venv/bin/activate
+      - |
+        if [ "${VERSION}" = "latest" ]; then
+          aws codeartifact login --tool pip --domain ${CODEARTIFACT_DOMAIN} --repository ${CODEARTIFACT_REPOSITORY}
+          cp ~/.config/pip/pip.conf .
+          pip install --upgrade aws-orbit==$(cat VERSION)
+          pip install -r requirements.txt
+          pip install -e ../images/jupyter-hub/utils/
+          pip install -e ../plugins/hello_world/
+          pip install -e ../plugins/redshift/
+          pip install -e ../plugins/code_commit/
+          pip install -e ../plugins/team_script_launcher/
+          pip install -e ../plugins/custom_cfn/
+          pip install -e ../plugins/emr_on_eks/
+        else
+          pip install --upgrade aws-orbit=="${VERSION}"
+          pip install --upgrade aws-orbit-hello-world=="${VERSION}"
+          pip install --upgrade aws-orbit-team-script-launcher=="${VERSION}"
+          pip install --upgrade aws-orbit-redshift=="${VERSION}"
+          pip install --upgrade aws-orbit-custom-cfn=="${VERSION}"
+          pip install --upgrade aws-orbit-code-commit=="${VERSION}"
+          pip install --upgrade aws-orbit-sdk=="${VERSION}"
+          pip install --upgrade aws-orbit-emr-on-eks=="${VERSION}"
+        fi
+  build:
+    commands:
+      - cd $CODEBUILD_SRC_DIR_CodeSource/cli
+      - . .venv/bin/activate
+      - . $CODEBUILD_SRC_DIR/scripts/export_env.sh
+      - orbit --help
+      - echo $BUILD_ACTION
+      - |
+        if [ $BUILD_ACTION = "DESTROY_FOUNDATION" ]; then
+          echo "Destroying Foundation"
+          orbit destroy foundation --debug --name "${ORBIT_FOUNDATION_NAME}"
+        elif [ $BUILD_ACTION = "DEPLOY_FOUNDATION" ]; then
+          echo "Deploying Foundation"
+          if [ "${VERSION}" = "latest" ]; then
+            orbit deploy foundation --name "${ORBIT_FOUNDATION_NAME}" --codeartifact-domain "${CODEARTIFACT_DOMAIN}" --codeartifact-repository "${CODEARTIFACT_REPOSITORY}" "${INTERNET_ACCESSIBILITY_ARG}" --debug -u tempuserid -p '123456Ab!'
+          else
+            orbit deploy foundation --name "${ORBIT_FOUNDATION_NAME}" "${INTERNET_ACCESSIBILITY_ARG}" --debug -u tempuserid -p '123456Ab!'
+          fi
+        elif [ $BUILD_ACTION = "DESTROY_TEAMS" ]; then
+          echo "Destroying Teams"
+          orbit destroy teams --debug -e "${ORBIT_ENV_NAME}"
+        elif [ $BUILD_ACTION = "DESTROY_ENV" ]; then
+          echo "Destroying Env"
+          orbit destroy env --debug -e "${ORBIT_ENV_NAME}"
+        elif [ $BUILD_ACTION = "DEPLOY_ENV" ]; then
+          echo "Deploying Env"
+          orbit deploy env --debug -f $CONF_DIR/plugins/dev-env-with-plugins.yaml -u tempuserid -p '123456Ab!'
+        elif [ $BUILD_ACTION = "DEPLOY_TEAMS_MINIMAL" ]; then
+          echo "Deploying Minimal"
+          orbit deploy teams --debug -f $CONF_DIR/minimal/dev-env.yaml
+        elif [ $BUILD_ACTION = "DEPLOY_TEAMS_PLUGINS" ]; then
+          echo "Deploying Plugins"
+          orbit deploy teams --debug -f $CONF_DIR/plugins/dev-env-with-plugins.yaml
+        elif [ $BUILD_ACTION = "DEPLOY_TEAMS" ]; then
+          echo "Deploying Teams"
+          orbit deploy teams --debug -f $CONF_DIR/plugins/dev-env-with-plugins.yaml
+        elif [ $BUILD_ACTION = "DEPLOY_SINGLE_TEAM" ]; then
+          echo "Deploying Single Team"
+          orbit deploy teams --debug -f $CONF_DIR/plugins/dev-env-single-team.yaml
+        elif [ $BUILD_ACTION = "DEPLOY_NO_TEAMS" ]; then
+          echo "Deploying Without Team"
+          orbit deploy teams --debug -f $CONF_DIR/plugins/dev-env-without-team.yaml
+        elif [ $BUILD_ACTION = "BUILD_TEAM_IMAGES" ]; then
+          echo "Building Team Images"
+          cd $CODEBUILD_SRC_DIR_CodeSource
+          orbit build image -e "${ORBIT_ENV_NAME}" -d ./images/jupyter-user -n jupyter-user -s bundle.sh --debug
+        else
+          echo "Invalid BUILD_ACTION: $BUILD_ACTION"
+          exit 1
+        fi
