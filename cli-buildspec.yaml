@@ -8,8 +8,8 @@ phases:
       - npm install -g aws-cdk@1.67.0
       - cd cli
       - mkdir -p conf
-      - cp -R $CODEBUILD_SRC_DIR_CodeSource/samples/manifests/* conf
-      - CONF_DIR=$CODEBUILD_SRC_DIR_CodeSource/cli/conf
+      - cp -R ../samples/manifests/* conf
+      - CONF_DIR=../samples/manifests
       - python3 -m venv .venv
       - . .venv/bin/activate
       - |
