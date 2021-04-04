@@ -48,10 +48,6 @@ Resources:
           - - 'arn:'
             - !Ref 'AWS::Partition'
             - ':iam::aws:policy/AmazonSNSFullAccess'
-      RoleName: !Join 
-        - ''
-        - - OrbitDemoPipelineBuildRole-
-          - !Ref 'AWS::Region'
 
   OrbitBuildDemoDeployFoundation:
     Type: 'AWS::CodeBuild::Project'
@@ -404,7 +400,7 @@ Resources:
       ArtifactStore:
         Location: !Ref ArtifactsBucket
         Type: S3
-      Name: Orbit_Demo_Environment
+      Name: Orbit_Demo_Deploy
       RestartExecutionOnUpdate: false
     DependsOn:
       - OrbitDeploymentRole
@@ -490,7 +486,7 @@ Resources:
       ArtifactStore:
         Location: !Ref ArtifactsBucket
         Type: S3
-      Name: Orbit_Demo_Environment
+      Name: Orbit_Demo_Destory
       RestartExecutionOnUpdate: false
     DependsOn:
       - OrbitDeploymentRole

@@ -15,9 +15,9 @@ phases:
       - . .venv/bin/activate
       - |
         if [ "${VERSION}" = "latest" ]; then
-          aws codeartifact login --tool pip --domain ${CODEARTIFACT_DOMAIN} --repository ${CODEARTIFACT_REPOSITORY}
-          cp ~/.config/pip/pip.conf .
-          pip install --upgrade aws-orbit==$(cat VERSION)
+#          aws codeartifact login --tool pip --domain ${CODEARTIFACT_DOMAIN} --repository ${CODEARTIFACT_REPOSITORY}
+#          cp ~/.config/pip/pip.conf .
+          pip install -e ../cli
           pip install -r requirements.txt
           pip install -e ../images/jupyter-hub/utils/
           pip install -e ../plugins/hello_world/
