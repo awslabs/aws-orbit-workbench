@@ -5,6 +5,7 @@ phases:
       python: 3.8
       nodejs: 12
     commands:
+      - env
       - npm install -g aws-cdk@1.67.0
       - cd cli
       - mkdir -p conf
@@ -38,6 +39,7 @@ phases:
   build:
     commands:
       - pwd
+      - env
       - . .venv/bin/activate
       - orbit --help
       - echo $BUILD_ACTION
@@ -48,9 +50,9 @@ phases:
         elif [ $BUILD_ACTION = "DEPLOY_FOUNDATION" ]; then
           echo "Deploying Foundation"
           if [ "${VERSION}" = "latest" ]; then
-            orbit deploy foundation --name "${ORBIT_FOUNDATION_NAME}" --codeartifact-domain "${CODEARTIFACT_DOMAIN}" --codeartifact-repository "${CODEARTIFACT_REPOSITORY}" "${INTERNET_ACCESSIBILITY_ARG}" --debug -u tempuserid -p '123456Ab!'
+            orbit deploy foundation --name "${ORBIT_FOUNDATION_NAME}" --codeartifact-domain "${CODEARTIFACT_DOMAIN}" --codeartifact-repository "${CODEARTIFACT_REPOSITORY}" "${INTERNET_ACCESSIBILITY_ARG}" --debug
           else
-            orbit deploy foundation --name "${ORBIT_FOUNDATION_NAME}" "${INTERNET_ACCESSIBILITY_ARG}" --debug -u tempuserid -p '123456Ab!'
+            orbit deploy foundation --name "${ORBIT_FOUNDATION_NAME}" "${INTERNET_ACCESSIBILITY_ARG}" --debug
           fi
         elif [ $BUILD_ACTION = "DESTROY_TEAMS" ]; then
           echo "Destroying Teams"
