@@ -23,6 +23,7 @@ phases:
           aws codeartifact login --tool pip --domain ${CODEARTIFACT_DOMAIN} --repository ${CODEARTIFACT_REPOSITORY}
           cp ~/.config/pip/pip.conf .
           pip install -e ../cli
+          pip install -e ../sdk
           pip install -r requirements.txt
           pip install -e ../images/jupyter-hub/utils/
           pip install -e ../plugins/hello_world/
@@ -32,7 +33,7 @@ phases:
           pip install -e ../plugins/custom_cfn/
           pip install -e ../plugins/emr_on_eks/
         else
-          pip install --upgrade aws-orbit=="${VERSION}"
+          pip install --upgrade aws-orbit[utils]=="${VERSION}"
           pip install --upgrade aws-orbit-hello-world=="${VERSION}"
           pip install --upgrade aws-orbit-team-script-launcher=="${VERSION}"
           pip install --upgrade aws-orbit-redshift=="${VERSION}"
