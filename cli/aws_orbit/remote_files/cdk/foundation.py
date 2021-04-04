@@ -71,6 +71,12 @@ class FoundationStack(Stack):
         self.nodes_subnets = (
             self.private_subnets if context.networking.data.internet_accessible else self.isolated_subnets
         )
+        self._vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
+        # Adding ingress rule to VPC CIDR
+        self._vpc_security_group.add_ingress_rule(
+            peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block), connection=ec2.Port.all_tcp()
+        )
+
         if not context.networking.data.internet_accessible:
             self._create_vpc_endpoints()
 
@@ -296,11 +302,6 @@ class FoundationStack(Stack):
                 ],
             )
 
-        self._vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
-        # Adding ingress rule to VPC CIDR
-        self._vpc_security_group.add_ingress_rule(
-            peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block), connection=ec2.Port.all_tcp()
-        )
         for name, interface_service in vpc_interface_endpoints.items():
             self.vpc.add_interface_endpoint(
                 id=name,
