@@ -274,6 +274,51 @@ Resources:
       EncryptionKey: alias/aws/s3
       TimeoutInMinutes: 120
 
+  OrbitBuildDemoDeployRegression:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DEPLOY_REGRESSION
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: Admin
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: 'true'
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: '--internet-accessibility'
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+          - Name: SOURCE_BRANCH
+            Type: PLAINTEXT
+            Value: !Ref 'Branch'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt
+        - OrbitDeploymentRole
+        - Arn
+      Source:
+        BuildSpec: cli-buildspec.yaml
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+
   OrbitBuildDemoDestroyTeams:
     Type: 'AWS::CodeBuild::Project'
     Properties:
@@ -322,7 +367,7 @@ Resources:
   DemoEnvironmentDeployCodePipeline:
     Type: 'AWS::CodePipeline::Pipeline'
     Properties:
-      RoleArn: !GetAtt 
+      RoleArn: !GetAtt
         - OrbitDeploymentRole
         - Arn
       Stages:
@@ -355,7 +400,7 @@ Resources:
               InputArtifacts:
                 - Name: CodeSource
               Name: CLI_DemoDeployFoundation
-              RoleArn: !GetAtt 
+              RoleArn: !GetAtt
                 - >-
                   OrbitDeploymentRole
                 - Arn
@@ -373,7 +418,7 @@ Resources:
               InputArtifacts:
                 - Name: CodeSource
               Name: CLI_DemoDeployEnv
-              RoleArn: !GetAtt 
+              RoleArn: !GetAtt
                 - >-
                   OrbitDeploymentRole
                 - Arn
@@ -391,12 +436,30 @@ Resources:
               InputArtifacts:
                 - Name: CodeSource
               Name: CLI_DemoDeployTeams
-              RoleArn: !GetAtt 
+              RoleArn: !GetAtt
                 - >-
                   OrbitDeploymentRole
                 - Arn
               RunOrder: 1
           Name: CLI-DemoDeployTeams
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDeployRegression
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDeployRegression
+              RoleArn: !GetAtt
+                - >-
+                  OrbitDeploymentRole
+                - Arn
+              RunOrder: 1
+          Name: CLI-DemoDeployRegression
       ArtifactStore:
         Location: !Ref ArtifactsBucket
         Type: S3
