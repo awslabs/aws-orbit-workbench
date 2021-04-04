@@ -15,8 +15,8 @@ phases:
       - . .venv/bin/activate
       - |
         if [ "${VERSION}" = "latest" ]; then
-          export CODEARTIFACT_DOMAIN = "aws-orbit"
-          export CODEARTIFACT_REPOSITORY = "python-repository"
+          export CODEARTIFACT_DOMAIN=aws-orbit
+          export CODEARTIFACT_REPOSITORY=python-repository
           aws codeartifact login --tool pip --domain ${CODEARTIFACT_DOMAIN} --repository ${CODEARTIFACT_REPOSITORY}
           cp ~/.config/pip/pip.conf .
           pip install -e ../cli
