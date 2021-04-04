@@ -11,12 +11,14 @@ phases:
       - mkdir -p conf
       - cp -R ../samples/manifests/* conf
       - CONF_DIR=../samples/manifests
+      - MANIFEST=$CONF_DIR/demo/manifest.yaml
       - python3 -m venv .venv
       - . .venv/bin/activate
       - |
         if [ "${VERSION}" = "latest" ]; then
           export CODEARTIFACT_DOMAIN=aws-orbit
           export CODEARTIFACT_REPOSITORY=python-repository
+          MANIFEST=$CONF_DIR/plugins/dev-env-with-plugins.yaml
           aws codeartifact login --tool pip --domain ${CODEARTIFACT_DOMAIN} --repository ${CODEARTIFACT_REPOSITORY}
           cp ~/.config/pip/pip.conf .
           pip install -e ../cli
@@ -65,10 +67,10 @@ phases:
           orbit destroy env --debug -e "${ORBIT_ENV_NAME}"
         elif [ $BUILD_ACTION = "DEPLOY_ENV" ]; then
           echo "Deploying Env"
-          orbit deploy env --debug -f $CONF_DIR/demo/manifest.yaml
+          orbit deploy env --debug -f $MANIFEST
         elif [ $BUILD_ACTION = "DEPLOY_TEAMS" ]; then
           echo "Deploying Teams"
-          orbit deploy teams --debug -f $CONF_DIR/demo/manifest.yaml
+          orbit deploy teams --debug -f $MANIFEST
         else
           echo "Invalid BUILD_ACTION: $BUILD_ACTION"
           exit 1
