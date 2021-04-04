@@ -37,7 +37,7 @@ phases:
         fi
   build:
     commands:
-      - cd $CODEBUILD_SRC_DIR_CodeSource/cli
+      - pwd
       - . .venv/bin/activate
       - . $CODEBUILD_SRC_DIR/scripts/export_env.sh
       - orbit --help
@@ -79,7 +79,7 @@ phases:
           orbit deploy teams --debug -f $CONF_DIR/plugins/dev-env-without-team.yaml
         elif [ $BUILD_ACTION = "BUILD_TEAM_IMAGES" ]; then
           echo "Building Team Images"
-          cd $CODEBUILD_SRC_DIR_CodeSource
+          cd ..
           orbit build image -e "${ORBIT_ENV_NAME}" -d ./images/jupyter-user -n jupyter-user -s bundle.sh --debug
         else
           echo "Invalid BUILD_ACTION: $BUILD_ACTION"
