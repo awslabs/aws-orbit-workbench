@@ -19,6 +19,7 @@ phases:
           export CODEARTIFACT_DOMAIN=aws-orbit
           export CODEARTIFACT_REPOSITORY=python-repository
           MANIFEST=$CONF_DIR/plugins/dev-env-with-plugins.yaml
+          ORBIT_FOUNDATION_NAME=dev-env
           aws codeartifact login --tool pip --domain ${CODEARTIFACT_DOMAIN} --repository ${CODEARTIFACT_REPOSITORY}
           cp ~/.config/pip/pip.conf .
           pip install -e ../cli
