@@ -52,6 +52,7 @@ phases:
         elif [ $BUILD_ACTION = "DEPLOY_FOUNDATION" ]; then
           echo "Deploying Foundation"
           if [ "${VERSION}" = "latest" ]; then
+            echo Using code artifact: ${CODEARTIFACT_DOMAIN} ${CODEARTIFACT_REPOSITORY}
             orbit deploy foundation --name "${ORBIT_FOUNDATION_NAME}" --codeartifact-domain "${CODEARTIFACT_DOMAIN}" --codeartifact-repository "${CODEARTIFACT_REPOSITORY}" "${INTERNET_ACCESSIBILITY_ARG}" --debug
           else
             orbit deploy foundation --name "${ORBIT_FOUNDATION_NAME}" "${INTERNET_ACCESSIBILITY_ARG}" --debug
