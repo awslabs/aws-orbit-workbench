@@ -1,0 +1,520 @@
+Resources:
+  ArtifactsBucket: 
+    DeletionPolicy: Delete
+    Description: Creating Amazon S3 bucket for AWS CodePipeline and CodeBuild artifacts
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Join
+        - '-'
+        - - !Ref 'AWS::StackName'
+          - ArtifactsBucket
+      VersioningConfiguration:
+        Status: Enabled
+    Type: AWS::S3::Bucket
+
+  OrbitDemoPipelineBuildRole7A877B6D:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - !Join 
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/PowerUserAccess'
+        - !Join 
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/IAMFullAccess'
+        - !Join 
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/AmazonElasticContainerRegistryPublicPowerUser'
+        - !Join 
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/AmazonSNSFullAccess'
+      RoleName: !Join 
+        - ''
+        - - OrbitDemoPipelineBuildRole-
+          - !Ref 'AWS::Region'
+    Metadata:
+      'aws:cdk:path': OrbitDemoPipeline/OrbitDemoPipelineBuildRole/Resource
+  OrbitBuildDemoDeployFoundationFDBFFFA8:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DEPLOY_FOUNDATION
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: Admin
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: 'true'
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: '--internet-accessibility'
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+          - Name: SOURCE_BRANCH
+            Type: PLAINTEXT
+            Value: !Ref 'Branch'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt 
+        - OrbitDemoPipelineBuildRole7A877B6D
+        - Arn
+      Source:
+        BuildSpec: cli-buildspec.yaml
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+    Metadata:
+      'aws:cdk:path': OrbitDemoPipeline/OrbitBuild-DemoDeployFoundation/Resource
+  OrbitBuildDemoDeployEnvDADC7B39:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DEPLOY_ENV
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: Admin
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: 'true'
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: '--internet-accessibility'
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+          - Name: SOURCE_BRANCH
+            Type: PLAINTEXT
+            Value: !Ref 'Branch'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt 
+        - OrbitDemoPipelineBuildRole7A877B6D
+        - Arn
+      Source:
+        BuildSpec: cli-buildspec.yaml
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+    Metadata:
+      'aws:cdk:path': OrbitDemoPipeline/OrbitBuild-DemoDeployEnv/Resource
+  OrbitBuildDemoDeployTeams115E3CAA:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DEPLOY_TEAMS
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: Admin
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: 'true'
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: '--internet-accessibility'
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+          - Name: SOURCE_BRANCH
+            Type: PLAINTEXT
+            Value: !Ref 'Branch'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt 
+        - OrbitDemoPipelineBuildRole7A877B6D
+        - Arn
+      Source:
+        BuildSpec: cli-buildspec.yaml
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+    Metadata:
+      'aws:cdk:path': OrbitDemoPipeline/OrbitBuild-DemoDeployTeams/Resource
+  DemoEnvironmentCodePipelineRole53A120B1:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+        Version: 2012-10-17
+  DemoEnvironmentCodePipelineRoleDefaultPolicy2428B326:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:GetObject*'
+              - 's3:GetBucket*'
+              - 's3:List*'
+              - 's3:DeleteObject*'
+              - 's3:PutObject*'
+              - 's3:Abort*'
+            Effect: Allow
+            Resource:
+              - '*'
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Resource: !GetAtt 
+              - >-
+                DemoEnvironmentCodePipelineSourceS3SourceCodePipelineActionRoleA74DB049
+              - Arn
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Resource: !GetAtt 
+              - >-
+                DemoEnvironmentCodePipelineCLIDemoDeployFoundationCLIDemoDeployFoundationCodePipelineActionRole67E66DC4
+              - Arn
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Resource: !GetAtt 
+              - >-
+                DemoEnvironmentCodePipelineCLIDemoDeployEnvCLIDemoDeployEnvCodePipelineActionRole49B10DDB
+              - Arn
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Resource: !GetAtt 
+              - >-
+                DemoEnvironmentCodePipelineCLIDemoDeployTeamsCLIDemoDeployTeamsCodePipelineActionRole5605162B
+              - Arn
+        Version: 2012-10-17
+      PolicyName: DemoEnvironmentCodePipelineRoleDefaultPolicy2428B326
+      Roles:
+        - !Ref DemoEnvironmentCodePipelineRole53A120B1
+    Metadata:
+      'aws:cdk:path': >-
+        OrbitDemoPipeline/DemoEnvironmentCodePipeline/Role/DefaultPolicy/Resource
+  DemoEnvironmentCodePipelineCD2478CE:
+    Type: 'AWS::CodePipeline::Pipeline'
+    Properties:
+      RoleArn: !GetAtt 
+        - DemoEnvironmentCodePipelineRole53A120B1
+        - Arn
+      Stages:
+        - Actions:
+            - ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: '1'
+              Configuration:
+                Owner: awslabs
+                Repo: aws-orbit-workbench
+                Branch: !Ref 'Branch'
+                OAuthToken: !Ref GitHubOAuthToken
+                PollForSourceChanges: false
+              Name: GitHub_Source
+              OutputArtifacts:
+                - Name: CodeSource
+              RunOrder: 1
+          Name: Source
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDeployFoundationFDBFFFA8
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDeployFoundation
+              RoleArn: !GetAtt 
+                - >-
+                  DemoEnvironmentCodePipelineCLIDemoDeployFoundationCLIDemoDeployFoundationCodePipelineActionRole67E66DC4
+                - Arn
+              RunOrder: 1
+          Name: CLI-DemoDeployFoundation
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDeployEnvDADC7B39
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDeployEnv
+              RoleArn: !GetAtt 
+                - >-
+                  DemoEnvironmentCodePipelineCLIDemoDeployEnvCLIDemoDeployEnvCodePipelineActionRole49B10DDB
+                - Arn
+              RunOrder: 1
+          Name: CLI-DemoDeployEnv
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDeployTeams115E3CAA
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDeployTeams
+              RoleArn: !GetAtt 
+                - >-
+                  DemoEnvironmentCodePipelineCLIDemoDeployTeamsCLIDemoDeployTeamsCodePipelineActionRole5605162B
+                - Arn
+              RunOrder: 1
+          Name: CLI-DemoDeployTeams
+      ArtifactStore:
+        Location: !Ref ArtifactsBucket
+        Type: S3
+      Name: Orbit_Demo_Environment
+      RestartExecutionOnUpdate: false
+    DependsOn:
+      - DemoEnvironmentCodePipelineRoleDefaultPolicy2428B326
+      - DemoEnvironmentCodePipelineRole53A120B1
+    Metadata:
+      'aws:cdk:path': OrbitDemoPipeline/DemoEnvironmentCodePipeline/Resource
+  DemoEnvironmentCodePipelineSourceS3SourceCodePipelineActionRoleA74DB049:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              AWS: !Join 
+                - ''
+                - - 'arn:'
+                  - !Ref 'AWS::Partition'
+                  - ':iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':root'
+        Version: 2012-10-17
+    Metadata:
+      'aws:cdk:path': >-
+        OrbitDemoPipeline/DemoEnvironmentCodePipeline/Source/S3_Source/CodePipelineActionRole/Resource
+  DemoEnvironmentCodePipelineSourceS3SourceCodePipelineActionRoleDefaultPolicyBC1CA9C8:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:GetObject*'
+              - 's3:GetBucket*'
+              - 's3:List*'
+            Effect: Allow
+            Resource:
+              - '*'
+          - Action:
+              - 's3:DeleteObject*'
+              - 's3:PutObject*'
+              - 's3:Abort*'
+            Effect: Allow
+            Resource:
+              - '*'
+        Version: 2012-10-17
+      PolicyName: >-
+        DemoEnvironmentCodePipelineSourceS3SourceCodePipelineActionRoleDefaultPolicyBC1CA9C8
+      Roles:
+        - !Ref >-
+          DemoEnvironmentCodePipelineSourceS3SourceCodePipelineActionRoleA74DB049
+    Metadata:
+      'aws:cdk:path': >-
+        OrbitDemoPipeline/DemoEnvironmentCodePipeline/Source/S3_Source/CodePipelineActionRole/DefaultPolicy/Resource
+  DemoEnvironmentCodePipelineCLIDemoDeployFoundationCLIDemoDeployFoundationCodePipelineActionRole67E66DC4:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              AWS: !Join 
+                - ''
+                - - 'arn:'
+                  - !Ref 'AWS::Partition'
+                  - ':iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':root'
+        Version: 2012-10-17
+    Metadata:
+      'aws:cdk:path': >-
+        OrbitDemoPipeline/DemoEnvironmentCodePipeline/CLI-DemoDeployFoundation/CLI_DemoDeployFoundation/CodePipelineActionRole/Resource
+  DemoEnvironmentCodePipelineCLIDemoDeployFoundationCLIDemoDeployFoundationCodePipelineActionRoleDefaultPolicyEA69D17C:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 'codebuild:BatchGetBuilds'
+              - 'codebuild:StartBuild'
+              - 'codebuild:StopBuild'
+            Effect: Allow
+            Resource: !GetAtt 
+              - OrbitBuildDemoDeployFoundationFDBFFFA8
+              - Arn
+        Version: 2012-10-17
+      PolicyName: >-
+        DemoEnvironmentCodePipelineCLIDemoDeployFoundationCLIDemoDeployFoundationCodePipelineActionRoleDefaultPolicyEA69D17C
+      Roles:
+        - !Ref >-
+          DemoEnvironmentCodePipelineCLIDemoDeployFoundationCLIDemoDeployFoundationCodePipelineActionRole67E66DC4
+    Metadata:
+      'aws:cdk:path': >-
+        OrbitDemoPipeline/DemoEnvironmentCodePipeline/CLI-DemoDeployFoundation/CLI_DemoDeployFoundation/CodePipelineActionRole/DefaultPolicy/Resource
+  DemoEnvironmentCodePipelineCLIDemoDeployEnvCLIDemoDeployEnvCodePipelineActionRole49B10DDB:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              AWS: !Join 
+                - ''
+                - - 'arn:'
+                  - !Ref 'AWS::Partition'
+                  - ':iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':root'
+        Version: 2012-10-17
+    Metadata:
+      'aws:cdk:path': >-
+        OrbitDemoPipeline/DemoEnvironmentCodePipeline/CLI-DemoDeployEnv/CLI_DemoDeployEnv/CodePipelineActionRole/Resource
+  DemoEnvironmentCodePipelineCLIDemoDeployEnvCLIDemoDeployEnvCodePipelineActionRoleDefaultPolicy7F1E6798:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 'codebuild:BatchGetBuilds'
+              - 'codebuild:StartBuild'
+              - 'codebuild:StopBuild'
+            Effect: Allow
+            Resource: !GetAtt 
+              - OrbitBuildDemoDeployEnvDADC7B39
+              - Arn
+        Version: 2012-10-17
+      PolicyName: >-
+        DemoEnvironmentCodePipelineCLIDemoDeployEnvCLIDemoDeployEnvCodePipelineActionRoleDefaultPolicy7F1E6798
+      Roles:
+        - !Ref >-
+          DemoEnvironmentCodePipelineCLIDemoDeployEnvCLIDemoDeployEnvCodePipelineActionRole49B10DDB
+    Metadata:
+      'aws:cdk:path': >-
+        OrbitDemoPipeline/DemoEnvironmentCodePipeline/CLI-DemoDeployEnv/CLI_DemoDeployEnv/CodePipelineActionRole/DefaultPolicy/Resource
+  DemoEnvironmentCodePipelineCLIDemoDeployTeamsCLIDemoDeployTeamsCodePipelineActionRole5605162B:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              AWS: !Join 
+                - ''
+                - - 'arn:'
+                  - !Ref 'AWS::Partition'
+                  - ':iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':root'
+        Version: 2012-10-17
+    Metadata:
+      'aws:cdk:path': >-
+        OrbitDemoPipeline/DemoEnvironmentCodePipeline/CLI-DemoDeployTeams/CLI_DemoDeployTeams/CodePipelineActionRole/Resource
+  DemoEnvironmentCodePipelineCLIDemoDeployTeamsCLIDemoDeployTeamsCodePipelineActionRoleDefaultPolicyE465C237:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 'codebuild:BatchGetBuilds'
+              - 'codebuild:StartBuild'
+              - 'codebuild:StopBuild'
+            Effect: Allow
+            Resource: !GetAtt 
+              - OrbitBuildDemoDeployTeams115E3CAA
+              - Arn
+        Version: 2012-10-17
+      PolicyName: >-
+        DemoEnvironmentCodePipelineCLIDemoDeployTeamsCLIDemoDeployTeamsCodePipelineActionRoleDefaultPolicyE465C237
+      Roles:
+        - !Ref >-
+          DemoEnvironmentCodePipelineCLIDemoDeployTeamsCLIDemoDeployTeamsCodePipelineActionRole5605162B
+    Metadata:
+      'aws:cdk:path': >-
+        OrbitDemoPipeline/DemoEnvironmentCodePipeline/CLI-DemoDeployTeams/CLI_DemoDeployTeams/CodePipelineActionRole/DefaultPolicy/Resource
+Parameters:
+  EnvName:
+    Type: String
+    Description: Unique name for both foundation and env in the account
+    Default: demo-env
+  Branch:
+    Type: String
+    Description: The release branch to use with this deployment. Required for latest deployment pipeline code
+    Default: release/0.14.0
+  Version:
+    Type: String
+    Description: The version to deploy this deployment
+    Default: 0.14.0   
+  GitHubOAuthToken:
+    Type: String
+    Description: The GitHub OAuth token that will allow read access to the repo

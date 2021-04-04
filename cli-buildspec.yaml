@@ -39,7 +39,6 @@ phases:
     commands:
       - pwd
       - . .venv/bin/activate
-      - . $CODEBUILD_SRC_DIR/scripts/export_env.sh
       - orbit --help
       - echo $BUILD_ACTION
       - |
@@ -61,26 +60,10 @@ phases:
           orbit destroy env --debug -e "${ORBIT_ENV_NAME}"
         elif [ $BUILD_ACTION = "DEPLOY_ENV" ]; then
           echo "Deploying Env"
-          orbit deploy env --debug -f $CONF_DIR/plugins/dev-env-with-plugins.yaml -u tempuserid -p '123456Ab!'
-        elif [ $BUILD_ACTION = "DEPLOY_TEAMS_MINIMAL" ]; then
-          echo "Deploying Minimal"
-          orbit deploy teams --debug -f $CONF_DIR/minimal/dev-env.yaml
-        elif [ $BUILD_ACTION = "DEPLOY_TEAMS_PLUGINS" ]; then
-          echo "Deploying Plugins"
-          orbit deploy teams --debug -f $CONF_DIR/plugins/dev-env-with-plugins.yaml
+          orbit deploy env --debug -f $CONF_DIR/demo/manifest.yaml
         elif [ $BUILD_ACTION = "DEPLOY_TEAMS" ]; then
           echo "Deploying Teams"
-          orbit deploy teams --debug -f $CONF_DIR/plugins/dev-env-with-plugins.yaml
-        elif [ $BUILD_ACTION = "DEPLOY_SINGLE_TEAM" ]; then
-          echo "Deploying Single Team"
-          orbit deploy teams --debug -f $CONF_DIR/plugins/dev-env-single-team.yaml
-        elif [ $BUILD_ACTION = "DEPLOY_NO_TEAMS" ]; then
-          echo "Deploying Without Team"
-          orbit deploy teams --debug -f $CONF_DIR/plugins/dev-env-without-team.yaml
-        elif [ $BUILD_ACTION = "BUILD_TEAM_IMAGES" ]; then
-          echo "Building Team Images"
-          cd ..
-          orbit build image -e "${ORBIT_ENV_NAME}" -d ./images/jupyter-user -n jupyter-user -s bundle.sh --debug
+          orbit deploy teams --debug -f $CONF_DIR/demo/manifest.yaml
         else
           echo "Invalid BUILD_ACTION: $BUILD_ACTION"
           exit 1
