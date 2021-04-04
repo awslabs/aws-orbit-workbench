@@ -7,8 +7,8 @@ phases:
     commands:
       - npm install -g aws-cdk@1.67.0
       - ls -al $CODEBUILD_SRC_DIR_CodeSource
-      - ls -alR $CODEBUILD_SRC_DIR_CodeSource
       - pwd
+      - ls
       - echo $CODEBUILD_SRC_DIR_CodeSource
       - cd $CODEBUILD_SRC_DIR_CodeSource
       - ls -al
