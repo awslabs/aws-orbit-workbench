@@ -59,6 +59,8 @@ class FoundationStack(Stack):
         az: Optional[List[str]]
         if self.region == "us-east-1":
             az = ["us-east-1b", "us-east-1c", "us-east-1d"]
+        elif self.region == "us-west-2":
+            az = ["us-west-1b", "us-west-1c", "us-west-1a"]
         else:
             az = None
         self.isolated_subnets = (
