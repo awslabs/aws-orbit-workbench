@@ -7,9 +7,6 @@ export interface ICluster {
   nodetype: string;
 }
 
-/**
- * The UI for the commit author form
- */
 export class RedshiftClusterForm extends Widget
   implements Dialog.IBodyWidget<ICluster> {
   constructor() {
@@ -19,7 +16,6 @@ export class RedshiftClusterForm extends Widget
 
   private createBody(): HTMLElement {
     const node = document.createElement('div');
-    // const text = document.createElement('span');
     const br1 = document.createElement('br');
     const br2 = document.createElement('br');
     this._name = document.createElement('input');
@@ -31,7 +27,6 @@ export class RedshiftClusterForm extends Widget
     this._nodetypelabel = document.createElement('label');
 
     node.className = 'jp-RedirectForm';
-    // text.textContent = 'Enter Redshift Cluster Details';
     this._namelabel.innerText = 'Cluster Name';
     this._numberofnodeslabel.innerText = 'Number of nodes';
     this._nodetypelabel.innerText = 'Node Type';
@@ -39,7 +34,6 @@ export class RedshiftClusterForm extends Widget
     this._numberofnodes.defaultValue = '3';
     this._nodetype.defaultValue = 'DC2.large';
 
-    // node.appendChild(text);
     node.appendChild(this._namelabel);
     node.appendChild(this._name);
     node.appendChild(br1);
@@ -51,9 +45,6 @@ export class RedshiftClusterForm extends Widget
     return node;
   }
 
-  /**
-   * Returns the input value.
-   */
   getValue(): ICluster {
     const clusterdetails = {
       name: this._name.value,
