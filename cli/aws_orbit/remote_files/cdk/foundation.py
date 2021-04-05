@@ -17,7 +17,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, cast
 
 from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_ec2 as ec2
@@ -62,9 +62,10 @@ class FoundationStack(Stack):
                 if self.vpc.isolated_subnets
                 else self.vpc.select_subnets(subnet_name="")
             )
-        self.nodes_subnets = (
-            self.private_subnets if context.networking.data.internet_accessible else self.isolated_subnets
-        )
+            self.nodes_subnets = self.isolated_subnets
+        else:
+            self.nodes_subnets = self.private_subnets
+
         self._vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
         # Adding ingress rule to VPC CIDR
         self._vpc_security_group.add_ingress_rule(
@@ -111,7 +112,9 @@ class FoundationStack(Stack):
                     "VpcId": self.vpc.vpc_id,
                     "PublicSubnets": self.public_subnets.subnet_ids,
                     "PrivateSubnets": self.private_subnets.subnet_ids,
-                    "IsolatedSubnets": self.isolated_subnets.subnet_ids,
+                    "IsolatedSubnets": self.isolated_subnets.subnet_ids
+                    if context.networking.data.internet_accessible
+                    else [],
                     "NodesSubnets": self.nodes_subnets.subnet_ids,
                     "LoadBalancersSubnets": self.public_subnets.subnet_ids,
                     "KMSKey": self.env_kms_key.key_arn,
