@@ -17,7 +17,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List, Optional, cast
 
 from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_ec2 as ec2
@@ -44,7 +44,7 @@ class FoundationStack(Stack):
         self.ssl_cert_arn = ssl_cert_arn
         super().__init__(scope, id, **kwargs)
         Tags.of(scope=cast(core.IConstruct, self)).add(key="Env", value=f"orbit-{self.env_name}")
-        self.vpc: ec2.Vpc = self._create_vpc()
+        self.vpc: ec2.Vpc = self._create_vpc(context)
 
         self.public_subnets = (
             self.vpc.select_subnets(subnet_type=ec2.SubnetType.PUBLIC)
@@ -56,16 +56,29 @@ class FoundationStack(Stack):
             if self.vpc.private_subnets
             else self.vpc.select_subnets(subnet_name="")
         )
+        az: Optional[List[str]]
+        if self.region == "us-east-1":
+            az = ["us-east-1b", "us-east-1c", "us-east-1d"]
+        elif self.region == "us-west-2":
+            az = ["us-west-1b", "us-west-1c", "us-west-1a"]
+        else:
+            az = None
         self.isolated_subnets = (
-            self.vpc.select_subnets(subnet_type=ec2.SubnetType.ISOLATED)
+            self.vpc.select_subnets(subnet_type=ec2.SubnetType.ISOLATED, availability_zones=az)
             if self.vpc.isolated_subnets
             else self.vpc.select_subnets(subnet_name="")
         )
         self.nodes_subnets = (
             self.private_subnets if context.networking.data.internet_accessible else self.isolated_subnets
         )
+        self._vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
+        # Adding ingress rule to VPC CIDR
+        self._vpc_security_group.add_ingress_rule(
+            peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block), connection=ec2.Port.all_tcp()
+        )
 
-        self._create_vpc_endpoints()
+        if not context.networking.data.internet_accessible:
+            self._create_vpc_endpoints()
 
         if context.toolkit.s3_bucket is None:
             raise ValueError("context.toolkit_s3_bucket is not defined")
@@ -177,7 +190,19 @@ class FoundationStack(Stack):
             ),
         )
 
-    def _create_vpc(self) -> ec2.Vpc:
+    def _create_vpc(self, context: "FoundationContext") -> ec2.Vpc:
+        if context.networking.data.internet_accessible:
+            subnet_configuration = [
+                ec2.SubnetConfiguration(name="Public", subnet_type=ec2.SubnetType.PUBLIC, cidr_mask=24),
+                ec2.SubnetConfiguration(name="Private", subnet_type=ec2.SubnetType.PRIVATE, cidr_mask=21),
+                ec2.SubnetConfiguration(name="Isolated", subnet_type=ec2.SubnetType.ISOLATED, cidr_mask=21),
+            ]
+        else:
+            subnet_configuration = [
+                ec2.SubnetConfiguration(name="Public", subnet_type=ec2.SubnetType.PUBLIC, cidr_mask=24),
+                ec2.SubnetConfiguration(name="Private", subnet_type=ec2.SubnetType.PRIVATE, cidr_mask=21),
+            ]
+
         vpc = ec2.Vpc(
             scope=self,
             id="vpc",
@@ -187,11 +212,7 @@ class FoundationStack(Stack):
             enable_dns_support=True,
             max_azs=2,
             nat_gateways=1,
-            subnet_configuration=[
-                ec2.SubnetConfiguration(name="Public", subnet_type=ec2.SubnetType.PUBLIC, cidr_mask=24),
-                ec2.SubnetConfiguration(name="Private", subnet_type=ec2.SubnetType.PRIVATE, cidr_mask=21),
-                ec2.SubnetConfiguration(name="Isolated", subnet_type=ec2.SubnetType.ISOLATED, cidr_mask=21),
-            ],
+            subnet_configuration=subnet_configuration,
         )
         return vpc
 
@@ -281,11 +302,6 @@ class FoundationStack(Stack):
                 ],
             )
 
-        self._vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
-        # Adding ingress rule to VPC CIDR
-        self._vpc_security_group.add_ingress_rule(
-            peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block), connection=ec2.Port.all_tcp()
-        )
         for name, interface_service in vpc_interface_endpoints.items():
             self.vpc.add_interface_endpoint(
                 id=name,
