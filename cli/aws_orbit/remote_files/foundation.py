@@ -49,8 +49,8 @@ def deploy(context: "FoundationContext") -> None:
 
 def destroy(context: "FoundationContext") -> None:
     if cfn.does_stack_exist(stack_name=cast(str, context.stack_name)):
-        cleanup.delete_cert_from_iam()
         cleanup.foundation_remaining_dependencies(context=context)
+        cleanup.delete_cert_from_iam()
         _logger.debug("Destroying Foundation...")
         cdk.destroy(
             context=context,
