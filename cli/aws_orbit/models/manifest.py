@@ -295,6 +295,8 @@ def _add_ssm_param_injector(tag: str = "!SSM") -> Set[str]:
             for g in match:
                 _logger.debug(f"match: {g}")
                 (ssm_param_name, jsonpath) = g.split("::")
+                if "${" in ssm_param_name:
+                    ssm_param_name = ssm_param_name.replace("$", "").format(os.environ)
                 _logger.debug(f"found injected parameter {(ssm_param_name, jsonpath)}")
                 if ssm_param_name not in SSM_CONTEXT:
                     ssm = boto3_client("ssm")
