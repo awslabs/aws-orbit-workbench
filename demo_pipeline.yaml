@@ -28,22 +28,22 @@ Resources:
               Service: codepipeline.amazonaws.com
         Version: 2012-10-17
       ManagedPolicyArns:
-        - !Join 
+        - !Join
           - ''
           - - 'arn:'
             - !Ref 'AWS::Partition'
             - ':iam::aws:policy/PowerUserAccess'
-        - !Join 
+        - !Join
           - ''
           - - 'arn:'
             - !Ref 'AWS::Partition'
             - ':iam::aws:policy/IAMFullAccess'
-        - !Join 
+        - !Join
           - ''
           - - 'arn:'
             - !Ref 'AWS::Partition'
             - ':iam::aws:policy/AmazonElasticContainerRegistryPublicPowerUser'
-        - !Join 
+        - !Join
           - ''
           - - 'arn:'
             - !Ref 'AWS::Partition'
@@ -65,7 +65,16 @@ Resources:
             Value: DEPLOY_FOUNDATION
           - Name: ORBIT_ADMIN_ROLE
             Type: PLAINTEXT
-            Value: Admin
+            Value: !Join
+              - ''
+              - - 'arn:'
+                - !Ref 'AWS::Partition'
+                - ':iam::'
+                - !Ref 'AWS::AccountId'
+                - ':role/'
+                - 'orbit-'
+                - !Ref 'EnvName'
+                - '-admin'
           - Name: ORBIT_ENV_NAME
             Type: PLAINTEXT
             Value: !Ref 'EnvName'
@@ -85,7 +94,7 @@ Resources:
         ImagePullCredentialsType: CODEBUILD
         PrivilegedMode: true
         Type: LINUX_CONTAINER
-      ServiceRole: !GetAtt 
+      ServiceRole: !GetAtt
         - OrbitDeploymentRole
         - Arn
       Source:
@@ -110,7 +119,16 @@ Resources:
             Value: DESTROY_FOUNDATION
           - Name: ORBIT_ADMIN_ROLE
             Type: PLAINTEXT
-            Value: Admin
+            Value: !Join
+              - ''
+              - - 'arn:'
+                - !Ref 'AWS::Partition'
+                - ':iam::'
+                - !Ref 'AWS::AccountId'
+                - ':role/'
+                - 'orbit-'
+                - !Ref 'EnvName'
+                - '-admin'
           - Name: ORBIT_ENV_NAME
             Type: PLAINTEXT
             Value: !Ref 'EnvName'
@@ -155,7 +173,16 @@ Resources:
             Value: DEPLOY_ENV
           - Name: ORBIT_ADMIN_ROLE
             Type: PLAINTEXT
-            Value: Admin
+            Value: !Join
+              - ''
+              - - 'arn:'
+                - !Ref 'AWS::Partition'
+                - ':iam::'
+                - !Ref 'AWS::AccountId'
+                - ':role/'
+                - 'orbit-'
+                - !Ref 'EnvName'
+                - '-admin'
           - Name: ORBIT_ENV_NAME
             Type: PLAINTEXT
             Value: !Ref 'EnvName'
@@ -200,7 +227,16 @@ Resources:
             Value: DESTROY_ENV
           - Name: ORBIT_ADMIN_ROLE
             Type: PLAINTEXT
-            Value: Admin
+            Value: !Join
+              - ''
+              - - 'arn:'
+                - !Ref 'AWS::Partition'
+                - ':iam::'
+                - !Ref 'AWS::AccountId'
+                - ':role/'
+                - 'orbit-'
+                - !Ref 'EnvName'
+                - '-admin'
           - Name: ORBIT_ENV_NAME
             Type: PLAINTEXT
             Value: !Ref 'EnvName'
@@ -245,7 +281,16 @@ Resources:
             Value: DEPLOY_TEAMS
           - Name: ORBIT_ADMIN_ROLE
             Type: PLAINTEXT
-            Value: Admin
+            Value: !Join
+              - ''
+              - - 'arn:'
+                - !Ref 'AWS::Partition'
+                - ':iam::'
+                - !Ref 'AWS::AccountId'
+                - ':role/'
+                - 'orbit-'
+                - !Ref 'EnvName'
+                - '-admin'
           - Name: ORBIT_ENV_NAME
             Type: PLAINTEXT
             Value: !Ref 'EnvName'
@@ -290,7 +335,16 @@ Resources:
             Value: DEPLOY_REGRESSION
           - Name: ORBIT_ADMIN_ROLE
             Type: PLAINTEXT
-            Value: Admin
+            Value: !Join
+              - ''
+              - - 'arn:'
+                - !Ref 'AWS::Partition'
+                - ':iam::'
+                - !Ref 'AWS::AccountId'
+                - ':role/'
+                - 'orbit-'
+                - !Ref 'EnvName'
+                - '-admin'
           - Name: ORBIT_ENV_NAME
             Type: PLAINTEXT
             Value: !Ref 'EnvName'
@@ -310,9 +364,16 @@ Resources:
         ImagePullCredentialsType: CODEBUILD
         PrivilegedMode: true
         Type: LINUX_CONTAINER
-      ServiceRole: !GetAtt
-        - OrbitDeploymentRole
-        - Arn
+      ServiceRole: !Join
+        - ''
+        - - 'arn:'
+          - !Ref 'AWS::Partition'
+          - ':iam::'
+          - !Ref 'AWS::AccountId'
+          - ':role/'
+          - 'orbit-'
+          - !Ref 'EnvName'
+          - '-admin'
       Source:
         BuildSpec: cli-buildspec.yaml
         Type: CODEPIPELINE
@@ -335,7 +396,16 @@ Resources:
             Value: DESTROY_TEAMS
           - Name: ORBIT_ADMIN_ROLE
             Type: PLAINTEXT
-            Value: Admin
+            Value: !Join
+              - ''
+              - - 'arn:'
+                - !Ref 'AWS::Partition'
+                - ':iam::'
+                - !Ref 'AWS::AccountId'
+                - ':role/'
+                - 'orbit-'
+                - !Ref 'EnvName'
+                - '-admin'
           - Name: ORBIT_ENV_NAME
             Type: PLAINTEXT
             Value: !Ref 'EnvName'

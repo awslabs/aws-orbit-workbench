@@ -48,6 +48,7 @@ phases:
       - env
       - . .venv/bin/activate
       - orbit --help
+      - aws eks update-kubeconfig --name orbit-dev-env --role-arn arn:aws:iam::$AWS_ACCOUNT_ID:role/orbit-$ORBIT_FOUNDATION_NAME-admin
       - echo $BUILD_ACTION
       - |
         if [ $BUILD_ACTION = "DESTROY_FOUNDATION" ]; then
