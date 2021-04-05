@@ -1,4 +1,4 @@
-pyroma~=2.6
+pyroma~=3.0.1
 check-manifest~=0.46
 pip-tools~=5.5.0
 wheel~=0.36.2
