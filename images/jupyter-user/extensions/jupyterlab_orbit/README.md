@@ -17,7 +17,7 @@ for the frontend extension.
 ## Install
 
 ```bash
-pip install jupyterlab_orbit
+pip install -e extensions/jupyterlab_orbit
 ```
 
 

@@ -141,6 +141,7 @@ def deploy_images_remotely(context: "Context") -> None:
             ("k8-dashboard", None, None, []),
             ("k8-metrics-scraper", None, None, []),
             ("k8-metrics-server", None, None, []),
+            ("cluster-autoscaler", None, None, []),
         ]
     _logger.debug("Building the second images batch")
     if images:

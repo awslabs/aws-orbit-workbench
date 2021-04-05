@@ -1,6 +1,6 @@
 Name: !ENV ${ORBIT_ENV_NAME::dev-env}
-CodeartifactDomain: aws-orbit
-CodeartifactRepository: python-repository
+CodeartifactDomain: !ENV ${CODEARTIFACT_DOMAIN::}
+CodeartifactRepository: !ENV ${CODEARTIFACT_REPOSITORY::}
 EksSystemMastersRoles:
 -   !ENV ${ORBIT_ADMIN_ROLE::Admin}
 ScratchBucketArn: !SSM ${/orbit-foundation/dev-env/resources::ScratchBucketArn}
@@ -33,6 +33,7 @@ Networking:
         NodesSubnets: !SSM ${/orbit-foundation/dev-env/resources::NodesSubnets}
     Frontend:
         LoadBalancersSubnets: !SSM ${/orbit-foundation/dev-env/resources::LoadBalancersSubnets}
+        SslCertArn: !SSM ${/orbit-foundation/dev-env/resources::SslCertArn}
 ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge

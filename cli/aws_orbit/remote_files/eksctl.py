@@ -24,7 +24,7 @@ from aws_orbit import sh
 from aws_orbit.models.changeset import Changeset, ListChangeset
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.models.manifest import ManagedNodeGroupManifest
-from aws_orbit.services import cfn, ec2, eks, iam
+from aws_orbit.services import autoscaling, cfn, ec2, eks, iam
 from aws_orbit.services.ec2 import IpPermission, UserIdGroupPair
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -50,17 +50,20 @@ def create_nodegroup_structure(context: "Context", nodegroup: ManagedNodeGroupMa
         else:
             labels["k8s.amazonaws.com/accelerator"] = "gpu"
 
+    tags = {f"k8s.io/cluster-autoscaler/node-template/label/{k}": v for k, v in labels.items()}
+    tags["Env"] = f"orbit-{context.name}"
+
     return {
         "name": nodegroup.name,
         "privateNetworking": True,
         "instanceType": nodegroup.instance_type,
-        "minSize": nodegroup.nodes_num_min,
-        "desiredCapacity": nodegroup.nodes_num_desired,
+        "minSize": 1 if nodegroup.nodes_num_min < 1 else nodegroup.nodes_num_min,
+        "desiredCapacity": 1 if nodegroup.nodes_num_desired < 1 else nodegroup.nodes_num_desired,
         "maxSize": nodegroup.nodes_num_max,
         "volumeSize": nodegroup.local_storage_size,
         "ssh": {"allow": False},
         "labels": labels,
-        "tags": {"Env": f"orbit-{context.name}"},
+        "tags": tags,
         "iam": {"instanceRoleARN": context.eks_env_nodegroup_role_arn},
     }
 
@@ -103,19 +106,23 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
     MANIFEST["iam"]["serviceRoleARN"] = context.eks_cluster_role_arn
     MANIFEST["managedNodeGroups"] = []
 
+    labels = {"orbit/node-group": "env", "orbit/usage": "reserved"}
+    tags = tags = {f"k8s.io/cluster-autoscaler/node-template/label/{k}": v for k, v in labels.items()}
+    tags["Env"] = f"orbit-{context.name}"
+
     # Env
     MANIFEST["managedNodeGroups"].append(
         {
             "name": "env",
             "privateNetworking": True,
             "instanceType": "t3a.xlarge",
-            "minSize": 2,
+            "minSize": 1,
             "desiredCapacity": 2,
-            "maxSize": 2,
+            "maxSize": 4,
             "volumeSize": 64,
             "ssh": {"allow": False},
-            "labels": {"orbit/node-group": "env", "orbit/usage": "reserved"},
-            "tags": {"Env": "orbit"},
+            "labels": labels,
+            "tags": tags,
             "iam": {"instanceRoleARN": context.eks_env_nodegroup_role_arn},
         }
     )
@@ -185,6 +192,16 @@ def map_iam_identities(
                 sh.run(f"eksctl delete iamidentitymapping --cluster {cluster_name} --arn {arn} --all")
                 cast(List[str], context.eks_system_masters_roles).remove(role)
                 ContextSerDe.dump_context_to_ssm(context=context)
+
+
+def create_cluster_autoscaler_service_account(context: Context) -> None:
+    policy_arn = f"arn:aws:iam::{context.account_id}:policy/orbit-{context.name}-cluster-autoscaler-policy"
+    _logger.debug(f"Creating ClusterAutoscaler ServiceAccount with Policy ARN: {policy_arn}")
+    sh.run(
+        f"eksctl create iamserviceaccount --cluster=orbit-{context.name} --namespace=kube-system "
+        f"--name=cluster-autoscaler --attach-policy-arn={policy_arn} --override-existing-serviceaccounts "
+        "--approve"
+    )
 
 
 def get_pod_to_cluster_rules(group_id: str) -> List[IpPermission]:
@@ -300,7 +317,10 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
         output_filename = generate_manifest(context=context, name=stack_name, nodegroups=requested_nodegroups)
 
         _logger.debug("Deploying EKSCTL Environment resources")
-        sh.run(f"eksctl create cluster -f {output_filename} --write-kubeconfig --verbose 4")
+        sh.run(
+            f"eksctl create cluster -f {output_filename} --install-nvidia-plugin=false "
+            "--write-kubeconfig --verbose 4"
+        )
 
         username = f"orbit-{context.name}-admin"
         arn = f"arn:aws:iam::{context.account_id}:role/{username}"
@@ -310,6 +330,14 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
             f"--username {username} --group system:masters"
         )
         context.managed_nodegroups = requested_nodegroups
+
+        for ng in requested_nodegroups:
+            if ng.nodes_num_desired < 1 or ng.nodes_num_min < 1:
+                _logger.debug(f"Reducing AutoScaling capacity for newly create NodeGroup: {ng.name}")
+                autoscaling.update_nodegroup_autoscaling_group(
+                    cluster_name=f"orbit-{context.name}", nodegroup_manifest=ng
+                )
+
         ContextSerDe.dump_context_to_ssm(context=context)
     else:
 
@@ -354,6 +382,12 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
                 context.managed_nodegroups = [ng for ng in current_nodegroups if ng.name not in nodegroups]
                 ContextSerDe.dump_context_to_ssm(context=context)
 
+            if changeset.managed_nodegroups_changeset.modified_nodegroups:
+                for ng in changeset.managed_nodegroups_changeset.modified_nodegroups:
+                    autoscaling.update_nodegroup_autoscaling_group(
+                        cluster_name=f"orbit-{context.name}", nodegroup_manifest=ng
+                    )
+
     eks_system_masters_changeset = (
         changeset.eks_system_masters_roles_changeset
         if changeset and changeset.eks_system_masters_roles_changeset
@@ -365,9 +399,23 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
         eks_system_masters_roles_changes=eks_system_masters_changeset,
     )
 
-    fetch_cluster_data(context=context, cluster_name=cluster_name)
     associate_open_id_connect_provider(context=context, cluster_name=cluster_name)
+    fetch_cluster_data(context=context, cluster_name=cluster_name)
     authorize_cluster_pod_security_group(context=context)
+
+    iam.add_assume_role_statement(
+        role_name=f"orbit-{context.name}-cluster-autoscaler-role",
+        statement={
+            "Effect": "Allow",
+            "Principal": {"Federated": f"arn:aws:iam::{context.account_id}:oidc-provider/{context.eks_oidc_provider}"},
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringLike": {
+                    f"{context.eks_oidc_provider}:sub": "system:serviceaccount:kube-system:cluster-autoscaler"
+                }
+            },
+        },
+    )
 
     _logger.debug("EKSCTL deployed")
 

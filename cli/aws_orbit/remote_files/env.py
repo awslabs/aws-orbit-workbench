@@ -34,6 +34,7 @@ DEFAULT_ISOLATED_IMAGES: List[str] = [
     "k8-dashboard",
     "k8-metrics-scraper",
     "k8-metrics-server",
+    "cluster-autoscaler",
 ]
 
 

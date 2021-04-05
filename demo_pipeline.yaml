@@ -1,0 +1,643 @@
+Resources:
+  ArtifactsBucket: 
+    DeletionPolicy: Delete
+    Description: Creating Amazon S3 bucket for AWS CodePipeline and CodeBuild artifacts
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Join
+        - '-'
+        - - !Ref 'AWS::StackName'
+          - ArtifactsBucket
+      VersioningConfiguration:
+        Status: Enabled
+    Type: AWS::S3::Bucket
+
+  OrbitDeploymentRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - !Join
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/PowerUserAccess'
+        - !Join
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/IAMFullAccess'
+        - !Join
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/AmazonElasticContainerRegistryPublicPowerUser'
+        - !Join
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/AmazonSNSFullAccess'
+
+  OrbitBuildDemoDeployFoundation:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DEPLOY_FOUNDATION
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: !Join
+              - ''
+              - - 'arn:'
+                - !Ref 'AWS::Partition'
+                - ':iam::'
+                - !Ref 'AWS::AccountId'
+                - ':role/'
+                - 'orbit-'
+                - !Ref 'EnvName'
+                - '-admin'
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: 'true'
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: '--internet-accessibility'
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+          - Name: SOURCE_BRANCH
+            Type: PLAINTEXT
+            Value: !Ref 'Branch'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt
+        - OrbitDeploymentRole
+        - Arn
+      Source:
+        BuildSpec: cli-buildspec.yaml
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+
+  OrbitBuildDemoDestroyFoundation:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DESTROY_FOUNDATION
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: !Join
+              - ''
+              - - 'arn:'
+                - !Ref 'AWS::Partition'
+                - ':iam::'
+                - !Ref 'AWS::AccountId'
+                - ':role/'
+                - 'orbit-'
+                - !Ref 'EnvName'
+                - '-admin'
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: 'true'
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: '--internet-accessibility'
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+          - Name: SOURCE_BRANCH
+            Type: PLAINTEXT
+            Value: !Ref 'Branch'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt
+        - OrbitDeploymentRole
+        - Arn
+      Source:
+        BuildSpec: cli-buildspec.yaml
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+
+  OrbitBuildDemoDeployEnv:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DEPLOY_ENV
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: !Join
+              - ''
+              - - 'arn:'
+                - !Ref 'AWS::Partition'
+                - ':iam::'
+                - !Ref 'AWS::AccountId'
+                - ':role/'
+                - 'orbit-'
+                - !Ref 'EnvName'
+                - '-admin'
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: 'true'
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: '--internet-accessibility'
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+          - Name: SOURCE_BRANCH
+            Type: PLAINTEXT
+            Value: !Ref 'Branch'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt 
+        - OrbitDeploymentRole
+        - Arn
+      Source:
+        BuildSpec: cli-buildspec.yaml
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+
+  OrbitBuildDemoDestroyEnv:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DESTROY_ENV
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: !Join
+              - ''
+              - - 'arn:'
+                - !Ref 'AWS::Partition'
+                - ':iam::'
+                - !Ref 'AWS::AccountId'
+                - ':role/'
+                - 'orbit-'
+                - !Ref 'EnvName'
+                - '-admin'
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: 'true'
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: '--internet-accessibility'
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+          - Name: SOURCE_BRANCH
+            Type: PLAINTEXT
+            Value: !Ref 'Branch'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt
+        - OrbitDeploymentRole
+        - Arn
+      Source:
+        BuildSpec: cli-buildspec.yaml
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+
+  OrbitBuildDemoDeployTeams:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DEPLOY_TEAMS
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: !Join
+              - ''
+              - - 'arn:'
+                - !Ref 'AWS::Partition'
+                - ':iam::'
+                - !Ref 'AWS::AccountId'
+                - ':role/'
+                - 'orbit-'
+                - !Ref 'EnvName'
+                - '-admin'
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: 'true'
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: '--internet-accessibility'
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+          - Name: SOURCE_BRANCH
+            Type: PLAINTEXT
+            Value: !Ref 'Branch'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt 
+        - OrbitDeploymentRole
+        - Arn
+      Source:
+        BuildSpec: cli-buildspec.yaml
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+
+  OrbitBuildDemoDeployRegression:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DEPLOY_REGRESSION
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: !Join
+              - ''
+              - - 'arn:'
+                - !Ref 'AWS::Partition'
+                - ':iam::'
+                - !Ref 'AWS::AccountId'
+                - ':role/'
+                - 'orbit-'
+                - !Ref 'EnvName'
+                - '-admin'
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: 'true'
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: '--internet-accessibility'
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+          - Name: SOURCE_BRANCH
+            Type: PLAINTEXT
+            Value: !Ref 'Branch'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !Join
+        - ''
+        - - 'arn:'
+          - !Ref 'AWS::Partition'
+          - ':iam::'
+          - !Ref 'AWS::AccountId'
+          - ':role/'
+          - 'orbit-'
+          - !Ref 'EnvName'
+          - '-admin'
+      Source:
+        BuildSpec: cli-buildspec.yaml
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+
+  OrbitBuildDemoDestroyTeams:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DESTROY_TEAMS
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: !Join
+              - ''
+              - - 'arn:'
+                - !Ref 'AWS::Partition'
+                - ':iam::'
+                - !Ref 'AWS::AccountId'
+                - ':role/'
+                - 'orbit-'
+                - !Ref 'EnvName'
+                - '-admin'
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !Ref 'EnvName'
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: 'true'
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: '--internet-accessibility'
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+          - Name: SOURCE_BRANCH
+            Type: PLAINTEXT
+            Value: !Ref 'Branch'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt
+        - OrbitDeploymentRole
+        - Arn
+      Source:
+        BuildSpec: cli-buildspec.yaml
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+
+  DemoEnvironmentDeployCodePipeline:
+    Type: 'AWS::CodePipeline::Pipeline'
+    Properties:
+      RoleArn: !GetAtt
+        - OrbitDeploymentRole
+        - Arn
+      Stages:
+        - Actions:
+            - ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: '1'
+              Configuration:
+                Owner: awslabs
+                Repo: aws-orbit-workbench
+                Branch: !Ref 'Branch'
+                OAuthToken: !Ref GitHubOAuthToken
+                PollForSourceChanges: false
+              Name: GitHub_Source
+              OutputArtifacts:
+                - Name: CodeSource
+              RunOrder: 1
+          Name: Source
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDeployFoundation
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDeployFoundation
+              RoleArn: !GetAtt
+                - >-
+                  OrbitDeploymentRole
+                - Arn
+              RunOrder: 1
+          Name: CLI-DemoDeployFoundation
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDeployEnv
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDeployEnv
+              RoleArn: !GetAtt
+                - >-
+                  OrbitDeploymentRole
+                - Arn
+              RunOrder: 1
+          Name: CLI-DemoDeployEnv
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDeployTeams
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDeployTeams
+              RoleArn: !GetAtt
+                - >-
+                  OrbitDeploymentRole
+                - Arn
+              RunOrder: 1
+          Name: CLI-DemoDeployTeams
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDeployRegression
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDeployRegression
+              RoleArn: !GetAtt
+                - >-
+                  OrbitDeploymentRole
+                - Arn
+              RunOrder: 1
+          Name: CLI-DemoDeployRegression
+      ArtifactStore:
+        Location: !Ref ArtifactsBucket
+        Type: S3
+      Name: Orbit_Demo_Deploy
+      RestartExecutionOnUpdate: false
+    DependsOn:
+      - OrbitDeploymentRole
+
+  DemoEnvironmentDestroyCodePipeline:
+    Type: 'AWS::CodePipeline::Pipeline'
+    Properties:
+      RoleArn: !GetAtt 
+        - OrbitDeploymentRole
+        - Arn
+      Stages:
+        - Actions:
+            - ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: '1'
+              Configuration:
+                Owner: awslabs
+                Repo: aws-orbit-workbench
+                Branch: !Ref 'Branch'
+                OAuthToken: !Ref GitHubOAuthToken
+                PollForSourceChanges: false
+              Name: GitHub_Source
+              OutputArtifacts:
+                - Name: CodeSource
+              RunOrder: 1
+          Name: Source
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDestroyTeams
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDestroyTeams
+              RoleArn: !GetAtt 
+                - >-
+                  OrbitDeploymentRole
+                - Arn
+              RunOrder: 1
+          Name: CLI-DemoDestroyTeams
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDestroyEnv
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDestroyEnv
+              RoleArn: !GetAtt 
+                - >-
+                  OrbitDeploymentRole
+                - Arn
+              RunOrder: 1
+          Name: CLI-DemoDestroyEnv
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDestroyFoundation
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDestroyFoundation
+              RoleArn: !GetAtt 
+                - >-
+                  OrbitDeploymentRole
+                - Arn
+              RunOrder: 1
+          Name: CLI-DemoDestroyFoundation
+      ArtifactStore:
+        Location: !Ref ArtifactsBucket
+        Type: S3
+      Name: Orbit_Demo_Destory
+      RestartExecutionOnUpdate: false
+    DependsOn:
+      - OrbitDeploymentRole
+
+
+Parameters:
+  EnvName:
+    Type: String
+    Description: Unique name for both foundation and env in the account
+    Default: demo-env
+  Branch:
+    Type: String
+    Description: The release branch to use with this deployment. Required for latest deployment pipeline code
+    Default: release/0.14.0
+  Version:
+    Type: String
+    Description: The version to deploy this deployment
+    Default: 0.14.0   
+  GitHubOAuthToken:
+    Type: String
+    Description: The GitHub OAuth token that will allow read access to the repo
