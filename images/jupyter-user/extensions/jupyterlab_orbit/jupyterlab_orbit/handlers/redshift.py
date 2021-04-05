@@ -36,13 +36,7 @@ class RedshiftRouteHandler(APIHandler):
             }
             if "ClusterCreateTime" in cdetails["info"]:
                 ddirct.update(
-                    {
-                        "start_time": str(
-                            cdetails["info"]["ClusterCreateTime"].strftime(
-                                "%Y-%m-%d %H:%M:%S %Z"
-                            )
-                        )
-                    }
+                    {"start_time": str(cdetails["info"]["ClusterCreateTime"].strftime("%Y-%m-%d %H:%M:%S %Z"))}
                 )
 
             data.append(ddirct)

@@ -5,13 +5,7 @@ import json
 import os
 
 import setuptools
-from jupyter_packaging import (
-    combine_commands,
-    create_cmdclass,
-    ensure_targets,
-    install_npm,
-    skip_if_exists,
-)
+from jupyter_packaging import combine_commands, create_cmdclass, ensure_targets, install_npm, skip_if_exists
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -39,9 +33,7 @@ data_files_spec = [
     ("etc/jupyter/jupyter_server_config.d", "jupyter-config", "jupyterlab_orbit.json"),
 ]
 
-cmdclass = create_cmdclass(
-    "jsdeps", package_data_spec=package_data_spec, data_files_spec=data_files_spec
-)
+cmdclass = create_cmdclass("jsdeps", package_data_spec=package_data_spec, data_files_spec=data_files_spec)
 
 js_command = combine_commands(
     install_npm(HERE, build_cmd="build:prod", npm=["jlpm"]),
