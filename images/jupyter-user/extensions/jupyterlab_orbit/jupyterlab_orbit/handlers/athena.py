@@ -32,7 +32,11 @@ class AthenaRouteHandler(APIHandler):
         sample_size = 100
 
         json_data = athena.get_sample_data(
-            database=database, table=table, sample=sample_size, field=field, direction=direction
+            database=database,
+            table=table,
+            sample=sample_size,
+            field=field,
+            direction=direction,
         )
 
         self.log.info(f"GET - {self.__class__}")
