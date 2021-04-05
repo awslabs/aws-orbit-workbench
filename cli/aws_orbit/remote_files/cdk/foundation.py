@@ -113,7 +113,7 @@ class FoundationStack(Stack):
                     "PublicSubnets": self.public_subnets.subnet_ids,
                     "PrivateSubnets": self.private_subnets.subnet_ids,
                     "IsolatedSubnets": self.isolated_subnets.subnet_ids
-                    if context.networking.data.internet_accessible
+                    if not context.networking.data.internet_accessible
                     else [],
                     "NodesSubnets": self.nodes_subnets.subnet_ids,
                     "LoadBalancersSubnets": self.public_subnets.subnet_ids,
