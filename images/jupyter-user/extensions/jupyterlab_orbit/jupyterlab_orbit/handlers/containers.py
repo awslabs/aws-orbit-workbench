@@ -42,30 +42,18 @@ class ContainersRouteHandler(APIHandler):
                 job_template = c["spec"]["template"]
                 container["time"] = c["metadata"]["creationTimestamp"]
                 response_datetime_format = "%Y-%m-%dT%H:%M:%SZ"
-                creation_dt = datetime.strptime(
-                    c["metadata"]["creationTimestamp"], response_datetime_format
-                )
+                creation_dt = datetime.strptime(c["metadata"]["creationTimestamp"], response_datetime_format)
 
                 if "status" in c and "completionTime" in c["status"]:
                     container["completionTime"] = c["status"]["completionTime"]
-                    completion_dt = datetime.strptime(
-                        c["status"]["completionTime"], response_datetime_format
-                    )
+                    completion_dt = datetime.strptime(c["status"]["completionTime"], response_datetime_format)
                     duration = completion_dt - creation_dt
                     container["duration"] = str(duration)
-                elif (
-                    "status" in c
-                    and "active" in c["status"]
-                    and c["status"]["active"] == 1
-                ):
+                elif "status" in c and "active" in c["status"] and c["status"]["active"] == 1:
                     duration = datetime.utcnow() - creation_dt
                     container["duration"] = str(duration).split(".")[0]
                     container["completionTime"] = ""
-                elif (
-                    "status" in c
-                    and "failed" in c["status"]
-                    and c["status"]["failed"] == 1
-                ):
+                elif "status" in c and "failed" in c["status"] and c["status"]["failed"] == 1:
                     last_transition_dt = datetime.strptime(
                         c["status"]["conditions"][0]["lastTransitionTime"],
                         response_datetime_format,
@@ -91,10 +79,7 @@ class ContainersRouteHandler(APIHandler):
             container["hint"] = json.dumps(tasks, indent=4)
             container["tasks"] = tasks["tasks"]
 
-            if (
-                "labels" in c["metadata"]
-                and "orbit/node-type" in c["metadata"]["labels"]
-            ):
+            if "labels" in c["metadata"] and "orbit/node-type" in c["metadata"]["labels"]:
                 container["node_type"] = c["metadata"]["labels"]["orbit/node-type"]
             else:
                 container["node_type"] = "unknown"
