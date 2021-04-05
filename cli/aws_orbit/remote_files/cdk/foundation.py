@@ -113,7 +113,7 @@ class FoundationStack(Stack):
                     "PublicSubnets": self.public_subnets.subnet_ids,
                     "PrivateSubnets": self.private_subnets.subnet_ids,
                     "IsolatedSubnets": self.isolated_subnets.subnet_ids
-                    if context.networking.data.internet_accessible
+                    if not context.networking.data.internet_accessible
                     else [],
                     "NodesSubnets": self.nodes_subnets.subnet_ids,
                     "LoadBalancersSubnets": self.public_subnets.subnet_ids,
@@ -153,12 +153,13 @@ class FoundationStack(Stack):
             export_name=f"orbit-foundation-{self.env_name}-private-subnet-ids",
             value=",".join(self.private_subnets.subnet_ids),
         )
-        CfnOutput(
-            scope=self,
-            id=f"{id}isolatedsubnetsids",
-            export_name=f"orbit-foundation-{self.env_name}-isolated-subnet-ids",
-            value=",".join(self.isolated_subnets.subnet_ids),
-        )
+        if not context.networking.data.internet_accessible:
+            CfnOutput(
+                scope=self,
+                id=f"{id}isolatedsubnetsids",
+                export_name=f"orbit-foundation-{self.env_name}-isolated-subnet-ids",
+                value=",".join(self.isolated_subnets.subnet_ids),
+            )
         CfnOutput(
             scope=self,
             id=f"{id}nodesubnetsids",
