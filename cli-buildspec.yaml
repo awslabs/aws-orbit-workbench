@@ -41,7 +41,9 @@ phases:
           pip install --upgrade aws-orbit-code-commit=="${VERSION}"
           pip install --upgrade aws-orbit-sdk=="${VERSION}"
           pip install --upgrade aws-orbit-emr-on-eks=="${VERSION}"
+
         fi
+      - python3 -m pip install --no-deps jupyterhub-kubespawner~=0.15.0
   build:
     commands:
       - pwd
