@@ -41,6 +41,7 @@ phases:
           pip install --upgrade aws-orbit-code-commit=="${VERSION}"
           pip install --upgrade aws-orbit-sdk=="${VERSION}"
           pip install --upgrade aws-orbit-emr-on-eks=="${VERSION}"
+
         fi
   build:
     commands:
@@ -48,7 +49,6 @@ phases:
       - env
       - . .venv/bin/activate
       - orbit --help
-      - aws eks update-kubeconfig --name orbit-dev-env --role-arn arn:aws:iam::$AWS_ACCOUNT_ID:role/orbit-$ORBIT_FOUNDATION_NAME-admin
       - echo $BUILD_ACTION
       - |
         if [ $BUILD_ACTION = "DESTROY_FOUNDATION" ]; then
@@ -90,33 +90,6 @@ phases:
           S3_BOOTSTRAP_PATH="s3://${TOOLKIT}/teams/lake-user/bootstrap/"
           aws s3 cp samples/copy_samples.sh $S3_BOOTSTRAP_PATH
           python scripts/download_demo_data.py ${ORBIT_ENV_NAME}
-
-          orbit run notebook \
-            --env dev-env \
-            --team lake-creator \
-            --user regression \
-            --delay 60 \
-            --max-attempts 40 \
-            --wait \
-            test/resources/regression/lake-creator.json
-
-          orbit run notebook \
-          --env dev-env \
-          --team lake-creator \
-          --user regression \
-          --delay 60 \
-          --max-attempts 40 \
-          --wait \
-          test/resources/regression/lake-creator-admin.json
-
-          orbit run notebook \
-            --env dev-env \
-            --team lake-user \
-            --user regression \
-            --delay 60 \
-            --max-attempts 40 \
-            --wait \
-            test/resources/regression/lake-user.json
         else
           echo "Invalid BUILD_ACTION: $BUILD_ACTION"
           exit 1

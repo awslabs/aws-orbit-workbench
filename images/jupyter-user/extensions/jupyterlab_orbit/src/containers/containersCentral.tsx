@@ -5,6 +5,8 @@ import ReactJson from 'react-json-view';
 import { IUseItemsReturn, getStateIcon, getNodeType } from '../containers';
 import { Tooltip } from 'antd';
 import { JupyterFrontEnd } from '@jupyterlab/application';
+import { refreshIcon } from '@jupyterlab/ui-components';
+import { ToolbarButtonComponent } from '@jupyterlab/apputils';
 
 const columns = [
   {
@@ -95,6 +97,14 @@ const columns = [
         </Tooltip>
       );
     }
+  },
+  {
+    title: 'Duration',
+    dataIndex: 'duration',
+    sorter: {
+      compare: utils.Sorter.DEFAULT,
+      multiple: 5
+    }
   }
 ];
 
@@ -127,6 +137,13 @@ export const ContainerCentralPanel = (props: {
   return (
     <div>
       <div>
+        <div style={{ float: 'right', paddingRight: '5px' }}>
+          <ToolbarButtonComponent
+            tooltip={'Refresh List'}
+            icon={refreshIcon}
+            onClick={refreshCallback}
+          />
+        </div>
         <TableWidget
           type={props.type}
           title={props.title}
