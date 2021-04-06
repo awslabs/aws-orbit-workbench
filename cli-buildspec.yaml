@@ -91,39 +91,6 @@ phases:
           S3_BOOTSTRAP_PATH="s3://${TOOLKIT}/teams/lake-user/bootstrap/"
           aws s3 cp samples/copy_samples.sh $S3_BOOTSTRAP_PATH
           python scripts/download_demo_data.py ${ORBIT_ENV_NAME}
-
-          python -m pip install --no-deps jupyterhub-kubespawner~=0.15.0
-          # remove the auto includes with the kubespawner package as we just using the helper class.
-          SITE_PACKAGES=`python -m pip show jupyterhub-kubespawner | grep "Location:" | cut -d ':' -f 2`
-          KUBE_SPAWNER_PACKAGE=$SITE_PACKAGES/kubespawner/__init__.py
-          rm $SITE_PACKAGES/kubespawner/__init__.py
-          touch $SITE_PACKAGES/kubespawner/__init__.py
-          orbit run notebook \
-            --env dev-env \
-            --team lake-creator \
-            --user regression \
-            --delay 60 \
-            --max-attempts 40 \
-            --wait \
-            test/resources/regression/lake-creator.json
-
-          orbit run notebook \
-          --env dev-env \
-          --team lake-creator \
-          --user regression \
-          --delay 60 \
-          --max-attempts 40 \
-          --wait \
-          test/resources/regression/lake-creator-admin.json
-
-          orbit run notebook \
-            --env dev-env \
-            --team lake-user \
-            --user regression \
-            --delay 60 \
-            --max-attempts 40 \
-            --wait \
-            test/resources/regression/lake-user.json
         else
           echo "Invalid BUILD_ACTION: $BUILD_ACTION"
           exit 1
