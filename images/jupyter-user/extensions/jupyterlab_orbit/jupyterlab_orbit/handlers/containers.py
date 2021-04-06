@@ -14,6 +14,7 @@
 
 import json
 import os
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -40,10 +41,30 @@ class ContainersRouteHandler(APIHandler):
             else:
                 job_template = c["spec"]["template"]
                 container["time"] = c["metadata"]["creationTimestamp"]
+                response_datetime_format = "%Y-%m-%dT%H:%M:%SZ"
+                creation_dt = datetime.strptime(c["metadata"]["creationTimestamp"], response_datetime_format)
+
                 if "status" in c and "completionTime" in c["status"]:
                     container["completionTime"] = c["status"]["completionTime"]
+                    completion_dt = datetime.strptime(c["status"]["completionTime"], response_datetime_format)
+                    duration = completion_dt - creation_dt
+                    container["duration"] = str(duration)
+                elif "status" in c and "active" in c["status"] and c["status"]["active"] == 1:
+                    duration = datetime.utcnow() - creation_dt
+                    container["duration"] = str(duration).split(".")[0]
+                    container["completionTime"] = ""
+                elif "status" in c and "failed" in c["status"] and c["status"]["failed"] == 1:
+                    last_transition_dt = datetime.strptime(
+                        c["status"]["conditions"][0]["lastTransitionTime"],
+                        response_datetime_format,
+                    )
+                    duration = last_transition_dt - creation_dt
+                    container["duration"] = str(duration)
+                    container["completionTime"] = ""
                 else:
                     container["completionTime"] = ""
+                    container["duration"] = ""
+
                 if "status" in c:
                     if "failed" in c["status"] and c["status"]["failed"] == 1:
                         container["job_state"] = "failed"
@@ -76,7 +97,11 @@ class ContainersRouteHandler(APIHandler):
             data.append(container)
 
         data = sorted(
-            data, key=lambda i: (i["rank"], i["creationTimestamp"] if "creationTimestamp" in i else i["name"])
+            data,
+            key=lambda i: (
+                i["rank"],
+                i["creationTimestamp"] if "creationTimestamp" in i else i["name"],
+            ),
         )
 
         return json.dumps(data)
@@ -101,7 +126,10 @@ class ContainersRouteHandler(APIHandler):
             else:
                 raise Exception("Unknown type: %s", type)
             if "MOCK" in os.environ:
-                with open(f"{Path(__file__).parent.parent.parent}/test/mockup/containers-{type}.json", "w") as outfile:
+                with open(
+                    f"{Path(__file__).parent.parent.parent}/test/mockup/containers-{type}.json",
+                    "w",
+                ) as outfile:
                     json.dump(data, outfile, indent=4)
         else:
             path = f"{Path(__file__).parent.parent.parent}/test/mockup/containers-{type}.json"
