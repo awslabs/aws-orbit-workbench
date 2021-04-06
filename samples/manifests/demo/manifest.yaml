@@ -4,21 +4,21 @@ CodeartifactRepository: !ENV ${CODEARTIFACT_REPOSITORY::}
 EksSystemMastersRoles:
 - !ENV ${ORBIT_ADMIN_ROLE::Admin}
 - !ENV ${ORBIT_ADMIN_DEMO_ROLE::Admin}
-ScratchBucketArn: !SSM ${/orbit-foundation/dev-env/resources::ScratchBucketArn}
-UserPoolId: !SSM ${/orbit-foundation/dev-env/resources::UserPoolId}
-SharedEfsFsId: !SSM ${/orbit-foundation/dev-env/resources::SharedEfsFsId}
-SharedEfsSgId: !SSM ${/orbit-foundation/dev-env/resources::SharedEfsSgId}
+ScratchBucketArn: !SSM ${/orbit-foundation/demo-foundation/resources::ScratchBucketArn}
+UserPoolId: !SSM ${/orbit-foundation/demo-foundation/resources::UserPoolId}
+SharedEfsFsId: !SSM ${/orbit-foundation/demo-foundation/resources::SharedEfsFsId}
+SharedEfsSgId: !SSM ${/orbit-foundation/demo-foundation/resources::SharedEfsSgId}
 Networking:
-    VpcId: !SSM ${/orbit-foundation/dev-env/resources::VpcId}
-    PublicSubnets: !SSM ${/orbit-foundation/dev-env/resources::PublicSubnets}
-    PrivateSubnets: !SSM ${/orbit-foundation/dev-env/resources::PrivateSubnets}
-    IsolatedSubnets: !SSM ${/orbit-foundation/dev-env/resources::IsolatedSubnets}
+    VpcId: !SSM ${/orbit-foundation/demo-foundation/resources::VpcId}
+    PublicSubnets: !SSM ${/orbit-foundation/demo-foundation/resources::PublicSubnets}
+    PrivateSubnets: !SSM ${/orbit-foundation/demo-foundation/resources::PrivateSubnets}
+    IsolatedSubnets: !SSM ${/orbit-foundation/demo-foundation/resources::IsolatedSubnets}
     Data:
-        InternetAccessible: false
-        NodesSubnets: !SSM ${/orbit-foundation/dev-env/resources::NodesSubnets}
+        InternetAccessible: true
+        NodesSubnets: !SSM ${/orbit-foundation/demo-foundation/resources::NodesSubnets}
     Frontend:
-        LoadBalancersSubnets: !SSM ${/orbit-foundation/dev-env/resources::LoadBalancersSubnets}
-        SslCertArn: !SSM ${/orbit-foundation/dev-env/resources::SslCertArn}
+        LoadBalancersSubnets: !SSM ${/orbit-foundation/demo-foundation/resources::LoadBalancersSubnets}
+        SslCertArn: !SSM ${/orbit-foundation/demo-foundation/resources::SslCertArn}
 ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge
