@@ -15,10 +15,10 @@
 # limitations under the License.
 #
 
-import sys
 import os
-from random import random
+import sys
 from operator import add
+from random import random
 
 from pyspark.sql import SparkSession
 
