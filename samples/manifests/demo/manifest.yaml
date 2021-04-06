@@ -2,7 +2,8 @@ Name: !ENV ${ORBIT_ENV_NAME::dev-env}
 CodeartifactDomain: !ENV ${CODEARTIFACT_DOMAIN::}
 CodeartifactRepository: !ENV ${CODEARTIFACT_REPOSITORY::}
 EksSystemMastersRoles:
--   !ENV ${ORBIT_ADMIN_ROLE::Admin}
+- !ENV ${ORBIT_ADMIN_ROLE::Admin}
+- !ENV ${ORBIT_ADMIN_DEMO_ROLE::Admin}
 ScratchBucketArn: !SSM ${/orbit-foundation/dev-env/resources::ScratchBucketArn}
 UserPoolId: !SSM ${/orbit-foundation/dev-env/resources::UserPoolId}
 SharedEfsFsId: !SSM ${/orbit-foundation/dev-env/resources::SharedEfsFsId}
