@@ -59,7 +59,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: 'demo-foundation'
+            Value: 'demo-fndn'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DEPLOY_FOUNDATION
@@ -104,7 +104,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: 'demo-foundation'
+            Value: 'demo-fndn'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DESTROY_FOUNDATION
@@ -149,7 +149,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: 'demo-foundation'
+            Value: 'demo-fndn'
           - Name: ORBIT_ADMIN_DEMO_ROLE
             Type: PLAINTEXT
             Value: !Ref 'K8AdminRole'
@@ -197,7 +197,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: 'demo-foundation'
+            Value: 'demo-fndn'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DESTROY_ENV
@@ -242,7 +242,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: 'demo-foundation'
+            Value: 'demo-fndn'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DEPLOY_TEAMS
@@ -287,7 +287,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: 'demo-foundation'
+            Value: 'demo-fndn'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DEPLOY_REGRESSION
@@ -330,7 +330,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: 'demo-foundation'
+            Value: 'demo-fndn'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DESTROY_TEAMS
