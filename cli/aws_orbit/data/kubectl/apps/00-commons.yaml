@@ -39,6 +39,7 @@ rules:
     resources:
       - persistentvolumes
       - nodes
+      - storageclasses
     verbs:
       - get
       - watch
