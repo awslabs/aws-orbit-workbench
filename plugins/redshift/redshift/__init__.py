@@ -14,6 +14,7 @@
 
 import logging
 import os
+import boto3
 from typing import TYPE_CHECKING, Any, Dict
 
 from aws_orbit import sh
@@ -45,18 +46,17 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
 def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
     _logger.debug("Destroying Redshift plugin resources for team %s", team_context.name)
     sh.run(f"echo 'Team name: {team_context.name} | Plugin ID: {plugin_id}'")
-    # Delete left over redshift cluster before deleting plugin resources
+    # Delete left over redshift cluster(s) before deleting plugin resources
     try:
-        from aws_orbit_sdk.database import get_redshift
-
-        rs = get_redshift()
-        team_redshift_clusters = rs.get_team_clusters()
-        for cluster_name in team_redshift_clusters.keys():
-            _logger.debug(f"Deleting redshift cluster: {cluster_name}")
-            rs.delete_redshift_cluster(cluster_name=cluster_name)
-    except ImportError as ie:
-        _logger.error("aws_orbit_sdk is required to destroy team %s redshift cluster(s): %s", team_context.name, ie)
-        raise ie
+        pass
+        redshift = boto3.client("redshift")
+        clusters = redshift.describe_clusters(TagValues=[team_context.name])["Clusters"]
+        namespace = context.name + "-" + team_context.name + "-"
+        for cluster in clusters:
+            cluster_id = cluster["ClusterIdentifier"]
+            cluster_name = cluster_id if namespace in cluster_id else namespace + cluster_id
+            redshift.delete_redshift_cluster(cluster_name=cluster_name)
+            _logger.debug(f"Deleted redshift cluster_name={cluster_name}")
     except Exception as e:
         _logger.error("Error deleting team %s redshift cluster(s) : %s", team_context.name, e)
         raise e
