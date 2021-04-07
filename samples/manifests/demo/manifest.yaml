@@ -31,7 +31,7 @@ ManagedNodegroups:
 Teams:
 -   Name: lake-creator
     Policies:
-    - orbit-dev-env-demo-lake-creator-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-demo-lake-creator-add-policy
     GrantSudo: true
     Fargate: false
     K8Admin: true
@@ -41,7 +41,7 @@ Teams:
     EfsLifeCycle: AFTER_7_DAYS
 -   Name: lake-user
     Policies:
-    - orbit-dev-env-demo-lake-user-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-demo-lake-user-add-policy
     JupyterhubInboundRanges:
     - 0.0.0.0/0
     GrantSudo: true
