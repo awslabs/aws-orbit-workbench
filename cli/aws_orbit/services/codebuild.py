@@ -254,8 +254,9 @@ def generate_spec(
         install.append("cp ~/.config/pip/pip.conf .")
 
     install.append("pwd")
-    # Orbit Workbench CLI
+    # Orbit Workbench CLI and SDK
     install.append(f"pip install aws-orbit~={__version__}")
+    install.append(f"pip install aws-orbit-sdk~={__version__}")
 
     # Plugins
     if plugins and isinstance(context, Context):
