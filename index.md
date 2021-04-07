@@ -1,4 +1,4 @@
-## Welcome to GitHub Pages
+## Welcome to AWS Orbit
 
 You can use the [editor on GitHub](https://github.com/awslabs/aws-orbit-workbench/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
 
