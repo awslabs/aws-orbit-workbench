@@ -59,7 +59,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: !Ref 'EnvName'
+            Value: 'demo-foundation'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DEPLOY_FOUNDATION
@@ -104,7 +104,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: !Ref 'EnvName'
+            Value: 'demo-foundation'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DESTROY_FOUNDATION
@@ -149,7 +149,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: !Ref 'EnvName'
+            Value: 'demo-foundation'
           - Name: ORBIT_ADMIN_DEMO_ROLE
             Type: PLAINTEXT
             Value: !Ref 'K8AdminRole'
@@ -197,7 +197,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: !Ref 'EnvName'
+            Value: 'demo-foundation'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DESTROY_ENV
@@ -242,7 +242,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: !Ref 'EnvName'
+            Value: 'demo-foundation'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DEPLOY_TEAMS
@@ -287,7 +287,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: !Ref 'EnvName'
+            Value: 'demo-foundation'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DEPLOY_REGRESSION
@@ -330,7 +330,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: !Ref 'EnvName'
+            Value: 'demo-foundation'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DESTROY_TEAMS
@@ -563,11 +563,10 @@ Parameters:
   Branch:
     Type: String
     Description: The release branch to use with this deployment. Required for latest deployment pipeline code
-    Default: release/0.14.0
+    Default: main
   Version:
     Type: String
     Description: The version to deploy this deployment
-    Default: 0.14.0   
   GitHubOAuthToken:
     Type: String
     Description: The GitHub OAuth token that will allow read access to the repo
