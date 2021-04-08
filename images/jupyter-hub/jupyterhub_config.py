@@ -166,6 +166,18 @@ AUTH
 
 c.JupyterHub.authenticator_class = OrbitWorkbenchAuthenticator
 c.Authenticator.auto_login = True
+# Try to validate session / refresh token every 10 minutes
+c.Authenticator.auth_refresh_age = 600
+
+# Needed to save refresh token
+c.Authenticator.enable_auth_state = True
+
+if "JUPYTERHUB_CRYPT_KEY" not in os.environ:
+    app_log.warn(
+        "Need JUPYTERHUB_CRYPT_KEY env for persistent auth_state.\n"
+        "    export JUPYTERHUB_CRYPT_KEY=$(openssl rand -hex 32)"
+    )
+    c.CryptKeeper.keys = [os.urandom(32)]
 
 """
 EXTRAS

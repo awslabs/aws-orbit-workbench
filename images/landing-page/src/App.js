@@ -53,7 +53,7 @@ const getUserInfo = (userSession) => {
     email: payload["email"],
     username: payload["cognito:username"],
     groups: groups,
-    jwt: userSession.idToken.jwtToken,
+    idToken: userSession.idToken.jwtToken,
   };
   console.log("userInfo", userInfo);
   return userInfo;
