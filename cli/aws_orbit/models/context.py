@@ -26,6 +26,7 @@ from marshmallow import Schema
 from marshmallow_dataclass import dataclass
 
 from aws_orbit import utils
+import aws_orbit
 from aws_orbit.models.common import BaseSchema
 from aws_orbit.models.manifest import (
     DataNetworkingManifest,
@@ -214,6 +215,7 @@ class FoundationContext:
     codeartifact_repository: Optional[str] = None
     images: FoundationImagesManifest = FoundationImagesManifest()
     policies: Optional[List[str]] = cast(List[str], field(default_factory=list))
+    orbit_version: Optional[str] = aws_orbit.__version__
 
 
 @dataclass(base_schema=BaseSchema)
@@ -258,6 +260,9 @@ class Context:
     cluster_pod_sg_id: Optional[str] = None
     managed_nodegroups: List[ManagedNodeGroupManifest] = field(default_factory=list)
     policies: Optional[List[str]] = cast(List[str], field(default_factory=list))
+    orbit_version: Optional[str] = aws_orbit.__version__
+    helm_repository: Optional[str] = None
+    install_ssm_agent: Optional[bool] = False
 
     def get_team_by_name(self, name: str) -> Optional[TeamContext]:
         for t in self.teams:
@@ -412,6 +417,7 @@ class ContextSerDe(Generic[T, V]):
                 managed_nodegroups=[],
                 eks_system_masters_roles=[],
                 policies=manifest.policies,
+                install_ssm_agent=manifest.install_ssm_agent,
             )
         ContextSerDe.fetch_toolkit_data(context=context)
         ContextSerDe.dump_context_to_ssm(context=context)

@@ -112,6 +112,17 @@ def _cluster_autoscaler(output_path: str, context: "Context") -> None:
         file.write(content)
 
 
+def _ssm_agent_installer(output_path: str, context: "Context") -> None:
+    filename = "08-ssm-agent-daemonset-installer.yaml"
+    input = os.path.join(MODELS_PATH, "apps", filename)
+    output = os.path.join(output_path, filename)
+
+    with open(input, "r") as file:
+        content: str = file.read()
+    with open(output, "w") as file:
+        file.write(content)
+
+
 def _team(context: "Context", team_context: "TeamContext", output_path: str) -> None:
     input = os.path.join(MODELS_PATH, "apps", "01-team.yaml")
     output = os.path.join(output_path, f"01-{team_context.name}-team.yaml")
@@ -229,6 +240,7 @@ def _generate_env_manifest(context: "Context", clean_up: bool = True) -> str:
     _landing_page(output_path=output_path, context=context)
     _k8_dashboard(output_path=output_path, context=context)
     _cluster_autoscaler(output_path=output_path, context=context)
+
 
     return output_path
 
