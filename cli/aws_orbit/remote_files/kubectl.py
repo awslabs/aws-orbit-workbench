@@ -241,6 +241,8 @@ def _generate_env_manifest(context: "Context", clean_up: bool = True) -> str:
     _k8_dashboard(output_path=output_path, context=context)
     _cluster_autoscaler(output_path=output_path, context=context)
 
+    if context.install_ssm_agent:
+        _ssm_agent_installer(output_path=output_path, context=context)
 
     return output_path
 
