@@ -88,6 +88,8 @@ constructs==3.3.71
     #   aws-cdk.aws-s3
     #   aws-cdk.aws-ssm
     #   aws-cdk.core
+cryptography==3.4.7
+    # via secretstorage
 decorator==5.0.1
     # via jsonpath-ng
 docutils==0.16
@@ -99,7 +101,10 @@ google-auth==1.28.0
 idna==2.10
     # via requests
 importlib-metadata==3.10.0
-    # via keyring
+    # via
+    #   flake8
+    #   keyring
+    #   twine
 isort==5.6.4
     # via -r requirements-dev.in
 jmespath==0.10.0

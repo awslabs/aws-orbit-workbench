@@ -38,6 +38,8 @@ idna==2.10
     # via
     #   anyio
     #   requests
+importlib-metadata==3.10.0
+    # via jsonschema
 ipykernel==5.5.0
     # via notebook
 ipython-genutils==0.2.0

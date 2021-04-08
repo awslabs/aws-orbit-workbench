@@ -73,7 +73,7 @@ if GRANT_SUDO == "yes":
 
 c.KubeSpawner.image = IMAGE
 # can below if need to force image pull
-# c.KubeSpawner.image_pull_policy = "Always"
+c.KubeSpawner.image_pull_policy = "Always"
 c.KubeSpawner.extra_annotations = {"AWS_ORBIT_TEAM_SPACE": TEAM, "AWS_ORBIT_ENV": ENV_NAME}
 pvc_name_template = "orbit-{username}-{servername}"
 c.KubeSpawner.pvc_name_template = pvc_name_template
