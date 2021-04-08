@@ -14,7 +14,7 @@
 
 import logging
 import os
-from typing import TYPE_CHECKING, Any, Dict, cast
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from aws_orbit import sh, utils
 from aws_orbit.plugins import hooks
@@ -31,7 +31,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
     configmap_script_name = f"{plugin_id}-script"
-    vars = dict(
+    vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
         region=context.region,
         account_id=context.account_id,
@@ -48,7 +48,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
         raise Exception(f"Plugin {plugin_id} must define parameter 'script'")
     script_file = os.path.join(os.path.dirname(POD_FILENAME), f"{plugin_id}-script.sh")
 
-    script_body = utils.resolve_parameters(script_body, cast(Dict[str, str], vars))
+    script_body = utils.resolve_parameters(script_body, vars)
     with open(script_file, "w") as file:
         file.write(script_body)
 
@@ -75,7 +75,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     with open(input, "r") as file:
         content: str = file.read()
 
-    content = utils.resolve_parameters(content, cast(Dict[str, str], vars))
+    content = utils.resolve_parameters(content, vars)
 
     _logger.debug("Kubectl Team %s context:\n%s", team_context.name, content)
     with open(output, "w") as file:
