@@ -54,6 +54,7 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
         namespace = context.name + "-" + team_context.name + "-"
         for cluster in clusters:
             cluster_id = cluster["ClusterIdentifier"]
+            _logger.debug(f"cluster_id={cluster_id}")
             cluster_name = cluster_id if namespace in cluster_id else namespace + cluster_id
             redshift.delete_cluster(ClusterIdentifier=cluster_name, SkipFinalClusterSnapshot=True)
             _logger.debug(f"Deleted redshift cluster_name={cluster_name}")
