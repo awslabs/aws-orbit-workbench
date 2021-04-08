@@ -255,7 +255,6 @@ class Manifest:
     ssm_parameter_name: Optional[str] = None
     install_ssm_agent: Optional[bool] = False
 
-
     def get_team_by_name(self, name: str) -> Optional[TeamManifest]:
         for t in self.teams:
             if t.name == name:
