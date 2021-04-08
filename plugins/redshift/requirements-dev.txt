@@ -142,6 +142,7 @@ aws-cdk.aws-iam==1.67.0
     #   aws-cdk.aws-autoscaling-hooktargets
     #   aws-cdk.aws-batch
     #   aws-cdk.aws-certificatemanager
+    #   aws-cdk.aws-cloudformation
     #   aws-cdk.aws-cloudfront
     #   aws-cdk.aws-cloudwatch
     #   aws-cdk.aws-codebuild
@@ -197,6 +198,7 @@ aws-cdk.aws-lambda==1.67.0
     #   aws-cdk.aws-apigateway
     #   aws-cdk.aws-autoscaling-hooktargets
     #   aws-cdk.aws-certificatemanager
+    #   aws-cdk.aws-cloudformation
     #   aws-cdk.aws-cloudfront
     #   aws-cdk.aws-cognito
     #   aws-cdk.aws-ecr-assets
@@ -237,6 +239,7 @@ aws-cdk.aws-s3==1.67.0
     # via
     #   -r requirements-dev.in
     #   aws-cdk.aws-apigateway
+    #   aws-cdk.aws-cloudformation
     #   aws-cdk.aws-cloudfront
     #   aws-cdk.aws-codebuild
     #   aws-cdk.aws-codepipeline
@@ -266,6 +269,7 @@ aws-cdk.aws-sns==1.67.0
     #   -r requirements-dev.in
     #   aws-cdk.aws-autoscaling
     #   aws-cdk.aws-autoscaling-hooktargets
+    #   aws-cdk.aws-cloudformation
     #   aws-cdk.aws-ecs
     #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-sns-subscriptions
@@ -303,6 +307,7 @@ aws-cdk.core==1.67.0
     #   aws-cdk.aws-autoscaling-hooktargets
     #   aws-cdk.aws-batch
     #   aws-cdk.aws-certificatemanager
+    #   aws-cdk.aws-cloudformation
     #   aws-cdk.aws-cloudfront
     #   aws-cdk.aws-cloudwatch
     #   aws-cdk.aws-codebuild
@@ -346,6 +351,7 @@ aws-cdk.cx-api==1.67.0
     # via
     #   aws-cdk.assets
     #   aws-cdk.aws-apigateway
+    #   aws-cdk.aws-cloudformation
     #   aws-cdk.aws-ec2
     #   aws-cdk.aws-ecr-assets
     #   aws-cdk.aws-ecs
@@ -402,6 +408,7 @@ constructs==3.3.71
     #   aws-cdk.aws-autoscaling-hooktargets
     #   aws-cdk.aws-batch
     #   aws-cdk.aws-certificatemanager
+    #   aws-cdk.aws-cloudformation
     #   aws-cdk.aws-cloudfront
     #   aws-cdk.aws-cloudwatch
     #   aws-cdk.aws-codebuild
@@ -438,6 +445,8 @@ constructs==3.3.71
     #   aws-cdk.aws-stepfunctions
     #   aws-cdk.core
     #   aws-cdk.custom-resources
+cryptography==3.4.7
+    # via secretstorage
 decorator==5.0.1
     # via jsonpath-ng
 docutils==0.16
@@ -449,7 +458,10 @@ google-auth==1.28.0
 idna==2.10
     # via requests
 importlib-metadata==3.10.0
-    # via keyring
+    # via
+    #   flake8
+    #   keyring
+    #   twine
 isort==5.6.4
     # via -r requirements-dev.in
 jmespath==0.10.0
@@ -466,6 +478,7 @@ jsii==1.26.0
     #   aws-cdk.aws-autoscaling-hooktargets
     #   aws-cdk.aws-batch
     #   aws-cdk.aws-certificatemanager
+    #   aws-cdk.aws-cloudformation
     #   aws-cdk.aws-cloudfront
     #   aws-cdk.aws-cloudwatch
     #   aws-cdk.aws-codebuild
@@ -551,6 +564,7 @@ publication==0.0.3
     #   aws-cdk.aws-autoscaling-hooktargets
     #   aws-cdk.aws-batch
     #   aws-cdk.aws-certificatemanager
+    #   aws-cdk.aws-cloudformation
     #   aws-cdk.aws-cloudfront
     #   aws-cdk.aws-cloudwatch
     #   aws-cdk.aws-codebuild

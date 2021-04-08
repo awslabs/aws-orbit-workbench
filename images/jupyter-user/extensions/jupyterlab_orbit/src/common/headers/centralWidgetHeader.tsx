@@ -1,6 +1,5 @@
 import React from 'react';
-import { LabIcon, refreshIcon } from '@jupyterlab/ui-components';
-import { ToolbarButtonComponent } from '@jupyterlab/apputils';
+import { LabIcon } from '@jupyterlab/ui-components';
 import { orbitIcon } from '../icons';
 
 const SECTION_HEADER_CLASS = 'jp-RunningSessions-sectionHeader';
@@ -34,11 +33,6 @@ export const CentralWidgetHeader = (props: {
         <div style={{ textAlign: 'right' }}>
           <orbitIcon.react tag="span" height="80px" width="80px" />
         </div>
-        <ToolbarButtonComponent
-          tooltip={'Refresh List'}
-          icon={refreshIcon}
-          onClick={props.refreshCallback}
-        />
       </div>
     </header>
   </div>

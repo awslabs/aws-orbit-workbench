@@ -1,0 +1,96 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      python: 3.8
+      nodejs: 12
+    commands:
+      - env
+      - npm install -g aws-cdk@1.67.0
+      - cd cli
+      - mkdir -p conf
+      - cp -R ../samples/manifests/* conf
+      - CONF_DIR=../samples/manifests
+      - MANIFEST=$CONF_DIR/demo/manifest.yaml
+      - python3 -m venv .venv
+      - . .venv/bin/activate
+      - |
+        if [ "${VERSION}" = "latest" ]; then
+          export CODEARTIFACT_DOMAIN=aws-orbit
+          export CODEARTIFACT_REPOSITORY=python-repository
+          MANIFEST=$CONF_DIR/plugins/dev-env-with-plugins.yaml
+          ORBIT_FOUNDATION_NAME=dev-env
+          aws codeartifact login --tool pip --domain ${CODEARTIFACT_DOMAIN} --repository ${CODEARTIFACT_REPOSITORY}
+          cp ~/.config/pip/pip.conf .
+          pip install -e ../cli
+          pip install -e ../sdk
+          pip install -r requirements.txt
+          pip install -e ../images/jupyter-hub/utils/
+          pip install -e ../plugins/hello_world/
+          pip install -e ../plugins/redshift/
+          pip install -e ../plugins/code_commit/
+          pip install -e ../plugins/team_script_launcher/
+          pip install -e ../plugins/custom_cfn/
+          pip install -e ../plugins/emr_on_eks/
+        else
+          pip install --upgrade aws-orbit[utils]=="${VERSION}"
+          pip install --upgrade aws-orbit-hello-world=="${VERSION}"
+          pip install --upgrade aws-orbit-team-script-launcher=="${VERSION}"
+          pip install --upgrade aws-orbit-redshift=="${VERSION}"
+          pip install --upgrade aws-orbit-custom-cfn=="${VERSION}"
+          pip install --upgrade aws-orbit-code-commit=="${VERSION}"
+          pip install --upgrade aws-orbit-sdk=="${VERSION}"
+          pip install --upgrade aws-orbit-emr-on-eks=="${VERSION}"
+
+        fi
+  build:
+    commands:
+      - pwd
+      - env
+      - . .venv/bin/activate
+      - orbit --help
+      - echo $BUILD_ACTION
+      - |
+        if [ $BUILD_ACTION = "DESTROY_FOUNDATION" ]; then
+          echo "Destroying Foundation"
+          orbit destroy foundation --debug --name "${ORBIT_FOUNDATION_NAME}"
+        elif [ $BUILD_ACTION = "DEPLOY_FOUNDATION" ]; then
+          echo "Deploying Foundation"
+          if [ "${VERSION}" = "latest" ]; then
+            echo Using code artifact: ${CODEARTIFACT_DOMAIN} ${CODEARTIFACT_REPOSITORY}
+            orbit deploy foundation --name "${ORBIT_FOUNDATION_NAME}" --codeartifact-domain "${CODEARTIFACT_DOMAIN}" --codeartifact-repository "${CODEARTIFACT_REPOSITORY}" "${INTERNET_ACCESSIBILITY_ARG}" --debug
+          else
+            orbit deploy foundation --name "${ORBIT_FOUNDATION_NAME}" "${INTERNET_ACCESSIBILITY_ARG}" --debug
+          fi
+        elif [ $BUILD_ACTION = "DESTROY_TEAMS" ]; then
+          echo "Destroying Teams"
+          orbit destroy teams --debug -e "${ORBIT_ENV_NAME}"
+        elif [ $BUILD_ACTION = "DESTROY_ENV" ]; then
+          echo "Destroying Env"
+          orbit destroy env --debug -e "${ORBIT_ENV_NAME}"
+        elif [ $BUILD_ACTION = "DEPLOY_ENV" ]; then
+          if [ "${VERSION}" = "latest" ]; then
+            echo "Deploying Env"
+            orbit deploy env --debug -f $MANIFEST --debug
+          else
+            echo "Deploying Env"
+            orbit deploy env --debug -f $MANIFEST
+          fi
+
+        elif [ $BUILD_ACTION = "DEPLOY_TEAMS" ]; then
+          echo "Deploying Teams"
+          orbit deploy teams --debug -f $MANIFEST
+        elif [ $BUILD_ACTION = "DEPLOY_REGRESSION" ]; then
+          cd ..
+          pwd
+          TOOLKIT=$(orbit list env --variable=toolkitbucket --env ${ORBIT_ENV_NAME})
+          aws s3 sync samples s3://$TOOLKIT/samples/
+          S3_BOOTSTRAP_PATH="s3://${TOOLKIT}/teams/lake-creator/bootstrap/"
+          aws s3 cp samples/copy_samples.sh $S3_BOOTSTRAP_PATH
+          S3_BOOTSTRAP_PATH="s3://${TOOLKIT}/teams/lake-user/bootstrap/"
+          aws s3 cp samples/copy_samples.sh $S3_BOOTSTRAP_PATH
+          python scripts/download_demo_data.py ${ORBIT_ENV_NAME}
+        else
+          echo "Invalid BUILD_ACTION: $BUILD_ACTION"
+          exit 1
+        fi

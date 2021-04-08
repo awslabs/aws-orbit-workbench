@@ -48,7 +48,10 @@ class StorageRouteHandler(APIHandler):
                 pass
             storage["info"] = s
             data.append(storage)
-        data = sorted(data, key=lambda i: (i["creationTimestamp"] if "creationTimestamp" in i else i["name"]))
+        data = sorted(
+            data,
+            key=lambda i: (i["creationTimestamp"] if "creationTimestamp" in i else i["name"]),
+        )
 
         return json.dumps(data)
 
@@ -77,7 +80,10 @@ class StorageRouteHandler(APIHandler):
                 raise Exception("Unknown type: %s", type)
 
             if "MOCK" in os.environ:
-                with open(f"{Path(__file__).parent.parent.parent}/test/mockup/storage-{type}.json", "w") as outfile:
+                with open(
+                    f"{Path(__file__).parent.parent.parent}/test/mockup/storage-{type}.json",
+                    "w",
+                ) as outfile:
                     json.dump(data, outfile, indent=4)
         else:
             path = f"{Path(__file__).parent.parent.parent}/test/mockup/storage-{type}.json"
@@ -118,7 +124,11 @@ class StorageRouteHandler(APIHandler):
             else:
                 raise Exception("Unknown type: %s", type)
 
-            response = {"status": "200", "reason": "OK", "message": f"Successfully deleted ={name}"}
+            response = {
+                "status": "200",
+                "reason": "OK",
+                "message": f"Successfully deleted ={name}",
+            }
 
         self.log.info(f"Delete response={response}")
         self.finish(json.dumps(response))
