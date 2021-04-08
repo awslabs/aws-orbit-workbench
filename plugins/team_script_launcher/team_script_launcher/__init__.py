@@ -33,7 +33,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
     configmap_script_name = f"{plugin_id}-script"
-    vars : Dict[str, Optional[str]] = dict(
+    vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
         region=context.region,
         account_id=context.account_id,
