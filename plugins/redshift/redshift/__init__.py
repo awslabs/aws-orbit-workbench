@@ -14,9 +14,9 @@
 
 import logging
 import os
-import boto3
 from typing import TYPE_CHECKING, Any, Dict
 
+import boto3
 from aws_orbit import sh
 from aws_orbit.plugins import hooks
 from aws_orbit.plugins.helpers import cdk_deploy, cdk_destroy
@@ -55,7 +55,7 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
         for cluster in clusters:
             cluster_id = cluster["ClusterIdentifier"]
             cluster_name = cluster_id if namespace in cluster_id else namespace + cluster_id
-            redshift.delete_redshift_cluster(cluster_name=cluster_name)
+            redshift.delete_cluster(ClusterIdentifier=cluster_name, SkipFinalClusterSnapshot=True)
             _logger.debug(f"Deleted redshift cluster_name={cluster_name}")
     except Exception as e:
         _logger.error("Error deleting team %s redshift cluster(s) : %s", team_context.name, e)
