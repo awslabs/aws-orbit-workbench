@@ -228,6 +228,8 @@ spec:
           volumeMounts:
             - mountPath: /efs
               name: efs-volume
+            - name: jupyterhub-config
+              mountPath: /config
           resources:
             limits:
               cpu: "2"
@@ -245,6 +247,10 @@ spec:
         - name: efs-volume
           persistentVolumeClaim:
             claimName: jupyterhub
+        - name: jupyterhub-config
+          configMap:
+            name: jupyterhub-config
+            defaultMode: 0744
 ---
 apiVersion: batch/v1
 kind: Job
