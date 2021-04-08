@@ -21,7 +21,7 @@ from aws_orbit.plugins import hooks
 
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
-
+    from typing import Optional
 _logger: logging.Logger = logging.getLogger("aws_orbit")
 POD_FILENAME = os.path.join(os.path.dirname(__file__), "job_definition.yaml")
 
@@ -49,7 +49,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
         raise Exception(f"Plugin {plugin_id} must define parameter 'script'")
     script_file = os.path.join(os.path.dirname(POD_FILENAME), f"{plugin_id}-script.sh")
 
-    script_body = utils.resolve_parameters(script_body, cast(Dict[str, str], vars))
+    script_body = utils.resolve_parameters(script_body, cast(Dict[str, Optional[str]], vars))
     with open(script_file, "w") as file:
         file.write(script_body)
 
@@ -76,7 +76,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     with open(input, "r") as file:
         content: str = file.read()
 
-    content = utils.resolve_parameters(content, cast(Dict[str, str], vars))
+    content = utils.resolve_parameters(content, cast(Dict[str, Optional[str]], vars))
 
     _logger.debug("Kubectl Team %s context:\n%s", team_context.name, content)
     with open(output, "w") as file:
