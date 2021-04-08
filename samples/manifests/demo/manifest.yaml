@@ -4,21 +4,21 @@ CodeartifactRepository: !ENV ${CODEARTIFACT_REPOSITORY::}
 EksSystemMastersRoles:
 - !ENV ${ORBIT_ADMIN_ROLE::Admin}
 - !ENV ${ORBIT_ADMIN_DEMO_ROLE::Admin}
-ScratchBucketArn: !SSM ${/orbit-foundation/demo-foundation/resources::ScratchBucketArn}
-UserPoolId: !SSM ${/orbit-foundation/demo-foundation/resources::UserPoolId}
-SharedEfsFsId: !SSM ${/orbit-foundation/demo-foundation/resources::SharedEfsFsId}
-SharedEfsSgId: !SSM ${/orbit-foundation/demo-foundation/resources::SharedEfsSgId}
+ScratchBucketArn: !SSM ${/orbit-foundation/demo-fndn/resources::ScratchBucketArn}
+UserPoolId: !SSM ${/orbit-foundation/demo-fndn/resources::UserPoolId}
+SharedEfsFsId: !SSM ${/orbit-foundation/demo-fndn/resources::SharedEfsFsId}
+SharedEfsSgId: !SSM ${/orbit-foundation/demo-fndn/resources::SharedEfsSgId}
 Networking:
-    VpcId: !SSM ${/orbit-foundation/demo-foundation/resources::VpcId}
-    PublicSubnets: !SSM ${/orbit-foundation/demo-foundation/resources::PublicSubnets}
-    PrivateSubnets: !SSM ${/orbit-foundation/demo-foundation/resources::PrivateSubnets}
-    IsolatedSubnets: !SSM ${/orbit-foundation/demo-foundation/resources::IsolatedSubnets}
+    VpcId: !SSM ${/orbit-foundation/demo-fndn/resources::VpcId}
+    PublicSubnets: !SSM ${/orbit-foundation/demo-fndn/resources::PublicSubnets}
+    PrivateSubnets: !SSM ${/orbit-foundation/demo-fndn/resources::PrivateSubnets}
+    IsolatedSubnets: !SSM ${/orbit-foundation/demo-fndn/resources::IsolatedSubnets}
     Data:
         InternetAccessible: true
-        NodesSubnets: !SSM ${/orbit-foundation/demo-foundation/resources::NodesSubnets}
+        NodesSubnets: !SSM ${/orbit-foundation/demo-fndn/resources::NodesSubnets}
     Frontend:
-        LoadBalancersSubnets: !SSM ${/orbit-foundation/demo-foundation/resources::LoadBalancersSubnets}
-        SslCertArn: !SSM ${/orbit-foundation/demo-foundation/resources::SslCertArn}
+        LoadBalancersSubnets: !SSM ${/orbit-foundation/demo-fndn/resources::LoadBalancersSubnets}
+        SslCertArn: !SSM ${/orbit-foundation/demo-fndn/resources::SslCertArn}
 ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge
@@ -31,7 +31,7 @@ ManagedNodegroups:
 Teams:
 -   Name: lake-creator
     Policies:
-    - orbit-dev-env-demo-lake-creator-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-demo-lake-creator-add-policy
     GrantSudo: true
     Fargate: false
     K8Admin: true
@@ -41,7 +41,7 @@ Teams:
     EfsLifeCycle: AFTER_7_DAYS
 -   Name: lake-user
     Policies:
-    - orbit-dev-env-demo-lake-user-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-demo-lake-user-add-policy
     JupyterhubInboundRanges:
     - 0.0.0.0/0
     GrantSudo: true
