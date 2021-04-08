@@ -387,3 +387,4 @@ images/jupyter-user-spark/notes.txt
 images/jupyter-user/.workspace/shared/samples
 /images/jupyter-user/*.mine
 /samples/notebooks/M-Admin/querybook_image/querybook.zip
+/.mine/

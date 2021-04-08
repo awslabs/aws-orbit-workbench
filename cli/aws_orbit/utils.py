@@ -181,7 +181,7 @@ def print_dir(dir: str, exclude: List[str] = []) -> None:
             _logger.debug((os.path.join(root, filename)))
 
 
-def resolve_parameters(template: str, parameters: Dict[str, str]) -> str:
+def resolve_parameters(template: str, parameters: Dict[str, Optional[str]]) -> str:
     string_template = Template(template)
     template = string_template.safe_substitute(parameters)
     return template
