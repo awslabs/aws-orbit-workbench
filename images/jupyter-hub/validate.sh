@@ -17,7 +17,7 @@
 
 set -ex
 
-isort --check .
-black --check .
-mypy .
-flake8 .
+isort --check utils
+black --check utils
+mypy utils
+flake8 utils

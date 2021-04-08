@@ -16,3 +16,6 @@ pyathena==2.1.1
 jupyterlab-git~=0.30.0b2
 jupyter-server-proxy~=3.0.2
 pylint~=2.7.4
+voila~=0.2.7
+bqplot~=0.12.23
+ipyvuetify~=1.6.2
