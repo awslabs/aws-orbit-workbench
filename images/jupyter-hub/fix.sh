@@ -17,5 +17,5 @@
 
 set -ex
 
-isort .
-black .
+isort utils
+black utils

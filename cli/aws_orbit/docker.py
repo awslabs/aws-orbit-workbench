@@ -123,8 +123,9 @@ def update_docker_file(context: "Context", dir: str) -> None:
     docker_file = os.path.join(dir, "Dockerfile")
     if os.path.exists(docker_file):
         _logger.info("Building DockerFile %s", docker_file)
+        tag = context.images.jupyter_user.version
         jupyter_user_base = (
-            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}-jupyter-user"
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}-jupyter-user:{tag}"
         )
 
         with open(docker_file, "r") as file:
