@@ -69,7 +69,7 @@ class IamBuilder:
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=["s3:ListObjects*", "s3:GetObject*"],
+                    actions=["s3:List*", "s3:Get*"],
                     resources=[
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}",
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/samples/*",
