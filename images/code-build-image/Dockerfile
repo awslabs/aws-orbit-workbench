@@ -24,6 +24,7 @@ RUN curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -
 # Install Helm tools
 RUN curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash && \
     helm version --short && \
+    helm plugin install https://github.com/hypnoglow/helm-s3.git && \
     helm repo add stable https://charts.helm.sh/stable
 
 RUN npm install -g aws-cdk@$CDK_VERSION yarn

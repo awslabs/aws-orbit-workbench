@@ -103,10 +103,40 @@ def _cluster_autoscaler(output_path: str, context: "Context") -> None:
         )
     else:
         image = f"{ImagesManifest.cluster_autoscaler.repository}:{ImagesManifest.cluster_autoscaler.version}"
+
     with open(input, "r") as file:
         content: str = file.read()
     content = content.replace("$", "").format(
         account_id=context.account_id, env_name=context.name, cluster_name=f"orbit-{context.name}", image=image
+    )
+    with open(output, "w") as file:
+        file.write(content)
+
+
+def _ssm_agent_installer(output_path: str, context: "Context") -> None:
+    filename = "09-ssm-agent-daemonset-installer.yaml"
+    input = os.path.join(MODELS_PATH, "apps", filename)
+    output = os.path.join(output_path, filename)
+
+    if context.networking.data.internet_accessible is False:
+        ssm_agent_installer_image = (
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
+            f"orbit-{context.name}-ssm-agent-installer:{ImagesManifest.ssm_agent_installer.version}"
+        )
+        pause_image = (
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
+            f"orbit-{context.name}-pause:{ImagesManifest.pause.version}"
+        )
+    else:
+        ssm_agent_installer_image = (
+            f"{ImagesManifest.ssm_agent_installer.repository}:{ImagesManifest.ssm_agent_installer.version}"
+        )
+        pause_image = f"{ImagesManifest.pause.repository}:{ImagesManifest.pause.version}"
+
+    with open(input, "r") as file:
+        content: str = file.read()
+    content = content.replace("$", "").format(
+        ssm_agent_installer_image=ssm_agent_installer_image, pause_image=pause_image
     )
     with open(output, "w") as file:
         file.write(content)
@@ -251,6 +281,9 @@ def _generate_env_manifest(context: "Context", clean_up: bool = True) -> str:
     _landing_page(output_path=output_path, context=context)
     _k8_dashboard(output_path=output_path, context=context)
     _cluster_autoscaler(output_path=output_path, context=context)
+
+    if context.install_ssm_agent:
+        _ssm_agent_installer(output_path=output_path, context=context)
 
     return output_path
 

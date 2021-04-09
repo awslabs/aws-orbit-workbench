@@ -85,7 +85,8 @@ def _deploy_image_remotely(context: "Context", name: str, bundle_path: str, buil
 def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[str], Optional[str], List[str]]]) -> None:
     _logger.debug("images:\n%s", images)
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=len(images)) as executor:
+    max_workers = 5
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures: List[Future[Any]] = []
         name: str = ""
         dir: Optional[str] = None
@@ -122,17 +123,14 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
 
 
 def deploy_images_remotely(context: "Context") -> None:
-    # First batch
+    # Required images
     images: List[Tuple[str, Optional[str], Optional[str], List[str]]] = [
         ("jupyter-hub", "jupyter-hub", None, []),
         ("jupyter-user", "jupyter-user", "build.sh", []),
         ("landing-page", "landing-page", "build.sh", []),
     ]
-    _logger.debug("Building the first images batch")
-    _deploy_images_batch(context=context, images=images)
 
-    # Second Batch
-    images = []
+    # Secondary images required if internet is not accessible
     if context.networking.data.internet_accessible is False:
         images += [
             ("aws-efs-csi-driver", None, None, []),
@@ -142,10 +140,12 @@ def deploy_images_remotely(context: "Context") -> None:
             ("k8-metrics-scraper", None, None, []),
             ("k8-metrics-server", None, None, []),
             ("cluster-autoscaler", None, None, []),
+            ("ssm-agent-installer", None, None, []),
+            ("pause", None, None, []),
         ]
-    _logger.debug("Building the second images batch")
-    if images:
-        _deploy_images_batch(context=context, images=images)
+
+    _logger.debug("Building/repclicating Container Images")
+    _deploy_images_batch(context=context, images=images)
 
 
 def deploy_foundation(args: Tuple[str, ...]) -> None:
