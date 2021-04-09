@@ -6,7 +6,7 @@ RUN apt-get -y update && \
     vim && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN python3 -m pip install --upgrade pip wheel awscli botocore
+RUN python3 -m pip install --upgrade pip wheel awscli botocore voila
 
 # JupyterHub Utils
 ADD utils/setup.py /etc/jupyterhub/utils/setup.py
@@ -14,12 +14,9 @@ ADD utils/requirements.txt /etc/jupyterhub/utils/requirements.txt
 ADD utils/jupyterhub_utils /etc/jupyterhub/utils/jupyterhub_utils
 RUN python3 -m pip install -e /etc/jupyterhub/utils/
 
-# Configurations
-ADD jupyterhub_config.py /etc/jupyterhub/jupyterhub_config.py
-
 # Ports
 EXPOSE 8000
 EXPOSE 8001
 EXPOSE 8081
 
-CMD ["jupyterhub", "-f", "/etc/jupyterhub/jupyterhub_config.py"]
+CMD ["jupyterhub", "-f", "/config/jupyterhub_config.py"]

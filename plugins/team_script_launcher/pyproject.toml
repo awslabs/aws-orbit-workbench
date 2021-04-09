@@ -24,6 +24,6 @@ force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 120
-src_paths = ["setup.py", "hello_world"]
+src_paths = ["setup.py", "team_script_launcher"]
 py_version = 36
 skip_gitignore = true
