@@ -59,7 +59,7 @@ data:
   install.sh: |
     #!/bin/bash
     # Update and install packages
-    sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+    sudo yum install -y /tmp/install/amazon-ssm-agent.rpm
     STATUS=$(sudo systemctl status amazon-ssm-agent)
     if echo $STATUS | grep -q "running"; then
         echo "Success"
@@ -86,7 +86,7 @@ spec:
       nodeSelector:
         orbit/node-type: ec2
       initContainers:
-      - image: public.ecr.aws/v3o4w1g6/jicowan/ssm-agent-installer:1.2
+      - image: ${ssm_agent_installer_image}
         name: ssm-agent-installer
         securityContext:
           privileged: true
@@ -104,7 +104,7 @@ spec:
           path: /tmp/install
       serviceAccount: ssm-agent-installer
       containers:
-      - image: public.ecr.aws/v3o4w1g6/gcr.io/google-containers/pause:2.0
+      - image: ${pause_image}
         name: pause
         securityContext:
           allowPrivilegeEscalation: false

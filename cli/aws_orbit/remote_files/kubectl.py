@@ -103,6 +103,7 @@ def _cluster_autoscaler(output_path: str, context: "Context") -> None:
         )
     else:
         image = f"{ImagesManifest.cluster_autoscaler.repository}:{ImagesManifest.cluster_autoscaler.version}"
+
     with open(input, "r") as file:
         content: str = file.read()
     content = content.replace("$", "").format(
@@ -117,8 +118,24 @@ def _ssm_agent_installer(output_path: str, context: "Context") -> None:
     input = os.path.join(MODELS_PATH, "apps", filename)
     output = os.path.join(output_path, filename)
 
+    if context.networking.data.internet_accessible is False:
+        ssm_agent_installer_image = (
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
+            f"orbit-{context.name}-ssm-agent-installer:{ImagesManifest.ssm_agent_installer.version}"
+        )
+        pause_image = (
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
+            f"orbit-{context.name}-pause:{ImagesManifest.pause.version}"
+        )
+    else:
+        ssm_agent_installer_image = f"{ImagesManifest.ssm_agent_installer.repository}:{ImagesManifest.ssm_agent_installer.version}"
+        pause_image = f"{ImagesManifest.pause.repository}:{ImagesManifest.pause.version}"
+
     with open(input, "r") as file:
         content: str = file.read()
+    content = content.replace("$", "").format(
+        ssm_agent_installer_image=ssm_agent_installer_image, pause_image=pause_image
+    )
     with open(output, "w") as file:
         file.write(content)
 
