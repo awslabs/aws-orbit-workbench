@@ -25,7 +25,7 @@ export const CentralWidgetHeader = (props: {
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <props.icon.react tag="div" height="48px" width="48px" />
         </div>
-        <h1> {props.name} </h1>
+        <h1 style={{ padding: '5px' }}> {props.name} </h1>
       </div>
       <div
         style={{ display: 'flex', flexDirection: 'row', paddingLeft: '5px' }}

@@ -121,32 +121,32 @@ const StorageSections = (props: { app: JupyterFrontEnd }): JSX.Element => {
   return (
     <>
       <StorageCategoryLeftList
-        title={'Team PersistentVolumeClaim(PVC)'}
+        title={'Team PersistentVolumeClaim'}
         type={'teampvc'}
         useItems={useItems}
         key="1"
         openCallback={() =>
-          launchSectionWidget('Team PersistentVolumeClaim(PVC)', 'teampvc')
+          launchSectionWidget('Team PersistentVolumeClaim', 'teampvc')
         }
         app={props.app}
       />
       <StorageCategoryLeftList
-        title={'Cluster PersistentVolume(PV)'}
+        title={'PersistentVolume'}
         type={'clusterpv'}
         useItems={useItems}
         key="2"
         openCallback={() =>
-          launchSectionWidget('Cluster PersistentVolume(PV)', 'clusterpv')
+          launchSectionWidget('PersistentVolume', 'clusterpv')
         }
         app={props.app}
       />
       <StorageCategoryLeftList
-        title={'Cluster StorageClass'}
+        title={'StorageClass'}
         type={'clusterstorageclass'}
         useItems={useItems}
         key="3"
         openCallback={() =>
-          launchSectionWidget('Cluster StorageClass', 'clusterstorageclass')
+          launchSectionWidget('StorageClass', 'clusterstorageclass')
         }
         app={props.app}
       />

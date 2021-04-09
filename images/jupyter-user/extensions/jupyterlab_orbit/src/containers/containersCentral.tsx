@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import * as utils from '../typings/utils';
 import { TableWidget } from './table/table';
 import ReactJson from 'react-json-view';
@@ -133,6 +133,12 @@ export const ContainerCentralPanel = (props: {
   const { data, closeAllCallback, refreshCallback, setData } = props.useItems(
     props.type
   );
+
+  useEffect(() => {
+    console.log('Testing');
+    const interval = setInterval(refreshCallback, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div>
