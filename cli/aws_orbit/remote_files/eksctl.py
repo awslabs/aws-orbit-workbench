@@ -106,7 +106,7 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
     MANIFEST["iam"]["serviceRoleARN"] = context.eks_cluster_role_arn
     MANIFEST["managedNodeGroups"] = []
 
-    labels = {"orbit/node-group": "env", "orbit/usage": "reserved"}
+    labels = {"orbit/node-group": "env", "orbit/usage": "reserved", "orbit/node-type": "ec2"}
     tags = tags = {f"k8s.io/cluster-autoscaler/node-template/label/{k}": v for k, v in labels.items()}
     tags["Env"] = f"orbit-{context.name}"
 
