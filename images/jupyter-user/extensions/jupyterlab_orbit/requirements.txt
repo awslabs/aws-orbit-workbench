@@ -6,10 +6,6 @@
 #
 anyio==2.2.0
     # via jupyter-server
-appnope==0.1.2
-    # via
-    #   ipykernel
-    #   ipython
 argon2-cffi==20.1.0
     # via notebook
 async-generator==1.10
@@ -199,12 +195,18 @@ traitlets==5.0.5
     #   nbconvert
     #   nbformat
     #   notebook
+typing-extensions==3.7.4.3
+    # via
+    #   anyio
+    #   importlib-metadata
 urllib3==1.26.4
     # via requests
 wcwidth==0.2.5
     # via prompt-toolkit
 webencodings==0.5.1
     # via bleach
+zipp==3.4.1
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

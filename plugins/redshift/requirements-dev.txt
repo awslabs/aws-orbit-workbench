@@ -386,6 +386,8 @@ certifi==2020.12.5
     # via
     #   kubernetes
     #   requests
+cffi==1.14.5
+    # via cryptography
 cfn-flip==1.2.3
     # via aws-orbit
 chardet==4.0.0
@@ -464,6 +466,10 @@ importlib-metadata==3.10.0
     #   twine
 isort==5.6.4
     # via -r requirements-dev.in
+jeepney==0.6.0
+    # via
+    #   keyring
+    #   secretstorage
 jmespath==0.10.0
     # via
     #   boto3
@@ -613,6 +619,8 @@ pyasn1==0.4.8
     #   rsa
 pycodestyle==2.6.0
     # via flake8
+pycparser==2.20
+    # via cffi
 pyflakes==2.2.0
     # via flake8
 pygments==2.8.1
@@ -654,6 +662,8 @@ rsa==4.7.2
     # via google-auth
 s3transfer==0.3.6
     # via boto3
+secretstorage==3.3.1
+    # via keyring
 six==1.15.0
     # via
     #   bleach
@@ -683,6 +693,7 @@ typeguard==2.12.0
 typing-extensions==3.7.4.3
     # via
     #   black
+    #   importlib-metadata
     #   jsii
     #   mypy
     #   typing-inspect
