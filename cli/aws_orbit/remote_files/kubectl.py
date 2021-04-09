@@ -114,7 +114,7 @@ def _cluster_autoscaler(output_path: str, context: "Context") -> None:
 
 
 def _ssm_agent_installer(output_path: str, context: "Context") -> None:
-    filename = "08-ssm-agent-daemonset-installer.yaml"
+    filename = "09-ssm-agent-daemonset-installer.yaml"
     input = os.path.join(MODELS_PATH, "apps", filename)
     output = os.path.join(output_path, filename)
 

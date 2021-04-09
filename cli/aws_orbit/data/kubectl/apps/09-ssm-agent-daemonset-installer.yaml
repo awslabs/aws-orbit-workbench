@@ -61,6 +61,7 @@ data:
     # Update and install packages
     sudo yum install -y /tmp/install/amazon-ssm-agent.rpm
     STATUS=$(sudo systemctl status amazon-ssm-agent)
+    echo $STATUS
     if echo $STATUS | grep -q "running"; then
         echo "Success"
     else
