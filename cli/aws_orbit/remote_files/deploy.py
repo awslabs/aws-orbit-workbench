@@ -144,7 +144,7 @@ def deploy_images_remotely(context: "Context") -> None:
             ("pause", None, None, []),
         ]
 
-    _logger.debug(f"Building/repclicating Container Images")
+    _logger.debug("Building/repclicating Container Images")
     _deploy_images_batch(context=context, images=images)
 
 

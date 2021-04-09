@@ -128,7 +128,9 @@ def _ssm_agent_installer(output_path: str, context: "Context") -> None:
             f"orbit-{context.name}-pause:{ImagesManifest.pause.version}"
         )
     else:
-        ssm_agent_installer_image = f"{ImagesManifest.ssm_agent_installer.repository}:{ImagesManifest.ssm_agent_installer.version}"
+        ssm_agent_installer_image = (
+            f"{ImagesManifest.ssm_agent_installer.repository}:{ImagesManifest.ssm_agent_installer.version}"
+        )
         pause_image = f"{ImagesManifest.pause.repository}:{ImagesManifest.pause.version}"
 
     with open(input, "r") as file:

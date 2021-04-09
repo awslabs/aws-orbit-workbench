@@ -26,7 +26,7 @@ import aws_cdk.aws_iam as iam
 import aws_cdk.aws_lambda_python as lambda_python
 import aws_cdk.aws_ssm as ssm
 from aws_cdk import aws_lambda
-from aws_cdk.core import App, Aws, CfnOutput, Construct, Duration, Environment, IConstruct, Stack, Tags
+from aws_cdk.core import App, CfnOutput, Construct, Duration, Environment, IConstruct, Stack, Tags
 
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.cdk import _lambda_path
