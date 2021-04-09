@@ -419,6 +419,7 @@ class ContextSerDe(Generic[T, V]):
                 policies=manifest.policies,
                 install_ssm_agent=manifest.install_ssm_agent,
             )
+        context.install_ssm_agent = manifest.install_ssm_agent
         ContextSerDe.fetch_toolkit_data(context=context)
         ContextSerDe.dump_context_to_ssm(context=context)
         return context
