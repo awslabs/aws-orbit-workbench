@@ -135,8 +135,9 @@ def _ssm_agent_installer(output_path: str, context: "Context") -> None:
 
     with open(input, "r") as file:
         content: str = file.read()
-    content = content.replace("$", "").format(
-        ssm_agent_installer_image=ssm_agent_installer_image, pause_image=pause_image
+    content = utils.resolve_parameters(
+        content,
+        dict(ssm_agent_installer_image=ssm_agent_installer_image, pause_image=pause_image),
     )
     with open(output, "w") as file:
         file.write(content)
