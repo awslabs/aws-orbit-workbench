@@ -87,6 +87,7 @@ class ManagedNodeGroupManifest:
 @dataclass(base_schema=BaseSchema, frozen=True)
 class CodeBuildImageManifest(ImageManifest):
     repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base"
+    version: Optional[str] = "latest"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -153,6 +154,18 @@ class ClusterAutoscaler(ImageManifest):
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
+class SsmAgentInstaller(ImageManifest):
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/ssm-agent-installer"
+    version: Optional[str] = "latest"
+
+
+@dataclass(base_schema=BaseSchema, frozen=True)
+class PauseImage(ImageManifest):
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/gcr.io/google-containers/pause"
+    version: Optional[str] = "2.0"
+
+
+@dataclass(base_schema=BaseSchema, frozen=True)
 class FoundationImagesManifest:
     Schema: ClassVar[Type[Schema]] = Schema
     code_build: CodeBuildImageManifest = CodeBuildImageManifest()
@@ -178,6 +191,8 @@ class ImagesManifest:
     k8_metrics_scraper: MetricsScraper = MetricsScraper()
     k8_metrics_server: MetricsServer = MetricsServer()
     cluster_autoscaler: ClusterAutoscaler = ClusterAutoscaler()
+    ssm_agent_installer: SsmAgentInstaller = SsmAgentInstaller()
+    pause: PauseImage = PauseImage()
     names: List[str] = field(
         metadata=dict(load_only=True),
         default_factory=lambda: [
@@ -192,6 +207,8 @@ class ImagesManifest:
             "k8_metrics_scraper",
             "k8_metrics_server",
             "cluster_autoscaler",
+            "ssm_agent_installer",
+            "pause",
         ],
     )
 
@@ -252,6 +269,7 @@ class Manifest:
     managed_nodegroups: List[ManagedNodeGroupManifest] = field(default_factory=list)
     policies: Optional[List[str]] = cast(List[str], field(default_factory=list))
     ssm_parameter_name: Optional[str] = None
+    install_ssm_agent: Optional[bool] = False
 
     def get_team_by_name(self, name: str) -> Optional[TeamManifest]:
         for t in self.teams:
