@@ -464,6 +464,30 @@ def list_storage_class():
     return res["items"]
 
 
+def get_nodegroups(cluster_name: str):
+    return_response = []
+    eks_client = boto3.client("eks")
+    try:
+        nodegroups_response = eks_client.list_nodegroups(clusterName=cluster_name)
+        for nodegroup_name in nodegroups_response["nodegroups"]:
+            nodegroup_details = eks_client.describe_nodegroup(clusterName=cluster_name, nodegroupName=nodegroup_name)
+            if "nodegroup" in nodegroup_details:
+                nodegroup = nodegroup_details["nodegroup"]
+                nodegroup_dict = {
+                    nodegroup_name: {
+                        "instance_types": nodegroup["instanceTypes"],
+                        "scaling_config": nodegroup["scalingConfig"],
+                        "status": nodegroup["status"],
+                        "capacity_type": nodegroup["capacityType"],
+                    }
+                }
+                return_response.append(nodegroup_dict)
+    except Exception as ekse:
+        _logger.error("Error describing cluster %s nodegroups: %s", cluster_name, ekse)
+    _logger.debug(f"get_nodegroup(f{cluster_name})=f{return_response}")
+    return return_response
+
+
 def delete_job(job_name: str, grace_period_seconds: int = 30):
     props = get_properties()
     global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
