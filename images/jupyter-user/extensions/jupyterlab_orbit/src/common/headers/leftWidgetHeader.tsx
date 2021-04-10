@@ -1,5 +1,6 @@
 import React from 'react';
-import { LabIcon } from '@jupyterlab/ui-components';
+import { LabIcon, refreshIcon, launcherIcon } from '@jupyterlab/ui-components';
+import { ToolbarButtonComponent } from '@jupyterlab/apputils';
 import { orbitIcon } from '../icons';
 import { JupyterFrontEnd } from '@jupyterlab/application';
 
@@ -27,6 +28,20 @@ export const LeftWidgetHeader = (props: {
         </div>
         <h2 style={{ fontWeight: 'bold' }}> {props.name} </h2>
       </div>
+      {props.name === 'Catalog' && (
+        <div style={{ display: 'flex', alignItems: 'right' }}>
+          <ToolbarButtonComponent
+            tooltip={'Open'}
+            icon={launcherIcon}
+            onClick={props.openCallback}
+          />
+          <ToolbarButtonComponent
+            tooltip={'Refresh List'}
+            icon={refreshIcon}
+            onClick={props.refreshCallback}
+          />
+        </div>
+      )}
     </header>
   </div>
 );

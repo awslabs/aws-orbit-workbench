@@ -7,7 +7,6 @@ const SECTION_HEADER_CLASS = 'jp-RunningSessions-sectionHeader';
 export const CentralWidgetHeader = (props: {
   name: string;
   icon: LabIcon;
-  refreshCallback: () => any;
 }): JSX.Element => (
   <div>
     <header
