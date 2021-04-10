@@ -321,10 +321,7 @@ class CentralWidget extends ReactWidget {
   render(): JSX.Element {
     return (
       <div className={SECTION_CLASS}>
-        <CentralWidgetHeader
-          name={NAME}
-          icon={ICON}
-        />
+        <CentralWidgetHeader name={NAME} icon={ICON} />
         <Sections app={this.app} />
         <div />
       </div>
