@@ -5,8 +5,6 @@ import ReactJson from 'react-json-view';
 import { IUseItemsReturn, getStateIcon, getNodeType } from '../containers';
 import { Tooltip } from 'antd';
 import { JupyterFrontEnd } from '@jupyterlab/application';
-import { refreshIcon } from '@jupyterlab/ui-components';
-import { ToolbarButtonComponent } from '@jupyterlab/apputils';
 
 const columns = [
   {
