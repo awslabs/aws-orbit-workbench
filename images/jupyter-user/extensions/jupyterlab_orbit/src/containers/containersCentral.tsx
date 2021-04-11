@@ -143,13 +143,6 @@ export const ContainerCentralPanel = (props: {
   return (
     <div>
       <div>
-        <div style={{ float: 'right', paddingRight: '5px' }}>
-          <ToolbarButtonComponent
-            tooltip={'Refresh List'}
-            icon={refreshIcon}
-            onClick={refreshCallback}
-          />
-        </div>
         <TableWidget
           type={props.type}
           title={props.title}
