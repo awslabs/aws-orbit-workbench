@@ -76,7 +76,7 @@ spec:
           - >-
              ln -s /efs/shared /home/jovyan/shared &&
              cd /efs/shared &&
-             voila --no-browser --port 4100 --base_url=/services/voila-server/
+             voila --no-browser --port 4100 --base_url=/services/voila-server/ --debug
         volumeMounts:
           - mountPath: /efs
             name: efs-volume
