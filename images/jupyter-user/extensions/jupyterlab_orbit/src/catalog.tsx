@@ -60,16 +60,11 @@ const CentralWidgetComponent = (props: {
   database: string;
   table: string;
 }): JSX.Element => {
-  const refreshCallback = async () => {
-    console.log(`[${props.database}.${props.table}] Refresh!`);
-  };
-
   const [state, setState] = useState({
     orderByField: '',
     orderByDirection: 'asc',
     items: []
   });
-  //
 
   useEffect(() => {
     const fetchData = async () => {
@@ -108,11 +103,7 @@ const CentralWidgetComponent = (props: {
 
   return (
     <div className={SECTION_CLASS}>
-      <CentralWidgetHeader
-        name={`TABLE ${props.table}`}
-        icon={ICON}
-        refreshCallback={refreshCallback}
-      />
+      <CentralWidgetHeader name={`TABLE ${props.table}`} icon={ICON} />
       {/*  https://github.com/langleyfoxall/react-dynamic-data-table  */}
       <div style={{ display: 'flex' }}>
         <DynamicDataTable

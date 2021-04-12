@@ -35,11 +35,7 @@ class CentralWidget extends ReactWidget {
   render(): JSX.Element {
     return (
       <div className={SECTION_CLASS}>
-        <CentralWidgetHeader
-          name={NAME}
-          icon={ICON}
-          refreshCallback={refreshCallback}
-        />
+        <CentralWidgetHeader name={NAME} icon={ICON} />
 
         <RedshiftCategoryCentralList
           title={'Your Redshift Clusters'}
