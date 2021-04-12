@@ -66,17 +66,17 @@ spec:
         command: ["/bin/bash"]
         resources:
           limits:
-            cpu: 0.9
-            memory: 1.8G
+            cpu: 3
+            memory: 3G
           requests:
-            cpu: 0.9
-            memory: 1.8G
+            cpu: "100m"
+            memory: "300Mi"
         args:
           - -c
           - >-
              ln -s /efs/shared /home/jovyan/shared &&
              cd /efs/shared &&
-             voila --no-browser --port 4100 --base_url=/services/voila-server/
+             voila --no-browser --port 4100 --base_url=/services/voila-server/ --debug
         volumeMounts:
           - mountPath: /efs
             name: efs-volume
