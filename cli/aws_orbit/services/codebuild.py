@@ -16,7 +16,7 @@ import logging
 import time
 from datetime import datetime, timezone
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, NamedTuple, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, NamedTuple, Optional, Union
 
 import botocore.exceptions
 import yaml

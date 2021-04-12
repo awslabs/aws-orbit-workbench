@@ -21,6 +21,7 @@ paths=(
 
 UPGRADE=""
 SED=${SED:-sed}
+CLEAN="no"
 
 while [ $# -gt 0 ] 
 do
@@ -37,17 +38,30 @@ do
         paths=("${ROOT_PATH}/${2}")
         shift # Remove --path from processing
         ;;
+        --clean)
+        CLEAN="yes"
+        shift # Remove --clean from processing
+        ;;
     esac
-    shift
 done
 
 
 for path in "${paths[@]}"; do
+    echo
+    echo "Updating requirements for ${path}"
     cd $path
 
-    pip-compile ${UPGRADE}
-    pip-compile ${UPGRADE} -r requirements-dev.in
+    if [[ $CLEAN == "yes" ]]; then
+        echo " - Cleaning requirements files"
+        rm -f requirements.txt requirements-dev.txt
+    fi
 
+    echo " - Updating module dependencies"
+    pip-compile ${UPGRADE} --quiet --rebuild
+    echo " - Updating module development dependencies"
+    pip-compile ${UPGRADE} --quiet --rebuild requirements-dev.in
+
+    echo " - Replacing full paths with relative paths"
     ${SED} -i "s|file://$path|.|g" requirements-dev.txt
 
     if [[ "${path}" == *"plugins"* ]]; then

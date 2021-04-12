@@ -25,6 +25,7 @@ from dataclasses import field
 from marshmallow import Schema
 from marshmallow_dataclass import dataclass
 
+import aws_orbit
 from aws_orbit import utils
 import aws_orbit
 from aws_orbit.models.common import BaseSchema
@@ -419,6 +420,7 @@ class ContextSerDe(Generic[T, V]):
                 policies=manifest.policies,
                 install_ssm_agent=manifest.install_ssm_agent,
             )
+        context.install_ssm_agent = manifest.install_ssm_agent
         ContextSerDe.fetch_toolkit_data(context=context)
         ContextSerDe.dump_context_to_ssm(context=context)
         return context

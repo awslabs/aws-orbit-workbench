@@ -103,6 +103,7 @@ def _cluster_autoscaler(output_path: str, context: "Context") -> None:
         )
     else:
         image = f"{ImagesManifest.cluster_autoscaler.repository}:{ImagesManifest.cluster_autoscaler.version}"
+
     with open(input, "r") as file:
         content: str = file.read()
     content = content.replace("$", "").format(
@@ -113,12 +114,31 @@ def _cluster_autoscaler(output_path: str, context: "Context") -> None:
 
 
 def _ssm_agent_installer(output_path: str, context: "Context") -> None:
-    filename = "08-ssm-agent-daemonset-installer.yaml"
+    filename = "09-ssm-agent-daemonset-installer.yaml"
     input = os.path.join(MODELS_PATH, "apps", filename)
     output = os.path.join(output_path, filename)
 
+    if context.networking.data.internet_accessible is False:
+        ssm_agent_installer_image = (
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
+            f"orbit-{context.name}-ssm-agent-installer:{ImagesManifest.ssm_agent_installer.version}"
+        )
+        pause_image = (
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
+            f"orbit-{context.name}-pause:{ImagesManifest.pause.version}"
+        )
+    else:
+        ssm_agent_installer_image = (
+            f"{ImagesManifest.ssm_agent_installer.repository}:{ImagesManifest.ssm_agent_installer.version}"
+        )
+        pause_image = f"{ImagesManifest.pause.repository}:{ImagesManifest.pause.version}"
+
     with open(input, "r") as file:
         content: str = file.read()
+    content = utils.resolve_parameters(
+        content,
+        dict(ssm_agent_installer_image=ssm_agent_installer_image, pause_image=pause_image),
+    )
     with open(output, "w") as file:
         file.write(content)
 
@@ -135,20 +155,23 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
         if team_context.jupyterhub_inbound_ranges
         else [utils.get_dns_ip_cidr(context=context)]
     )
-    content = content.replace("$", "").format(
-        team=team_context.name,
-        efsid=context.shared_efs_fs_id,
-        efsapid=team_context.efs_ap_id,
-        region=context.region,
-        account_id=context.account_id,
-        env_name=context.name,
-        tag=context.images.jupyter_hub.version,
-        grant_sudo='"yes"' if team_context.grant_sudo else '"no"',
-        internal_load_balancer='"false"' if context.networking.frontend.load_balancers_subnets else '"true"',
-        jupyterhub_inbound_ranges=inbound_ranges,
-        team_kms_key_arn=team_context.team_kms_key_arn,
-        team_security_group_id=team_context.team_security_group_id,
-        cluster_pod_security_group_id=context.cluster_pod_sg_id,
+    content = utils.resolve_parameters(
+        content,
+        dict(
+            team=team_context.name,
+            efsid=context.shared_efs_fs_id,
+            efsapid=team_context.efs_ap_id,
+            region=context.region,
+            account_id=context.account_id,
+            env_name=context.name,
+            tag=context.images.jupyter_hub.version,
+            grant_sudo='"yes"' if team_context.grant_sudo else '"no"',
+            internal_load_balancer='"false"' if context.networking.frontend.load_balancers_subnets else '"true"',
+            jupyterhub_inbound_ranges=str(inbound_ranges),
+            team_kms_key_arn=team_context.team_kms_key_arn,
+            team_security_group_id=team_context.team_security_group_id,
+            cluster_pod_security_group_id=context.cluster_pod_sg_id,
+        ),
     )
     _logger.debug("Kubectl Team %s manifest:\n%s", team_context.name, content)
     with open(output, "w") as file:
@@ -161,6 +184,25 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
     with open(input, "r") as file:
         content = file.read()
     content = content.replace("$", "").format(team=team_context.name)
+    with open(output, "w") as file:
+        file.write(content)
+
+    # deploy voila service
+    input = os.path.join(MODELS_PATH, "apps", "08-voila_service.yaml")
+    output = os.path.join(output_path, f"08-{team_context.name}-voila_service.yaml")
+
+    with open(input, "r") as file:
+        content = file.read()
+    content = utils.resolve_parameters(
+        content,
+        dict(
+            team=team_context.name,
+            region=context.region,
+            account_id=context.account_id,
+            env_name=context.name,
+            tag=context.images.jupyter_hub.version,
+        ),
+    )
     with open(output, "w") as file:
         file.write(content)
 
@@ -241,6 +283,8 @@ def _generate_env_manifest(context: "Context", clean_up: bool = True) -> str:
     _k8_dashboard(output_path=output_path, context=context)
     _cluster_autoscaler(output_path=output_path, context=context)
 
+    if context.install_ssm_agent:
+        _ssm_agent_installer(output_path=output_path, context=context)
 
     return output_path
 
