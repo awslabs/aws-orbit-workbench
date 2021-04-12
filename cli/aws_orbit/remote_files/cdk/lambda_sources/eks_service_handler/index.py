@@ -12,9 +12,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import logging
 import os
-import json
 from typing import Any, Dict, List, Optional
 
 import boto3
@@ -37,7 +37,7 @@ def get_nodegroups(cluster_name: str) -> List[Dict[str, Dict[str, str]]]:
                 nodegroup_dict = {
                     nodegroup_name: {
                         "instance_types": nodegroup["instanceTypes"],
-                        "scaling_config": json.dumps(nodegroup["scalingConfig"]).encode("utf-8") ,
+                        "scaling_config": json.dumps(nodegroup["scalingConfig"]).encode("utf-8"),
                         "status": nodegroup["status"],
                         "capacity_type": nodegroup["capacityType"],
                     }
