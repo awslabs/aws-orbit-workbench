@@ -24,7 +24,7 @@ logger.setLevel(logging.INFO)
 REGION: str = os.environ["REGION"]
 
 
-def get_nodegroups(cluster_name: str):
+def get_nodegroups(cluster_name: str) -> List[Dict[str, Dict[str, str]]]:
     return_response: List[Dict[str, Dict[str, str]]] = []
     eks_client = boto3.client("eks")
     try:
@@ -47,10 +47,8 @@ def get_nodegroups(cluster_name: str):
     return return_response
 
 
-def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Dict[str, Union[str, int]]:
-    nodegroups: List[Dict[str, Dict[str, str]]] = []
-    if "cluster_name" in event:
-        cluster_name = event["cluster_name"]
-        nodegroups: List[Dict[str, Dict[str, str]]] = get_nodegroups(token=cluster_name)
+def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> List[Dict[str, Dict[str, str]]]:
+    cluster_name = event["cluster_name"]
+    nodegroups: List[Dict[str, Dict[str, str]]] = get_nodegroups(cluster_name=cluster_name)
     logger.debug(f"get_nodegroup({cluster_name})={nodegroups}")
     return nodegroups
