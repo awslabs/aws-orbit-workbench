@@ -149,8 +149,9 @@ export const CategoryViewsWithCreate = (props: {
   );
 };
 
-export const ListViewWithoutToolbar = (props: {
+export const ListViewWithRefresh = (props: {
   name: string;
+  refreshCallback: (name: string) => any;
   items: JSX.Element;
 }) => {
   return (
@@ -158,6 +159,11 @@ export const ListViewWithoutToolbar = (props: {
       <header className={SECTION_HEADER_CLASS}>
         <h2>{props.name}</h2>
         <div style={{ display: 'flex', alignItems: 'right' }} />
+        <ToolbarButtonComponent
+          tooltip={'Refresh List'}
+          icon={refreshIcon}
+          onClick={() => props.refreshCallback(props.name)}
+        />
       </header>
       <div className={CONTAINER_CLASS}>
         <ul className={LIST_CLASS}> {props.items} </ul>
