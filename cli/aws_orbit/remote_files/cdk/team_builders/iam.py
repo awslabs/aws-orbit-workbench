@@ -72,7 +72,8 @@ class IamBuilder:
                     actions=["s3:List*", "s3:Get*"],
                     resources=[
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}",
-                        f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/*",
+                        f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/samples/*",
+                        f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/teams/{team_name}/*",
                     ],
                 ),
                 iam.PolicyStatement(

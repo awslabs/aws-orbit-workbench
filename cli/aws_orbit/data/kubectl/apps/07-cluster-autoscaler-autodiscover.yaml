@@ -146,6 +146,9 @@ spec:
       containers:
         - image: ${image}
           name: cluster-autoscaler
+          env:
+            - name: AWS_STS_REGIONAL_ENDPOINTS
+              value: regional
           resources:
             limits:
               cpu: 100m
