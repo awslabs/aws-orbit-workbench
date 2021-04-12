@@ -66,11 +66,11 @@ spec:
         command: ["/bin/bash"]
         resources:
           limits:
-            cpu: 0.9
-            memory: 1.8G
+            cpu: 3
+            memory: 3G
           requests:
-            cpu: 0.9
-            memory: 1.8G
+            cpu: "100m"
+            memory: "300Mi"
         args:
           - -c
           - >-
