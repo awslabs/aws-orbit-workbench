@@ -449,7 +449,7 @@ constructs==3.3.71
     #   aws-cdk.custom-resources
 cryptography==3.4.7
     # via secretstorage
-decorator==5.0.1
+decorator==5.0.
     # via jsonpath-ng
 docutils==0.16
     # via readme-renderer

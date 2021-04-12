@@ -25,7 +25,7 @@ click==7.1.2
     # via
     #   aws-orbit (setup.py)
     #   cfn-flip
-decorator==5.0.1
+decorator==5.0.6
     # via jsonpath-ng
 google-auth==1.28.0
     # via kubernetes

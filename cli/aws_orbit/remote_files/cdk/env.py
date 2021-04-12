@@ -385,6 +385,29 @@ class Env(Stack):
             ],
         )
 
+    def _create_eks_service_lambda(self) -> aws_lambda.Function:
+
+        return lambda_python.PythonFunction(
+            scope=self,
+            id="eks_service_lambda",
+            function_name=f"orbit-{self.context.name}-eks-service-handler",
+            entry=_lambda_path("eks_service_handler"),
+            index="index.py",
+            handler="handler",
+            runtime=aws_lambda.Runtime.PYTHON_3_8,
+            timeout=Duration.seconds(5),
+            environment={
+                "REGION": self.context.region,
+            },
+            initial_policy=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["eks:*"],
+                    resources=["*"],
+                )
+            ],
+        )
+
     def _create_manifest_parameter(self) -> ssm.StringParameter:
         parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,

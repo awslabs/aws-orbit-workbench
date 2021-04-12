@@ -484,8 +484,31 @@ def get_nodegroups(cluster_name: str):
                 return_response.append(nodegroup_dict)
     except Exception as ekse:
         _logger.error("Error describing cluster %s nodegroups: %s", cluster_name, ekse)
-    _logger.debug(f"get_nodegroup(f{cluster_name})=f{return_response}")
+    _logger.debug(f"get_nodegroup({cluster_name})={return_response}")
     return return_response
+
+
+def get_nodegroups(cluster_name: str):
+    nodegroups: List[Dict[str, Dict[str, str]]] = []
+    props = get_properties()
+    env_name = props["AWS_ORBIT_ENV"]
+    try:
+        cluster_name = f"orbit-{env_name}"
+        _logger.debug(f"Fetching cluster {cluster_name} nodegroups")
+        response: Dict[str, Any] = boto3.client("lambda").invoke(
+            FunctionName=f"orbit-{env_name}-eks-service-handler",
+            InvocationType="RequestResponse",
+            Payload=json.dumps({"cluster_name": cluster_name}).encode("utf-8"),
+        )
+        _logger.debug(response)
+        if response.get("StatusCode") != 200 or response.get("Payload") is None:
+            _logger.error(f"Invalid Lambda response:\n{response}")
+            return nodegroups
+        nodegroups = json.loads(response["Payload"].read().decode("utf-8"))
+    except Exception as ekse:
+        _logger.error("Error invoking nodgroup lambda  %s", ekse)
+    _logger.debug(f"get_nodegroup({cluster_name})={nodegroups}")
+    return nodegroups
 
 
 def delete_job(job_name: str, grace_period_seconds: int = 30):
