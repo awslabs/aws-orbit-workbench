@@ -85,6 +85,7 @@ class Env(Stack):
         self.user_pool_client = self._create_user_pool_client()
         self.identity_pool = self._create_identity_pool()
         self.token_validation_lambda = self._create_token_validation_lambda()
+        self.eks_service_lambda = self._create_eks_service_lambda()
         self.cluster_pod_security_group = self._create_cluster_pod_security_group()
         self.context_parameter = self._create_manifest_parameter()
 
