@@ -15,13 +15,9 @@ import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
 import { registerLaunchCommand, registerGeneral } from './common/activation';
 import { request } from './common/backend';
-import { ListViewWithoutToolbar, TreeView } from './common/categoryViews';
+import { ListViewWithRefresh, TreeView } from './common/categoryViews';
 const NAME = 'Your Team';
 const ICON: LabIcon = teamIcon;
-
-const refreshCallback = () => {
-  console.log(`[${NAME}] Refresh!`);
-};
 
 interface IItem {
   name: string;
@@ -33,6 +29,7 @@ interface IUseItemsReturn {
   securityItems: any;
   profiles: any;
   other: any;
+  refreshCallback: () => void;
 }
 
 const Item = (props: { item: IItem }) => (
@@ -60,6 +57,11 @@ const useItems = (): IUseItemsReturn => {
     profiles: {},
     other: {}
   });
+
+  const refreshCallback = async () => {
+    setData(await request('team'));
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setData(await request('team'));
@@ -70,7 +72,7 @@ const useItems = (): IUseItemsReturn => {
   const securityItems = data.security;
   const profiles = data.profiles;
   const other = data.other;
-  return { commonItems, securityItems, profiles, other };
+  return { commonItems, securityItems, profiles, other, refreshCallback };
 };
 
 class TeamCentralWidget extends ReactWidget {
@@ -86,12 +88,7 @@ class TeamCentralWidget extends ReactWidget {
   render(): JSX.Element {
     return (
       <div className={SECTION_CLASS}>
-        <CentralWidgetHeader
-          name={NAME}
-          icon={ICON}
-          refreshCallback={refreshCallback}
-        />
-        <TeamComponentFunc />
+        <CentralWidgetHeader name={NAME} icon={ICON} />
         <div />
       </div>
     );
@@ -99,10 +96,20 @@ class TeamCentralWidget extends ReactWidget {
 }
 
 const TeamComponentFunc = (): JSX.Element => {
-  const { commonItems, securityItems, profiles, other } = useItems();
+  const {
+    commonItems,
+    securityItems,
+    profiles,
+    other,
+    refreshCallback
+  } = useItems();
   return (
     <div>
-      <ListViewWithoutToolbar name={'Team'} items={commonItems} />
+      <ListViewWithRefresh
+        name={'Team'}
+        items={commonItems}
+        refreshCallback={refreshCallback}
+      />
       <TreeView name={'Security'} item={securityItems} root_name={'security'} />
       <TreeView name={'Profiles'} item={profiles} root_name={'team profiles'} />
       <TreeView name={'Other'} item={other} root_name={'properties'} />
@@ -130,12 +137,15 @@ class TeamLeftWidget extends ReactWidget {
   }
 
   render(): JSX.Element {
+    const refreshCallback1 = () => {
+      console.log(`[${NAME}] Refresh!`);
+    };
     return (
       <div className={SECTION_CLASS}>
         <LeftWidgetHeader
           name={NAME}
           icon={ICON}
-          refreshCallback={refreshCallback}
+          refreshCallback={refreshCallback1}
           openCallback={this.launchCallback}
           app={this.app}
         />

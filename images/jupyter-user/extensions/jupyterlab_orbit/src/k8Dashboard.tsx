@@ -11,11 +11,7 @@ import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { registerLaunchCommand } from './common/activation';
 const NAME = 'K8Dashboard';
 const ICON: LabIcon = testsIcon;
-const refreshCallback = (): void => {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-  // @ts-ignore
-  console.log(`[${NAME}] Refresh!`);
-};
+
 const { Search } = Input;
 
 interface IDashboardReturn {
@@ -80,11 +76,7 @@ class CentralWidget extends ReactWidget {
   render(): JSX.Element {
     return (
       <div className={SECTION_CLASS}>
-        <CentralWidgetHeader
-          name={NAME}
-          icon={ICON}
-          refreshCallback={refreshCallback}
-        />
+        <CentralWidgetHeader name={NAME} icon={ICON} />
         <div>
           <DashboardComponentFunc />
         </div>
