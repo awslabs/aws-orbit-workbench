@@ -54,11 +54,11 @@ spec:
             - containerPort: 80
           resources:
             limits:
-              cpu: 0.9
-              memory: 1.8G
+              cpu: 300m
+              memory: 300Mi
             requests:
-              cpu: 0.9
-              memory: 1.8G
+              cpu: 50m
+              memory: 100Mi
       nodeSelector:
         orbit/usage: reserved
         orbit/node-group: env
