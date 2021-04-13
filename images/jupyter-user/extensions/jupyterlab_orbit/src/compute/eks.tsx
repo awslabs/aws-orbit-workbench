@@ -37,9 +37,9 @@ export const EksComponentFunc = (): JSX.Element => {
   return (
     <div>
       <TreeViewWithRefresh
-        name={'Nodegroups'}
+        name={'Your EKS Cluster'}
         item={nodeGroups}
-        root_name={'nodegroups'}
+        root_name={'EKS Node Groups'}
         refreshCallback={refreshCallback}
       />
     </div>

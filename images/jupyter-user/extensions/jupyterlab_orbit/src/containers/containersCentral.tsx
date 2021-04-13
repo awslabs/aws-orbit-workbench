@@ -133,7 +133,6 @@ export const ContainerCentralPanel = (props: {
   );
 
   useEffect(() => {
-    console.log('Testing');
     const interval = setInterval(refreshCallback, 60000);
     return () => clearInterval(interval);
   }, []);
