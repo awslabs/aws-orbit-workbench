@@ -29,11 +29,14 @@ class EksRouteHandler(APIHandler):
     @staticmethod
     def _dump(data) -> str:
         ret: Dict[str, Any] = {}
-        for key, value in data.items():
-            for ngk, ngv in value.items():
-                ret[key].append({"name": ngk, "value": str(ngv)})
+        for ng in data:
+            ngn = ng["nodegroup_name"]
+            ret[ngn] = {}
+            for ngk in ng.keys():
+                ret[ngn][ngk] = ng[ngk]
 
-        return json.dumps(ret)
+        ret_resp = {"nodegroups": ret}
+        return json.dumps(ret_resp)
 
     @web.authenticated
     def get(self):

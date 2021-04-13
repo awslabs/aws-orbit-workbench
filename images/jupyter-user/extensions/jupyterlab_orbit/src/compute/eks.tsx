@@ -27,19 +27,19 @@ const useItems = (): IUseItemsReturn => {
     console.log(`[${NAME}] Refresh!`);
     setData(await request('eks'));
   };
-
   const nodeGroups = data.nodegroups;
   return { nodeGroups, refreshCallback };
 };
 
 export const EksComponentFunc = (): JSX.Element => {
   const { nodeGroups, refreshCallback } = useItems();
+  console.log(nodeGroups);
   return (
     <div>
       <TreeViewWithRefresh
-        name={'NodeGroups'}
+        name={'Nodegroups'}
         item={nodeGroups}
-        root_name={'node groups'}
+        root_name={'nodegroups'}
         refreshCallback={refreshCallback}
       />
     </div>

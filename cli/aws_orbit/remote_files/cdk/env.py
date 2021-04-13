@@ -403,7 +403,7 @@ class Env(Stack):
             initial_policy=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=["eks:*"],
+                    actions=["eks:List*", "eks:Describe*", "ec2:Describe*"],
                     resources=["*"],
                 )
             ],

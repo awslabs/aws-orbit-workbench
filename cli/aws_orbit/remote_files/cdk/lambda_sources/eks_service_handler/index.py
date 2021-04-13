@@ -28,6 +28,7 @@ REGION: str = os.environ["REGION"]
 def get_nodegroups(cluster_name: str) -> List[Dict[str, Dict[str, str]]]:
     return_response: List[Dict[str, Dict[str, str]]] = []
     eks_client = boto3.client("eks")
+    ec2_client = boto3.client("ec2")
     try:
         nodegroups_response = eks_client.list_nodegroups(clusterName=cluster_name)
         for nodegroup_name in nodegroups_response["nodegroups"]:
@@ -35,13 +36,29 @@ def get_nodegroups(cluster_name: str) -> List[Dict[str, Dict[str, str]]]:
             if "nodegroup" in nodegroup_details:
                 nodegroup = nodegroup_details["nodegroup"]
                 nodegroup_dict = {
-                    nodegroup_name: {
-                        "instance_types": nodegroup["instanceTypes"],
-                        "scaling_config": json.dumps(nodegroup["scalingConfig"]).encode("utf-8"),
-                        "status": nodegroup["status"],
-                        "capacity_type": nodegroup["capacityType"],
-                    }
+                    "nodegroup_name": nodegroup_name,
+                    "instance_types": nodegroup["instanceTypes"],
+                    "scaling_config": json.dumps(nodegroup["scalingConfig"]).encode("utf-8"),
+                    "status": nodegroup["status"],
+                    "capacity_type": nodegroup["capacityType"],
                 }
+
+                # Get Disk size
+                if "diskSize" in nodegroup:
+                    nodegroup_dict["disk_size"] = nodegroup["diskSize"]
+
+                # Get Launch Template details
+                if "launchTemplate" in nodegroup:
+                    ltr = ec2_client.describe_launch_template_versions(
+                        LaunchTemplateId=nodegroup["launchTemplate"]["id"],
+                        Versions=[nodegroup["launchTemplate"]["version"]],
+                    )
+                    if ltr["LaunchTemplateVersions"]:
+                        launch_template = ltr["LaunchTemplateVersions"][0]
+                        nodegroup_dict["launch_template_data"] = launch_template["LaunchTemplateData"][
+                            "BlockDeviceMappings"
+                        ]
+
                 return_response.append(nodegroup_dict)
     except Exception as ekse:
         logger.error("Error describing cluster %s nodegroups: %s", cluster_name, ekse)
