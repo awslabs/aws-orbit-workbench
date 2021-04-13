@@ -403,8 +403,11 @@ class Env(Stack):
             initial_policy=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=["eks:List*", "eks:Describe*", "ec2:Describe*"],
-                    resources=["*"],
+                    actions=["eks:List*", "eks:Describe*"],
+                    resources=[
+                        f"arn:aws:eks:{self.context.region}:{self.context.account_id}:cluster/orbit-*",
+                        f"arn:aws:eks:{self.context.region}:{self.context.account_id}:nodegroup/orbit-*/*/*",
+                    ],
                 )
             ],
         )
