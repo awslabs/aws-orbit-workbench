@@ -464,6 +464,47 @@ def list_storage_class():
     return res["items"]
 
 
+def get_nodegroups(cluster_name: str):
+    props = get_properties()
+    env_name = props["AWS_ORBIT_ENV"]
+    nodegroups_with_lt = []
+    nodegroups: List[Dict[str, str]] = []
+    _logger.debug(f"Fetching cluster {cluster_name} nodegroups")
+    try:
+        response: Dict[str, Any] = boto3.client("lambda").invoke(
+            FunctionName=f"orbit-{env_name}-eks-service-handler",
+            InvocationType="RequestResponse",
+            Payload=json.dumps({"cluster_name": cluster_name}).encode("utf-8"),
+        )
+        if response.get("StatusCode") != 200 or response.get("Payload") is None:
+            _logger.error(f"Invalid Lambda response:\n{response}")
+            return nodegroups
+        nodegroups = json.loads(response["Payload"].read().decode("utf-8"))
+    except Exception as ekse:
+        _logger.error("Error invoking nodgroup lambda  %s", ekse)
+        raise ekse
+
+    # Get launch template details per nodegroup
+    ec2_client = boto3.client("ec2")
+    for nodegroup in nodegroups:
+        try:
+            ng = nodegroup
+            if "launch_template" in nodegroup:
+                ltr_response = ec2_client.describe_launch_template_versions(
+                    LaunchTemplateId=nodegroup["launch_template"]["id"],
+                    Versions=[nodegroup["launch_template"]["version"]],
+                )
+                if ltr_response["LaunchTemplateVersions"]:
+                    launch_template = ltr_response["LaunchTemplateVersions"][0]
+                    ng["launch_template_data"] = launch_template["LaunchTemplateData"]["BlockDeviceMappings"]
+                    del ng["launch_template"]
+
+            nodegroups_with_lt.append(ng)
+        except Exception as lte:
+            _logger.error("Error invoking describe_launch_template_versions  %s", lte)
+    return nodegroups_with_lt
+
+
 def delete_job(job_name: str, grace_period_seconds: int = 30):
     props = get_properties()
     global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__

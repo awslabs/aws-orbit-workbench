@@ -2,13 +2,16 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: team-script-${plugin_id}
+  labels:
+    app: team-script-${plugin_id}
+    orbit/node-type: ec2
+    orbit/attach-security-group: "yes"
 spec:
   template:
     spec:
       nodeSelector:
         orbit/usage: teams
         orbit/node-type: ec2
-        orbit/attach-security-group: "yes"
       serviceAccountName: ${team}
       securityContext:
         fsGroup: 100
@@ -34,6 +37,13 @@ spec:
             ln -s /efs/shared /home/jovyan/shared &&
             source /scripts/${plugin_id}-script.sh &&
             echo "DONE EXECUTING SCRIPT"
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "20Mi"
+          requests:
+            cpu: "10m"
+            memory: "20Mi"
         volumeMounts:
           - mountPath: /efs
             name: efs-volume

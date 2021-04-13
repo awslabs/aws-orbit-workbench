@@ -17,7 +17,7 @@
 set -ex
 echo `pwd`
 curl -fsSL https://code-server.dev/install.sh | sh
-code-server --install-extension ms-python.python
-code-server --install-extension ms-toolsai.jupyter
-code-server --install-extension mtxr.sqltools
+code-server --install-extension ms-python.python --force
+code-server --install-extension ms-toolsai.jupyter --force
+code-server --install-extension mtxr.sqltools --force
 pip install .

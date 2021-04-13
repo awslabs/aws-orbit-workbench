@@ -1,12 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import * as utils from '../typings/utils';
 import { TableWidget } from './table/table';
 import ReactJson from 'react-json-view';
 import { IUseItemsReturn, getStateIcon, getNodeType } from '../containers';
 import { Tooltip } from 'antd';
 import { JupyterFrontEnd } from '@jupyterlab/application';
-import { refreshIcon } from '@jupyterlab/ui-components';
-import { ToolbarButtonComponent } from '@jupyterlab/apputils';
 
 const columns = [
   {
@@ -134,16 +132,14 @@ export const ContainerCentralPanel = (props: {
     props.type
   );
 
+  useEffect(() => {
+    const interval = setInterval(refreshCallback, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div>
       <div>
-        <div style={{ float: 'right', paddingRight: '5px' }}>
-          <ToolbarButtonComponent
-            tooltip={'Refresh List'}
-            icon={refreshIcon}
-            onClick={refreshCallback}
-          />
-        </div>
         <TableWidget
           type={props.type}
           title={props.title}
