@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import * as utils from '../typings/utils';
 import { TableWidget } from '../common/table';
 import ReactJson from 'react-json-view';
@@ -91,6 +91,12 @@ export const StorageCentralPanel = (props: {
 
     return columns;
   };
+
+  useEffect(() => {
+    console.log('Testing');
+    const interval = setInterval(refreshCallback, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div>

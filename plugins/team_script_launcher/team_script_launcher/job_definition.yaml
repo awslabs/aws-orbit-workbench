@@ -34,6 +34,13 @@ spec:
             ln -s /efs/shared /home/jovyan/shared &&
             source /scripts/${plugin_id}-script.sh &&
             echo "DONE EXECUTING SCRIPT"
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "20Mi"
+          requests:
+            cpu: "10m"
+            memory: "20Mi"
         volumeMounts:
           - mountPath: /efs
             name: efs-volume

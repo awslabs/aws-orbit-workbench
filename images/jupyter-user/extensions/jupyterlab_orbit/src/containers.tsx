@@ -293,11 +293,7 @@ class CentralWidgetSection extends ReactWidget {
   render(): JSX.Element {
     return (
       <div className={SECTION_CLASS}>
-        <CentralWidgetHeader
-          name={this.title.label}
-          icon={ICON}
-          refreshCallback={refreshCallback}
-        />
+        <CentralWidgetHeader name={this.title.label} icon={ICON} />
         <ContainerCentralPanel
           title={this.headerTitle}
           type={this.type}
@@ -325,11 +321,7 @@ class CentralWidget extends ReactWidget {
   render(): JSX.Element {
     return (
       <div className={SECTION_CLASS}>
-        <CentralWidgetHeader
-          name={NAME}
-          icon={ICON}
-          refreshCallback={refreshCallback}
-        />
+        <CentralWidgetHeader name={NAME} icon={ICON} />
         <Sections app={this.app} />
         <div />
       </div>
