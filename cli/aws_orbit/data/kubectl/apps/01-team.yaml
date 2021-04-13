@@ -232,11 +232,11 @@ spec:
               mountPath: /config
           resources:
             limits:
-              cpu: "100m"
-              memory: "100Mi"
+              cpu: "500m"
+              memory: "2G"
             requests:
-              cpu: "10m"
-              memory: "20Mi"
+              cpu: "100m"
+              memory: "512Mi"
       nodeSelector:
         orbit/usage: teams
         orbit/node-type: ec2

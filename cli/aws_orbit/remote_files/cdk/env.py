@@ -85,6 +85,7 @@ class Env(Stack):
         self.user_pool_client = self._create_user_pool_client()
         self.identity_pool = self._create_identity_pool()
         self.token_validation_lambda = self._create_token_validation_lambda()
+        self.eks_service_lambda = self._create_eks_service_lambda()
         self.cluster_pod_security_group = self._create_cluster_pod_security_group()
         self.context_parameter = self._create_manifest_parameter()
 
@@ -381,6 +382,32 @@ class Env(Stack):
                     effect=iam.Effect.ALLOW,
                     actions=["ec2:Describe*", "logs:Create*", "logs:PutLogEvents", "logs:Describe*"],
                     resources=["*"],
+                )
+            ],
+        )
+
+    def _create_eks_service_lambda(self) -> aws_lambda.Function:
+
+        return lambda_python.PythonFunction(
+            scope=self,
+            id="eks_service_lambda",
+            function_name=f"orbit-{self.context.name}-eks-service-handler",
+            entry=_lambda_path("eks_service_handler"),
+            index="index.py",
+            handler="handler",
+            runtime=aws_lambda.Runtime.PYTHON_3_8,
+            timeout=Duration.seconds(5),
+            environment={
+                "REGION": self.context.region,
+            },
+            initial_policy=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["eks:List*", "eks:Describe*"],
+                    resources=[
+                        f"arn:aws:eks:{self.context.region}:{self.context.account_id}:cluster/orbit-*",
+                        f"arn:aws:eks:{self.context.region}:{self.context.account_id}:nodegroup/orbit-*/*/*",
+                    ],
                 )
             ],
         )
