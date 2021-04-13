@@ -189,6 +189,13 @@ spec:
         - name: kubernetes-dashboard
           image: ${dashboard_image}
           imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: "1"
+              memory: "500Mi"
+            requests:
+              cpu: "10m"
+              memory: "20Mi"
           ports:
             - containerPort: 8443
               protocol: TCP
@@ -284,6 +291,13 @@ spec:
               port: 8000
             initialDelaySeconds: 30
             timeoutSeconds: 30
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "50Mi"
+            requests:
+              cpu: "10m"
+              memory: "20Mi"
           volumeMounts:
           - mountPath: /tmp
             name: tmp-volume

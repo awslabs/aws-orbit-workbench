@@ -135,6 +135,13 @@ spec:
         - --kubelet-use-node-status-port
         image: ${image}
         imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: 500m
+            memory: 300Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
         livenessProbe:
           failureThreshold: 3
           httpGet:
