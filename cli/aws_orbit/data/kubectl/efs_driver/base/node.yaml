@@ -26,6 +26,13 @@ spec:
           securityContext:
             privileged: true
           image: amazon/aws-efs-csi-driver:latest
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "300Mi"
+            requests:
+              cpu: "30m"
+              memory: "100Mi"
           args:
             - --endpoint=$(CSI_ENDPOINT)
             - --logtostderr
@@ -57,6 +64,13 @@ spec:
             failureThreshold: 5
         - name: csi-driver-registrar
           image: quay.io/k8scsi/csi-node-driver-registrar:v1.3.0
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "300Mi"
+            requests:
+              cpu: "30m"
+              memory: "100Mi"
           args:
             - --csi-address=$(ADDRESS)
             - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
@@ -76,6 +90,13 @@ spec:
             - name: registration-dir
               mountPath: /registration
         - name: liveness-probe
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "100Mi"
+            requests:
+              cpu: "10m"
+              memory: "20Mi"
           image: quay.io/k8scsi/livenessprobe:v2.0.0
           args:
             - --csi-address=/csi/csi.sock

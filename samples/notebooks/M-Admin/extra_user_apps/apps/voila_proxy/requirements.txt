@@ -1,3 +1,0 @@
-voila~=0.2.7
-bqplot~=0.12.23
-ipyvuetify~=1.6.2

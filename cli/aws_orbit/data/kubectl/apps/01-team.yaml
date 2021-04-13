@@ -232,11 +232,11 @@ spec:
               mountPath: /config
           resources:
             limits:
-              cpu: "2"
-              memory: "3G"
+              cpu: "100m"
+              memory: "100Mi"
             requests:
-              cpu: "2"
-              memory: "3G"
+              cpu: "10m"
+              memory: "20Mi"
       nodeSelector:
         orbit/usage: teams
         orbit/node-type: ec2
@@ -279,6 +279,13 @@ spec:
         imagePullPolicy: Always
         image: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-jupyter-user:${tag}
         command: ["/bin/bash"]
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "100Mi"
+          requests:
+            cpu: "10m"
+            memory: "20Mi"
         args:
           - -c
           - >-
