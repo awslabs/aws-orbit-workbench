@@ -356,7 +356,6 @@ def getCatalogAsDict(database: Optional[str] = None) -> Dict:
             table = dict()
             table["title"] = t["Name"]
             table["key"] = str(key)
-            table["location"] = t["StorageDescriptor"]["Location"]
             table["location"] = (
                 t["StorageDescriptor"]["Location"]
                 if ("StorageDescriptor" in t and "Location" in t["StorageDescriptor"])
