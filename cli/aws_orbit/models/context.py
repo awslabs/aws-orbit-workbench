@@ -383,6 +383,10 @@ class ContextSerDe(Generic[T, V]):
             context.shared_efs_sg_id = manifest.shared_efs_sg_id
             context.scratch_bucket_arn = manifest.scratch_bucket_arn
             context.policies = manifest.policies
+            context.codeartifact_domain = manifest.codeartifact_domain
+            context.codeartifact_repository = manifest.codeartifact_repository
+            context.cognito_external_provider = manifest.cognito_external_provider
+            context.cognito_external_provider_label = manifest.cognito_external_provider_label
             for team_manifest in manifest.teams:
                 team_context: Optional[TeamContext] = context.get_team_by_name(name=team_manifest.name)
                 if team_context:
