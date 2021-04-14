@@ -194,3 +194,32 @@ export const TreeView = (props: {
     </div>
   );
 };
+
+export const TreeViewWithRefresh = (props: {
+  name: string;
+  item: any;
+  root_name: string;
+  refreshCallback: () => any;
+}) => {
+  return (
+    <div className={SECTION_CLASS}>
+      <header className={SECTION_HEADER_CLASS}>
+        <h2>{props.name}</h2>
+        <div style={{ display: 'flex', alignItems: 'right' }} />
+        <ToolbarButtonComponent
+          tooltip={'Refresh'}
+          icon={refreshIcon}
+          onClick={() => props.refreshCallback()}
+        />
+      </header>
+      <div className={CONTAINER_CLASS}>
+        <ReactJson
+          src={props.item}
+          name={props.root_name}
+          collapsed={true}
+          displayDataTypes={false}
+        />
+      </div>
+    </div>
+  );
+};

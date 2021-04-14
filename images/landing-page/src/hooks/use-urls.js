@@ -48,7 +48,7 @@ const fetchParameters = async (groups, jwt) => {
     const response = await ssm.getParameters(params).promise();
     urls = response.Parameters.map((x) => ({
       title: toTitleCase(x.Name.slice(x.Name.slice(0, -8).lastIndexOf("/") + 1, -8).replace("-", " ")),
-      url: `http://${JSON.parse(x.Value)["JupyterUrl"]}/hub/login?next=%2Fhub%2Fhome&token=${jwt}`,
+      url: `https://${JSON.parse(x.Value)["JupyterUrl"]}/hub/login?next=%2Fhub%2Fhome&token=${jwt}`,
     }));
   }
   console.log("urls", urls);
