@@ -357,6 +357,11 @@ def getCatalogAsDict(database: Optional[str] = None) -> Dict:
             table["title"] = t["Name"]
             table["key"] = str(key)
             table["location"] = t["StorageDescriptor"]["Location"]
+            table["location"] = (
+                t["StorageDescriptor"]["Location"]
+                if ("StorageDescriptor" in t and "Location" in t["StorageDescriptor"])
+                else ""
+            )
             table["children"] = []
             table["key"] = str(key)
             table["_class"] = "table"

@@ -327,7 +327,7 @@ def list_running_jobs(team_only: bool = False):
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     load_kube_config()
-    username = os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))
+    username = (os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))).split("@")[0]
     api_instance = BatchV1Api()
     # field_selector = "status.successful!=1"
     if team_only:
@@ -546,7 +546,7 @@ def delete_cronjob(job_name: str, grace_period_seconds: int = 30):
 def delete_all_my_jobs():
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
-    username = os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))
+    username = (os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))).split("@")[0]
     load_kube_config()
     api_instance = BatchV1Api()
     label_selector = f"app=orbit-runner,username={username}"
@@ -730,7 +730,7 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
     """
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
-    username = os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))
+    username = (os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))).split("@")[0]
     node_type = get_node_type(taskConfiguration)
     labels = {"app": f"orbit-runner", "orbit/node-type": node_type, "username": username}
     if node_type == "ec2":
@@ -886,7 +886,7 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     node_type = get_node_type(taskConfiguration)
-    username = os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))
+    username = (os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))).split("@")[0]
     cronjob_id = f"orbit-{team_name}-{triggerName}"
     labels = {"app": f"orbit-runner", "orbit/node-type": node_type, "username": username, "cronjob_id": cronjob_id}
     team_constants: TeamConstants = TeamConstants(username)
