@@ -8,6 +8,8 @@ UserPoolId: !SSM ${/orbit-foundation/dev-env/resources::UserPoolId}
 SharedEfsFsId: !SSM ${/orbit-foundation/dev-env/resources::SharedEfsFsId}
 SharedEfsSgId: !SSM ${/orbit-foundation/dev-env/resources::SharedEfsSgId}
 InstallSsmAgent: true
+CognitoExternalProvider: okta
+CognitoExternalProviderLabel: OKTA
 Images:
     JupyterHub:
         Repository: !ENV ${JUPYTER_HUB_REPO::aws-orbit-jupyter-hub}
