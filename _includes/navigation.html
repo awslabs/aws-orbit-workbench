@@ -1,0 +1,14 @@
+<h2>{{ site.data.navigation.docs_list_title }}</h2>
+<ul>
+   {% for item in site.data.navigation.docs %}
+      <li class="{% if item.url == page.url %}active{% endif %}">
+        <a href="{{ item.url }}">{{ item.title }}</a></li>
+   {% endfor %}
+</ul>
+
+<style>
+  .result li.active a {
+    color: lightgray;
+    cursor: default;
+}
+</style>
