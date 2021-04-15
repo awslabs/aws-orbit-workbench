@@ -42,6 +42,7 @@ class TeamRouteHandler(APIHandler):
             {"name": "Environment Name", "value": data["env_name"]},
             {"name": "Team Name", "value": data["team_space"]},
             {"name": "EKS Cluster Name", "value": "orbit-" + data["env_name"]},
+            {"name": "Current Image", "value": os.environ["JUPYTER_IMAGE"].split("/")[-1]},
         ]
         for key, value in data.items():
             if key in common_props:

@@ -29,7 +29,7 @@ def delete_buckets(profile, prefix=None):
             print("Permanantly deleting "+b)
             bucket = s3.Bucket(b)
             bucket.object_versions.delete()
-            bucket.delete()]
+            bucket.delete()
     else:
         print("Deletion Canceled")
         exit(0)

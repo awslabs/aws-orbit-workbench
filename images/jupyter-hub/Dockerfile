@@ -1,4 +1,4 @@
-FROM jupyterhub/jupyterhub:1.3.0
+FROM public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyterhub/jupyterhub:1.3.0
 
 # System packages
 RUN apt-get -y update && \
