@@ -384,6 +384,63 @@ def _generate_efs_driver_manifest(context: "Context") -> str:
     return os.path.join(output_path, "overlays")
 
 
+#######
+def _fsx_driver_base(output_path: str, context: "Context") -> None:
+    os.makedirs(os.path.join(output_path, "base"), exist_ok=True)
+    filenames = ("csidriver.yaml", "controller.yaml", "kustomization.yaml", "rbac.yaml", "node.yaml")
+    for filename in filenames:
+        input = os.path.join(MODELS_PATH, "fsx_driver", "base", filename)
+        output = os.path.join(output_path, "base", filename)
+        _logger.debug("Copying fsx driver base file: %s -> %s", input, output)
+        with open(input, "r") as file:
+            content: str = file.read()
+        content = utils.resolve_parameters(
+            content,
+            dict(
+                region=context.region,
+                account_id=context.account_id,
+                env_name=context.name,
+                orbit_cluster_role=context.eks_cluster_role_arn,
+            ),
+        )
+        with open(output, "w") as file:
+            file.write(content)
+
+
+def _fsx_driver_overlays(output_path: str, context: "Context") -> None:
+    filename = "kustomization.yaml"
+    input = os.path.join(MODELS_PATH, "fsx_driver", "overlays", "stable", filename)
+    os.makedirs(os.path.join(output_path, "overlays"), exist_ok=True)
+    output = os.path.join(output_path, "overlays", filename)
+    with open(input, "r") as file:
+        content: str = file.read()
+    content = utils.resolve_parameters(
+        content,
+        dict(
+            region=context.region,
+            account_id=context.account_id,
+            env_name=context.name,
+            orbit_cluster_role=context.eks_cluster_role_arn,
+        ),
+    )
+    with open(output, "w") as file:
+        file.write(content)
+
+
+def _generate_fsx_driver_manifest(context: "Context") -> str:
+    output_path = os.path.join(".orbit.out", context.name, "kubectl", "fsx_driver")
+    os.makedirs(output_path, exist_ok=True)
+    _cleanup_output(output_path=output_path)
+    if context.account_id is None:
+        raise RuntimeError("context.account_id is None!")
+    if context.region is None:
+        raise RuntimeError("context.region is None!")
+    _fsx_driver_base(output_path=output_path, context=context)
+    _fsx_driver_overlays(output_path=output_path, context=context)
+    return os.path.join(output_path, "overlays")
+
+
+#######
 def write_kubeconfig(context: "Context") -> None:
     sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
 
@@ -399,6 +456,12 @@ def deploy_env(context: "Context") -> None:
             sh.run(f"kubectl apply -k {output_path} --context {k8s_context} --wait")
         else:
             sh.run(f"kubectl apply -k {EFS_DRIVE} --context {k8s_context} --wait")
+
+        # FSX Driver
+        output_path = _generate_fsx_driver_manifest(context=context)
+        sh.run(f"kubectl apply -k {output_path} --context {k8s_context} --wait")
+
+        # Orbit Env
         output_path = _generate_env_manifest(context=context)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
         sh.run(f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} ENABLE_POD_ENI=true")

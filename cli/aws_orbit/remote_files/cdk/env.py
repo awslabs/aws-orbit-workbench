@@ -26,7 +26,7 @@ import aws_cdk.aws_iam as iam
 import aws_cdk.aws_lambda_python as lambda_python
 import aws_cdk.aws_ssm as ssm
 from aws_cdk import aws_lambda
-from aws_cdk.core import App, CfnOutput, Construct, Duration, Environment, IConstruct, Stack, Tags
+from aws_cdk.core import App, Aws, CfnOutput, Construct, Duration, Environment, IConstruct, Stack, Tags
 
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.cdk import _lambda_path
@@ -141,20 +141,23 @@ class Env(Stack):
                             ],
                             resources=["*"],
                         ),
-                        # FIXME can this be moved to a service role and only be allowed to access the
-                        #  team key after chamcca@ changes
+                        iam.PolicyStatement(
+                            effect=iam.Effect.ALLOW,
+                            actions=["iam:AttachRolePolicy", "iam:PutRolePolicy", "s3:*"],
+                            resources=[
+                                "arn:aws:iam::*:role/aws-service-role/s3.data-source.lustre.fsx.amazonaws.com/",
+                                f"{self.context.scratch_bucket_arn}",
+                                f"{self.context.scratch_bucket_arn}/*",
+                            ],
+                        ),
                         iam.PolicyStatement(
                             effect=iam.Effect.ALLOW,
                             actions=[
-                                "kms:CreateGrant",
-                                "kms:ListGrants",
-                                "kms:RevokeGrant",
-                                "kms:DescribeKey",
-                                "kms:Encrypt",
-                                "kms:Decrypt",
-                                "kms:ReEncrypt*",
-                                "kms:GenerateDataKey*",
-                                "kms:DescribeKey",
+                                "iam:CreateServiceLinkedRole",
+                                "s3:ListBucket",
+                                "fsx:CreateFileSystem",
+                                "fsx:DeleteFileSystem",
+                                "fsx:DescribeFileSystems",
                             ],
                             resources=["*"],
                         ),
@@ -162,6 +165,25 @@ class Env(Stack):
                 )
             },
         )
+        partition = Aws.PARTITION
+        account = Aws.ACCOUNT_ID
+        if role.assume_role_policy:
+            role.assume_role_policy.add_statements(
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["sts:AssumeRoleWithWebIdentity"],
+                    principals=[
+                        iam.FederatedPrincipal(
+                            federated=f"arn:{partition}:iam::{account}:oidc-provider/{self.context.eks_oidc_provider}",
+                            conditions={
+                                "StringLike": {
+                                    f"{self.context.eks_oidc_provider}:sub": "system:serviceaccount:kube-system:fsx-csi-controller-sa"
+                                }
+                            },
+                        )
+                    ],
+                ),
+            )
         return role
 
     def _create_role_fargate_profile(self) -> iam.Role:

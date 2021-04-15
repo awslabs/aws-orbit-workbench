@@ -188,6 +188,7 @@ class IamBuilder:
                         "sagemaker:StopCompilationJob",
                         "sagemaker:CreateHyperParameterTuningJob",
                         "lakeformation:GetDataAccess",
+                        "fsx:Describe*"
                     ],
                     resources=["*"],
                 ),

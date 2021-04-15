@@ -4,21 +4,23 @@
 #
 #    pip-compile requirements-dev.in
 #
--e ../plugins/code_commit
+-e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/plugins/code_commit
     # via -r requirements-dev.in
--e ../plugins/custom_cfn
+-e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/plugins/custom_cfn
     # via -r requirements-dev.in
--e ../plugins/emr_on_eks
+-e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/plugins/emr_on_eks
     # via -r requirements-dev.in
--e ../plugins/hello_world
+-e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/plugins/hello_world
     # via -r requirements-dev.in
--e ../plugins/redshift
+-e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/plugins/lustre
     # via -r requirements-dev.in
--e ../sdk
+-e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/plugins/redshift
     # via -r requirements-dev.in
--e ../plugins/team_script_launcher
+-e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/sdk
     # via -r requirements-dev.in
--e .
+-e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/plugins/team_script_launcher
+    # via -r requirements-dev.in
+-e file:///Users/amirbo/PycharmProjects/aws-orbit-workbench/cli
     # via -r requirements-dev.in
 appdirs==1.4.4
     # via black
@@ -547,13 +549,7 @@ google-auth==1.28.1
 idna==2.10
     # via requests
 importlib-metadata==3.10.0
-    # via
-    #   build
-    #   flake8
-    #   jsonschema
-    #   keyring
-    #   pep517
-    #   twine
+    # via keyring
 ipython-genutils==0.2.0
     # via traitlets
 ipython==7.19.0
@@ -869,7 +865,6 @@ typeguard==2.12.0
 typing-extensions==3.7.4.3
     # via
     #   black
-    #   importlib-metadata
     #   jsii
     #   mypy
     #   typing-inspect
@@ -889,9 +884,7 @@ websocket-client==0.58.0
 wheel==0.36.2
     # via -r requirements-dev.in
 zipp==3.4.1
-    # via
-    #   importlib-metadata
-    #   pep517
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip
