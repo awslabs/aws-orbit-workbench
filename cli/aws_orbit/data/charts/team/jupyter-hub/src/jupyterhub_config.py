@@ -28,7 +28,7 @@ CONNECTIVITY
 c.JupyterHub.hub_connect_ip = os.environ["JUPYTERHUB_PRIVATE_SERVICE_HOST"]
 c.JupyterHub.hub_connect_port = int(os.environ["JUPYTERHUB_PRIVATE_SERVICE_PORT"])
 c.JupyterHub.hub_ip = "0.0.0.0"
-c.JupyterHub.logo_file = "/etc/jupyterhub/orbit.svg"
+
 """
 SPAWNER
 """
