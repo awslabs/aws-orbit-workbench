@@ -46,6 +46,7 @@ def destroy_teams(args: Tuple[str, ...]) -> None:
     _logger.debug("context.name %s", context.name)
 
     plugins.PLUGINS_REGISTRIES.load_plugins(context=context, plugin_changesets=[], teams_changeset=None)
+    kubectl.write_kubeconfig(context=context)
     _logger.debug("Plugins loaded")
     for team_context in context.teams:
         plugins.PLUGINS_REGISTRIES.destroy_team_plugins(context=context, team_context=team_context)
