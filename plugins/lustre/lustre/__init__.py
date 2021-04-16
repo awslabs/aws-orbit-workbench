@@ -14,12 +14,11 @@
 
 import logging
 import os
-from typing import TYPE_CHECKING, Any, Dict, Optional
-import boto3
-import botocore
+from typing import TYPE_CHECKING, Any, Dict, Optional,cast
 from aws_orbit import sh, utils
 from aws_orbit.plugins import hooks
-
+from aws_orbit.services import ec2
+from aws_orbit.services.ec2 import IpPermission, UserIdGroupPair
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
 _logger: logging.Logger = logging.getLogger("aws_orbit")
@@ -56,21 +55,16 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     with open(output, "w") as file:
         file.write(content)
 
-    ec2 = boto3.client("ec2")
-    try:
-        ec2.authorize_security_group_ingress(
-            CidrIp='192.168.0.0/16',
-            FromPort=988,
-            ToPort=988,
-            GroupId=team_context.team_security_group_id,
-            IpProtocol='tcp',
-        )
-    except botocore.exceptions.ClientError as ex:
-        if ex.response.get("Error", {}).get("Code", "Unknown") != "InvalidPermission.Duplicate":
-            _logger.error("Error Authorizing Ingress", ex)
-            raise
-        else:
-            _logger.debug("Ingress previously authorized")
+    ec2.authorize_security_group_ingress(
+        group_id=cast(str, team_context.team_security_group_id),
+        ip_permissions=[IpPermission(
+                from_port=988,
+                to_port=988,
+                ip_protocol="tcp",
+                user_id_group_pairs=[UserIdGroupPair(description="All from Cluster", group_id=cast(str, context.cluster_sg_id))],
+            )]
+    )
+
     # run the POD to execute the script
     cmd = f"kubectl apply -f {output}  --namespace {team_context.name}"
     _logger.debug(cmd)

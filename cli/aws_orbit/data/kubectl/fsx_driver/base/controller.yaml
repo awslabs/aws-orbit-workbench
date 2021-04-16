@@ -14,7 +14,6 @@ spec:
       labels:
         app: fsx-csi-controller
         orbit/node-type: ec2
-        orbit/attach-security-group: "yes"
     spec:
       nodeSelector:
         kubernetes.io/os: linux

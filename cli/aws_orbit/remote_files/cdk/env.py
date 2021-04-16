@@ -168,6 +168,7 @@ class Env(Stack):
         )
         partition = Aws.PARTITION
         account = Aws.ACCOUNT_ID
+        service_account = "system:serviceaccount:kube-system:fsx-csi-controller-sa"
         if role.assume_role_policy:
             role.assume_role_policy.add_statements(
                 iam.PolicyStatement(
@@ -178,7 +179,8 @@ class Env(Stack):
                             federated=f"arn:{partition}:iam::{account}:oidc-provider/{self.context.eks_oidc_provider}",
                             conditions={
                                 "StringLike": {
-                                    f"{self.context.eks_oidc_provider}:sub": "system:serviceaccount:kube-system:fsx-csi-controller-sa"
+                                    # ignore
+                                    f"{self.context.eks_oidc_provider}:sub": service_account
                                 }
                             },
                         )
