@@ -2,13 +2,16 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: team-script-${plugin_id}
+  labels:
+    app: team-script-${plugin_id}
+    orbit/node-type: ec2
+    orbit/attach-security-group: "yes"
 spec:
   template:
     spec:
       nodeSelector:
         orbit/usage: teams
         orbit/node-type: ec2
-        orbit/attach-security-group: "yes"
       serviceAccountName: ${team}
       securityContext:
         fsGroup: 100

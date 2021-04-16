@@ -163,6 +163,7 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
             efsapid=team_context.efs_ap_id,
             region=context.region,
             account_id=context.account_id,
+            ssl_cert_arn=context.networking.frontend.ssl_cert_arn,
             env_name=context.name,
             tag=context.images.jupyter_hub.version,
             grant_sudo='"yes"' if team_context.grant_sudo else '"no"',
@@ -299,7 +300,7 @@ def fetch_kubectl_data(context: "Context", k8s_context: str, include_teams: bool
     )
 
     context.landing_page_url = f"https://{landing_page_url}"
-    context.k8_dashboard_url = f"http://{k8_dashboard_url}"
+    context.k8_dashboard_url = f"https://{k8_dashboard_url}"
 
     _update_elbs(context=context)
 
