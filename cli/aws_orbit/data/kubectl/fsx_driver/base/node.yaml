@@ -17,8 +17,6 @@ spec:
     spec:
       nodeSelector:
         kubernetes.io/os: linux
-        kubernetes.io/arch: amd64
-        orbit/usage: teams
         orbit/node-type: ec2
       hostNetwork: true
       containers:
@@ -30,6 +28,13 @@ spec:
             - --endpoint=$(CSI_ENDPOINT)
             - --logtostderr
             - --v=5
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "300Mi"
+            requests:
+              cpu: "30m"
+              memory: "100Mi"
           env:
             - name: CSI_ENDPOINT
               value: unix:/csi/csi.sock
@@ -57,6 +62,13 @@ spec:
             - --csi-address=$(ADDRESS)
             - --kubelet-registration-path=$(DRIVER_REG_SOCK_PATH)
             - --v=5
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "300Mi"
+            requests:
+              cpu: "30m"
+              memory: "100Mi"
           env:
             - name: ADDRESS
               value: /csi/csi.sock
@@ -74,6 +86,13 @@ spec:
         - name: liveness-probe
           imagePullPolicy: Always
           image: quay.io/k8scsi/livenessprobe:v1.1.0
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "100Mi"
+            requests:
+              cpu: "10m"
+              memory: "20Mi"
           args:
             - --csi-address=/csi/csi.sock
             - --health-port=9810

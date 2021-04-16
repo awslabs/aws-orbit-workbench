@@ -5,9 +5,13 @@ bases:
 images:
 - name: amazon/aws-fsx-csi-driver
   newTag: v0.4.0
+  newName: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/amazon/aws-fsx-csi-driver
 - name: quay.io/k8scsi/csi-provisioner
   newTag: v1.3.0
+  newName: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/quay.io/k8scsi/csi-provisioner
 - name: quay.io/k8scsi/livenessprobe
-  newTag: v1.1.0
+  newName: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/quay.io/k8scsi/livenessprobe
+  newTag: v2.0.0
 - name: quay.io/k8scsi/csi-node-driver-registrar
-  newTag: v1.1.0
+  newName: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/quay.io/k8scsi/csi-node-driver-registrar
+  newTag: v1.3.0

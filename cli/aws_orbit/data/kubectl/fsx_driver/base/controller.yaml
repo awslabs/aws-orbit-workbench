@@ -17,8 +17,6 @@ spec:
     spec:
       nodeSelector:
         kubernetes.io/os: linux
-        kubernetes.io/arch: amd64
-        orbit/usage: teams
         orbit/node-type: ec2
       serviceAccount: fsx-csi-controller-sa
       priorityClassName: system-cluster-critical
@@ -28,6 +26,13 @@ spec:
       containers:
         - name: fsx-plugin
           image: amazon/aws-fsx-csi-driver:latest
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "300Mi"
+            requests:
+              cpu: "30m"
+              memory: "100Mi"
           args :
             - --endpoint=$(CSI_ENDPOINT)
             - --logtostderr
@@ -52,6 +57,13 @@ spec:
               mountPath: /var/lib/csi/sockets/pluginproxy/
         - name: csi-provisioner
           image: quay.io/k8scsi/csi-provisioner:v1.3.0
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "300Mi"
+            requests:
+              cpu: "30m"
+              memory: "100Mi"
           args:
             - --timeout=10m
             - --csi-address=$(ADDRESS)
