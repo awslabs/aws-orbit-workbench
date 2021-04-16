@@ -1,8 +1,3 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: node-configuration-daemonset
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -18,13 +13,13 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: ssm-agent-installer
-  namespace: node-configuration-daemonset
+  namespace: kube-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: ssm-agent-installer
-  namespace: node-configuration-daemonset
+  namespace: kube-system
 roleRef:
   kind: ClusterRole
   name: ssm-agent-installer
@@ -32,7 +27,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: ssm-agent-installer
-  namespace: node-configuration-daemonset
+  namespace: kube-system
 ---
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
@@ -54,7 +49,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ssm-installer-script
-  namespace: node-configuration-daemonset
+  namespace: kube-system
 data:
   install.sh: |
     #!/bin/bash
@@ -72,7 +67,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: ssm-agent-installer
-  namespace: node-configuration-daemonset
+  namespace: kube-system
 spec:
   selector:
     matchLabels:

@@ -74,6 +74,8 @@ class IamBuilder:
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}",
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/samples/*",
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/teams/{team_name}/*",
+                        f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/helm/repositories/env/*",
+                        f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/helm/repositories/teams/{team_name}/*",
                     ],
                 ),
                 iam.PolicyStatement(

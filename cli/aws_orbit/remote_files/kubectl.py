@@ -15,9 +15,9 @@
 import logging
 import os
 import shutil
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
-from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, plugins, sh, utils
+from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.models.manifest import ImagesManifest
 from aws_orbit.remote_files.utils import get_k8s_context
@@ -150,25 +150,14 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
     with open(input, "r") as file:
         content: str = file.read()
 
-    inbound_ranges: List[str] = (
-        team_context.jupyterhub_inbound_ranges
-        if team_context.jupyterhub_inbound_ranges
-        else [utils.get_dns_ip_cidr(context=context)]
-    )
     content = utils.resolve_parameters(
         content,
         dict(
             team=team_context.name,
             efsid=context.shared_efs_fs_id,
             efsapid=team_context.efs_ap_id,
-            region=context.region,
             account_id=context.account_id,
-            ssl_cert_arn=context.networking.frontend.ssl_cert_arn,
             env_name=context.name,
-            tag=context.images.jupyter_hub.version,
-            grant_sudo='"yes"' if team_context.grant_sudo else '"no"',
-            internal_load_balancer='"false"' if context.networking.frontend.load_balancers_subnets else '"true"',
-            jupyterhub_inbound_ranges=str(inbound_ranges),
             team_kms_key_arn=team_context.team_kms_key_arn,
             team_security_group_id=team_context.team_security_group_id,
             cluster_pod_security_group_id=context.cluster_pod_sg_id,
@@ -220,43 +209,6 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
             file.write(content)
 
 
-def _landing_page(output_path: str, context: "Context") -> None:
-    filename = "03-landing-page.yaml"
-    input = os.path.join(MODELS_PATH, "apps", filename)
-    output = os.path.join(output_path, filename)
-
-    with open(input, "r") as file:
-        content: str = file.read()
-    label: Optional[str] = (
-        context.cognito_external_provider
-        if context.cognito_external_provider_label is None
-        else context.cognito_external_provider_label
-    )
-    domain: str = (
-        "null" if context.cognito_external_provider_domain is None else context.cognito_external_provider_domain
-    )
-    redirect: str = (
-        "null" if context.cognito_external_provider_redirect is None else context.cognito_external_provider_redirect
-    )
-    content = content.replace("$", "").format(
-        region=context.region,
-        account_id=context.account_id,
-        env_name=context.name,
-        user_pool_id=context.user_pool_id,
-        user_pool_client_id=context.user_pool_client_id,
-        identity_pool_id=context.identity_pool_id,
-        ssl_cert_arn=context.networking.frontend.ssl_cert_arn,
-        tag=context.images.landing_page.version,
-        cognito_external_provider=context.cognito_external_provider,
-        cognito_external_provider_label=label,
-        cognito_external_provider_domain=domain,
-        cognito_external_provider_redirect=redirect,
-        internal_load_balancer='"false"' if context.networking.frontend.load_balancers_subnets else '"true"',
-    )
-    with open(output, "w") as file:
-        file.write(content)
-
-
 def _cleanup_output(output_path: str) -> None:
     files = os.listdir(output_path)
     for file in files:
@@ -280,7 +232,6 @@ def _generate_env_manifest(context: "Context", clean_up: bool = True) -> str:
     if context.identity_pool_id is None:
         raise ValueError("context.identity_pool_id is None!")
 
-    _landing_page(output_path=output_path, context=context)
     _k8_dashboard(output_path=output_path, context=context)
     _cluster_autoscaler(output_path=output_path, context=context)
 
@@ -330,9 +281,7 @@ def fetch_kubectl_data(context: "Context", k8s_context: str, include_teams: bool
             url = k8s.get_service_hostname(name="jupyterhub-public", k8s_context=k8s_context, namespace=team.name)
             team.jupyter_url = url
 
-    landing_page_url: str = k8s.get_service_hostname(
-        name="landing-page-public", k8s_context=k8s_context, namespace="env"
-    )
+    landing_page_url: str = k8s.get_service_hostname(name="landing-page", k8s_context=k8s_context, namespace="env")
     k8_dashboard_url: str = k8s.get_service_hostname(
         name="kubernetes-dashboard", k8s_context=k8s_context, namespace="kubernetes-dashboard"
     )
@@ -467,8 +416,6 @@ def deploy_env(context: "Context") -> None:
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
         sh.run(f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} ENABLE_POD_ENI=true")
 
-        fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=False)
-
 
 def deploy_team(context: "Context", team_context: "TeamContext") -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
@@ -479,7 +426,6 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
         output_path = _generate_team_context(context=context, team_context=team_context)
         output_path = _generate_env_manifest(context=context, clean_up=False)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
-        fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=True)
 
 
 def destroy_env(context: "Context") -> None:
@@ -505,8 +451,6 @@ def destroy_teams(context: "Context") -> None:
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(stack_name=eks_stack_name):
         sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
-        for team_context in context.teams:
-            plugins.PLUGINS_REGISTRIES.destroy_team_plugins(context=context, team_context=team_context)
         k8s_context = get_k8s_context(context=context)
         _logger.debug("kubectl k8s_context: %s", k8s_context)
         _logger.debug("Attempting kubectl delete")
