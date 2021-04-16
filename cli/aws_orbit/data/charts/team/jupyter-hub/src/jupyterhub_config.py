@@ -75,11 +75,6 @@ c.JupyterHub.services = [
         "name": "idle-culler",
         "admin": True,
         "command": [sys.executable, "-m", "jupyterhub_idle_culler", "--remove-named-servers=True", "--timeout=28800"],
-    },
-    {
-        "name": "voila-server",
-        "url": "http://voila-service-private:4100/services/voila-server/",
-        "admin": False,
     }
 ]
 profile_list_default = [

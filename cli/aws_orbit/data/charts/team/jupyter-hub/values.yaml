@@ -47,8 +47,9 @@ services:
   public:
     annotations:
       service.beta.kubernetes.io/aws-load-balancer-internal: ${internal_load_balancer}
+      service.beta.kubernetes.io/aws-load-balancer-ssl-cert: ${ssl_cert_arn}
     type: LoadBalancer
-    port: 80
+    port: 443
     loadBalancerSourceRanges: ${jupyterhub_inbound_ranges}
 
 resources:
