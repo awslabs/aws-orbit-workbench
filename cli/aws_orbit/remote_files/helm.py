@@ -41,11 +41,15 @@ def update_file(file_path: str, values: Dict[str, Any]) -> str:
     return content
 
 
-def create_team_charts(team_context: TeamContext) -> str:
-    team_charts_path = os.path.join(CHARTS_PATH, ".output", team_context.name)
-    # os.mkdir(os.path.join(CHARTS_PATH, ".output"))
+def create_team_charts_copy(team_context: TeamContext, path: str) -> str:
+    dirs = path.split("/")
+    charts_dir = dirs.pop()
+    charts_path = "/".join(dirs)
+    team_charts_path = os.path.join(charts_path, ".output", team_context.name)
     os.makedirs(team_charts_path, exist_ok=True)
-    return str(shutil.copytree(src=os.path.join(CHARTS_PATH, "team"), dst=os.path.join(team_charts_path, "team")))
+    return str(
+        shutil.copytree(src=os.path.join(charts_path, charts_dir), dst=os.path.join(team_charts_path, charts_dir))
+    )
 
 
 def add_repo(repo: str, repo_location: str) -> None:
@@ -104,10 +108,12 @@ def package_chart(repo: str, chart_path: str, values: Optional[Dict[str, Any]]) 
     return chart_name, chart_version, chart_package
 
 
-def install_chart(repo: str, name: str, chart_name: str, chart_version: str) -> None:
+def install_chart(repo: str, namespace: str, name: str, chart_name: str, chart_version: str) -> None:
     chart_version = aws_orbit.__version__.replace(".dev", "-")
     _logger.debug("Installing %s, version %s as %s from %s", chart_name, chart_version, name, repo)
-    sh.run(f"helm upgrade --install --debug --version {chart_version} {name} {repo}/{chart_name}")
+    sh.run(
+        f"helm upgrade --install --debug --namespace {namespace} --version {chart_version} {name} {repo}/{chart_name}"
+    )
 
 
 def uninstall_chart(name: str) -> None:
@@ -160,7 +166,9 @@ def deploy_env(context: Context) -> None:
                 "internal_load_balancer": '"false"' if context.networking.frontend.load_balancers_subnets else '"true"',
             },
         )
-        install_chart(repo=repo, name="landing-page", chart_name=chart_name, chart_version=chart_version)
+        install_chart(
+            repo=repo, namespace="env", name="landing-page", chart_name=chart_name, chart_version=chart_version
+        )
 
 
 def deploy_team(context: Context, team_context: TeamContext) -> None:
@@ -172,7 +180,7 @@ def deploy_team(context: Context, team_context: TeamContext) -> None:
         add_repo(repo=repo, repo_location=repo_location)
         kubectl.write_kubeconfig(context=context)
 
-        team_charts_path = create_team_charts(team_context=team_context)
+        team_charts_path = create_team_charts_copy(team_context=team_context, path=os.path.join(CHARTS_PATH, "team"))
 
         chart_name, chart_version, chart_package = package_chart(
             repo=repo,
@@ -195,7 +203,11 @@ def deploy_team(context: Context, team_context: TeamContext) -> None:
             },
         )
         install_chart(
-            repo=repo, name=f"{team_context.name}-jupyter-hub", chart_name=chart_name, chart_version=chart_version
+            repo=repo,
+            namespace=team_context.name,
+            name=f"{team_context.name}-jupyter-hub",
+            chart_name=chart_name,
+            chart_version=chart_version,
         )
 
 
