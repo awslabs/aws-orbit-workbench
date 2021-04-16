@@ -166,27 +166,7 @@ class Env(Stack):
                 )
             },
         )
-        partition = Aws.PARTITION
-        account = Aws.ACCOUNT_ID
-        service_account = "system:serviceaccount:kube-system:fsx-csi-controller-sa"
-        if role.assume_role_policy:
-            role.assume_role_policy.add_statements(
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=["sts:AssumeRoleWithWebIdentity"],
-                    principals=[
-                        iam.FederatedPrincipal(
-                            federated=f"arn:{partition}:iam::{account}:oidc-provider/{self.context.eks_oidc_provider}",
-                            conditions={
-                                "StringLike": {
-                                    # ignore
-                                    f"{self.context.eks_oidc_provider}:sub": service_account
-                                }
-                            },
-                        )
-                    ],
-                ),
-            )
+
         return role
 
     def _create_role_fargate_profile(self) -> iam.Role:
