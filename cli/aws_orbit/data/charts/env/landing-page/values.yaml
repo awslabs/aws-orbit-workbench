@@ -1,0 +1,63 @@
+# Default values for landing-page.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+namespace: env
+replicaCount: 2
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-landing-page:${tag}
+  pullPolicy: Always
+  env:
+    - name: AWS_DEFAULT_REGION
+      value: ${region}
+    - name: ENV_NAME
+      value: ${env_name}
+    - name: USER_POOL_ID
+      value: ${user_pool_id}
+    - name: USER_POOL_CLIENT_ID
+      value: ${user_pool_client_id}
+    - name: IDENTITY_POOL_ID
+      value: ${identity_pool_id}
+    - name: COGNITO_EXTERNAL_PROVIDER
+      value: ${cognito_external_provider}
+    - name: COGNITO_EXTERNAL_PROVIDER_LABEL
+      value: ${cognito_external_provider_label}
+    - name: COGNITO_EXTERNAL_PROVIDER_DOMAIN
+      value: ${cognito_external_provider_domain}
+    - name: COGNITO_EXTERNAL_PROVIDER_REDIRECT
+      value: ${cognito_external_provider_redirect}
+
+podAnnotations: {}
+
+service:
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-internal: ${internal_load_balancer}
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: ${ssl_cert_arn}
+  type: LoadBalancer
+  port: 443
+
+resources:
+  limits:
+    cpu: 300m
+    memory: 300Mi
+  requests:
+    cpu: 50m
+    memory: 100Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector:
+  orbit/usage: reserved
+  orbit/node-group: env
+
+tolerations: []
+
+affinity: {}
