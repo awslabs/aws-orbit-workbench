@@ -19,8 +19,9 @@ import time
 from itertools import repeat
 from typing import Any, Dict, List, Optional, cast
 
-from aws_orbit.utils import boto3_client, boto3_resource, chunkify
 from botocore.exceptions import ClientError
+
+from aws_orbit.utils import boto3_client, boto3_resource, chunkify
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -103,7 +104,7 @@ def object_exists(bucket: str, key: str) -> bool:
     try:
         boto3_resource("s3").Object(bucket, key).load()
     except ClientError as e:
-        if e.response['Error']['Code'] == "404":
+        if e.response["Error"]["Code"] == "404":
             return False
         else:
             raise

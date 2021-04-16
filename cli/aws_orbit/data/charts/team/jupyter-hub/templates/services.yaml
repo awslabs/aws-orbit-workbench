@@ -1,0 +1,61 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "jupyter-hub.name" . }}-private
+  labels:
+    {{- include "jupyter-hub.labels" . | nindent 4 }}
+  namespace: {{ .Values.namespace }}
+  {{- with .Values.services.private.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ports:
+    - port: {{ .Values.services.private.port }}
+      protocol: TCP
+      targetPort: 8081
+  selector:
+    {{- include "jupyter-hub.selectorLabels" . | nindent 4 }}
+  type: {{ .Values.services.private.type }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "jupyter-hub.name" . }}-api
+  labels:
+    {{- include "jupyter-hub.labels" . | nindent 4 }}
+  namespace: {{ .Values.namespace }}
+  {{- with .Values.services.api.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ports:
+    - port: {{ .Values.services.api.port }}
+      protocol: TCP
+      targetPort: 8001
+  selector:
+    {{- include "jupyter-hub.selectorLabels" . | nindent 4 }}
+  type: {{ .Values.services.api.type }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "jupyter-hub.name" . }}-public
+  labels:
+    {{- include "jupyter-hub.labels" . | nindent 4 }}
+  namespace: {{ .Values.namespace }}
+  {{- with .Values.services.public.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ports:
+    - port: {{ .Values.services.public.port }}
+      protocol: TCP
+      targetPort: 8000
+  selector:
+    {{- include "jupyter-hub.selectorLabels" . | nindent 4 }}
+  type: {{ .Values.services.public.type }}
+  loadBalancerSourceRanges: {{ .Values.services.public.loadBalancerSourceRanges }}

@@ -27,7 +27,6 @@ from marshmallow_dataclass import dataclass
 
 import aws_orbit
 from aws_orbit import utils
-import aws_orbit
 from aws_orbit.models.common import BaseSchema
 from aws_orbit.models.manifest import (
     DataNetworkingManifest,

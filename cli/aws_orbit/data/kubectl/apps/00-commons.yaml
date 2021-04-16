@@ -1,8 +1,7 @@
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
+apiVersion: v1
+kind: Namespace
 metadata:
-  name: efs-storage-class
-provisioner: efs.csi.aws.com
+  name: env
 ---
 kind: Namespace
 apiVersion: v1
@@ -16,7 +15,6 @@ apiVersion: v1
 metadata:
   name: aws-logging
   namespace: aws-observability
-  labels:
 data:
   output.conf: |
     [OUTPUT]
@@ -26,6 +24,12 @@ data:
         log_group_name /orbit/pods/${env_name}
         log_stream_prefix fluent-bit-
         auto_create_group On
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-storage-class
+provisioner: efs.csi.aws.com
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -49,6 +53,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: aws-virtual-gpu-device-plugin-daemonset
+  namespace: kube-system
 spec:
   selector:
     matchLabels:
@@ -131,6 +136,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: nvidia-device-plugin-daemonset
+  namespace: kube-system
 spec:
   selector:
     matchLabels:
