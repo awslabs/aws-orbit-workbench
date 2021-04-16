@@ -55,7 +55,15 @@ services:
 resources:
   limits:
     cpu: "100m"
-    memory: "100Mi"
+    memory: "256Mi"
+  requests:
+    cpu: "10m"
+    memory: "20Mi"
+
+jobResoures:
+  limits:
+    cpu: "100m"
+    memory: "256Mi"
   requests:
     cpu: "10m"
     memory: "20Mi"
@@ -73,6 +81,8 @@ nodeSelector:
 
 tolerations: []
 
+jobTolerations: []
+
 affinity:
   nodeAffinity:
     # requiredDuringSchedulingIgnoredDuringExecution:
@@ -80,9 +90,19 @@ affinity:
     #   - matchExpressions:
     #     - key: k8s.amazonaws.com/accelerator
     #       operator: DoesNotExist
-  preferredDuringSchedulingIgnoredDuringExecution:
-  - weight: 100
-    preference:
-      matchExpressions:
-      - key: k8s.amazonaws.com/accelerator
-        operator: DoesNotExist
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      preference:
+        matchExpressions:
+        - key: k8s.amazonaws.com/accelerator
+          operator: DoesNotExist
+
+jobAffinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      preference:
+        matchExpressions:
+        - key: k8s.amazonaws.com/accelerator
+          operator: DoesNotExist
+

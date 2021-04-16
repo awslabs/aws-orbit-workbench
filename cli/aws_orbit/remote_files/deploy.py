@@ -204,6 +204,7 @@ def deploy_env(args: Tuple[str, ...]) -> None:
 
     k8s_context = utils.get_k8s_context(context=context)
     kubectl.fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=False)
+    ContextSerDe.dump_context_to_ssm(context=context)
 
 
 def deploy_teams(args: Tuple[str, ...]) -> None:

@@ -15,7 +15,7 @@
 import logging
 import os
 import shutil
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
@@ -150,25 +150,14 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
     with open(input, "r") as file:
         content: str = file.read()
 
-    inbound_ranges: List[str] = (
-        team_context.jupyterhub_inbound_ranges
-        if team_context.jupyterhub_inbound_ranges
-        else [utils.get_dns_ip_cidr(context=context)]
-    )
     content = utils.resolve_parameters(
         content,
         dict(
             team=team_context.name,
             efsid=context.shared_efs_fs_id,
             efsapid=team_context.efs_ap_id,
-            region=context.region,
             account_id=context.account_id,
-            ssl_cert_arn=context.networking.frontend.ssl_cert_arn,
             env_name=context.name,
-            tag=context.images.jupyter_hub.version,
-            grant_sudo='"yes"' if team_context.grant_sudo else '"no"',
-            internal_load_balancer='"false"' if context.networking.frontend.load_balancers_subnets else '"true"',
-            jupyterhub_inbound_ranges=str(inbound_ranges),
             team_kms_key_arn=team_context.team_kms_key_arn,
             team_security_group_id=team_context.team_security_group_id,
             cluster_pod_security_group_id=context.cluster_pod_sg_id,

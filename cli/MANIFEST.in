@@ -12,4 +12,5 @@ recursive-include aws_orbit *.typed
 recursive-include aws_orbit *.yaml
 recursive-include aws_orbit *.tpl
 recursive-include aws_orbit *.helmignore
+recursive-include aws_orbit *.py
 recursive-include docs *.md

@@ -165,6 +165,7 @@ class TeamContext:
     # added with defaults for backward compatability
     fargate: bool = True
     k8_admin: bool = False
+    helm_repository: Optional[str] = None
 
     def fetch_team_data(self) -> None:
         _logger.debug("Fetching Team %s data...", self.name)

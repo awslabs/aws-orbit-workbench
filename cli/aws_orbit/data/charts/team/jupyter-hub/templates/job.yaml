@@ -21,11 +21,11 @@ spec:
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.affinity }}
+      {{- with .Values.jobAffinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.tolerations }}
+      {{- with .Values.jobTolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -38,7 +38,7 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy}}
         command: ["/bin/bash"]
         resources:
-          {{- toYaml .Values.resources | nindent 12 }}
+          {{- toYaml .Values.jobResources | nindent 12 }}
         args:
           - -c
           - >-

@@ -61,6 +61,7 @@ def init_env_repo(context: Context) -> str:
     else:
         _logger.debug("Skipping initialization of existing Env Helm Repository at %s", repo_location)
 
+    context.helm_repository = repo_location
     return repo_location
 
 
@@ -74,6 +75,7 @@ def init_team_repo(context: Context, team_context: TeamContext) -> str:
     else:
         _logger.debug("Skipping initialization of existing Team Helm Repository at %s", repo_location)
 
+    team_context.helm_repository = repo_location
     return repo_location
 
 
@@ -178,9 +180,9 @@ def deploy_team(context: Context, team_context: TeamContext) -> None:
             values={
                 "team": team_context.name,
                 "efsid": context.shared_efs_fs_id,
-                "efsapid": team_context.efs_ap_id,
                 "region": context.region,
                 "account_id": context.account_id,
+                "ssl_cert_arn": context.networking.frontend.ssl_cert_arn,
                 "env_name": context.name,
                 "tag": context.images.jupyter_hub.version,
                 "grant_sudo": '"yes"' if team_context.grant_sudo else '"no"',
@@ -190,9 +192,6 @@ def deploy_team(context: Context, team_context: TeamContext) -> None:
                     if team_context.jupyterhub_inbound_ranges
                     else [utils.get_dns_ip_cidr(context=context)]
                 ),
-                "team_kms_key_arn": team_context.team_kms_key_arn,
-                "team_security_group_id": team_context.team_security_group_id,
-                "cluster_pod_security_group_id": context.cluster_pod_sg_id,
             },
         )
         install_chart(
