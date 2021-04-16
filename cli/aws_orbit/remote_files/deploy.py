@@ -206,7 +206,6 @@ def deploy_env(args: Tuple[str, ...]) -> None:
     kubectl.fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=False)
 
 
-
 def deploy_teams(args: Tuple[str, ...]) -> None:
     _logger.debug("args: %s", args)
     if len(args) == 1:

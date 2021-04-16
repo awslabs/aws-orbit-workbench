@@ -15,14 +15,15 @@
 import logging
 import os
 import shutil
+from typing import Any, Dict, Optional, Tuple, cast
+
 import yaml
-from typing import Any, Dict, List, Optional, Tuple, cast
 
 import aws_orbit
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, sh, utils
 from aws_orbit.models.context import Context, TeamContext
-from aws_orbit.services import cfn, s3
 from aws_orbit.remote_files import kubectl
+from aws_orbit.services import cfn, s3
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -42,9 +43,9 @@ def update_file(file_path: str, values: Dict[str, Any]) -> str:
 
 def create_team_charts(team_context: TeamContext) -> str:
     team_charts_path = os.path.join(CHARTS_PATH, ".output", team_context.name)
-        # os.mkdir(os.path.join(CHARTS_PATH, ".output"))
+    # os.mkdir(os.path.join(CHARTS_PATH, ".output"))
     os.makedirs(team_charts_path, exist_ok=True)
-    return shutil.copytree(src=os.path.join(CHARTS_PATH, "team"), dst=os.path.join(team_charts_path, "team"))
+    return str(shutil.copytree(src=os.path.join(CHARTS_PATH, "team"), dst=os.path.join(team_charts_path, "team")))
 
 
 def add_repo(repo: str, repo_location: str) -> None:
@@ -81,7 +82,9 @@ def package_chart(repo: str, chart_path: str, values: Optional[Dict[str, Any]]) 
     values_yaml = os.path.join(chart_path, "values.yaml")
 
     chart_version = aws_orbit.__version__.replace(".dev", "-")
-    chart = yaml.safe_load(update_file(chart_yaml, {"orbit_version": aws_orbit.__version__, "chart_version": chart_version}))
+    chart = yaml.safe_load(
+        update_file(chart_yaml, {"orbit_version": aws_orbit.__version__, "chart_version": chart_version})
+    )
     chart_version = chart["version"]
 
     if values:
@@ -113,14 +116,12 @@ def uninstall_chart(name: str) -> None:
         _logger.error(e)
 
 
-
 def delete_chart(repo: str, chart_name: str) -> None:
     try:
         _logger.debug("Deleting %s from %s repository", chart_name, repo)
         sh.run(f"helm s3 delete {chart_name} {repo}")
     except exceptions.FailedShellCommand as e:
         _logger.error(e)
-
 
 
 def deploy_env(context: Context) -> None:
@@ -146,16 +147,16 @@ def deploy_env(context: Context) -> None:
                 "tag": context.images.landing_page.version,
                 "cognito_external_provider": context.cognito_external_provider,
                 "cognito_external_provider_label": context.cognito_external_provider
-                    if context.cognito_external_provider_label is None
-                    else context.cognito_external_provider_label,
+                if context.cognito_external_provider_label is None
+                else context.cognito_external_provider_label,
                 "cognito_external_provider_domain": "null"
-                    if context.cognito_external_provider_domain is None
-                    else context.cognito_external_provider_domain,
+                if context.cognito_external_provider_domain is None
+                else context.cognito_external_provider_domain,
                 "cognito_external_provider_redirect": "null"
-                    if context.cognito_external_provider_redirect is None
-                    else context.cognito_external_provider_redirect,
+                if context.cognito_external_provider_redirect is None
+                else context.cognito_external_provider_redirect,
                 "internal_load_balancer": '"false"' if context.networking.frontend.load_balancers_subnets else '"true"',
-            }
+            },
         )
         install_chart(repo=repo, name="landing-page", chart_name=chart_name, chart_version=chart_version)
 
@@ -192,9 +193,11 @@ def deploy_team(context: Context, team_context: TeamContext) -> None:
                 "team_kms_key_arn": team_context.team_kms_key_arn,
                 "team_security_group_id": team_context.team_security_group_id,
                 "cluster_pod_security_group_id": context.cluster_pod_sg_id,
-            }
+            },
         )
-        install_chart(repo=repo, name=f"{team_context.name}-jupyter-hub", chart_name=chart_name, chart_version=chart_version)
+        install_chart(
+            repo=repo, name=f"{team_context.name}-jupyter-hub", chart_name=chart_name, chart_version=chart_version
+        )
 
 
 def destroy_env(context: Context) -> None:

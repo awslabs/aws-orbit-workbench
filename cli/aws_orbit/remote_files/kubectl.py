@@ -15,9 +15,9 @@
 import logging
 import os
 import shutil
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, plugins, sh, utils
+from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.models.manifest import ImagesManifest
 from aws_orbit.remote_files.utils import get_k8s_context
@@ -292,9 +292,7 @@ def fetch_kubectl_data(context: "Context", k8s_context: str, include_teams: bool
             url = k8s.get_service_hostname(name="jupyterhub-public", k8s_context=k8s_context, namespace=team.name)
             team.jupyter_url = url
 
-    landing_page_url: str = k8s.get_service_hostname(
-        name="landing-page", k8s_context=k8s_context, namespace="env"
-    )
+    landing_page_url: str = k8s.get_service_hostname(name="landing-page", k8s_context=k8s_context, namespace="env")
     k8_dashboard_url: str = k8s.get_service_hostname(
         name="kubernetes-dashboard", k8s_context=k8s_context, namespace="kubernetes-dashboard"
     )
