@@ -51,7 +51,7 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
         pass
         redshift = boto3.client("redshift")
         clusters = redshift.describe_clusters(TagValues=[team_context.name])["Clusters"]
-        namespace = context.name + "-" + team_context.name + "-"
+        namespace = "orbit-" + context.name + "-" + team_context.name + "-"
         for cluster in clusters:
             cluster_id = cluster["ClusterIdentifier"]
             _logger.debug(f"cluster_id={cluster_id}")
