@@ -53,16 +53,12 @@ google-auth==1.28.1
 idna==2.10
     # via requests
 importlib-metadata==3.10.0
-<<<<<<< HEAD
-    # via keyring
-=======
     # via
     #   build
     #   flake8
     #   keyring
     #   pep517
     #   twine
->>>>>>> main
 ipython-genutils==0.2.0
     # via traitlets
 ipython==7.19.0
