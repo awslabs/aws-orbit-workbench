@@ -208,6 +208,10 @@ traitlets==5.0.5
     #   nbconvert
     #   nbformat
     #   notebook
+typing-extensions==3.7.4.3
+    # via
+    #   anyio
+    #   importlib-metadata
 urllib3==1.26.4
     # via requests
 wcwidth==0.2.5

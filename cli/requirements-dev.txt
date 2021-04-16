@@ -869,6 +869,7 @@ typeguard==2.12.0
 typing-extensions==3.7.4.3
     # via
     #   black
+    #   importlib-metadata
     #   jsii
     #   mypy
     #   typing-inspect
@@ -888,7 +889,9 @@ websocket-client==0.58.0
 wheel==0.36.2
     # via -r requirements-dev.in
 zipp==3.4.1
-    # via importlib-metadata
+    # via
+    #   importlib-metadata
+    #   pep517
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

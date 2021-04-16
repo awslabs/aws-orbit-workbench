@@ -229,6 +229,7 @@ typeguard==2.12.0
 typing-extensions==3.7.4.3
     # via
     #   black
+    #   importlib-metadata
     #   jsii
     #   mypy
     #   typing-inspect
