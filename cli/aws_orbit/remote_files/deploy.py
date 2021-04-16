@@ -22,7 +22,7 @@ from aws_orbit import bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, TeamContext
 from aws_orbit.models.manifest import ImageManifest, Manifest, ManifestSerDe
-from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, kubectl, teams
+from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, teams, utils
 from aws_orbit.services import codebuild
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -199,6 +199,12 @@ def deploy_env(args: Tuple[str, ...]) -> None:
     _logger.debug("EKS Environment Stack deployed")
     kubectl.deploy_env(context=context)
     _logger.debug("Kubernetes Environment components deployed")
+    helm.deploy_env(context=context)
+    _logger.debug("Helm Charts installed")
+
+    k8s_context = utils.get_k8s_context(context=context)
+    kubectl.fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=False)
+    ContextSerDe.dump_context_to_ssm(context=context)
 
 
 def deploy_teams(args: Tuple[str, ...]) -> None:
@@ -230,6 +236,8 @@ def deploy_teams(args: Tuple[str, ...]) -> None:
             _logger.debug("Destroying team %s", team_name)
             plugins.PLUGINS_REGISTRIES.destroy_team_plugins(context=context, team_context=team_context)
             _logger.debug("Team Plugins destroyed")
+            helm.destroy_team(context=context, team_context=team_context)
+            _logger.debug("Team Helm Charts uninstalled")
             kubectl.destroy_team(context=context, team_context=team_context)
             _logger.debug("Kubernetes Team components destroyed")
             eksctl.destroy_team(context=context, team_context=team_context)
@@ -260,10 +268,16 @@ def deploy_teams(args: Tuple[str, ...]) -> None:
         _logger.debug("EKS Team Stack deployed")
         kubectl.deploy_team(context=context, team_context=team_context)
         _logger.debug("Kubernetes Team components deployed")
+        helm.deploy_team(context=context, team_context=team_context)
+        _logger.debug("Team Helm Charts installed")
         plugins.PLUGINS_REGISTRIES.deploy_team_plugins(
             context=context, team_context=team_context, changes=changeset.plugin_changesets if changeset else []
         )
+
         team_context.plugins = team_manifest.plugins
         ContextSerDe.dump_context_to_ssm(context=context)
         _logger.debug("Team Plugins deployed")
+
+    k8s_context = utils.get_k8s_context(context=context)
+    kubectl.fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=True)
     _logger.debug("Teams deployed")
