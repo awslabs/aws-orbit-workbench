@@ -1,0 +1,55 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: efs-init-{{ .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: orbit-jupyterhub
+    volume: {{ .Values.efsId }}
+    job-name: efs-init-{{ .Values.namespace }}
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "jupyter-hub.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.jobAffinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.jobTolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ .Values.serviceAccountName }}
+      containers:
+      - name: run-efs-init
+        securityContext:
+          runAsUser: 0
+        image: {{ .Values.image.initRepository }}
+        imagePullPolicy: {{ .Values.image.pullPolicy}}
+        command: ["/bin/bash"]
+        resources:
+          {{- toYaml .Values.jobResources | nindent 12 }}
+        args:
+          - -c
+          - >-
+            sudo chmod 777 /efs &&
+            ls -ld /efs
+        volumeMounts:
+          - mountPath: /efs
+            name: efs-volume
+      volumes:
+        - name: efs-volume
+          persistentVolumeClaim:
+            claimName: jupyterhub
+      restartPolicy: Never
+
