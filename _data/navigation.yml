@@ -1,16 +1,60 @@
 docs_list_title: AWS Orbit Documentation
 docs:
-  - title: Introduction
-    url: index.html
-  - title: Getting Start
-    url: start.html
-  - title: For Admins
-    url: admins.html
-  - title: For Users
-    url: users.html
-  - title: Plugins
-    url: plugins.html
-  - title: Integrations
-    url: integrations.html
-  - title: Developement
-    url: development.html
+  - group: Getting Start
+    sub:
+      - title: Introduction
+        url: index.html
+      - title: Quick Demo Deployment
+        url: quick-demo-deployment
+      - title: Architecture
+        url: architecture
+      - title: Usage Architecture
+        url: usage-architecture
+  - group: For Admins
+    sub:
+      - title: Deployment Guideline
+        url: deployment-guideline
+      - title: Orbit Manifest Guide
+        url: orbit-manifest-guide
+      - title: CLI Guide
+        url: cli-guide
+      - title: Administrative Teams
+        url: administrative-teams
+      - title: Prepare User Local Access
+        url: prepare-user-local-access
+      - title: Plugin Installation
+        url: plugin-installation
+  - group: For Users
+    sub:
+      - title: Your Team Guideline
+        url: 404
+      - title: Performing Data Analysis in your Notebooks
+        url: 404
+      - title: Running and Scheduling Tasks as Containers
+        url: running-and-scheduling-tasks-as-containers
+      - title: Building your docker images
+        url: 404
+      - title: Connecting to Redshift
+        url: 404
+      - title: Connecting EBS Volumes
+        url: 404
+      - title: Working remotely with local workspace
+        url: working-remotely-with-local-workspace
+  - group: Plugins
+    sub:
+      - title: Built-in Plugin Directory
+        url: built-in-plugin-directory
+      - title: Plugins Development Guide
+        url: 404
+  - group: Integrations
+    sub:
+      - title: Okta Integration
+        url: okta-integration
+  - group: Developement
+    sub:
+      - title: Contribution Guide
+        url: contribution-guide
+      - title: CLI Development
+        url: cli-development
+      - title: Deploying From Source
+        url: deploying-from-source
