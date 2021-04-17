@@ -19,7 +19,9 @@ import time
 from itertools import repeat
 from typing import Any, Dict, List, Optional, cast
 
-from aws_orbit.utils import boto3_client, chunkify
+from botocore.exceptions import ClientError
+
+from aws_orbit.utils import boto3_client, boto3_resource, chunkify
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -96,3 +98,15 @@ def delete_bucket_by_prefix(prefix: str) -> None:
     for bucket in client_s3.list_buckets()["Buckets"]:
         if bucket["Name"].startswith(prefix):
             delete_bucket(bucket=bucket["Name"])
+
+
+def object_exists(bucket: str, key: str) -> bool:
+    try:
+        boto3_resource("s3").Object(bucket, key).load()
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "404":
+            return False
+        else:
+            raise
+    else:
+        return True
