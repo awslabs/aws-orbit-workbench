@@ -1,5 +1,5 @@
 apiVersion: v2
-name: team-script-launcher
+name: team_script_launcher
 description: Helm Chart for the aws-orbit-workbench team_script_launcher plugin
 
 # A chart can be either an 'application' or a 'library' chart.

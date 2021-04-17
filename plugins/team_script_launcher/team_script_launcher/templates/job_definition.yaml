@@ -1,13 +1,11 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "team-script-launcher.fullname" . }}
+  name: {{ include "team_script_launcher.fullname" . }}
   namespace: {{ .Values.namespace }}
   labels:
-    { { - include "team-script-launcher.labels" . | nindent 8 } }
-      { { - with .Values.podLabels } }
-      { { - toYaml . | nindent 8 } }
-      { { - end } }
+    app: "orbit/team_script_launcher"
+    job-name: {{ .Values.nameOverride }}
 
 spec:
   template:

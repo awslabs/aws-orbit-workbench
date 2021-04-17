@@ -23,8 +23,7 @@ from aws_orbit.remote_files import helm
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
 _logger: logging.Logger = logging.getLogger("aws_orbit")
-# POD_FILENAME = os.path.join(os.path.dirname(__file__), "job_definition.yaml")
-CHARTS_PATH = os.path.join(os.path.dirname(__file__))
+CHART_PATH = os.path.join(os.path.dirname(__file__))
 
 
 @hooks.deploy
@@ -32,8 +31,11 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
-    charts_path = helm.create_team_charts_copy(team_context=team_context, path=CHARTS_PATH)
-    utils.print_dir(charts_path)
+    chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATH)
+    _logger.debug("package dir")
+    utils.print_dir(CHART_PATH)
+    _logger.debug("copy chart dir")
+    utils.print_dir(chart_path)
     vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
         region=context.region,
@@ -49,7 +51,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
         script_body = parameters["script"]
     else:
         raise Exception(f"Plugin {plugin_id} must define parameter 'script'")
-    script_file = os.path.join(charts_path, "chart", "templates", "script.txt")
+    script_file = os.path.join(chart_path, "templates", "script.txt")
 
     script_body = utils.resolve_parameters(script_body, vars)
     with open(script_file, "w") as file:
@@ -59,9 +61,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     repo = team_context.name
     _logger.debug(script_body)
     helm.add_repo(repo=repo, repo_location=repo_location)
-    chart_name, chart_version, chart_package = helm.package_chart(
-        repo=repo, chart_path=os.path.join(charts_path, "chart"), values=vars
-    )
+    chart_name, chart_version, chart_package = helm.package_chart(repo=repo, chart_path=chart_path, values=vars)
     helm.install_chart(
         repo=repo,
         namespace=team_context.name,

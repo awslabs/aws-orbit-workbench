@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 namespace: ${team}
-nameOverride: "team-script-launcher"
+nameOverride: team_script_launcher-${plugin_id}
 fullnameOverride: ""
 serviceAccountName: ${team}
 configMapName: ${plugin_id}-script
@@ -30,7 +30,7 @@ restartPolicy: ${restart_policy}
 podLabels:
   orbit/node-type: ec2
   orbit/attach-security-group: "yes"
-  app: "orbit/team-script-launcher"
+  app: "orbit/team_script_launcher"
 
 jobResoures:
   limits:
