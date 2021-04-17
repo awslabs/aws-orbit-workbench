@@ -1,16 +1,16 @@
--   PluginId: team_script_launcher
-    Module: team_script_launcher
-    Path: ../plugins/team_script_launcher/
-    Parameters:
-        script: |
-            i=0
-            while [ $i -lt 1 ];
-            do
-              find /efs/shared/regression -mtime +5 -exec rm {} \;
-              sleep 60
-            done
-            echo "DONE LOOP"
-        restartPolicy: Never
+#-   PluginId: team_script_launcher
+#    Module: team_script_launcher
+#    Path: ../plugins/team_script_launcher/
+#    Parameters:
+#        script: |
+#            i=0
+#            while [ $i -lt 1 ];
+#            do
+#              find /efs/shared/regression -mtime +5 -exec rm {} \;
+#              sleep 60
+#            done
+#            echo "DONE LOOP"
+#        restartPolicy: Never
 -   PluginId: custom_cfn
     Module: custom_cfn
     Path: ../plugins/custom_cfn/
