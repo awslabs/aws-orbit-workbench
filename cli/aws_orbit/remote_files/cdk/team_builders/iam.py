@@ -99,11 +99,11 @@ class IamBuilder:
                         "redshift:DeleteCluster",
                     ],
                     resources=[
-                        f"arn:{partition}:redshift:{region}:{account}:dbuser:{env_name}-{team_name}*",
-                        f"arn:{partition}:redshift:{region}:{account}:dbuser:{env_name}-{team_name}*/master",
-                        f"arn:{partition}:redshift:{region}:{account}:dbuser:{env_name}-{team_name}*/defaultdb",
-                        f"arn:{partition}:redshift:{region}:{account}:dbname:{env_name}-{team_name}*/defaultdb",
-                        f"arn:{partition}:redshift:{region}:{account}:cluster:{env_name}-{team_name}*",
+                        f"arn:{partition}:redshift:{region}:{account}:dbuser:orbit-{env_name}-{team_name}*",
+                        f"arn:{partition}:redshift:{region}:{account}:dbuser:orbit-{env_name}-{team_name}*/master",
+                        f"arn:{partition}:redshift:{region}:{account}:dbuser:orbit-{env_name}-{team_name}*/defaultdb",
+                        f"arn:{partition}:redshift:{region}:{account}:dbname:orbit-{env_name}-{team_name}*/defaultdb",
+                        f"arn:{partition}:redshift:{region}:{account}:cluster:orbit-{env_name}-{team_name}*",
                     ],
                 ),
                 iam.PolicyStatement(
