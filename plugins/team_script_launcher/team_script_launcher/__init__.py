@@ -51,7 +51,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
         script_body = parameters["script"]
     else:
         raise Exception(f"Plugin {plugin_id} must define parameter 'script'")
-    script_file = os.path.join(chart_path, "templates", "script.txt")
+    script_file = os.path.join(chart_path, "script.txt")
 
     script_body = utils.resolve_parameters(script_body, vars)
     with open(script_file, "w") as file:
@@ -74,4 +74,4 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
 @hooks.destroy
 def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
     _logger.debug("Delete Plugin %s of Team Env name: %s | Team name: %s", plugin_id, context.name, team_context.name)
-    # helm.uninstall_chart(f"{team_context.name}-{plugin_id}")
+    helm.uninstall_chart(f"{team_context.name}-{plugin_id}")

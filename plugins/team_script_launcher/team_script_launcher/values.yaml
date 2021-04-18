@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 namespace: ${team}
-nameOverride: team_script_launcher-${plugin_id}
+nameOverride: ${plugin_id}
 fullnameOverride: ""
 serviceAccountName: ${team}
 configMapName: ${plugin_id}-script
