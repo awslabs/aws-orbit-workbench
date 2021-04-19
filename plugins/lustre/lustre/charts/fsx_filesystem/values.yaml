@@ -1,0 +1,13 @@
+# Default values.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+namespace: ${team}
+nameOverride: ${plugin_id}
+fullnameOverride: ""
+serviceAccountName: ${team}
+storageClassName: fsx-lustre-${team}-${plugin_id}
+
+## Change this to modify the storage file system and create new file systems
+fs_name: lustre-${team}-fs
+storage: 1200Gi

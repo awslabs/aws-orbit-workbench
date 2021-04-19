@@ -107,7 +107,11 @@ def _cluster_autoscaler(output_path: str, context: "Context") -> None:
     with open(input, "r") as file:
         content: str = file.read()
     content = content.replace("$", "").format(
-        account_id=context.account_id, env_name=context.name, cluster_name=f"orbit-{context.name}", image=image
+        account_id=context.account_id,
+        env_name=context.name,
+        cluster_name=f"orbit-{context.name}",
+        image=image,
+        sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
     )
     with open(output, "w") as file:
         file.write(content)
@@ -191,6 +195,7 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
             account_id=context.account_id,
             env_name=context.name,
             tag=context.images.jupyter_hub.version,
+            sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
         ),
     )
     with open(output, "w") as file:
