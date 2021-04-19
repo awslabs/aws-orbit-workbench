@@ -6,7 +6,7 @@
             i=0
             while [ $i -lt 1 ];
             do
-              find /efs/shared/regression -mtime +5 -type f -exec rm {} \;
+              find /efs/shared/regression -mtime +5 -exec rm {} \;
               sleep 60
             done
             echo "DONE LOOP"
@@ -19,10 +19,3 @@
 -   PluginId: fast_fs_lustre
     Module: lustre
     Path: ../plugins/lustre/
--   PluginId: overprovisioning1
-    Module: overprovisioning
-    Path: ../plugins/overprovisioning/
-    Parameters:
-        replicas: 3
-        cpu: 2
-        memory: 4G

@@ -33,14 +33,11 @@ aws-cdk.aws-sns-subscriptions~=1.67.0
 aws-cdk.aws-stepfunctions~=1.67.0
 aws-cdk.aws-stepfunctions-tasks~=1.67.0
 -e .
--e ../sdk
 -e ../plugins/hello_world
 -e ../plugins/code_commit
 -e ../plugins/team_script_launcher
 -e ../plugins/redshift
 -e ../plugins/custom_cfn
 -e ../plugins/emr_on_eks
--e ../plugins/overprovisioning
 -e ../plugins/lustre
--e ../plugins/ray/
-
+-e ../sdk
