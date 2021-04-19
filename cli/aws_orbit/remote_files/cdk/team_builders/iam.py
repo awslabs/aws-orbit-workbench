@@ -161,6 +161,8 @@ class IamBuilder:
                         "elasticmapreduce:AddJobFlowSteps",
                         "sagemaker:*",
                         "lakeformation:GetDataAccess",
+                        "fsx:Describe*",
+                        "fsx:List*",
                     ],
                     resources=["*"],
                 ),
