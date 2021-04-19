@@ -45,5 +45,5 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Typing :: Typed",
     ],
-    package_data={"team_script_launcher": ["*.yaml"},
+    package_data={"team_script_launcher": ["*.yaml"]},
 )

@@ -200,7 +200,7 @@ def deploy_team(context: Context, team_context: TeamContext) -> None:
                     if team_context.jupyterhub_inbound_ranges
                     else [utils.get_dns_ip_cidr(context=context)]
                 ),
-                "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional"
+                "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
             },
         )
         install_chart(
