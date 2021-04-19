@@ -40,6 +40,7 @@ metadata:
 rules:
   - apiGroups:
       - ""
+      - storage.k8s.io
     resources:
       - persistentvolumes
       - nodes
