@@ -1,0 +1,13 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: fsx-lustre-${team}-${plugin_id}
+provisioner: fsx.csi.aws.com
+parameters:
+  subnetId: ${subnet}
+  securityGroupIds: ${sg}
+  s3ImportPath: ${s3importpath}
+  s3ExportPath: ${s3exportpath}
+  deploymentType: ${deploymentType}
+mountOptions:
+  - flock

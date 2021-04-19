@@ -12,6 +12,8 @@
     # via -r requirements-dev.in
 -e ../plugins/hello_world
     # via -r requirements-dev.in
+-e ../plugins/lustre
+    # via -r requirements-dev.in
 -e ../plugins/redshift
     # via -r requirements-dev.in
 -e ../sdk
@@ -547,13 +549,7 @@ google-auth==1.28.1
 idna==2.10
     # via requests
 importlib-metadata==3.10.0
-    # via
-    #   build
-    #   flake8
-    #   jsonschema
-    #   keyring
-    #   pep517
-    #   twine
+    # via keyring
 ipython-genutils==0.2.0
     # via traitlets
 ipython==7.19.0
@@ -869,7 +865,6 @@ typeguard==2.12.0
 typing-extensions==3.7.4.3
     # via
     #   black
-    #   importlib-metadata
     #   jsii
     #   mypy
     #   typing-inspect
@@ -889,9 +884,7 @@ websocket-client==0.58.0
 wheel==0.36.2
     # via -r requirements-dev.in
 zipp==3.4.1
-    # via
-    #   importlib-metadata
-    #   pep517
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

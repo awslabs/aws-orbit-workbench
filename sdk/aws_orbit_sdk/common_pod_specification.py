@@ -73,11 +73,6 @@ class TeamConstants:
     def default_image(self) -> str:
         return f"{self.account_id}.dkr.ecr.{self.region}.amazonaws.com/orbit-{self.env_name}-{self.team_name}:latest"
 
-    def default_spark_image(self) -> str:
-        return (
-            f"{self.account_id}.dkr.ecr.{self.region}.amazonaws.com/orbit-{self.env_name}-{self.team_name}-spark:latest"
-        )
-
     def env(self) -> Dict[str, str]:
         env = dict()
         env["AWS_ORBIT_ENV"] = self.env_name
