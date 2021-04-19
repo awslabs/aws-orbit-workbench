@@ -1,6 +1,6 @@
 apiVersion: v2
-name: team_script_launcher
-description: Helm Chart for the aws-orbit-workbench team_script_launcher plugin
+name: fsx_filesystem
+description: Helm Chart for the aws-orbit-workbench fsx_filesystem plugin
 
 # A chart can be either an 'application' or a 'library' chart.
 #
