@@ -13,7 +13,7 @@ ADD utils/setup.py /etc/jupyterhub/utils/setup.py
 ADD utils/requirements.txt /etc/jupyterhub/utils/requirements.txt
 ADD utils/jupyterhub_utils /etc/jupyterhub/utils/jupyterhub_utils
 RUN python3 -m pip install -e /etc/jupyterhub/utils/
-ADD utils/orbit.svg /etc/jupyterhub/orbit.svg
+ADD orbit.svg /etc/jupyterhub/orbit.svg
 
 # Ports
 EXPOSE 8000
