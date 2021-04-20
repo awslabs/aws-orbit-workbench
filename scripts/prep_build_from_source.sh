@@ -68,7 +68,11 @@ if [ $PLUGINS -eq 1 ]; then
     ${DIR}/update_repo.sh plugins/custom_cfn aws-orbit-custom-cfn \
         && echo "Updated custom_cfn codeartifact repository" \
         || (echo "ERROR: Failed to update custom_cfn codeartifact repository"; exit 1)
+    ${DIR}/update_repo.sh plugins/ray aws-orbit-ray \
+        && echo "Updated ray codeartifact repository" \
+        || (echo "ERROR: Failed to update ray codeartifact repository"; exit 1)
     ${DIR}/update_repo.sh plugins/lustre aws-orbit-lustre \
         && echo "Updated lustre codeartifact repository" \
         || (echo "ERROR: Failed to update lustre codeartifact repository"; exit 1)
+
 fi
