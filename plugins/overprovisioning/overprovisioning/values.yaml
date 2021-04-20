@@ -3,7 +3,7 @@
 # Declare variables to be passed into your templates.
 
 namespace: ${team}
-nameOverride: ${plugin_id}
+nameOverride: overprovisioning-${plugin_id}
 fullnameOverride: ""
 serviceAccountName: ${team}
 
@@ -32,4 +32,4 @@ nodeSelector:
   orbit/usage: teams
   orbit/node-type: ec2
 
-resources: ${resources}
+${resources}

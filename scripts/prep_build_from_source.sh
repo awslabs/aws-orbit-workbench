@@ -74,5 +74,8 @@ if [ $PLUGINS -eq 1 ]; then
     ${DIR}/update_repo.sh plugins/lustre aws-orbit-lustre \
         && echo "Updated lustre codeartifact repository" \
         || (echo "ERROR: Failed to update lustre codeartifact repository"; exit 1)
+    ${DIR}/update_repo.sh plugins/overprovisioning aws-orbit-overprovisioning \
+        && echo "Updated overprovisioning codeartifact repository" \
+        || (echo "ERROR: Failed to update overprovisioning codeartifact repository"; exit 1)
 
 fi

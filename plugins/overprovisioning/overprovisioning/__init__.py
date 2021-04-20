@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from aws_orbit.plugins import hooks
 from aws_orbit.remote_files import helm
-
+import yaml
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
 _logger: logging.Logger = logging.getLogger("aws_orbit")
@@ -31,13 +31,14 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
     chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATH)
-    containers = parameters["containers"] if "containers" in parameters else 1
-    if "resources" in parameters:
-         resources = parameters["resources"]
-    else:
-        raise Exception(f"Must provide resources for {plugin_id}")
+    containers = parameters["replicas"] if "replicas" in parameters else 1
+    del parameters["replicas"]
+    if 'cpu' not in parameters:
+        parameters['cpu'] = '1'
 
-    _logger.info(f"overprovisioning installed with {containers} containers of profile {profile}.")
+    resources = {'resources': parameters}
+
+    _logger.info(f"overprovisioning installed with {containers} containers of profile:  {resources}.")
 
     vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
@@ -47,7 +48,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
         restart_policy=parameters["restartPolicy"] if "restartPolicy" in parameters else "Never",
         plugin_id=plugin_id,
         containers=containers,
-        resources=resources,
+        resources=yaml.dump(resources),
         toolkit_s3_bucket=context.toolkit.s3_bucket,
     )
 
