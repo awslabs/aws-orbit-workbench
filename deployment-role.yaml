@@ -1,0 +1,218 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This template deploys an IAM Role which has the ability to deploy all the client side Aws resources, which are pre-requisistes before orbit does a remote deployment.
+Resources:
+  DeploymentRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              AWS: !Join 
+                - ''
+                - - 'arn:'
+                  - !Ref 'AWS::Partition'
+                  - ':iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':root'
+        Version: 2012-10-17
+      RoleName: orbit_toolkit_deployer_role
+  IAMApi:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 'iam:CreatePolicy'
+              - 'iam:DetachRolePolicy'
+              - 'iam:DeletePolicy'
+              - 'iam:CreateRole'
+              - 'iam:DeleteRole'
+              - 'iam:AttachRolePolicy'
+              - 'iam:PutRolePolicy'
+              - 'iam:UpdateRole'
+              - 'iam:CreatePolicyVersion'
+              - 'iam:DeletePolicyVersion'
+              - 'iam:List*'
+              - 'iam:Get*'
+              - 'iam:TagRole'
+              - 'iam:UntagRole'
+              - 'iam:PassRole'
+            Effect: Allow
+            Resource:
+              - !Join 
+                - ''
+                - - 'arn:aws:iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':policy/orbit*'
+              - !Join 
+                - ''
+                - - 'arn:aws:iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':role/orbit*'
+        Version: 2012-10-17
+      PolicyName: iam_permissions
+      Roles:
+        - !Ref DeploymentRole
+  S3Permissions:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:Create*'
+              - 's3:Put*'
+              - 's3:Delete*'
+              - 's3:Get*'
+            Effect: Allow
+            Resource: 'arn:aws:s3:::orbit*'
+        Version: 2012-10-17
+      PolicyName: s3_permissions
+      Roles:
+        - !Ref DeploymentRole
+  SsmPermissions:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 'ssm:Put*'
+              - 'ssm:DeleteParameters'
+            Effect: Allow
+            Resource: !Join 
+              - ''
+              - - 'arn:aws:ssm:'
+                - !Ref 'AWS::Region'
+                - ':'
+                - !Ref 'AWS::AccountId'
+                - ':parameter/orbit*'
+        Version: 2012-10-17
+      PolicyName: ssm_perm
+      Roles:
+        - !Ref DeploymentRole
+  CfnPermissions:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 'cloudformation:Describe*'
+              - 'cloudformation:Create*'
+              - 'cloudformation:Delete*'
+              - 'cloudformation:ExecuteChangeSet'
+            Effect: Allow
+            Resource: !Join 
+              - ''
+              - - 'arn:aws:cloudformation:'
+                - !Ref 'AWS::Region'
+                - ':'
+                - !Ref 'AWS::AccountId'
+                - ':stack/orbit*'
+        Version: 2012-10-17
+      PolicyName: cfn_perm
+      Roles:
+        - !Ref DeploymentRole
+  GeneralPermissions:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 'kms:CreateKey'
+              - 'kms:List*'
+              - 'kms:Describe*'
+              - 'kms:TagResource'
+              - 'ssm:Describe*'
+              - 'ssm:Get*'
+              - 'elasticloadbalancing:DescribeLoadBalancers'
+              - 's3:List*'
+              - 'ec2:Describe*'
+            Effect: Allow
+            Resource: '*'
+        Version: 2012-10-17
+      PolicyName: star_permissions
+      Roles:
+        - !Ref DeploymentRole
+  CodeBuildPermissions:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 'codebuild:BatchGetBuilds'
+              - 'codebuild:StartBuild'
+              - 'codebuild:StopBuild'
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+              - 'logs:Describe*'
+              - 'logs:Get*'
+              - 'codebuild:Create*'
+              - 'codebuild:DeleteProject'
+              - 'codebuild:UpdateReport'
+              - 'codebuild:BatchPutTestCases'
+              - 'codebuild:BatchPutCodeCoverages'
+            Effect: Allow
+            Resource:
+              - !Join 
+                - ''
+                - - 'arn:aws:codebuild:'
+                  - !Ref 'AWS::Region'
+                  - ':'
+                  - !Ref 'AWS::AccountId'
+                  - ':project/orbit*'
+              - !Join 
+                - ''
+                - - 'arn:aws:logs:'
+                  - !Ref 'AWS::Region'
+                  - ':'
+                  - !Ref 'AWS::AccountId'
+                  - ':log-group:/aws/codebuild/orbit*'
+              - !Join 
+                - ''
+                - - 'arn:aws:codebuild:'
+                  - !Ref 'AWS::Region'
+                  - ':'
+                  - !Ref 'AWS::AccountId'
+                  - ':report-group*'
+        Version: 2012-10-17
+      PolicyName: codebuild_permissions
+      Roles:
+        - !Ref DeploymentRole
+  KmsPermissions:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 'kms:CreateAlias'
+              - 'kms:DeleteAlias'
+              - 'kms:EnableKeyRotation'
+              - 'kms:ScheduleKeyDeletion'
+              - 'kms:ListResourceTags'
+              - 'kms:PutKeyPolicy'
+              - 'kms:TagResource'
+              - 'kms:Update*'
+              - 'kms:Decrypt'
+              - 'kms:GenerateDataKey'
+            Effect: Allow
+            Resource:
+              - !Join 
+                - ''
+                - - 'arn:aws:kms:'
+                  - !Ref 'AWS::Region'
+                  - ':'
+                  - !Ref 'AWS::AccountId'
+                  - ':alias/orbit*'
+              - !Join 
+                - ''
+                - - 'arn:aws:kms:'
+                  - !Ref 'AWS::Region'
+                  - ':'
+                  - !Ref 'AWS::AccountId'
+                  - ':key/*'
+        Version: 2012-10-17
+      PolicyName: kms_policy
+      Roles:
+        - !Ref DeploymentRole

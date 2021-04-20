@@ -7,6 +7,9 @@ ScratchBucketArn: !SSM ${/orbit-foundation/dev-env/resources::ScratchBucketArn}
 UserPoolId: !SSM ${/orbit-foundation/dev-env/resources::UserPoolId}
 SharedEfsFsId: !SSM ${/orbit-foundation/dev-env/resources::SharedEfsFsId}
 SharedEfsSgId: !SSM ${/orbit-foundation/dev-env/resources::SharedEfsSgId}
+InstallSsmAgent: true
+CognitoExternalProvider: !ENV ${COGNITO_EXTERNAL_PROVIDER::}
+CognitoExternalProviderLabel: !ENV ${COGNITO_EXTERNAL_PROVIDER_LABEL::}
 Images:
     JupyterHub:
         Repository: !ENV ${JUPYTER_HUB_REPO::aws-orbit-jupyter-hub}
@@ -33,6 +36,7 @@ Networking:
         NodesSubnets: !SSM ${/orbit-foundation/dev-env/resources::NodesSubnets}
     Frontend:
         LoadBalancersSubnets: !SSM ${/orbit-foundation/dev-env/resources::LoadBalancersSubnets}
+        SslCertArn: !SSM ${/orbit-foundation/dev-env/resources::SslCertArn}
 ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge
@@ -42,17 +46,19 @@ ManagedNodegroups:
     NodesNumMin: 1
     Labels:
         instance-type: m5.2xlarge
+-   Name: primary-gpu
+    InstanceType: g4dn.xlarge
+    LocalStorageSize: 128
+    NodesNumDesired: 1
+    NodesNumMax: 4
+    NodesNumMin: 0
 Teams:
 -   Name: lake-creator
-    Policies:
-    - orbit-dev-env-demo-lake-bucket-fullaccess
     GrantSudo: true
     Fargate: false
     K8Admin: true
     JupyterhubInboundRanges:
     - 0.0.0.0/0
 -   Name: lake-user
-    Policies:
-    - orbit-dev-env-demo-lake-bucket-readonlyaccess
     GrantSudo: false
     JupyterhubInboundRanges: []

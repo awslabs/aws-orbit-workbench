@@ -144,9 +144,9 @@ class RedshiftClustersCommon(core.Construct):
                                 "redshift:*",
                             ],
                             resources=[
-                                f"arn:{self.partition}:redshift:{self.region}:{self.account}:dbuser:{self.env_name}-{self.teamspace_name}*/master",  # noqa
-                                f"arn:{self.partition}:redshift:{self.region}:{self.account}:dbname:{self.env_name}-{self.teamspace_name}*/defaultdb",  # noqa
-                                f"arn:{self.partition}:redshift:{self.region}:{self.account}:cluster:{self.env_name}-{self.teamspace_name}*",  # noqa
+                                f"arn:{self.partition}:redshift:{self.region}:{self.account}:dbuser:orbit-{self.env_name}-{self.teamspace_name}*/master",  # noqa
+                                f"arn:{self.partition}:redshift:{self.region}:{self.account}:dbname:orbit-{self.env_name}-{self.teamspace_name}*/defaultdb",  # noqa
+                                f"arn:{self.partition}:redshift:{self.region}:{self.account}:cluster:orbit-{self.env_name}-{self.teamspace_name}*",  # noqa
                             ],
                         ),
                         iam.PolicyStatement(

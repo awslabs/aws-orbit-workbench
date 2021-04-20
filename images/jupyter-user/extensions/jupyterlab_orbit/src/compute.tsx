@@ -15,6 +15,8 @@ import {
   RedshiftCategoryLeftList
 } from './compute/redshift';
 
+import { EksComponentFunc } from './compute/eks';
+
 const NAME = 'Compute';
 const ICON: LabIcon = computeIcon;
 
@@ -35,11 +37,7 @@ class CentralWidget extends ReactWidget {
   render(): JSX.Element {
     return (
       <div className={SECTION_CLASS}>
-        <CentralWidgetHeader
-          name={NAME}
-          icon={ICON}
-          refreshCallback={refreshCallback}
-        />
+        <CentralWidgetHeader name={NAME} icon={ICON} />
 
         <RedshiftCategoryCentralList
           title={'Your Redshift Clusters'}
@@ -83,6 +81,7 @@ class LeftWidget extends ReactWidget {
           title={'Your Redshift Clusters'}
           type={'user'}
         />
+        <EksComponentFunc />
         <div />
       </div>
     );

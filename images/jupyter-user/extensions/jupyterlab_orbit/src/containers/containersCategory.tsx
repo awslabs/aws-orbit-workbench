@@ -17,7 +17,7 @@ import {
 import { CategoryViews } from '../common/categoryViews';
 import { Tooltip } from 'antd';
 import { ToolbarButtonComponent } from '@jupyterlab/apputils';
-import { bugIcon, closeIcon } from '@jupyterlab/ui-components';
+import { bugIcon, closeIcon, searchIcon } from '@jupyterlab/ui-components';
 import { JupyterFrontEnd } from '@jupyterlab/application';
 
 const Item = (props: {
@@ -25,6 +25,7 @@ const Item = (props: {
   openItemCallback: (name: string) => void;
   closeItemCallback: (name: string) => void;
   connect: (container: string) => Promise<void>;
+  logs: (container: string) => Promise<void>;
 }) => {
   const { title, color, icon } = getStateIcon(props.item.job_state);
 
@@ -50,6 +51,13 @@ const Item = (props: {
         />
         <ToolbarButtonComponent
           className={SHUTDOWN_BUTTON_CLASS}
+          icon={searchIcon}
+          onClick={() => props.logs(props.item.name)}
+          tooltip={'Tail logs!'}
+          enabled={props.item.job_state === 'running'}
+        />
+        <ToolbarButtonComponent
+          className={SHUTDOWN_BUTTON_CLASS}
           icon={closeIcon}
           onClick={() => props.closeItemCallback(props.item.name)}
           tooltip={'Shut Down!'}
@@ -63,6 +71,7 @@ const Items = (props: {
   data: IItem[];
   closeItemCallback: (name: string) => void;
   connect: (container: string) => Promise<void>;
+  logs: (container: string) => Promise<void>;
 }) => (
   <>
     {' '}
@@ -72,6 +81,7 @@ const Items = (props: {
         openItemCallback={openItemCallback}
         closeItemCallback={props.closeItemCallback}
         connect={props.connect}
+        logs={props.logs}
       />
     ))}{' '}
   </>
@@ -90,7 +100,8 @@ export const ContainerCategoryLeftList = (props: {
     closeAllCallback,
     refreshCallback,
     setData,
-    connect
+    connect,
+    logs
   } = props.useItems(props.type, props.app);
 
   const closeItemCallback = async (name: string) => {
@@ -101,6 +112,7 @@ export const ContainerCategoryLeftList = (props: {
       data={data}
       closeItemCallback={closeItemCallback}
       connect={connect}
+      logs={logs}
     />
   );
 

@@ -24,5 +24,5 @@ force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 120
-src_paths = ["jupyterhub_config.py", "utils"]
+src_paths = ["utils"]
 py_version = 36

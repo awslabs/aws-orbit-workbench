@@ -8,9 +8,9 @@ appnope==0.1.2
     # via ipython
 backcall==0.2.0
     # via ipython
-boto3==1.17.43
+boto3==1.17.49
     # via aws-orbit-sdk (setup.py)
-botocore==1.20.43
+botocore==1.20.49
     # via
     #   boto3
     #   s3transfer
@@ -22,9 +22,9 @@ certifi==2020.12.5
     #   requests
 chardet==4.0.0
     # via requests
-decorator==5.0.1
+decorator==5.0.6
     # via ipython
-google-auth==1.28.0
+google-auth==1.28.1
     # via kubernetes
 idna==2.10
     # via requests

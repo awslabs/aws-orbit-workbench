@@ -477,9 +477,10 @@ class RedshiftUtils(DatabaseCommon):
         """
 
         props = get_properties()
-
         redshift = boto3.client("redshift")
-        cluster_identifier = (props["AWS_ORBIT_ENV"] + "-" + props["AWS_ORBIT_TEAM_SPACE"] + "-" + cluster_name).lower()
+        env = props["AWS_ORBIT_ENV"]
+        team_space = props["AWS_ORBIT_TEAM_SPACE"]
+        cluster_identifier = f"orbit-{env}-{team_space}-{cluster_name}".lower()
         try:
             clusters = redshift.describe_clusters(ClusterIdentifier=cluster_identifier)["Clusters"]
         except:
@@ -574,10 +575,12 @@ class RedshiftUtils(DatabaseCommon):
         """
 
         props = get_properties()
+        env = props["AWS_ORBIT_ENV"]
+        team_space = props["AWS_ORBIT_TEAM_SPACE"]
         redshift = boto3.client("redshift")
-        namespace = props["AWS_ORBIT_ENV"] + "-" + props["AWS_ORBIT_TEAM_SPACE"] + "-"
-        cluster_identifier = cluster_name if namespace in cluster_name else namespace + cluster_name
-
+        namespace = f"orbit-{env}-{team_space}-"
+        cluster_name_value = cluster_name.lower()
+        cluster_identifier = cluster_name if namespace in cluster_name_value else namespace + cluster_name_value
         res = redshift.delete_cluster(ClusterIdentifier=cluster_identifier, SkipFinalClusterSnapshot=True)
 
         if "errorMessage" in res:
@@ -716,6 +719,42 @@ class RedshiftUtils(DatabaseCommon):
         waiter.wait(ClusterIdentifier=cluster_id, WaiterConfig={"Delay": 60, "MaxAttempts": 15})
         time.sleep(60)  # allow DB to for another min
         return (cluster_id, user)
+
+    def create_cluster(self, cluster_name: str, number_of_nodes: str, node_type: str) -> Dict[str, str]:
+        """
+        Creates a Redshift Cluster.
+
+        """
+        props = get_properties()
+        env = props["AWS_ORBIT_ENV"]
+        team_space = props["AWS_ORBIT_TEAM_SPACE"]
+        cluster_def_func = f"orbit-{env}-{team_space}-StartRedshift-Standard"
+        cluster_identifier = f"orbit-{env}-{team_space}-{cluster_name}".lower()
+
+        cluster_args = {"cluster_name": cluster_identifier, "Nodes": number_of_nodes, "NodeType": node_type}
+
+        lambda_client = boto3.client("lambda")
+        invoke_response = lambda_client.invoke(
+            FunctionName=cluster_def_func,
+            Payload=bytes(json.dumps(cluster_args), "utf-8"),
+            InvocationType="RequestResponse",
+            LogType="Tail",
+        )
+
+        response_payload = json.loads(invoke_response["Payload"].read().decode("utf-8"))
+        if "statusCode" not in response_payload or "200" != response_payload["statusCode"]:
+            logger.error(response_payload)
+            error_message = response_payload["errorMessage"]
+            response = {"status": "400", "message": f"Error creating Redshift cluster - {error_message}"}
+        else:
+            cluster_id = response_payload["cluster_id"]
+            logger.info("cluster created: %s", cluster_id)
+            response = {
+                "status": str(response_payload["statusCode"]),
+                "message": f"Successfully created Redshift cluster {cluster_id}",
+            }
+
+        return response
 
     def _add_json_schema(
         self,
@@ -873,7 +912,7 @@ class RedshiftUtils(DatabaseCommon):
             cluster_model["cluster_id"] = cluster_id
             cluster_model["Name"] = cluster_id
             cluster_model["State"] = cluster["ClusterStatus"]
-            if "Endpoint" in cluster:
+            if "Endpoint" in cluster and "Address" in cluster["Endpoint"]:
                 cluster_model["ip"] = f"{cluster['Endpoint']['Address']}:{cluster['Endpoint']['Port']}"
 
             cluster_nodes_info = {

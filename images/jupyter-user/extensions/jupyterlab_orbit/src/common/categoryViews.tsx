@@ -149,8 +149,9 @@ export const CategoryViewsWithCreate = (props: {
   );
 };
 
-export const ListViewWithoutToolbar = (props: {
+export const ListViewWithRefresh = (props: {
   name: string;
+  refreshCallback: (name: string) => any;
   items: JSX.Element;
 }) => {
   return (
@@ -158,6 +159,11 @@ export const ListViewWithoutToolbar = (props: {
       <header className={SECTION_HEADER_CLASS}>
         <h2>{props.name}</h2>
         <div style={{ display: 'flex', alignItems: 'right' }} />
+        <ToolbarButtonComponent
+          tooltip={'Refresh List'}
+          icon={refreshIcon}
+          onClick={() => props.refreshCallback(props.name)}
+        />
       </header>
       <div className={CONTAINER_CLASS}>
         <ul className={LIST_CLASS}> {props.items} </ul>
@@ -176,6 +182,35 @@ export const TreeView = (props: {
       <header className={SECTION_HEADER_CLASS}>
         <h2>{props.name}</h2>
         <div style={{ display: 'flex', alignItems: 'right' }} />
+      </header>
+      <div className={CONTAINER_CLASS}>
+        <ReactJson
+          src={props.item}
+          name={props.root_name}
+          collapsed={true}
+          displayDataTypes={false}
+        />
+      </div>
+    </div>
+  );
+};
+
+export const TreeViewWithRefresh = (props: {
+  name: string;
+  item: any;
+  root_name: string;
+  refreshCallback: () => any;
+}) => {
+  return (
+    <div className={SECTION_CLASS}>
+      <header className={SECTION_HEADER_CLASS}>
+        <h2>{props.name}</h2>
+        <div style={{ display: 'flex', alignItems: 'right' }} />
+        <ToolbarButtonComponent
+          tooltip={'Refresh'}
+          icon={refreshIcon}
+          onClick={() => props.refreshCallback()}
+        />
       </header>
       <div className={CONTAINER_CLASS}>
         <ReactJson

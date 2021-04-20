@@ -14,16 +14,16 @@
 
 import logging
 import os
-from typing import TYPE_CHECKING, Any, Dict, cast
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from aws_orbit import sh, utils
+from aws_orbit import utils
 from aws_orbit.plugins import hooks
+from aws_orbit.remote_files import helm
 
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
-
 _logger: logging.Logger = logging.getLogger("aws_orbit")
-POD_FILENAME = os.path.join(os.path.dirname(__file__), "job_definition.yaml")
+CHART_PATH = os.path.join(os.path.dirname(__file__))
 
 
 @hooks.deploy
@@ -31,8 +31,12 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
-    configmap_script_name = f"{plugin_id}-script"
-    vars = dict(
+    chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATH)
+    _logger.debug("package dir")
+    utils.print_dir(CHART_PATH)
+    _logger.debug("copy chart dir")
+    utils.print_dir(chart_path)
+    vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
         region=context.region,
         account_id=context.account_id,
@@ -47,49 +51,27 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
         script_body = parameters["script"]
     else:
         raise Exception(f"Plugin {plugin_id} must define parameter 'script'")
-    script_file = os.path.join(os.path.dirname(POD_FILENAME), f"{plugin_id}-script.sh")
+    script_file = os.path.join(chart_path, "script.txt")
 
-    script_body = utils.resolve_parameters(script_body, cast(Dict[str, str], vars))
+    script_body = utils.resolve_parameters(script_body, vars)
     with open(script_file, "w") as file:
         file.write(script_body)
 
+    repo_location = helm.init_team_repo(context=context, team_context=team_context)
+    repo = team_context.name
     _logger.debug(script_body)
-    # Cleanup of previous installation if needed
-    sh.run(f"kubectl delete jobs/team-script-{plugin_id} --namespace {team_context.name} --ignore-not-found")
-    sh.run(f"kubectl delete configmap {configmap_script_name} --namespace {team_context.name} --ignore-not-found")
-
-    # Create the configmap with the script
-    sh.run(
-        f"kubectl create configmap {configmap_script_name} --from-file={script_file} --namespace {team_context.name}"
+    helm.add_repo(repo=repo, repo_location=repo_location)
+    chart_name, chart_version, chart_package = helm.package_chart(repo=repo, chart_path=chart_path, values=vars)
+    helm.install_chart(
+        repo=repo,
+        namespace=team_context.name,
+        name=f"{team_context.name}-{plugin_id}",
+        chart_name=chart_name,
+        chart_version=chart_version,
     )
-    _logger.debug(f"Create config map: {configmap_script_name} at namespace {team_context.name}")
-
-    _logger.debug(
-        "Using S3 Sync Pod at %s for Env name: %s | Team name: %s",
-        POD_FILENAME,
-        context.name,
-        team_context.name,
-    )
-    input = POD_FILENAME
-    output = os.path.join(os.path.dirname(POD_FILENAME), f"{plugin_id}-team.yaml")
-
-    with open(input, "r") as file:
-        content: str = file.read()
-
-    content = utils.resolve_parameters(content, cast(Dict[str, str], vars))
-
-    _logger.debug("Kubectl Team %s context:\n%s", team_context.name, content)
-    with open(output, "w") as file:
-        file.write(content)
-
-    # run the POD to execute the script
-    cmd = f"kubectl apply -f {output}  --namespace {team_context.name}"
-    _logger.debug(cmd)
-    sh.run(cmd)
 
 
 @hooks.destroy
 def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
     _logger.debug("Delete Plugin %s of Team Env name: %s | Team name: %s", plugin_id, context.name, team_context.name)
-    sh.run(f"kubectl delete jobs/team-script-{plugin_id} --namespace {team_context.name} --ignore-not-found")
-    sh.run(f"kubectl delete configmap {plugin_id}-script --namespace {team_context.name} --ignore-not-found")
+    helm.uninstall_chart(f"{team_context.name}-{plugin_id}")

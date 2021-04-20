@@ -25,6 +25,7 @@ from dataclasses import field
 from marshmallow import Schema
 from marshmallow_dataclass import dataclass
 
+import aws_orbit
 from aws_orbit import utils
 from aws_orbit.models.common import BaseSchema
 from aws_orbit.models.manifest import (
@@ -164,6 +165,7 @@ class TeamContext:
     # added with defaults for backward compatability
     fargate: bool = True
     k8_admin: bool = False
+    helm_repository: Optional[str] = None
 
     def fetch_team_data(self) -> None:
         _logger.debug("Fetching Team %s data...", self.name)
@@ -214,6 +216,7 @@ class FoundationContext:
     codeartifact_repository: Optional[str] = None
     images: FoundationImagesManifest = FoundationImagesManifest()
     policies: Optional[List[str]] = cast(List[str], field(default_factory=list))
+    orbit_version: Optional[str] = aws_orbit.__version__
 
 
 @dataclass(base_schema=BaseSchema)
@@ -258,6 +261,9 @@ class Context:
     cluster_pod_sg_id: Optional[str] = None
     managed_nodegroups: List[ManagedNodeGroupManifest] = field(default_factory=list)
     policies: Optional[List[str]] = cast(List[str], field(default_factory=list))
+    orbit_version: Optional[str] = aws_orbit.__version__
+    helm_repository: Optional[str] = None
+    install_ssm_agent: Optional[bool] = False
 
     def get_team_by_name(self, name: str) -> Optional[TeamContext]:
         for t in self.teams:
@@ -378,6 +384,10 @@ class ContextSerDe(Generic[T, V]):
             context.shared_efs_sg_id = manifest.shared_efs_sg_id
             context.scratch_bucket_arn = manifest.scratch_bucket_arn
             context.policies = manifest.policies
+            context.codeartifact_domain = manifest.codeartifact_domain
+            context.codeartifact_repository = manifest.codeartifact_repository
+            context.cognito_external_provider = manifest.cognito_external_provider
+            context.cognito_external_provider_label = manifest.cognito_external_provider_label
             for team_manifest in manifest.teams:
                 team_context: Optional[TeamContext] = context.get_team_by_name(name=team_manifest.name)
                 if team_context:
@@ -412,7 +422,9 @@ class ContextSerDe(Generic[T, V]):
                 managed_nodegroups=[],
                 eks_system_masters_roles=[],
                 policies=manifest.policies,
+                install_ssm_agent=manifest.install_ssm_agent,
             )
+        context.install_ssm_agent = manifest.install_ssm_agent
         ContextSerDe.fetch_toolkit_data(context=context)
         ContextSerDe.dump_context_to_ssm(context=context)
         return context

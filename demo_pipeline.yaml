@@ -59,22 +59,13 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: !Ref 'EnvName'
+            Value: 'demo-fndn'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DEPLOY_FOUNDATION
           - Name: ORBIT_ADMIN_ROLE
             Type: PLAINTEXT
-            Value: !Join
-              - ''
-              - - 'arn:'
-                - !Ref 'AWS::Partition'
-                - ':iam::'
-                - !Ref 'AWS::AccountId'
-                - ':role/'
-                - 'orbit-'
-                - !Ref 'EnvName'
-                - '-admin'
+            Value: !Ref OrbitDeploymentRole
           - Name: ORBIT_ENV_NAME
             Type: PLAINTEXT
             Value: !Ref 'EnvName'
@@ -113,22 +104,13 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: !Ref 'EnvName'
+            Value: 'demo-fndn'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DESTROY_FOUNDATION
           - Name: ORBIT_ADMIN_ROLE
             Type: PLAINTEXT
-            Value: !Join
-              - ''
-              - - 'arn:'
-                - !Ref 'AWS::Partition'
-                - ':iam::'
-                - !Ref 'AWS::AccountId'
-                - ':role/'
-                - 'orbit-'
-                - !Ref 'EnvName'
-                - '-admin'
+            Value: !Ref OrbitDeploymentRole
           - Name: ORBIT_ENV_NAME
             Type: PLAINTEXT
             Value: !Ref 'EnvName'
@@ -167,22 +149,16 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: !Ref 'EnvName'
+            Value: 'demo-fndn'
+          - Name: ORBIT_ADMIN_DEMO_ROLE
+            Type: PLAINTEXT
+            Value: !Ref 'K8AdminRole'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DEPLOY_ENV
           - Name: ORBIT_ADMIN_ROLE
             Type: PLAINTEXT
-            Value: !Join
-              - ''
-              - - 'arn:'
-                - !Ref 'AWS::Partition'
-                - ':iam::'
-                - !Ref 'AWS::AccountId'
-                - ':role/'
-                - 'orbit-'
-                - !Ref 'EnvName'
-                - '-admin'
+            Value: !Ref OrbitDeploymentRole
           - Name: ORBIT_ENV_NAME
             Type: PLAINTEXT
             Value: !Ref 'EnvName'
@@ -221,22 +197,13 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: !Ref 'EnvName'
+            Value: 'demo-fndn'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DESTROY_ENV
           - Name: ORBIT_ADMIN_ROLE
             Type: PLAINTEXT
-            Value: !Join
-              - ''
-              - - 'arn:'
-                - !Ref 'AWS::Partition'
-                - ':iam::'
-                - !Ref 'AWS::AccountId'
-                - ':role/'
-                - 'orbit-'
-                - !Ref 'EnvName'
-                - '-admin'
+            Value: !Ref OrbitDeploymentRole
           - Name: ORBIT_ENV_NAME
             Type: PLAINTEXT
             Value: !Ref 'EnvName'
@@ -275,22 +242,13 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: !Ref 'EnvName'
+            Value: 'demo-fndn'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DEPLOY_TEAMS
           - Name: ORBIT_ADMIN_ROLE
             Type: PLAINTEXT
-            Value: !Join
-              - ''
-              - - 'arn:'
-                - !Ref 'AWS::Partition'
-                - ':iam::'
-                - !Ref 'AWS::AccountId'
-                - ':role/'
-                - 'orbit-'
-                - !Ref 'EnvName'
-                - '-admin'
+            Value: !Ref OrbitDeploymentRole
           - Name: ORBIT_ENV_NAME
             Type: PLAINTEXT
             Value: !Ref 'EnvName'
@@ -329,22 +287,13 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: !Ref 'EnvName'
+            Value: 'demo-fndn'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DEPLOY_REGRESSION
           - Name: ORBIT_ADMIN_ROLE
             Type: PLAINTEXT
-            Value: !Join
-              - ''
-              - - 'arn:'
-                - !Ref 'AWS::Partition'
-                - ':iam::'
-                - !Ref 'AWS::AccountId'
-                - ':role/'
-                - 'orbit-'
-                - !Ref 'EnvName'
-                - '-admin'
+            Value: !Ref OrbitDeploymentRole
           - Name: ORBIT_ENV_NAME
             Type: PLAINTEXT
             Value: !Ref 'EnvName'
@@ -364,16 +313,7 @@ Resources:
         ImagePullCredentialsType: CODEBUILD
         PrivilegedMode: true
         Type: LINUX_CONTAINER
-      ServiceRole: !Join
-        - ''
-        - - 'arn:'
-          - !Ref 'AWS::Partition'
-          - ':iam::'
-          - !Ref 'AWS::AccountId'
-          - ':role/'
-          - 'orbit-'
-          - !Ref 'EnvName'
-          - '-admin'
+      ServiceRole: !Ref OrbitDeploymentRole
       Source:
         BuildSpec: cli-buildspec.yaml
         Type: CODEPIPELINE
@@ -390,22 +330,13 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: !Ref 'EnvName'
+            Value: 'demo-fndn'
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DESTROY_TEAMS
           - Name: ORBIT_ADMIN_ROLE
             Type: PLAINTEXT
-            Value: !Join
-              - ''
-              - - 'arn:'
-                - !Ref 'AWS::Partition'
-                - ':iam::'
-                - !Ref 'AWS::AccountId'
-                - ':role/'
-                - 'orbit-'
-                - !Ref 'EnvName'
-                - '-admin'
+            Value: !Ref OrbitDeploymentRole
           - Name: ORBIT_ENV_NAME
             Type: PLAINTEXT
             Value: !Ref 'EnvName'
@@ -619,11 +550,10 @@ Resources:
       ArtifactStore:
         Location: !Ref ArtifactsBucket
         Type: S3
-      Name: Orbit_Demo_Destory
+      Name: Orbit_Demo_Destroy
       RestartExecutionOnUpdate: false
     DependsOn:
       - OrbitDeploymentRole
-
 
 Parameters:
   EnvName:
@@ -633,11 +563,13 @@ Parameters:
   Branch:
     Type: String
     Description: The release branch to use with this deployment. Required for latest deployment pipeline code
-    Default: release/0.14.0
+    Default: main
   Version:
     Type: String
     Description: The version to deploy this deployment
-    Default: 0.14.0   
   GitHubOAuthToken:
     Type: String
     Description: The GitHub OAuth token that will allow read access to the repo
+  K8AdminRole:
+    Type: String
+    Description: A role name for users that manages K8

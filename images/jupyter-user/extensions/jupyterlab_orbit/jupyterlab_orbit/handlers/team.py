@@ -18,19 +18,32 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from aws_orbit_sdk.common import get_workspace
+from aws_orbit_sdk.common_pod_specification import TeamConstants
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
 
 DATA: Dict[str, List[Dict[str, str]]] = {}
+PROFILES_DATA: List[Dict[str, str]] = {}
 
 
 class TeamRouteHandler(APIHandler):
     @staticmethod
-    def _dump(data) -> str:
+    def _dump(data, profiles_data) -> str:
         ret: Dict[str, Any] = {}
         common_props = ["Fargate", "ScratchBucket"]
-        security_props = ["EksPodRoleArn", "TeamKmsKeyArn", "TeamSecurityGroupId", "GrantSudo", "K8Admin"]
-        ret["common"] = [{"name": "team name", "value": data["team_space"]}]
+        security_props = [
+            "EksPodRoleArn",
+            "TeamKmsKeyArn",
+            "TeamSecurityGroupId",
+            "GrantSudo",
+            "K8Admin",
+        ]
+        ret["common"] = [
+            {"name": "Environment Name", "value": data["env_name"]},
+            {"name": "Team Name", "value": data["team_space"]},
+            {"name": "EKS Cluster Name", "value": "orbit-" + data["env_name"]},
+            {"name": "Current Image", "value": os.environ["JUPYTER_IMAGE"].split("/")[-1]},
+        ]
         for key, value in data.items():
             if key in common_props:
                 ret["common"].append({"name": key, "value": str(value)})
@@ -41,8 +54,8 @@ class TeamRouteHandler(APIHandler):
                 ret["security"][key] = value
 
         ret["profiles"] = {}
-        if "Profiles" in data:
-            for p in data["Profiles"]:
+        if profiles_data:
+            for p in profiles_data:
                 ret["profiles"][p["slug"]] = p
 
         ret["other"] = {}
@@ -50,7 +63,13 @@ class TeamRouteHandler(APIHandler):
             if (
                 key not in security_props
                 and key not in common_props
-                and key not in ["Profiles", "StackName", "SsmParameterName", "JupyterhubInboundRanges"]
+                and key
+                not in [
+                    "Profiles",
+                    "StackName",
+                    "SsmParameterName",
+                    "JupyterhubInboundRanges",
+                ]
                 and value
             ):
                 ret["other"][key] = value
@@ -63,6 +82,7 @@ class TeamRouteHandler(APIHandler):
         self.log.info(f"GET - {self.__class__}")
         if "MOCK" not in os.environ or os.environ["MOCK"] == "0":
             DATA = get_workspace()
+            PROFILES_DATA = TeamConstants().team_profiles()
             # hide some details
             if "Elbs" in DATA:
                 del DATA["Elbs"]
@@ -79,4 +99,4 @@ class TeamRouteHandler(APIHandler):
             with open(path) as f:
                 DATA = json.load(f)
 
-        self.finish(self._dump(DATA))
+        self.finish(self._dump(DATA, PROFILES_DATA))

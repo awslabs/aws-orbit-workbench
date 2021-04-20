@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import * as utils from '../typings/utils';
 import { TableWidget } from './table/table';
 import ReactJson from 'react-json-view';
@@ -95,6 +95,14 @@ const columns = [
         </Tooltip>
       );
     }
+  },
+  {
+    title: 'Duration',
+    dataIndex: 'duration',
+    sorter: {
+      compare: utils.Sorter.DEFAULT,
+      multiple: 5
+    }
   }
 ];
 
@@ -123,6 +131,11 @@ export const ContainerCentralPanel = (props: {
   const { data, closeAllCallback, refreshCallback, setData } = props.useItems(
     props.type
   );
+
+  useEffect(() => {
+    const interval = setInterval(refreshCallback, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div>

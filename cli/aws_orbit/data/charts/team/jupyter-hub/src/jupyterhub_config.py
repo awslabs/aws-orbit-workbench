@@ -1,18 +1,5 @@
-#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-#    Licensed under the Apache License, Version 2.0 (the "License").
-#    You may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
-#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    See the License for the specific language governing permissions and
-#    limitations under the License.
-
 # type: ignore
+# flake8: noqa
 
 import json
 import os
@@ -20,10 +7,9 @@ import sys
 from typing import Any, Dict, List, cast
 
 import boto3
-from tornado.log import app_log
-
 from jupyterhub_utils.authenticator import OrbitWorkbenchAuthenticator
 from jupyterhub_utils.ssm import ACCOUNT_ID, ENV_NAME, GRANT_SUDO, IMAGE, REGION, TEAM, TOOLKIT_S3_BUCKET
+from tornado.log import app_log
 
 PROFILES_TYPE = List[Dict[str, Any]]
 
@@ -42,7 +28,7 @@ CONNECTIVITY
 c.JupyterHub.hub_connect_ip = os.environ["JUPYTERHUB_PRIVATE_SERVICE_HOST"]
 c.JupyterHub.hub_connect_port = int(os.environ["JUPYTERHUB_PRIVATE_SERVICE_PORT"])
 c.JupyterHub.hub_ip = "0.0.0.0"
-
+c.JupyterHub.logo_file = "/etc/jupyterhub/orbit.svg"
 """
 SPAWNER
 """
@@ -73,7 +59,7 @@ if GRANT_SUDO == "yes":
 
 c.KubeSpawner.image = IMAGE
 # can below if need to force image pull
-# c.KubeSpawner.image_pull_policy = "Always"
+c.KubeSpawner.image_pull_policy = "Always"
 c.KubeSpawner.extra_annotations = {"AWS_ORBIT_TEAM_SPACE": TEAM, "AWS_ORBIT_ENV": ENV_NAME}
 pvc_name_template = "orbit-{username}-{servername}"
 c.KubeSpawner.pvc_name_template = pvc_name_template

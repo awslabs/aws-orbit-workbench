@@ -51,6 +51,7 @@ export interface IUseItemsReturn {
   refreshCallback: () => void;
   setData: Dispatch<SetStateAction<any[]>>;
   connect: (container: string) => Promise<void>;
+  logs: (container: string) => Promise<void>;
 }
 
 export const openItemCallback = (name: string) => {
@@ -155,8 +156,6 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
   };
 
   const connect = async (container: string): Promise<void> => {
-    console.log('HERE');
-
     const session = await app.serviceManager.terminals.startNew();
     const terminal = await app.commands.execute('terminal:create-new', {
       name: session.name
@@ -166,6 +165,25 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
       'kubectl -n $AWS_ORBIT_TEAM_SPACE exec --stdin --tty `kubectl get pods -n $AWS_ORBIT_TEAM_SPACE -l job-name=' +
       container +
       ' -o=name` -- /bin/bash \n';
+    terminal.content.session.send({
+      type: 'stdin',
+      content: [command]
+    });
+    console.log('session', terminal.content.session);
+    console.log('terminal', terminal);
+  };
+
+  const logs = async (container: string): Promise<void> => {
+    const session = await app.serviceManager.terminals.startNew();
+    const terminal = await app.commands.execute('terminal:create-new', {
+      name: session.name
+    });
+
+    const command =
+      'kubectl logs -n $AWS_ORBIT_TEAM_SPACE --tail=-1 -f `kubectl get pods -n $AWS_ORBIT_TEAM_SPACE -l job-name=' +
+      container +
+      ' -o=name` \n';
+
     terminal.content.session.send({
       type: 'stdin',
       content: [command]
@@ -215,7 +233,7 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
     setData(await request('containers', parameters));
   };
 
-  return { data, closeAllCallback, refreshCallback, setData, connect };
+  return { data, closeAllCallback, refreshCallback, setData, connect, logs };
 };
 
 const Sections = (props: { app: JupyterFrontEnd }): JSX.Element => {
@@ -275,11 +293,7 @@ class CentralWidgetSection extends ReactWidget {
   render(): JSX.Element {
     return (
       <div className={SECTION_CLASS}>
-        <CentralWidgetHeader
-          name={this.title.label}
-          icon={ICON}
-          refreshCallback={refreshCallback}
-        />
+        <CentralWidgetHeader name={this.title.label} icon={ICON} />
         <ContainerCentralPanel
           title={this.headerTitle}
           type={this.type}
@@ -307,11 +321,7 @@ class CentralWidget extends ReactWidget {
   render(): JSX.Element {
     return (
       <div className={SECTION_CLASS}>
-        <CentralWidgetHeader
-          name={NAME}
-          icon={ICON}
-          refreshCallback={refreshCallback}
-        />
+        <CentralWidgetHeader name={NAME} icon={ICON} />
         <Sections app={this.app} />
         <div />
       </div>

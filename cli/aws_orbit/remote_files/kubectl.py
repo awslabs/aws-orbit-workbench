@@ -15,9 +15,9 @@
 import logging
 import os
 import shutil
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
-from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, plugins, sh, utils
+from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.models.manifest import ImagesManifest
 from aws_orbit.remote_files.utils import get_k8s_context
@@ -103,10 +103,45 @@ def _cluster_autoscaler(output_path: str, context: "Context") -> None:
         )
     else:
         image = f"{ImagesManifest.cluster_autoscaler.repository}:{ImagesManifest.cluster_autoscaler.version}"
+
     with open(input, "r") as file:
         content: str = file.read()
     content = content.replace("$", "").format(
-        account_id=context.account_id, env_name=context.name, cluster_name=f"orbit-{context.name}", image=image
+        account_id=context.account_id,
+        env_name=context.name,
+        cluster_name=f"orbit-{context.name}",
+        image=image,
+        sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
+    )
+    with open(output, "w") as file:
+        file.write(content)
+
+
+def _ssm_agent_installer(output_path: str, context: "Context") -> None:
+    filename = "09-ssm-agent-daemonset-installer.yaml"
+    input = os.path.join(MODELS_PATH, "apps", filename)
+    output = os.path.join(output_path, filename)
+
+    if context.networking.data.internet_accessible is False:
+        ssm_agent_installer_image = (
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
+            f"orbit-{context.name}-ssm-agent-installer:{ImagesManifest.ssm_agent_installer.version}"
+        )
+        pause_image = (
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
+            f"orbit-{context.name}-pause:{ImagesManifest.pause.version}"
+        )
+    else:
+        ssm_agent_installer_image = (
+            f"{ImagesManifest.ssm_agent_installer.repository}:{ImagesManifest.ssm_agent_installer.version}"
+        )
+        pause_image = f"{ImagesManifest.pause.repository}:{ImagesManifest.pause.version}"
+
+    with open(input, "r") as file:
+        content: str = file.read()
+    content = utils.resolve_parameters(
+        content,
+        dict(ssm_agent_installer_image=ssm_agent_installer_image, pause_image=pause_image),
     )
     with open(output, "w") as file:
         file.write(content)
@@ -119,25 +154,18 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
     with open(input, "r") as file:
         content: str = file.read()
 
-    inbound_ranges: List[str] = (
-        team_context.jupyterhub_inbound_ranges
-        if team_context.jupyterhub_inbound_ranges
-        else [utils.get_dns_ip_cidr(context=context)]
-    )
-    content = content.replace("$", "").format(
-        team=team_context.name,
-        efsid=context.shared_efs_fs_id,
-        efsapid=team_context.efs_ap_id,
-        region=context.region,
-        account_id=context.account_id,
-        env_name=context.name,
-        tag=context.images.jupyter_hub.version,
-        grant_sudo='"yes"' if team_context.grant_sudo else '"no"',
-        internal_load_balancer='"false"' if context.networking.frontend.load_balancers_subnets else '"true"',
-        jupyterhub_inbound_ranges=inbound_ranges,
-        team_kms_key_arn=team_context.team_kms_key_arn,
-        team_security_group_id=team_context.team_security_group_id,
-        cluster_pod_security_group_id=context.cluster_pod_sg_id,
+    content = utils.resolve_parameters(
+        content,
+        dict(
+            team=team_context.name,
+            efsid=context.shared_efs_fs_id,
+            efsapid=team_context.efs_ap_id,
+            account_id=context.account_id,
+            env_name=context.name,
+            team_kms_key_arn=team_context.team_kms_key_arn,
+            team_security_group_id=team_context.team_security_group_id,
+            cluster_pod_security_group_id=context.cluster_pod_sg_id,
+        ),
     )
     _logger.debug("Kubectl Team %s manifest:\n%s", team_context.name, content)
     with open(output, "w") as file:
@@ -153,6 +181,26 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
     with open(output, "w") as file:
         file.write(content)
 
+    # deploy voila service
+    input = os.path.join(MODELS_PATH, "apps", "08-voila_service.yaml")
+    output = os.path.join(output_path, f"08-{team_context.name}-voila_service.yaml")
+
+    with open(input, "r") as file:
+        content = file.read()
+    content = utils.resolve_parameters(
+        content,
+        dict(
+            team=team_context.name,
+            region=context.region,
+            account_id=context.account_id,
+            env_name=context.name,
+            tag=context.images.jupyter_hub.version,
+            sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
+        ),
+    )
+    with open(output, "w") as file:
+        file.write(content)
+
     # bind to admin role
     if team_context.k8_admin:
         # user service account
@@ -164,43 +212,6 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
         content = content.replace("$", "").format(team=team_context.name)
         with open(output, "w") as file:
             file.write(content)
-
-
-def _landing_page(output_path: str, context: "Context") -> None:
-    filename = "03-landing-page.yaml"
-    input = os.path.join(MODELS_PATH, "apps", filename)
-    output = os.path.join(output_path, filename)
-
-    with open(input, "r") as file:
-        content: str = file.read()
-    label: Optional[str] = (
-        context.cognito_external_provider
-        if context.cognito_external_provider_label is None
-        else context.cognito_external_provider_label
-    )
-    domain: str = (
-        "null" if context.cognito_external_provider_domain is None else context.cognito_external_provider_domain
-    )
-    redirect: str = (
-        "null" if context.cognito_external_provider_redirect is None else context.cognito_external_provider_redirect
-    )
-    content = content.replace("$", "").format(
-        region=context.region,
-        account_id=context.account_id,
-        env_name=context.name,
-        user_pool_id=context.user_pool_id,
-        user_pool_client_id=context.user_pool_client_id,
-        identity_pool_id=context.identity_pool_id,
-        ssl_cert_arn=context.networking.frontend.ssl_cert_arn,
-        tag=context.images.landing_page.version,
-        cognito_external_provider=context.cognito_external_provider,
-        cognito_external_provider_label=label,
-        cognito_external_provider_domain=domain,
-        cognito_external_provider_redirect=redirect,
-        internal_load_balancer='"false"' if context.networking.frontend.load_balancers_subnets else '"true"',
-    )
-    with open(output, "w") as file:
-        file.write(content)
 
 
 def _cleanup_output(output_path: str) -> None:
@@ -226,9 +237,11 @@ def _generate_env_manifest(context: "Context", clean_up: bool = True) -> str:
     if context.identity_pool_id is None:
         raise ValueError("context.identity_pool_id is None!")
 
-    _landing_page(output_path=output_path, context=context)
     _k8_dashboard(output_path=output_path, context=context)
     _cluster_autoscaler(output_path=output_path, context=context)
+
+    if context.install_ssm_agent:
+        _ssm_agent_installer(output_path=output_path, context=context)
 
     return output_path
 
@@ -273,15 +286,13 @@ def fetch_kubectl_data(context: "Context", k8s_context: str, include_teams: bool
             url = k8s.get_service_hostname(name="jupyterhub-public", k8s_context=k8s_context, namespace=team.name)
             team.jupyter_url = url
 
-    landing_page_url: str = k8s.get_service_hostname(
-        name="landing-page-public", k8s_context=k8s_context, namespace="env"
-    )
+    landing_page_url: str = k8s.get_service_hostname(name="landing-page", k8s_context=k8s_context, namespace="env")
     k8_dashboard_url: str = k8s.get_service_hostname(
         name="kubernetes-dashboard", k8s_context=k8s_context, namespace="kubernetes-dashboard"
     )
 
     context.landing_page_url = f"https://{landing_page_url}"
-    context.k8_dashboard_url = f"http://{k8_dashboard_url}"
+    context.k8_dashboard_url = f"https://{k8_dashboard_url}"
 
     _update_elbs(context=context)
 
@@ -328,6 +339,63 @@ def _generate_efs_driver_manifest(context: "Context") -> str:
     return os.path.join(output_path, "overlays")
 
 
+#######
+def _fsx_driver_base(output_path: str, context: "Context") -> None:
+    os.makedirs(os.path.join(output_path, "base"), exist_ok=True)
+    filenames = ("csidriver.yaml", "controller.yaml", "kustomization.yaml", "rbac.yaml", "node.yaml")
+    for filename in filenames:
+        input = os.path.join(MODELS_PATH, "fsx_driver", "base", filename)
+        output = os.path.join(output_path, "base", filename)
+        _logger.debug("Copying fsx driver base file: %s -> %s", input, output)
+        with open(input, "r") as file:
+            content: str = file.read()
+        content = utils.resolve_parameters(
+            content,
+            dict(
+                region=context.region,
+                account_id=context.account_id,
+                env_name=context.name,
+                orbit_cluster_role=context.eks_cluster_role_arn,
+            ),
+        )
+        with open(output, "w") as file:
+            file.write(content)
+
+
+def _fsx_driver_overlays(output_path: str, context: "Context") -> None:
+    filename = "kustomization.yaml"
+    input = os.path.join(MODELS_PATH, "fsx_driver", "overlays", "stable", filename)
+    os.makedirs(os.path.join(output_path, "overlays"), exist_ok=True)
+    output = os.path.join(output_path, "overlays", filename)
+    with open(input, "r") as file:
+        content: str = file.read()
+    content = utils.resolve_parameters(
+        content,
+        dict(
+            region=context.region,
+            account_id=context.account_id,
+            env_name=context.name,
+            orbit_cluster_role=context.eks_cluster_role_arn,
+        ),
+    )
+    with open(output, "w") as file:
+        file.write(content)
+
+
+def _generate_fsx_driver_manifest(context: "Context") -> str:
+    output_path = os.path.join(".orbit.out", context.name, "kubectl", "fsx_driver")
+    os.makedirs(output_path, exist_ok=True)
+    _cleanup_output(output_path=output_path)
+    if context.account_id is None:
+        raise RuntimeError("context.account_id is None!")
+    if context.region is None:
+        raise RuntimeError("context.region is None!")
+    _fsx_driver_base(output_path=output_path, context=context)
+    _fsx_driver_overlays(output_path=output_path, context=context)
+    return os.path.join(output_path, "overlays")
+
+
+#######
 def write_kubeconfig(context: "Context") -> None:
     sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
 
@@ -343,11 +411,15 @@ def deploy_env(context: "Context") -> None:
             sh.run(f"kubectl apply -k {output_path} --context {k8s_context} --wait")
         else:
             sh.run(f"kubectl apply -k {EFS_DRIVE} --context {k8s_context} --wait")
+
+        # FSX Driver
+        output_path = _generate_fsx_driver_manifest(context=context)
+        sh.run(f"kubectl apply -k {output_path} --context {k8s_context} --wait")
+
+        # Orbit Env
         output_path = _generate_env_manifest(context=context)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
         sh.run(f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} ENABLE_POD_ENI=true")
-
-        fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=False)
 
 
 def deploy_team(context: "Context", team_context: "TeamContext") -> None:
@@ -359,7 +431,6 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
         output_path = _generate_team_context(context=context, team_context=team_context)
         output_path = _generate_env_manifest(context=context, clean_up=False)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
-        fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=True)
 
 
 def destroy_env(context: "Context") -> None:
@@ -385,8 +456,6 @@ def destroy_teams(context: "Context") -> None:
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(stack_name=eks_stack_name):
         sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
-        for team_context in context.teams:
-            plugins.PLUGINS_REGISTRIES.destroy_team_plugins(context=context, team_context=team_context)
         k8s_context = get_k8s_context(context=context)
         _logger.debug("kubectl k8s_context: %s", k8s_context)
         _logger.debug("Attempting kubectl delete")

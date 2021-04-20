@@ -97,6 +97,7 @@ Resources:
               - emr-containers:TagResource
               - emr-containers:ListVirtualClusters
               - emr-containers:DeleteVirtualCluster
+              - redshift:Describe*
             Resource: '*'
           - Effect: Allow
             Action:
@@ -191,6 +192,19 @@ Resources:
               - codecommit:*
             Resource:
               - arn:aws:codecommit:${region}:${account_id}:${top_level}-${env_name}-*
+          - Effect: Allow
+            Action:
+              - redshift:*
+            Resource:
+              - arn:aws:redshift:${region}:${account_id}:parametergroup:${top_level}-${env_name}-*
+              - arn:aws:redshift:${region}:${account_id}:securitygroup:${top_level}-${env_name}-*
+              - arn:aws:redshift:${region}:${account_id}:subnetgroup:${top_level}-${env_name}-*
+              - arn:aws:redshift:${region}:${account_id}:cluster:${top_level}-${env_name}-*
+          - Effect: Allow
+            Action:
+              - secretsmanager:*
+            Resource:
+              - arn:aws:secretsmanager:${region}:${account_id}:secret:${top_level}-redshift-master-${env_name}*
         Version: '2012-10-17'
       Description: ''
       ManagedPolicyName: ${top_level}-${env_name}-admin-other
@@ -281,28 +295,6 @@ Resources:
       Description: ''
       ManagedPolicyName: ${top_level}-${env_name}-admin-iam-s3
       Path: /
-  RedshiftPluginManagedPolicy:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      PolicyDocument:
-        Statement:
-          - Effect: Allow
-            Action:
-              - redshift:*
-            Resource:
-              - arn:aws:redshift:${region}:${account_id}:parametergroup:${top_level}-${env_name}-*
-              - arn:aws:redshift:${region}:${account_id}:securitygroup:${top_level}-${env_name}-*
-              - arn:aws:redshift:${region}:${account_id}:subnetgroup:${top_level}-${env_name}-*
-              - arn:aws:redshift:${region}:${account_id}:cluster:${top_level}-${env_name}-*
-          - Effect: Allow
-            Action:
-              - secretsmanager:*
-            Resource:
-              - arn:aws:secretsmanager:${region}:${account_id}:secret:${top_level}-redshift-master-${env_name}*
-        Version: '2012-10-17'
-      Description: 'Managed policy for plugin specific resources'
-      ManagedPolicyName: ${top_level}-${env_name}-plugin-admin
-      Path: /
   AdminRole:
     Type: AWS::IAM::Role
     Properties:
@@ -310,7 +302,6 @@ Resources:
       ManagedPolicyArns:
         - Ref: OrbitAdminPolicyOther
         - Ref: OrbitAdminPolicyIAMS3
-        - Ref: RedshiftPluginManagedPolicy
       RoleName: ${top_level}-${env_name}-admin
       MaxSessionDuration: 10000
       AssumeRolePolicyDocument:
@@ -404,6 +395,7 @@ Resources:
               - kms:ScheduleKeyDeletion
               - kms:CancelKeyDeletion
             Resource: '*'
+
 Outputs:
   DeployId:
     Value: '${deploy_id}'

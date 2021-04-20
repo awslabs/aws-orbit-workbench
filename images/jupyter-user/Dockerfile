@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=jupyter/base-notebook:python-3.8.8
+ARG BASE_IMAGE=public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter/base-notebook:python-3.8.8
 FROM $BASE_IMAGE
 
 ######################################
@@ -32,6 +32,14 @@ RUN update-alternatives --install /usr/bin/nano nano /bin/nano-tiny 10
 RUN cd /usr/local/bin \
     && sudo curl -k -sS -O https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl \
     && sudo chmod 755 /usr/local/bin/kubectl
+
+######################################
+# Kubectl installation
+######################################
+RUN curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash && \
+    helm version --short && \
+    helm plugin install https://github.com/hypnoglow/helm-s3.git && \
+    helm repo add stable https://charts.helm.sh/stable
 
 ######################################
 # Container Run
@@ -90,15 +98,19 @@ RUN chmod a+xr /home/jovyan/.orbit/bootstrap.sh
 COPY aws-orbit_jupyter-user.tar.gz /home/jovyan/.orbit/aws-orbit_jupyter-user.tar.gz
 RUN chown jovyan /home/jovyan/.orbit/aws-orbit_jupyter-user.tar.gz
 
+
+
 # ######################################
 # # Jupyter Lab extensions
 # ######################################
 
 ENV JUPYTER_ENABLE_LAB yes
 RUN jupyter serverextension enable --py jupyterlab --sys-prefix && \
+    jupyter serverextension enable --sys-prefix jupyter_server_proxy && \
     jupyter nbextension enable --py widgetsnbextension --sys-prefix && \
     jupyter labextension install @jupyter-widgets/jupyterlab-manager --no-build && \
     jupyter labextension install jupyter-matplotlib --no-build && \
+    jupyter labextension install @jupyterlab/server-proxy --no-build && \
     jupyter lab build --dev-build=False -y && \
     jupyter lab clean -y && \
     npm cache clean --force && \

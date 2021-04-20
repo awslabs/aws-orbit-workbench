@@ -106,7 +106,7 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
     MANIFEST["iam"]["serviceRoleARN"] = context.eks_cluster_role_arn
     MANIFEST["managedNodeGroups"] = []
 
-    labels = {"orbit/node-group": "env", "orbit/usage": "reserved"}
+    labels = {"orbit/node-group": "env", "orbit/usage": "reserved", "orbit/node-type": "ec2"}
     tags = tags = {f"k8s.io/cluster-autoscaler/node-template/label/{k}": v for k, v in labels.items()}
     tags["Env"] = f"orbit-{context.name}"
 
@@ -412,6 +412,20 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
             "Condition": {
                 "StringLike": {
                     f"{context.eks_oidc_provider}:sub": "system:serviceaccount:kube-system:cluster-autoscaler"
+                }
+            },
+        },
+    )
+
+    iam.add_assume_role_statement(
+        role_name=f"orbit-{context.name}-eks-cluster-role",
+        statement={
+            "Effect": "Allow",
+            "Principal": {"Federated": f"arn:aws:iam::{context.account_id}:oidc-provider/{context.eks_oidc_provider}"},
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringLike": {
+                    f"{context.eks_oidc_provider}:sub": "system:serviceaccount:kube-system:fsx-csi-controller-sa"
                 }
             },
         },
