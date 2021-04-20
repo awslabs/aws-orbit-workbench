@@ -160,6 +160,7 @@ class IamBuilder:
                         "elasticmapreduce:TerminateJobFlows",
                         "elasticmapreduce:AddJobFlowSteps",
                         "sagemaker:*",
+                        "databrew:*",
                         "lakeformation:GetDataAccess",
                         "fsx:Describe*",
                         "fsx:List*",
@@ -182,6 +183,7 @@ class IamBuilder:
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/sagemaker/*:log-stream:*",
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/eks/orbit*",
                         f"arn:{partition}:events:{region}:{account}:rule/orbit-{env_name}-{team_name}-*",
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws-glue-databrew/*",
                     ],
                 ),
                 iam.PolicyStatement(
@@ -269,6 +271,7 @@ class IamBuilder:
                     ],
                     resources=[
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}:log-stream:*"  # noqa
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws-glue-databrew/*:log-stream:*"
                     ],
                 ),
                 iam.PolicyStatement(
@@ -284,6 +287,7 @@ class IamBuilder:
                     ],
                     resources=[
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}*:log-stream:*",  # noqa
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws-glue-databrew/*:log-stream:*"
                     ],
                 ),
                 iam.PolicyStatement(
@@ -330,6 +334,7 @@ class IamBuilder:
                 iam.ServicePrincipal("redshift.amazonaws.com"),
                 iam.ServicePrincipal("codepipeline.amazonaws.com"),
                 iam.ServicePrincipal("personalize.amazonaws.com"),
+                iam.ServicePrincipal("databrew.amazonaws.com"),
             ),
             managed_policies=managed_policies,
         )
