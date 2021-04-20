@@ -26,22 +26,20 @@ phases:
           pip install -e ../sdk
           pip install -r requirements.txt
           pip install -e ../images/jupyter-hub/utils/
-          pip install -e ../plugins/hello_world/
-          pip install -e ../plugins/redshift/
-          pip install -e ../plugins/code_commit/
-          pip install -e ../plugins/team_script_launcher/
-          pip install -e ../plugins/custom_cfn/
-          pip install -e ../plugins/emr_on_eks/
+
+          for module in `ls ../plugins`; do
+            pip install -e ../plugins/"${module}/"
+          done
         else
           pip install --upgrade aws-orbit[utils]=="${VERSION}"
-          pip install --upgrade aws-orbit-hello-world=="${VERSION}"
-          pip install --upgrade aws-orbit-team-script-launcher=="${VERSION}"
-          pip install --upgrade aws-orbit-redshift=="${VERSION}"
-          pip install --upgrade aws-orbit-custom-cfn=="${VERSION}"
-          pip install --upgrade aws-orbit-code-commit=="${VERSION}"
           pip install --upgrade aws-orbit-sdk=="${VERSION}"
-          pip install --upgrade aws-orbit-emr-on-eks=="${VERSION}"
 
+          for module in `ls ../plugins`; do
+            MODULE_NAME_FORMATTED=`echo ${module} | sed "s/_/-/g"`
+            MODULE_PKG="aws-orbit-${MODULE_NAME_FORMATTED}"
+
+            pip install --upgrade "${MODULE_PKG}"=="${VERSION}"
+          done
         fi
   build:
     commands:

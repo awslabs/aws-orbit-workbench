@@ -50,32 +50,16 @@ fi
 
 if [ $PLUGINS -eq 1 ]; then
     # Adding plugins to Codeartifact
-    ${DIR}/update_repo.sh plugins/emr_on_eks aws-orbit-emr-on-eks \
-        && echo "Updated custom_cfn codeartifact repository" \
-        || (echo "ERROR: Failed to update custom_cfn codeartifact repository"; exit 1)
-    ${DIR}/update_repo.sh plugins/code_commit aws-orbit-code-commit \
-        && echo "Updated code_commit codeartifact repository" \
-        || (echo "ERROR: Failed to update code_commit codeartifact repository"; exit 1)
-    ${DIR}/update_repo.sh plugins/hello_world aws-orbit-hello-world \
-        && echo "Updated SDK codeartifact repository" \
-        || (echo "ERROR: Failed to update SDK codeartifact repository"; exit 1)
-    ${DIR}/update_repo.sh plugins/redshift aws-orbit-redshift \
-        && echo "Updated redshift codeartifact repository" \
-        || (echo "ERROR: Failed to update redshift codeartifact repository"; exit 1)
-    ${DIR}/update_repo.sh plugins/team_script_launcher aws-orbit-team-script-launcher \
-        && echo "Updated team_script_launcher codeartifact repository" \
-        || (echo "ERROR: Failed to update team_script_launcher codeartifact repository"; exit 1)
-    ${DIR}/update_repo.sh plugins/custom_cfn aws-orbit-custom-cfn \
-        && echo "Updated custom_cfn codeartifact repository" \
-        || (echo "ERROR: Failed to update custom_cfn codeartifact repository"; exit 1)
-    ${DIR}/update_repo.sh plugins/ray aws-orbit-ray \
-        && echo "Updated ray codeartifact repository" \
-        || (echo "ERROR: Failed to update ray codeartifact repository"; exit 1)
-    ${DIR}/update_repo.sh plugins/lustre aws-orbit-lustre \
-        && echo "Updated lustre codeartifact repository" \
-        || (echo "ERROR: Failed to update lustre codeartifact repository"; exit 1)
-    ${DIR}/update_repo.sh plugins/overprovisioning aws-orbit-overprovisioning \
-        && echo "Updated overprovisioning codeartifact repository" \
-        || (echo "ERROR: Failed to update overprovisioning codeartifact repository"; exit 1)
+    PLUGINS_DIR="${DIR}/../plugins"
+    ORBIT_PREFIX="aws-orbit-"
 
+    for module in `ls "${PLUGINS_DIR}"`
+    do
+        MODULE_NAME_FORMATTED=`echo ${module} | sed "s/_/-/g"`
+        MODULE_PKG="${ORBIT_PREFIX}${MODULE_NAME_FORMATTED}"
+
+        ${DIR}/update_repo.sh plugins/"${module}" "${MODULE_PKG}" \
+            && echo "Updated $module codeartifact repository" \
+            || (echo "ERROR: Failed to update $module codeartifact repository"; exit 1)
+    done
 fi
