@@ -9,8 +9,6 @@ UserPoolId: !SSM ${/orbit-foundation/demo-fndn/resources::UserPoolId}
 SharedEfsFsId: !SSM ${/orbit-foundation/demo-fndn/resources::SharedEfsFsId}
 SharedEfsSgId: !SSM ${/orbit-foundation/demo-fndn/resources::SharedEfsSgId}
 InstallSsmAgent: true
-CognitoExternalProvider: !ENV ${COGNITO_EXTERNAL_PROVIDER::}
-CognitoExternalProviderLabel: !ENV ${COGNITO_EXTERNAL_PROVIDER_LABEL::}
 Networking:
     VpcId: !SSM ${/orbit-foundation/demo-fndn/resources::VpcId}
     PublicSubnets: !SSM ${/orbit-foundation/demo-fndn/resources::PublicSubnets}
