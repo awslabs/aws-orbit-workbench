@@ -41,3 +41,9 @@
 -   PluginId: fast_fs_lustre
     Module: lustre
     Path: ../plugins/lustre/
+-   PluginId: ray
+    Module: ray
+    Path: ../plugins/ray/
+    Parameters:
+        workers: 2
+        release_tag: latest-gpu
