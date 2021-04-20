@@ -2,12 +2,11 @@
 # Feel free to add content and custom Front Matter to this file.
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
-layout: default
+layout: tutorial
 title: Prepare User Local Access
 permalink: prepare-user-local-access
 ---
-{% include navigation.html %}
-# {{ page.title }}
+
 
 Orbit Environment Administrators should follow these steps to allow users to access their namespace from their local development machines.
 

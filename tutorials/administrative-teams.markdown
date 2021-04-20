@@ -2,12 +2,10 @@
 # Feel free to add content and custom Front Matter to this file.
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
-layout: default
+layout: tutorial
 title: Administrative Teams
 permalink: administrative-teams
 ---
-{% include navigation.html %}
-# {{ page.title }}
 ### Purpose
 
 - A single place for environment administrators to log-in and perform administrative actions

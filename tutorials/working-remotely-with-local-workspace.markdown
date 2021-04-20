@@ -2,12 +2,11 @@
 # Feel free to add content and custom Front Matter to this file.
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
-layout: default
+layout: tutorial
 title: Working remotely with local workspace
 permalink: working-remotely-with-local-workspace
 ---
-{% include navigation.html %}
-# {{ page.title }}
+
 ## Make sure that your role can assume the team space role you belong to.
 
 Checkout the last step in [Admin Guide](https://github.com/awslabs/aws-orbit-workbench/wiki/Configure-User-Local-Access)

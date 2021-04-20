@@ -2,12 +2,11 @@
 # Feel free to add content and custom Front Matter to this file.
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
-layout: default
+layout: tutorial
 title: Running and Scheduling Tasks as Containers
 permalink: running-and-scheduling-tasks-as-containers
 ---
-{% include navigation.html %}
-# {{ page.title }}
+
 ## Running and scheduling containers
 
 Orbit provides multiple ways of running and scheduling containers.

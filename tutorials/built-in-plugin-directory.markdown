@@ -2,12 +2,11 @@
 # Feel free to add content and custom Front Matter to this file.
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
-layout: default
+layout: tutorial
 title: Built-in Plugin Directory
 permalink: built-in-plugin-directory
 ---
-{% include navigation.html %}
-# {{ page.title }}
+
 Orbit plugins are individual python modules published to PyPi, can be installed to local python environment using pip.
 #### Installing Amazon Redshift Plugin
 

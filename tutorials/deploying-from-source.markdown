@@ -2,12 +2,10 @@
 # Feel free to add content and custom Front Matter to this file.
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
-layout: default
+layout: tutorial
 title: Deploying From Source
 permalink: deploying-from-source
 ---
-{% include navigation.html %}
-# {{ page.title }}
 ## First an explanation on the how and why:
 
 The CLI is intended to be light weight with very few dependencies. In addition, some deploy/destroy operations are long running (EKS Clusters, EKS NodeGroups, etc). Interruption of a deploy/destroy operation can leave the environment in an unstable state. To help avoid this, the operation needs to survive CLI interruptions.

@@ -2,12 +2,10 @@
 # Feel free to add content and custom Front Matter to this file.
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
-layout: default
+layout: tutorial
 title: Usage Architecture
 permalink: usage-architecture
 ---
-{% include navigation.html %}
-# {{ page.title }}
 
 ## Intro
 Upon deployment, AWS Orbit Workbench provides a universal Landing Page and Team dedicated Jupyter Hub and Juputer Notebook instances. The Team dedicated instances enable Team members to interact with other Team dedicated resources (e.g. Redshift, EMR) and provide custom integrations with other AWS services.

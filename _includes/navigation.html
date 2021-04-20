@@ -1,11 +1,12 @@
 <div class="sidenav">
      {% for item in site.data.navigation.docs %}
-       <h5>{{ item.group }}</h5>
+       <h5 style="color:#818181;">{{ item.group }}</h5>
           {% for subitem in item.sub %}
             <li>
               <a href="{{ subitem.url }}">{{ subitem.title }}</a>
             </li>
           {% endfor %}
+          <br>
      {% endfor %}
 </div>
 

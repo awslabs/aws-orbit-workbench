@@ -2,12 +2,11 @@
 # Feel free to add content and custom Front Matter to this file.
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
-layout: default
+layout: tutorial
 title: Plugin Installation
 permalink: plugin-installation
 ---
-{% include navigation.html %}
-# {{ page.title }}
+
 Orbit plugins are individual python modules published PyPi. Use `pip install <plugin_module_name>` to install in a specific python environment.
 
 List of plugins and respective pip install command.

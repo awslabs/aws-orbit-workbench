@@ -4,7 +4,7 @@ title: Markdown Examples
 permalink: /examples
 ---
 
-## Welcome to AWS Orbit Workbench
+## This is the example page, to be deleted.
 
 You can use the [editor on GitHub](https://github.com/awslabs/aws-orbit-workbench/edit/gh-pages/index.markdown) to maintain and preview the content for your website in Markdown files.
 

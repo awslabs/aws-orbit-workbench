@@ -2,13 +2,10 @@
 # Feel free to add content and custom Front Matter to this file.
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
-layout: default
+layout: tutorial
 title: CLI Guide
 permalink: cli-guide
 ---
-{% include navigation.html %}
-# {{ page.title }}
-
 <h4 id="usage">Usage</h4>
 <pre><code>orbit [OPTIONS] COMMAND [ARGS]…
 </code></pre>

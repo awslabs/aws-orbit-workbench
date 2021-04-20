@@ -29,7 +29,8 @@ twitter_username: jekyllrb
 github_username:  jekyll
 
 # Build settings
-theme: jekyll-theme-cayman
+#theme: jekyll-theme-cayman
+theme: minima
 plugins:
   - jekyll-feed
 
@@ -52,3 +53,9 @@ plugins:
 #   - vendor/cache/
 #   - vendor/gems/
 #   - vendor/ruby/
+header_pages:
+  - index.markdown
+  - tutorials.markdown
+  - blog.markdown
+  - examples.markdown
+  - about.markdown

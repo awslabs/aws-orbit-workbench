@@ -2,12 +2,11 @@
 # Feel free to add content and custom Front Matter to this file.
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
-layout: default
+layout: tutorial
 title: Quick Demo Deployment
 permalink: quick-demo-deployment
 ---
-{% include navigation.html %}
-# {{ page.title }}
+
 
 ## Deploy the demo pipeline
 
