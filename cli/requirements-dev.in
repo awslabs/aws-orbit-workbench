@@ -40,6 +40,7 @@ aws-cdk.aws-stepfunctions-tasks~=1.67.0
 -e ../plugins/redshift
 -e ../plugins/custom_cfn
 -e ../plugins/emr_on_eks
+-e ../plugins/overprovisioning
 -e ../plugins/lustre
 -e ../plugins/ray/
 
