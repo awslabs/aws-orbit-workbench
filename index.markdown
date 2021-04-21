@@ -6,3 +6,5 @@ layout: default
 title: Home
 ---
 This is the landing page, content TBD
+
+{% include carousel.html height="80" unit="%" duration="30" images = site.data.carousel.images %}

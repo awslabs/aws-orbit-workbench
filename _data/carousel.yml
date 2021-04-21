@@ -3,3 +3,11 @@ images:
   - image: img/slider/image2.jpg
   - image: img/slider/image3.jpg
   - image: img/slider/image4.jpg
+
+landing-gifs:
+  - image: img/gif/01.login.gif
+  - image: img/gif/02.startServer.gif
+  - image: img/gif/03.browseFolder.gif
+  - image: img/gif/04.browseTeam.gif
+  - image: img/gif/05.browseCatalog.gif
+  - image: img/gif/06.browseJobs.gif  
