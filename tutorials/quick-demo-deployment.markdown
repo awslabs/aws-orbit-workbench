@@ -7,8 +7,13 @@ title: Quick Demo Deployment
 permalink: quick-demo-deployment
 ---
 
-
 ## Deploy the demo pipeline
+
+- Create an Admin role
+  - In IAM, create a new role.
+  - On the 'Select type of trusted entity' page, select `Codebuild`.
+  - On the 'Permissions' page, select `AdministrativeAccess`
+  - Give the role a name, it will be mapped below to the K8AdminRole parameter
 
 - Get the cloudformation for the pipeline:
 

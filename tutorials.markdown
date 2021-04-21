@@ -1,7 +1,7 @@
 ---
 layout: tutorial
 title: Tutorials
-permalink: tutorial/
+permalink: tutorial
 ---
 Todo: fix some broken links below
 <a href="url"><img src="https://github.com/awslabs/aws-orbit-workbench/blob/main/images/landing-page/src/images/orbit1.jpg?raw=true" align="right" height="30%" width="30%" style="float:right"></a>
