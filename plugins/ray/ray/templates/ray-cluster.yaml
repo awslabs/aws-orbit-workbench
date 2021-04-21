@@ -65,6 +65,9 @@ spec:
       - name: dshm
         emptyDir:
           medium: Memory
+      - name: efs-volume
+        persistentVolumeClaim:
+          claimName: jupyterhub
       containers:
         - name: ray-head
           image: {{ .Values.images.ray }}
@@ -83,6 +86,8 @@ spec:
           volumeMounts:
             - mountPath: /dev/shm
               name: dshm
+            - mountPath: /efs
+              name: efs-volume
           env:
             # This is used in the ray start command so that Ray can spawn the
             # correct number of processes. Omitting this may lead to degraded
