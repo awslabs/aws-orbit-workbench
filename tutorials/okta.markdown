@@ -1,12 +1,3 @@
----
-# Feel free to add content and custom Front Matter to this file.
-# To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
-
-layout: tutorial
-title: Okta Integration
-permalink: okta-integration
----
-
 <!--
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #   
@@ -141,28 +132,39 @@ permalink: okta-integration
 > _For more information, see [Specifying identity provider attribute mappings for your user pool](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-specifying-attribute-mapping.html)._
 
 * Save Changes
-## 8 - Configuring Cognito User Pool - Client Settings
+
+## 8 - Get the Orbit Workbench URL
+* Open the Systems Manager Console
+  * On the left, select `Parameter Store`
+  * Select /orbit/<your-env-name>/context
+  * Search for LandingPageUrl, you will need it below
+
+## 9 - Configuring Cognito User Pool - Client Settings
 
 * In the left navigation pane, under **App integration**, choose **App client settings**.
-* On the app client page, do the following:
+  * On the app client page, do the following:
 Under Enabled Identity Providers, select the Okta and Cognito User Pool check boxes.
-* For Callback URL(s), enter a URL where you want your users to be redirected after they log in. Enter your Orbit Workbench URL.
-* For Sign out URL(s), enter a URL where you want your users to be redirected after they log out.  Enter your Orbit Workbench URL.
-* Under Allowed OAuth Flows, be sure to select at least the Implicit grant check box.
-* Under Allowed OAuth Scopes, be sure to select at least the email and openid check boxes.
-* Choose Save changes.
+  * For Callback URL(s), enter a URL where you want your users to be redirected after they log in. Enter your Orbit Workbench URL.
+  * For Sign out URL(s), enter a URL where you want your users to be redirected after they log out.  Enter your Orbit Workbench URL.
+  * Under Allowed OAuth Flows, be sure to select at least the Implicit grant check box.
+  * Under Allowed OAuth Scopes, be sure to select at least the email and openid check boxes.
+  * Choose Save changes.
 
 > _For more information, see [App client settings overview](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-app-idp-settings.html#cognito-user-pools-app-idp-settings-about)._
 
 ![Client Settings](https://github.com/awslabs/aws-orbit-workbench/blob/main/docs/_static/okta/client-settings.png?raw=true "Client Settings")
 
-## 8 - Configuring the Orbit Workbench manifest file (YAML)
+## 10 - Configuring the Orbit Workbench manifest file (YAML)
 
-* Add two new attributes in the root level:
+* Add these new attributes in the root level, and fill in `CognitoExternalProviderDomain` and `CognitoExternalProviderRedirect` with your configurations:
 
 ```yaml
 CognitoExternalProvider: okta
 CognitoExternalProviderLabel: OKTA
+# The domain created in Coginto
+CognitoExternalProviderDomain: domain.auth.region.amazoncognito.com
+# The Orbit Workbench URL
+CognitoExternalProviderRedirect: https://a12389bc893fa0980ce08f1000ecf89a.region.elb.amazonaws.com
 ```
 
 * Deploy:
@@ -174,7 +176,7 @@ You should see a 'Sign in with Okta' button on the landing page
 <!---![Landing Page](https://github.com/awslabs/aws-orbit-workbench/blob/main/docs/_static/okta/landing-page.png?raw=true "Landing Page")--->
 
 
-## 9 - Map Cognito groups to Okta groups
+## 11 - Map Cognito groups to Okta groups
 * Go to your Cognito console
   * On the left click `General settings` > `Users and groups`
   * Select the `Groups` tab
@@ -189,5 +191,7 @@ You should see a 'Sign in with Okta' button on the landing page
   * Click on the `Groups` tab
     * Add the group from the Groups search bar
 
-## 10 - Sign in
-* Go back to your landing page and click on `Sign in with Okta`. You should see the Lake Creator and Lake user groups
+## 12 - Sign in
+* Go back to your landing page and click on `Sign in with Okta`
+  * You will be prompted to login with with your Okta account
+  * You should see the Lake Creator and Lake user groups after you sign in
