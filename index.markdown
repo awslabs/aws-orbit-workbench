@@ -7,4 +7,6 @@ title: Home
 ---
 This is the landing page, content TBD
 
+## [GitHub Repository](https://github.com/awslabs/aws-orbit-workbench)
+
 {% include carousel.html height="80" unit="%" duration="30" %}

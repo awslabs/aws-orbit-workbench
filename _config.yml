@@ -55,7 +55,7 @@ plugins:
 #   - vendor/ruby/
 header_pages:
   - index.markdown
-  - tutorials.markdown
+  - documentation.markdown
   - blog.markdown
-  - examples.markdown
+  - tutorial.markdown
   - about.markdown

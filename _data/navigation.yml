@@ -3,7 +3,7 @@ docs:
   - group: Getting Start
     sub:
       - title: Introduction
-        url: tutorial
+        url: documentation
       - title: Quick Demo Deployment
         url: quick-demo-deployment
       - title: Architecture
