@@ -1,0 +1,15 @@
+include VERSION
+include LICENSE
+include NOTICE
+include *.in
+include *.sh
+include *.toml
+include *.txt
+include *.yml
+recursive-include overprovisioning *.json
+recursive-include overprovisioning *.txt
+recursive-include overprovisioning *.typed
+recursive-include overprovisioning *.yaml
+recursive-include overprovisioning *.tpl
+recursive-include overprovisioning *.helmignore
+recursive-include overprovisioning *.py

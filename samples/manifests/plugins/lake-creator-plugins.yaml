@@ -19,3 +19,10 @@
 -   PluginId: fast_fs_lustre
     Module: lustre
     Path: ../plugins/lustre/
+-   PluginId: overprovisioning1
+    Module: overprovisioning
+    Path: ../plugins/overprovisioning/
+    Parameters:
+        replicas: 3
+        cpu: 2
+        memory: 4G
