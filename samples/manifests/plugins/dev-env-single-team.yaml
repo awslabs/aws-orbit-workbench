@@ -10,6 +10,8 @@ SharedEfsSgId: !SSM ${/orbit-foundation/dev-env/resources::SharedEfsSgId}
 InstallSsmAgent: true
 CognitoExternalProvider: !ENV ${COGNITO_EXTERNAL_PROVIDER::}
 CognitoExternalProviderLabel: !ENV ${COGNITO_EXTERNAL_PROVIDER_LABEL::}
+CognitoExternalProviderDomain: !ENV ${COGNITO_EXTERNAL_PROVIDER_DOMAIN::}
+CognitoExternalProviderRedirect: !ENV ${COGNITO_EXTERNAL_PROVIDER_REDIRECT::}
 Images:
     JupyterHub:
         Repository: !ENV ${JUPYTER_HUB_REPO::aws-orbit-jupyter-hub}
