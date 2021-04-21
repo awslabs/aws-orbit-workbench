@@ -142,20 +142,23 @@ class Env(Stack):
                             ],
                             resources=["*"],
                         ),
-                        # FIXME can this be moved to a service role and only be allowed to access the
-                        #  team key after chamcca@ changes
+                        iam.PolicyStatement(
+                            effect=iam.Effect.ALLOW,
+                            actions=["iam:AttachRolePolicy", "iam:PutRolePolicy", "s3:*"],
+                            resources=[
+                                "arn:aws:iam::*:role/aws-service-role/s3.data-source.lustre.fsx.amazonaws.com/",
+                                f"{self.context.scratch_bucket_arn}",
+                                f"{self.context.scratch_bucket_arn}/*",
+                            ],
+                        ),
                         iam.PolicyStatement(
                             effect=iam.Effect.ALLOW,
                             actions=[
-                                "kms:CreateGrant",
-                                "kms:ListGrants",
-                                "kms:RevokeGrant",
-                                "kms:DescribeKey",
-                                "kms:Encrypt",
-                                "kms:Decrypt",
-                                "kms:ReEncrypt*",
-                                "kms:GenerateDataKey*",
-                                "kms:DescribeKey",
+                                "iam:CreateServiceLinkedRole",
+                                "s3:ListBucket",
+                                "fsx:CreateFileSystem",
+                                "fsx:DeleteFileSystem",
+                                "fsx:DescribeFileSystems",
                             ],
                             resources=["*"],
                         ),
@@ -163,6 +166,7 @@ class Env(Stack):
                 )
             },
         )
+
         return role
 
     def _create_role_fargate_profile(self) -> iam.Role:

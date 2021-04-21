@@ -1,0 +1,82 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: fsx-csi-controller
+  namespace: kube-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fsx-csi-controller
+  template:
+    metadata:
+      labels:
+        app: fsx-csi-controller
+        orbit/node-type: ec2
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+        orbit/node-type: ec2
+      serviceAccount: fsx-csi-controller-sa
+      priorityClassName: system-cluster-critical
+      tolerations:
+        - key: CriticalAddonsOnly
+          operator: Exists
+      containers:
+        - name: fsx-plugin
+          image: amazon/aws-fsx-csi-driver:latest
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "300Mi"
+            requests:
+              cpu: "30m"
+              memory: "100Mi"
+          args :
+            - --endpoint=$(CSI_ENDPOINT)
+            - --logtostderr
+            - --v=5
+          env:
+            - name: CSI_ENDPOINT
+              value: unix:///var/lib/csi/sockets/pluginproxy/csi.sock
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-secret
+                  key: key_id
+                  optional: true
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-secret
+                  key: access_key
+                  optional: true
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+        - name: csi-provisioner
+          image: quay.io/k8scsi/csi-provisioner:v1.3.0
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "300Mi"
+            requests:
+              cpu: "30m"
+              memory: "100Mi"
+          args:
+            - --timeout=10m
+            - --csi-address=$(ADDRESS)
+            - --v=5
+            - --enable-leader-election
+            - --leader-election-type=leases
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          volumeMounts:
+            - name: socket-dir
+              mountPath: /var/lib/csi/sockets/pluginproxy/
+      volumes:
+        - name: socket-dir
+          emptyDir: {}
+

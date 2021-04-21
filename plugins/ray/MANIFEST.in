@@ -1,0 +1,15 @@
+include VERSION
+include LICENSE
+include NOTICE
+include *.in
+include *.sh
+include *.toml
+include *.txt
+include *.yml
+recursive-include ray *.json
+recursive-include ray *.txt
+recursive-include ray *.typed
+recursive-include ray *.yaml
+recursive-include ray *.tpl
+recursive-include ray *.helmignore
+recursive-include ray *.py

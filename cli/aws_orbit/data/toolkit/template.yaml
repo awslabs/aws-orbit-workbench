@@ -395,6 +395,7 @@ Resources:
               - kms:ScheduleKeyDeletion
               - kms:CancelKeyDeletion
             Resource: '*'
+
 Outputs:
   DeployId:
     Value: '${deploy_id}'

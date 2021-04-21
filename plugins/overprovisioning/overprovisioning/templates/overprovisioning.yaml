@@ -1,0 +1,37 @@
+---
+apiVersion: scheduling.k8s.io/v1beta1
+kind: PriorityClass
+metadata:
+  name: {{ .Values.nameOverride }}
+value: -1
+globalDefault: false
+description: "Priority class used by {{ .Values.nameOverride }}."
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.nameOverride }}
+  namespace: kube-system
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      run: {{ .Values.nameOverride }}
+  template:
+    metadata:
+      labels:
+        run: {{ .Values.nameOverride }}
+    spec:
+      priorityClassName: {{ .Values.nameOverride }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      containers:
+      - name: reserve-resources
+        image: public.ecr.aws/v3o4w1g6/gcr.io/google-containers/pause:2.0
+        resources:
+          requests:
+            {{- with .Values.resources }}
+              {{- toYaml . | nindent 12 }}
+              {{- end }}

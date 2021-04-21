@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.fs_name }}
+  labels:
+    {{- include "fsx_filesystem.labels" . | nindent 4 }}
+  namespace: {{ .Values.namespace }}
+
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: {{ .Values.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.storage }}

@@ -1,0 +1,14 @@
+# Default values.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+namespace: ${team}
+nameOverride: ${plugin_id}
+fullnameOverride: ""
+serviceAccountName: ${team}
+subnet: ${subnet}
+sg: ${sg}
+s3importpath: ${s3importpath}
+s3exportpath: ${s3exportpath}
+deploymentType: ${deploymentType}
+storageClassName: fsx-lustre-${team}-${plugin_id}
