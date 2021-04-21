@@ -35,7 +35,14 @@ cp ${DIR}/bundle.sh ${ARCHIVE_DIR}/
 cp ${DIR}/Dockerfile ${ARCHIVE_DIR}/
 cp ${DIR}/VERSION ${ARCHIVE_DIR}/
 
+cd ${ARCHIVE_DIR}/extensions/
+git clone https://github.com/stthoom/aws-glue-databrew-jupyter-extension.git
+git branch
+git clone feature/jl_310_databrew_v4
+
+
 touch ${ARCHIVE_DIR}/pip.conf
 
 cd ${DIR}
 tar czvf aws-orbit_jupyter-user.tar.gz ./aws-orbit_jupyter-user
+
