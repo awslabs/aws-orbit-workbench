@@ -46,4 +46,4 @@
     Path: ../plugins/ray/
     Parameters:
         workers: 2
-        release_tag: latest-gpu
+        release_tag: latest
