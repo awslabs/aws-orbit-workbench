@@ -26,6 +26,10 @@ Images:
         Source: !ENV ${IMAGE_SOURCE::code}
         Path: !ENV ${IMAGE_PATH::../../../images/landing-page}
         Version: !ENV ${VERSION::latest}
+    CodeBuild:
+        Repository: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base
+        Source: ecr
+        Version: 0.16.0.dev0
 Networking:
     VpcId: !SSM ${/orbit-foundation/dev-env/resources::VpcId}
     PublicSubnets: !SSM ${/orbit-foundation/dev-env/resources::PublicSubnets}
