@@ -106,6 +106,11 @@ class LandingPageImageManifest(ImageManifest):
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
+class ImageReplicatorImageManifest(ImageManifest):
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/image-replicator"
+
+
+@dataclass(base_schema=BaseSchema, frozen=True)
 class AwsEfsDriverImageManifest(ImageManifest):
     repository: Optional[str] = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/aws-efs-csi-driver"
     source: Optional[str] = "ecr-external"
@@ -184,6 +189,7 @@ class ImagesManifest:
     jupyter_hub: JupyterHubImageManifest = JupyterHubImageManifest()
     jupyter_user: JupyterUserImageManifest = JupyterUserImageManifest()
     landing_page: LandingPageImageManifest = LandingPageImageManifest()
+    image_replicator: ImageReplicatorImageManifest = ImageReplicatorImageManifest()
     aws_efs_csi_driver: AwsEfsDriverImageManifest = AwsEfsDriverImageManifest()
     livenessprobe: LivenessprobeImageManifest = LivenessprobeImageManifest()
     csi_node_driver_registrar: CsiNodeDriverRegistrarImageManifest = CsiNodeDriverRegistrarImageManifest()
@@ -200,6 +206,7 @@ class ImagesManifest:
             "jupyter_hub",
             "jupyter_user",
             "landing_page",
+            "image_replicator",
             "aws_efs_csi_driver",
             "livenessprobe",
             "csi_node_driver_registrar",

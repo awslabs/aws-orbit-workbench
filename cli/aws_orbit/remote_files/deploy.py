@@ -128,6 +128,7 @@ def deploy_images_remotely(context: "Context") -> None:
         ("jupyter-hub", "jupyter-hub", None, []),
         ("jupyter-user", "jupyter-user", "build.sh", []),
         ("landing-page", "landing-page", "build.sh", []),
+        ("image-replicator", "image-replicator", None, []),
     ]
 
     # Secondary images required if internet is not accessible
