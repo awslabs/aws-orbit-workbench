@@ -14,4 +14,5 @@ COPY src/* /var/image-replicator/
 
 RUN python3 /var/image-replicator/setup.py install
 
-ENTRYPOINT ["/usr/local/bin/image-replicator"]
+# ENTRYPOINT ["image-replicator"]
+ENTRYPOINT ["bash"]

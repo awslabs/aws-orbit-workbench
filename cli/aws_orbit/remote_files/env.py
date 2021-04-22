@@ -14,11 +14,10 @@
 
 import logging
 import os
-from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 from aws_orbit import ORBIT_CLI_ROOT, cdk, docker
 from aws_orbit.services import cfn, ecr, iam, ssm
-from aws_orbit.utils import boto3_client
 
 if TYPE_CHECKING:
     from aws_orbit.models.changeset import ListChangeset
@@ -38,28 +37,6 @@ DEFAULT_ISOLATED_IMAGES: List[str] = [
     "ssm-agent-installer",
     "pause",
 ]
-
-
-def _filter_repos(env_name: str, page: Dict[str, Any]) -> Iterator[str]:
-    client = boto3_client("ecr")
-    for repo in page["repositories"]:
-        response: Dict[str, Any] = client.list_tags_for_resource(resourceArn=repo["repositoryArn"])
-        for tag in response["tags"]:
-            if tag["Key"] == "Env" and tag["Value"] == f"orbit-{env_name}":
-                yield repo["repositoryName"]
-
-
-def _fetch_repos(env_name: str) -> Iterator[str]:
-    client = boto3_client("ecr")
-    paginator = client.get_paginator("describe_repositories")
-    for page in paginator.paginate():
-        for repo_name in _filter_repos(env_name, page=page):
-            yield repo_name
-
-
-def _cleanup_remaining_resources(env_name: str) -> None:
-    for repo in _fetch_repos(env_name=env_name):
-        ecr.delete_repo(repo=repo)
 
 
 def _concat_images_into_args(context: "Context", add_images: List[str], remove_images: List[str]) -> Tuple[str, str]:
@@ -108,7 +85,7 @@ def destroy(context: "Context") -> None:
     if cfn.does_stack_exist(stack_name=context.env_stack_name):
         docker.login(context=context)
         _logger.debug("DockerHub and ECR Logged in")
-        _cleanup_remaining_resources(env_name=context.name)
+        ecr.cleanup_remaining_repos(env_name=context.name)
         add_images_str, remove_images_str = _concat_images_into_args(context=context, add_images=[], remove_images=[])
         args = [context.name, add_images_str, remove_images_str]
         cdk.destroy(

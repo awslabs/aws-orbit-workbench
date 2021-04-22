@@ -264,6 +264,7 @@ class Context:
     orbit_version: Optional[str] = aws_orbit.__version__
     helm_repository: Optional[str] = None
     install_ssm_agent: Optional[bool] = False
+    install_image_replicator: Optional[bool] = False
 
     def get_team_by_name(self, name: str) -> Optional[TeamContext]:
         for t in self.teams:
@@ -423,8 +424,10 @@ class ContextSerDe(Generic[T, V]):
                 eks_system_masters_roles=[],
                 policies=manifest.policies,
                 install_ssm_agent=manifest.install_ssm_agent,
+                install_image_replicator=manifest.install_image_replicator,
             )
         context.install_ssm_agent = manifest.install_ssm_agent
+        context.install_image_replicator = manifest.install_image_replicator
         ContextSerDe.fetch_toolkit_data(context=context)
         ContextSerDe.dump_context_to_ssm(context=context)
         return context

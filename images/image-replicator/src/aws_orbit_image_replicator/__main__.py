@@ -48,7 +48,7 @@ def main(
     repo_prefix: Optional[str],
     codebuild_project: Optional[str],
     codebuild_timeout: Optional[int],
-    replicate_internal_repos: Optional[bool],
+    replicate_external_repos: Optional[bool],
     in_cluster_deployment: Optional[bool],
     replicator_processes: Optional[int],
     debug: bool,
@@ -56,34 +56,43 @@ def main(
     if debug:
         logger.setLevel(logging.DEBUG)
 
-    repo_host = repo_host if repo_host else os.environ.get("IMAGE_REPLICATOR_REPO_HOST", None)
-    repo_prefix = repo_prefix if repo_prefix else os.environ.get("IMAGE_REPLICATOR_REPO_PREFIX", None)
-    codebuild_project = codebuild_project if codebuild_project else os.environ.get("IMAGE_REPLICATOR_CODEBUILD_PROJECT", None)
-    codebuild_timeout = codebuild_timeout if codebuild_timeout else int(os.environ.get("IMAGE_REPLICATOR_CODEBUILD_TIMEOUT", "30"))
-    replicate_internal_repos = (
-        replicate_internal_repos
-        if replicate_internal_repos is not None
-        else os.environ.get("IMAGE_REPLICATOR_REPLICATE_INTERNAL_REPOS", False)
+    repo_host = repo_host if repo_host else os.environ.get("IMAGE_REPLICATOR_REPO_HOST", "")
+    repo_prefix = repo_prefix if repo_prefix else os.environ.get("IMAGE_REPLICATOR_REPO_PREFIX", "")
+    codebuild_project = (
+        codebuild_project if codebuild_project else os.environ.get("IMAGE_REPLICATOR_CODEBUILD_PROJECT", "")
+    )
+    codebuild_timeout = (
+        codebuild_timeout if codebuild_timeout else int(os.environ.get("IMAGE_REPLICATOR_CODEBUILD_TIMEOUT", "30"))
+    )
+    replicate_external_repos = (
+        replicate_external_repos
+        if replicate_external_repos is not None
+        else os.environ.get("IMAGE_REPLICATOR_REPLICATE_EXTERNAL_REPOS", "False").lower() in ["true", "yes", "1"]
     )
     in_cluster_deployment = (
         in_cluster_deployment
         if in_cluster_deployment is not None
-        else os.environ.get("IMAGE_REPLICATOR_IN_CLUSTER_DEPLOYMENT", True)
+        else os.environ.get("IMAGE_REPLICATOR_IN_CLUSTER_DEPLOYMENT", "True").lower() in ["true", "yes", "1"]
     )
     replicator_processes = (
-        replicator_processes if replicator_processes else int(os.environ.get("IMAGE_REPLICATOR_REPLICATOR_PROCESSES", "3"))
+        replicator_processes
+        if replicator_processes
+        else int(os.environ.get("IMAGE_REPLICATOR_REPLICATOR_PROCESSES", "3"))
     )
 
     logger.info("repo_host: %s", repo_host)
     logger.info("repo_prefix: %s", repo_prefix)
     logger.info("codebuild_project: %s", codebuild_project)
     logger.info("codebuild_timeout: %s", codebuild_timeout)
-    logger.info("replicate_internal_repos: %s", replicate_internal_repos)
+    logger.info("replicate_external_repos: %s", replicate_external_repos)
     logger.info("in_cluster_deployment: %s", in_cluster_deployment)
     logger.info("replicator_processes: %s", replicator_processes)
 
     if not repo_host or not repo_prefix or not codebuild_project or not codebuild_timeout or not replicator_processes:
-        exception = click.ClickException("All of repo_host, repo_prefix, codebuild_project, codebuild_timeout, and replicator_processes are required.")
+        exception = click.ClickException(
+            "All of repo_host, repo_prefix, codebuild_project, codebuild_timeout, "
+            "and replicator_processes are required."
+        )
         logger.error(exception)
         raise exception
 
@@ -97,7 +106,7 @@ def main(
             "repo_prefix": repo_prefix,
             "codebuild_project": codebuild_project,
             "codebuild_timeout": codebuild_timeout,
-            "replicate_internal_repos": replicate_internal_repos,
+            "replicate_external_repos": replicate_external_repos,
             "in_cluster_deployment": in_cluster_deployment,
             "replicator_processes": replicator_processes,
         }
@@ -130,14 +139,11 @@ def main(
             replicators.append(replicator)
             replicator.start()
 
-        result = monitor.join()
+        monitor.join()
         for replicator in replicators:
             replicator.terminate()
 
-    if result == 0:
-        return result
-    else:
-        raise click.ClickException("Processing Error")
+    return 0
 
 
 if __name__ == "__main__":

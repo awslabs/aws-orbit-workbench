@@ -15,20 +15,20 @@
 import re
 import time
 from multiprocessing import Queue, synchronize
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, Dict, List, Tuple
 
 from aws_orbit_image_replicator import load_config, logger
 from kubernetes.client import AppsV1Api
 
 
 def _get_desired_image(config: Dict[str, Any], image: str) -> str:
-    external_ecr_match = re.compile("^[0-9]{12}\.dkr\.ecr\..+\.amazonaws.com/")
-    public_ecr_match = re.compile("^public.ecr.aws/.+/")
+    external_ecr_match = re.compile(r"^[0-9]{12}\.dkr\.ecr\..+\.amazonaws.com/")
+    public_ecr_match = re.compile(r"^public.ecr.aws/.+/")
 
     if image.startswith(config["repo_host"]):
         return image
     elif external_ecr_match.match(image):
-        if config["replicate_internal_repos"]:
+        if config["replicate_external_repos"]:
             return external_ecr_match.sub(f"{config['repo_host']}/{config['repo_prefix']}/", image)
         else:
             return image
@@ -40,7 +40,7 @@ def _get_desired_image(config: Dict[str, Any], image: str) -> str:
 
 def _get_replication_status(
     lock: synchronize.Lock,
-    replications_queue: Queue,
+    replications_queue: Queue,  # type: ignore
     replication_statuses: Dict[str, str],
     image: str,
     desired_image: str,
@@ -63,7 +63,7 @@ def _get_replication_status(
 def _inspect_item(
     config: Dict[str, Any],
     lock: synchronize.Lock,
-    replications_queue: Queue,
+    replications_queue: Queue,  # type: ignore
     replication_statuses: Dict[str, str],
     item: Any,
 ) -> Tuple[Dict[str, Any], List[str]]:
@@ -111,7 +111,10 @@ def _inspect_item(
 
 
 def _inspect_deployments(
-    config: Dict[str, Any], lock: synchronize.Lock, replications_queue: Queue, replication_statuses: Dict[str, str]
+    config: Dict[str, Any],
+    lock: synchronize.Lock,
+    replications_queue: Queue,  # type: ignore
+    replication_statuses: Dict[str, str],
 ) -> None:
     deployments = AppsV1Api().list_deployment_for_all_namespaces()
     for deployment in deployments.items:
@@ -119,7 +122,9 @@ def _inspect_deployments(
 
         if len(statuses) > 0 and all([status == "Complete" for status in statuses]):
             with lock:
-                for container in body["spec"]["template"]["spec"]["containers"] + body["spec"]["template"]["spec"]["initContainers"]:
+                for container in (
+                    body["spec"]["template"]["spec"]["containers"] + body["spec"]["template"]["spec"]["initContainers"]
+                ):
                     del replication_statuses[container["image"]]
 
             AppsV1Api().patch_namespaced_deployment(
@@ -133,7 +138,10 @@ def _inspect_deployments(
 
 
 def _inspect_daemon_sets(
-    config: Dict[str, Any], lock: synchronize.Lock, replications_queue: Queue, replication_statuses: Dict[str, str]
+    config: Dict[str, Any],
+    lock: synchronize.Lock,
+    replications_queue: Queue,  # type: ignore
+    replication_statuses: Dict[str, str],
 ) -> None:
     daemon_sets = AppsV1Api().list_daemon_set_for_all_namespaces()
     for daemon_set in daemon_sets.items:
@@ -141,7 +149,9 @@ def _inspect_daemon_sets(
 
         if len(statuses) > 0 and all([status == "Complete" for status in statuses]):
             with lock:
-                for container in body["spec"]["template"]["spec"]["containers"] + body["spec"]["template"]["spec"]["initContainers"]:
+                for container in (
+                    body["spec"]["template"]["spec"]["containers"] + body["spec"]["template"]["spec"]["initContainers"]
+                ):
                     del replication_statuses[container["image"]]
 
             AppsV1Api().patch_namespaced_daemon_set(
@@ -155,8 +165,11 @@ def _inspect_daemon_sets(
 
 
 def monitor(
-    config: Dict[str, Any], lock: synchronize.Lock, replications_queue: Queue, replication_statuses: Dict[str, str]
-) -> int:  # type: ignore
+    config: Dict[str, Any],
+    lock: synchronize.Lock,
+    replications_queue: Queue,  # type: ignore
+    replication_statuses: Dict[str, str],
+) -> int:
     try:
         while True:
             load_config(config["in_cluster_deployment"])
@@ -167,7 +180,7 @@ def monitor(
             logger.debug("Monitoring Daemon Sets")
             _inspect_daemon_sets(config, lock, replications_queue, replication_statuses)
 
-            time.sleep(10)
+            time.sleep(30)
     except Exception as e:
         logger.exception(e)
         return -1
