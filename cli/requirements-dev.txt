@@ -16,6 +16,10 @@
     # via -r requirements-dev.in
 -e ../plugins/redshift
     # via -r requirements-dev.in
+-e ../plugins/ray
+    # via -r requirements-dev.in
+-e ../plugins/overprovisioning
+    # via -r requirements-dev.in
 -e ../sdk
     # via -r requirements-dev.in
 -e ../plugins/team_script_launcher
