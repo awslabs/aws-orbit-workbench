@@ -46,16 +46,22 @@ def _get_replication_status(
     desired_image: str,
 ) -> str:
     with lock:
-        status = replication_statuses.get(desired_image, "Pending:1")
+        status = replication_statuses.get(desired_image, "Unknown")
 
-        if status.startswith("Pending"):
+        if status == "Unknown":
+            logger.info("Queueing Replication Task: %s -> %s", image, desired_image)
+            status = "Pending:1"
             replication_statuses[desired_image] = status
             replications_queue.put({"src": image, "dest": desired_image})
         elif status.startswith("Failed"):
             attempt = int(status.split(":")[1])
             if attempt < 3:
-                replication_statuses[desired_image] = f"Pending:{attempt + 1}"
+                attempt = attempt + 1
+                logger.info("Queueing Failed Replication Task Attemp %s: %s -> %s", attempt, image, desired_image)
+                replication_statuses[desired_image] = f"Pending:{attempt}"
                 replications_queue.put({"src": image, "dest": desired_image})
+            else:
+                logger.error("Too many failed replication attempts: %s -> %s", image, desired_image)
 
         return status
 
@@ -73,7 +79,7 @@ def _inspect_item(
 
     for container in item.spec.template.spec.containers:
         desired_image = _get_desired_image(config, container.image)
-        logger.debug("Image: %s -> %s", container.image, desired_image)
+        logger.debug("Container Image: %s -> %s", container.image, desired_image)
         containers.append({"name": container.name, "image": desired_image})
 
         if container.image != desired_image:
@@ -86,7 +92,7 @@ def _inspect_item(
     if item.spec.template.spec.init_containers:
         for container in item.spec.template.spec.init_containers:
             desired_image = _get_desired_image(config, container.image)
-            logger.debug("Image: %s -> %s", container.image, desired_image)
+            logger.debug("Init Container Image: %s -> %s", container.image, desired_image)
             init_containers.append({"name": container.name, "image": desired_image})
 
             if container.image != desired_image:

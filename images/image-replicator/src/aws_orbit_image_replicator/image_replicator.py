@@ -20,8 +20,10 @@ import boto3
 import yaml
 from aws_orbit_image_replicator import load_config, logger
 
+from aws_orbit.cdk import destroy
 
-def _generate_build_spec(repo_host: str, repo_prefix: str, src: str, dest: str) -> Dict[str, Any]:
+
+def _generate_buildspec(repo_host: str, repo_prefix: str, src: str, dest: str) -> Dict[str, Any]:
     repo = dest.replace(f"{repo_host}/", "").split(":")[0]
     build_spec = {
         "version": 0.2,
@@ -55,11 +57,14 @@ def _generate_build_spec(repo_host: str, repo_prefix: str, src: str, dest: str) 
 def _replicate_image(config: Dict[str, Any], src: str, dest: str) -> str:
     logger.info("Replicating Image: %s -> %s", src, dest)
 
+    buildspec = yaml.safe_dump(_generate_buildspec(config["repo_host"], config["repo_prefix"], src, dest))
+    logger.debug("BuildSpec:\n%s", buildspec)
+
     client = boto3.client("codebuild")
     build_id = client.start_build(
         projectName=config["codebuild_project"],
         sourceTypeOverride="NO_SOURCE",
-        buildspecOverride=yaml.safe_dump(_generate_build_spec(config["repo_host"], config["repo_host"], src, dest)),
+        buildspecOverride=buildspec,
         timeoutInMinutesOverride=config["codebuild_timeout"],
         privilegedModeOverride=True,
     )["build"]["id"]
@@ -69,8 +74,9 @@ def _replicate_image(config: Dict[str, Any], src: str, dest: str) -> str:
     while True:
         build = client.batch_get_builds(ids=[build_id])["builds"][0]
         status: str = build["buildStatus"]
+        phase: str = build["currentPhase"]
 
-        logger.debug("CodeBuild Id: %s Status: %s", build_id, status)
+        logger.debug("CodeBuild Id: %s, Phase: %s,  Status: %s", build_id, phase, status)
 
         if status == "IN_PROGRESS":
             time.sleep(10)
@@ -87,42 +93,62 @@ def replicate(
     replicator_id: int,
 ) -> int:
     logger.info("Started Replicator Id: %s", replicator_id)
+    replication_task: Optional[Dict[str, str]] = None
 
     while True:
         try:
             load_config(config["in_cluster_deployment"])
-            replication_task: Optional[Dict[str, str]] = None
+
+            queue_size = replications_queue.qsize()
+            logger.info(f"Queue Size: {queue_size}")
 
             replication_task = cast(Dict[str, str], replications_queue.get(block=True, timeout=None))
-            logger.info("Got Replication Task: %s -> %s", replication_task["src"], replication_task["dest"])
+            src, dest = replication_task["src"], replication_task["dest"]
 
-            result = _replicate_image(config, replication_task["src"], replication_task["dest"])
+            with lock:
+                logger.info("Got Replication Task: %s -> %s", src, replication_task["dest"])
+
+                status = replication_statuses[dest]
+                if status == "Complete":
+                    logger.info("Skipping Completed Task: %s -> %s", src, dest)
+                    continue
+                elif status.startswith("Failed"):
+                    logger.info("Skipping Failed Task: %s -> %s", src, dest)
+                    continue
+                elif status.startswith("Replicating"):
+                    logger.info("Skipping Replicating Task: %s -> %s", src, dest)
+                    continue
+                else:
+                    attempt = int(status.split(":")[1])
+                    replication_statuses[dest] = f"Replicating:{attempt}"
+
+            result = _replicate_image(config, src, dest)
 
             with lock:
                 if result == "SUCCEEDED":
-                    logger.info("Replication Succeeded: %s -> %s", replication_task["src"], replication_task["dest"])
-                    replication_statuses[replication_task["dest"]] = "Complete"
+                    logger.info("Replication Complete: %s -> %s", src, dest)
+                    replication_statuses[dest] = "Complete"
                 else:
-                    status = replication_statuses.get(replication_task["dest"], "Pending:1")
-                    attempt = int(status.split(":")[1])
                     logger.error(
                         "Image Replication Attempt %s Failed: %s -> %s",
                         attempt,
-                        replication_task["src"],
-                        replication_task["dest"],
+                        src,
+                        dest,
                     )
-                    replication_statuses[replication_task["dest"]] = f"Failed:{attempt}"
+                    replication_statuses[dest] = f"Failed:{attempt}"
 
         except Exception as e:
             with lock:
-                replication_task = cast(Dict[str, str], replication_task)
-                status = replication_statuses.get(replication_task["dest"], "Pending:1")
+                status = replication_statuses[dest]
                 attempt = int(status.split(":")[1])
                 logger.error(
                     "Image Replication Attempt %s Failed: %s -> %s",
                     attempt,
-                    replication_task["src"],
-                    replication_task["dest"],
+                    src,
+                    dest,
                 )
                 logger.exception(e)
-                replication_statuses[replication_task["dest"]] = f"Failed:{attempt}"
+                replication_statuses[dest] = f"Failed:{attempt}"
+        finally:
+            replication_task = None
+            time.sleep(5)
