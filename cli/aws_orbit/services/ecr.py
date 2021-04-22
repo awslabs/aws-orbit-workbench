@@ -1,7 +1,7 @@
 import itertools
 import logging
 from base64 import b64decode
-from typing import Any, Iterator, Optional, Tuple, cast
+from typing import Any, Dict, Iterator, Optional, Tuple, cast
 
 import boto3
 
@@ -14,6 +14,28 @@ def _chunks(iterable: Iterator[Any], size: int) -> Iterator[Any]:
     iterator = iter(iterable)
     for first in iterator:
         yield itertools.chain([first], itertools.islice(iterator, size - 1))
+
+
+def _filter_repos(env_name: str, page: Dict[str, Any]) -> Iterator[str]:
+    client = boto3_client("ecr")
+    for repo in page["repositories"]:
+        if repo["repositoryName"].startswith(f"orbit-{env_name}/"):
+            yield repo["repositoryName"]
+        elif repo["repositoryName"].startswith(f"orbit-{env_name}-"):
+            yield repo["repositoryName"]
+        else:
+            response: Dict[str, Any] = client.list_tags_for_resource(resourceArn=repo["repositoryArn"])
+            for tag in response["tags"]:
+                if tag["Key"] == "Env" and tag["Value"] == f"orbit-{env_name}":
+                    yield repo["repositoryName"]
+
+
+def _fetch_repos(env_name: str) -> Iterator[str]:
+    client = boto3_client("ecr")
+    paginator = client.get_paginator("describe_repositories")
+    for page in paginator.paginate():
+        for repo_name in _filter_repos(env_name, page=page):
+            yield repo_name
 
 
 def get_credential(region: Optional[str] = None) -> Tuple[str, str]:
@@ -48,3 +70,9 @@ def delete_repo(repo: str) -> None:
     delete_images(repo=repo)
     _logger.debug("Deleting Repository: %s", repo)
     client.delete_repository(repositoryName=repo, force=True)
+
+
+def cleanup_remaining_repos(env_name: str) -> None:
+    _logger.debug("Deleting any remaining ECR Repos")
+    for repo in _fetch_repos(env_name=env_name):
+        delete_repo(repo=repo)

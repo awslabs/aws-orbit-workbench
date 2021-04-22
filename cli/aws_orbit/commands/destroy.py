@@ -20,7 +20,7 @@ import botocore.exceptions
 from aws_orbit import bundle, plugins, remote, utils
 from aws_orbit.messages import MessagesContext
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
-from aws_orbit.services import cfn, codebuild, elb, s3, ssm
+from aws_orbit.services import cfn, codebuild, ecr, elb, s3, ssm
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -37,6 +37,7 @@ def destroy_toolkit(env_name: str, top_level: str = "orbit") -> None:
 
 
 def destroy_remaining_resources(env_name: str, top_level: str = "orbit") -> None:
+    ecr.cleanup_remaining_repos(env_name=env_name)
     s3.delete_bucket_by_prefix(prefix=f"{top_level}-{env_name}-cdk-toolkit-{utils.get_account_id()}-")
     env_cdk_toolkit: str = f"{top_level}-{env_name}-cdk-toolkit"
     if cfn.does_stack_exist(stack_name=env_cdk_toolkit):
