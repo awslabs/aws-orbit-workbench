@@ -41,7 +41,7 @@ def _generate_build_spec(repo_host: str, repo_prefix: str, src: str, dest: str) 
                     f"aws ecr get-login-password | docker login --username AWS --password-stdin {repo_host}",
                     (
                         f"aws ecr create-repository --repository-name {repo} "
-                        f"--tags Key=Env,Value={repo_prefix} || echo 'Already exists'",
+                        f"--tags Key=Env,Value={repo_prefix} || echo 'Already exists'"
                     ),
                 ]
             },
