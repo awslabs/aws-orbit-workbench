@@ -15,5 +15,4 @@ ADD src /var/image-replicator/
 RUN cd /var/image-replicator/ && \
     pip3 install .
 
-# ENTRYPOINT ["image-replicator"]
-ENTRYPOINT ["bash"]
+ENTRYPOINT ["image-replicator"]
