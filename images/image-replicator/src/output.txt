@@ -1,9 +1,0 @@
-[2021-04-21 09:27:07,198][__main__.py  : 77] INFO     repo_host: None
-[2021-04-21 09:27:07,198][__main__.py  : 78] INFO     repo_prefix: None
-[2021-04-21 09:27:07,198][__main__.py  : 79] INFO     replicate_internal_repos: False
-[2021-04-21 09:27:07,198][__main__.py  : 80] INFO     in_cluster_deployment: True
-[2021-04-21 09:27:07,198][__main__.py  : 81] INFO     replicator_processes: 3
-[2021-04-21 09:27:07,198][__main__.py  : 85] ERROR    All of repo_host, repo_prefix, and replicator_processes are required.
-[2021-04-21 09:27:07,198][util.py      : 54] INFO     process shutting down
-[2021-04-21 09:27:07,198][util.py      : 50] DEBUG    running all "atexit" finalizers with priority >= 0
-[2021-04-21 09:27:07,198][util.py      : 50] DEBUG    running the remaining "atexit" finalizers
