@@ -131,8 +131,8 @@ RUN conda run pip install ./
 RUN jupyter labextension install ./
 RUN jupyter lab build
 
-#ADD extensions/jupyterlab_orbit/ /etc/extensions/jupyterlab_orbit/
-WORKDIR /etc/extensions/jupyterlab_orbit/
+WORKDIR /home/${NB_USER}
+
 RUN conda run pip install /etc/extensions/jupyterlab_orbit/
 
 RUN jupyter labextension build /etc/extensions/jupyterlab_orbit
