@@ -47,3 +47,11 @@ do
 done
 
 rm -fR /home/jovyan/.aws
+
+# VSCode Extensions for extra_user_apps/codeserver 
+if [ -d "/home/jovyan/.local/share/code-server/CachedExtensionVSIXs" ]; then
+  ln -s /home/jovyan/.local/share/code-server/CachedExtensionVSIXs /home/jovyan/private/CachedExtensionVSIXs
+fi
+if [ -d "/home/jovyan/.local/share/code-server/extensions" ]; then
+  ln -s /home/jovyan/.local/share/code-server/extensions /home/jovyan/private/extensions
+fi
