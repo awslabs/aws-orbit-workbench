@@ -33,6 +33,10 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
+    release_name = f"{team_context.name}-{plugin_id}"
+    if helm.is_exists_chart_release(release_name, team_context.name):
+        _logger.info("Chart %s already installed, skipping installation", release_name)
+        return
     vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
         region=context.region,
@@ -75,7 +79,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     helm.install_chart(
         repo=repo,
         namespace=team_context.name,
-        name=f"{team_context.name}-{plugin_id}",
+        name=release_name,
         chart_name=chart_name,
         chart_version=chart_version,
     )
