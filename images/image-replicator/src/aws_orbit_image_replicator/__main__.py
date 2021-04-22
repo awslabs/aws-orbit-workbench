@@ -28,7 +28,7 @@ from aws_orbit_image_replicator import image_monitor, image_replicator, logger
 @click.option("--codebuild-project", type=str, required=False, default=None, show_default=True)
 @click.option("--codebuild-timeout", type=int, required=False, default=None, show_default=True)
 @click.option(
-    "--replicate-internal-repos/--skip-internal-repos",
+    "--replicate-external-repos/--skip-external-repos",
     type=bool,
     required=False,
     default=None,
