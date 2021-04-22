@@ -124,6 +124,18 @@ def uninstall_chart(name: str) -> None:
         _logger.error(e)
 
 
+def is_exists_chart_release(name: str, namespace: str) -> bool:
+    try:
+        for line in sh.run_iterating(f"helm list -n {namespace}"):
+            if name in line:
+                return True
+
+        return False
+    except exceptions.FailedShellCommand as e:
+        _logger.error(e)
+        raise e
+
+
 def delete_chart(repo: str, chart_name: str) -> None:
     try:
         _logger.debug("Deleting %s from %s repository", chart_name, repo)
