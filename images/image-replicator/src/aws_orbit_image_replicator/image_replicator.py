@@ -20,8 +20,6 @@ import boto3
 import yaml
 from aws_orbit_image_replicator import load_config, logger
 
-from aws_orbit.cdk import destroy
-
 
 def _generate_buildspec(repo_host: str, repo_prefix: str, src: str, dest: str) -> Dict[str, Any]:
     repo = dest.replace(f"{repo_host}/", "").split(":")[0]
