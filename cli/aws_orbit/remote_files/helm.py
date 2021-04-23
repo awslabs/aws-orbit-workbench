@@ -190,7 +190,7 @@ def deploy_env(context: Context) -> None:
                     "region": context.region,
                     "account_id": context.account_id,
                     "env_name": context.name,
-                    "tag": context.images.landing_page.version,
+                    "tag": context.images.image_replicator.version,
                 },
             )
             install_chart(
