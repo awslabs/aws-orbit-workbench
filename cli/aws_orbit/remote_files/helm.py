@@ -182,6 +182,25 @@ def deploy_env(context: Context) -> None:
             repo=repo, namespace="env", name="landing-page", chart_name=chart_name, chart_version=chart_version
         )
 
+        if context.install_image_replicator or not context.networking.data.internet_accessible:
+            chart_name, chart_version, chart_package = package_chart(
+                repo=repo,
+                chart_path=os.path.join(CHARTS_PATH, "env", "image-replicator"),
+                values={
+                    "region": context.region,
+                    "account_id": context.account_id,
+                    "env_name": context.name,
+                    "tag": context.images.image_replicator.version,
+                },
+            )
+            install_chart(
+                repo=repo,
+                namespace="kube-system",
+                name="image-replicator",
+                chart_name=chart_name,
+                chart_version=chart_version,
+            )
+
 
 def deploy_team(context: Context, team_context: TeamContext) -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"

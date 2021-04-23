@@ -431,6 +431,20 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
         },
     )
 
+    iam.add_assume_role_statement(
+        role_name=f"orbit-{context.name}-admin",
+        statement={
+            "Effect": "Allow",
+            "Principal": {"Federated": f"arn:aws:iam::{context.account_id}:oidc-provider/{context.eks_oidc_provider}"},
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringLike": {
+                    f"{context.eks_oidc_provider}:sub": f"system:serviceaccount:kube-system:orbit-{context.name}-admin"
+                }
+            },
+        },
+    )
+
     _logger.debug("EKSCTL deployed")
 
 
