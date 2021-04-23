@@ -191,7 +191,7 @@ def deploy_env(context: Context) -> None:
                     "account_id": context.account_id,
                     "env_name": context.name,
                     "tag": context.images.image_replicator.version,
-                },
+                    "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",                },
             )
             install_chart(
                 repo=repo,

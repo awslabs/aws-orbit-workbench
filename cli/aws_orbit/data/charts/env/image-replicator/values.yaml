@@ -26,6 +26,8 @@ image:
       value: "yes"
     - name: IMAGE_REPLICATOR_REPLICATOR_PROCESSES
       value: "5"
+    - name: AWS_STS_REGIONAL_ENDPOINTS
+      value: ${sts_ep}
 
 podAnnotations: {}
 
