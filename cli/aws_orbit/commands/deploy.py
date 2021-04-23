@@ -15,6 +15,7 @@
 import logging
 import os
 import random
+import string
 from typing import List, Optional, Tuple, cast
 
 import click
