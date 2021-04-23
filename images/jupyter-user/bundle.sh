@@ -45,7 +45,7 @@ tar czvf aws-orbit_jupyter-user.tar.gz ./aws-orbit_jupyter-user
 git clone https://github.com/stthoom/aws-glue-databrew-jupyter-extension.git
 cd aws-glue-databrew-jupyter-extension
 git branch
-git checkout feature/jl_310_databrew_v4
+git checkout feature/orbit_databrew_extension
 cd ${DIR}
 tar czvf aws-glue-databrew-jupyter-extension.tar.gz ./aws-glue-databrew-jupyter-extension
 
