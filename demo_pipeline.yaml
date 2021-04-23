@@ -1,3 +1,7 @@
+Conditions:
+  CreateDestroyPipeline: !Equals
+    - !Ref DestroyPipeline
+    - "true"
 Resources:
   ArtifactsBucket: 
     DeletionPolicy: Delete
@@ -470,6 +474,7 @@ Resources:
       - OrbitDeploymentRole
 
   DemoEnvironmentDestroyCodePipeline:
+    Condition: CreateDestroyPipeline
     Type: 'AWS::CodePipeline::Pipeline'
     Properties:
       RoleArn: !GetAtt 
@@ -573,3 +578,7 @@ Parameters:
   K8AdminRole:
     Type: String
     Description: A role name for users that manages K8
+  DestroyPipeline:
+    Type: String
+    Default: "false"
+    Description: If true, will create a destroy pipeline. Default is false. If created, false will destroy
