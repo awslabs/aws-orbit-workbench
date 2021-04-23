@@ -1,0 +1,48 @@
+# Default values for image-replicator.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+namespace: kube-system
+replicaCount: 1
+nameOverride: ""
+fullnameOverride: ""
+serviceAccountName: orbit-${env_name}-admin
+
+image:
+  repository: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-image-replicator:${tag}
+  pullPolicy: Always
+  env:
+    - name: IMAGE_REPLICATOR_REPO_HOST
+      value: ${account_id}.dkr.ecr.${region}.amazonaws.com
+    - name: IMAGE_REPLICATOR_REPO_PREFIX
+      value: orbit-${env_name}
+    - name: IMAGE_REPLICATOR_CODEBUILD_PROJECT
+      value: orbit-${env_name}
+    - name: IMAGE_REPLICATOR_CODEBUILD_TIMEOUT
+      value: "30"
+    - name: IMAGE_REPLICATOR_REPLICATE_EXTERNAL_REPOS
+      value: "no"
+    - name: IMAGE_REPLICATOR_IN_CLUSTER_DEPLOYMENT
+      value: "yes"
+    - name: IMAGE_REPLICATOR_REPLICATOR_PROCESSES
+      value: "5"
+    - name: AWS_STS_REGIONAL_ENDPOINTS
+      value: ${sts_ep}
+
+podAnnotations: {}
+
+resources:
+  limits:
+    cpu: 300m
+    memory: 300Mi
+  requests:
+    cpu: 50m
+    memory: 100Mi
+
+nodeSelector:
+  orbit/usage: reserved
+  orbit/node-group: env
+
+tolerations: []
+
+affinity: {}
