@@ -34,6 +34,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
     release_name = f"{team_context.name}-{plugin_id}"
+    _logger.info("Checking Chart %s is installed...", release_name)
     if helm.is_exists_chart_release(release_name, team_context.name):
         _logger.info("Chart %s already installed, skipping installation", release_name)
         return
