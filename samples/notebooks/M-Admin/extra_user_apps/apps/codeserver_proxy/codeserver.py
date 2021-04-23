@@ -1,10 +1,8 @@
 def setup_codeserver():
     
     def _command(port):
-        return ["code-server", "--bind-addr", "localhost:{port}", "--auth", "none", "--user-data-dir",
-                    "/home/jovyan/private", "", "--config", "/home/jovyan/private/.config/code-server/config.yaml"]
-    
-    
+        return ["bash", "/home/jovyan/.orbit/apps/codeserver_proxy/startup.sh", "{port}"]
+                           
     return {
         "command": _command,
         "timeout": 120,

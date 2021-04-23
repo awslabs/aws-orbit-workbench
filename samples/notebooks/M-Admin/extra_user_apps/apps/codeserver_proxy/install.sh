@@ -15,15 +15,15 @@
 #   limitations under the License.
 #
 set -ex
+
 echo `pwd`
 curl -fsSL https://code-server.dev/install.sh | sh
 code-server --install-extension ms-python.python --force
 code-server --install-extension ms-toolsai.jupyter --force
 code-server --install-extension mtxr.sqltools --force
-code-server --install-extension extension-vsix/mtxr.sqltools-driver-pg-0.2.0.vsix --force
-code-server --install-extension extension-vsix/natqe.reload-0.0.6.vsix --force
-code-server --install-extension extension-vsix/rogalmic.bash-debug-0.3.9.vsix --force
+code-server --install-extension rogalmic.bash-debug --force
 code-server --install-extension AmazonWebServices.aws-toolkit-vscode --force
+
 pip install .
 
 
