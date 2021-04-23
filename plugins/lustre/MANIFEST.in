@@ -1,0 +1,15 @@
+include VERSION
+include LICENSE
+include NOTICE
+include *.in
+include *.sh
+include *.toml
+include *.txt
+include *.yml
+recursive-include lustre *.json
+recursive-include lustre *.txt
+recursive-include lustre *.typed
+recursive-include lustre *.yaml
+recursive-include lustre *.tpl
+recursive-include lustre *.helmignore
+recursive-include lustre *.py

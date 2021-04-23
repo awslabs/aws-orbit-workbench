@@ -1,0 +1,59 @@
+# Default values.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+namespace: ${team}
+nameOverride: ${plugin_id}
+fullnameOverride: ""
+serviceAccountName: ${team}
+configMapName: ${plugin_id}-script
+scriptFile: ${plugin_id}-script.sh
+
+securityContext:
+  fsGroup: 100
+
+image:
+  repository: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-jupyter-user:${tag}
+  pullPolicy: Always
+env:
+  - name: AWS_DEFAULT_REGION
+    value: ${region}
+  - name: ENV_NAME
+    value: ${env_name}
+  - name: TEAM
+    value: ${team}
+  - name: AWS_STS_REGIONAL_ENDPOINTS
+    value: regional
+
+podAnnotations: {}
+restartPolicy: ${restart_policy}
+podLabels:
+  orbit/node-type: ec2
+  orbit/attach-security-group: "yes"
+  app: "orbit/team_script_launcher"
+
+jobResoures:
+  limits:
+    cpu: "1000m"
+    memory: "300Mi"
+  requests:
+    cpu: "10m"
+    memory: "20Mi"
+
+nodeSelector:
+  orbit/usage: teams
+  orbit/node-type: ec2
+
+tolerations: []
+
+jobTolerations: []
+
+jobAffinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      preference:
+        matchExpressions:
+        - key: k8s.amazonaws.com/accelerator
+          operator: DoesNotExist
+

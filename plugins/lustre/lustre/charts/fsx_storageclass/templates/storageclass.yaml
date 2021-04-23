@@ -1,0 +1,13 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: {{ .Values.storageClassName }}
+provisioner: fsx.csi.aws.com
+parameters:
+  subnetId: {{ .Values.subnet }}
+  securityGroupIds: {{ .Values.sg }}
+  s3ImportPath: {{ .Values.s3importpath }}
+  s3ExportPath: {{ .Values.s3exportpath }}
+  deploymentType: {{ .Values.deploymentType }}
+mountOptions:
+  - flock

@@ -14,6 +14,7 @@
 
 import logging
 import os
+import time
 from typing import TYPE_CHECKING, Any, Dict
 
 import boto3
@@ -51,13 +52,17 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
         pass
         redshift = boto3.client("redshift")
         clusters = redshift.describe_clusters(TagValues=[team_context.name])["Clusters"]
-        namespace = context.name + "-" + team_context.name + "-"
+        namespace = "orbit-" + context.name + "-" + team_context.name + "-"
+        # Deleting redshift clusters in parallel.
         for cluster in clusters:
             cluster_id = cluster["ClusterIdentifier"]
             _logger.debug(f"cluster_id={cluster_id}")
             cluster_name = cluster_id if namespace in cluster_id else namespace + cluster_id
             redshift.delete_cluster(ClusterIdentifier=cluster_name, SkipFinalClusterSnapshot=True)
-            _logger.debug(f"Deleted redshift cluster_name={cluster_name}")
+            _logger.debug(f"Delete redshift cluster_name={cluster_name}")
+        # Hold before destroying the redshift plugin resource.
+        time.sleep(180)
+        _logger.debug(f"Deleted {team_context.name} team redshift clusters")
     except Exception as e:
         _logger.error("Error deleting team %s redshift cluster(s) : %s", team_context.name, e)
         raise e

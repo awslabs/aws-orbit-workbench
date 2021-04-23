@@ -65,16 +65,6 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Typing :: Typed",
     ],
-    package_data={
-        "aws_orbit": [
-            "data/kubectl/apps/*.yaml",
-            "data/kubectl/efs_driver/*/*.yaml",
-            "data/toolkit/*.yaml",
-            "data/init/*.yaml",
-            "data/cms/schema/*.json",
-            "remote_files/cdk/lambda_sources/**/*.txt",
-        ]
-    },
     include_package_data=True,
     extras_require={"utils": [f"aws-orbit-sdk~={version}"], "kubespawner": ["jupyterhub-kubespawner~=0.15.0"]},
 )
