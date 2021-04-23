@@ -126,11 +126,14 @@ def uninstall_chart(name: str) -> None:
 
 def is_exists_chart_release(name: str, namespace: str) -> bool:
     try:
+        _logger.info("Installed charts at %s", namespace)
+        found = False
         for line in sh.run_iterating(f"helm list -n {namespace}"):
+            _logger.info(line)
             if name in line:
-                return True
+                found = True
 
-        return False
+        return found
     except exceptions.FailedShellCommand as e:
         _logger.error(e)
         raise e
