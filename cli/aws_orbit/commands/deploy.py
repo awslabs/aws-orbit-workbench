@@ -104,7 +104,7 @@ def deploy_toolkit(
             )
             credential_exist = True
     else:
-        context.toolkit.deploy_id = "".join(random.choice(string.ascii_letters) for i in range(6))
+        context.toolkit.deploy_id = ("".join(random.choice(string.ascii_letters) for i in range(6)).lower())
         if credential_required and not credential_received:
             username, password = _request_dockerhub_credential(msg_ctx=msg_ctx)
             credential_exist = False
