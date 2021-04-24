@@ -77,7 +77,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     chart_name, chart_version, chart_package = helm.package_chart(
         repo=repo, chart_path=os.path.join(chart_path, "fsx_storageclass"), values=vars
     )
-    helm.install_chart(
+    helm.install_chart_no_upgrade(
         repo=repo,
         namespace=team_context.name,
         name=release_name,

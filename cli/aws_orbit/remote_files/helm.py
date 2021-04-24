@@ -112,7 +112,16 @@ def install_chart(repo: str, namespace: str, name: str, chart_name: str, chart_v
     chart_version = aws_orbit.__version__.replace(".dev", "-")
     _logger.debug("Installing %s, version %s as %s from %s", chart_name, chart_version, name, repo)
     sh.run(
-        f"helm upgrade --install --debug --namespace {namespace} --version {chart_version} {name} {repo}/{chart_name}"
+        f"helm upgrade --install --debug --namespace {namespace} --atomic -version "
+        f"{chart_version} {name} {repo}/{chart_name}"
+    )
+
+
+def install_chart_no_upgrade(repo: str, namespace: str, name: str, chart_name: str, chart_version: str) -> None:
+    chart_version = aws_orbit.__version__.replace(".dev", "-")
+    _logger.debug("Installing %s, version %s as %s from %s", chart_name, chart_version, name, repo)
+    sh.run(
+        f"helm install --debug --namespace {namespace} --atomic --version {chart_version} {name} {repo}/{chart_name}"
     )
 
 
