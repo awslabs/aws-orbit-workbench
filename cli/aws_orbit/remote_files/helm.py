@@ -112,7 +112,16 @@ def install_chart(repo: str, namespace: str, name: str, chart_name: str, chart_v
     chart_version = aws_orbit.__version__.replace(".dev", "-")
     _logger.debug("Installing %s, version %s as %s from %s", chart_name, chart_version, name, repo)
     sh.run(
-        f"helm upgrade --install --debug --namespace {namespace} --version {chart_version} {name} {repo}/{chart_name}"
+        f"helm upgrade --install --debug --namespace {namespace} --atomic --version "
+        f"{chart_version} {name} {repo}/{chart_name}"
+    )
+
+
+def install_chart_no_upgrade(repo: str, namespace: str, name: str, chart_name: str, chart_version: str) -> None:
+    chart_version = aws_orbit.__version__.replace(".dev", "-")
+    _logger.debug("Installing %s, version %s as %s from %s", chart_name, chart_version, name, repo)
+    sh.run(
+        f"helm install --debug --namespace {namespace} --atomic --version {chart_version} {name} {repo}/{chart_name}"
     )
 
 
@@ -122,6 +131,21 @@ def uninstall_chart(name: str) -> None:
         sh.run(f"helm uninstall --debug {name}")
     except exceptions.FailedShellCommand as e:
         _logger.error(e)
+
+
+def is_exists_chart_release(name: str, namespace: str) -> bool:
+    try:
+        _logger.info("Installed charts at %s", namespace)
+        found = False
+        for line in sh.run_iterating(f"helm list -n {namespace}"):
+            _logger.info(line)
+            if name in line:
+                found = True
+
+        return found
+    except exceptions.FailedShellCommand as e:
+        _logger.error(e)
+        raise e
 
 
 def delete_chart(repo: str, chart_name: str) -> None:
@@ -169,6 +193,26 @@ def deploy_env(context: Context) -> None:
         install_chart(
             repo=repo, namespace="env", name="landing-page", chart_name=chart_name, chart_version=chart_version
         )
+
+        if context.install_image_replicator or not context.networking.data.internet_accessible:
+            chart_name, chart_version, chart_package = package_chart(
+                repo=repo,
+                chart_path=os.path.join(CHARTS_PATH, "env", "image-replicator"),
+                values={
+                    "region": context.region,
+                    "account_id": context.account_id,
+                    "env_name": context.name,
+                    "tag": context.images.image_replicator.version,
+                    "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
+                },
+            )
+            install_chart(
+                repo=repo,
+                namespace="kube-system",
+                name="image-replicator",
+                chart_name=chart_name,
+                chart_version=chart_version,
+            )
 
 
 def deploy_team(context: Context, team_context: TeamContext) -> None:
