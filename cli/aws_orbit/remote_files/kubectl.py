@@ -27,7 +27,6 @@ from aws_orbit.utils import resolve_parameters
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-EFS_DRIVE = "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/ecr/?ref=release-1.0"
 MODELS_PATH = os.path.join(ORBIT_CLI_ROOT, "data", "kubectl")
 
 
@@ -57,7 +56,7 @@ def _k8_dashboard(context: "Context", output_path: str) -> None:
     with open(input, "r") as file:
         content: str = file.read()
     content = utils.resolve_parameters(
-        content, dict(imagePullPolicy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent")
+        content, dict(image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent")
     )
     with open(output, "w") as file:
         file.write(content)
@@ -70,7 +69,7 @@ def _metrics_server(context: "Context", output_path: str) -> None:
     with open(input, "r") as file:
         content: str = file.read()
     content = utils.resolve_parameters(
-        content, dict(imagePullPolicy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent")
+        content, dict(image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent")
     )
     with open(output, "w") as file:
         file.write(content)
@@ -90,7 +89,8 @@ def _cluster_autoscaler(output_path: str, context: "Context") -> None:
             env_name=context.name,
             cluster_name=f"orbit-{context.name}",
             sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
-            imagePullPolicy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
+            image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
+            use_static_instance_list=str(not context.networking.data.internet_accessible).lower(),
         ),
     )
     with open(output, "w") as file:
@@ -153,7 +153,7 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
             env_name=context.name,
             tag=context.images.jupyter_hub.version,
             sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
-            imagePullPolicy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
+            image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
         ),
     )
     with open(output, "w") as file:
@@ -277,13 +277,19 @@ def _generate_efs_driver_manifest(context: "Context") -> str:
     if context.region is None:
         raise RuntimeError("context.region is None!")
     _efs_driver_base(output_path=output_path)
-    return os.path.join(output_path, "overlays")
+    overlays_path = os.path.join(output_path, "overlays")
+    os.makedirs(overlays_path, exist_ok=True)
+    shutil.copyfile(
+        src=os.path.join(MODELS_PATH, "efs_driver", "overlays", "kustomization.yaml"),
+        dst=os.path.join(overlays_path, "kustomization.yaml"),
+    )
+    return overlays_path
 
 
 #######
 def _fsx_driver_base(output_path: str, context: "Context") -> None:
     os.makedirs(os.path.join(output_path, "base"), exist_ok=True)
-    filenames = "rbac.yaml"
+    filenames = ["controller.yaml", "csidriver.yaml", "kustomization.yaml", "node.yaml", "rbac.yaml"]
     for filename in filenames:
         input = os.path.join(MODELS_PATH, "fsx_driver", "base", filename)
         output = os.path.join(output_path, "base", filename)
@@ -309,7 +315,13 @@ def _generate_fsx_driver_manifest(context: "Context") -> str:
     if context.region is None:
         raise RuntimeError("context.region is None!")
     _fsx_driver_base(output_path=output_path, context=context)
-    return os.path.join(output_path, "overlays")
+    overlays_path = os.path.join(output_path, "overlays")
+    os.makedirs(overlays_path, exist_ok=True)
+    shutil.copyfile(
+        src=os.path.join(MODELS_PATH, "fsx_driver", "overlays", "stable", "kustomization.yaml"),
+        dst=os.path.join(overlays_path, "kustomization.yaml"),
+    )
+    return overlays_path
 
 
 #######

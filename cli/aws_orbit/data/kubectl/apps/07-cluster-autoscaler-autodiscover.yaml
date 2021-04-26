@@ -144,7 +144,7 @@ spec:
         orbit/usage: reserved
         orbit/node-group: env
       containers:
-        - image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s.gcr.io/autoscaling/cluster-autoscaler
+        - image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s.gcr.io/autoscaling/cluster-autoscaler:v1.18.3
           name: cluster-autoscaler
           env:
             - name: AWS_STS_REGIONAL_ENDPOINTS
@@ -166,11 +166,12 @@ spec:
             - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/${cluster_name}
             - --balance-similar-node-groups
             - --skip-nodes-with-system-pods=false
+            - --aws-use-static-instance-list=${use_static_instance_list}
           volumeMounts:
             - name: ssl-certs
               mountPath: /etc/ssl/certs/ca-bundle.crt
               readOnly: true
-          imagePullPolicy: ${imagePullPolicy}
+          imagePullPolicy: ${image_pull_policy}
       volumes:
         - name: ssl-certs
           hostPath:

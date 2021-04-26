@@ -39,9 +39,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 def _request_dockerhub_credential(msg_ctx: MessagesContext) -> Tuple[str, str]:
     if msg_ctx.pbar is not None:
         msg_ctx.pbar.clear()
-    msg_ctx.info(
-        "When Container Images are built from source or pulled from Dockerhub, " "a Dockerhub login is required."
-    )
+    msg_ctx.info("When Container Images are from Dockerhub, " "a Dockerhub login is required.")
     username = cast(
         str,
         click.prompt("Please enter the DockerHub username", type=str, hide_input=False),
@@ -88,7 +86,7 @@ def deploy_toolkit(
     stack_exist: bool = cfn.does_stack_exist(stack_name=context.toolkit.stack_name)
     credential_exist: bool = dockerhub.does_credential_exist(context=context) if stack_exist else False
     image_manifests = [cast(ImageManifest, getattr(context.images, i)) for i in context.images.names]
-    credential_required: bool = any([im.source == "dockerhub" or im.source == "code" for im in image_manifests])
+    credential_required: bool = any([im.source == "dockerhub" for im in image_manifests])
 
     if stack_exist:
         if credential_required and not credential_exist and not credential_received:

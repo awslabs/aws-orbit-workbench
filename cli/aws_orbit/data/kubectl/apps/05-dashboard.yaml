@@ -188,7 +188,7 @@ spec:
       containers:
         - name: kubernetes-dashboard
           image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/kubernetesui/dashboard
-          imagePullPolicy: ${imagePullPolicy}
+          imagePullPolicy: ${image_pull_policy}
           resources:
             limits:
               cpu: "1"
