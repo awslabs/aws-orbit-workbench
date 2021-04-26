@@ -7,14 +7,14 @@ metadata:
   labels:
     component: ray-job
     type: ray
-    example: job
+    example: tune
 spec:
   template:
     metadata:
       labels:
         component: ray-job
         type: ray
-        example: job
+        example: tune
     spec:
       restartPolicy: Never
       volumes:
@@ -30,7 +30,7 @@ spec:
           imagePullPolicy: Always
           command: [ "/bin/bash", "-c", "--" ]
           args:
-            - "python /efs/shared/samples/notebooks/H-Model-Development/job_example.py"
+            - "python /efs/shared/samples/notebooks/H-Model-Development/tune.py"
           resources:
             requests:
               cpu: 100m
