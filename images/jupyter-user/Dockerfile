@@ -120,7 +120,28 @@ RUN jupyter serverextension enable --py jupyterlab --sys-prefix && \
     fix-permissions "/home/${NB_USER}"
 
 ADD extensions/jupyterlab_orbit/ /etc/extensions/jupyterlab_orbit/
+
+
+COPY aws-glue-databrew-jupyter-extension.tar.gz /home/${NB_USER}/.orbit/databrew/aws-glue-databrew-jupyter-extension.tar.gz
+
+WORKDIR /home/${NB_USER}/.orbit/databrew/
+RUN tar xvzf aws-glue-databrew-jupyter-extension.tar.gz
+
+WORKDIR /home/${NB_USER}/.orbit/databrew/aws-glue-databrew-jupyter-extension/
+
+RUN npm install && \
+    npm run build && \
+    conda run pip install ./ && \
+    jupyter labextension install ./ && \
+    jupyter lab build
+
+WORKDIR /home/${NB_USER}/.orbit/
+RUN rm -rf ./databrew
+
+WORKDIR /home/${NB_USER}
+
 RUN conda run pip install /etc/extensions/jupyterlab_orbit/
+
 RUN jupyter labextension build /etc/extensions/jupyterlab_orbit
 
 USER $NB_UID
