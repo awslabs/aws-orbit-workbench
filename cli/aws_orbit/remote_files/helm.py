@@ -176,7 +176,7 @@ def deploy_env(context: Context) -> None:
                 if context.cognito_external_provider_redirect is None
                 else context.cognito_external_provider_redirect,
                 "internal_load_balancer": '"false"' if context.networking.frontend.load_balancers_subnets else '"true"',
-                "image_pull_policy": "Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent"
+                "image_pull_policy": "Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
             },
         )
         install_chart(
@@ -193,7 +193,7 @@ def deploy_env(context: Context) -> None:
                     "env_name": context.name,
                     "tag": context.images.image_replicator.version,
                     "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
-                    "image_pull_policy": "Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent"
+                    "image_pull_policy": "Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
                 },
             )
             install_chart(
@@ -235,7 +235,7 @@ def deploy_team(context: Context, team_context: TeamContext) -> None:
                     else [utils.get_dns_ip_cidr(context=context)]
                 ),
                 "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
-                "image_pull_policy": "Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent"
+                "image_pull_policy": "Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
             },
         )
         install_chart(

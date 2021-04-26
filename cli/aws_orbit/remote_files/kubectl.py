@@ -17,10 +17,9 @@ import os
 import shutil
 from typing import Any, Dict
 
-from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
 import aws_orbit
+from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
-from aws_orbit.models.manifest import ImagesManifest
 from aws_orbit.remote_files.utils import get_k8s_context
 from aws_orbit.services import cfn, elb
 from aws_orbit.utils import resolve_parameters
@@ -57,9 +56,9 @@ def _k8_dashboard(context: "Context", output_path: str) -> None:
     output = os.path.join(output_path, filename)
     with open(input, "r") as file:
         content: str = file.read()
-    content = utils.resolve_parameters(content, dict(
-        imagePullPolicy="Always" if aws_orbit.__version__ .endswith(".dev0") else "InNotPresent"
-    ))
+    content = utils.resolve_parameters(
+        content, dict(imagePullPolicy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent")
+    )
     with open(output, "w") as file:
         file.write(content)
 
@@ -70,9 +69,9 @@ def _metrics_server(context: "Context", output_path: str) -> None:
     output = os.path.join(output_path, filename)
     with open(input, "r") as file:
         content: str = file.read()
-    content = utils.resolve_parameters(content, dict(
-        imagePullPolicy="Always" if aws_orbit.__version__ .endswith(".dev0") else "InNotPresent"
-    ))
+    content = utils.resolve_parameters(
+        content, dict(imagePullPolicy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent")
+    )
     with open(output, "w") as file:
         file.write(content)
 
@@ -84,13 +83,16 @@ def _cluster_autoscaler(output_path: str, context: "Context") -> None:
 
     with open(input, "r") as file:
         content: str = file.read()
-    content = utils.resolve_parameters(content, dict(
-        account_id=context.account_id,
-        env_name=context.name,
-        cluster_name=f"orbit-{context.name}",
-        sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
-        imagePullPolicy="Always" if aws_orbit.__version__ .endswith(".dev0") else "InNotPresent",
-    ))
+    content = utils.resolve_parameters(
+        content,
+        dict(
+            account_id=context.account_id,
+            env_name=context.name,
+            cluster_name=f"orbit-{context.name}",
+            sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
+            imagePullPolicy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
+        ),
+    )
     with open(output, "w") as file:
         file.write(content)
 
@@ -151,7 +153,7 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
             env_name=context.name,
             tag=context.images.jupyter_hub.version,
             sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
-            imagePullPolicy="Always" if aws_orbit.__version__ .endswith(".dev0") else "InNotPresent"
+            imagePullPolicy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
         ),
     )
     with open(output, "w") as file:
@@ -281,7 +283,7 @@ def _generate_efs_driver_manifest(context: "Context") -> str:
 #######
 def _fsx_driver_base(output_path: str, context: "Context") -> None:
     os.makedirs(os.path.join(output_path, "base"), exist_ok=True)
-    filenames = ("rbac.yaml")
+    filenames = "rbac.yaml"
     for filename in filenames:
         input = os.path.join(MODELS_PATH, "fsx_driver", "base", filename)
         output = os.path.join(output_path, "base", filename)
