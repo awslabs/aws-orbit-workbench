@@ -170,7 +170,7 @@ spec:
             - name: ssl-certs
               mountPath: /etc/ssl/certs/ca-bundle.crt
               readOnly: true
-          imagePullPolicy: "Always"
+          imagePullPolicy: ${imagePullPolicy}
       volumes:
         - name: ssl-certs
           hostPath:
