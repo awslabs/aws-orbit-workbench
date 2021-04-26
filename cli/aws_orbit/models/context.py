@@ -514,11 +514,11 @@ class ContextSerDe(Generic[T, V]):
             _logger.debug("teams_parameters: %s", teams_parameters)
             teams = [ssm.get_parameter_if_exists(name=p) for p in teams_parameters if p.endswith("/context")]
             main["Teams"] = [t for t in teams if t]
-            return cast(V, Context.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
+            return cast(V, Context.Schema().load(data=main, many=False, partial=False, unknown="EXCLUDE"))
         elif type is FoundationContext:
             context_parameter_name = f"/orbit-foundation/{env_name}/context"
             main = ssm.get_parameter(name=context_parameter_name)
-            return cast(V, FoundationContext.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
+            return cast(V, FoundationContext.Schema().load(data=main, many=False, partial=False, unknown="EXCLUDE"))
         else:
             raise ValueError("Unknown 'context' Type")
 
