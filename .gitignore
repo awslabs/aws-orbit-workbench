@@ -378,7 +378,7 @@ cdk.context.json
 cdk.json
 
 # Orbit CLI
-cli/*.yaml
+# cli/*.yaml
 cli/.orbit.out
 cli/conf/
 .orbit.out
