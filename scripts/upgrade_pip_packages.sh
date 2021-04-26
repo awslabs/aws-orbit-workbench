@@ -10,14 +10,12 @@ ROOT_PATH=`pwd`
 paths=(
     "${ROOT_PATH}/cli"
     "${ROOT_PATH}/images/jupyter-user/extensions/jupyterlab_orbit"
-    "${ROOT_PATH}/plugins/code_commit"
-    "${ROOT_PATH}/plugins/hello_world"
-    "${ROOT_PATH}/plugins/redshift"
-    "${ROOT_PATH}/plugins/team_script_launcher"
-    "${ROOT_PATH}/plugins/custom_cfn"
-    "${ROOT_PATH}/plugins/emr_on_eks"
     "${ROOT_PATH}/sdk"
 )
+
+for module in `ls ${ROOT_PATH}/plugins`; do
+    paths+=("${ROOT_PATH}/plugins/$module")
+done
 
 UPGRADE=""
 SED=${SED:-sed}

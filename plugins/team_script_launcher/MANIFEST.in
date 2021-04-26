@@ -1,6 +1,15 @@
+include VERSION
+include LICENSE
+include NOTICE
 include *.in
 include *.sh
 include *.toml
 include *.txt
-include VERSION
+include *.yml
+recursive-include team_script_launcher *.json
+recursive-include team_script_launcher *.txt
+recursive-include team_script_launcher *.typed
 recursive-include team_script_launcher *.yaml
+recursive-include team_script_launcher *.tpl
+recursive-include team_script_launcher *.helmignore
+recursive-include team_script_launcher *.py

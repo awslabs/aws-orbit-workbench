@@ -62,7 +62,7 @@ spec:
           - name: TEAM
             value: ${team}
           - name: AWS_STS_REGIONAL_ENDPOINTS
-            value: regional
+            value: ${sts_ep}
         command: ["/bin/bash"]
         resources:
           limits:

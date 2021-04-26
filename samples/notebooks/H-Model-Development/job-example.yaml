@@ -1,0 +1,37 @@
+# Job to run a Ray program in its own pod. Assumes that a Ray cluster is already
+# running.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: ray-test-job-
+  labels:
+    component: ray-job
+    type: ray
+    example: job
+spec:
+  template:
+    metadata:
+      labels:
+        component: ray-job
+        type: ray
+        example: job
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: efs-volume
+          persistentVolumeClaim:
+            claimName: jupyterhub
+      containers:
+        - name: ray
+          image: rayproject/ray:nightly
+          volumeMounts:
+          - mountPath: /efs
+            name: efs-volume
+          imagePullPolicy: Always
+          command: [ "/bin/bash", "-c", "--" ]
+          args:
+            - "python /efs/shared/samples/notebooks/H-Model-Development/job_example.py"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi

@@ -1,0 +1,11 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMapName }}
+  labels:
+    {{- include "team_script_launcher.labels" . | nindent 4 }}
+  namespace: {{ .Values.namespace }}
+data:
+  {{ .Values.scriptFile }}: |
+    {{ .Files.Get "script.txt" | nindent 4 }}

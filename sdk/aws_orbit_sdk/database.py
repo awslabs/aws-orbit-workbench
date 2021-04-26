@@ -477,9 +477,10 @@ class RedshiftUtils(DatabaseCommon):
         """
 
         props = get_properties()
-
         redshift = boto3.client("redshift")
-        cluster_identifier = (props["AWS_ORBIT_ENV"] + "-" + props["AWS_ORBIT_TEAM_SPACE"] + "-" + cluster_name).lower()
+        env = props["AWS_ORBIT_ENV"]
+        team_space = props["AWS_ORBIT_TEAM_SPACE"]
+        cluster_identifier = f"orbit-{env}-{team_space}-{cluster_name}".lower()
         try:
             clusters = redshift.describe_clusters(ClusterIdentifier=cluster_identifier)["Clusters"]
         except:
@@ -574,10 +575,12 @@ class RedshiftUtils(DatabaseCommon):
         """
 
         props = get_properties()
+        env = props["AWS_ORBIT_ENV"]
+        team_space = props["AWS_ORBIT_TEAM_SPACE"]
         redshift = boto3.client("redshift")
-        namespace = props["AWS_ORBIT_ENV"] + "-" + props["AWS_ORBIT_TEAM_SPACE"] + "-"
-        cluster_identifier = cluster_name if namespace in cluster_name else namespace + cluster_name
-
+        namespace = f"orbit-{env}-{team_space}-"
+        cluster_name_value = cluster_name.lower()
+        cluster_identifier = cluster_name if namespace in cluster_name_value else namespace + cluster_name_value
         res = redshift.delete_cluster(ClusterIdentifier=cluster_identifier, SkipFinalClusterSnapshot=True)
 
         if "errorMessage" in res:
@@ -726,7 +729,7 @@ class RedshiftUtils(DatabaseCommon):
         env = props["AWS_ORBIT_ENV"]
         team_space = props["AWS_ORBIT_TEAM_SPACE"]
         cluster_def_func = f"orbit-{env}-{team_space}-StartRedshift-Standard"
-        cluster_identifier = f"{env}-{team_space}-{cluster_name}".lower()
+        cluster_identifier = f"orbit-{env}-{team_space}-{cluster_name}".lower()
 
         cluster_args = {"cluster_name": cluster_identifier, "Nodes": number_of_nodes, "NodeType": node_type}
 
