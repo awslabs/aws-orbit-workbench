@@ -111,66 +111,6 @@ class ImageReplicatorImageManifest(ImageManifest):
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
-class AwsEfsDriverImageManifest(ImageManifest):
-    repository: Optional[str] = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/aws-efs-csi-driver"
-    source: Optional[str] = "ecr-external"
-    version: Optional[str] = "v1.0.0"
-
-
-@dataclass(base_schema=BaseSchema, frozen=True)
-class LivenessprobeImageManifest(ImageManifest):
-    repository: Optional[str] = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/livenessprobe"
-    source: Optional[str] = "ecr-external"
-    version: Optional[str] = "v2.0.0"
-
-
-@dataclass(base_schema=BaseSchema, frozen=True)
-class CsiNodeDriverRegistrarImageManifest(ImageManifest):
-    repository: Optional[str] = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/csi-node-driver-registrar"
-    source: Optional[str] = "ecr-external"
-    version: Optional[str] = "v1.3.0"
-
-
-# https://github.com/kubernetes/dashboard/releases
-@dataclass(base_schema=BaseSchema, frozen=True)
-class K8Dashboard(ImageManifest):
-    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/kubernetesui/dashboard"
-    version: Optional[str] = "v2.2.0"
-
-
-@dataclass(base_schema=BaseSchema, frozen=True)
-class MetricsScraper(ImageManifest):
-    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/kubernetesui/metrics-scraper"
-    version: Optional[str] = "v1.0.6"
-
-
-# https://github.com/kubernetes-sigs/metrics-server/releases
-@dataclass(base_schema=BaseSchema, frozen=True)
-class MetricsServer(ImageManifest):
-    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s.gcr.io/metrics-server/metrics-server"
-    version: Optional[str] = "v0.4.2"
-
-
-# https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/aws
-@dataclass(base_schema=BaseSchema, frozen=True)
-class ClusterAutoscaler(ImageManifest):
-    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s.gcr.io/autoscaling/cluster-autoscaler"
-    version: Optional[str] = "v1.18.3"
-
-
-@dataclass(base_schema=BaseSchema, frozen=True)
-class SsmAgentInstaller(ImageManifest):
-    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/ssm-agent-installer"
-    version: Optional[str] = "latest"
-
-
-@dataclass(base_schema=BaseSchema, frozen=True)
-class PauseImage(ImageManifest):
-    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/gcr.io/google-containers/pause"
-    version: Optional[str] = "2.0"
-
-
-@dataclass(base_schema=BaseSchema, frozen=True)
 class FoundationImagesManifest:
     Schema: ClassVar[Type[Schema]] = Schema
     code_build: CodeBuildImageManifest = CodeBuildImageManifest()
@@ -190,15 +130,6 @@ class ImagesManifest:
     jupyter_user: JupyterUserImageManifest = JupyterUserImageManifest()
     landing_page: LandingPageImageManifest = LandingPageImageManifest()
     image_replicator: ImageReplicatorImageManifest = ImageReplicatorImageManifest()
-    aws_efs_csi_driver: AwsEfsDriverImageManifest = AwsEfsDriverImageManifest()
-    livenessprobe: LivenessprobeImageManifest = LivenessprobeImageManifest()
-    csi_node_driver_registrar: CsiNodeDriverRegistrarImageManifest = CsiNodeDriverRegistrarImageManifest()
-    k8_dashboard: K8Dashboard = K8Dashboard()
-    k8_metrics_scraper: MetricsScraper = MetricsScraper()
-    k8_metrics_server: MetricsServer = MetricsServer()
-    cluster_autoscaler: ClusterAutoscaler = ClusterAutoscaler()
-    ssm_agent_installer: SsmAgentInstaller = SsmAgentInstaller()
-    pause: PauseImage = PauseImage()
     names: List[str] = field(
         metadata=dict(load_only=True),
         default_factory=lambda: [
@@ -207,15 +138,6 @@ class ImagesManifest:
             "jupyter_user",
             "landing_page",
             "image_replicator",
-            "aws_efs_csi_driver",
-            "livenessprobe",
-            "csi_node_driver_registrar",
-            "k8_dashboard",
-            "k8_metrics_scraper",
-            "k8_metrics_server",
-            "cluster_autoscaler",
-            "ssm_agent_installer",
-            "pause",
         ],
     )
 

@@ -26,17 +26,7 @@ if TYPE_CHECKING:
 _logger: logging.Logger = logging.getLogger(__name__)
 
 DEFAULT_IMAGES: List[str] = ["landing-page", "jupyter-hub", "jupyter-user", "image-replicator"]
-DEFAULT_ISOLATED_IMAGES: List[str] = [
-    "aws-efs-csi-driver",
-    "livenessprobe",
-    "csi-node-driver-registrar",
-    "k8-dashboard",
-    "k8-metrics-scraper",
-    "k8-metrics-server",
-    "cluster-autoscaler",
-    "ssm-agent-installer",
-    "pause",
-]
+DEFAULT_ISOLATED_IMAGES: List[str] = []
 
 
 def _concat_images_into_args(context: "Context", add_images: List[str], remove_images: List[str]) -> Tuple[str, str]:

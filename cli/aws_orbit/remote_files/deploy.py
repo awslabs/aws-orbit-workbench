@@ -133,17 +133,7 @@ def deploy_images_remotely(context: "Context") -> None:
 
     # Secondary images required if internet is not accessible
     if context.networking.data.internet_accessible is False:
-        images += [
-            ("aws-efs-csi-driver", None, None, []),
-            ("livenessprobe", None, None, []),
-            ("csi-node-driver-registrar", None, None, []),
-            ("k8-dashboard", None, None, []),
-            ("k8-metrics-scraper", None, None, []),
-            ("k8-metrics-server", None, None, []),
-            ("cluster-autoscaler", None, None, []),
-            ("ssm-agent-installer", None, None, []),
-            ("pause", None, None, []),
-        ]
+        images += []
 
     _logger.debug("Building/repclicating Container Images")
     _deploy_images_batch(context=context, images=images)

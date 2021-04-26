@@ -144,7 +144,7 @@ spec:
         orbit/usage: reserved
         orbit/node-group: env
       containers:
-        - image: ${image}
+        - image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s.gcr.io/autoscaling/cluster-autoscaler
           name: cluster-autoscaler
           env:
             - name: AWS_STS_REGIONAL_ENDPOINTS
