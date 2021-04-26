@@ -25,6 +25,7 @@ Resources:
               - 's3:Get*'
               - 's3:List*'
               - 's3:Put*'
+              - 's3:Delete*'
             Effect: Allow
             Resource:
               - !Join

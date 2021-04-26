@@ -290,15 +290,20 @@ class Context:
 
     def fetch_cognito_external_idp_data(self) -> None:
         _logger.debug("Fetching Cognito External IdP data...")
-        client = boto3_client(service_name="cognito-idp")
-        response: Dict[str, Any] = client.describe_user_pool(UserPoolId=self.user_pool_id)
-        domain: str = response["UserPool"].get("Domain")
-        self.cognito_external_provider_domain = f"{domain}.auth.{self.region}.amazoncognito.com"
-        _logger.debug("cognito_external_provider_domain: %s", self.cognito_external_provider_domain)
-        response = client.describe_user_pool_client(UserPoolId=self.user_pool_id, ClientId=self.user_pool_client_id)
-        self.cognito_external_provider_redirect = response["UserPoolClient"]["CallbackURLs"][0]
-        _logger.debug("cognito_external_provider_redirect: %s", self.cognito_external_provider_redirect)
-        _logger.debug("Cognito External IdP data fetched successfully.")
+        if self.cognito_external_provider:
+            client = boto3_client(service_name="cognito-idp")
+            response: Dict[str, Any] = client.describe_user_pool(UserPoolId=self.user_pool_id)
+            domain: str = response["UserPool"].get("Domain")
+            self.cognito_external_provider_domain = f"{domain}.auth.{self.region}.amazoncognito.com"
+            _logger.debug("cognito_external_provider_domain: %s", self.cognito_external_provider_domain)
+            response = client.describe_user_pool_client(UserPoolId=self.user_pool_id, ClientId=self.user_pool_client_id)
+            self.cognito_external_provider_redirect = response["UserPoolClient"]["CallbackURLs"][0]
+            _logger.debug("cognito_external_provider_redirect: %s", self.cognito_external_provider_redirect)
+            _logger.debug("Cognito External IdP data fetched successfully.")
+        else:
+            self.cognito_external_provider_domain = None
+            self.cognito_external_provider_domain_label = None
+            _logger.debug("No Cognito External IdP data to fetch.")
 
     def fetch_teams_data(self) -> None:
         _logger.debug("Fetching Teams data...")

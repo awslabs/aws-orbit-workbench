@@ -390,6 +390,8 @@ def _add_env_var_injector(tag: str = "!ENV") -> None:
                 (env_var, default_val) = g.split("::")
                 value = os.environ.get(env_var, default_val)
                 full_value = full_value.replace(f"${{{g}}}", value)
+                if not full_value:
+                    full_value = None
                 _logger.debug(f"injected ENV parameter {env_var} resolved to {value}")
             return full_value
         return value
