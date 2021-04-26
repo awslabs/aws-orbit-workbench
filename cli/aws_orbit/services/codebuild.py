@@ -33,7 +33,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 _BUILD_WAIT_POLLING_DELAY: float = 5  # SECONDS
 
-CDK_VERSION = "~=1.67.0"
+CDK_VERSION = "~=1.100.0"
 CDK_MODULES = [
     "aws_cdk.core",
     "aws-cdk.aws-ec2",
