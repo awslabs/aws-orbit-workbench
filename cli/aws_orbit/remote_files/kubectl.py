@@ -38,9 +38,13 @@ def _commons(context: "Context", output_path: str) -> None:
 
     with open(input, "r") as file:
         content: str = file.read()
-    content = content.replace("$", "").format(
-        region=context.region,
-        env_name=context.name,
+    content = resolve_parameters(
+        content,
+        dict(
+            account_id=context.account_id,
+            region=context.region,
+            env_name=context.name,
+        ),
     )
     with open(output, "w") as file:
         file.write(content)
