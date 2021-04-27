@@ -127,7 +127,7 @@ def start(
     client = boto3_client("codebuild")
     repo: Optional[str] = None
     credentials: Optional[str] = None
-    if context.images.code_build.source and context.images.code_build.source.startswith("ecr"):
+    if context.images.code_build.get_source(account_id=context.account_id, region=context.region).startswith("ecr"):
         version = context.images.code_build.version
         repo = f"{context.images.code_build.repository}:{version}"
         if not any(match in repo for match in [".amazonaws.com/", "public.ecr.aws"]):

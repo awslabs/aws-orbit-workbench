@@ -186,7 +186,9 @@ def replicate_image(
 
     attr_name: str = image_name.replace("-", "_")
     if not source:
-        final_source = getattr(context.images, attr_name).source
+        final_source = getattr(context.images, attr_name).get_source(
+            account_id=context.account_id, region=context.region
+        )
     else:
         final_source = source
     if not source_repository:

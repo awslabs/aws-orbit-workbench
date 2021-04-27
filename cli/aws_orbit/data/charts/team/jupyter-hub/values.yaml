@@ -13,8 +13,8 @@ securityContext:
   fsGroup: 100
 
 image:
-  repository: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-jupyter-hub:${tag}
-  initRepository: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-jupyter-user:${tag}
+  repository: ${jupyter_hub_repository}:${jupyter_hub_tag}
+  initRepository: ${jupyter_user_repository}:${jupyter_user_tag}
   pullPolicy: ${image_pull_policy}
   env:
     - name: AWS_DEFAULT_REGION

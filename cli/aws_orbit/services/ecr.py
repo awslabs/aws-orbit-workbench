@@ -1,7 +1,7 @@
 import itertools
 import logging
 from base64 import b64decode
-from typing import Any, Dict, Iterator, Optional, Tuple, cast
+from typing import Any, Dict, Iterator, List, Optional, Tuple, cast
 
 import boto3
 
@@ -76,3 +76,24 @@ def cleanup_remaining_repos(env_name: str) -> None:
     _logger.debug("Deleting any remaining ECR Repos")
     for repo in _fetch_repos(env_name=env_name):
         delete_repo(repo=repo)
+
+
+def create_repository(repository_name: str, env_name: Optional[str] = None) -> None:
+    client = boto3_client("ecr")
+    params: Dict[str, Any] = {"repositoryName": repository_name}
+    if env_name:
+        params["tags"] = {"Key": "Env", "Value": env_name}
+    response = client.create_repository(**params)
+    if "repository" in response and "repositoryName" in response["repository"]:
+        _logger.debug("ECR repository not exist, creating for %s", repository_name)
+    else:
+        _logger.error("ECR repository creation failed, response %s", response)
+        raise RuntimeError(response)
+
+
+def describe_repositories(repository_names: List[str]) -> List[Dict[str, Any]]:
+    client = boto3_client("ecr")
+    try:
+        return cast(List[Dict[str, Any]], client.describe_repositories(repositoryNames=repository_names)["imageIds"])
+    except client.exceptions.RepositoryNotFoundException:
+        return []

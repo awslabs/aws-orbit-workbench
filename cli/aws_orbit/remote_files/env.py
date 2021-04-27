@@ -14,7 +14,7 @@
 
 import logging
 import os
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional
 
 from aws_orbit import ORBIT_CLI_ROOT, cdk, docker
 from aws_orbit.services import cfn, ecr, iam, ssm
@@ -25,23 +25,9 @@ if TYPE_CHECKING:
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
-DEFAULT_IMAGES: List[str] = ["landing-page", "jupyter-hub", "jupyter-user", "image-replicator"]
-DEFAULT_ISOLATED_IMAGES: List[str] = []
-
-
-def _concat_images_into_args(context: "Context", add_images: List[str], remove_images: List[str]) -> Tuple[str, str]:
-    add_images += DEFAULT_IMAGES
-    if context.networking.data.internet_accessible is False:
-        add_images += DEFAULT_ISOLATED_IMAGES
-    add_images_str = ",".join(add_images) if add_images else "null"
-    remove_images_str = ",".join(remove_images) if remove_images else "null"
-    return add_images_str, remove_images_str
-
 
 def deploy(
     context: "Context",
-    add_images: List[str],
-    remove_images: List[str],
     eks_system_masters_roles_changes: Optional["ListChangeset"],
 ) -> None:
     _logger.debug("Stack name: %s", context.env_stack_name)
@@ -56,10 +42,7 @@ def deploy(
             roles_to_remove=eks_system_masters_roles_changes.removed_values,
         )
 
-    add_images_str, remove_images_str = _concat_images_into_args(
-        context=context, add_images=add_images, remove_images=remove_images
-    )
-    args: List[str] = [context.name, add_images_str, remove_images_str]
+    args: List[str] = [context.name]
 
     cdk.deploy(
         context=context,
@@ -76,8 +59,7 @@ def destroy(context: "Context") -> None:
         docker.login(context=context)
         _logger.debug("DockerHub and ECR Logged in")
         ecr.cleanup_remaining_repos(env_name=context.name)
-        add_images_str, remove_images_str = _concat_images_into_args(context=context, add_images=[], remove_images=[])
-        args = [context.name, add_images_str, remove_images_str]
+        args = [context.name]
         cdk.destroy(
             context=context,
             stack_name=context.env_stack_name,

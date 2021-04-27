@@ -17,21 +17,19 @@ import logging
 import os
 import shutil
 import sys
-from typing import List, cast
+from typing import cast
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2
-import aws_cdk.aws_ecr as ecr
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_lambda_python as lambda_python
 import aws_cdk.aws_ssm as ssm
 from aws_cdk import aws_lambda
-from aws_cdk.core import App, CfnOutput, Construct, Duration, Environment, IConstruct, Stack, Tags
+from aws_cdk.core import App, Construct, Duration, Environment, IConstruct, Stack, Tags
 
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.cdk import _lambda_path
 from aws_orbit.services import cognito as orbit_cognito
-from aws_orbit.utils import extract_images_names
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -42,14 +40,10 @@ class Env(Stack):
         scope: Construct,
         id: str,
         context: "Context",
-        add_images: List[str],
-        remove_images: List[str],
     ) -> None:
         self.scope = scope
         self.id = id
         self.context = context
-        self.add_images = add_images
-        self.remove_images = remove_images
         super().__init__(
             scope=scope,
             id=id,
@@ -67,7 +61,6 @@ class Env(Stack):
             vpc_id=self.context.networking.vpc_id,
             availability_zones=self.context.networking.availability_zones,
         )
-        self.repos = self._create_ecr_repos()
         self.role_eks_cluster = self._create_role_cluster()
         self.role_eks_env_nodegroup = self._create_env_nodegroup_role()
         self.role_fargate_profile = self._create_role_fargate_profile()
@@ -88,31 +81,6 @@ class Env(Stack):
         self.eks_service_lambda = self._create_eks_service_lambda()
         self.cluster_pod_security_group = self._create_cluster_pod_security_group()
         self.context_parameter = self._create_manifest_parameter()
-
-    def create_repo(self, image_name: str) -> ecr.Repository:
-        return ecr.Repository(
-            scope=self,
-            id=f"repo-{image_name}",
-            repository_name=f"orbit-{self.context.name}-{image_name}",
-        )
-
-    def _create_ecr_repos(self) -> List[ecr.Repository]:
-        current_images_names = extract_images_names(env_name=self.context.name)
-        current_images_names = list(set(current_images_names) - set(self.remove_images))
-        repos = [self.create_repo(image_name=r) for r in current_images_names]
-        for image_name in self.add_images:
-            if image_name not in current_images_names:
-                repos.append(self.create_repo(image_name=image_name))
-                current_images_names.append(image_name)
-        if current_images_names:
-            current_images_names.sort()
-            CfnOutput(
-                scope=self,
-                id="repos",
-                export_name=f"orbit-{self.context.name}-repos",
-                value=",".join([x for x in current_images_names]),
-            )
-        return repos
 
     def _create_role_cluster(self) -> iam.Role:
         name: str = f"orbit-{self.context.name}-eks-cluster-role"
@@ -454,10 +422,8 @@ class Env(Stack):
 
 def main() -> None:
     _logger.debug("sys.argv: %s", sys.argv)
-    if len(sys.argv) == 4:
+    if len(sys.argv) == 2:
         context: "Context" = ContextSerDe.load_context_from_ssm(env_name=sys.argv[1], type=Context)
-        add_images = [] if sys.argv[2] == "null" else sys.argv[2].split(sep=",")
-        remove_images = [] if sys.argv[3] == "null" else sys.argv[3].split(sep=",")
     else:
         raise ValueError(f"Unexpected number of values in sys.argv ({len(sys.argv)}), {sys.argv}")
 
@@ -470,8 +436,6 @@ def main() -> None:
         scope=app,
         id=context.env_stack_name,
         context=context,
-        add_images=add_images,
-        remove_images=remove_images,
     )
     app.synth(force=True)
 

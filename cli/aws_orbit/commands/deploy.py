@@ -57,11 +57,11 @@ def _get_images_dirs(context: "Context", manifest_filename: str, skip_images: bo
     else:
         refdir: str = os.path.dirname(os.path.abspath(manifest_filename))
         _logger.debug("refdir: %s", refdir)
-        _logger.debug(context.images.jupyter_hub.source)
+        _logger.debug(context.images.jupyter_hub.get_source(account_id=context.account_id, region=context.region))
         dirs = [
             (os.path.join(refdir, getattr(context.images, name).path), name.replace("_", "-"))
             for name in context.images.names
-            if getattr(context.images, name).source == "code"
+            if getattr(context.images, name).get_source(account_id=context.account_id, region=context.region) == "code"
         ]
         _logger.debug("dirs: %s", dirs)
     return dirs
@@ -86,7 +86,9 @@ def deploy_toolkit(
     stack_exist: bool = cfn.does_stack_exist(stack_name=context.toolkit.stack_name)
     credential_exist: bool = dockerhub.does_credential_exist(context=context) if stack_exist else False
     image_manifests = [cast(ImageManifest, getattr(context.images, i)) for i in context.images.names]
-    credential_required: bool = any([im.source == "dockerhub" for im in image_manifests])
+    credential_required: bool = any(
+        [im.get_source(account_id=context.account_id, region=context.region) == "dockerhub" for im in image_manifests]
+    )
 
     if stack_exist:
         if credential_required and not credential_exist and not credential_received:

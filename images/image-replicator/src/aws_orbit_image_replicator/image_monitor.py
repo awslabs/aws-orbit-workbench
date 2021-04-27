@@ -17,8 +17,26 @@ import time
 from multiprocessing import Queue, synchronize
 from typing import Any, Dict, List, Tuple
 
+import boto3
 from aws_orbit_image_replicator import load_config, logger
 from kubernetes.client import AppsV1Api
+
+
+def image_replicated(image: str) -> bool:
+    try:
+        repo, tag = image.split(":")
+        client = boto3.client("ecr")
+        paginator = client.get_paginator("list_images")
+        for page in paginator.paginate(repositoryName=repo):
+            for imageId in page["imageIds"]:
+                if imageId.get("imageTag", None) == tag:
+                    logger.debug("ECR Repository contains Image: %s", image)
+                    return True
+        logger.debug("Tag %s not found in ECR Repository %s", tag, repo)
+        return False
+    except Exception as e:
+        logger.exception(e)
+        return False
 
 
 def _get_desired_image(config: Dict[str, Any], image: str) -> str:
@@ -49,10 +67,15 @@ def _get_replication_status(
         status = replication_statuses.get(desired_image, "Unknown")
 
         if status == "Unknown":
-            logger.info("Queueing Replication Task: %s -> %s", image, desired_image)
-            status = "Pending:1"
-            replication_statuses[desired_image] = status
-            replications_queue.put({"src": image, "dest": desired_image})
+            if image_replicated(desired_image):
+                logger.info("Skipping previously completed Replication Task: %s -> %s", image, desired_image)
+                status = "Complete"
+                replication_statuses[desired_image] = status
+            else:
+                logger.info("Queueing Replication Task: %s -> %s", image, desired_image)
+                status = "Pending:1"
+                replication_statuses[desired_image] = status
+                replications_queue.put({"src": image, "dest": desired_image})
         elif status.startswith("Failed"):
             attempt = int(status.split(":")[1])
             if attempt < 3:

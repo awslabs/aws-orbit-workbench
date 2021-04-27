@@ -8,7 +8,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 image:
-  repository: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-landing-page:${tag}
+  repository: ${repository}:${tag}
   pullPolicy: ${image_pull_policy}
   env:
     - name: AWS_DEFAULT_REGION

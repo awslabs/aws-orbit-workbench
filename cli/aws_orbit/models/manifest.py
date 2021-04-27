@@ -66,9 +66,24 @@ class TeamManifest:
 class ImageManifest:
     Schema: ClassVar[Type[Schema]] = Schema
     repository: Optional[str]
-    source: Optional[str] = "ecr-public"
-    version: Optional[str] = aws_orbit.__version__
+    version: Optional[str] = "latest" if aws_orbit.__version__.endswith(".dev0") else aws_orbit.__version__
     path: Optional[str] = None
+
+    def get_source(self, account_id: str, region: str) -> str:
+        external_ecr_match = re.compile(r"^[0-9]{12}\.dkr\.ecr\..+\.amazonaws.com/")
+        public_ecr_match = re.compile(r"^public.ecr.aws/.+/")
+        repository = cast(str, self.repository)
+
+        if self.path is not None:
+            return "code"
+        elif repository.startswith(f"{account_id}.dkr.ecr.{region}.amazonaws.com"):
+            return "ecr-internal"
+        elif external_ecr_match.match(repository):
+            return "ecr-external"
+        elif public_ecr_match.match(repository):
+            return "ecr-public"
+        else:
+            return "dockerhub"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -87,7 +102,6 @@ class ManagedNodeGroupManifest:
 @dataclass(base_schema=BaseSchema, frozen=True)
 class CodeBuildImageManifest(ImageManifest):
     repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base"
-    version: Optional[str] = "latest"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)

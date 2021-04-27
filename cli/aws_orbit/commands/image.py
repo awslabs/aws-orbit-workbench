@@ -23,7 +23,6 @@ from slugify import slugify
 from aws_orbit import bundle, remote, utils
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.context import Context, ContextSerDe
-from aws_orbit.remote_files.env import DEFAULT_IMAGES, DEFAULT_ISOLATED_IMAGES
 from aws_orbit.services import cfn, codebuild
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -175,11 +174,7 @@ def build_image(
             timeout=timeout,
         )
         msg_ctx.info("Docker Image deploy into ECR")
-        if name in DEFAULT_IMAGES or name in DEFAULT_ISOLATED_IMAGES:
-            # Trying to build the system image, hope you are admin or you will get permission errors
-            address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}-{name}"
-        else:
-            address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}-users-{name}"
+        address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}/{name}"
 
         msg_ctx.info(f"ECR Image Address={address}")
         msg_ctx.tip(f"ECR Image Address: {stylize(address, underline=True)}")
