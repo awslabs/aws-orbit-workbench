@@ -16,7 +16,7 @@ import logging
 import os
 from typing import TYPE_CHECKING, Any, Dict, Optional, cast
 
-from aws_orbit import utils
+from aws_orbit import sh, utils
 from aws_orbit.plugins import hooks
 from aws_orbit.remote_files import helm
 from aws_orbit.services import ec2
@@ -38,6 +38,11 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     if helm.is_exists_chart_release(release_name, team_context.name):
         _logger.info("Chart %s already installed, skipping installation", release_name)
         return
+    try:
+        sh.run(f"kubectl delete sc fsx-lustre-{team_context.name}-fast-fs-lustre")
+    except Exception as e:
+        _logger.error(f"Deleting prior sc 'fsx-lustre-{team_context.name}-fast-fs-lustre' failed with:%s", str(e))
+
     vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
         region=context.region,
