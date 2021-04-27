@@ -2,6 +2,8 @@ kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
   name: {{ .Values.storageClassName }}
+  labels:
+    {{- include "fsx_storageclass.labels" . | nindent 4 }}
 provisioner: fsx.csi.aws.com
 parameters:
   subnetId: {{ .Values.subnet }}
