@@ -91,7 +91,10 @@ class Team(Stack):
             policy=iam.PolicyDocument(
                 statements=[
                     iam.PolicyStatement(
-                        effect=iam.Effect.ALLOW, actions=["kms:*"], resources=["*"], principals=[admin_principals]
+                        effect=iam.Effect.ALLOW,
+                        actions=["kms:*"],
+                        resources=["*"],
+                        principals=[cast(iam.IPrincipal, admin_principals)],
                     )
                 ]
             ),
@@ -118,7 +121,7 @@ class Team(Stack):
             context=self.context,
             team_name=self.team_name,
             policy_names=self.policies,
-            scratch_bucket=self.scratch_bucket,
+            scratch_bucket=cast(s3.IBucket, self.scratch_bucket),
             team_kms_key=self.team_kms_key,
         )
         shared_fs_name: str = f"orbit-{context.name}-{self.team_name}-shared-fs"

@@ -120,9 +120,12 @@ class Env(Stack):
             scope=self,
             id=name,
             role_name=name,
-            assumed_by=iam.CompositePrincipal(
-                iam.ServicePrincipal("eks.amazonaws.com"),
-                iam.ServicePrincipal("eks-fargate-pods.amazonaws.com"),
+            assumed_by=cast(
+                iam.IPrincipal,
+                iam.CompositePrincipal(
+                    iam.ServicePrincipal("eks.amazonaws.com"),
+                    iam.ServicePrincipal("eks-fargate-pods.amazonaws.com"),
+                ),
             ),
             managed_policies=[
                 iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSClusterPolicy"),
@@ -175,9 +178,12 @@ class Env(Stack):
             scope=self,
             id=name,
             role_name=name,
-            assumed_by=iam.CompositePrincipal(
-                iam.ServicePrincipal("eks.amazonaws.com"),
-                iam.ServicePrincipal("eks-fargate-pods.amazonaws.com"),
+            assumed_by=cast(
+                iam.IPrincipal,
+                iam.CompositePrincipal(
+                    iam.ServicePrincipal("eks.amazonaws.com"),
+                    iam.ServicePrincipal("eks-fargate-pods.amazonaws.com"),
+                ),
             ),
             managed_policies=[
                 iam.ManagedPolicy.from_aws_managed_policy_name(
@@ -229,7 +235,7 @@ class Env(Stack):
             scope=self,
             id=name,
             role_name=name,
-            assumed_by=iam.ServicePrincipal("eks.amazonaws.com"),
+            assumed_by=cast(iam.IPrincipal, iam.ServicePrincipal("eks.amazonaws.com")),
             inline_policies={
                 "Logging": iam.PolicyDocument(
                     statements=[
@@ -261,7 +267,7 @@ class Env(Stack):
         return cognito.UserPoolClient(
             scope=self,
             id="user-pool-client",
-            user_pool=self.user_pool,
+            user_pool=cast(cognito.IUserPool, self.user_pool),
             auth_flows=cognito.AuthFlow(user_srp=True, admin_user_password=False, custom=False),
             generate_secret=False,
             prevent_user_existence_errors=True,
@@ -293,13 +299,16 @@ class Env(Stack):
             scope=self,
             id=name,
             role_name=name,
-            assumed_by=iam.FederatedPrincipal(
-                federated="cognito-identity.amazonaws.com",
-                conditions={
-                    "StringEquals": {"cognito-identity.amazonaws.com:aud": pool.ref},
-                    "ForAnyValue:StringLike": {"cognito-identity.amazonaws.com:amr": "authenticated"},
-                },
-                assume_role_action="sts:AssumeRoleWithWebIdentity",
+            assumed_by=cast(
+                iam.IPrincipal,
+                iam.FederatedPrincipal(
+                    federated="cognito-identity.amazonaws.com",
+                    conditions={
+                        "StringEquals": {"cognito-identity.amazonaws.com:aud": pool.ref},
+                        "ForAnyValue:StringLike": {"cognito-identity.amazonaws.com:amr": "authenticated"},
+                    },
+                    assume_role_action="sts:AssumeRoleWithWebIdentity",
+                ),
             ),
             inline_policies={
                 "cognito-default": iam.PolicyDocument(
@@ -332,13 +341,16 @@ class Env(Stack):
             scope=self,
             id=name,
             role_name=name,
-            assumed_by=iam.FederatedPrincipal(
-                federated="cognito-identity.amazonaws.com",
-                conditions={
-                    "StringEquals": {"cognito-identity.amazonaws.com:aud": pool.ref},
-                    "ForAnyValue:StringLike": {"cognito-identity.amazonaws.com:amr": "unauthenticated"},
-                },
-                assume_role_action="sts:AssumeRoleWithWebIdentity",
+            assumed_by=cast(
+                iam.IPrincipal,
+                iam.FederatedPrincipal(
+                    federated="cognito-identity.amazonaws.com",
+                    conditions={
+                        "StringEquals": {"cognito-identity.amazonaws.com:aud": pool.ref},
+                        "ForAnyValue:StringLike": {"cognito-identity.amazonaws.com:amr": "unauthenticated"},
+                    },
+                    assume_role_action="sts:AssumeRoleWithWebIdentity",
+                ),
             ),
             inline_policies={
                 "cognito-default": iam.PolicyDocument(
@@ -448,7 +460,7 @@ class Env(Stack):
             security_group_name=name,
             vpc=self.i_vpc,
         )
-        Tags.of(scope=sg).add(key="Name", value=name)
+        Tags.of(scope=cast(IConstruct, sg)).add(key="Name", value=name)
         return sg
 
 
