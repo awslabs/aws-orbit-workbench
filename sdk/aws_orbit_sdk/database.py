@@ -983,7 +983,7 @@ class AthenaUtils(DatabaseCommon):
             region_name = workspace["region"]
 
         if S3QueryResultsLocation == None:
-            S3QueryResultsLocation = f"s3://{workspace['ScratchBucket']}/{workspace['team_space']}/athena"
+            S3QueryResultsLocation = f"{workspace['ScratchBucket']}/athena"
 
         template_con_str = (
             "awsathena+rest://athena.{region_name}.amazonaws.com:443/" "{schema_name}?s3_staging_dir={s3_staging_dir}"
@@ -1043,9 +1043,9 @@ class AthenaUtils(DatabaseCommon):
 
     def get_sample_data(self, database: str, table: str, sample: int, field: str, direction: str):
         workspace = get_workspace()
-        logger.info(f"query staging location: s3://{workspace['ScratchBucket']}/athena/query/")
+        logger.info(f"query staging location: {workspace['ScratchBucket']}/athena/query/")
         conn = pyathena.connect(
-            s3_staging_dir=f"s3://{workspace['ScratchBucket']}/{workspace['team_space']}/athena/query/",
+            s3_staging_dir=f"{workspace['ScratchBucket']}/athena/query/",
             region_name=workspace["region"],
         )
         if field and len(field) > 0:
