@@ -24,7 +24,7 @@ Images:
         Path: !ENV ${IMAGE_PATH::../../../images/landing-page}
         Version: !ENV ${VERSION::latest}
     ImageReplicator:
-        Repository: !ENV ${IMAGE_REPLICATOR_REPO_REPO::aws-orbit-image-replicator}
+        Repository: !ENV ${IMAGE_REPLICATOR_REPO::aws-orbit-image-replicator}
         Path: !ENV ${IMAGE_PATH::../../../images/image-replicator}
         Version: !ENV ${VERSION::latest}
 Networking:
