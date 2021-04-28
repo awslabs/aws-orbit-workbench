@@ -125,7 +125,7 @@ def update_docker_file(context: "Context", dir: str) -> None:
         _logger.info("Building DockerFile %s", docker_file)
         tag = context.images.jupyter_user.version
         jupyter_user_base = (
-            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}-jupyter-user:{tag}"
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}/jupyter-user:{tag}"
         )
 
         with open(docker_file, "r") as file:
@@ -186,7 +186,9 @@ def replicate_image(
 
     attr_name: str = image_name.replace("-", "_")
     if not source:
-        final_source = getattr(context.images, attr_name).source
+        final_source = getattr(context.images, attr_name).get_source(
+            account_id=context.account_id, region=context.region
+        )
     else:
         final_source = source
     if not source_repository:

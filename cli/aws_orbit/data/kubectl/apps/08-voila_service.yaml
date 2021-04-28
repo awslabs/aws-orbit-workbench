@@ -52,8 +52,8 @@ spec:
       - name: service
         securityContext:
           runAsUser: 1000
-        imagePullPolicy: Always
-        image: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-jupyter-user:${tag}
+        imagePullPolicy: ${image_pull_policy}
+        image: ${repository}:${tag}
         env:
           - name: AWS_DEFAULT_REGION
             value: us-west-2
@@ -85,4 +85,4 @@ spec:
           persistentVolumeClaim:
             claimName: jupyterhub
       restartPolicy: Always
-        
+

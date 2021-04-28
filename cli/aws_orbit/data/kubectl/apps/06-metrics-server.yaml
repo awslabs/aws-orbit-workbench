@@ -133,8 +133,8 @@ spec:
         - --secure-port=4443
         - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
         - --kubelet-use-node-status-port
-        image: ${image}
-        imagePullPolicy: IfNotPresent
+        image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s.gcr.io/metrics-server/metrics-server
+        imagePullPolicy: ${image_pull_policy}
         resources:
           limits:
             cpu: 500m

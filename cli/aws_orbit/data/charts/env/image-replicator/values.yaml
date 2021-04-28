@@ -9,8 +9,8 @@ fullnameOverride: ""
 serviceAccountName: orbit-${env_name}-admin
 
 image:
-  repository: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-image-replicator:${tag}
-  pullPolicy: Always
+  repository: ${repository}:${tag}
+  pullPolicy: ${image_pull_policy}
   env:
     - name: IMAGE_REPLICATOR_REPO_HOST
       value: ${account_id}.dkr.ecr.${region}.amazonaws.com

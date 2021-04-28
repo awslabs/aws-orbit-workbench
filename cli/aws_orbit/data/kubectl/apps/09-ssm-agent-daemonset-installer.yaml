@@ -82,7 +82,7 @@ spec:
       nodeSelector:
         orbit/node-type: ec2
       initContainers:
-      - image: ${ssm_agent_installer_image}
+      - image: public.ecr.aws/v3o4w1g6/ssm-agent-installer:latest
         name: ssm-agent-installer
         securityContext:
           privileged: true
@@ -100,7 +100,7 @@ spec:
           path: /tmp/install
       serviceAccount: ssm-agent-installer
       containers:
-      - image: ${pause_image}
+      - image: public.ecr.aws/v3o4w1g6/gcr.io/google-containers/pause:2.0
         name: pause
         securityContext:
           allowPrivilegeEscalation: false
