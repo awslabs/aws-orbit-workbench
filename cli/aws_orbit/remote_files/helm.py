@@ -191,6 +191,7 @@ def deploy_env(context: Context) -> None:
                     "region": context.region,
                     "account_id": context.account_id,
                     "env_name": context.name,
+                    "repository": context.images.image_replicator.repository,
                     "tag": context.images.image_replicator.version,
                     "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
                     "image_pull_policy": "Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",

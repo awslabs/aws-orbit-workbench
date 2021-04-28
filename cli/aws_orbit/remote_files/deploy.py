@@ -21,7 +21,7 @@ from typing import Any, List, Optional, Tuple, cast
 from aws_orbit import bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, TeamContext
-from aws_orbit.models.manifest import ImageManifest, Manifest, ManifestSerDe
+from aws_orbit.models.manifest import ImageManifest, ImagesManifest, Manifest, ManifestSerDe
 from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, teams, utils
 from aws_orbit.services import codebuild, ecr
 
@@ -87,6 +87,7 @@ def _deploy_image_remotely(context: "Context", name: str, bundle_path: str, buil
 def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[str], Optional[str], List[str]]]) -> None:
     _logger.debug("images:\n%s", images)
 
+    new_images_manifest = {name: getattr(context.images, name) for name in context.images.names}
     max_workers = 5
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures: List[Future[Any]] = []
@@ -101,12 +102,10 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
             path = os.path.join(os.getcwd(), "bundle", name)
             _logger.debug("path: %s", path)
 
-            if (
-                getattr(context.images, name.replace("-", "_")).get_source(
-                    account_id=context.account_id, region=context.region
-                )
-                == "code"
-            ):
+            image_attr_name = name.replace("-", "_")
+            image_def: ImageManifest = getattr(context.images, image_attr_name)
+            tag = image_def.version
+            if image_def.get_source(account_id=context.account_id, region=context.region) == "code":
                 dirs: List[Tuple[str, str]] = [(path, cast(str, dir))]
             else:
                 dirs = []
@@ -123,10 +122,18 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
                     f"{context.name} {name} {dir} {script_str} {' '.join(build_args)}"
                 ],
             )
+            new_images_manifest[image_attr_name] = ImageManifest(
+                repository=f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}/{name}",
+                version=tag,
+                path=None,
+            )
             futures.append(executor.submit(_deploy_image_remotely, context, name, bundle_path, buildspec))
 
         for f in futures:
             f.result()
+
+        context.images = ImagesManifest(**new_images_manifest)
+        ContextSerDe.dump_context_to_ssm(context=context)
 
 
 def deploy_images_remotely(context: "Context", skip_images: bool = True) -> None:
@@ -137,11 +144,13 @@ def deploy_images_remotely(context: "Context", skip_images: bool = True) -> None
 
     # Secondary images we can optionally skip
     if not skip_images:
-        images += [
-            ("jupyter-hub", "jupyter-hub", None, []),
-            ("jupyter-user", "jupyter-user", "build.sh", []),
-            ("landing-page", "landing-page", "build.sh", []),
-        ]
+        images += []
+        if context.images.landing_page.get_source(context.account_id, context.region) != "ecr-public":
+            images.append(("landing-page", "landing-page", "build.sh", []))
+        if context.images.jupyter_hub.get_source(context.account_id, context.region) != "ecr-public":
+            images.append(("jupyter-hub", "jupyter-hub", None, []))
+        if context.images.jupyter_user.get_source(context.account_id, context.region) != "ecr-public":
+            images.append(("jupyter-user", "jupyter-user", "build.sh", []))
 
     _logger.debug("Building/repclicating Container Images")
     _deploy_images_batch(context=context, images=images)

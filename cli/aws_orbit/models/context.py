@@ -313,7 +313,7 @@ def create_team_context_from_manifest(manifest: "Manifest", team_manifest: "Team
     region: str = utils.get_region()
     ssm_parameter_name: str = f"/orbit/{manifest.name}/teams/{team_manifest.name}/context"
     version = manifest.images.jupyter_user.version
-    base_image_address = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-jupyter-user:{version}"
+    base_image_address = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}/jupyter-user:{version}"
     final_image_address = base_image_address
     return TeamContext(
         base_image_address=base_image_address,
@@ -378,7 +378,6 @@ class ContextSerDe(Generic[T, V]):
         context_parameter_name: str = f"/orbit/{manifest.name}/context"
         if ssm.does_parameter_exist(name=context_parameter_name):
             context: Context = ContextSerDe.load_context_from_ssm(env_name=manifest.name, type=Context)
-            context.images = manifest.images
             context.networking = create_networking_context_from_manifest(networking=manifest.networking)
             context.user_pool_id = manifest.user_pool_id
             context.shared_efs_fs_id = manifest.shared_efs_fs_id

@@ -82,7 +82,7 @@ def create_repository(repository_name: str, env_name: Optional[str] = None) -> N
     client = boto3_client("ecr")
     params: Dict[str, Any] = {"repositoryName": repository_name}
     if env_name:
-        params["tags"] = {"Key": "Env", "Value": env_name}
+        params["tags"] = [{"Key": "Env", "Value": env_name}]
     response = client.create_repository(**params)
     if "repository" in response and "repositoryName" in response["repository"]:
         _logger.debug("ECR repository not exist, creating for %s", repository_name)
@@ -94,6 +94,8 @@ def create_repository(repository_name: str, env_name: Optional[str] = None) -> N
 def describe_repositories(repository_names: List[str]) -> List[Dict[str, Any]]:
     client = boto3_client("ecr")
     try:
-        return cast(List[Dict[str, Any]], client.describe_repositories(repositoryNames=repository_names)["imageIds"])
+        return cast(
+            List[Dict[str, Any]], client.describe_repositories(repositoryNames=repository_names)["repositories"]
+        )
     except client.exceptions.RepositoryNotFoundException:
         return []

@@ -23,7 +23,7 @@ from typing import Any, ClassVar, Dict, Generic, List, Optional, Set, Type, Type
 import jsonpath_ng as jsonpath_ng
 import yaml
 from dataclasses import field
-from marshmallow import Schema
+from marshmallow import EXCLUDE, Schema
 from marshmallow_dataclass import dataclass
 from yamlinclude import YamlIncludeConstructor
 
@@ -83,7 +83,7 @@ class ImageManifest:
         elif public_ecr_match.match(repository):
             return "ecr-public"
         else:
-            return "dockerhub"
+            return "ecr-internal"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -139,11 +139,11 @@ class FoundationImagesManifest:
 @dataclass(base_schema=BaseSchema, frozen=True)
 class ImagesManifest:
     Schema: ClassVar[Type[Schema]] = Schema
-    code_build: CodeBuildImageManifest = CodeBuildImageManifest()
-    jupyter_hub: JupyterHubImageManifest = JupyterHubImageManifest()
-    jupyter_user: JupyterUserImageManifest = JupyterUserImageManifest()
-    landing_page: LandingPageImageManifest = LandingPageImageManifest()
-    image_replicator: ImageReplicatorImageManifest = ImageReplicatorImageManifest()
+    code_build: ImageManifest = CodeBuildImageManifest()
+    jupyter_hub: ImageManifest = JupyterHubImageManifest()
+    jupyter_user: ImageManifest = JupyterUserImageManifest()
+    landing_page: ImageManifest = LandingPageImageManifest()
+    image_replicator: ImageManifest = ImageReplicatorImageManifest()
     names: List[str] = field(
         metadata=dict(load_only=True),
         default_factory=lambda: [
@@ -352,10 +352,10 @@ class ManifestSerDe(Generic[T]):
         _logger.debug("raw: %s", raw)
         if type is Manifest:
             raw["SsmParameterName"] = f"/orbit/{raw['Name']}/manifest"
-            manifest: T = cast(T, Manifest.Schema().load(data=raw, many=False, partial=False, unknown="RAISE"))
+            manifest: T = cast(T, Manifest.Schema().load(data=raw, many=False, partial=False, unknown=EXCLUDE))
         elif type is FoundationManifest:
             raw["SsmParameterName"] = f"/orbit-foundation/{raw['Name']}/manifest"
-            manifest = cast(T, FoundationManifest.Schema().load(data=raw, many=False, partial=False, unknown="RAISE"))
+            manifest = cast(T, FoundationManifest.Schema().load(data=raw, many=False, partial=False, unknown=EXCLUDE))
         else:
             raise ValueError("Unknown 'manifest' Type")
         ManifestSerDe.dump_manifest_to_ssm(manifest=manifest)
@@ -408,12 +408,12 @@ class ManifestSerDe(Generic[T]):
             _logger.debug("teams_parameters (/orbit/%s/teams/): %s", env_name, teams_parameters)
             teams = [ssm.get_parameter(name=p) for p in teams_parameters if p.endswith("/manifest")]
             main["Teams"] = teams
-            return cast(T, Manifest.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
+            return cast(T, Manifest.Schema().load(data=main, many=False, partial=False, unknown=EXCLUDE))
         elif type is FoundationManifest:
             context_parameter_name = f"/orbit-foundation/{env_name}/manifest"
             main = ssm.get_parameter_if_exists(name=context_parameter_name)
             if main is None:
                 return None
-            return cast(T, FoundationManifest.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
+            return cast(T, FoundationManifest.Schema().load(data=main, many=False, partial=False, unknown=EXCLUDE))
         else:
             raise ValueError("Unknown 'manifest' Type")

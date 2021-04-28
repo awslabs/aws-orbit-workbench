@@ -53,7 +53,7 @@ spec:
         securityContext:
           runAsUser: 1000
         imagePullPolicy: ${image_pull_policy}
-        image: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-jupyter-user:${tag}
+        image: ${repository}:${tag}
         env:
           - name: AWS_DEFAULT_REGION
             value: us-west-2

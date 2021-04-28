@@ -27,6 +27,7 @@ from aws_orbit.models.manifest import (
     DataNetworkingManifest,
     FoundationManifest,
     ImageManifest,
+    ImagesManifest,
     Manifest,
     ManifestSerDe,
     NetworkingManifest,
@@ -212,6 +213,13 @@ def deploy_env(
         msg_ctx.progress(3)
 
         context: "Context" = ContextSerDe.load_context_from_manifest(manifest=manifest)
+        image_manifests = {"code_build": manifest.images.code_build, "landing_page": manifest.images.landing_page}
+
+        for name in context.images.names:
+            if name not in ["code_build", "image_replicator"]:
+                image_manifests[name] = getattr(context.images, name) if skip_images else getattr(manifest.images, name)
+        context.images = ImagesManifest(**image_manifests)  # type: ignore
+
         msg_ctx.info("Current Context loaded")
         msg_ctx.progress(4)
 

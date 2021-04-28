@@ -148,10 +148,9 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
         content,
         dict(
             team=team_context.name,
-            region=context.region,
-            account_id=context.account_id,
             env_name=context.name,
-            tag=context.images.jupyter_hub.version,
+            repository=context.images.jupyter_user.repository,
+            tag=context.images.jupyter_user.version,
             sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
             image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
         ),

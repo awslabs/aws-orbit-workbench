@@ -13,18 +13,19 @@ CognitoExternalProviderLabel: !ENV ${COGNITO_EXTERNAL_PROVIDER_LABEL::}
 Images:
     JupyterHub:
         Repository: !ENV ${JUPYTER_HUB_REPO::aws-orbit-jupyter-hub}
-        Source: !ENV ${IMAGE_SOURCE::code}
         Path: !ENV ${IMAGE_PATH::../../../images/jupyter-hub}
         Version: !ENV ${VERSION::latest}
     JupyterUser:
         Repository: !ENV ${JUPYTER_USER_REPO::aws-orbit-jupyter-user}
-        Source: !ENV ${IMAGE_SOURCE::code}
         Path: !ENV ${IMAGE_PATH::../../../images/jupyter-user}
         Version: !ENV ${VERSION::latest}
     LandingPage:
         Repository: !ENV ${LANDING_PAGE_REPO::aws-orbit-landing-page}
-        Source: !ENV ${IMAGE_SOURCE::code}
         Path: !ENV ${IMAGE_PATH::../../../images/landing-page}
+        Version: !ENV ${VERSION::latest}
+    ImageReplicator:
+        Repository: !ENV ${IMAGE_REPLICATOR_REPO_REPO::aws-orbit-image-replicator}
+        Path: !ENV ${IMAGE_PATH::../../../images/image-replicator}
         Version: !ENV ${VERSION::latest}
 Networking:
     VpcId: !SSM ${/orbit-foundation/dev-env/resources::VpcId}
