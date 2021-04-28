@@ -112,8 +112,15 @@ def install_chart(repo: str, namespace: str, name: str, chart_name: str, chart_v
     chart_version = aws_orbit.__version__.replace(".dev", "-")
     _logger.debug("Installing %s, version %s as %s from %s", chart_name, chart_version, name, repo)
     sh.run(
-        f"helm upgrade --install --debug --namespace {namespace} --version {chart_version} {name} {repo}/{chart_name}"
+        f"helm upgrade --install --debug --namespace {namespace} --version "
+        f"{chart_version} {name} {repo}/{chart_name}"
     )
+
+
+def install_chart_no_upgrade(repo: str, namespace: str, name: str, chart_name: str, chart_version: str) -> None:
+    chart_version = aws_orbit.__version__.replace(".dev", "-")
+    _logger.debug("Installing %s, version %s as %s from %s", chart_name, chart_version, name, repo)
+    sh.run(f"helm install --debug --namespace {namespace} --version {chart_version} {name} {repo}/{chart_name}")
 
 
 def uninstall_chart(name: str) -> None:
@@ -126,11 +133,14 @@ def uninstall_chart(name: str) -> None:
 
 def is_exists_chart_release(name: str, namespace: str) -> bool:
     try:
+        _logger.info("Installed charts at %s", namespace)
+        found = False
         for line in sh.run_iterating(f"helm list -n {namespace}"):
+            _logger.info(line)
             if name in line:
-                return True
+                found = True
 
-        return False
+        return found
     except exceptions.FailedShellCommand as e:
         _logger.error(e)
         raise e

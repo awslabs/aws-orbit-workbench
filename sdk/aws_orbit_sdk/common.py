@@ -124,6 +124,7 @@ def get_workspace() -> Dict[str, str]:
     config["region"] = my_region
     config["env_name"] = props["AWS_ORBIT_ENV"]
     config["team_space"] = props["AWS_ORBIT_TEAM_SPACE"]
+    config["ScratchBucket"] = f"s3://{config['ScratchBucket']}/{props['AWS_ORBIT_TEAM_SPACE']}"
 
     return config
 
@@ -151,7 +152,7 @@ def get_scratch_database() -> str:
     response = glue.get_databases()
     workspace = get_workspace()
     scratch_db_name = f"scratch_db_{workspace['env_name']}_{workspace['team_space']}".lower().replace("-", "_")
-    new_location = f"s3://{workspace['ScratchBucket']}/{workspace['team_space']}/{scratch_db_name}"
+    new_location = f"{workspace['ScratchBucket']}/{scratch_db_name}"
     for db in response["DatabaseList"]:
         if db["Name"].lower() == scratch_db_name:
             if new_location == db["LocationUri"]:

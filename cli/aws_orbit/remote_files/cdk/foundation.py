@@ -289,6 +289,7 @@ class FoundationStack(Stack):
             "cloudformation_endpoint": ec2.InterfaceVpcEndpointAwsService("cloudformation"),
             "codebuild_endpoint": ec2.InterfaceVpcEndpointAwsService("codebuild"),
             "emr-containers": ec2.InterfaceVpcEndpointAwsService("emr-containers"),
+            "databrew": ec2.InterfaceVpcEndpointAwsService("databrew"),
         }
 
         for name, gateway_vpc_endpoint_service in vpc_gateway_endpoints.items():

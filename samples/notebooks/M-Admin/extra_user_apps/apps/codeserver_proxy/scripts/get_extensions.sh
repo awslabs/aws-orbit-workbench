@@ -16,14 +16,11 @@
 #
 set -ex
 
-echo `pwd`
-curl -fsSL https://code-server.dev/install.sh | sh
-code-server --install-extension ms-python.python --force
-code-server --install-extension ms-toolsai.jupyter --force
-code-server --install-extension mtxr.sqltools --force
-code-server --install-extension rogalmic.bash-debug --force
-code-server --install-extension AmazonWebServices.aws-toolkit-vscode --force
-
-pip install .
-
-
+# Go get the VSIX files that we cannot get from the markeplace directly
+#workingDir=/home/jovyan/.local/share/code-server/CachedExtensionVSIXs
+workingDir=$pwd
+curl -fsSL https://marketplace.visualstudio.com/_apis/public/gallery/publishers/mtxr/vsextensions/sqltools-driver-pg/0.2.0/vspackage \
+-o $workingDir/mtxr.sqltools-driver-pg-0.2.0.gz
+gunzip $workingDir/mtxr.sqltools-driver-pg-0.2.0.gz
+mv $workingDir/mtxr.sqltools-driver-pg-0.2.0 $workingDir/mtxr.sqltools-driver-pg-0.2.0.vsix
+code-server --install-extension $workingDir/mtxr.sqltools-driver-pg-0.2.0.vsix --force
