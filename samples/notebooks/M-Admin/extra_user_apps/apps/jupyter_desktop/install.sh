@@ -44,3 +44,12 @@ cp  -R /temp/jupyter-desktop-server-master/* /opt/install
 rm -fR /temp/jupyter-desktop-server-master
 cd /opt/install
 conda env update -n base --file environment.yml
+
+mkdir -p /temp/datagrip
+wget -O /temp/datagrip/datagrip-2021.1.tar.gz https://download.jetbrains.com/datagrip/datagrip-2021.1.tar.gz
+#curl -o /temp/datagrip/datagrip-2021.1.tar.gz https://download.jetbrains.com/datagrip/datagrip-2021.1.tar.gz
+tar xzf /temp/datagrip/datagrip-2021.1.tar.gz -C /temp/datagrip/
+mkdir /opt/datagrip
+cp -R /temp/datagrip/DataGrip-2021.1/* /opt/datagrip 
+rm -rf /temp/datagrip
+ln -s /opt/datagrip/bin/datagrip.sh /usr/local/bin/datagrip
