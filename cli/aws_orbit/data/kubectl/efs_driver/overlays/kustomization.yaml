@@ -4,11 +4,11 @@ bases:
   - ../base
 images:
   - name: amazon/aws-efs-csi-driver
-    newName: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-aws-efs-csi-driver
+    newName: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/amazon/aws-efs-csi-driver
     newTag: v1.0.0
   - name: quay.io/k8scsi/livenessprobe
-    newName: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-livenessprobe
+    newName: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/quay.io/k8scsi/livenessprobe
     newTag: v2.0.0
   - name: quay.io/k8scsi/csi-node-driver-registrar
-    newName: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-csi-node-driver-registrar
+    newName: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/quay.io/k8scsi/csi-node-driver-registrar
     newTag: v1.3.0

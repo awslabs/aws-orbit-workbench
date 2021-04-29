@@ -1,7 +1,11 @@
+import logging
+import time
 from typing import Any, Dict, cast
 
 from kubernetes import config
 from kubernetes.client import CoreV1Api, V1Service
+
+_logger: logging.Logger = logging.getLogger(__name__)
 
 
 def get_service_hostname(name: str, k8s_context: str, namespace: str = "default") -> str:
@@ -15,4 +19,5 @@ def get_service_hostname(name: str, k8s_context: str, namespace: str = "default"
                 if status["load_balancer"]["ingress"]:
                     if "hostname" in status["load_balancer"]["ingress"][0]:
                         break
+        time.sleep(10)
     return str(status["load_balancer"]["ingress"][0]["hostname"])

@@ -16,6 +16,7 @@ import logging
 import os
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+import aws_orbit
 from aws_orbit import utils
 from aws_orbit.plugins import hooks
 from aws_orbit.remote_files import helm
@@ -45,6 +46,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
         restart_policy=parameters["restartPolicy"] if "restartPolicy" in parameters else "Never",
         plugin_id=plugin_id,
         toolkit_s3_bucket=context.toolkit.s3_bucket,
+        image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
     )
 
     if "script" in parameters:

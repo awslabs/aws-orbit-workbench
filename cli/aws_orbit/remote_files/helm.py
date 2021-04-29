@@ -168,12 +168,12 @@ def deploy_env(context: Context) -> None:
             chart_path=os.path.join(CHARTS_PATH, "env", "landing-page"),
             values={
                 "region": context.region,
-                "account_id": context.account_id,
                 "env_name": context.name,
                 "user_pool_id": context.user_pool_id,
                 "user_pool_client_id": context.user_pool_client_id,
                 "identity_pool_id": context.identity_pool_id,
                 "ssl_cert_arn": context.networking.frontend.ssl_cert_arn,
+                "repository": context.images.landing_page.repository,
                 "tag": context.images.landing_page.version,
                 "cognito_external_provider": context.cognito_external_provider,
                 "cognito_external_provider_label": context.cognito_external_provider
@@ -186,6 +186,7 @@ def deploy_env(context: Context) -> None:
                 if context.cognito_external_provider_redirect is None
                 else context.cognito_external_provider_redirect,
                 "internal_load_balancer": '"false"' if context.networking.frontend.load_balancers_subnets else '"true"',
+                "image_pull_policy": "Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
             },
         )
         install_chart(
@@ -200,8 +201,10 @@ def deploy_env(context: Context) -> None:
                     "region": context.region,
                     "account_id": context.account_id,
                     "env_name": context.name,
+                    "repository": context.images.image_replicator.repository,
                     "tag": context.images.image_replicator.version,
                     "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
+                    "image_pull_policy": "Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
                 },
             )
             install_chart(
@@ -231,10 +234,12 @@ def deploy_team(context: Context, team_context: TeamContext) -> None:
                 "team": team_context.name,
                 "efsid": context.shared_efs_fs_id,
                 "region": context.region,
-                "account_id": context.account_id,
                 "ssl_cert_arn": context.networking.frontend.ssl_cert_arn,
                 "env_name": context.name,
-                "tag": context.images.jupyter_hub.version,
+                "jupyter_hub_repository": context.images.jupyter_hub.repository,
+                "jupyter_hub_tag": context.images.jupyter_hub.version,
+                "jupyter_user_repository": context.images.jupyter_user.repository,
+                "jupyter_user_tag": context.images.jupyter_user.version,
                 "grant_sudo": '"yes"' if team_context.grant_sudo else '"no"',
                 "internal_load_balancer": '"false"' if context.networking.frontend.load_balancers_subnets else '"true"',
                 "jupyterhub_inbound_ranges": str(
@@ -243,6 +248,7 @@ def deploy_team(context: Context, team_context: TeamContext) -> None:
                     else [utils.get_dns_ip_cidr(context=context)]
                 ),
                 "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
+                "image_pull_policy": "Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
             },
         )
         install_chart(

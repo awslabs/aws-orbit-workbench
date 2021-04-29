@@ -37,6 +37,6 @@ COGNITO_USER_POOL_ID: str = CONTEXT["UserPoolId"]
 TOOLKIT_S3_BUCKET: str = CONTEXT["Toolkit"]["S3Bucket"]
 TAG: str = CONTEXT["Images"]["JupyterUser"]["Version"]
 IMAGE_REPOSITORY = CONTEXT["Images"]["JupyterUser"]["Repository"]
-IMAGE: Optional[str] = f"{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/orbit-{ENV_NAME}-jupyter-user:{TAG}"
+IMAGE: Optional[str] = f"{IMAGE_REPOSITORY}:{TAG}"
 CODEARTIFACT_DOMAIN: str = CONTEXT["CodeartifactDomain"]
 CODEARTIFACT_REPOSITORY: str = CONTEXT["CodeartifactRepository"]

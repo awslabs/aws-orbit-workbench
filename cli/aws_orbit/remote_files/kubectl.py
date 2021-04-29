@@ -17,9 +17,9 @@ import os
 import shutil
 from typing import Any, Dict
 
+import aws_orbit
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
-from aws_orbit.models.manifest import ImagesManifest
 from aws_orbit.remote_files.utils import get_k8s_context
 from aws_orbit.services import cfn, elb
 from aws_orbit.utils import resolve_parameters
@@ -27,7 +27,6 @@ from aws_orbit.utils import resolve_parameters
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-EFS_DRIVE = "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/ecr/?ref=release-1.0"
 MODELS_PATH = os.path.join(ORBIT_CLI_ROOT, "data", "kubectl")
 
 
@@ -54,23 +53,11 @@ def _k8_dashboard(context: "Context", output_path: str) -> None:
     filename = "05-dashboard.yaml"
     input = os.path.join(MODELS_PATH, "apps", filename)
     output = os.path.join(output_path, filename)
-
-    if context.networking.data.internet_accessible is False:
-        dashboard_image = (
-            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
-            f"orbit-{context.name}-k8-dashboard:{ImagesManifest.k8_dashboard.version}"
-        )
-        scraper_image = (
-            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
-            f"orbit-{context.name}-k8-metrics-scraper:{ImagesManifest.k8_metrics_scraper.version}"
-        )
-    else:
-        dashboard_image = f"{ImagesManifest.k8_dashboard.repository}:{ImagesManifest.k8_dashboard.version}"
-        scraper_image = f"{ImagesManifest.k8_metrics_scraper.repository}:{ImagesManifest.k8_metrics_scraper.version}"
     with open(input, "r") as file:
         content: str = file.read()
-    _logger.debug("using for k8 dashboard images: \n%s \n%s", dashboard_image, scraper_image)
-    content = resolve_parameters(content, parameters=dict(dashboard_image=dashboard_image, scraper_image=scraper_image))
+    content = utils.resolve_parameters(
+        content, dict(image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent")
+    )
     with open(output, "w") as file:
         file.write(content)
 
@@ -79,18 +66,11 @@ def _metrics_server(context: "Context", output_path: str) -> None:
     filename = "06-metrics-server.yaml"
     input = os.path.join(MODELS_PATH, "apps", filename)
     output = os.path.join(output_path, filename)
-
-    if context.networking.data.internet_accessible is False:
-        image = (
-            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
-            f"orbit-{context.name}-k8-metrics-server:{ImagesManifest.k8_metrics_server.version}"
-        )
-    else:
-        image = f"{ImagesManifest.k8_metrics_server.repository}:{ImagesManifest.k8_metrics_server.version}"
     with open(input, "r") as file:
         content: str = file.read()
-    _logger.debug("using %s for k8 dashboard image", image)
-    content = content.replace("$", "").format(image=image)
+    content = utils.resolve_parameters(
+        content, dict(image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent")
+    )
     with open(output, "w") as file:
         file.write(content)
 
@@ -100,22 +80,18 @@ def _cluster_autoscaler(output_path: str, context: "Context") -> None:
     input = os.path.join(MODELS_PATH, "apps", filename)
     output = os.path.join(output_path, filename)
 
-    if context.networking.data.internet_accessible is False:
-        image = (
-            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
-            f"orbit-{context.name}-cluster-autoscaler:{ImagesManifest.cluster_autoscaler.version}"
-        )
-    else:
-        image = f"{ImagesManifest.cluster_autoscaler.repository}:{ImagesManifest.cluster_autoscaler.version}"
-
     with open(input, "r") as file:
         content: str = file.read()
-    content = content.replace("$", "").format(
-        account_id=context.account_id,
-        env_name=context.name,
-        cluster_name=f"orbit-{context.name}",
-        image=image,
-        sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
+    content = utils.resolve_parameters(
+        content,
+        dict(
+            account_id=context.account_id,
+            env_name=context.name,
+            cluster_name=f"orbit-{context.name}",
+            sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
+            image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
+            use_static_instance_list=str(not context.networking.data.internet_accessible).lower(),
+        ),
     )
     with open(output, "w") as file:
         file.write(content)
@@ -125,30 +101,7 @@ def _ssm_agent_installer(output_path: str, context: "Context") -> None:
     filename = "09-ssm-agent-daemonset-installer.yaml"
     input = os.path.join(MODELS_PATH, "apps", filename)
     output = os.path.join(output_path, filename)
-
-    if context.networking.data.internet_accessible is False:
-        ssm_agent_installer_image = (
-            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
-            f"orbit-{context.name}-ssm-agent-installer:{ImagesManifest.ssm_agent_installer.version}"
-        )
-        pause_image = (
-            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/"
-            f"orbit-{context.name}-pause:{ImagesManifest.pause.version}"
-        )
-    else:
-        ssm_agent_installer_image = (
-            f"{ImagesManifest.ssm_agent_installer.repository}:{ImagesManifest.ssm_agent_installer.version}"
-        )
-        pause_image = f"{ImagesManifest.pause.repository}:{ImagesManifest.pause.version}"
-
-    with open(input, "r") as file:
-        content: str = file.read()
-    content = utils.resolve_parameters(
-        content,
-        dict(ssm_agent_installer_image=ssm_agent_installer_image, pause_image=pause_image),
-    )
-    with open(output, "w") as file:
-        file.write(content)
+    shutil.copyfile(src=input, dst=output)
 
 
 def _team(context: "Context", team_context: "TeamContext", output_path: str) -> None:
@@ -181,7 +134,7 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
 
     with open(input, "r") as file:
         content = file.read()
-    content = content.replace("$", "").format(team=team_context.name)
+    content = utils.resolve_parameters(content, dict(team=team_context.name))
     with open(output, "w") as file:
         file.write(content)
 
@@ -195,11 +148,11 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
         content,
         dict(
             team=team_context.name,
-            region=context.region,
-            account_id=context.account_id,
             env_name=context.name,
-            tag=context.images.jupyter_hub.version,
+            repository=context.images.jupyter_user.repository,
+            tag=context.images.jupyter_user.version,
             sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
+            image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
         ),
     )
     with open(output, "w") as file:
@@ -213,7 +166,7 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
 
         with open(input, "r") as file:
             content = file.read()
-        content = content.replace("$", "").format(team=team_context.name)
+        content = utils.resolve_parameters(content, dict(team=team_context.name))
         with open(output, "w") as file:
             file.write(content)
 
@@ -314,22 +267,6 @@ def _efs_driver_base(output_path: str) -> None:
         shutil.copyfile(src=input, dst=output)
 
 
-def _efs_driver_overlays(output_path: str, context: "Context") -> None:
-    filename = "kustomization.yaml"
-    input = os.path.join(MODELS_PATH, "efs_driver", "overlays", filename)
-    os.makedirs(os.path.join(output_path, "overlays"), exist_ok=True)
-    output = os.path.join(output_path, "overlays", filename)
-    with open(input, "r") as file:
-        content: str = file.read()
-    content = content.replace("$", "").format(
-        region=context.region,
-        account_id=context.account_id,
-        env_name=context.name,
-    )
-    with open(output, "w") as file:
-        file.write(content)
-
-
 def _generate_efs_driver_manifest(context: "Context") -> str:
     output_path = os.path.join(".orbit.out", context.name, "kubectl", "efs_driver")
     os.makedirs(output_path, exist_ok=True)
@@ -339,14 +276,19 @@ def _generate_efs_driver_manifest(context: "Context") -> str:
     if context.region is None:
         raise RuntimeError("context.region is None!")
     _efs_driver_base(output_path=output_path)
-    _efs_driver_overlays(output_path=output_path, context=context)
-    return os.path.join(output_path, "overlays")
+    overlays_path = os.path.join(output_path, "overlays")
+    os.makedirs(overlays_path, exist_ok=True)
+    shutil.copyfile(
+        src=os.path.join(MODELS_PATH, "efs_driver", "overlays", "kustomization.yaml"),
+        dst=os.path.join(overlays_path, "kustomization.yaml"),
+    )
+    return overlays_path
 
 
 #######
 def _fsx_driver_base(output_path: str, context: "Context") -> None:
     os.makedirs(os.path.join(output_path, "base"), exist_ok=True)
-    filenames = ("csidriver.yaml", "controller.yaml", "kustomization.yaml", "rbac.yaml", "node.yaml")
+    filenames = ["controller.yaml", "csidriver.yaml", "kustomization.yaml", "node.yaml", "rbac.yaml"]
     for filename in filenames:
         input = os.path.join(MODELS_PATH, "fsx_driver", "base", filename)
         output = os.path.join(output_path, "base", filename)
@@ -356,34 +298,11 @@ def _fsx_driver_base(output_path: str, context: "Context") -> None:
         content = utils.resolve_parameters(
             content,
             dict(
-                region=context.region,
-                account_id=context.account_id,
-                env_name=context.name,
                 orbit_cluster_role=context.eks_cluster_role_arn,
             ),
         )
         with open(output, "w") as file:
             file.write(content)
-
-
-def _fsx_driver_overlays(output_path: str, context: "Context") -> None:
-    filename = "kustomization.yaml"
-    input = os.path.join(MODELS_PATH, "fsx_driver", "overlays", "stable", filename)
-    os.makedirs(os.path.join(output_path, "overlays"), exist_ok=True)
-    output = os.path.join(output_path, "overlays", filename)
-    with open(input, "r") as file:
-        content: str = file.read()
-    content = utils.resolve_parameters(
-        content,
-        dict(
-            region=context.region,
-            account_id=context.account_id,
-            env_name=context.name,
-            orbit_cluster_role=context.eks_cluster_role_arn,
-        ),
-    )
-    with open(output, "w") as file:
-        file.write(content)
 
 
 def _generate_fsx_driver_manifest(context: "Context") -> str:
@@ -395,8 +314,13 @@ def _generate_fsx_driver_manifest(context: "Context") -> str:
     if context.region is None:
         raise RuntimeError("context.region is None!")
     _fsx_driver_base(output_path=output_path, context=context)
-    _fsx_driver_overlays(output_path=output_path, context=context)
-    return os.path.join(output_path, "overlays")
+    overlays_path = os.path.join(output_path, "overlays")
+    os.makedirs(overlays_path, exist_ok=True)
+    shutil.copyfile(
+        src=os.path.join(MODELS_PATH, "fsx_driver", "overlays", "stable", "kustomization.yaml"),
+        dst=os.path.join(overlays_path, "kustomization.yaml"),
+    )
+    return overlays_path
 
 
 #######
@@ -410,11 +334,10 @@ def deploy_env(context: "Context") -> None:
     if cfn.does_stack_exist(stack_name=eks_stack_name):
         k8s_context = get_k8s_context(context=context)
         _logger.debug("k8s_context: %s", k8s_context)
-        if context.networking.data.internet_accessible is False:
-            output_path = _generate_efs_driver_manifest(context=context)
-            sh.run(f"kubectl apply -k {output_path} --context {k8s_context} --wait")
-        else:
-            sh.run(f"kubectl apply -k {EFS_DRIVE} --context {k8s_context} --wait")
+
+        # EFS Driver
+        output_path = _generate_efs_driver_manifest(context=context)
+        sh.run(f"kubectl apply -k {output_path} --context {k8s_context} --wait")
 
         # FSX Driver
         output_path = _generate_fsx_driver_manifest(context=context)

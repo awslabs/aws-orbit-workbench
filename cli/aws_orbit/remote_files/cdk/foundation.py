@@ -66,7 +66,9 @@ class FoundationStack(Stack):
         else:
             self.nodes_subnets = self.private_subnets
 
-        self._vpc_security_group = ec2.SecurityGroup(self, "vpc-sg", vpc=self.vpc, allow_all_outbound=False)
+        self._vpc_security_group = ec2.SecurityGroup(
+            self, "vpc-sg", vpc=cast(ec2.IVpc, self.vpc), allow_all_outbound=False
+        )
         # Adding ingress rule to VPC CIDR
         self._vpc_security_group.add_ingress_rule(
             peer=ec2.Peer.ipv4(self.vpc.vpc_cidr_block), connection=ec2.Port.all_tcp()
@@ -96,8 +98,8 @@ class FoundationStack(Stack):
             scope=self,
             name="orbit-fs",
             efs_life_cycle="AFTER_7_DAYS",
-            vpc=self.vpc,
-            efs_security_group=self._vpc_security_group,
+            vpc=cast(ec2.IVpc, self.vpc),
+            efs_security_group=cast(ec2.ISecurityGroup, self._vpc_security_group),
             subnets=self.nodes_subnets.subnets,
             team_kms_key=self.env_kms_key,
         )
@@ -182,7 +184,10 @@ class FoundationStack(Stack):
             policy=iam.PolicyDocument(
                 statements=[
                     iam.PolicyStatement(
-                        effect=iam.Effect.ALLOW, actions=["kms:*"], resources=["*"], principals=[admin_principals]
+                        effect=iam.Effect.ALLOW,
+                        actions=["kms:*"],
+                        resources=["*"],
+                        principals=[cast(iam.IPrincipal, admin_principals)],
                     )
                 ]
             ),
@@ -307,7 +312,7 @@ class FoundationStack(Stack):
                 service=interface_service,
                 subnets=ec2.SubnetSelection(subnets=self.nodes_subnets.subnets),
                 private_dns_enabled=True,
-                security_groups=[self._vpc_security_group],
+                security_groups=[cast(ec2.ISecurityGroup, self._vpc_security_group)],
             )
         # Adding CodeArtifact VPC endpoints
         self.vpc.add_interface_endpoint(
@@ -317,14 +322,14 @@ class FoundationStack(Stack):
             ),
             subnets=ec2.SubnetSelection(subnets=self.nodes_subnets.subnets),
             private_dns_enabled=False,
-            security_groups=[self._vpc_security_group],
+            security_groups=[cast(ec2.ISecurityGroup, self._vpc_security_group)],
         )
         self.vpc.add_interface_endpoint(
             id="code_artifact_api_endpoint",
             service=cast(ec2.IInterfaceVpcEndpointService, ec2.InterfaceVpcEndpointAwsService("codeartifact.api")),
             subnets=ec2.SubnetSelection(subnets=self.nodes_subnets.subnets),
             private_dns_enabled=False,
-            security_groups=[self._vpc_security_group],
+            security_groups=[cast(ec2.ISecurityGroup, self._vpc_security_group)],
         )
 
         # Adding Lambda and Redshift endpoints with CDK low level APIs

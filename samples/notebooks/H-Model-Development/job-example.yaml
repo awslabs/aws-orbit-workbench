@@ -27,7 +27,7 @@ spec:
           volumeMounts:
           - mountPath: /efs
             name: efs-volume
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           command: [ "/bin/bash", "-c", "--" ]
           args:
             - "python /efs/shared/samples/notebooks/H-Model-Development/job_example.py"

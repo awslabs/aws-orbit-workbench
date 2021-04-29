@@ -16,6 +16,7 @@ import logging
 import os
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+import aws_orbit
 from aws_orbit.plugins import hooks
 from aws_orbit.remote_files import helm
 
@@ -46,6 +47,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
         workers=workers,
         release_tag=release_tag,
         toolkit_s3_bucket=context.toolkit.s3_bucket,
+        image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
     )
 
     repo_location = helm.init_team_repo(context=context, team_context=team_context)

@@ -324,4 +324,4 @@ def load_changeset_from_ssm(env_name: str) -> Optional[Changeset]:
     content = ssm.get_parameter_if_exists(name=f"/orbit/{env_name}/changeset")
     if content is None:
         return None
-    return cast(Changeset, Changeset.Schema().load(data=content, many=False, partial=False, unknown="RAISE"))
+    return cast(Changeset, Changeset.Schema().load(data=content, many=False, partial=False, unknown="EXCLUDE"))

@@ -16,13 +16,10 @@ import logging
 import os
 from typing import List, Optional, Tuple, cast
 
-from boto3 import client
-
 from aws_orbit import docker, sh
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.models.manifest import ImageManifest
-from aws_orbit.remote_files.env import DEFAULT_IMAGES, DEFAULT_ISOLATED_IMAGES
-from aws_orbit.utils import boto3_client
+from aws_orbit.services import ecr
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -52,17 +49,9 @@ def build_image(args: Tuple[str, ...]) -> None:
     docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
 
-    ecr = boto3_client("ecr")
-    if image_name in DEFAULT_IMAGES or image_name in DEFAULT_ISOLATED_IMAGES:
-        # Building system image
-        ecr_repo = f"orbit-{context.name}-{image_name}"
-    else:
-        ecr_repo = f"orbit-{context.name}-users-{image_name}"
-
-    try:
-        ecr.describe_repositories(repositoryNames=[ecr_repo])
-    except ecr.exceptions.RepositoryNotFoundException:
-        _create_repository(context.name, ecr, ecr_repo)
+    ecr_repo = f"orbit-{context.name}/{image_name}"
+    if not ecr.describe_repositories(repository_names=[ecr_repo]):
+        ecr.create_repository(repository_name=ecr_repo, env_name=context.name)
 
     image_def: Optional["ImageManifest"] = getattr(context.images, image_name.replace("-", "_"), None)
     _logger.debug("image def: %s", image_def)
@@ -76,7 +65,7 @@ def build_image(args: Tuple[str, ...]) -> None:
             source_repository=source_repository,
             source_version=source_version,
         )
-    elif image_def is None or image_def.source == "code":
+    elif image_def is None or image_def.get_source(account_id=context.account_id, region=context.region) == "code":
         path = os.path.join(os.getcwd(), image_name)
         if not os.path.exists(path):
             bundle_dir = os.path.join(os.getcwd(), "bundle", image_name)
@@ -95,17 +84,3 @@ def build_image(args: Tuple[str, ...]) -> None:
     else:
         docker.replicate_image(context=context, image_name=image_name, deployed_name=ecr_repo)
     _logger.debug("Docker Image Deployed to ECR")
-
-
-def _create_repository(env_name: str, ecr: client, ecr_repo: str) -> None:
-    response = ecr.create_repository(
-        repositoryName=ecr_repo,
-        tags=[
-            {"Key": "Env", "Value": env_name},
-        ],
-    )
-    if "repository" in response and "repositoryName" in response["repository"]:
-        _logger.debug("ECR repository not exist, creating for %s", ecr_repo)
-    else:
-        _logger.error("ECR repository creation failed, response %s", response)
-        raise RuntimeError(response)

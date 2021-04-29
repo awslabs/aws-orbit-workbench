@@ -16,9 +16,10 @@ import logging
 import os
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+import yaml
 from aws_orbit.plugins import hooks
 from aws_orbit.remote_files import helm
-import yaml
+
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
 _logger: logging.Logger = logging.getLogger("aws_orbit")
@@ -33,10 +34,10 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATH)
     containers = parameters["replicas"] if "replicas" in parameters else 1
     del parameters["replicas"]
-    if 'cpu' not in parameters:
-        parameters['cpu'] = '1'
+    if "cpu" not in parameters:
+        parameters["cpu"] = "1"
 
-    resources = {'resources': parameters}
+    resources = {"resources": parameters}
 
     _logger.info(f"overprovisioning installed with {containers} containers of profile:  {resources}.")
 
