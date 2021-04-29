@@ -21,16 +21,17 @@
 title: AWS Orbit Workbench
 email: your-email@example.com
 description: >- # this means to ignore newlines until "baseurl:"
-  An open framework for building team-based secured data environment
+  The easiest way for teams to collaborate and create production workloads that get value from data.
 #baseurl: "" #this is for local testing purposes
 baseurl: "/aws-orbit-workbench" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
+url: "https://github.com/awslabs/aws-orbit-workbench" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: jekyllrb
 github_username:  jekyll
+show_downloads: 1
 
 # Build settings
 #theme: jekyll-theme-cayman
-theme: minima
+theme: jekyll-theme-cayman
 plugins:
   - jekyll-feed
 

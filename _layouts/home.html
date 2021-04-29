@@ -1,61 +1,324 @@
 ---
 layout: default
 ---
+<div>
+    <div class="squid-background">
+        <section class="main-content">
+            <div></div>
+            <div class="header-container">
+                <div class="image-container">
+                    <img width="120px" alt="Orbit Logo" src="img/orbitlogo.png"/>
+                </div>
+                <div class="title-container">
+                    <div class="header-title">{{ site.title }}</div>
+                    <div class="header-desc">{{ site.description }}</div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <section class="main-content">
+        {{ content }}
+    </section>
+    <section class="main-content">
+        <div class="main-areas">
+            <div class="box">
+                <div class="box-top"></div>
+                <div class="box-content">
+                    <span class="iconify icon" data-icon="la:map-signs" data-inline="false"></span>
+                    <h3>Tour</h3>
+                    <h5>Discover the main features of AWS Orbit Workbench</h5>
+                </div>
+            </div>
+            <div class="box">
+                <div class="box-top"></div>
+                <div class="box-content">
+                    <span class="iconify icon" data-icon="la:code-branch" data-inline="false"></span>
+                    <h3>Installation</h3>
+                    <h5>How to install AWS Orbit Workbench</h5>
+                </div>
+            </div>
+            <div class="box">
+                <div class="box-top"></div>
+                <div class="box-content">
+                    <span class="iconify icon" data-icon="la:chalkboard-teacher" data-inline="false"></span>
+                    <h3>Tutorials</h3>
+                    <h5>Learn how to use AWS Orbit Workbench with our how to guides</h5>
+                </div>
+            </div>
+            <div class="box">
+                <div class="box-top"></div>
+                <div class="box-content">
+                    <span class="iconify icon" data-icon="la:book" data-inline="false"></span>
+                    <h3>Documentation</h3>
+                    <h5>View the AWS Orbit Workbench documentation</h5>
+                </div>
+            </div>
+        </div>
+    </section>
 
-<div class="home">
-  {%- if page.title -%}
-    <h1 class="page-heading">{{ page.title }}</h1>
-  {%- endif -%}
+    <section class="main-content">
+        <div class="btn-div">
+            {% if site.github.is_project_page %}
+            <a href="{{ site.github.repository_url }}" class="btn">View on GitHub</a>
+            {% endif %}
+            {% if site.show_downloads %}
+            <a href="{{ site.github.zip_url }}" class="btn">Download .zip</a>
+            <a href="{{ site.github.tar_url }}" class="btn">Download .tar.gz</a>
+            {% endif %}
+        </div>
+    </section>
+    <div class="grey-background">
+        <section class="main-content">
+            <h2>Benefits</h2>
+            <div class="main-areas">
+                <div class="benefit-box">
+                    <h4>Work efficiently</h4>
+                    <h5>Leverage AWS analytical and machine learning services from a single environment to efficiently work on data-driven projects.</h5>
+                </div>
+                <div class="benefit-box">
+                    <h4>Securely collaborate</h4>
+                    <h5>Work with your team in a secure environment that manages access to the data and resources you need to get the job done.</h5>
+                </div>
+                <div class="benefit-box">
+                    <h4>Quickly move to production</h4>
+                    <h5>Scale instantly by running your workloads on a Kubernetes cluster.</h5>
+                </div>
+                <div class="benefit-box">
+                    <h4>Easily extend</h4>
+                    <h5>Add extra integrations to any service through the pluggable architecture</h5>
+                </div>
+            </div>
+        </section>
+    </div>
 
-  {{ content }}
+    <section class="main-content">
+        <h2>Integrations</h2>
 
+        <div class="integration-header">
+            <div class="integration-image">
+                <img src="img/category/Application-Integration_48.png" alt="Application IDEs">
+            </div>
+            <div class="integration-title">
+                <h3>Development Environments</h3>
+            </div>
+        </div>
 
-  {% if site.paginate %}
-    {% assign posts = paginator.posts %}
-  {% else %}
-    {% assign posts = site.posts %}
-  {% endif %}
+        <div class="feature-header">
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/jupyter-logo.svg" alt="Jupyter">
+                </div>
+                <div class="feature-title">
+                    <h4>Jupyter</h4>
+                </div>
+            </div>
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Visual_Studio_Code_1.18_icon.svg/1200px-Visual_Studio_Code_1.18_icon.svg.png"
+                         alt="Visual Studio Code">
+                </div>
+                <div class="feature-title">
+                    <h4>Visual Studio Code</h4>
+                </div>
+            </div>
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/icon-pycharm.svg" alt="PyCharm">
+                </div>
+                <div class="feature-title">
+                    <h4>PyCharm</h4>
+                </div>
+            </div>
+        </div>
+        <div class="integration-header">
+            <div class="integration-image">
+                <img src="img/category/Analytics_64.png" alt="Analytics Services">
+            </div>
+            <div class="integration-title">
+                <h3>Analytics Services</h3>
+            </div>
+        </div>
+        <div class="feature-header">
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/Amazon-Athena_48.png" alt="Amazon Athena">
+                </div>
+                <div class="feature-title">
+                    <h4>Amazon Athena</h4>
+                </div>
+            </div>
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/Amazon-Redshift_48.png" alt="Amazon Redshift">
+                </div>
+                <div class="feature-title">
+                    <h4>Amazon Redshift</h4>
+                </div>
+            </div>
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/AWS-Glue_48.png" alt="AWS Glue">
+                </div>
+                <div class="feature-title">
+                    <h4>AWS Glue</h4>
+                </div>
+            </div>
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/Amazon-EMR_48.png" alt="Amazon EMR">
+                </div>
+                <div class="feature-title">
+                    <h4>Amazon EMR</h4>
+                </div>
+            </div>
+        </div>
+        <div class="integration-header">
+            <div class="integration-image">
+                <img src="img/category/Containers_64.png" alt="Container Services">
+            </div>
+            <div class="integration-title">
+                <h3>Container Services</h3>
+            </div>
+        </div>
 
+        <div class="feature-header">
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/Amazon-Elastic-Kubernetes-Service_48.png" alt="Amazon EKS">
+                </div>
+                <div class="feature-title">
+                    <h4>Amazon EKS</h4>
+                </div>
+            </div>
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/AWS-Fargate_48.png" alt="AWS Fargate">
+                </div>
+                <div class="feature-title">
+                    <h4>AWS Fargate</h4>
+                </div>
+            </div>
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/Amazon-Elastic-Container-Registry_48.png" alt="Amazon ECR">
+                </div>
+                <div class="feature-title">
+                    <h4>Amazon ECR</h4>
+                </div>
+            </div>
+        </div>
+        <div class="integration-header">
+            <div class="integration-image">
+                <img src="img/category/Compute_64.png" alt="Compute Services">
+            </div>
+            <div class="integration-title">
+                <h3>Compute Services</h3>
+            </div>
+        </div>
 
-  {%- if posts.size > 0 -%}
-    {%- if page.list_title -%}
-      <h2 class="post-list-heading">{{ page.list_title }}</h2>
-    {%- endif -%}
-    <ul class="post-list">
-      {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
-      {%- for post in posts -%}
-      <li>
-        <span class="post-meta">{{ post.date | date: date_format }}</span>
-        <h3>
-          <a class="post-link" href="{{ post.url | relative_url }}">
-            {{ post.title | escape }}
-          </a>
-        </h3>
-        {%- if site.show_excerpts -%}
-          {{ post.excerpt }}
-        {%- endif -%}
-      </li>
-      {%- endfor -%}
-    </ul>
+        <div class="feature-header">
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/Amazon-EC2_48.png" alt="Amazon EC2">
+                </div>
+                <div class="feature-title">
+                    <h4>Amazon EC2</h4>
+                </div>
+            </div>
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/AWS-Lambda_48.png" alt="AWS Lambda">
+                </div>
+                <div class="feature-title">
+                    <h4>AWS Lambda</h4>
+                </div>
+            </div>
+        </div>
+        <div class="integration-header">
+            <div class="integration-image">
+                <img src="img/category/Storage_64.png" alt="Storage Services">
+            </div>
+            <div class="integration-title">
+                <h3>Storage Services</h3>
+            </div>
+        </div>
 
-    {% if site.paginate %}
-      <div class="pager">
-        <ul class="pagination">
-        {%- if paginator.previous_page %}
-          <li><a href="{{ paginator.previous_page_path | relative_url }}" class="previous-page">{{ paginator.previous_page }}</a></li>
-        {%- else %}
-          <li><div class="pager-edge">•</div></li>
-        {%- endif %}
-          <li><div class="current-page">{{ paginator.page }}</div></li>
-        {%- if paginator.next_page %}
-          <li><a href="{{ paginator.next_page_path | relative_url }}" class="next-page">{{ paginator.next_page }}</a></li>
-        {%- else %}
-          <li><div class="pager-edge">•</div></li>
-        {%- endif %}
-        </ul>
-      </div>
-    {%- endif %}
+        <div class="feature-header">
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/Amazon-Simple-Storage-Service_48.png" alt="Amazon S3">
+                </div>
+                <div class="feature-title">
+                    <h4>Amazon S3</h4>
+                </div>
+            </div>
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/Amazon-Elastic-File-System_48.png" alt="Amazon EFS">
+                </div>
+                <div class="feature-title">
+                    <h4>Amazon EFS</h4>
+                </div>
+            </div>
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/Amazon-FSx-for-Lustre_48.png" alt="Amazon FSx for Lustre">
+                </div>
+                <div class="feature-title">
+                    <h4>Amazon FSx for Lustre</h4>
+                </div>
+            </div>
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/Amazon-Elastic-Block-Store_48.png" alt="Amazon EBS">
+                </div>
+                <div class="feature-title">
+                    <h4>Amazon EBS</h4>
+                </div>
+            </div>
+        </div>
+        <div class="integration-header">
+            <div class="integration-image">
+                <img src="img/category/Security-Identity-Compliance_64.png"
+                     alt="Security, Identity and Compliance Services">
+            </div>
+            <div class="integration-title">
+                <h3>Security, Identity and Compliance Services</h3>
+            </div>
+        </div>
 
-  {%- endif -%}
+        <div class="feature-header">
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/Amazon-Cognito_48.png" alt="Amazon Cognito">
+                </div>
+                <div class="feature-title">
+                    <h4>Amazon Cognito</h4>
+                </div>
+            </div>
+            <div class="feature-box">
+                <div class="feature-image">
+                    <img src="img/service/Logo_Okta_Blue_RGB.png" alt="Okta">
+                </div>
+                <div class="feature-title">
+                    <h4>Okta</h4>
+                </div>
+            </div>
+        </div>
+
+    </section>
+    <section class="main-content">
+
+        <footer class="site-footer">
+            {% if site.github.is_project_page %}
+            <span class="site-footer-owner"><a
+                    href="{{ site.github.repository_url }}">{{ site.github.repository_name }}</a> is maintained by <a
+                    href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a>.</span>
+            {% endif %}
+            <span class="site-footer-credits">This page was generated by <a
+                    href="https://pages.github.com">GitHub Pages</a>.</span>
+        </footer>
+    </section>
+
 
 </div>
