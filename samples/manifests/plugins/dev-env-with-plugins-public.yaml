@@ -11,19 +11,15 @@ InstallSsmAgent: true
 Images:
     JupyterHub:
         Repository: !ENV ${JUPYTER_HUB_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-hub}
-        Path: !ENV ${IMAGE_PATH::../../../images/jupyter-hub}
         Version: !ENV ${VERSION::latest}
     JupyterUser:
         Repository: !ENV ${JUPYTER_USER_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user}
-        Path: !ENV ${IMAGE_PATH::../../../images/jupyter-user}
         Version: !ENV ${VERSION::latest}
     LandingPage:
         Repository: !ENV ${LANDING_PAGE_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/landing-page}
-        Path: !ENV ${IMAGE_PATH::../../../images/landing-page}
         Version: !ENV ${VERSION::latest}
     ImageReplicator:
         Repository: !ENV ${IMAGE_REPLICATOR_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/image-replicator}
-        Path: !ENV ${IMAGE_PATH::../../../images/image-replicator}
         Version: !ENV ${VERSION::latest}
 Networking:
     VpcId: !SSM ${/orbit-foundation/dev-env-public/resources::VpcId}
