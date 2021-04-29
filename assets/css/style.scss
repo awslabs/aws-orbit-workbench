@@ -1,0 +1,278 @@
+---
+---
+
+// Breakpoints
+$large-breakpoint: 72rem !default;
+$medium-breakpoint: 42rem !default;
+
+// Headers
+$header-heading-color: #232F3E !default;
+$header-text-color: #FFFFFF !default;
+$header-bg-color: #f1f4f6 !default;
+$header-bg-color-secondary: #161E2D !default;
+
+// Text
+$section-headings-color: #232F3E !default;
+$body-text-color: #757575 !default;
+$body-link-color: #1e6bb8 !default;
+$blockquote-text-color: #819198 !default;
+
+// Code
+$code-bg-color: #f3f6fa !default;
+$code-text-color: #567482 !default;
+
+// Borders
+$border-color: #ced4d5 !default;
+$table-border-color: #e9ebec !default;
+$hr-border-color: #eff0f1 !default;
+
+// Buttons
+$btn-border-color: #232F3E !default;
+$btn-background-color: #232F3E11 !default;
+$btn-color: #232F3EEE !default;
+
+$btn-border-color-hover: #232F3E !default;
+$btn-background-color-hover: #232F3E33 !default;
+$btn-color-hover: #232F3E !default;
+
+
+@import "{{ site.theme }}";
+
+@font-face {
+  font-family: 'Amazon Ember';
+  src: url(/aws-orbit-workbench/assets/font/amazon_ember/AmazonEmber_Lt.ttf) format("truetype");
+  font-weight: 200;
+}
+
+@font-face {
+  font-family: 'Amazon Ember';
+  src: url(/aws-orbit-workbench/assets/font/amazon_ember/AmazonEmber_Rg.ttf) format("truetype");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Amazon Ember';
+  src: url(/aws-orbit-workbench/assets/font/amazon_ember/AmazonEmber_Bd.ttf) format("truetype");
+  font-weight: 500;
+}
+
+body {
+  font-family: "Amazon Ember";
+}
+
+h2 {
+  font-weight: 200;
+}
+
+.squid-background {
+  background-color: $header-heading-color;
+}
+
+@media screen and (min-width: $large-breakpoint) {
+  .page-banner {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: $large-breakpoint;
+  }
+  .main-content {
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 0;
+    padding-right: 0;
+    max-width: $large-breakpoint;
+  }
+  .divider {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: $large-breakpoint;
+    border-top: 1px solid $border-color
+  }
+}
+
+@media screen and (min-width: $medium-breakpoint) and (max-width: $large-breakpoint) {
+  .page-banner {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: $medium-breakpoint;
+  }
+  .main-content {
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 0;
+    padding-right: 0;
+    max-width: $medium-breakpoint;
+  }
+  .divider {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: $medium-breakpoint;
+    border-top: 1px solid $border-color
+  }
+}
+
+.image-container :first-child {
+  margin-top: 4px;
+}
+
+.header-container {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  margin-top: 4rem;
+  margin-bottom: 4rem;
+}
+
+
+.header-title  {
+  color: $header-text-color;
+  font-weight: 500;
+  font-size: 44px;
+}
+
+.header-desc  {
+  color: $header-text-color;
+  font-weight: 200;
+  font-size: 20px;
+}
+
+.title-container {
+  display: flex;
+  flex-direction: column;
+  margin-left: 3rem;
+}
+
+
+.main-areas {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+}
+
+.box {
+  border: solid 1px $border-color;
+  border-top-width: 0;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+}
+
+.box h3 {
+  margin-top: 0;
+}
+
+.box h5 {
+  margin-top: 1rem;
+}
+
+.box-content {
+  text-align: center;
+  padding: 1rem;
+}
+
+.box-top {
+  border: solid 1px $header-heading-color;
+  width: 100%;
+  height: 4px;
+  background-color: $header-heading-color;
+}
+
+.icon {
+  height: 90px;
+  width: 90px;
+}
+
+.btn-div {
+  text-align: center;
+}
+
+.btn {
+  border-color: $btn-border-color;
+  color: $btn-color;
+  background-color: $btn-background-color;
+}
+
+.btn:hover {
+  border-color: $btn-border-color-hover;
+  color: $btn-color-hover;
+  background-color: $btn-background-color-hover;
+}
+
+.integration-header {
+  display: flex;
+  align-items: center;
+  justify-items: flex-start;
+}
+
+.integration-image {
+
+}
+
+.integration-title {
+  margin-left: 10px;
+  padding: 5px;
+  margin-top: 1rem;
+}
+
+.integration-title > h3 {
+  font-weight: bold;
+}
+
+.feature-box {
+  display: flex;
+  width: 250px;
+  border: solid 1px $border-color;
+  padding: 1rem;
+  align-items: center;
+  margin: 5px
+}
+
+.feature-header div:first-of-type {
+  margin-top: 5px
+}
+
+.feature-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.feature-image {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.feature-title {
+  margin-left: 10px;
+}
+
+.feature-title h4 {
+  margin: 0;
+  font-weight: 100;
+}
+
+.grey-background {
+  background-color: $header-bg-color;
+}
+
+.benefit-box {
+  width: 260px;
+}
+
+.benefit-box > h4 {
+  margin-bottom: 0;
+}
+
+.benefit-box > h5 {
+  margin-top: 8px;
+  color: $body-text-color
+}
