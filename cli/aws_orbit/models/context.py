@@ -446,6 +446,8 @@ class ContextSerDe(Generic[T, V]):
             )
             context.images = manifest.images
             context.policies = manifest.policies
+            context.codeartifact_domain = manifest.codeartifact_domain
+            context.codeartifact_repository = manifest.codeartifact_repository
         else:
             context = FoundationContext(
                 name=manifest.name,
