@@ -1,7 +1,6 @@
 import json
 import logging
 import time
-
 from datetime import date, datetime
 from typing import Any, Dict, cast
 
@@ -11,12 +10,12 @@ from kubernetes.client import CoreV1Api, V1Service
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def json_serial(obj):
+def json_serial(obj: Any) -> str:
     """JSON serializer for objects not serializable by default json code"""
 
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
-    raise TypeError ("Type %s not serializable" % type(obj))
+    raise TypeError("Type %s not serializable" % type(obj))
 
 
 def get_service_hostname(name: str, k8s_context: str, namespace: str = "default") -> str:
