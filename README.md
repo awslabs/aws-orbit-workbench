@@ -40,3 +40,5 @@ title: about
 ---
 ```
 layout and title are must-have.
+
+### check [here](./examples.markdown) for Markdown examples, this file is rendered at [here](https://awslabs.github.io/aws-orbit-workbench/examples)
