@@ -74,7 +74,7 @@ class ImageManifest:
         public_ecr_match = re.compile(r"^public.ecr.aws/.+/")
         repository = cast(str, self.repository)
 
-        if self.path is not None:
+        if self.path:
             return "code"
         elif repository.startswith(f"{account_id}.dkr.ecr.{region}.amazonaws.com"):
             return "ecr-internal"
