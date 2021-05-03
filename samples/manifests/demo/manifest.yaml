@@ -29,6 +29,12 @@ ManagedNodegroups:
     NodesNumMin: 1
     Labels:
         instance-type: m5.2xlarge
+-   Name: primary-gpu
+    InstanceType: g4dn.xlarge
+    LocalStorageSize: 128
+    NodesNumDesired: 1
+    NodesNumMax: 4
+    NodesNumMin: 0
 Teams:
 -   Name: lake-creator
     Policies:
