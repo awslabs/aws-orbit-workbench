@@ -106,6 +106,137 @@ class ContainersRouteHandler(APIHandler):
 
         return json.dumps(data)
 
+    @staticmethod
+    def _dump_job(clist, type) -> str:
+        data: List[Dict[str, str]] = []
+        for c in clist:
+            container: Dict[str, str] = dict()
+            container["name"] = c["metadata"]["name"]
+            if type == "cron":
+                job_template = c["spec"]["jobTemplate"]["spec"]["template"]
+                container["time"] = c["spec"]["schedule"]
+                container["job_state"] = "active"
+
+
+
+            envs = job_template["spec"]["containers"][0]["env"]
+
+            tasks = json.loads([e["value"] for e in envs if e["name"] == "tasks"][0])
+            container["hint"] = json.dumps(tasks, indent=4)
+            container["tasks"] = tasks["tasks"]
+
+
+            if "labels" in c["metadata"]:
+                container["node_type"] = (
+                    c["metadata"]["labels"]["orbit/node-type"]
+                    if "orbit/node-type" in c["metadata"]["labels"]
+                    else "unknown"
+                )
+
+
+            container["notebook"] = (
+                tasks["tasks"][0]["notebookName"]
+                if "notebookName" in tasks["tasks"][0]
+                else f'{tasks["tasks"][0]["moduleName"]}.{tasks["tasks"][0]["functionName"]}'
+            )
+            if container["job_state"] == "running":
+                container["rank"] = 1
+            else:
+                container["rank"] = 2
+            container["info"] = c
+            data.append(container)
+
+        data = sorted(
+            data,
+            key=lambda i: (
+                i["rank"],
+                i["creationTimestamp"] if "creationTimestamp" in i else i["name"],
+            ),
+        )
+
+        return json.dumps(data)
+
+    @staticmethod
+    def _dump_pod(clist, type) -> str:
+        data: List[Dict[str, str]] = []
+        for c in clist:
+            container: Dict[str, str] = dict()
+            container["name"] = c["metadata"]["name"]
+            # if type == "cron":
+            #     job_template = c["spec"]["jobTemplate"]["spec"]["template"]
+            #     container["time"] = c["spec"]["schedule"]
+            #     container["job_state"] = "active"
+            # else:
+            container["time"] = c["metadata"]["creationTimestamp"]
+            response_datetime_format = "%Y-%m-%dT%H:%M:%SZ"
+
+            if "status" in c:
+                # Succeeded / Completed
+                constainer_phase_status = (c["status"]["phase"]).lower()
+                if constainer_phase_status in ["succeeded","failed"]:
+                    constainer_status = c["status"]["containerStatuses"][0]
+                    completion_dt = datetime.strptime(constainer_status["state"]["terminated"]["finishedAt"], response_datetime_format)
+                    start_dt = datetime.strptime(constainer_status["state"]["terminated"]["startedAt"], response_datetime_format)
+                    duration = completion_dt - start_dt
+                    container["duration"] = str(duration)
+                    container["completionTime"] = constainer_status["state"]["terminated"]["finishedAt"] if constainer_phase_status == "succeeded" else ""
+                    container["job_state"] = constainer_phase_status
+                elif constainer_phase_status == "running":
+                    started_at = datetime.strptime(c["status"]["startTime"], response_datetime_format)
+                    duration = datetime.utcnow() - started_at
+                    container["duration"] = str(duration).split(".")[0]
+                    container["completionTime"] = ""
+                    container["job_state"] = constainer_phase_status
+                else:
+                    container["completionTime"] = ""
+                    container["duration"] = ""
+                    container["job_state"] = "unknown"
+            else:
+                container["completionTime"] = ""
+                container["duration"] = ""
+                container["job_state"] = "unknown"
+
+            # if type == "cron":
+            #     envs = job_template["spec"]["containers"][0]["env"]
+            # else:
+            envs = c["spec"]["containers"][0]["env"]
+            tasks = json.loads([e["value"] for e in envs if e["name"] == "tasks"][0])
+            container["hint"] = json.dumps(tasks, indent=4)
+            container["tasks"] = tasks["tasks"]
+
+
+            if "labels" in c["metadata"]:
+                container["node_type"] = (
+                    c["metadata"]["labels"]["orbit/node-type"]
+                    if "orbit/node-type" in c["metadata"]["labels"]
+                    else "unknown"
+                )
+                container["job_type"] = (
+                    c["metadata"]["labels"]["app"] if "app" in c["metadata"]["labels"] else "unknown"
+                )
+
+            container["notebook"] = (
+                tasks["tasks"][0]["notebookName"]
+                if "notebookName" in tasks["tasks"][0]
+                else f'{tasks["tasks"][0]["moduleName"]}.{tasks["tasks"][0]["functionName"]}'
+            )
+            if container["job_state"] == "running":
+                container["rank"] = 1
+            else:
+                container["rank"] = 2
+            container["info"] = c
+            data.append(container)
+
+        data = sorted(
+            data,
+            key=lambda i: (
+                i["rank"],
+                i["creationTimestamp"] if "creationTimestamp" in i else i["name"],
+            ),
+        )
+
+        return json.dumps(data)
+
     @web.authenticated
     def get(self):
         global MYJOBS
@@ -115,10 +246,10 @@ class ContainersRouteHandler(APIHandler):
         self.log.info(f"GET - {self.__class__} - {type} {format}")
         if "MOCK" not in os.environ or os.environ["MOCK"] == "0":
             if type == "user":
-                MYJOBS = controller.list_my_running_jobs()
+                MYJOBS = controller.list_my_running_pods()
                 data = MYJOBS
             elif type == "team":
-                TEAMJOBS = controller.list_team_running_jobs()
+                TEAMJOBS = controller.list_team_running_pods()
                 data = TEAMJOBS
             elif type == "cron":
                 CRONJOBS = controller.list_running_cronjobs()
@@ -161,20 +292,20 @@ class ContainersRouteHandler(APIHandler):
         global TEAMJOBS
         global CRONJOBS
         input_data = self.get_json_body()
-        job_name = input_data["name"]
+        name = input_data["name"]
         job_type: Optional[str] = self.get_argument("type", default="")
-        self.log.info(f"DELETE - {self.__class__} - %s type: %s", job_name, job_type)
+        self.log.info(f"DELETE - {self.__class__} - %s type: %s", name, job_type)
         if job_type == "user":
-            controller.delete_job(job_name)
+            controller.delete_job(name)
             data = MYJOBS
         elif job_type == "team":
-            controller.delete_job(job_name)
+            controller.delete_job(name)
             data = TEAMJOBS
         elif job_type == "cron":
-            controller.delete_cronjob(job_name)
+            controller.delete_cronjob(name)
             data = CRONJOBS
         else:
             raise Exception("Unknown job_type: %s", job_type)
 
-        self._delete(job_name, data)
+        self._delete(name, data)
         self.finish(self._dump(data, type))

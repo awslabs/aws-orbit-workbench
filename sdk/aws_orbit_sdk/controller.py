@@ -356,6 +356,47 @@ def list_running_jobs(team_only: bool = False):
     return res["items"]
 
 
+def list_team_running_pods():
+    return list_running_pods(True)
+
+
+def list_my_running_pods():
+    return list_running_pods(False)
+
+
+def list_running_pods(team_only: bool = False):
+    props = get_properties()
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    load_kube_config()
+    username = (os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))).split("@")[0]
+    api_instance = CoreV1Api()
+    # field_selector = "status.successful!=1"
+    if team_only:
+        operand = "!="
+    else:
+        operand = "="
+
+    label_selector = f"app=orbit-runner,username{operand}{username}"
+    _logger.info("using job selector %s", label_selector)
+    try:
+        api_response = api_instance.list_namespaced_pod(
+            namespace=team_name,
+            _preload_content=False,
+            label_selector=label_selector,
+            # field_selector=field_selector,
+            watch=False,
+        )
+        res = json.loads(api_response.data)
+    except ApiException as e:
+        _logger.info("Exception when calling BatchV1Api->list_namespaced_job: %s\n" % e)
+        raise e
+
+    if "items" not in res:
+        return []
+
+    return res["items"]
+
+
 def list_current_pods(label_selector: str = None):
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
@@ -505,6 +546,26 @@ def get_nodegroups(cluster_name: str):
     return nodegroups_with_lt
 
 
+def delete_pod(pod_name: str, grace_period_seconds: int = 30):
+    props = get_properties()
+    global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
+    env_name = props["AWS_ORBIT_ENV"]
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    load_kube_config()
+    api_instance = CoreV1Api()
+    try:
+        api_instance.delete_namespaced_pod(
+            name=pod_name,
+            namespace=team_name,
+            _preload_content=False,
+            grace_period_seconds=grace_period_seconds,
+            orphan_dependents=False,
+        )
+    except ApiException as e:
+        _logger.info("Exception when calling CoreV1Api->delete_namespaced_pod: %s\n" % e)
+        raise e
+
+
 def delete_job(job_name: str, grace_period_seconds: int = 30):
     props = get_properties()
     global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
@@ -521,7 +582,7 @@ def delete_job(job_name: str, grace_period_seconds: int = 30):
             orphan_dependents=False,
         )
     except ApiException as e:
-        _logger.info("Exception when calling BatchV1Api->list_namespaced_job: %s\n" % e)
+        _logger.info("Exception when calling BatchV1Api->delete_namespaced_job: %s\n" % e)
         raise e
 
 
@@ -540,6 +601,22 @@ def delete_cronjob(job_name: str, grace_period_seconds: int = 30):
         )
     except ApiException as e:
         _logger.info("Exception when calling BatchV1Api->delete_namespaced_cron_job: %s\n" % e)
+        raise e
+
+
+def delete_all_my_pods():
+    props = get_properties()
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    username = (os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))).split("@")[0]
+    load_kube_config()
+    api_instance = CoreV1Api()
+    label_selector = f"app=orbit-runner,username={username}"
+    try:
+        api_instance.delete_collection_namespaced_pod(
+            namespace=team_name, _preload_content=False, orphan_dependents=False, label_selector=label_selector
+        )
+    except ApiException as e:
+        _logger.info("Exception when calling CoreV1Api->delete_all_my_pods: %s\n" % e)
         raise e
 
 
