@@ -24,11 +24,17 @@ ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge
     LocalStorageSize: 128
-    NodesNumDesired: 3
-    NodesNumMax: 4
-    NodesNumMin: 1
+    NodesNumDesired: 6
+    NodesNumMax: 8
+    NodesNumMin: 4
     Labels:
         instance-type: m5.2xlarge
+-   Name: primary-gpu
+    InstanceType: g4dn.xlarge
+    LocalStorageSize: 128
+    NodesNumDesired: 1
+    NodesNumMax: 4
+    NodesNumMin: 0
 Teams:
 -   Name: lake-creator
     Policies:
