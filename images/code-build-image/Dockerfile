@@ -21,6 +21,12 @@ RUN curl --location "https://github.com/weaveworks/eksctl/releases/latest/downlo
 RUN curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && \
     chmod +x ./kubectl && mv ./kubectl /usr/local/bin/kubectl
 
+# Install KFCTL
+RUN wget -O kfctl_v1.2.0-0_linux.tar.gz https://github.com/kubeflow/kfctl/releases/download/v1.2.0/kfctl_v1.2.0-0-gbc038f9_linux.tar.gz && \
+    tar xzf kfctl_v1.2.0-0_linux.tar.gz && \
+    chmod +x kfctl && \
+    mv kfctl /usr/local/bin
+
 # Install Helm tools
 RUN curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash && \
     helm version --short && \

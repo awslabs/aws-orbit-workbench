@@ -318,7 +318,12 @@ def create_team_context_from_manifest(manifest: "Manifest", team_manifest: "Team
     region: str = utils.get_region()
     ssm_parameter_name: str = f"/orbit/{manifest.name}/teams/{team_manifest.name}/context"
     version = manifest.images.jupyter_user.version
-    base_image_address = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}/jupyter-user:{version}"
+    _logger.debug("Team Base Image: %s - %s", team_manifest.name, manifest.images.jupyter_user)
+    base_image_address = (
+        f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}/jupyter-user:{version}"
+        if manifest.images.jupyter_user.get_source(account_id=account_id, region=region) == "code"
+        else f"{manifest.images.jupyter_user.repository}:{version}"
+    )
     final_image_address = base_image_address
     return TeamContext(
         base_image_address=base_image_address,
