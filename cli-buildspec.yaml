@@ -6,7 +6,7 @@ phases:
       nodejs: 12
     commands:
       - env
-      - npm install -g aws-cdk@1.67.0
+      - npm install -g aws-cdk@1.100.0
       - cd cli
       - mkdir -p conf
       - cp -R ../samples/manifests/* conf

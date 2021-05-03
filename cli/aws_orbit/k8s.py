@@ -1,3 +1,4 @@
+import time
 from typing import Any, Dict, cast
 
 from kubernetes import config
@@ -15,4 +16,5 @@ def get_service_hostname(name: str, k8s_context: str, namespace: str = "default"
                 if status["load_balancer"]["ingress"]:
                     if "hostname" in status["load_balancer"]["ingress"][0]:
                         break
+        time.sleep(10)
     return str(status["load_balancer"]["ingress"][0]["hostname"])

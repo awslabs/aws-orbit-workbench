@@ -187,8 +187,8 @@ spec:
     spec:
       containers:
         - name: kubernetes-dashboard
-          image: ${dashboard_image}
-          imagePullPolicy: Always
+          image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/kubernetesui/dashboard
+          imagePullPolicy: ${image_pull_policy}
           resources:
             limits:
               cpu: "1"
@@ -280,7 +280,7 @@ spec:
     spec:
       containers:
         - name: dashboard-metrics-scraper
-          image: ${scraper_image}
+          image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/kubernetesui/metrics-scraper
           ports:
             - containerPort: 8000
               protocol: TCP

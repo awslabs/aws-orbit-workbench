@@ -34,7 +34,7 @@ def delete_image(args: Tuple[str, ...]) -> None:
     else:
         raise ValueError("Unexpected number of values in args.")
 
-    env.deploy(context=context, add_images=[], remove_images=[image_name], eks_system_masters_roles_changes=None)
+    env.deploy(context=context, eks_system_masters_roles_changes=None)
     _logger.debug("Env changes deployed")
     ecr.delete_repo(repo=f"orbit-{context.name}-{image_name}")
     _logger.debug("Docker Image Destroyed from ECR")

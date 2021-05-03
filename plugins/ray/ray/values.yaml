@@ -16,7 +16,7 @@ ray:
 
 images:
   ray: rayproject/ray:${release_tag}
-  pullPolicy: Always
+  pullPolicy: ${image_pull_policy}
 env:
   - name: AWS_DEFAULT_REGION
     value: ${region}

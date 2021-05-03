@@ -148,8 +148,8 @@ def deploy_teams(
     help="Dockerhub password (Required only for the first deploy).",
 )
 @click.option(
-    "--skip-images/--no-skip-images",
-    default=False,
+    "--skip-images/--build-images",
+    default=True,
     help="Skip Docker images updates (Usually for development purpose).",
     show_default=True,
 )

@@ -21,9 +21,9 @@ from typing import Any, List, Optional, Tuple, cast
 from aws_orbit import bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, TeamContext
-from aws_orbit.models.manifest import ImageManifest, Manifest, ManifestSerDe
+from aws_orbit.models.manifest import ImageManifest, ImagesManifest, Manifest, ManifestSerDe
 from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, teams, utils
-from aws_orbit.services import codebuild
+from aws_orbit.services import codebuild, ecr
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -45,8 +45,12 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
     _logger.debug("DockerHub and ECR Logged in")
     _logger.debug("Deploying the %s Docker image", image_name)
 
+    ecr_repo = f"orbit-{context.name}/{image_name}"
+    if not ecr.describe_repositories(repository_names=[ecr_repo]):
+        ecr.create_repository(repository_name=ecr_repo, env_name=context.name)
+
     image_def: ImageManifest = getattr(context.images, image_name.replace("-", "_"))
-    if image_def.source == "code":
+    if image_def.get_source(account_id=context.account_id, region=context.region) == "code":
         _logger.debug("Building and deploy docker image from source...")
         path = os.path.join(os.getcwd(), "bundle", dir)
         _logger.debug("path: %s", path)
@@ -56,15 +60,13 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
         docker.deploy_image_from_source(
             context=context,
             dir=path,
-            name=f"orbit-{context.name}-{image_name}",
+            name=ecr_repo,
             build_args=cast(Optional[List[str]], build_args),
             tag=tag,
         )
     else:
         _logger.debug("Replicating docker image to ECR...")
-        docker.replicate_image(
-            context=context, image_name=image_name, deployed_name=f"orbit-{context.name}-{image_name}"
-        )
+        docker.replicate_image(context=context, image_name=image_name, deployed_name=ecr_repo)
 
     _logger.debug("Docker Image Deployed to ECR")
 
@@ -85,6 +87,7 @@ def _deploy_image_remotely(context: "Context", name: str, bundle_path: str, buil
 def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[str], Optional[str], List[str]]]) -> None:
     _logger.debug("images:\n%s", images)
 
+    new_images_manifest = {name: getattr(context.images, name) for name in context.images.names}
     max_workers = 5
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures: List[Future[Any]] = []
@@ -99,7 +102,10 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
             path = os.path.join(os.getcwd(), "bundle", name)
             _logger.debug("path: %s", path)
 
-            if getattr(context.images, name.replace("-", "_")).source == "code":
+            image_attr_name = name.replace("-", "_")
+            image_def: ImageManifest = getattr(context.images, image_attr_name)
+            tag = image_def.version
+            if image_def.get_source(account_id=context.account_id, region=context.region) == "code":
                 dirs: List[Tuple[str, str]] = [(path, cast(str, dir))]
             else:
                 dirs = []
@@ -116,34 +122,35 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
                     f"{context.name} {name} {dir} {script_str} {' '.join(build_args)}"
                 ],
             )
+            new_images_manifest[image_attr_name] = ImageManifest(
+                repository=f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}/{name}",
+                version=tag,
+                path=None,
+            )
             futures.append(executor.submit(_deploy_image_remotely, context, name, bundle_path, buildspec))
 
         for f in futures:
             f.result()
 
+        context.images = ImagesManifest(**new_images_manifest)
+        ContextSerDe.dump_context_to_ssm(context=context)
 
-def deploy_images_remotely(context: "Context") -> None:
-    # Required images
+
+def deploy_images_remotely(context: "Context", skip_images: bool = True) -> None:
+    # Required images we always build/replicate
     images: List[Tuple[str, Optional[str], Optional[str], List[str]]] = [
-        ("jupyter-hub", "jupyter-hub", None, []),
-        ("jupyter-user", "jupyter-user", "build.sh", []),
-        ("landing-page", "landing-page", "build.sh", []),
         ("image-replicator", "image-replicator", None, []),
     ]
 
-    # Secondary images required if internet is not accessible
-    if context.networking.data.internet_accessible is False:
-        images += [
-            ("aws-efs-csi-driver", None, None, []),
-            ("livenessprobe", None, None, []),
-            ("csi-node-driver-registrar", None, None, []),
-            ("k8-dashboard", None, None, []),
-            ("k8-metrics-scraper", None, None, []),
-            ("k8-metrics-server", None, None, []),
-            ("cluster-autoscaler", None, None, []),
-            ("ssm-agent-installer", None, None, []),
-            ("pause", None, None, []),
-        ]
+    # Secondary images we can optionally skip
+    if not skip_images:
+        images += []
+        if context.images.landing_page.get_source(context.account_id, context.region) != "ecr-public":
+            images.append(("landing-page", "landing-page", "build.sh", []))
+        if context.images.jupyter_hub.get_source(context.account_id, context.region) != "ecr-public":
+            images.append(("jupyter-hub", "jupyter-hub", None, []))
+        if context.images.jupyter_user.get_source(context.account_id, context.region) != "ecr-public":
+            images.append(("jupyter-user", "jupyter-user", "build.sh", []))
 
     _logger.debug("Building/repclicating Container Images")
     _deploy_images_batch(context=context, images=images)
@@ -183,16 +190,11 @@ def deploy_env(args: Tuple[str, ...]) -> None:
     _logger.debug("CDK Toolkit Stack deployed")
     env.deploy(
         context=context,
-        add_images=[],
-        remove_images=[],
         eks_system_masters_roles_changes=changeset.eks_system_masters_roles_changeset if changeset else None,
     )
     _logger.debug("Env Stack deployed")
-    if skip_images_remote_flag == "skip-images":
-        _logger.debug("Docker images build skipped")
-    else:
-        deploy_images_remotely(context=context)
-        _logger.debug("Docker Images deployed")
+    deploy_images_remotely(context=context, skip_images=skip_images_remote_flag == "skip-images")
+    _logger.debug("Docker Images deployed")
     eksctl.deploy_env(
         context=context,
         changeset=changeset,
