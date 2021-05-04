@@ -1,0 +1,3 @@
+[submodule "images/certificate-manager/k8s-webhook-cert-manager"]
+	path = images/k8s-webhook-cert-manager/k8s-webhook-cert-manager
+	url = git@github.com:chamcca/k8s-webhook-cert-manager.git
