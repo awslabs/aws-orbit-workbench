@@ -49,7 +49,11 @@ def build_image(args: Tuple[str, ...]) -> None:
     docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
 
-    ecr_repo = f"orbit-{context.name}/{image_name}"
+    ecr_repo = (
+        f"orbit-{context.name}/{image_name}"
+        if image_name in [n.replace("_", "-") for n in context.images.names]
+        else f"orbit-{context.name}/users/{image_name}"
+    )
     if not ecr.describe_repositories(repository_names=[ecr_repo]):
         ecr.create_repository(repository_name=ecr_repo, env_name=context.name)
 
