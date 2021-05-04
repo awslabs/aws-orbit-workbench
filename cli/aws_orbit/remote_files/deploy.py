@@ -22,7 +22,7 @@ from aws_orbit import bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, TeamContext
 from aws_orbit.models.manifest import ImageManifest, ImagesManifest, Manifest, ManifestSerDe
-from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, teams, utils
+from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, kubeflow, teams, utils
 from aws_orbit.services import codebuild, ecr
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -192,6 +192,7 @@ def deploy_env(args: Tuple[str, ...]) -> None:
         context=context,
         eks_system_masters_roles_changes=changeset.eks_system_masters_roles_changeset if changeset else None,
     )
+
     _logger.debug("Env Stack deployed")
     deploy_images_remotely(context=context, skip_images=skip_images_remote_flag == "skip-images")
     _logger.debug("Docker Images deployed")
@@ -202,6 +203,9 @@ def deploy_env(args: Tuple[str, ...]) -> None:
     _logger.debug("EKS Environment Stack deployed")
     kubectl.deploy_env(context=context)
     _logger.debug("Kubernetes Environment components deployed")
+
+    kubeflow.deploy_kubeflow(context=context)
+
     helm.deploy_env(context=context)
     _logger.debug("Helm Charts installed")
 
