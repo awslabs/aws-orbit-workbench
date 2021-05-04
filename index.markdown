@@ -5,9 +5,7 @@
 layout: home
 title: Home
 ---
-AWS Orbit Workbench is a platform that enables customers to integrate their data, analytical and machine-learning services in 
-a single unified experience.  It promotes collaboration, by enabling customer teams to work together in a secure environment to 
-quickly exchange ideas and results.  When winning ideas are found, it allows customers to quickly go big by scaling their
-workloads on Kubernetes clusters.
+AWS Orbit Workbench is an open source framework that provides a single, unified experience for your data, analytics and 
+machine learning projects.  You can collaborate with your team in a secure environment, using a wide range of AWS and partner services to experiment, develop, test and deploy your workloads onto Kubernetes Clusters in production.
 
 
