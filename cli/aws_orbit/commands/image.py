@@ -174,7 +174,12 @@ def build_image(
             timeout=timeout,
         )
         msg_ctx.info("Docker Image deploy into ECR")
-        address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}/{name}"
+
+        address = (
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}/{name}"
+            if name in [n.replace("_", "-") for n in context.images.names]
+            else f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}/users/{name}"
+        )
 
         msg_ctx.info(f"ECR Image Address={address}")
         msg_ctx.tip(f"ECR Image Address: {stylize(address, underline=True)}")

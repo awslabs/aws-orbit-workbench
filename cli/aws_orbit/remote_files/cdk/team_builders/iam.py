@@ -191,7 +191,7 @@ class IamBuilder:
                     actions=[
                         "ecr:*",
                     ],
-                    resources=[f"arn:{partition}:ecr:{region}:{account}:repository/orbit-{env_name}-users-*"],
+                    resources=[f"arn:{partition}:ecr:{region}:{account}:repository/orbit-{env_name}/users/*"],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
