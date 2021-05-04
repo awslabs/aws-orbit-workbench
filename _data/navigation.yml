@@ -3,13 +3,15 @@ docs:
   - group: Getting Start
     sub:
       - title: Introduction
-        url: tutorial
+        url: documentation
       - title: Quick Demo Deployment
         url: quick-demo-deployment
       - title: Architecture
         url: architecture
       - title: Usage Architecture
         url: usage-architecture
+      - title: Code of Conduct
+        url: code-of-conduct
   - group: For Admins
     sub:
       - title: Deployment Guideline
