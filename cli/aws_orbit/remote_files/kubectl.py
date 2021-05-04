@@ -249,6 +249,8 @@ def fetch_kubectl_data(context: "Context", k8s_context: str, include_teams: bool
     )
 
     context.landing_page_url = f"https://{landing_page_url}"
+    if context.cognito_external_provider:
+        context.cognito_external_provider_redirect = context.landing_page_url
     context.k8_dashboard_url = f"https://{k8_dashboard_url}"
 
     _update_elbs(context=context)
