@@ -23,6 +23,7 @@ from slugify import slugify
 from aws_orbit import bundle, remote, utils
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.context import Context, ContextSerDe
+from aws_orbit.models.manifest import ImagesManifest
 from aws_orbit.services import cfn, codebuild
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -174,7 +175,13 @@ def build_image(
             timeout=timeout,
         )
         msg_ctx.info("Docker Image deploy into ECR")
-        address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}/{name}"
+
+
+        address = (
+            f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}/{name}"
+            if name in [n.replace("_", "-") for n in context.images.names]
+            else f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}/users/{name}"
+        )
 
         msg_ctx.info(f"ECR Image Address={address}")
         msg_ctx.tip(f"ECR Image Address: {stylize(address, underline=True)}")
