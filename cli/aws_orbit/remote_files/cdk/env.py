@@ -233,7 +233,7 @@ class Env(Stack):
         )
 
     def _add_post_authentication_trigger(self) -> None:
-        logger.info("Adding trigger to Cognito")
+        _logger.info("Adding trigger to Cognito")
         post_auth_lambda_function = lambda_python.PythonFunction(
             scope=self,
             id="post_authentication_lambda",
