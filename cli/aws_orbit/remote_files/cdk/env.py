@@ -238,7 +238,7 @@ class Env(Stack):
             scope=self,
             id="post_authentication_lambda",
             function_name=f"orbit-{self.context.name}-post-authentication",
-            entry=_lambda_path("cognito-post-authentication"),
+            entry=_lambda_path("cognito_post_authentication"),
             index="index.py",
             handler="handler",
             runtime=aws_lambda.Runtime.PYTHON_3_8,
