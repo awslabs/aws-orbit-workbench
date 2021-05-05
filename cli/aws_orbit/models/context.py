@@ -478,6 +478,8 @@ class ContextSerDe(Generic[T, V]):
             content: Dict[str, Any] = cast(Dict[str, Any], Context.Schema().dump(context))
         elif isinstance(context, FoundationContext):
             content = cast(Dict[str, Any], FoundationContext.Schema().dump(context))
+        elif isinstance(context, TeamContext):
+            content = cast(Dict[str, Any], TeamContext.Schema().dump(context))
         else:
             raise ValueError("Unknown 'context' Type")
         return str(json.dumps(obj=content, sort_keys=True))
