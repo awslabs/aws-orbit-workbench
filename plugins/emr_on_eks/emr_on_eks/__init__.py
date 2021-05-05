@@ -50,7 +50,14 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
        --role-name {role_name}"
     )
     emr = boto3.client("emr-containers")
-
+    _logger.info(f"deploying emr on eks iam policy")
+    cdk_deploy(
+        stack_name=f"orbit-{context.name}-{team_context.name}-emr-on-eks",
+        app_filename=os.path.join(ORBIT_EMR_ON_EKS_ROOT, "cdk.py"),
+        context=context,
+        team_context=team_context,
+        parameters=parameters,
+    )
     try:
         _logger.info(f"creating emr virtual cluster {virtual_cluster_name}")
         response = emr.create_virtual_cluster(
@@ -67,13 +74,6 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
         parameters["virtual_cluster_id"] = response["id"]
         parameters["virtual_name"] = response["name"]
         parameters["virtual_arn"] = response["arn"]
-        cdk_deploy(
-            stack_name=f"orbit-{context.name}-{team_context.name}-emr-on-eks",
-            app_filename=os.path.join(ORBIT_EMR_ON_EKS_ROOT, "cdk.py"),
-            context=context,
-            team_context=team_context,
-            parameters=parameters,
-        )
 
     except Exception as e:
         if "A virtual cluster already exists in the given namespace" in str(e):
