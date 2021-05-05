@@ -81,6 +81,7 @@ class Env(Stack):
         self.eks_service_lambda = self._create_eks_service_lambda()
         self.cluster_pod_security_group = self._create_cluster_pod_security_group()
         self.context_parameter = self._create_manifest_parameter()
+        self._add_post_authentication_trigger()
 
     def _create_role_cluster(self) -> iam.Role:
         name: str = f"orbit-{self.context.name}-eks-cluster-role"
@@ -232,8 +233,6 @@ class Env(Stack):
         )
 
     def _add_post_authentication_trigger(self) -> None:
-        orbit_cognito_user_group = self.user_pool
-
         post_auth_lambda_function = lambda_python.PythonFunction(
             scope=self,
             id="post_authentication_lambda",
