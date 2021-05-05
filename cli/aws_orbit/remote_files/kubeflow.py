@@ -14,10 +14,13 @@
 
 import logging
 import os
+from typing import Any, Dict
 
 from aws_orbit import ORBIT_CLI_ROOT, sh, utils
 from aws_orbit.models.context import Context
+from aws_orbit.remote_files import kubectl
 from aws_orbit.remote_files.utils import get_k8s_context
+from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -43,6 +46,10 @@ def gen_kubeflow_config(context: Context, output_path: str, cluster_name: str) -
     input = os.path.join(CONFIG_PATH, "kfctl_aws.yaml")
     output = os.path.join(output_path, "kfctl_aws.yaml")
 
+    client = boto3_client(service_name="cognito-idp")
+    response: Dict[str, Any] = client.describe_user_pool(UserPoolId=context.user_pool_id)
+    domain: str = response["UserPool"].get("Domain")
+
     with open(input, "r") as file:
         content: str = file.read()
 
@@ -55,7 +62,8 @@ def gen_kubeflow_config(context: Context, output_path: str, cluster_name: str) -
             account_id=context.account_id,
             region=context.region,
             env_name=context.name,
-            cluster_name=cluster_name
+            cluster_name=cluster_name,
+            cognitoUserPoolDomain=domain,
         ),
     )
     _logger.debug("Kubeflow configuration:\n%s", content)
@@ -64,8 +72,24 @@ def gen_kubeflow_config(context: Context, output_path: str, cluster_name: str) -
 
     k8s_context = get_k8s_context(context=context)
 
-    input = os.path.join(CONFIG_PATH, "kubeflow.sh")
-    output = os.path.join(output_path, "kubeflow.sh")
+    input = os.path.join(CONFIG_PATH, "apply_kf.sh")
+    output = os.path.join(output_path, "apply_kf.sh")
+
+    with open(input, "r") as file:
+        content = file.read()
+
+    content = utils.resolve_parameters(
+        content,
+        dict(cluster_name=cluster_name, k8s_context=k8s_context),
+    )
+    _logger.debug("Kubeflow script:\n%s", content)
+    with open(output, "w") as file:
+        file.write(content)
+
+    sh.run(f"chmod a+x  {output}")
+
+    input = os.path.join(CONFIG_PATH, "delete_kf.sh")
+    output = os.path.join(output_path, "delete_kf.sh")
 
     with open(input, "r") as file:
         content = file.read()
@@ -83,6 +107,7 @@ def gen_kubeflow_config(context: Context, output_path: str, cluster_name: str) -
 
 def deploy_kubeflow(context: Context) -> None:
     cluster_name = f"orbit-{context.name}"
+
     output_path = os.path.join(".orbit.out", context.name, "kubeflow", cluster_name)
     gen_kubeflow_config(context, output_path, cluster_name)
 
@@ -90,4 +115,23 @@ def deploy_kubeflow(context: Context) -> None:
     output_path = os.path.abspath(output_path)
     _logger.debug(f"kubeflow config dir: {output_path}")
     utils.print_dir(output_path)
-    sh.run("./kubeflow.sh", cwd=output_path)
+    sh.run("./apply_kf.sh", cwd=output_path)
+
+
+def destroy_kubeflow(context: Context) -> None:
+    kubectl.write_kubeconfig(context=context)
+
+    for line in sh.run_iterating("kubectl get namespace kubeflow"):
+        if '"kubeflow" not found' in line:
+            return
+
+    cluster_name = f"orbit-{context.name}"
+    output_path = os.path.join(".orbit.out", context.name, "kubeflow", cluster_name)
+    gen_kubeflow_config(context, output_path, cluster_name)
+
+    _logger.debug("Destroying Kubeflow")
+    output_path = os.path.abspath(output_path)
+    _logger.debug(f"kubeflow config dir: {output_path}")
+    utils.print_dir(output_path)
+    sh.run("./apply_kf.sh", cwd=output_path)
+    sh.run("./delete_kf.sh", cwd=output_path)

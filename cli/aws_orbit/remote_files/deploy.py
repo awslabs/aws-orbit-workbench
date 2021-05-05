@@ -24,6 +24,7 @@ from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, T
 from aws_orbit.models.manifest import ImageManifest, ImagesManifest, Manifest, ManifestSerDe
 from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, kubeflow, teams, utils
 from aws_orbit.services import codebuild, ecr
+from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -210,8 +211,28 @@ def deploy_env(args: Tuple[str, ...]) -> None:
     _logger.debug("Helm Charts installed")
 
     k8s_context = utils.get_k8s_context(context=context)
-    kubectl.fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=False)
+    kubectl.fetch_kubectl_data(context=context, k8s_context=k8s_context)
     ContextSerDe.dump_context_to_ssm(context=context)
+    _logger.debug("Updating userpool redirect")
+    _update_userpool_client(context=context)
+
+
+def _update_userpool_client(context: Context) -> None:
+    cognito = boto3_client("cognito-idp")
+    cognito.update_user_pool_client(
+        UserPoolId=context.user_pool_id,
+        ClientId=context.user_pool_client_id,
+        CallbackURLs=[
+            f"{context.landing_page_url}/oauth2/idpresponse",
+        ],
+        LogoutURLs=[],
+        ExplicitAuthFlows=["ALLOW_CUSTOM_AUTH", "ALLOW_USER_SRP_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"],
+        SupportedIdentityProviders=["COGNITO"],
+        AllowedOAuthFlows=["code"],
+        AllowedOAuthScopes=["aws.cognito.signin.user.admin", "email", "openid", "profile"],
+        AllowedOAuthFlowsUserPoolClient=True,
+        PreventUserExistenceErrors="ENABLED",
+    )
 
 
 def deploy_teams(args: Tuple[str, ...]) -> None:
@@ -285,6 +306,4 @@ def deploy_teams(args: Tuple[str, ...]) -> None:
         ContextSerDe.dump_context_to_ssm(context=context)
         _logger.debug("Team Plugins deployed")
 
-    k8s_context = utils.get_k8s_context(context=context)
-    kubectl.fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=True)
     _logger.debug("Teams deployed")

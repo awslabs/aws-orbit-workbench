@@ -1,0 +1,64 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orbit-team-context
+  labels:
+    {{- include "orbit-user.labels" . | nindent 4 }}
+  namespace: {{ .Values.namespace }}
+data:
+  team: |
+    {{ (tpl (.Files.Get "src/team-context.json") . | nindent 4 ) }}
+  env: |
+    {{ (tpl (.Files.Get "src/env-context.json") . | nindent 4 ) }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orbit-notebook-common-defaults
+  labels:
+    {{- include "orbit-user.labels" . | nindent 4 }}
+    orbit_pod_mutator: 1
+  namespace: {{ .Values.namespace }}
+data:
+  pod_common_default: |
+      selector:
+        matchExpressions:
+          - key: app
+            operator: Exists
+      desc: add orbit context to pods
+      labels:
+        orbit/node-type: ec2
+        orbit/attach-security-group: "yes"
+      env:
+        - name: AWS_DEFAULT_REGION
+          value: {{ .Values.region }}
+        - name: ENV_NAME
+          value: {{ .Values.env }}
+        - name: TEAM
+          value: {{ .Values.team }}
+        - name: GRANT_SUDO
+          value: {{ .Values.grant_sudo }}
+        - name: AWS_STS_REGIONAL_ENDPOINTS
+          value: {{ .Values.sts_ep }}
+      securityContext:
+        fsGroup: {{ .Values.fsGroup }}
+      volumeMounts:
+        - mountPath: /efs
+          name: efs-volume
+      volumes:
+        - name: efs-volume
+          persistentVolumeClaim:
+            claimName: team-efs
+      nodeSelector:
+        orbit/usage: teams
+        orbit/node-type: ec2
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: k8s.amazonaws.com/accelerator
+                    operator: DoesNotExist

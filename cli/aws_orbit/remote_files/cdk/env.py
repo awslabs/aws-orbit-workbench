@@ -237,7 +237,7 @@ class Env(Stack):
             id="user-pool-client",
             user_pool=cast(cognito.IUserPool, self.user_pool),
             auth_flows=cognito.AuthFlow(user_srp=True, admin_user_password=False, custom=False),
-            generate_secret=False,
+            generate_secret=True,
             prevent_user_existence_errors=True,
             user_pool_client_name="orbit",
         )

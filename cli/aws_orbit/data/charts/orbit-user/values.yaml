@@ -1,0 +1,21 @@
+# Default values for orbit-user.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+user: placeholder
+user_email: placeholder@amz.com
+team: ${team}
+env: ${env}
+region: ${region}
+namespace: placeholder
+
+nameOverride: "orbit-user"
+fullnameOverride: ""
+efsId: ${efsid}
+efsapid: ${efsapid}
+cluster_pod_security_group_id: ${cluster_pod_security_group_id}
+team_security_group_id: ${team_security_group_id}
+grant_sudo: ${grant_sudo} #"False"
+sts_ep: ${sts_ep}
+fsGroup: 100
+team_role_arn: ${team_role_arn}

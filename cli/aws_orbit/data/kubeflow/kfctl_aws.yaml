@@ -105,7 +105,7 @@ spec:
           certArn: ${certArn}
           cognitoAppClientId: ${cognitoAppClientId}
           cognitoUserPoolArn: arn:aws:cognito-idp:${region}:${account_id}:userpool/${cognitoUserPoolID}
-          cognitoUserPoolDomain: orbit-${account_id}-${env_name}
+          cognitoUserPoolDomain: ${cognitoUserPoolDomain}
       enablePodIamPolicy: true
       region: ${region}
   repos:
