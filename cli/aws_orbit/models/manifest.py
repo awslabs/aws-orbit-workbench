@@ -83,7 +83,7 @@ class ImageManifest:
         elif public_ecr_match.match(repository):
             return "ecr-public"
         else:
-            return "dockerhub"
+            return "public"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
