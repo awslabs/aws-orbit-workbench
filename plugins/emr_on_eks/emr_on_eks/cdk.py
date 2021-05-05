@@ -41,7 +41,7 @@ class Team(Stack):
         if team_context.eks_pod_role_arn is None:
             raise ValueError("Pod Role arn required")
         team_role = iam.Role.from_role_arn(
-                scope=self, id="team-role", role_arn=team_context.eks_pod_role_arn, mutable=True
+            scope=self, id="team-role", role_arn=team_context.eks_pod_role_arn, mutable=True
         )
         team_role.attach_inline_policy(
             policy=iam.Policy(
