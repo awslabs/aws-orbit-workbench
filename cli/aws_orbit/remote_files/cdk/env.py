@@ -233,6 +233,7 @@ class Env(Stack):
         )
 
     def _add_post_authentication_trigger(self) -> None:
+        logger.info("Adding trigger to Cognito")
         post_auth_lambda_function = lambda_python.PythonFunction(
             scope=self,
             id="post_authentication_lambda",
@@ -242,18 +243,18 @@ class Env(Stack):
             handler="handler",
             runtime=aws_lambda.Runtime.PYTHON_3_8,
             timeout=Duration.seconds(5),
-            # environment={
-            #     "COGNITO_USER_POOL_ID": self.user_pool.user_pool_id,
-            #     "REGION": self.context.region,
-            #     "COGNITO_USER_POOL_CLIENT_ID": self.user_pool_client.user_pool_client_id,
-            # },
-            # initial_policy=[
-            #     iam.PolicyStatement(
-            #         effect=iam.Effect.ALLOW,
-            #         actions=["ec2:Describe*", "logs:Create*", "logs:PutLogEvents", "logs:Describe*"],
-            #         resources=["*"],
-            #     )
-            # ],
+            environment={
+                "COGNITO_USER_POOL_ID": self.user_pool.user_pool_id,
+                "REGION": self.context.region,
+                "COGNITO_USER_POOL_CLIENT_ID": self.user_pool_client.user_pool_client_id,
+            },
+            initial_policy=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["ec2:Describe*", "logs:Create*", "logs:PutLogEvents", "logs:Describe*"],
+                    resources=["*"],
+                )
+            ],
         )
 
         self.user_pool.add_trigger(operation="POST_AUTHENTICATION", fn=post_auth_lambda_function)
