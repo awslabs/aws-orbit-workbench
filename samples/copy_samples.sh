@@ -21,5 +21,6 @@ LOCAL_PATH="/home/jovyan/shared/samples"
 mkdir -p $LOCAL_PATH
 S3_PATH="s3://$AWS_ORBIT_S3_BUCKET/samples/"
 
+rm -fR $LOCAL_PATH
 mkdir -p $LOCAL_PATH
-aws s3 sync $S3_PATH $LOCAL_PATH
+aws s3 cp --recursive $S3_PATH $LOCAL_PATH
