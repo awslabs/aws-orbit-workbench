@@ -257,7 +257,7 @@ class Env(Stack):
             ],
         )
 
-        self.user_pool.add_trigger(operation="POST_AUTHENTICATION", fn=post_auth_lambda_function)
+        self.user_pool.add_trigger(operation=cognito.UserPoolOperation.POST_AUTHENTICATION, fn=post_auth_lambda_function)
 
     def _create_user_pool_client(self) -> cognito.UserPoolClient:
         return cognito.UserPoolClient(
