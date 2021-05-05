@@ -27,6 +27,8 @@ import aws_cdk.aws_ssm as ssm
 from aws_cdk import aws_lambda
 from aws_cdk.core import App, Construct, Duration, Environment, IConstruct, Stack, Tags
 
+import boto3
+
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.cdk import _lambda_path
 from aws_orbit.services import cognito as orbit_cognito
@@ -256,8 +258,17 @@ class Env(Stack):
                 )
             ],
         )
-        _logger.info(type(self.user_pool))
-        self.user_pool.add_trigger(operation=cognito.UserPoolOperation.POST_AUTHENTICATION, fn=post_auth_lambda_function)
+
+        cognito_client = boto3.client("cognito-idp")
+
+        return_status = cognito_client.update_user_pool(
+            UserPoolId=self.user_pool.user_pool_id,
+            LambdaConfig={
+                "PostAuthentication": post_auth_lambda_function.function_arn
+            }
+        )
+        # self.user_pool.add_trigger(operation=cognito.UserPoolOperation.POST_AUTHENTICATION, fn=post_auth_lambda_function)
+        _logger.info(return_status)
 
     def _create_user_pool_client(self) -> cognito.UserPoolClient:
         return cognito.UserPoolClient(
