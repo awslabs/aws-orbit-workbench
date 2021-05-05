@@ -2,10 +2,8 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   labels:
-    app: orbit
     efs-id: {{ .Values.efsid }}
-    labels:
-      {{- include "orbit-user.labels" . | nindent 6 }}
+    {{- include "orbit-user.labels" . | nindent 4 }}
   name: team-efs-{{ .Values.namespace }}
 spec:
   accessModes:

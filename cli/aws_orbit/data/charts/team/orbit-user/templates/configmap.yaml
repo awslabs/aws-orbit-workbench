@@ -19,7 +19,7 @@ metadata:
   name: orbit-notebook-common-defaults
   labels:
     {{- include "orbit-user.labels" . | nindent 4 }}
-    orbit_pod_mutator: 1
+    orbit/pod-mutator: "1"
   namespace: {{ .Values.namespace }}
 data:
   pod_common_default: |

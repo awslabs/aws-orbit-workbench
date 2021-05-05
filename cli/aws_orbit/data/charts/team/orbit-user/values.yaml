@@ -13,7 +13,7 @@ env: ${env_name}
 region: ${region}
 nameOverride: "orbit-user"
 fullnameOverride: ""
-efsId: ${efsid}
+efsid: ${efsid}
 efsapid: ${efsapid}
 cluster_pod_security_group_id: ${cluster_pod_security_group_id}
 team_security_group_id: ${team_security_group_id}

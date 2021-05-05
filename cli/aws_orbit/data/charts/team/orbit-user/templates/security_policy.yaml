@@ -1,7 +1,7 @@
 apiVersion: vpcresources.k8s.aws/v1beta1
 kind: SecurityGroupPolicy
 metadata:
-  name: ${team}-security-group-policy
+  name: team-security-group-policy
   namespace: {{ .Values.namespace }}
   labels:
     {{- include "orbit-user.labels" . | nindent 4 }}
