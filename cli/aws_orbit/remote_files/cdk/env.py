@@ -259,6 +259,8 @@ class Env(Stack):
                 )
             ],
         )
+        print("lambda function arn: ", post_auth_lambda_function.function_arn)
+        print("lambda function name: ", post_auth_lambda_function.function_name)
         _logger.info("lambda function arn: ", post_auth_lambda_function.function_arn)
         _logger.info("lambda function name: ", post_auth_lambda_function.function_name)
 
@@ -267,7 +269,7 @@ class Env(Stack):
         return_status = cognito_client.update_user_pool(
             UserPoolId=self.user_pool.user_pool_id,
             LambdaConfig={
-                "PostAuthentication": post_auth_lambda_function.function_arn + "_" + post_auth_lambda_function.function_name
+                "PostAuthentication": post_auth_lambda_function.function_arn + "__asda"
             }
         )
         # self.user_pool.add_trigger(operation=cognito.UserPoolOperation.POST_AUTHENTICATION, fn=post_auth_lambda_function)
