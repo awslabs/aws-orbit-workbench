@@ -21,7 +21,7 @@ import yaml
 
 import aws_orbit
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, sh, utils
-from aws_orbit.models.context import Context, TeamContext
+from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.remote_files import kubectl
 from aws_orbit.services import cfn, s3
 
