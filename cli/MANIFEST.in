@@ -8,6 +8,7 @@ include *.txt
 include *.yml
 recursive-include aws_orbit *.json
 recursive-include aws_orbit *.txt
+recursive-include aws_orbit *.sh
 recursive-include aws_orbit *.typed
 recursive-include aws_orbit *.yaml
 recursive-include aws_orbit *.tpl

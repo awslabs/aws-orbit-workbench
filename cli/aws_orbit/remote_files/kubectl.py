@@ -234,16 +234,11 @@ def _update_elbs(context: "Context") -> None:
         team.elbs = {k: v for k, v in elbs.items() if k.startswith(f"{team.name}/")}
 
 
-def fetch_kubectl_data(context: "Context", k8s_context: str, include_teams: bool) -> None:
+def fetch_kubectl_data(context: "Context", k8s_context: str) -> None:
     _logger.debug("Fetching Kubectl data...")
 
-    if include_teams:
-        for team in context.teams:
-            _logger.debug("Fetching team %s URL parameter", team.name)
-            url = k8s.get_service_hostname(name="jupyterhub-public", k8s_context=k8s_context, namespace=team.name)
-            team.jupyter_url = url
-
-    landing_page_url: str = k8s.get_service_hostname(name="landing-page", k8s_context=k8s_context, namespace="env")
+    # landing_page_url: str = k8s.get_service_hostname(name="landing-page", k8s_context=k8s_context, namespace="env")
+    landing_page_url: str = k8s.get_ingress_dns(name="istio-ingress", k8s_context=k8s_context, namespace="istio-system")
     k8_dashboard_url: str = k8s.get_service_hostname(
         name="kubernetes-dashboard", k8s_context=k8s_context, namespace="kubernetes-dashboard"
     )
@@ -366,7 +361,7 @@ def destroy_env(context: "Context") -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(stack_name=eks_stack_name):
-        sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
+        sh.run(f"eksctl utils write-kget_k8s_contextubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
         k8s_context = get_k8s_context(context=context)
         _logger.debug("kubectl k8s_context: %s", k8s_context)
         output_path = _generate_env_manifest(context=context)

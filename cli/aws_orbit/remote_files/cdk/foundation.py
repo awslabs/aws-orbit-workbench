@@ -255,6 +255,12 @@ class FoundationStack(Stack):
             ),
             user_pool_name=f"orbit-{self.env_name}-user-pool",
         )
+        pool.add_domain(
+            id="orbit-user-pool-domain",
+            cognito_domain=cognito.CognitoDomainOptions(
+                domain_prefix=f"orbit-{self.context.account_id}-{self.env_name}"
+            ),
+        )
         return pool
 
     def _create_vpc_endpoints(self) -> None:

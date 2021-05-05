@@ -6,6 +6,8 @@ from typing import cast
 import boto3
 from botocore.exceptions import ClientError
 
+from aws_orbit.models.context import FoundationContext
+
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
@@ -19,7 +21,7 @@ def run_command(cmd: str) -> str:
     return output
 
 
-def deploy_selfsigned_cert() -> str:
+def deploy_selfsigned_cert(context: "FoundationContext") -> str:
     """ Module to deploy self signed cert """
 
     _logger.debug("Generating self-signed certificate...")
@@ -43,14 +45,14 @@ def deploy_selfsigned_cert() -> str:
         public_pem = fp.read()
 
     _logger.debug("Uploading the cert to IAM...")
-    ssl_cert_arn = upload_cert_iam(private_pem, public_pem)
+    ssl_cert_arn = upload_cert_iam(context, private_pem, public_pem)
     return ssl_cert_arn
 
 
-def upload_cert_iam(private_pem: str, public_pem: str) -> str:
+def upload_cert_iam(context: "FoundationContext", private_pem: str, public_pem: str) -> str:
     """ Uploads the cert to AWS IAM """
     iam_client = boto3.client("iam")
-    ssl_cert_name = "AWSORBIT"
+    ssl_cert_name = context.name
     try:
         response = iam_client.get_server_certificate(ServerCertificateName=ssl_cert_name)
         return cast(str, response["ServerCertificate"]["ServerCertificateMetadata"]["Arn"])

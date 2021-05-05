@@ -21,7 +21,7 @@ import yaml
 
 import aws_orbit
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, sh, utils
-from aws_orbit.models.context import Context, TeamContext
+from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.remote_files import kubectl
 from aws_orbit.services import cfn, s3
 
@@ -226,37 +226,29 @@ def deploy_team(context: Context, team_context: TeamContext) -> None:
         kubectl.write_kubeconfig(context=context)
 
         team_charts_path = create_team_charts_copy(team_context=team_context, path=os.path.join(CHARTS_PATH, "team"))
+        # Write the context into configmap
+        env_context_path = os.path.join(team_charts_path, "orbit-user", "src", "env-context.json")
+        with open(env_context_path, "w") as file:
+            file.write(ContextSerDe.dump_context_to_str(context))
+        team_context_path = os.path.join(team_charts_path, "orbit-user", "src", "team-context.json")
+        with open(team_context_path, "w") as file:
+            file.write(ContextSerDe.dump_context_to_str(team_context))
 
         chart_name, chart_version, chart_package = package_chart(
             repo=repo,
-            chart_path=os.path.join(team_charts_path, "jupyter-hub"),
+            chart_path=os.path.join(team_charts_path, "orbit-user"),
             values={
+                "env_name": context.name,
                 "team": team_context.name,
                 "efsid": context.shared_efs_fs_id,
+                "efsapid": team_context.efs_ap_id,
                 "region": context.region,
-                "ssl_cert_arn": context.networking.frontend.ssl_cert_arn,
-                "env_name": context.name,
-                "jupyter_hub_repository": context.images.jupyter_hub.repository,
-                "jupyter_hub_tag": context.images.jupyter_hub.version,
-                "jupyter_user_repository": context.images.jupyter_user.repository,
-                "jupyter_user_tag": context.images.jupyter_user.version,
+                "cluster_pod_security_group_id": context.cluster_pod_sg_id,
+                "team_security_group_id": team_context.team_security_group_id,
                 "grant_sudo": '"yes"' if team_context.grant_sudo else '"no"',
-                "internal_load_balancer": '"false"' if context.networking.frontend.load_balancers_subnets else '"true"',
-                "jupyterhub_inbound_ranges": str(
-                    team_context.jupyterhub_inbound_ranges
-                    if team_context.jupyterhub_inbound_ranges
-                    else [utils.get_dns_ip_cidr(context=context)]
-                ),
                 "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
-                "image_pull_policy": "Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
+                "team_role_arn": team_context.eks_pod_role_arn,
             },
-        )
-        install_chart(
-            repo=repo,
-            namespace=team_context.name,
-            name=f"{team_context.name}-jupyter-hub",
-            chart_name=chart_name,
-            chart_version=chart_version,
         )
 
 
