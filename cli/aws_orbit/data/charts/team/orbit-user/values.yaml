@@ -8,6 +8,7 @@ user: placeholder
 user_email: placeholder@amz.com
 namespace: placeholder
 
+
 # Team paraemeters
 team: ${team}
 env: ${env_name}
