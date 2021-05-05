@@ -238,7 +238,7 @@ class Env(Stack):
         _logger.info("Adding trigger to Cognito")
         post_auth_lambda_function = lambda_python.PythonFunction(
             scope=self,
-            id="post_authentication_lambda",
+            id="cognito_post_authentication_lambda",
             function_name=f"orbit-{self.context.name}-post-authentication",
             entry=_lambda_path("cognito_post_authentication"),
             index="index.py",
@@ -246,9 +246,9 @@ class Env(Stack):
             runtime=aws_lambda.Runtime.PYTHON_3_8,
             timeout=Duration.seconds(5),
             environment={
-                "COGNITO_USER_POOL_ID": self.user_pool.user_pool_id,
+                # "COGNITO_USER_POOL_ID": self.user_pool.user_pool_id,
                 "REGION": self.context.region,
-                "COGNITO_USER_POOL_CLIENT_ID": self.user_pool_client.user_pool_client_id,
+                # "COGNITO_USER_POOL_CLIENT_ID": self.user_pool_client.user_pool_client_id,
             },
             initial_policy=[
                 iam.PolicyStatement(
@@ -258,6 +258,8 @@ class Env(Stack):
                 )
             ],
         )
+        _logger.info("lambda function arn: ", post_auth_lambda_function.function_arn)
+        _logger.info("lambda function name: ", post_auth_lambda_function.function_name)
 
         cognito_client = boto3.client("cognito-idp")
 
