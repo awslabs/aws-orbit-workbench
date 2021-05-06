@@ -16,7 +16,7 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
     userGroupsInfo = cognito_client.admin_list_groups_for_user(Username=userName, UserPoolId=userPoolId)
     userGroups = [group.get("GroupName") for group in userGroupsInfo.get("Groups")]
 
-    logger.info("Authenticated successful")
-    logger.info(userName, userPoolId, userGroups)
+    logger.info("Authenticated successfully:")
+    logger.info(f"userName: {userName}, userPoolId: {userPoolId}, userGroups: {userGroups}")
 
     return event
