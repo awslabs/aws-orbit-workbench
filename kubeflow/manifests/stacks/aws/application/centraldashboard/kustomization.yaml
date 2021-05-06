@@ -6,6 +6,10 @@ resources:
 patchesStrategicMerge:
 - links-configmap.yaml
 - deployment_patch.yaml
+configMapGenerator:
+- envs:
+  - params.env
+  name: parameters
 vars:
 - fieldref:
     fieldPath: metadata.namespace
@@ -21,24 +25,5 @@ vars:
     apiVersion: v1
     kind: ConfigMap
     name: parameters
-- fieldref:
-    fieldPath: data.userid-header
-  name: userid-header
-  objref:
-    apiVersion: v1
-    kind: ConfigMap
-    name: parameters
-- fieldref:
-    fieldPath: data.userid-prefix
-  name: userid-prefix
-  objref:
-    apiVersion: v1
-    kind: ConfigMap
-    name: parameters
-- fieldref:
-    fieldPath: data.registration-flow
-  name: registration-flow
-  objref:
-    apiVersion: v1
-    kind: ConfigMap
-    name: parameters
+configurations:
+- params.yaml
