@@ -18,8 +18,11 @@ RUN apt -y update && \
     less \
     jq \
     openssl \
+    vim-tiny \
+    nano-tiny \
     # ---- Clean up ----
     && apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    update-alternatives --install /usr/bin/nano nano /bin/nano-tiny 10 && \
     # ---- Install AWS CLI ----
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip && \
@@ -34,12 +37,7 @@ RUN apt -y update && \
     # ---- Install aws-iam-authenticator ----
     curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator && \
     chmod +x ./aws-iam-authenticator && \
-    mv ./aws-iam-authenticator /usr/local/bin && \
-    # ---- Install kfctl CLI ----
-    wget -O kfctl_v1.2.0-0_linux.tar.gz https://github.com/kubeflow/kfctl/releases/download/v1.2.0/kfctl_v1.2.0-0-gbc038f9_linux.tar.gz && \
-    tar xzf kfctl_v1.2.0-0_linux.tar.gz && \
-    chmod +x kfctl && \
-    mv kfctl /usr/local/bin
+    mv ./aws-iam-authenticator /usr/local/bin
 
 
 ENTRYPOINT [ "bash" ]
