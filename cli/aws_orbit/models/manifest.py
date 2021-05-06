@@ -83,7 +83,7 @@ class ImageManifest:
         elif public_ecr_match.match(repository):
             return "ecr-public"
         else:
-            return "dockerhub"
+            return "public"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -102,7 +102,7 @@ class ManagedNodeGroupManifest:
 @dataclass(base_schema=BaseSchema, frozen=True)
 class CodeBuildImageManifest(ImageManifest):
     repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base"
-    version: Optional[str] = aws_orbit.__version__
+    version: Optional[str] = "1.0.0"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -123,6 +123,7 @@ class LandingPageImageManifest(ImageManifest):
 @dataclass(base_schema=BaseSchema, frozen=True)
 class ImageReplicatorImageManifest(ImageManifest):
     repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/image-replicator"
+    version: Optional[str] = "1.0.0"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)

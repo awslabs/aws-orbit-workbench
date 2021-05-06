@@ -314,16 +314,16 @@ def monitor(
         while True:
             load_config(config["in_cluster_deployment"])
 
-            logger.debug("Monitoring Deployments")
+            logger.info("Monitoring Deployments")
             _inspect_deployments(config, lock, replications_queue, replication_statuses)
 
-            logger.debug("Monitoring Daemon Sets")
+            logger.info("Monitoring Daemon Sets")
             _inspect_daemon_sets(config, lock, replications_queue, replication_statuses)
 
-            # logger.debug("Monitoring Jobs")
+            # logger.info("Monitoring Jobs")
             # _inspect_jobs(config, lock, replications_queue, replication_statuses)
 
-            logger.debug("Monitoring Standalone Pods")
+            logger.info("Monitoring Standalone Pods")
             _inspect_standalone_pods(config, lock, replications_queue, replication_statuses)
 
             time.sleep(20)
