@@ -413,7 +413,7 @@ class Env(Stack):
             initial_policy=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=["ec2:Describe*", "logs:Create*", "logs:PutLogEvents", "logs:Describe*"],
+                    actions=["logs:Create*", "logs:PutLogEvents", "logs:Describe*", "cognito-idp:*"],
                     resources=["*"],
                 )
             ],
