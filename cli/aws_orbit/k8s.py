@@ -54,11 +54,11 @@ def get_ingress_dns(name: str, k8s_context: str, namespace: str = "default") -> 
         except Exception:
             print(f"Cannot find Ingress {name}.{namespace}")
 
-    time.sleep(wait)
-    timeout = timeout - wait
-    _logger.info(f"Waiting for for Ingress {name}.{namespace}")
-    if timeout < 0:
-        raise Exception(f"Timeout while waiting for Ingress {name}.{namespace}")
+        time.sleep(wait)
+        timeout = timeout - wait
+        _logger.info(f"Waiting for for Ingress {name}.{namespace}")
+        if timeout < 0:
+            raise Exception(f"Timeout while waiting for Ingress {name}.{namespace}")
 
 
 if __name__ == "__main__":
