@@ -39,7 +39,7 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
     build_args = args[4:]
 
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
-    _logger.debug("manifest.name: %s", context.name)
+    _logger.debug("context: %s", vars(context))
 
     docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
