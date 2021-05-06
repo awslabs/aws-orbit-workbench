@@ -50,7 +50,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
        --role-name {role_name}"
     )
     emr = boto3.client("emr-containers")
-    _logger.info(f"deploying emr on eks iam policy")
+    _logger.info("deploying emr on eks iam policy")
     cdk_deploy(
         stack_name=f"orbit-{context.name}-{team_context.name}-emr-on-eks",
         app_filename=os.path.join(ORBIT_EMR_ON_EKS_ROOT, "cdk.py"),
