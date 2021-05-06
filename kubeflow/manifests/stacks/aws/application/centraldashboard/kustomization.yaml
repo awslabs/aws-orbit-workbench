@@ -6,3 +6,5 @@ resources:
 patchesStrategicMerge:
 - links-configmap.yaml
 - deployment_patch.yaml
+configurations:
+- params.yaml
