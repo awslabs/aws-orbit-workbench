@@ -30,26 +30,30 @@ def get_ingress_dns(name: str, k8s_context: str, namespace: str = "default") -> 
     timeout = 15 * 60
     wait = 30
     while True:
-        resp: NetworkingV1beta1IngressList = network.list_namespaced_ingress(namespace=namespace)
-        print(resp)
-        for i in resp.items:
-            item: Dict[str, Any] = i.to_dict()
-            if item["metadata"]["name"] == name:
-                if "load_balancer" in item["status"]:
-                    if "ingress" in item["status"]["load_balancer"]:
-                        if item["status"]["load_balancer"]["ingress"]:
-                            if "hostname" in item["status"]["load_balancer"]["ingress"][0]:
-                                return str(item["status"]["load_balancer"]["ingress"][0]["hostname"])
+        try:
+            resp: NetworkingV1beta1IngressList = network.list_namespaced_ingress(namespace=namespace)
+            print(resp)
+            for i in resp.items:
+                item: Dict[str, Any] = i.to_dict()
+                if item["metadata"]["name"] == name:
+                    if "load_balancer" in item["status"]:
+                        if "ingress" in item["status"]["load_balancer"]:
+                            if item["status"]["load_balancer"]["ingress"]:
+                                if "hostname" in item["status"]["load_balancer"]["ingress"][0]:
+                                    return str(item["status"]["load_balancer"]["ingress"][0]["hostname"])
+                                else:
+                                    print("hostname is not defined ")
                             else:
-                                print("hostname is not defined ")
+                                print("ingress[] is empty")
                         else:
-                            print("ingress[] is empty")
+                            print("ingress not in load_balancer")
                     else:
-                        print("ingress not in load_balancer")
-                else:
-                    print("no load_balancer in status")
-        else:
-            raise Exception(f"Cannot find Ingress {name}.{namespace}")
+                        print("no load_balancer in status")
+            else:
+                raise Exception(f"Cannot find Ingress {name}.{namespace}")
+        except Exception:
+            print(f"Cannot find Ingress {name}.{namespace}")
+
         time.sleep(wait)
         timeout = timeout - wait
         _logger.info(f"Waiting for for Ingress {name}.{namespace}")
