@@ -34,7 +34,7 @@ RUN cd /usr/local/bin \
     && sudo chmod 755 /usr/local/bin/kubectl
 
 ######################################
-# Kubectl installation
+# Helm installation
 ######################################
 RUN curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash && \
     helm version --short && \
