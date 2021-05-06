@@ -221,14 +221,12 @@ def deploy_env(args: Tuple[str, ...]) -> None:
 def _update_userpool(context: Context) -> None:
     cognito_client = boto3.client("cognito-idp")
 
-    function_arn = f"arn:aws:lambda:{context.region}:{context.account_id}:function:orbit-{context.name}-post-authentication"
-
-    cognito_client.update_user_pool(
-        UserPoolId=context.user_pool_id,
-        LambdaConfig={
-            "PostAuthentication": function_arn
-        }
+    function_arn = (
+        f"arn:aws:lambda:{context.region}:{context.account_id}:function:orbit-{context.name}-post-authentication"
     )
+
+    cognito_client.update_user_pool(UserPoolId=context.user_pool_id, LambdaConfig={"PostAuthentication": function_arn})
+
 
 def _update_userpool_client(context: Context) -> None:
     cognito = boto3_client("cognito-idp")
