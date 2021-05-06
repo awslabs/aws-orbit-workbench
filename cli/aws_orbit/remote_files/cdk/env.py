@@ -397,7 +397,7 @@ class Env(Stack):
             ],
         )
 
-    def _create_post_authentication_lambda(self) -> None:
+    def _create_post_authentication_lambda(self) -> aws_lambda.Function:
         return lambda_python.PythonFunction(
             scope=self,
             id="cognito_post_authentication_lambda",
