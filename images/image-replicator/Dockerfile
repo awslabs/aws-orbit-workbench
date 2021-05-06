@@ -15,4 +15,5 @@ ADD src /var/image-replicator/
 RUN cd /var/image-replicator/ && \
     pip3 install .
 
+WORKDIR /var/image-replicator
 ENTRYPOINT ["image-replicator"]
