@@ -2,7 +2,7 @@
 
 set -x
 
-cat <<EOF |  orbit run notebook --env $ENV_NAME --team $TEST_TEAM_SPACE --user testing --wait --tail-logs -
+cat <<EOF |  orbit run notebook --env $ENV_NAME --team $TEST_TEAM_SPACE --user testing --delay 60 --max-attempts 15 --wait --tail-logs -
 {
       "compute": {
           "container" : {
