@@ -30,7 +30,7 @@ from aws_cdk.core import App, Construct, Duration, Environment, IConstruct, Stac
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.cdk import _lambda_path
 from aws_orbit.services import cognito as orbit_cognito
-from aws_orbit.services import iam
+from aws_orbit.services import iam as orbit_iam
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -401,7 +401,7 @@ class Env(Stack):
     def _create_post_authentication_lambda(self) -> aws_lambda.Function:
         role_name = f"orbit-{self.context.name}-admin"
         role_arn = f"arn:aws:iam::{self.context.account_id}:role/{role_name}"
-        iam.add_assume_role_statement(
+        orbit_iam.add_assume_role_statement(
             role_name=role_name,
             statement={
                 "Effect": "Allow",
