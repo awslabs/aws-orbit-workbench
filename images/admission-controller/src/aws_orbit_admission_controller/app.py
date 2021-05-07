@@ -3,59 +3,33 @@ import copy
 import http
 import json
 import random
+import os
 
 import jsonpatch
-from flask import Flask, jsonify, request
+
+from flask import Flask, request
+from typing import Any
+
+from aws_orbit_admission_controller import load_config
+from aws_orbit_admission_controller.namespace import process_request as process_namespace_request
+from aws_orbit_admission_controller.pod import process_request as process_pod_request
 
 app = Flask(__name__)
+app.logger.info("environ: %s", os.environ)
+
+@app.route("/namespace", methods=["POST"])
+def namespace() -> Any:
+    return process_namespace_request(logger=app.logger, request=request.json["request"])
 
 
-@app.route("/validate", methods=["POST"])
-def validate():
-    allowed = True
-    try:
-        for container_spec in request.json["request"]["object"]["spec"]["containers"]:
-            if "env" in container_spec:
-                allowed = False
-    except KeyError:
-        pass
-    return jsonify(
-        {
-            "response": {
-                "allowed": allowed,
-                "uid": request.json["request"]["uid"],
-                "status": {"message": "env keys are prohibited"},
-            }
-        }
-    )
-
-
-@app.route("/mutate", methods=["POST"])
-def mutate():
-    spec = request.json["request"]["object"]
-    modified_spec = copy.deepcopy(spec)
-
-    try:
-        modified_spec["metadata"]["labels"]["example.com/new-label"] = str(
-            random.randint(1, 1000)
-        )
-    except KeyError:
-        pass
-    patch = jsonpatch.JsonPatch.from_diff(spec, modified_spec)
-    return jsonify(
-        {
-            "response": {
-                "allowed": True,
-                "uid": request.json["request"]["uid"],
-                "patch": base64.b64encode(str(patch).encode()).decode(),
-                "patchtype": "JSONPatch",
-            }
-        }
-    )
+@app.route("/pod", methods=["POST"])
+def pod() -> Any:
+    return process_pod_request(logger=app.logger, request=request.json["request"])
 
 
 @app.route("/health", methods=["GET"])
 def health():
+    app.logger.debug("Health check")
     return ("", http.HTTPStatus.NO_CONTENT)
 
 

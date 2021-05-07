@@ -140,6 +140,8 @@ def deploy_images_remotely(context: "Context", skip_images: bool = True) -> None
     # Required images we always build/replicate
     images: List[Tuple[str, Optional[str], Optional[str], List[str]]] = [
         ("image-replicator", "image-replicator", None, []),
+        ("k8s-utilities", "k8s-utilities", None, []),
+        ("admission-controller", "admission-controller", None, []),
     ]
 
     # Secondary images we can optionally skip

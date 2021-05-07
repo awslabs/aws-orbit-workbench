@@ -64,11 +64,7 @@ def dockerhub_pull(name: str, tag: str = "latest") -> None:
 
 
 def ecr_pull(context: "Context", name: str, tag: str = "latest") -> None:
-    if name.startswith("public.ecr.aws"):
-        repository = name
-    else:
-        repository = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/{name}"
-    sh.run(f"docker pull {repository}:{tag}")
+    sh.run(f"docker pull {name}:{tag}")
 
 
 def ecr_pull_external(context: "Context", repository: str, tag: str = "latest") -> None:
