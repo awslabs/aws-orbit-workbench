@@ -15,7 +15,7 @@
 import logging
 import os
 import shutil
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import aws_orbit
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
@@ -153,14 +153,24 @@ def _cleanup_output(output_path: str) -> None:
             os.remove(os.path.join(output_path, file))
 
 
+def _generate_kube_system_kustomizations(context: "Context", clean_up: bool = True) -> List[str]:
+    output_path = os.path.join(".orbit.out", context.name, "kubectl", "kube-system")
+    os.makedirs(output_path, exist_ok=True)
+    if clean_up:
+        _cleanup_output(output_path=output_path)
+
+    efs_output_path = _generate_efs_driver_manifest(output_path=output_path, context=context)
+    fsx_output_path = _generate_fsx_driver_manifest(output_path=output_path, context=context)
+
+    return [efs_output_path, fsx_output_path]
+
+
 def _generate_kube_system_manifest(context: "Context", clean_up: bool = True) -> str:
     output_path = os.path.join(".orbit.out", context.name, "kubectl", "kube-system")
     os.makedirs(output_path, exist_ok=True)
     if clean_up:
         _cleanup_output(output_path=output_path)
 
-    _generate_efs_driver_manifest(output_path=output_path, context=context)
-    _generate_fsx_driver_manifest(output_path=output_path, context=context)
     _cluster_autoscaler(output_path=output_path, context=context)
 
     filenames = [
@@ -359,7 +369,12 @@ def deploy_env(context: "Context") -> None:
         k8s_context = get_k8s_context(context=context)
         _logger.debug("k8s_context: %s", k8s_context)
 
-        # kube-system
+        # kube-system kustomizations
+        output_paths = _generate_kube_system_kustomizations(context=context)
+        for output_path in output_paths:
+            sh.run(f"kubectl apply -k {output_path} --context {k8s_context} --wait")
+
+        # kube-system manifests
         output_path = _generate_kube_system_manifest(context=context)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
