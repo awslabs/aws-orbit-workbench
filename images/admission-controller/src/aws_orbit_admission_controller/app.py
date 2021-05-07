@@ -19,11 +19,15 @@ app.logger.info("environ: %s", os.environ)
 
 @app.route("/namespace", methods=["POST"])
 def namespace() -> Any:
+    # See here for AdmissionReview request/response
+    # https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#request
     return process_namespace_request(logger=app.logger, request=request.json["request"])
 
 
 @app.route("/pod", methods=["POST"])
 def pod() -> Any:
+    # See here for AdmissionReview request/response
+    # https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#request
     return process_pod_request(logger=app.logger, request=request.json["request"])
 
 

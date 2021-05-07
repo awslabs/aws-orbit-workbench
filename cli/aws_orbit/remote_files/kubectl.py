@@ -133,31 +133,11 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
     with open(output, "w") as file:
         file.write(content)
 
-    # deploy voila service
-    input = os.path.join(MODELS_PATH, "teams", "02-voila_service.yaml")
-    output = os.path.join(output_path, f"{team_context.name}-02-voila_service.yaml")
-
-    with open(input, "r") as file:
-        content = file.read()
-    content = utils.resolve_parameters(
-        content,
-        dict(
-            team=team_context.name,
-            env_name=context.name,
-            repository=context.images.jupyter_user.repository,
-            tag=context.images.jupyter_user.version,
-            sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
-            image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
-        ),
-    )
-    with open(output, "w") as file:
-        file.write(content)
-
     # bind to admin role
     if team_context.k8_admin:
         # user service account
-        input = os.path.join(MODELS_PATH, "teams", "04-admin-binding.yaml")
-        output = os.path.join(output_path, f"{team_context.name}-04-admin-binding.yaml")
+        input = os.path.join(MODELS_PATH, "teams", "02-admin-binding.yaml")
+        output = os.path.join(output_path, f"{team_context.name}-02-admin-binding.yaml")
 
         with open(input, "r") as file:
             content = file.read()
