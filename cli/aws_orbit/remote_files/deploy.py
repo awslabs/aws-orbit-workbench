@@ -215,6 +215,17 @@ def deploy_env(args: Tuple[str, ...]) -> None:
     ContextSerDe.dump_context_to_ssm(context=context)
     _logger.debug("Updating userpool redirect")
     _update_userpool_client(context=context)
+    _update_userpool(context=context)
+
+
+def _update_userpool(context: Context) -> None:
+    cognito_client = boto3_client("cognito-idp")
+
+    function_arn = (
+        f"arn:aws:lambda:{context.region}:{context.account_id}:function:orbit-{context.name}-post-authentication"
+    )
+
+    cognito_client.update_user_pool(UserPoolId=context.user_pool_id, LambdaConfig={"PostAuthentication": function_arn})
 
 
 def _update_userpool_client(context: Context) -> None:

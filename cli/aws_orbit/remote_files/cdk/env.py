@@ -81,6 +81,7 @@ class Env(Stack):
         self.eks_service_lambda = self._create_eks_service_lambda()
         self.cluster_pod_security_group = self._create_cluster_pod_security_group()
         self.context_parameter = self._create_manifest_parameter()
+        self.cognito_post_auth_lambda = self._create_post_authentication_lambda()
 
     def _create_role_cluster(self) -> iam.Role:
         name: str = f"orbit-{self.context.name}-eks-cluster-role"
@@ -392,6 +393,28 @@ class Env(Stack):
                         f"arn:aws:eks:{self.context.region}:{self.context.account_id}:cluster/orbit-*",
                         f"arn:aws:eks:{self.context.region}:{self.context.account_id}:nodegroup/orbit-*/*/*",
                     ],
+                )
+            ],
+        )
+
+    def _create_post_authentication_lambda(self) -> aws_lambda.Function:
+        return lambda_python.PythonFunction(
+            scope=self,
+            id="cognito_post_authentication_lambda",
+            function_name=f"orbit-{self.context.name}-post-authentication",
+            entry=_lambda_path("cognito_post_authentication"),
+            index="index.py",
+            handler="handler",
+            runtime=aws_lambda.Runtime.PYTHON_3_8,
+            timeout=Duration.seconds(5),
+            environment={
+                "REGION": self.context.region,
+            },
+            initial_policy=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["ec2:Describe*", "logs:Create*", "logs:PutLogEvents", "logs:Describe*"],
+                    resources=["*"],
                 )
             ],
         )
