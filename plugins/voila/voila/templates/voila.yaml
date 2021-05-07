@@ -23,7 +23,7 @@ metadata:
     app: orbit-voila
     {{- include "voila.labels" . | nindent 4 }}
   name: orbit-voila
-  namespace: abaror-lake-user
+  namespace: {{ .Values.namespace }}
 spec:
   replicas: 1
   selector:
@@ -61,8 +61,8 @@ spec:
       - name: service
         securityContext:
           runAsUser: 1000
-        image: {{ .Values.images.image }}
-        imagePullPolicy: {{ .Values.images.pullPolicy }}
+        image: {{ .Values.image.repository }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
           {{- toYaml .Values.env | nindent 10 }}
         command: ["/bin/bash"]
@@ -95,7 +95,7 @@ metadata:
   namespace: kubeflow
   labels:
     app: orbit-voila
-    { { - include "voila.labels" . | nindent 4 } }
+    {{- include "voila.labels" . | nindent 4 }}
 spec:
   hosts:
   - "*"

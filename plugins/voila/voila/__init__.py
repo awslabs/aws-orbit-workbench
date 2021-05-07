@@ -32,8 +32,6 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
     chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATH)
-    workers = parameters["workers"] if "workers" in parameters else "3"
-    release_tag = parameters["release_tag"] if "release_tag" in parameters else "latest"
 
     vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
@@ -42,12 +40,10 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
         env_name=context.name,
         restart_policy=parameters["restartPolicy"] if "restartPolicy" in parameters else "Never",
         plugin_id=plugin_id,
-        workers=workers,
-        release_tag=release_tag,
         toolkit_s3_bucket=context.toolkit.s3_bucket,
         image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
-        image= parameters['image'] if 'image' in parameters else team_context.final_image_address,
-        sts_ep="legacy" if context.networking.data.internet_accessible else "regional"
+        image=parameters["image"] if "image" in parameters else team_context.final_image_address,
+        sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
     )
 
     repo_location = helm.init_team_repo(context=context, team_context=team_context)
