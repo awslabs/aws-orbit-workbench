@@ -16,11 +16,13 @@ data:
           "text": "Katib"
         },
          {
-           "link": "/landing-page",
-           "text": "Orbit"
+           "link": "/voila",
+           "text": "Voila"
          }
       ],
-      "externalLinks": [],
+      "externalLinks": [
+
+       ],
       "quickLinks": [
         {
           "text": "Upload a pipeline",
@@ -44,6 +46,11 @@ data:
         }
       ],
       "documentationItems": [
+        {
+          "text": "Orbit Home Page",
+          "desc": "Orbit Workbench Home page",
+          "link": "https://awslabs.github.io/aws-orbit-workbench/"
+        },
         {
           "text": "Getting Started with Kubeflow",
           "desc": "Get your machine-learning workflow up and running on Kubeflow",
