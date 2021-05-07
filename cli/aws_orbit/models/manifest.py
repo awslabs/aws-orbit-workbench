@@ -126,10 +126,10 @@ class AdmissionControllerImageManifest(ImageManifest):
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
-
 class ImageReplicatorImageManifest(ImageManifest):
     repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/image-replicator"
     version: Optional[str] = "1.0.0"
+
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class K8sUtilitiesImageManifest(ImageManifest):

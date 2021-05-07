@@ -61,8 +61,7 @@ def _admission_controller(context: "Context", output_path: str) -> None:
         dict(
             admission_controller_image=f"{context.images.admission_controller.repository}:"
             f"{context.images.admission_controller.version}",
-            k8s_utilities_image=f"{context.images.k8s_utilities.repository}:"
-            f"{context.images.k8s_utilities.version}",
+            k8s_utilities_image=f"{context.images.k8s_utilities.repository}:" f"{context.images.k8s_utilities.version}",
             image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
         ),
     )

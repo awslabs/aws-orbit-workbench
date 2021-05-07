@@ -14,6 +14,7 @@
 
 from kubernetes import config as k8_config
 
+
 def load_config(in_cluster: bool = True) -> None:
     if in_cluster:
         k8_config.load_incluster_config()

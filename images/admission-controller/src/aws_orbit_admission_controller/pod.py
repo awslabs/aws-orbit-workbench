@@ -14,27 +14,24 @@
 
 import base64
 import copy
-import random
 import logging
+import random
+from typing import Any, Dict
 
 import jsonpatch
 
+# from aws_orbit_admission_controller import load_config
 from flask import jsonify
-from typing import Any, Dict
-
-from aws_orbit_admission_controller import load_config
 
 
-def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Dict[str, Any]:
+def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     spec = request["object"]
     modified_spec = copy.deepcopy(spec)
 
     logger.info("request: %s", request)
 
     try:
-        modified_spec["metadata"]["labels"]["example.com/new-label"] = str(
-            random.randint(1, 1000)
-        )
+        modified_spec["metadata"]["labels"]["example.com/new-label"] = str(random.randint(1, 1000))
     except KeyError:
         pass
 

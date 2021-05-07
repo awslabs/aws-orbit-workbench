@@ -1,21 +1,14 @@
-import base64
-import copy
 import http
-import json
-import random
 import os
-
-import jsonpatch
-
-from flask import Flask, request
 from typing import Any
 
-from aws_orbit_admission_controller import load_config
 from aws_orbit_admission_controller.namespace import process_request as process_namespace_request
 from aws_orbit_admission_controller.pod import process_request as process_pod_request
+from flask import Flask, request
 
 app = Flask(__name__)
 app.logger.info("environ: %s", os.environ)
+
 
 @app.route("/namespace", methods=["POST"])
 def namespace() -> Any:
@@ -32,7 +25,7 @@ def pod() -> Any:
 
 
 @app.route("/health", methods=["GET"])
-def health():
+def health() -> Any:
     app.logger.debug("Health check")
     return ("", http.HTTPStatus.NO_CONTENT)
 
