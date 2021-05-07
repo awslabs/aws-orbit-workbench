@@ -290,20 +290,15 @@ class Context:
 
     def fetch_cognito_external_idp_data(self) -> None:
         _logger.debug("Fetching Cognito External IdP data...")
-        if self.cognito_external_provider:
-            client = boto3_client(service_name="cognito-idp")
-            response: Dict[str, Any] = client.describe_user_pool(UserPoolId=self.user_pool_id)
-            domain: str = response["UserPool"].get("Domain")
-            self.cognito_external_provider_domain = f"{domain}.auth.{self.region}.amazoncognito.com"
-            _logger.debug("cognito_external_provider_domain: %s", self.cognito_external_provider_domain)
-            response = client.describe_user_pool_client(UserPoolId=self.user_pool_id, ClientId=self.user_pool_client_id)
-            self.cognito_external_provider_redirect = response["UserPoolClient"]["CallbackURLs"][0]
-            _logger.debug("cognito_external_provider_redirect: %s", self.cognito_external_provider_redirect)
-            _logger.debug("Cognito External IdP data fetched successfully.")
-        else:
-            self.cognito_external_provider_domain = None
-            self.cognito_external_provider_domain_label = None
-            _logger.debug("No Cognito External IdP data to fetch.")
+        client = boto3_client(service_name="cognito-idp")
+        response: Dict[str, Any] = client.describe_user_pool(UserPoolId=self.user_pool_id)
+        domain: str = response["UserPool"].get("Domain")
+        self.cognito_external_provider_domain = f"{domain}.auth.{self.region}.amazoncognito.com"
+        _logger.debug("cognito_external_provider_domain: %s", self.cognito_external_provider_domain)
+        response = client.describe_user_pool_client(UserPoolId=self.user_pool_id, ClientId=self.user_pool_client_id)
+        self.cognito_external_provider_redirect = response["UserPoolClient"]["CallbackURLs"][0]
+        _logger.debug("cognito_external_provider_redirect: %s", self.cognito_external_provider_redirect)
+        _logger.debug("Cognito External IdP data fetched successfully.")
 
     def fetch_teams_data(self) -> None:
         _logger.debug("Fetching Teams data...")
@@ -483,6 +478,8 @@ class ContextSerDe(Generic[T, V]):
             content: Dict[str, Any] = cast(Dict[str, Any], Context.Schema().dump(context))
         elif isinstance(context, FoundationContext):
             content = cast(Dict[str, Any], FoundationContext.Schema().dump(context))
+        elif isinstance(context, TeamContext):
+            content = cast(Dict[str, Any], TeamContext.Schema().dump(context))
         else:
             raise ValueError("Unknown 'context' Type")
         return str(json.dumps(obj=content, sort_keys=True))

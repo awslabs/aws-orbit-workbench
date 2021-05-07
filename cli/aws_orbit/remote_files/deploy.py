@@ -22,8 +22,9 @@ from aws_orbit import bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, TeamContext
 from aws_orbit.models.manifest import ImageManifest, ImagesManifest, Manifest, ManifestSerDe
-from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, teams, utils
+from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, kubeflow, teams, utils
 from aws_orbit.services import codebuild, ecr
+from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -194,6 +195,7 @@ def deploy_env(args: Tuple[str, ...]) -> None:
         context=context,
         eks_system_masters_roles_changes=changeset.eks_system_masters_roles_changeset if changeset else None,
     )
+
     _logger.debug("Env Stack deployed")
     deploy_images_remotely(context=context, skip_images=skip_images_remote_flag == "skip-images")
     _logger.debug("Docker Images deployed")
@@ -204,12 +206,46 @@ def deploy_env(args: Tuple[str, ...]) -> None:
     _logger.debug("EKS Environment Stack deployed")
     kubectl.deploy_env(context=context)
     _logger.debug("Kubernetes Environment components deployed")
+
+    kubeflow.deploy_kubeflow(context=context)
+
     helm.deploy_env(context=context)
     _logger.debug("Helm Charts installed")
 
     k8s_context = utils.get_k8s_context(context=context)
-    kubectl.fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=False)
+    kubectl.fetch_kubectl_data(context=context, k8s_context=k8s_context)
     ContextSerDe.dump_context_to_ssm(context=context)
+    _logger.debug("Updating userpool redirect")
+    _update_userpool_client(context=context)
+    _update_userpool(context=context)
+
+
+def _update_userpool(context: Context) -> None:
+    cognito_client = boto3_client("cognito-idp")
+
+    function_arn = (
+        f"arn:aws:lambda:{context.region}:{context.account_id}:function:orbit-{context.name}-post-authentication"
+    )
+
+    cognito_client.update_user_pool(UserPoolId=context.user_pool_id, LambdaConfig={"PostAuthentication": function_arn})
+
+
+def _update_userpool_client(context: Context) -> None:
+    cognito = boto3_client("cognito-idp")
+    cognito.update_user_pool_client(
+        UserPoolId=context.user_pool_id,
+        ClientId=context.user_pool_client_id,
+        CallbackURLs=[
+            f"{context.landing_page_url}/oauth2/idpresponse",
+        ],
+        LogoutURLs=[],
+        ExplicitAuthFlows=["ALLOW_CUSTOM_AUTH", "ALLOW_USER_SRP_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"],
+        SupportedIdentityProviders=["COGNITO"],
+        AllowedOAuthFlows=["code"],
+        AllowedOAuthScopes=["aws.cognito.signin.user.admin", "email", "openid", "profile"],
+        AllowedOAuthFlowsUserPoolClient=True,
+        PreventUserExistenceErrors="ENABLED",
+    )
 
 
 def deploy_teams(args: Tuple[str, ...]) -> None:
@@ -283,6 +319,4 @@ def deploy_teams(args: Tuple[str, ...]) -> None:
         ContextSerDe.dump_context_to_ssm(context=context)
         _logger.debug("Team Plugins deployed")
 
-    k8s_context = utils.get_k8s_context(context=context)
-    kubectl.fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=True)
     _logger.debug("Teams deployed")

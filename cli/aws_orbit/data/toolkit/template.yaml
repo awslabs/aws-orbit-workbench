@@ -73,6 +73,7 @@ Resources:
               - iam:GetOpenIDConnectProvider
               - cognito-idp:CreateUserPool
               - cognito-idp:DeleteUserPool
+              - cognito-idp:UpdateUserPoolClient
               - cognito-idp:CreateUserPoolClient
               - cognito-idp:DeleteUserPoolClient
               - cognito-idp:CreateGroup
@@ -83,6 +84,8 @@ Resources:
               - cognito-identity:UntagResource
               - cognito-identity:TagResource
               - cognito-identity:SetIdentityPoolRoles
+              - cognito-idp:CreateUserPoolDomain
+              - cognito-idp:DeleteUserPoolDomain
               - ec2:*
               - elasticloadbalancing:*
               - ecs:CreateCluster
@@ -262,6 +265,8 @@ Resources:
             Resource:
               - arn:aws:iam::${account_id}:role/${top_level}-${env_name}-*
               - arn:aws:iam::${account_id}:role/eksctl-${top_level}-${env_name}-*
+              - arn:aws:iam::${account_id}:role/kf-user-${region}-${top_level}-${env_name}
+              - arn:aws:iam::${account_id}:role/kf-admin-${region}-${top_level}-${env_name}
           - Effect: Allow
             Action:
               - iam:CreateServiceLinkedRole
