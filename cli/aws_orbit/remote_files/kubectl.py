@@ -56,7 +56,7 @@ def _k8_dashboard(context: "Context", output_path: str) -> None:
     with open(input, "r") as file:
         content: str = file.read()
     content = utils.resolve_parameters(
-        content, dict(image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent")
+        content, dict(image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent")
     )
     with open(output, "w") as file:
         file.write(content)
@@ -69,7 +69,7 @@ def _metrics_server(context: "Context", output_path: str) -> None:
     with open(input, "r") as file:
         content: str = file.read()
     content = utils.resolve_parameters(
-        content, dict(image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent")
+        content, dict(image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent")
     )
     with open(output, "w") as file:
         file.write(content)
@@ -89,7 +89,7 @@ def _cluster_autoscaler(output_path: str, context: "Context") -> None:
             env_name=context.name,
             cluster_name=f"orbit-{context.name}",
             sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
-            image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
+            image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
             use_static_instance_list=str(not context.networking.data.internet_accessible).lower(),
         ),
     )
@@ -152,7 +152,7 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
             repository=context.images.jupyter_user.repository,
             tag=context.images.jupyter_user.version,
             sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
-            image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
+            image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
         ),
     )
     with open(output, "w") as file:
