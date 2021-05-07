@@ -87,7 +87,7 @@ def _cluster_autoscaler(output_path: str, context: "Context") -> None:
             env_name=context.name,
             cluster_name=f"orbit-{context.name}",
             sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
-            image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
+            image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
             use_static_instance_list=str(not context.networking.data.internet_accessible).lower(),
         ),
     )
