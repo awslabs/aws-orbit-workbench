@@ -20,9 +20,6 @@ Images:
     LandingPage:
         Repository: !ENV ${LANDING_PAGE_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/landing-page}
         Version: !ENV ${VERSION::latest}
-    ImageReplicator:
-        Repository: !ENV ${IMAGE_REPLICATOR_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/image-replicator}
-        Version: !ENV ${VERSION::latest}
 Networking:
     VpcId: !SSM ${/orbit-foundation/dev-env/resources::VpcId}
     PublicSubnets: !SSM ${/orbit-foundation/dev-env/resources::PublicSubnets}

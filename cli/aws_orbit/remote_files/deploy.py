@@ -40,7 +40,7 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
     build_args = args[4:]
 
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
-    _logger.debug("manifest.name: %s", context.name)
+    _logger.debug("context: %s", vars(context))
 
     docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
@@ -141,6 +141,8 @@ def deploy_images_remotely(context: "Context", skip_images: bool = True) -> None
     # Required images we always build/replicate
     images: List[Tuple[str, Optional[str], Optional[str], List[str]]] = [
         ("image-replicator", "image-replicator", None, []),
+        ("k8s-utilities", "k8s-utilities", None, []),
+        ("admission-controller", "admission-controller", None, []),
     ]
 
     # Secondary images we can optionally skip
