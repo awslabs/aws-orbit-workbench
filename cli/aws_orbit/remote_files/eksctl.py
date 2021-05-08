@@ -445,7 +445,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
             "Action": "sts:AssumeRoleWithWebIdentity",
             "Condition": {
                 "StringLike": {
-                    f"{context.eks_oidc_provider}:sub": f"system:serviceaccount:kube-system:orbit-{context.name}-admin"
+                    f"{context.eks_oidc_provider}:sub": f"system:serviceaccount:orbit-system:orbit-{context.name}-admin"
                 }
             },
         },

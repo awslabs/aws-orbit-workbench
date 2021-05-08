@@ -518,6 +518,7 @@ class ContextSerDe(Generic[T, V]):
                 msg = f"SSM parameter {context_parameter_name} not found for env {env_name}"
                 _logger.error(msg)
                 raise Exception(msg)
+            _logger.debug("Raw SSM: %s", main)
             teams_parameters = ssm.list_parameters(prefix=f"/orbit/{env_name}/teams/")
             _logger.debug("teams_parameters: %s", teams_parameters)
             teams = [ssm.get_parameter_if_exists(name=p) for p in teams_parameters if p.endswith("/context")]
