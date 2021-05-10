@@ -21,7 +21,7 @@
 title: AWS Orbit Workbench
 email: your-email@example.com
 description: >- # this means to ignore newlines until "baseurl:"
-  The easiest way for teams to collaborate to create production workloads that get value from data.
+  A Data Platform built for AWS, powered by Kubernetes.
 #baseurl: "" #this is for local testing purposes
 baseurl: "/aws-orbit-workbench" # the subpath of your site, e.g. /blog
 url: "https://github.com/awslabs/aws-orbit-workbench" # the base hostname & protocol for your site, e.g. http://example.com
@@ -57,6 +57,6 @@ plugins:
 header_pages:
   - index.markdown
   - documentation.markdown
-  - blog.markdown
+  - tour.markdown
   - tutorial.markdown
   - about.markdown

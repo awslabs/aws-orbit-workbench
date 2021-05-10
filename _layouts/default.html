@@ -1,31 +1,63 @@
 <!DOCTYPE html>
-<html lang="{{ site.lang | default: "en-US" }}">
-  <head>
+<html lang="{{ site.lang | default: " en-US" }}">
+<head>
     <meta charset="UTF-8">
 
-{% seo %}
+    {% seo %}
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#157878">
     <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
-      <script src="https://code.iconify.design/1/1.0.7/iconify.min.js"></script>
-  </head>
-  <body>
+    <script src="https://code.iconify.design/1/1.0.7/iconify.min.js"></script>
+</head>
+<body>
 
+<section>
+    <div class="menu-background">
+        <section class="menu-bar">
+            <div>
+                <nav role="navigation">
+                    <ul>
+                        <li><a class="nav-title" href="/aws-orbit-workbench/#">AWS Orbit Workbench</a></li>
+                        <li><a class="nav-item"  href="#" aria-haspopup="true">Tour</a>
+                         <!--   <ul class="dropdown" aria-label="submenu">
+                                <li><a href="#">Sub-1</a></li>
+                                <li><a href="#">Sub-2</a></li>
+                                <li><a href="#">Sub-3</a></li>
+                            </ul>-->
+                        </li>
+                        <li><a class="nav-item"  href="#" aria-haspopup="true">Installation</a>
+                        <li><a class="nav-item"  href="#" aria-haspopup="true">Tutorials</a>
+                        <li><a class="nav-item"  href="documentation" aria-haspopup="true">Documentation</a>
+                    </ul>
+                </nav>
+            </div>
 
-    <section>
-      {{ content }}
-    </section>
+        </section>
+    </div>
 
-    {% if site.google_analytics %}
-      <script>
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    <div class="default-content">
+        {{ content }}
+    </div>
 
-        ga('create', '{{ site.google_analytics }}', 'auto');
-        ga('send', 'pageview');
-      </script>
-    {% endif %}
-  </body>
+</section>
+
+{% if site.google_analytics %}
+<script>
+    (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r;
+        i[r] = i[r] || function () {
+            (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date();
+        a = s.createElement(o),
+            m = s.getElementsByTagName(o)[0];
+        a.async = 1;
+        a.src = g;
+        m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+    ga('create', '{{ site.google_analytics }}', 'auto');
+    ga('send', 'pageview');
+</script>
+{% endif %}
+</body>
 </html>
