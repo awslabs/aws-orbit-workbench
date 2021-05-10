@@ -9,13 +9,14 @@ $medium-breakpoint: 42rem !default;
 $header-heading-color: #232F3E !default;
 $header-text-color: #FFFFFF !default;
 $header-bg-color: #f1f4f6 !default;
-$header-bg-color-secondary: #161E2D !default;
+$menu-bg-color: #BBC0C1 !default;
+
 
 // Text
 $section-headings-color: #232F3E !default;
 $body-text-color: #757575 !default;
-$body-link-color: #1e6bb8 !default;
-$blockquote-text-color: #819198 !default;
+$body-link-color:#00a1c9 !default;
+
 
 // Code
 $code-bg-color: #f3f6fa !default;
@@ -23,8 +24,6 @@ $code-text-color: #567482 !default;
 
 // Borders
 $border-color: #ced4d5 !default;
-$table-border-color: #e9ebec !default;
-$hr-border-color: #eff0f1 !default;
 
 // Buttons
 $btn-border-color: #232F3E !default;
@@ -58,6 +57,14 @@ $btn-color-hover: #232F3E !default;
 
 body {
   font-family: "Amazon Ember";
+}
+
+.default-content {
+  margin-top: 46px;
+}
+
+h1 {
+  color: $header-heading-color;
 }
 
 h2 {
@@ -152,6 +159,11 @@ h2 {
   align-items: stretch;
 }
 
+a.box-link {
+  text-decoration: none;
+  color: $body-text-color;
+}
+
 .box {
   border: solid 1px $border-color;
   border-top-width: 0;
@@ -159,6 +171,7 @@ h2 {
   display: flex;
   flex-direction: column;
 }
+
 
 .box h3 {
   margin-top: 0;
@@ -201,25 +214,6 @@ h2 {
   background-color: $btn-background-color-hover;
 }
 
-.integration-header {
-  display: flex;
-  align-items: center;
-  justify-items: flex-start;
-}
-
-.integration-image {
-
-}
-
-.integration-title {
-  margin-left: 10px;
-  padding: 5px;
-  margin-top: 1rem;
-}
-
-.integration-title > h3 {
-  font-weight: bold;
-}
 
 .feature-box {
   display: flex;
@@ -275,4 +269,161 @@ h2 {
 .benefit-box > h5 {
   margin-top: 8px;
   color: $body-text-color
+}
+
+.light-grey-background {
+  background-color: $header-bg-color;
+}
+
+.generic-header-title {
+  color: $section-headings-color;
+}
+
+.menu-bar {
+  max-width: $large-breakpoint;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+
+.menu-background {
+  background-color: $menu-bg-color;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 9999;
+}
+
+nav a {
+  text-decoration: none;
+}
+
+nav ul {
+  list-style: none;
+  margin: 0;
+  padding-left: 0;
+}
+
+nav li {
+  color: $header-heading-color;
+  display: block;
+  float: left;
+  padding: 0.7rem;
+  position: relative;
+  text-decoration: none;
+  transition-duration: 0.5s;
+}
+
+nav li a {
+  color: $header-heading-color;
+}
+
+nav li:hover,
+nav li:focus-within {
+  color: $body-link-color;
+  cursor: pointer;
+  transition-duration: 0.5s;
+}
+
+nav li:focus-within a {
+  outline: none;
+  color: $body-link-color;
+  text-decoration: none;
+}
+
+nav li:hover a {
+  color: $body-link-color;
+  transition-duration: 0.5s;
+  text-decoration: none;
+}
+
+nav ul li:hover ul li a {
+  color: $header-heading-color;
+  transition-duration: 0.5s;
+  text-decoration: none;
+}
+
+nav ul li:hover ul li:hover a {
+  color: $body-link-color;
+  transition-duration: 0.5s;
+  text-decoration: none;
+}
+
+nav ul li ul {
+  background: $menu-bg-color;
+  visibility: hidden;
+  opacity: 0;
+  min-width: 5rem;
+  position: absolute;
+  transition: all 0.5s ease;
+  margin-top: 1rem;
+  left: 0;
+  display: none;
+}
+
+
+nav ul li:hover > ul,
+nav ul li:focus-within > ul,
+nav ul li ul:hover,
+nav ul li ul:focus {
+  visibility: visible;
+  opacity: 1;
+  display: block;
+  animation: fadeIn linear 0.25s;
+  -webkit-animation: fadeIn linear 0.25s;
+  -moz-animation: fadeIn linear 0.25s;
+  -o-animation: fadeIn linear 0.25s;
+  -ms-animation: fadeIn linear 0.25s;
+}
+
+.nav-title {
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.nav-item {
+  font-weight: 400;
+  font-size: 0.9rem;
+}
+
+@keyframes fadeIn {
+  0% {opacity:0;}
+  100% {opacity:1;}
+}
+
+@-moz-keyframes fadeIn {
+  0% {opacity:0;}
+  100% {opacity:1;}
+}
+
+@-webkit-keyframes fadeIn {
+  0% {opacity:0;}
+  100% {opacity:1;}
+}
+
+@-o-keyframes fadeIn {
+  0% {opacity:0;}
+  100% {opacity:1;}
+}
+
+@-ms-keyframes fadeIn {
+  0% {opacity:0;}
+  100% {opacity:1;}
+}
+
+nav ul li ul li {
+  clear: both;
+  width: 100%;
+}
+
+.documentation {
+  display: flex;
+}
+
+.documentation-content {
+  padding: 2rem;
 }
