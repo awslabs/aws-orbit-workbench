@@ -230,7 +230,7 @@ spec:
         app: admission-controller-pod
       name: admission-controller-pod
     spec:
-      serviceAccountName: cert-manager-service-account
+      serviceAccountName: orbit-${env_name}-admin
       containers:
         - name: webhook
           image: ${admission_controller_image}
@@ -248,6 +248,7 @@ spec:
             - "--bind=0.0.0.0:443"
             - "--certfile=/certs/tls.crt"
             - "--keyfile=/certs/tls.key"
+            - "--workers=5"
             - "aws_orbit_admission_controller.app:app"
           volumeMounts:
             - readOnly: true
@@ -269,10 +270,10 @@ spec:
             periodSeconds: 5
           resources:
             limits:
-              cpu: 1
-              memory: 1G
+              cpu: 2
+              memory: 2G
             requests:
-              cpu: 1
+              cpu: 2
               memory: 1G
       volumes:
         - name: admission-controller-certs

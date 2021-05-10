@@ -20,6 +20,7 @@ from aws_orbit import ORBIT_CLI_ROOT, sh, utils
 from aws_orbit.models.context import Context
 from aws_orbit.remote_files import kubectl
 from aws_orbit.remote_files.utils import get_k8s_context
+from aws_orbit.services import cfn
 from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -106,32 +107,42 @@ def gen_kubeflow_config(context: Context, output_path: str, cluster_name: str) -
 
 
 def deploy_kubeflow(context: Context) -> None:
-    cluster_name = f"orbit-{context.name}"
+    stack_name: str = f"orbit-{context.name}"
+    final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
+    _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
 
-    output_path = os.path.join(".orbit.out", context.name, "kubeflow", cluster_name)
-    gen_kubeflow_config(context, output_path, cluster_name)
+    if cfn.does_stack_exist(stack_name=final_eks_stack_name):
+        cluster_name = f"orbit-{context.name}"
 
-    _logger.debug("Deploying Kubeflow")
-    output_path = os.path.abspath(output_path)
-    _logger.debug(f"kubeflow config dir: {output_path}")
-    utils.print_dir(output_path)
-    sh.run("./apply_kf.sh", cwd=output_path)
+        output_path = os.path.join(".orbit.out", context.name, "kubeflow", cluster_name)
+        gen_kubeflow_config(context, output_path, cluster_name)
+
+        _logger.debug("Deploying Kubeflow")
+        output_path = os.path.abspath(output_path)
+        _logger.debug(f"kubeflow config dir: {output_path}")
+        utils.print_dir(output_path)
+        sh.run("./apply_kf.sh", cwd=output_path)
 
 
 def destroy_kubeflow(context: Context) -> None:
-    kubectl.write_kubeconfig(context=context)
+    stack_name: str = f"orbit-{context.name}"
+    final_eks_stack_name: str = f"eksctl-{stack_name}-cluster"
+    _logger.debug("EKSCTL stack name: %s", final_eks_stack_name)
 
-    for line in sh.run_iterating("kubectl get namespace kubeflow"):
-        if '"kubeflow" not found' in line:
-            return
+    if cfn.does_stack_exist(stack_name=final_eks_stack_name):
+        kubectl.write_kubeconfig(context=context)
 
-    cluster_name = f"orbit-{context.name}"
-    output_path = os.path.join(".orbit.out", context.name, "kubeflow", cluster_name)
-    gen_kubeflow_config(context, output_path, cluster_name)
+        for line in sh.run_iterating("kubectl get namespace kubeflow"):
+            if '"kubeflow" not found' in line:
+                return
 
-    _logger.debug("Destroying Kubeflow")
-    output_path = os.path.abspath(output_path)
-    _logger.debug(f"kubeflow config dir: {output_path}")
-    utils.print_dir(output_path)
-    sh.run("./apply_kf.sh", cwd=output_path)
-    sh.run("./delete_kf.sh", cwd=output_path)
+        cluster_name = f"orbit-{context.name}"
+        output_path = os.path.join(".orbit.out", context.name, "kubeflow", cluster_name)
+        gen_kubeflow_config(context, output_path, cluster_name)
+
+        _logger.debug("Destroying Kubeflow")
+        output_path = os.path.abspath(output_path)
+        _logger.debug(f"kubeflow config dir: {output_path}")
+        utils.print_dir(output_path)
+        sh.run("./apply_kf.sh", cwd=output_path)
+        sh.run("./delete_kf.sh", cwd=output_path)
