@@ -70,7 +70,7 @@ def _admission_controller(context: "Context", output_path: str) -> None:
 
 
 def _cluster_autoscaler(output_path: str, context: "Context") -> None:
-    filename = "cluster-autoscaler-autodiscover.yaml"
+    filename = "02-cluster-autoscaler-autodiscover.yaml"
     input = os.path.join(MODELS_PATH, "kube-system", filename)
     output = os.path.join(output_path, filename)
 
