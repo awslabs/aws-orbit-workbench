@@ -209,7 +209,7 @@ def deploy_env(context: Context) -> None:
             )
             install_chart(
                 repo=repo,
-                namespace="kube-system",
+                namespace="orbit-system",
                 name="image-replicator",
                 chart_name=chart_name,
                 chart_version=chart_version,

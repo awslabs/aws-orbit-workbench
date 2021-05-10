@@ -1,3 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${team}
+  labels:
+    orbit/user-space: enabled
+---
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
@@ -30,11 +37,6 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: efs-storage-class
   volumeMode: Filesystem
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ${team}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

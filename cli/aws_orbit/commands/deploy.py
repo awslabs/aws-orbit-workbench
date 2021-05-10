@@ -217,7 +217,9 @@ def deploy_env(
         image_manifests = {"code_build": manifest.images.code_build, "landing_page": manifest.images.landing_page}
 
         for name in context.images.names:
-            if name not in ["code_build", "image_replicator"]:
+            # We don't allow these images to be managed with an input Manifest
+            # These images should be changed/maintained in manifests.py
+            if name not in ["code_build", "image_replicator", "k8s-utilities"]:
                 image_manifests[name] = getattr(context.images, name) if skip_images else getattr(manifest.images, name)
         context.images = ImagesManifest(**image_manifests)  # type: ignore
 

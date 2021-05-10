@@ -94,6 +94,11 @@ spec:
         name: manifests
         path: aws/aws-istio-authz-adaptor/base_v3
     name: aws-istio-authz-adaptor
+  - kustomizeConfig:
+      repoRef:
+        name: orbit
+        path: kubeflow/manifests/stacks/aws/application/centraldashboard
+    name: centraldashboard
   plugins:
   - kind: KfAwsPlugin
     metadata:
@@ -111,8 +116,7 @@ spec:
   repos:
   - name: manifests
     uri: https://github.com/kubeflow/manifests/archive/v1.2.0.tar.gz
+  - name: orbit
+    uri: https://github.com/awslabs/aws-orbit-workbench/archive/refs/heads/kubeflow_shared_main.tar.gz
+#    uri: https://github.com/awslabs/aws-orbit-workbench/archive/refs/heads/kf_customizations.tar.gz
   version: v1.2-branch
-status:
-  reposCache:
-  - localPath: '".cache/manifests/manifests-1.2.0"'
-    name: manifests

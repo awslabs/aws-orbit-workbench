@@ -1,0 +1,15 @@
+include VERSION
+include LICENSE
+include NOTICE
+include *.in
+include *.sh
+include *.toml
+include *.txt
+include *.yml
+recursive-include voila *.json
+recursive-include voila *.txt
+recursive-include voila *.typed
+recursive-include voila *.yaml
+recursive-include voila *.tpl
+recursive-include voila *.helmignore
+recursive-include voila *.py
