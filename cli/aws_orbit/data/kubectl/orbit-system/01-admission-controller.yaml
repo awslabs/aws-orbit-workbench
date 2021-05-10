@@ -89,6 +89,8 @@ spec:
           env:
             - name: FLASK_DEBUG
               value: "1"
+            - name: REMOTE_DEBUG_HOST
+              value: "127.0.0.1:4321"
           args:
             - "--bind=0.0.0.0:443"
             - "--certfile=/certs/tls.crt"
@@ -233,9 +235,15 @@ spec:
         - name: webhook
           image: ${admission_controller_image}
           imagePullPolicy: ${image_pull_policy}
+          ports:
+            - containerPort: 443
+              name: https
+              protocol: TCP
           env:
             - name: FLASK_DEBUG
               value: "1"
+            - name: FLASK_ENV
+              value: development
           args:
             - "--bind=0.0.0.0:443"
             - "--certfile=/certs/tls.crt"
