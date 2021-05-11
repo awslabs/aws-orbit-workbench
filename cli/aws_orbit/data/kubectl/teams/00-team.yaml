@@ -131,3 +131,18 @@ spec:
   securityGroups:
     groupIds:
       - ${cluster_pod_security_group_id}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orbit-team-context
+  namespace: ${team}
+  labels:
+    orbit/team: ${team}
+    orbit/env: ${env_name}
+data:
+  team: |
+    ${team_context}
+  env: |
+    ${env_context}
+

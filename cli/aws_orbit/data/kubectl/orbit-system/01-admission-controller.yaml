@@ -81,7 +81,7 @@ spec:
         app: admission-controller-namespace
       name: admission-controller-namespace
     spec:
-      serviceAccountName: cert-manager-service-account
+      serviceAccountName: orbit-${env_name}-admin
       containers:
         - name: webhook
           image: ${admission_controller_image}
@@ -89,13 +89,15 @@ spec:
           env:
             - name: FLASK_DEBUG
               value: "1"
-            - name: REMOTE_DEBUG_HOST
-              value: "127.0.0.1:4321"
+            - name: FLASK_ENV
+              value: development
           args:
             - "--bind=0.0.0.0:443"
             - "--certfile=/certs/tls.crt"
             - "--keyfile=/certs/tls.key"
+            - "--workers=1"
             - "aws_orbit_admission_controller.app:app"
+            - "--reload"
           volumeMounts:
             - readOnly: true
               mountPath: /certs
@@ -116,8 +118,8 @@ spec:
             periodSeconds: 5
           resources:
             limits:
-              cpu: 1
-              memory: 1G
+              cpu: 2
+              memory: 2G
             requests:
               cpu: 1
               memory: 1G
@@ -154,6 +156,8 @@ spec:
             - "admission-controller-namespace-certs"
             - "--namespace"
             - "orbit-system"
+            - "--force"
+            - "yes"
           volumeMounts:
             - name: cert-manager-scripts
               mountPath: /cert-manager-scripts
@@ -188,9 +192,9 @@ webhooks:
           operator: Exists
     rules:
       - operations: ["CREATE", "UPDATE"]
-        apiGroups: [""]
+        apiGroups: ["orbit.aws"]
         apiVersions: ["v1"]
-        resources: ["namespaces"]
+        resources: ["namespacesettings"]
     clientConfig:
       caBundle: ""
       service:
@@ -248,7 +252,8 @@ spec:
             - "--bind=0.0.0.0:443"
             - "--certfile=/certs/tls.crt"
             - "--keyfile=/certs/tls.key"
-            - "--workers=5"
+            - "--workers=1"
+            - "--reload"
             - "aws_orbit_admission_controller.app:app"
           volumeMounts:
             - readOnly: true
@@ -273,7 +278,7 @@ spec:
               cpu: 2
               memory: 2G
             requests:
-              cpu: 2
+              cpu: 1
               memory: 1G
       volumes:
         - name: admission-controller-certs
@@ -308,6 +313,8 @@ spec:
             - "admission-controller-pod-certs"
             - "--namespace"
             - "orbit-system"
+            - "--force"
+            - "yes"
           volumeMounts:
             - name: cert-manager-scripts
               mountPath: /cert-manager-scripts

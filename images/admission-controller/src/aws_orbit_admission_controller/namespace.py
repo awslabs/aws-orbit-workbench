@@ -14,24 +14,77 @@
 
 import base64
 import copy
+import json
 import logging
-import random
 from typing import Any, Dict
 
 import jsonpatch
-
 # from aws_orbit_admission_controller import load_config
 from flask import jsonify
+from kubernetes.client import *
+
+from aws_orbit_admission_controller import load_config, run_command, install_chart
+
+def should_install_team_package(logger: logging.Logger, request: Dict[str, Any]) -> bool:
+    spec = request["object"]
+
+    if "dryRun" in request and request["dryRun"] == True:
+        logger.info("Dry run - Skip Install")
+        return False
+
+    if "metadata" not in spec or "labels" not in spec["metadata"]:
+        logger.info("Missing labels - Skip Install")
+        return False
+
+    if "orbit/user-space" not in spec["metadata"]["labels"]:
+        logger.info("Missing orbit/user-space - Skip Install")
+        return False
+
+    return True
 
 
 def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
+    logger.info("loading kubeconfig")
+    load_config()
     spec = request["object"]
     modified_spec = copy.deepcopy(spec)
-
+    logger.info("processing namesace:")
     logger.info("request: %s", request)
 
+    if not should_install_team_package(logger, request):
+        return jsonify(
+            {
+                "response": {
+                    "allowed": True,
+                    "uid": request["uid"],
+                }
+            }
+        )
+    # env = spec["metadata"]["labels"]["orbit/env"]
+    team = spec["metadata"]["labels"]["orbit/team"]
+    user = spec["metadata"]["labels"]["orbit/user"]
+    user_email = spec["metadata"]["annotations"]["owner"]
+    namespace = spec["metadata"]["name"]
+    logger.info("new namespace: %s,%s,%s,%s", team, user, user_email, namespace)
     try:
-        modified_spec["metadata"]["labels"]["example.com/new-label"] = str(random.randint(1, 1000))
+        api_instance = CoreV1Api()
+        team_context_cf: V1ConfigMap = api_instance.read_namespaced_config_map("orbit-team-context", team)
+        team_context_str = team_context_cf.data["team"]
+
+        logger.info("team context: %s", team_context_str)
+        team_context: Dict[str, Any] = json.loads(team_context_str)
+        logger.info("team context keys: %s", team_context.keys())
+    except Exception as e:
+        logger.error("Error during fetching team context configmap")
+        raise e
+    helm_repo_url = team_context["HelmRepository"]
+    logger.debug("Adding Helm Repository: %s at %s", team, helm_repo_url)
+
+    run_command(logger, f"helm repo add {team} {helm_repo_url}")
+    install_chart(logger, team, namespace, f'{namespace}-orbit-team', "orbit-user")
+
+    try:
+        modified_spec["metadata"]["annotations"]["orbit/helm"] = f'{namespace}-orbit-team'
     except KeyError:
         pass
 

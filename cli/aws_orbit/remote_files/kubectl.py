@@ -117,6 +117,8 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
             team_kms_key_arn=team_context.team_kms_key_arn,
             team_security_group_id=team_context.team_security_group_id,
             cluster_pod_security_group_id=context.cluster_pod_sg_id,
+            team_context=ContextSerDe.dump_context_to_str(team_context),
+            env_context=ContextSerDe.dump_context_to_str(context),
         ),
     )
     _logger.debug("Kubectl Team %s manifest:\n%s", team_context.name, content)
