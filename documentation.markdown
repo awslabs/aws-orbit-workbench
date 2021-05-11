@@ -1,10 +1,31 @@
 ---
-layout: tutorial
+layout: documentation
 title: Documentation
 permalink: /documentation
 ---
-Todo: fix some broken links below
-<a href="url"><img src="https://github.com/awslabs/aws-orbit-workbench/blob/main/images/landing-page/src/images/orbit1.jpg?raw=true" align="right" height="30%" width="30%" style="float:right"></a>
+
+# What is AWS Orbit Workbench?
+
+AWS Orbit Workbench is a framework for building data platforms on AWS.  You can build a data platform that gives you access to 
+the right tools for your use cases, either through the out-of-the-box in [integrations](/aws-orbit-workbench/#integrations)
+or through the extensible architecture.  You also have control over the underlying infrastructure, whether your work
+needs extra GPUs, extra memory or could save money by running on the newest [Graviton2](https://aws.amazon.com/ec2/graviton/) processors. 
+AWS Orbit Workbench is built on Kubernetes, making it easy to deploy, scale and 
+rapidly iterate.
+
+This introduction to AWS Orbit Workbench provides a detailed summary.  After reading this section, you should have a good 
+idea of what it offers and how it can fit into your business.
+
+## Advantages of using AWS Orbit Workbench
+
+AWS Orbit Workbench has been built to let you build a secure data platform on AWS and give you control over the services you use
+and the infrastructure you run on.  Advantages of using AWS Orbit Workbench are:
+
+* **Build the data platform you want** - you can use the out-of-the-box integrations to AWS and partner services or
+add your own.  You also have control over the infrastructure, so you can optimise your environment for your use cases.
+* **Work securely** - you can collaborate with your team, exchanging data and code, but you are prevented from sharing
+* **Work productively** - 
+
 
 Orbit Workbench is an open framework for building team-based secured data environment. Orbit workbench is built on Kubernetes using Amazon Managed Kubernetes Service (EKS), and provides both a command line tool for rapid deployment as well as Python SDK, Jupyter Plugins and more to accelerate data analysis and ML by integration with AWS analytics services such as Amazon Redshift, Amazon Athena, Amazon EMR, Amazon SageMaker and more.
 

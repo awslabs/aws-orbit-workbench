@@ -1,0 +1,47 @@
+services:
+  - title: Jupyter
+    image: img/service/jupyter-logo.svg
+  - title: Visual Studio Code
+    image: https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Visual_Studio_Code_1.18_icon.svg/1200px-Visual_Studio_Code_1.18_icon.svg.png
+  - title: PyCharm
+    image: img/service/icon-pycharm.svg
+  - title: Voila
+    image: img/service/voila-logo.svg
+  - title: Streamlit
+    image: img/service/streamlit_logo.png
+  - title: Plotly
+    image: img/service/plotly-logo.png
+  - title: Amazon Sagemaker
+    image: img/service/Amazon-SageMaker_48.png
+  - title: Amazon Athena
+    image: img/service/Amazon-Athena_48.png
+  - title: Amazon Redshift
+    image: img/service/Amazon-Redshift_48.png
+  - title: AWS Glue
+    image: img/service/AWS-Glue_48.png
+  - title: Amazon EMR
+    image: img/service/Amazon-EMR_48.png
+  - title: Ray
+    image: img/service/ray_logo.png
+  - title: Amazon EKS
+    image: img/service/Amazon-Elastic-Kubernetes-Service_48.png
+  - title: AWS Fargate
+    image: img/service/AWS-Fargate_48.png
+  - title: Amazon ECR
+    image: img/service/Amazon-Elastic-Container-Registry_48.png
+  - title: Amazon EC2
+    image: img/service/Amazon-EC2_48.png
+  - title: AWS Lambda
+    image: img/service/AWS-Lambda_48.png
+  - title: Amazon S3
+    image: img/service/Amazon-Simple-Storage-Service_48.png
+  - title: Amazon EFS
+    image: img/service/Amazon-Elastic-File-System_48.png
+  - title: Amazon FSx for Lustre
+    image: img/service/Amazon-FSx-for-Lustre_48.png
+  - title: Amazon EBS
+    image: img/service/Amazon-Elastic-Block-Store_48.png
+  - title: Amazon Cognito
+    image: img/service/Amazon-Cognito_48.png
+  - title: Okta
+    image: img/service/Logo_Okta_Blue_RGB.png
