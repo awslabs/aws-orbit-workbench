@@ -18,7 +18,7 @@ If you are looking to build your own Data & ML Platform for your company on AWS,
 
 Contributors are welcome!
 
-Please see our [Home](../../wiki) for installation and usage guides.
+Please see our [Home](https://awslabs.github.io/aws-orbit-workbench) for installation and usage guides.
 
 ##  Feature List <sup>[**](#myfootnote1)</sup>
 
