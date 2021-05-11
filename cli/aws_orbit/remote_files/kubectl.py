@@ -50,24 +50,27 @@ def _orbit_system_commons(context: "Context", output_path: str) -> None:
 
 
 def _admission_controller(context: "Context", output_path: str) -> None:
-    filename = "01-admission-controller.yaml"
-    input = os.path.join(MODELS_PATH, "orbit-system", filename)
-    output = os.path.join(output_path, filename)
+    filenames = ["01-admission-controller.yaml", "01-cert-manager.yaml"]
 
-    with open(input, "r") as file:
-        content: str = file.read()
-    content = resolve_parameters(
-        content,
-        dict(
-            env_name=context.name,
-            admission_controller_image=f"{context.images.admission_controller.repository}:"
-            f"{context.images.admission_controller.version}",
-            k8s_utilities_image=f"{context.images.k8s_utilities.repository}:" f"{context.images.k8s_utilities.version}",
-            image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
-        ),
-    )
-    with open(output, "w") as file:
-        file.write(content)
+    for filename in filenames:
+        input = os.path.join(MODELS_PATH, "orbit-system", filename)
+        output = os.path.join(output_path, filename)
+
+        with open(input, "r") as file:
+            content: str = file.read()
+        content = resolve_parameters(
+            content,
+            dict(
+                env_name=context.name,
+                admission_controller_image=f"{context.images.admission_controller.repository}:"
+                f"{context.images.admission_controller.version}",
+                k8s_utilities_image=f"{context.images.k8s_utilities.repository}:"
+                f"{context.images.k8s_utilities.version}",
+                image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
+            ),
+        )
+        with open(output, "w") as file:
+            file.write(content)
 
 
 def _cluster_autoscaler(output_path: str, context: "Context") -> None:
@@ -377,6 +380,7 @@ def deploy_env(context: "Context") -> None:
 
         # kube-system manifests
         output_path = _generate_kube_system_manifest(context=context)
+        sh.run(f"kubectl delete jobs -l app=cert-manager -n orbit-system --context {k8s_context} --wait")
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
         # orbit-system
