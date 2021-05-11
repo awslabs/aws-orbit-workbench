@@ -15,7 +15,6 @@
 
 import logging
 import subprocess
-from typing import Optional
 
 from kubernetes import config as k8_config
 
@@ -34,24 +33,4 @@ def run_command(logger: logging.Logger, cmd: str) -> str:
     except subprocess.CalledProcessError as exc:
         logger.debug("Command failed with exit code {}, stderr: {}".format(exc.returncode, exc.output.decode("utf-8")))
         raise Exception(exc.output.decode("utf-8"))
-    return output
-
-
-def install_chart(logger: logging.Logger, repo: str, namespace: str, name: str, chart_name: str,
-                  chart_version: Optional[str]) -> str:
-    logger.debug("Installing %s, version %s as %s from %s", chart_name, chart_version, name, repo)
-    try:
-        if chart_version:
-            version = f'--version {chart_version}'
-        else:
-            version = ''
-
-        output = subprocess.check_output(
-            f"helm upgrade --install --debug --namespace {namespace} {version} "
-            f"{chart_version} {name} {repo}/{chart_name}"
-        )
-    except subprocess.CalledProcessError as exc:
-        logger.debug("Command failed with exit code {}, stderr: {}".format(exc.returncode, exc.output.decode("utf-8")))
-        raise Exception(exc.output.decode("utf-8"))
-
     return output

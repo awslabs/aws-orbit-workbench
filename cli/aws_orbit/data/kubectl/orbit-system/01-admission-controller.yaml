@@ -170,15 +170,11 @@ webhooks:
     reinvocationPolicy: IfNeeded
     failurePolicy: Fail
     matchPolicy: Equivalent
-    namespaceSelector:
-      matchExpressions:
-        - key: orbit/user-space
-          operator: Exists
     rules:
       - operations: ["CREATE", "UPDATE"]
-        apiGroups: [""]
+        apiGroups: ["orbit.aws"]
         apiVersions: ["v1"]
-        resources: ["namespaces"]
+        resources: ["namespacesettings"]
     clientConfig:
       caBundle: ""
       service:
