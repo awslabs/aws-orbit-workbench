@@ -194,8 +194,11 @@ webhooks:
     matchPolicy: Equivalent
     namespaceSelector:
       matchExpressions:
-        - key: orbit/user-space
-          operator: Exists
+        - key: orbit/space
+          operator: In
+          values:
+            - team
+            - user
     rules:
       - operations: ["CREATE", "UPDATE"]
         apiGroups: [""]

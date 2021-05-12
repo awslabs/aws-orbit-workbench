@@ -57,14 +57,39 @@ data:
           "link": "https://www.kubeflow.org/docs/started/getting-started/"
         },
         {
-          "text": "Kubeflow on AWS",
-          "desc": "Running Kubeflow on Elastic Container Service and Amazon Web Services",
-          "link": "https://www.kubeflow.org/docs/aws/"
+          "text": "EMR on EKS",
+          "desc": "Amazon EMR on EKS provides a deployment option for Amazon EMR that allows you to run open-source big data frameworks on Amazon Elastic Kubernetes Service (Amazon EKS). With this deployment option, you can focus on running analytics workloads while Amazon EMR on EKS builds, configures, and manages containers for open-source applications. ",
+          "link": "https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks.html"
         },
         {
-          "text": "Requirements for Kubeflow",
-          "desc": "Get more detailed information about using Kubeflow and its components",
-          "link": "https://www.kubeflow.org/docs/started/requirements/"
+          "text": "AWS Glue DataBrew",
+          "desc": "AWS Glue DataBrew is a new visual data preparation tool that makes it easy for data analysts and data scientists to clean and normalize data to prepare it for analytics and machine learning. ",
+          "link": "https://aws.amazon.com/glue/features/databrew/"
+        },
+        {
+          "text": "Amazon FSx for Lustre",
+          "desc": "Fast and scalable shared storage to power your compute workloads. ",
+          "link": "https://aws.amazon.com/fsx/lustre/"
+        },
+        {
+          "text": "Amazon Redshift",
+          "desc": "Analyze all of your data with the fastest and most widely used cloud data warehouse.",
+          "link": "https://aws.amazon.com/redshift/?whats-new-cards.sort-by=item.additionalFields.postDateTime&whats-new-cards.sort-order=desc"
+        },
+        {
+          "text": "Amazon SageMaker",
+          "desc": "Machine learning for every data scientist and developer",
+          "link": "https://aws.amazon.com/sagemaker/"
+        },
+        {
+          "text": "Apache Ray",
+          "desc": "Ray is a distributed execution framework that makes it easy to scale your applications and to leverage state of the art machine learning libraries.",
+          "link": "https://ray.io"
+        },
+        {
+          "text": "Voila",
+          "desc": "Voilà turns Jupyter notebooks into standalone web applications.",
+          "link": "https://github.com/voila-dashboards/voila"
         }
       ]
     }
