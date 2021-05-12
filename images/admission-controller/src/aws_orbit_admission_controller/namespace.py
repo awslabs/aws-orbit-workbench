@@ -17,12 +17,11 @@ import copy
 import json
 import logging
 import subprocess
+import sys
 from typing import Any, Dict
 
 import jsonpatch
-import sys
 from aws_orbit_admission_controller import load_config, run_command
-# from aws_orbit_admission_controller import load_config
 from flask import jsonify
 from kubernetes.client import *
 
@@ -71,7 +70,7 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     install_helm_chart(helm_release, logger, namespace, team, user, user_email)
 
     try:
-        modified_spec["metadata"]["annotations"]["orbit/helm"] = f'{namespace}-orbit-team'
+        modified_spec["metadata"]["annotations"]["orbit/helm"] = f"{namespace}-orbit-team"
     except KeyError:
         pass
 
@@ -92,12 +91,14 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
 def install_helm_chart(helm_release, logger, namespace, team, user, user_email):
     try:
         # cmd = "/usr/local/bin/helm repo list"
-        cmd = f"/usr/local/bin/helm upgrade --install --devel --debug --namespace {namespace} " \
-              f"{helm_release} {team}/orbit-user " \
-              f"--set user={user},user_email={user_email},namespace={namespace}"
+        cmd = (
+            f"/usr/local/bin/helm upgrade --install --devel --debug --namespace {namespace} "
+            f"{helm_release} {team}/orbit-user "
+            f"--set user={user},user_email={user_email},namespace={namespace}"
+        )
 
         logger.debug("running cmd: %s", cmd)
-        subprocess.check_output(cmd.split(' '), stderr=sys.stderr)
+        subprocess.check_output(cmd.split(" "), stderr=sys.stderr)
     except subprocess.CalledProcessError as exc:
         logger.debug("Command failed with exit code {}, stderr: {}".format(exc.returncode, exc.output.decode("utf-8")))
         raise Exception(exc.output.decode("utf-8"))
