@@ -44,7 +44,7 @@ spec:
         app: admission-controller-namespace
       name: admission-controller-namespace
     spec:
-      serviceAccountName: cert-manager-service-account
+      serviceAccountName: orbit-${env_name}-admin
       containers:
         - name: webhook
           image: ${admission_controller_image}
@@ -52,11 +52,15 @@ spec:
           env:
             - name: FLASK_DEBUG
               value: "1"
+            - name: FLASK_ENV
+              value: development
           args:
             - "--bind=0.0.0.0:443"
             - "--certfile=/certs/tls.crt"
             - "--keyfile=/certs/tls.key"
+            - "--workers=1"
             - "aws_orbit_admission_controller.app:app"
+            - "--reload"
           volumeMounts:
             - readOnly: true
               mountPath: /certs
@@ -77,8 +81,8 @@ spec:
             periodSeconds: 5
           resources:
             limits:
-              cpu: 1
-              memory: 1G
+              cpu: 2
+              memory: 2G
             requests:
               cpu: 1
               memory: 1G
@@ -110,14 +114,21 @@ spec:
         - name: webhook
           image: ${admission_controller_image}
           imagePullPolicy: ${image_pull_policy}
+          ports:
+            - containerPort: 443
+              name: https
+              protocol: TCP
           env:
             - name: FLASK_DEBUG
               value: "1"
+            - name: FLASK_ENV
+              value: development
           args:
             - "--bind=0.0.0.0:443"
             - "--certfile=/certs/tls.crt"
             - "--keyfile=/certs/tls.key"
-            - "--workers=5"
+            - "--workers=1"
+            - "--reload"
             - "aws_orbit_admission_controller.app:app"
           volumeMounts:
             - readOnly: true
@@ -142,7 +153,7 @@ spec:
               cpu: 2
               memory: 2G
             requests:
-              cpu: 2
+              cpu: 1
               memory: 1G
       volumes:
         - name: admission-controller-certs
@@ -159,15 +170,11 @@ webhooks:
     reinvocationPolicy: IfNeeded
     failurePolicy: Fail
     matchPolicy: Equivalent
-    namespaceSelector:
-      matchExpressions:
-        - key: orbit/user-space
-          operator: Exists
     rules:
       - operations: ["CREATE", "UPDATE"]
-        apiGroups: [""]
+        apiGroups: ["orbit.aws"]
         apiVersions: ["v1"]
-        resources: ["namespaces"]
+        resources: ["namespacesettings"]
     clientConfig:
       caBundle: ""
       service:

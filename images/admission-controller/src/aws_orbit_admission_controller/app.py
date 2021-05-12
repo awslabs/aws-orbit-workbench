@@ -1,5 +1,6 @@
 import http
 import os
+import random
 from typing import Any
 
 from aws_orbit_admission_controller.namespace import process_request as process_namespace_request
@@ -26,9 +27,14 @@ def pod() -> Any:
 
 @app.route("/health", methods=["GET"])
 def health() -> Any:
-    app.logger.debug("Health check")
     return ("", http.HTTPStatus.NO_CONTENT)
 
 
+@app.route('/hello')
+def hello():
+    r = random.randint(0, 1000)
+    return f'Hello! random number gen: {r}'
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True)  # pragma: no cover
+    app.run(host="0.0.0.0", debug=True, use_reloader=True)  # pragma: no cover
