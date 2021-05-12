@@ -31,6 +31,11 @@ def should_install_team_package(logger: logging.Logger, request: Dict[str, Any])
         logger.info("Dry run - Skip Install")
         return False
 
+    spec = request["object"]["spec"]
+    space = spec["space"]
+    if space == "team":
+        return False
+
     return True
 
 

@@ -73,13 +73,11 @@ spec:
             spec:
               type: object
               required:
-              - user-space
+              - space
               - team
               - env
-              - user
-              - email
               properties:
-                user-space:
+                space:
                   type: string
                 team:
                   type: string

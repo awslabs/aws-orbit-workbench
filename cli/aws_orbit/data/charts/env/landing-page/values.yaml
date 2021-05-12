@@ -33,11 +33,8 @@ image:
 podAnnotations: {}
 
 service:
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-internal: ${internal_load_balancer}
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: ${ssl_cert_arn}
-  type: LoadBalancer
-  port: 443
+  type: ClusterIP
+  port: 80
 
 resources:
   limits:

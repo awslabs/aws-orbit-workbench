@@ -69,10 +69,6 @@ def list_env(env: str, variable: str) -> None:
             env_name = p["Name"].split("/")[2]
             context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
             _logger.debug(f"found env: {env_name}")
-            if context.k8_dashboard_url:
-                k8_dashboard_url = context.k8_dashboard_url
-            else:
-                k8_dashboard_url = ""
             if len(context.teams) > 0:
                 teams_list: List[str] = [x.name for x in context.teams]
             else:
@@ -87,7 +83,6 @@ def list_env(env: str, variable: str) -> None:
                     "LandingPage": context.landing_page_url,
                     "Teams": teams_list,
                     "ToolkitBucket": context.toolkit.s3_bucket,
-                    "K8Dashboard": k8_dashboard_url,
                 }
             else:
                 raise Exception(f"Unknown --variable option {variable}")
