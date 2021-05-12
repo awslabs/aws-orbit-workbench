@@ -3,7 +3,7 @@ kind: Namespace
 metadata:
   name: ${team}
   labels:
-    orbit/user-space: enabled
+    orbit/space: team
 ---
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
