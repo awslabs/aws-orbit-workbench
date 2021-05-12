@@ -82,7 +82,7 @@ def list_env(env: str, variable: str) -> None:
                 env_info[env_name] = {
                     "LandingPage": context.landing_page_url,
                     "Teams": teams_list,
-                    "ToolkitBucket": context.toolkit.s3_bucket
+                    "ToolkitBucket": context.toolkit.s3_bucket,
                 }
             else:
                 raise Exception(f"Unknown --variable option {variable}")
