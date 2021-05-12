@@ -50,24 +50,27 @@ def _orbit_system_commons(context: "Context", output_path: str) -> None:
 
 
 def _admission_controller(context: "Context", output_path: str) -> None:
-    filename = "01-admission-controller.yaml"
-    input = os.path.join(MODELS_PATH, "orbit-system", filename)
-    output = os.path.join(output_path, filename)
+    filenames = ["01-admission-controller.yaml", "01-cert-manager.yaml"]
 
-    with open(input, "r") as file:
-        content: str = file.read()
-    content = resolve_parameters(
-        content,
-        dict(
-            env_name=context.name,
-            admission_controller_image=f"{context.images.admission_controller.repository}:"
-            f"{context.images.admission_controller.version}",
-            k8s_utilities_image=f"{context.images.k8s_utilities.repository}:" f"{context.images.k8s_utilities.version}",
-            image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
-        ),
-    )
-    with open(output, "w") as file:
-        file.write(content)
+    for filename in filenames:
+        input = os.path.join(MODELS_PATH, "orbit-system", filename)
+        output = os.path.join(output_path, filename)
+
+        with open(input, "r") as file:
+            content: str = file.read()
+        content = resolve_parameters(
+            content,
+            dict(
+                env_name=context.name,
+                admission_controller_image=f"{context.images.admission_controller.repository}:"
+                f"{context.images.admission_controller.version}",
+                k8s_utilities_image=f"{context.images.k8s_utilities.repository}:"
+                f"{context.images.k8s_utilities.version}",
+                image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
+            ),
+        )
+        with open(output, "w") as file:
+            file.write(content)
 
 
 def _cluster_autoscaler(output_path: str, context: "Context") -> None:
@@ -117,6 +120,8 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
             team_kms_key_arn=team_context.team_kms_key_arn,
             team_security_group_id=team_context.team_security_group_id,
             cluster_pod_security_group_id=context.cluster_pod_sg_id,
+            team_context=ContextSerDe.dump_context_to_str(team_context),
+            env_context=ContextSerDe.dump_context_to_str(context),
         ),
     )
     _logger.debug("Kubectl Team %s manifest:\n%s", team_context.name, content)
@@ -377,6 +382,7 @@ def deploy_env(context: "Context") -> None:
 
         # kube-system manifests
         output_path = _generate_kube_system_manifest(context=context)
+        sh.run(f"kubectl delete jobs -l app=cert-manager -n orbit-system --context {k8s_context} --wait")
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
         # orbit-system
@@ -406,7 +412,7 @@ def destroy_env(context: "Context") -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(stack_name=eks_stack_name):
-        sh.run(f"eksctl utils write-kget_k8s_contextubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
+        sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
         k8s_context = get_k8s_context(context=context)
         _logger.debug("kubectl k8s_context: %s", k8s_context)
         output_path = _generate_orbit_system_manifest(context=context)

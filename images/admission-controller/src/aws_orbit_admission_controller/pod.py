@@ -19,7 +19,6 @@ import random
 from typing import Any, Dict
 
 import jsonpatch
-
 # from aws_orbit_admission_controller import load_config
 from flask import jsonify
 

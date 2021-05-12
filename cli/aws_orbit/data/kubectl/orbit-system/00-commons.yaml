@@ -54,6 +54,45 @@ rules:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  name: namespacesettings.orbit.aws
+spec:
+  group: orbit.aws
+  scope: Namespaced
+  names:
+    plural: namespacesettings
+    singular: namespacesetting
+    kind: NamespaceSetting
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+              - user-space
+              - team
+              - env
+              - user
+              - email
+              properties:
+                user-space:
+                  type: string
+                team:
+                  type: string
+                env:
+                  type: string
+                user:
+                  type: string
+                email:
+                  type: string
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
   name: podsettings.orbit.aws
 spec:
   group: orbit.aws
@@ -62,8 +101,6 @@ spec:
     plural: podsettings
     singular: podsetting
     kind: PodSetting
-    shortNames:
-    - ps
   versions:
     - name: v1
       served: true
