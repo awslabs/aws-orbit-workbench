@@ -22,13 +22,14 @@ import jsonpatch
 from aws_orbit_admission_controller import load_config
 from flask import jsonify
 from kubernetes import dynamic
-from kubernetes.dynamic import exceptions as k8s_exceptions
 from kubernetes.client import api_client
+from kubernetes.dynamic import exceptions as k8s_exceptions
 
 ORBIT_API_VERSION = "v1"
 ORBIT_API_GROUP = "orbit.aws"
 ORBIT_SYSTEM_NAMESPACE = "orbit-system"
 ORBIT_SYSTEM_POD_SETTINGS = None
+
 
 def get_client() -> dynamic.DynamicClient:
     load_config()
@@ -45,7 +46,7 @@ def get_namespace_setting(client: dynamic.DynamicClient, namespace: str, name: s
     api = client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="NamespaceSetting")
 
     try:
-        return api.get(name=name, namespace=namespace)
+        return cast(Dict[str, Any], api.get(name=name, namespace=namespace).to_dict())
     except k8s_exceptions.NotFoundError:
         return None
 
@@ -120,6 +121,7 @@ def apply_pod_setting_to_pod(pod_setting: Dict[str, Any], pod: Dict[str, Any], l
             apply_pod_setting_to_container(pod_setting=pod_setting, container=container)
     logger.debug("modified pod: %s", pod)
 
+
 def apply_pod_setting_to_container(pod_setting: Dict[str, Any], container: Dict[str, Any]) -> None:
     ps_spec = pod_setting["spec"]
 
@@ -135,9 +137,7 @@ def apply_pod_setting_to_container(pod_setting: Dict[str, Any], container: Dict[
     if "env" in ps_spec:
         # Filter out any existing env items with names that match pod_setting env items
         container["env"] = [
-            pv
-            for pv in container.get("env", [])
-            if pv["name"] not in [psv["name"] for psv in ps_spec.get("env", [])]
+            pv for pv in container.get("env", []) if pv["name"] not in [psv["name"] for psv in ps_spec.get("env", [])]
         ]
         # Extend container env items with container pod_setting env items
         container["env"].extend(ps_spec.get("env", []))
@@ -199,13 +199,13 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     client = get_client()
     global ORBIT_SYSTEM_POD_SETTINGS
     ORBIT_SYSTEM_POD_SETTINGS = (
-        get_pod_settings(client=client)
-        if ORBIT_SYSTEM_POD_SETTINGS is None
-        else ORBIT_SYSTEM_POD_SETTINGS
+        get_pod_settings(client=client) if ORBIT_SYSTEM_POD_SETTINGS is None else ORBIT_SYSTEM_POD_SETTINGS
     )
     logger.debug("podsettings: %s", ORBIT_SYSTEM_POD_SETTINGS)
 
-    namespace_setting = get_namespace_setting(client=client, namespace=ORBIT_SYSTEM_NAMESPACE, name=request["namespace"])
+    namespace_setting = get_namespace_setting(
+        client=client, namespace=ORBIT_SYSTEM_NAMESPACE, name=request["namespace"]
+    )
     if namespace_setting is None:
         logger.info("namespacesetting named %s not found in namesapce %s", request["namespace"], ORBIT_SYSTEM_NAMESPACE)
         return get_response(uid=request["uid"])
