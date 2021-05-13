@@ -26,6 +26,16 @@ spec:
     port: 443
     targetPort: 443
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: admission-controller-namespace-config
+  namespace: orbit-system
+data:
+  FLASK_DEBUG: "1"
+  FLASK_ENV: development
+  GUNICORN_WORKERS: "1"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -49,16 +59,14 @@ spec:
         - name: webhook
           image: ${admission_controller_image}
           imagePullPolicy: ${image_pull_policy}
-          env:
-            - name: FLASK_DEBUG
-              value: "1"
-            - name: FLASK_ENV
-              value: development
+          envFrom:
+            - configMapRef:
+                name: admission-controller-namespace-config
           args:
             - "--bind=0.0.0.0:443"
             - "--certfile=/certs/tls.crt"
             - "--keyfile=/certs/tls.key"
-            - "--workers=1"
+            - "--workers=$(GUNICORN_WORKERS)"
             - "aws_orbit_admission_controller.app:app"
             - "--reload"
           volumeMounts:
@@ -91,6 +99,16 @@ spec:
           secret:
             secretName: admission-controller-namespace-certs
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: admission-controller-pod-config
+  namespace: orbit-system
+data:
+  FLASK_DEBUG: "1"
+  FLASK_ENV: development
+  GUNICORN_WORKERS: "1"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -118,16 +136,14 @@ spec:
             - containerPort: 443
               name: https
               protocol: TCP
-          env:
-            - name: FLASK_DEBUG
-              value: "1"
-            - name: FLASK_ENV
-              value: development
+          envFrom:
+            - configMapRef:
+                name: admission-controller-pod-config
           args:
             - "--bind=0.0.0.0:443"
             - "--certfile=/certs/tls.crt"
             - "--keyfile=/certs/tls.key"
-            - "--workers=1"
+            - "--workers=$(GUNICORN_WORKERS)"
             - "--reload"
             - "aws_orbit_admission_controller.app:app"
           volumeMounts:
