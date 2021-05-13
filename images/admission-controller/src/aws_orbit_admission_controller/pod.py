@@ -22,12 +22,13 @@ import jsonpatch
 from aws_orbit_admission_controller import load_config
 from flask import jsonify
 from kubernetes import dynamic
+from kubernetes.dynamic import exceptions as k8s_exceptions
 from kubernetes.client import api_client
 
 ORBIT_API_VERSION = "v1"
 ORBIT_API_GROUP = "orbit.aws"
 ORBIT_SYSTEM_NAMESPACE = "orbit-system"
-
+ORBIT_SYSTEM_POD_SETTINGS = None
 
 def get_client() -> dynamic.DynamicClient:
     load_config()
@@ -36,14 +37,17 @@ def get_client() -> dynamic.DynamicClient:
 
 def get_pod_settings(client: dynamic.DynamicClient) -> List[Dict[str, Any]]:
     api = client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="PodSetting")
-    pod_settings = api.get(label_selector="orbit/team-space=enabled")
-    return cast(List[Dict[str, Any]], pod_settings.items)
+    pod_settings = api.get(label_selector="orbit/space")
+    return cast(List[Dict[str, Any]], pod_settings.to_dict().get("items", []))
 
 
-def get_namespace_setting(client: dynamic.DynamicClient, name: str) -> Optional[Dict[str, Any]]:
+def get_namespace_setting(client: dynamic.DynamicClient, namespace: str, name: str) -> Optional[Dict[str, Any]]:
     api = client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="NamespaceSetting")
-    namespace_settings = api.get(name=name, namespace=ORBIT_SYSTEM_NAMESPACE)
-    return namespace_settings.items[0] if namespace_settings.items else None
+
+    try:
+        return api.get(name=name, namespace=namespace)
+    except k8s_exceptions.NotFoundError:
+        return None
 
 
 def filter_pod_settings(
@@ -78,12 +82,12 @@ def filter_pod_settings(
     return filtered_pod_settings
 
 
-def apply_pod_setting_to_pod(pod_setting: Dict[str, Any], pod: Dict[str, Any]) -> None:
+def apply_pod_setting_to_pod(pod_setting: Dict[str, Any], pod: Dict[str, Any], logger: logging.Logger) -> None:
     ps_spec = pod_setting["spec"]
     pod_spec = pod["spec"]
 
     if "serviceAccountName" in ps_spec:
-        pod["serviceAccountName"] = ps_spec.get("serviceAccountName", None)
+        pod_spec["serviceAccountName"] = ps_spec.get("serviceAccountName", None)
 
     if "labels" in ps_spec:
         pod["metadata"]["labels"] = {**pod["metadata"].get("labels", {}), **ps_spec.get("labels", {})}
@@ -92,10 +96,10 @@ def apply_pod_setting_to_pod(pod_setting: Dict[str, Any], pod: Dict[str, Any]) -
         pod["metadata"]["annotations"] = {**pod["metadata"].get("annotations", {}), **ps_spec.get("annotations", {})}
 
     if "nodeSelector" in ps_spec:
-        pod["nodeSelector"] = {**pod_spec.get("nodeSelector", {}), **ps_spec.get("nodeSelector", {})}
+        pod_spec["nodeSelector"] = {**pod_spec.get("nodeSelector", {}), **ps_spec.get("nodeSelector", {})}
 
     if "securityContext" in ps_spec:
-        pod["securityContext"] = {**pod_spec.get("securityContext", {}), **ps_spec.get("securityContext", {})}
+        pod_spec["securityContext"] = {**pod_spec.get("securityContext", {}), **ps_spec.get("securityContext", {})}
 
     if "volumes" in ps_spec:
         # Filter out any existing volumes with names that match pod_setting volumes
@@ -114,7 +118,7 @@ def apply_pod_setting_to_pod(pod_setting: Dict[str, Any], pod: Dict[str, Any]) -
     for container in pod_spec.get("containers", []):
         if containerSelector.match(container.get("name", "")):
             apply_pod_setting_to_container(pod_setting=pod_setting, container=container)
-
+    logger.debug("modified pod: %s", pod)
 
 def apply_pod_setting_to_container(pod_setting: Dict[str, Any], container: Dict[str, Any]) -> None:
     ps_spec = pod_setting["spec"]
@@ -125,11 +129,22 @@ def apply_pod_setting_to_container(pod_setting: Dict[str, Any], container: Dict[
     if "imagePullPolicy" in ps_spec:
         container["imagePullPolicy"] = ps_spec.get("imagePullPolicy", None)
 
-    if "env" in ps_spec:
-        container["env"] = {**container.get("env", {}), **ps_spec.get("env", {})}
-
     if "lifecycle" in ps_spec:
         container["lifecycle"] = {**container.get("lifecycle", {}), **ps_spec.get("lifecycle", {})}
+
+    if "env" in ps_spec:
+        # Filter out any existing env items with names that match pod_setting env items
+        container["env"] = [
+            pv
+            for pv in container.get("env", [])
+            if pv["name"] not in [psv["name"] for psv in ps_spec.get("env", [])]
+        ]
+        # Extend container env items with container pod_setting env items
+        container["env"].extend(ps_spec.get("env", []))
+
+    if "envFrom" in ps_spec:
+        # Extend container envFrom with pod_setting envFrom
+        container["envFrom"].extend(ps_spec.get("envFrom", []))
 
     if "volumeMounts" in ps_spec:
         # Filter out any existing volumes with names that match pod_setting volumes
@@ -138,7 +153,7 @@ def apply_pod_setting_to_container(pod_setting: Dict[str, Any], container: Dict[
             for pv in container.get("volumeMounts", [])
             if pv["name"] not in [psv["name"] for psv in ps_spec.get("volumeMounts", [])]
         ]
-        # Extend pod volumes with pod_setting volumes
+        # Extend container volumes with container volumes
         container["volumeMounts"].extend(ps_spec.get("volumeMounts", []))
 
 
@@ -182,23 +197,31 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     logger.info("request: %s", request)
 
     client = get_client()
-    namespace_setting = get_namespace_setting(client=client, name=pod["metadata"]["namespace"])
+    global ORBIT_SYSTEM_POD_SETTINGS
+    ORBIT_SYSTEM_POD_SETTINGS = (
+        get_pod_settings(client=client)
+        if ORBIT_SYSTEM_POD_SETTINGS is None
+        else ORBIT_SYSTEM_POD_SETTINGS
+    )
+    logger.debug("podsettings: %s", ORBIT_SYSTEM_POD_SETTINGS)
+
+    namespace_setting = get_namespace_setting(client=client, namespace=ORBIT_SYSTEM_NAMESPACE, name=request["namespace"])
     if namespace_setting is None:
+        logger.info("namespacesetting named %s not found in namesapce %s", request["namespace"], ORBIT_SYSTEM_NAMESPACE)
         return get_response(uid=request["uid"])
 
     team_namespace = namespace_setting["spec"]["team"]
     team_pod_settings = filter_pod_settings(pod_settings=ORBIT_SYSTEM_POD_SETTINGS, namespace=team_namespace, pod=pod)
+    logger.debug("filtered podsettings: %s", team_pod_settings)
 
     try:
         for pod_setting in team_pod_settings:
-            apply_pod_setting_to_pod(pod_setting=pod_setting, pod=modified_pod)
+            logger.debug("applying podsetting: %s", pod_setting)
+            apply_pod_setting_to_pod(pod_setting=pod_setting, pod=modified_pod, logger=logger)
     except Exception as e:
         logger.exception(e)
         pass
 
     patch = jsonpatch.JsonPatch.from_diff(pod, modified_pod)
-    logger.info("patch: %s", patch)
+    logger.info("patch: %s", str(patch).encode())
     return get_response(uid=request["uid"], patch=patch)
-
-
-ORBIT_SYSTEM_POD_SETTINGS = get_pod_settings(client=get_client())
