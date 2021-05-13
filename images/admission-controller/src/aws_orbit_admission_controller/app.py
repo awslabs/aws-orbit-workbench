@@ -30,10 +30,10 @@ def health() -> Any:
     return ("", http.HTTPStatus.NO_CONTENT)
 
 
-@app.route('/hello')
-def hello():
+@app.route("/hello")
+def hello() -> Any:
     r = random.randint(0, 1000)
-    return f'Hello! random number gen: {r}'
+    return f"Hello! random number gen: {r}"
 
 
 if __name__ == "__main__":

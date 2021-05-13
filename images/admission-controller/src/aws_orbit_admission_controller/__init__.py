@@ -14,12 +14,15 @@
 
 
 import logging
+import os
 import subprocess
 
 from kubernetes import config as k8_config
 
 
 def load_config(in_cluster: bool = True) -> None:
+    in_cluster_env = os.environ.get("IN_CLUSTER_DEPLOYMENT", None)
+    in_cluster = in_cluster_env.lower() in ["yes", "true", "1"] if in_cluster_env is not None else in_cluster
     if in_cluster:
         k8_config.load_incluster_config()
     else:
