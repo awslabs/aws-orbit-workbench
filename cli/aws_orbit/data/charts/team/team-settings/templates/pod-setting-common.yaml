@@ -1,0 +1,86 @@
+# This is the lowest commond properties which every orbit-based container requires.
+apiVersion: orbit.aws/v1
+kind: PodSetting
+metadata:
+  name: orbit-pod-basics
+  namespace: orbit-system
+spec:
+  containerSelector:
+    regex: "jupyter*"
+  podSelector:
+    matchLabels:
+      orbit/pod: "yes"
+    matchExpressions:
+      - key: someKey
+        operator: Exists
+  volumeMounts:
+    - mountPath: /efs
+      name: efs-volume
+  volumes:
+    - name: efs-volume
+      persistentVolumeClaim:
+        claimName: team-efs
+  labels:
+    orbit/node-type: ec2
+    orbit/attach-security-group: "yes"
+  env:
+    - name: AWS_DEFAULT_REGION
+      value: {{ .Values.region }}
+    - name: ENV_NAME
+      value: {{ .Values.env }}
+    - name: TEAM
+      value: {{ .Values.team }}
+    - name: GRANT_SUDO
+      value: {{ .Values.grant_sudo }}
+    - name: AWS_STS_REGIONAL_ENDPOINTS
+      value: {{ .Values.sts_ep }}
+  nodeSelector:
+    orbit/usage: teams
+    orbit/node-type: ec2
+  annotations:
+    AWS_ORBIT_TEAM_SPACE: {{ .Values.team }}
+    AWS_ORBIT_ENV: {{ .Values.env }}
+  securityContext:
+    {{ if .Values.grant_sudo }}
+    runAsUser: {{ .Values.runAsUser }}
+    {{ end }}
+    fsGroup: 100
+---
+# This configures the image policy to force PULL when using development env.
+{{ if .Values.DEVELOPMENT }}
+apiVersion: orbit.aws/v1
+kind: PodSetting
+metadata:
+  name: orbit-pod-force-image-pull
+  namespace: orbit-system
+spec:
+  containerSelector:
+    regex: "jupyter*"
+  podSelector:
+    matchLabels:
+      orbit/pod: "yes"
+    matchExpressions:
+      - key: someKey
+        operator: Exists
+  imagePullPolicy: Always
+---
+{{ end }}
+# This configures the bootstrap script to start once the container is created for interactive notebooks only
+apiVersion: orbit.aws/v1
+kind: PodSetting
+metadata:
+  name: orbit-pod-notebook-interactive
+  namespace: orbit-system
+spec:
+  containerSelector:
+    regex: "jupyter*"
+  podSelector:
+    matchLabels:
+      orbit/pod: "yes"
+    matchExpressions:
+      - key: someKey
+        operator: Exists
+  lifecycle:
+    postStart:
+      exec:
+        command: ["/bin/sh", "/home/jovyan/.orbit/bootstrap.sh"]

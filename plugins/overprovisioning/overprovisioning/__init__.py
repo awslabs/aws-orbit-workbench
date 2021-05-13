@@ -69,4 +69,4 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
 @hooks.destroy
 def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
     _logger.debug("Delete Plugin %s of Team Env name: %s | Team name: %s", plugin_id, context.name, team_context.name)
-    helm.uninstall_chart(f"{team_context.name}-{plugin_id}")
+    helm.uninstall_chart(f"{team_context.name}-{plugin_id}", namespace=team_context.name)
