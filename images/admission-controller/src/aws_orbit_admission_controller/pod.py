@@ -38,7 +38,7 @@ def get_client() -> dynamic.DynamicClient:
 
 def get_pod_settings(client: dynamic.DynamicClient) -> List[Dict[str, Any]]:
     api = client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="PodSetting")
-    pod_settings = api.get(label_selector="orbit/space")
+    pod_settings = api.get()
     return cast(List[Dict[str, Any]], pod_settings.to_dict().get("items", []))
 
 
@@ -87,21 +87,27 @@ def apply_pod_setting_to_pod(pod_setting: Dict[str, Any], pod: Dict[str, Any], l
     ps_spec = pod_setting["spec"]
     pod_spec = pod["spec"]
 
+    # Merge
     if "serviceAccountName" in ps_spec:
         pod_spec["serviceAccountName"] = ps_spec.get("serviceAccountName", None)
 
+    # Merge
     if "labels" in ps_spec:
         pod["metadata"]["labels"] = {**pod["metadata"].get("labels", {}), **ps_spec.get("labels", {})}
 
+    # Merge
     if "annotations" in ps_spec:
         pod["metadata"]["annotations"] = {**pod["metadata"].get("annotations", {}), **ps_spec.get("annotations", {})}
 
+    # Merge
     if "nodeSelector" in ps_spec:
         pod_spec["nodeSelector"] = {**pod_spec.get("nodeSelector", {}), **ps_spec.get("nodeSelector", {})}
 
+    # Merge
     if "securityContext" in ps_spec:
         pod_spec["securityContext"] = {**pod_spec.get("securityContext", {}), **ps_spec.get("securityContext", {})}
 
+    # Merge
     if "volumes" in ps_spec:
         # Filter out any existing volumes with names that match pod_setting volumes
         pod_spec["volumes"] = [
@@ -112,7 +118,11 @@ def apply_pod_setting_to_pod(pod_setting: Dict[str, Any], pod: Dict[str, Any], l
         # Extend pod volumes with pod_setting volumes
         pod_spec["volumes"].extend(ps_spec.get("volumes", []))
 
-    containerSelector = re.compile(ps_spec["containerSelector"]["regex"])
+    containerSelector = (
+        re.compile(r".*")
+        if ps_spec["containerSelector"]["regex"] == "*"
+        else re.compile(ps_spec["containerSelector"]["regex"])
+    )
     for container in pod_spec.get("initContainers", []):
         if containerSelector.match(container.get("name", "")):
             apply_pod_setting_to_container(pod_setting=pod_setting, container=container)
@@ -125,15 +135,27 @@ def apply_pod_setting_to_pod(pod_setting: Dict[str, Any], pod: Dict[str, Any], l
 def apply_pod_setting_to_container(pod_setting: Dict[str, Any], container: Dict[str, Any]) -> None:
     ps_spec = pod_setting["spec"]
 
+    # Replace
     if "image" in ps_spec:
         container["image"] = ps_spec.get("image", None)
 
+    # Replace
     if "imagePullPolicy" in ps_spec:
         container["imagePullPolicy"] = ps_spec.get("imagePullPolicy", None)
 
+    # Merge
     if "lifecycle" in ps_spec:
         container["lifecycle"] = {**container.get("lifecycle", {}), **ps_spec.get("lifecycle", {})}
 
+    # Replace
+    if "command" in ps_spec:
+        container["command"] = ps_spec["command"]
+
+    # Replace
+    if "args" in ps_spec:
+        container["args"] = ps_spec["args"]
+
+    # Merge
     if "env" in ps_spec:
         # Filter out any existing env items with names that match pod_setting env items
         container["env"] = [
@@ -142,10 +164,12 @@ def apply_pod_setting_to_container(pod_setting: Dict[str, Any], container: Dict[
         # Extend container env items with container pod_setting env items
         container["env"].extend(ps_spec.get("env", []))
 
+    # Extend
     if "envFrom" in ps_spec:
         # Extend container envFrom with pod_setting envFrom
         container["envFrom"].extend(ps_spec.get("envFrom", []))
 
+    # Merge
     if "volumeMounts" in ps_spec:
         # Filter out any existing volumes with names that match pod_setting volumes
         container["volumeMounts"] = [
