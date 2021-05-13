@@ -162,6 +162,14 @@ spec:
                     required:
                     - name
                     - mountPath
+                command:
+                  type: array
+                  items:
+                    type: string
+                args:
+                  type: array
+                  items:
+                    type: string
                 labels:
                   type: object
                   additionalProperties:

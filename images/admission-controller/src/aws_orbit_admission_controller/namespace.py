@@ -23,7 +23,7 @@ from typing import Any, Dict
 import jsonpatch
 from aws_orbit_admission_controller import load_config, run_command
 from flask import jsonify
-from kubernetes.client import *
+from kubernetes.client import CoreV1Api, V1ConfigMap
 
 
 def should_install_team_package(logger: logging.Logger, request: Dict[str, Any]) -> bool:
@@ -93,7 +93,9 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     )
 
 
-def install_helm_chart(helm_release, logger, namespace, team, user, user_email):
+def install_helm_chart(
+    helm_release: str, logger: logging.Logger, namespace: str, team: str, user: str, user_email: str
+) -> None:
     try:
         # cmd = "/usr/local/bin/helm repo list"
         cmd = (
@@ -109,7 +111,7 @@ def install_helm_chart(helm_release, logger, namespace, team, user, user_email):
         raise Exception(exc.output.decode("utf-8"))
 
 
-def get_team_context(logger, team):
+def get_team_context(logger: logging.Logger, team: str) -> Dict[str, Any]:
     try:
         api_instance = CoreV1Api()
         team_context_cf: V1ConfigMap = api_instance.read_namespaced_config_map("orbit-team-context", team)
