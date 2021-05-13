@@ -1,0 +1,2238 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: batchtransformjobs.sagemaker.aws.amazon.com
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.transformJobStatus
+    name: Status
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    format: date
+    name: Creation-Time
+    type: string
+  - JSONPath: .status.sageMakerTransformJobName
+    name: Sagemaker-Job-Name
+    type: string
+  group: sagemaker.aws.amazon.com
+  names:
+    kind: BatchTransformJob
+    listKind: BatchTransformJobList
+    plural: batchtransformjobs
+    singular: batchtransformjob
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: BatchTransformJob is the Schema for the batchtransformjobs API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: BatchTransformJobSpec defines the desired state of BatchTransformJob
+          properties:
+            batchStrategy:
+              description: Batch Transform related struct
+              type: string
+            dataProcessing:
+              properties:
+                JoinSource:
+                  type: string
+                OutputFilter:
+                  type: string
+                inputFilter:
+                  type: string
+              type: object
+            environment:
+              items:
+                description: Used in describing maps in Kubernetes.
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+                type: object
+              type: array
+            maxConcurrentTransforms:
+              format: int64
+              type: integer
+            maxPayloadInMB:
+              format: int64
+              type: integer
+            modelName:
+              type: string
+            region:
+              minLength: 1
+              type: string
+            sageMakerEndpoint:
+              description: A custom SageMaker endpoint to use when communicating with
+                SageMaker.
+              pattern: ^(https|http)://.*$
+              type: string
+            tags:
+              items:
+                properties:
+                  key:
+                    minLength: 1
+                    type: string
+                  value:
+                    type: string
+                required:
+                - key
+                - value
+                type: object
+              type: array
+            transformInput:
+              properties:
+                compressionType:
+                  enum:
+                  - None
+                  - Gzip
+                  type: string
+                contentType:
+                  type: string
+                dataSource:
+                  properties:
+                    s3DataSource:
+                      properties:
+                        s3DataType:
+                          enum:
+                          - S3Prefix
+                          - ManifestFile
+                          - AugmentedManifestFile
+                          type: string
+                        s3Uri:
+                          pattern: ^(https|s3)://([^/]+)/?(.*)$
+                          type: string
+                      required:
+                      - s3DataType
+                      - s3Uri
+                      type: object
+                  required:
+                  - s3DataSource
+                  type: object
+                splitType:
+                  type: string
+              required:
+              - dataSource
+              type: object
+            transformJobName:
+              description: The SageMaker batchtransform job name. This is optional
+                for the SageMaker K8s operator. If it is empty, the operator will
+                populate it with a generated name.
+              maxLength: 63
+              type: string
+            transformOutput:
+              properties:
+                accept:
+                  type: string
+                assembleWith:
+                  type: string
+                kmsKeyId:
+                  type: string
+                s3OutputPath:
+                  pattern: ^(https|s3)://([^/]+)/?(.*)$
+                  type: string
+              required:
+              - s3OutputPath
+              type: object
+            transformResources:
+              properties:
+                instanceCount:
+                  format: int64
+                  minimum: 1
+                  type: integer
+                instanceType:
+                  description: Transform job has separate instance type called TransformInstanceType
+                    Keeping it string
+                  minLength: 1
+                  type: string
+                volumeKmsKeyId:
+                  type: string
+              required:
+              - instanceCount
+              - instanceType
+              type: object
+          required:
+          - modelName
+          - region
+          - transformInput
+          - transformOutput
+          - transformResources
+          type: object
+        status:
+          description: BatchTransformJobStatus defines the observed state of BatchTransformJob
+          properties:
+            additional:
+              description: Field to store additional information, for example if we
+                are unable to check the status we update this.
+              type: string
+            lastCheckTime:
+              description: The last time that we checked the status of the SageMaker
+                job.
+              format: date-time
+              type: string
+            sageMakerTransformJobName:
+              description: SageMaker TransformJobName job name
+              type: string
+            transformJobStatus:
+              description: The status of the transform job. https://docs.aws.amazon.com/sagemaker/latest/dg/API_DescribeTransformJob.html
+              type: string
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: endpointconfigs.sagemaker.aws.amazon.com
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.status
+    name: Status
+    type: string
+  - JSONPath: .status.sageMakerEndpointConfigName
+    name: Sage-Maker-EndpointConfig-Name
+    type: string
+  group: sagemaker.aws.amazon.com
+  names:
+    kind: EndpointConfig
+    listKind: EndpointConfigList
+    plural: endpointconfigs
+    singular: endpointconfig
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: EndpointConfig is the Schema for the hostingdeployments API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: EndpointConfigSpec defines the desired state of EndpointConfig
+          properties:
+            kmsKeyId:
+              type: string
+            productionVariants:
+              items:
+                properties:
+                  acceleratorType:
+                    type: string
+                  initialInstanceCount:
+                    format: int64
+                    minimum: 1
+                    type: integer
+                  initialVariantWeight:
+                    description: We use an int64 here instead of float because floats
+                      are not supported by the Kubernetes API. The actual traffic
+                      directed to this ProductionVariant is the ratio of this variant
+                      weight to the sum of all variant weights.
+                    format: int64
+                    type: integer
+                  instanceType:
+                    type: string
+                  modelName:
+                    minLength: 1
+                    type: string
+                  variantName:
+                    minLength: 1
+                    type: string
+                required:
+                - initialInstanceCount
+                - instanceType
+                - modelName
+                - variantName
+                type: object
+              minItems: 1
+              type: array
+            region:
+              type: string
+            sageMakerEndpoint:
+              type: string
+            tags:
+              items:
+                properties:
+                  key:
+                    minLength: 1
+                    type: string
+                  value:
+                    type: string
+                required:
+                - key
+                - value
+                type: object
+              type: array
+          required:
+          - productionVariants
+          - region
+          type: object
+        status:
+          description: EndpointConfigStatus defines the observed state of EndpointConfig
+          properties:
+            additional:
+              description: Field to store additional information, for example if we
+                are unable to check the status in sagemaker we update this.
+              type: string
+            endpointConfigArn:
+              description: The EndpointConfig ARN of the SageMaker EndpointConfig
+              type: string
+            lastUpdateTime:
+              description: The last time this status was updated.
+              format: date-time
+              type: string
+            sageMakerEndpointConfigName:
+              description: The name of the EndpointConfig in SageMaker.
+              type: string
+            status:
+              description: The status of the EndpointConfig
+              type: string
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: hostingautoscalingpolicies.sagemaker.aws.amazon.com
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.hostingAutoscalingPolicyStatus
+    name: Status
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    format: date
+    name: Creation-Time
+    type: string
+  group: sagemaker.aws.amazon.com
+  names:
+    kind: HostingAutoscalingPolicy
+    listKind: HostingAutoscalingPolicyList
+    plural: hostingautoscalingpolicies
+    shortNames:
+    - hap
+    singular: hostingautoscalingpolicy
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: HostingAutoscalingPolicy is the Schema for the HostingAutoscalingPolicy
+        API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: HostingAutoscalingPolicySpec defines the desired state of the
+            cluster for HostingAutoscalingPolicy
+          properties:
+            maxCapacity:
+              format: int64
+              type: integer
+            minCapacity:
+              format: int64
+              type: integer
+            policyName:
+              description: The autoscaling policy name. This is optional for the SageMaker
+                K8s operator. If it is empty, the operator will populate it with a
+                generated name.
+              maxLength: 256
+              type: string
+            policyType:
+              description: The autoscaling policy type. This is optional for the SageMaker
+                K8s operator. If it is empty, the operator will populate it with TargetTrackingScaling
+              type: string
+            region:
+              type: string
+            resourceId:
+              items:
+                description: AutoscalingResource is used to create the string representing
+                  the resourceID in the format endpoint/my-end-point/variant/my-variant
+                properties:
+                  endpointName:
+                    minLength: 1
+                    type: string
+                  variantName:
+                    minLength: 1
+                    type: string
+                type: object
+              minItems: 1
+              type: array
+            sageMakerEndpoint:
+              description: A custom SageMaker endpoint to use when communicating with
+                SageMaker.
+              pattern: ^(https|http)://.*$
+              type: string
+            scalableDimension:
+              type: string
+            serviceNamespace:
+              type: string
+            suspendedState:
+              description: HAPSuspendedState https://docs.aws.amazon.com/autoscaling/application/APIReference/API_SuspendedState.html
+              properties:
+                dynamicScalingInSuspended:
+                  type: boolean
+                dynamicScalingOutSuspended:
+                  type: boolean
+                scheduledScalingSuspended:
+                  type: boolean
+              type: object
+            targetTrackingScalingPolicyConfiguration:
+              description: 'TargetTrackingScalingPolicyConfig https://docs.aws.amazon.com/autoscaling/application/APIReference/API_TargetTrackingScalingPolicyConfiguration.html
+                TODO: string requires the input to be in quotes in the spec which
+                is not intuitive Needs a fix for floats, probably use resource.Quantity'
+              properties:
+                customizedMetricSpecification:
+                  description: CustomizedMetricSpecification https://docs.aws.amazon.com/autoscaling/application/APIReference/API_CustomizedMetricSpecification.html
+                  properties:
+                    dimensions:
+                      items:
+                        description: Used in describing maps in Kubernetes.
+                        properties:
+                          name:
+                            type: string
+                          value:
+                            type: string
+                        type: object
+                      type: array
+                    metricName:
+                      minLength: 1
+                      type: string
+                    namespace:
+                      minLength: 1
+                      type: string
+                    statistic:
+                      minLength: 1
+                      type: string
+                    unit:
+                      type: string
+                  type: object
+                disableScaleIn:
+                  type: boolean
+                predefinedMetricSpecification:
+                  description: Ideally Predefined metric should not need a value but
+                    this is for consistency with API usage
+                  properties:
+                    predefinedMetricType:
+                      type: string
+                  type: object
+                scaleInCooldown:
+                  format: int64
+                  type: integer
+                scaleOutCooldown:
+                  format: int64
+                  type: integer
+                targetValue:
+                  format: int64
+                  type: integer
+              type: object
+          required:
+          - region
+          type: object
+        status:
+          description: HostingAutoscalingPolicyStatus defines the observed state of
+            HostingAutoscalingPolicy
+          properties:
+            additional:
+              description: Field to store additional information, for example if we
+                are unable to check the status we update this.
+              type: string
+            hostingAutoscalingPolicyStatus:
+              type: string
+            lastCheckTime:
+              description: The last time that we checked the status of the job.
+              format: date-time
+              type: string
+            policyName:
+              type: string
+            resourceIDList:
+              items:
+                type: string
+              type: array
+          type: object
+      required:
+      - spec
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: hostingdeployments.sagemaker.aws.amazon.com
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.endpointStatus
+    name: Status
+    type: string
+  - JSONPath: .status.endpointName
+    name: Sagemaker-endpoint-name
+    type: string
+  group: sagemaker.aws.amazon.com
+  names:
+    kind: HostingDeployment
+    listKind: HostingDeploymentList
+    plural: hostingdeployments
+    singular: hostingdeployment
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: HostingDeployment is the Schema for the hostingdeployments API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: HostingDeploymentSpec defines the desired state of HostingDeployment
+          properties:
+            endpointName:
+              description: The SageMaker endpoint name. If it is empty the operator
+                will populate it with a generated name.
+              maxLength: 63
+              type: string
+            excludeRetainedVariantProperties:
+              items:
+                properties:
+                  variantPropertyType:
+                    enum:
+                    - DesiredInstanceCount
+                    - DesiredWeight
+                    - DataCaptureConfig
+                    type: string
+                required:
+                - variantPropertyType
+                type: object
+              type: array
+            kmsKeyId:
+              type: string
+            models:
+              items:
+                description: This is something we are defining not coming from aws-sdk-go-v2
+                properties:
+                  containers:
+                    items:
+                      description: Describes the container, as part of model definition.
+                      properties:
+                        containerHostname:
+                          type: string
+                        environment:
+                          items:
+                            description: Used in describing maps in Kubernetes.
+                            properties:
+                              name:
+                                type: string
+                              value:
+                                type: string
+                            type: object
+                          type: array
+                        image:
+                          type: string
+                        mode:
+                          enum:
+                          - SingleModel
+                          - MultiModel
+                          type: string
+                        modelDataUrl:
+                          type: string
+                        modelPackageName:
+                          type: string
+                      type: object
+                    minItems: 1
+                    type: array
+                  enableNetworkIsolation:
+                    type: boolean
+                  executionRoleArn:
+                    minLength: 20
+                    type: string
+                  name:
+                    type: string
+                  primaryContainer:
+                    description: Primary container will be ignored if more than one
+                      container in the `containers` field is provided.
+                    type: string
+                  vpcConfig:
+                    properties:
+                      securityGroupIds:
+                        items:
+                          type: string
+                        maxItems: 5
+                        minItems: 1
+                        type: array
+                      subnets:
+                        items:
+                          type: string
+                        maxItems: 16
+                        minItems: 1
+                        type: array
+                    required:
+                    - securityGroupIds
+                    - subnets
+                    type: object
+                required:
+                - executionRoleArn
+                - name
+                type: object
+              type: array
+            productionVariants:
+              items:
+                properties:
+                  acceleratorType:
+                    type: string
+                  initialInstanceCount:
+                    format: int64
+                    minimum: 1
+                    type: integer
+                  initialVariantWeight:
+                    description: We use an int64 here instead of float because floats
+                      are not supported by the Kubernetes API. The actual traffic
+                      directed to this ProductionVariant is the ratio of this variant
+                      weight to the sum of all variant weights.
+                    format: int64
+                    type: integer
+                  instanceType:
+                    type: string
+                  modelName:
+                    minLength: 1
+                    type: string
+                  variantName:
+                    minLength: 1
+                    type: string
+                required:
+                - initialInstanceCount
+                - instanceType
+                - modelName
+                - variantName
+                type: object
+              minItems: 1
+              type: array
+            region:
+              minLength: 1
+              type: string
+            retainAllVariantProperties:
+              type: boolean
+            sageMakerEndpoint:
+              description: A custom SageMaker endpoint to use when communicating with
+                SageMaker.
+              pattern: ^(https|http)://.*$
+              type: string
+            tags:
+              items:
+                properties:
+                  key:
+                    minLength: 1
+                    type: string
+                  value:
+                    type: string
+                required:
+                - key
+                - value
+                type: object
+              type: array
+          required:
+          - models
+          - productionVariants
+          - region
+          type: object
+        status:
+          description: HostingDeploymentStatus defines the observed state of HostingDeployment
+          properties:
+            additional:
+              description: This field contains additional information about failures.
+              type: string
+            creationTime:
+              description: https://docs.aws.amazon.com/sagemaker/latest/dg/API_DescribeEndpoint.html#SageMaker-DescribeEndpoint-response-CreationTime
+              format: date-time
+              type: string
+            endpointArn:
+              description: https://docs.aws.amazon.com/sagemaker/latest/dg/API_DescribeEndpoint.html#SageMaker-DescribeEndpoint-response-EndpointArn
+              type: string
+            endpointConfigName:
+              description: https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateEndpoint.html#SageMaker-CreateEndpoint-request-EndpointConfigName
+              type: string
+            endpointName:
+              description: https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateEndpoint.html#SageMaker-CreateEndpoint-request-EndpointName
+              type: string
+            endpointStatus:
+              description: https://docs.aws.amazon.com/sagemaker/latest/dg/API_DescribeEndpoint.html#SageMaker-DescribeEndpoint-response-EndpointStatus
+              type: string
+            endpointUrl:
+              type: string
+            failureReason:
+              description: https://docs.aws.amazon.com/sagemaker/latest/dg/API_DescribeEndpoint.html#SageMaker-DescribeEndpoint-response-FailureReason
+              type: string
+            lastCheckTime:
+              format: date-time
+              type: string
+            lastModifiedTime:
+              description: https://docs.aws.amazon.com/sagemaker/latest/dg/API_DescribeEndpoint.html#API_DescribeEndpoint_ResponseSyntax
+              format: date-time
+              type: string
+            modelNames:
+              items:
+                description: Used in describing maps in Kubernetes.
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+                type: object
+              type: array
+            productionVariants:
+              description: https://docs.aws.amazon.com/sagemaker/latest/dg/API_ProductionVariantSummary.html
+              items:
+                description: Please also see https://docs.aws.amazon.com/goto/WebAPI/sagemaker-2017-07-24/ProductionVariantSummary
+                  This is only used in status so no validation is required
+                properties:
+                  currentInstanceCount:
+                    format: int64
+                    type: integer
+                  currentWeight:
+                    description: We use an int64 here instead of float because floats
+                      are not supported by the Kubernetes API. The actual traffic
+                      directed to this ProductionVariant is the ratio of this variant
+                      weight to the sum of all variant weights.
+                    format: int64
+                    type: integer
+                  deployedImages:
+                    items:
+                      properties:
+                        resolutionTime:
+                          format: date-time
+                          type: string
+                        resolvedImage:
+                          type: string
+                        specifiedImage:
+                          type: string
+                      type: object
+                    type: array
+                  desiredInstanceCount:
+                    format: int64
+                    type: integer
+                  desiredWeight:
+                    description: We use an int64 here instead of float because floats
+                      are not supported by the Kubernetes API. The actual traffic
+                      directed to this ProductionVariant is the ratio of this variant
+                      weight to the sum of all variant weights.
+                    format: int64
+                    type: integer
+                  variantName:
+                    type: string
+                required:
+                - variantName
+                type: object
+              type: array
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: hyperparametertuningjobs.sagemaker.aws.amazon.com
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.hyperParameterTuningJobStatus
+    name: Status
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    format: date
+    name: Creation-Time
+    type: string
+  - JSONPath: .status.trainingJobStatusCounters.completed
+    format: int64
+    name: Completed
+    type: number
+  - JSONPath: .status.trainingJobStatusCounters.inProgress
+    format: int64
+    name: InProgress
+    type: number
+  - JSONPath: .status.trainingJobStatusCounters.totalError
+    format: int64
+    name: Errors
+    type: number
+  - JSONPath: .status.trainingJobStatusCounters.stopped
+    format: int64
+    name: Stopped
+    type: number
+  - JSONPath: .status.bestTrainingJob.trainingJobName
+    name: Best-Training-Job
+    type: string
+  - JSONPath: .status.sageMakerHyperParameterTuningJobName
+    name: Sagemaker-Job-Name
+    type: string
+  group: sagemaker.aws.amazon.com
+  names:
+    kind: HyperparameterTuningJob
+    listKind: HyperparameterTuningJobList
+    plural: hyperparametertuningjobs
+    singular: hyperparametertuningjob
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: HyperparameterTuningJob is the Schema for the hyperparametertuningjobs
+        API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: HyperparameterTuningJobSpec defines the desired state of HyperparameterTuningJob
+            These are taken from aws-go-sdk-v2 and modified to use Kubebuilder validation
+            and json omitempty instead of aws-go-sdk-v2 validation and required parameter
+            notation, respectively.
+          properties:
+            hyperParameterTuningJobConfig:
+              properties:
+                hyperParameterTuningJobObjective:
+                  properties:
+                    metricName:
+                      minLength: 1
+                      type: string
+                    type:
+                      type: string
+                  required:
+                  - metricName
+                  - type
+                  type: object
+                parameterRanges:
+                  properties:
+                    categoricalParameterRanges:
+                      items:
+                        properties:
+                          name:
+                            type: string
+                          values:
+                            items:
+                              type: string
+                            minItems: 1
+                            type: array
+                        required:
+                        - name
+                        - values
+                        type: object
+                      type: array
+                    continuousParameterRanges:
+                      items:
+                        properties:
+                          maxValue:
+                            type: string
+                          minValue:
+                            type: string
+                          name:
+                            type: string
+                          scalingType:
+                            type: string
+                        required:
+                        - maxValue
+                        - minValue
+                        - name
+                        - scalingType
+                        type: object
+                      type: array
+                    integerParameterRanges:
+                      items:
+                        properties:
+                          maxValue:
+                            type: string
+                          minValue:
+                            type: string
+                          name:
+                            type: string
+                          scalingType:
+                            type: string
+                        required:
+                        - maxValue
+                        - minValue
+                        - name
+                        - scalingType
+                        type: object
+                      type: array
+                  type: object
+                resourceLimits:
+                  properties:
+                    maxNumberOfTrainingJobs:
+                      format: int64
+                      minimum: 1
+                      type: integer
+                    maxParallelTrainingJobs:
+                      format: int64
+                      minimum: 1
+                      type: integer
+                  required:
+                  - maxNumberOfTrainingJobs
+                  - maxParallelTrainingJobs
+                  type: object
+                strategy:
+                  type: string
+                trainingJobEarlyStoppingType:
+                  type: string
+              required:
+              - resourceLimits
+              - strategy
+              type: object
+            hyperParameterTuningJobName:
+              type: string
+            region:
+              minLength: 1
+              type: string
+            sageMakerEndpoint:
+              description: A custom SageMaker endpoint to use when communicating with
+                SageMaker.
+              pattern: ^(https|http)://.*$
+              type: string
+            tags:
+              items:
+                properties:
+                  key:
+                    minLength: 1
+                    type: string
+                  value:
+                    type: string
+                required:
+                - key
+                - value
+                type: object
+              type: array
+            trainingJobDefinition:
+              properties:
+                algorithmSpecification:
+                  properties:
+                    algorithmName:
+                      minLength: 1
+                      type: string
+                    metricDefinitions:
+                      items:
+                        properties:
+                          name:
+                            minLength: 1
+                            type: string
+                          regex:
+                            minLength: 1
+                            type: string
+                        required:
+                        - name
+                        - regex
+                        type: object
+                      type: array
+                    trainingImage:
+                      type: string
+                    trainingInputMode:
+                      enum:
+                      - File
+                      - Pipe
+                      type: string
+                  required:
+                  - trainingInputMode
+                  type: object
+                checkpointConfig:
+                  properties:
+                    localPath:
+                      type: string
+                    s3Uri:
+                      pattern: ^(https|s3)://([^/]+)/?(.*)$
+                      type: string
+                  required:
+                  - s3Uri
+                  type: object
+                enableInterContainerTrafficEncryption:
+                  type: boolean
+                enableManagedSpotTraining:
+                  type: boolean
+                enableNetworkIsolation:
+                  type: boolean
+                inputDataConfig:
+                  items:
+                    properties:
+                      channelName:
+                        minLength: 1
+                        pattern: '[A-Za-z0-9\.\-_]+'
+                        type: string
+                      compressionType:
+                        enum:
+                        - None
+                        - Gzip
+                        type: string
+                      contentType:
+                        type: string
+                      dataSource:
+                        properties:
+                          fileSystemDataSource:
+                            properties:
+                              directoryPath:
+                                type: string
+                              fileSystemAccessMode:
+                                type: string
+                              fileSystemId:
+                                type: string
+                              fileSystemType:
+                                type: string
+                            required:
+                            - directoryPath
+                            - fileSystemAccessMode
+                            - fileSystemId
+                            - fileSystemType
+                            type: object
+                          s3DataSource:
+                            properties:
+                              attributeNames:
+                                items:
+                                  type: string
+                                type: array
+                              s3DataDistributionType:
+                                enum:
+                                - FullyReplicated
+                                - ShardedByS3Key
+                                type: string
+                              s3DataType:
+                                enum:
+                                - S3Prefix
+                                - ManifestFile
+                                - AugmentedManifestFile
+                                type: string
+                              s3Uri:
+                                pattern: ^(https|s3)://([^/]+)/?(.*)$
+                                type: string
+                            required:
+                            - s3DataType
+                            - s3Uri
+                            type: object
+                        type: object
+                      inputMode:
+                        enum:
+                        - Pipe
+                        - File
+                        type: string
+                      recordWrapperType:
+                        type: string
+                      shuffleConfig:
+                        properties:
+                          seed:
+                            format: int64
+                            type: integer
+                        required:
+                        - seed
+                        type: object
+                    required:
+                    - channelName
+                    - dataSource
+                    type: object
+                  minItems: 1
+                  type: array
+                outputDataConfig:
+                  properties:
+                    kmsKeyId:
+                      type: string
+                    s3OutputPath:
+                      pattern: ^(https|s3)://([^/]+)/?(.*)$
+                      type: string
+                  required:
+                  - s3OutputPath
+                  type: object
+                resourceConfig:
+                  properties:
+                    instanceCount:
+                      format: int64
+                      minimum: 1
+                      type: integer
+                    instanceType:
+                      minLength: 1
+                      type: string
+                    volumeKmsKeyId:
+                      type: string
+                    volumeSizeInGB:
+                      format: int64
+                      minimum: 1
+                      type: integer
+                  required:
+                  - instanceCount
+                  - instanceType
+                  - volumeSizeInGB
+                  type: object
+                roleArn:
+                  minLength: 20
+                  type: string
+                staticHyperParameters:
+                  items:
+                    description: Used in describing maps in Kubernetes.
+                    properties:
+                      name:
+                        type: string
+                      value:
+                        type: string
+                    type: object
+                  type: array
+                stoppingCondition:
+                  properties:
+                    maxRuntimeInSeconds:
+                      format: int64
+                      minimum: 1
+                      type: integer
+                    maxWaitTimeInSeconds:
+                      format: int64
+                      minimum: 1
+                      type: integer
+                  type: object
+                vpcConfig:
+                  properties:
+                    securityGroupIds:
+                      items:
+                        type: string
+                      maxItems: 5
+                      minItems: 1
+                      type: array
+                    subnets:
+                      items:
+                        type: string
+                      maxItems: 16
+                      minItems: 1
+                      type: array
+                  required:
+                  - securityGroupIds
+                  - subnets
+                  type: object
+              required:
+              - algorithmSpecification
+              - outputDataConfig
+              - resourceConfig
+              - roleArn
+              - stoppingCondition
+              type: object
+            warmStartConfig:
+              properties:
+                parentHyperParameterTuningJobs:
+                  items:
+                    properties:
+                      hyperParameterTuningJobName:
+                        minLength: 1
+                        type: string
+                    type: object
+                  minItems: 1
+                  type: array
+                warmStartType:
+                  type: string
+              required:
+              - parentHyperParameterTuningJobs
+              - warmStartType
+              type: object
+          required:
+          - hyperParameterTuningJobConfig
+          - region
+          type: object
+        status:
+          description: HyperparameterTuningJobStatus defines the observed state of
+            HyperparameterTuningJob
+          properties:
+            additional:
+              description: Field to store additional information, for example if we
+                are unable to check the status we update this.
+              type: string
+            bestTrainingJob:
+              description: A HyperParameterTrainingJobSummary object that describes
+                the training job that completed with the best current HyperParameterTuningJobObjective.
+                See https://docs.aws.amazon.com/sagemaker/latest/dg/API_DescribeHyperParameterTuningJob.html#SageMaker-DescribeHyperParameterTuningJob-response-BestTrainingJob
+              properties:
+                creationTime:
+                  format: date-time
+                  type: string
+                failureReason:
+                  type: string
+                finalHyperParameterTuningJobObjectiveMetric:
+                  properties:
+                    metricName:
+                      type: string
+                    type:
+                      type: string
+                    value:
+                      description: Value is string instead of float64 to prevent bugs
+                        when deserializing onto different platforms.
+                      type: string
+                  type: object
+                objectiveStatus:
+                  type: string
+                trainingEndTime:
+                  format: date-time
+                  type: string
+                trainingJobArn:
+                  type: string
+                trainingJobName:
+                  type: string
+                trainingJobStatus:
+                  type: string
+                trainingStartTime:
+                  format: date-time
+                  type: string
+                tunedHyperParameters:
+                  items:
+                    description: Used in describing maps in Kubernetes.
+                    properties:
+                      name:
+                        type: string
+                      value:
+                        type: string
+                    type: object
+                  type: array
+                tuningJobName:
+                  type: string
+              type: object
+            hyperParameterTuningJobStatus:
+              description: The status of HyperParameterTrainingJob https://docs.aws.amazon.com/sagemaker/latest/dg/API_DescribeHyperParameterTuningJob.html#SageMaker-DescribeHyperParameterTuningJob-response-HyperParameterTuningJobStatus
+              type: string
+            lastCheckTime:
+              description: The last time that we checked the status of the SageMaker
+                job.
+              format: date-time
+              type: string
+            sageMakerHyperParameterTuningJobName:
+              description: SageMaker hyperparametertuning job name
+              type: string
+            trainingJobStatusCounters:
+              description: The TrainingJobStatusCounters object that specifies the
+                number of training jobs, categorized by status, that this tuning job
+                launched. https://docs.aws.amazon.com/sagemaker/latest/dg/API_TrainingJobStatusCounters.html
+              properties:
+                completed:
+                  description: The number of completed training jobs launched by the
+                    hyperparameter tuning job.
+                  format: int64
+                  type: integer
+                inProgress:
+                  description: The number of in-progress training jobs launched by
+                    a hyperparameter tuning job.
+                  format: int64
+                  type: integer
+                nonRetryableError:
+                  description: The number of training jobs that failed and can't be
+                    retried. A failed training job can't be retried if it failed because
+                    a client error occurred.
+                  format: int64
+                  type: integer
+                retryableError:
+                  description: The number of training jobs that failed, but can be
+                    retried. A failed training job can be retried only if it failed
+                    because an internal service error occurred.
+                  format: int64
+                  type: integer
+                stopped:
+                  description: The number of training jobs launched by a hyperparameter
+                    tuning job that were manually stopped.
+                  format: int64
+                  type: integer
+                totalError:
+                  description: The sum of NonRetryableError and RetryableError. This
+                    is unique to the Kubernetes operator and is used to simplify the
+                    `kubectl get` output.
+                  format: int64
+                  type: integer
+              type: object
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: models.sagemaker.aws.amazon.com
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.status
+    name: Status
+    type: string
+  - JSONPath: .status.sageMakerModelName
+    name: Sage-Maker-Model-Name
+    type: string
+  group: sagemaker.aws.amazon.com
+  names:
+    kind: Model
+    listKind: ModelList
+    plural: models
+    singular: model
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: Model is the Schema for the hostingdeployments API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: ModelSpec defines the desired state of Model
+          properties:
+            containers:
+              items:
+                description: Describes the container, as part of model definition.
+                properties:
+                  containerHostname:
+                    type: string
+                  environment:
+                    items:
+                      description: Used in describing maps in Kubernetes.
+                      properties:
+                        name:
+                          type: string
+                        value:
+                          type: string
+                      type: object
+                    type: array
+                  image:
+                    type: string
+                  mode:
+                    enum:
+                    - SingleModel
+                    - MultiModel
+                    type: string
+                  modelDataUrl:
+                    type: string
+                  modelPackageName:
+                    type: string
+                type: object
+              type: array
+            enableNetworkIsolation:
+              type: boolean
+            executionRoleArn:
+              type: string
+            primaryContainer:
+              description: Describes the container, as part of model definition.
+              properties:
+                containerHostname:
+                  type: string
+                environment:
+                  items:
+                    description: Used in describing maps in Kubernetes.
+                    properties:
+                      name:
+                        type: string
+                      value:
+                        type: string
+                    type: object
+                  type: array
+                image:
+                  type: string
+                mode:
+                  enum:
+                  - SingleModel
+                  - MultiModel
+                  type: string
+                modelDataUrl:
+                  type: string
+                modelPackageName:
+                  type: string
+              type: object
+            region:
+              type: string
+            sageMakerEndpoint:
+              type: string
+            tags:
+              items:
+                properties:
+                  key:
+                    minLength: 1
+                    type: string
+                  value:
+                    type: string
+                required:
+                - key
+                - value
+                type: object
+              type: array
+            vpcConfig:
+              properties:
+                securityGroupIds:
+                  items:
+                    type: string
+                  maxItems: 5
+                  minItems: 1
+                  type: array
+                subnets:
+                  items:
+                    type: string
+                  maxItems: 16
+                  minItems: 1
+                  type: array
+              required:
+              - securityGroupIds
+              - subnets
+              type: object
+          required:
+          - executionRoleArn
+          - region
+          type: object
+        status:
+          description: ModelStatus defines the observed state of Model
+          properties:
+            additional:
+              description: Field to store additional information, for example if we
+                are unable to check the status in sagemaker we update this.
+              type: string
+            lastUpdateTime:
+              description: The last time this status was updated.
+              format: date-time
+              type: string
+            modelArn:
+              description: The Model ARN of the SageMaker model
+              type: string
+            sageMakerModelName:
+              description: The name of the model in SageMaker.
+              type: string
+            status:
+              description: The status of the model.
+              type: string
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: processingjobs.sagemaker.aws.amazon.com
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.processingJobStatus
+    name: Status
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    format: date
+    name: Creation-Time
+    type: string
+  - JSONPath: .status.sageMakerProcessingJobName
+    name: Sagemaker-Job-Name
+    type: string
+  group: sagemaker.aws.amazon.com
+  names:
+    kind: ProcessingJob
+    listKind: ProcessingJobList
+    plural: processingjobs
+    singular: processingjob
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: ProcessingJob is the Schema for the processingjobs API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: ProcessingJobSpec defines the desired state of ProcessingJob
+          properties:
+            appSpecification:
+              properties:
+                containerArguments:
+                  items:
+                    type: string
+                  type: array
+                containerEntrypoint:
+                  items:
+                    type: string
+                  type: array
+                imageUri:
+                  type: string
+              type: object
+            environment:
+              items:
+                description: Used in describing maps in Kubernetes.
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+                type: object
+              maxItems: 100
+              type: array
+            networkConfig:
+              properties:
+                enableInterContainerTrafficEncryption:
+                  type: boolean
+                enableNetworkIsolation:
+                  type: boolean
+                vpcConfig:
+                  properties:
+                    securityGroupIds:
+                      items:
+                        type: string
+                      maxItems: 5
+                      minItems: 1
+                      type: array
+                    subnets:
+                      items:
+                        type: string
+                      maxItems: 16
+                      minItems: 1
+                      type: array
+                  required:
+                  - securityGroupIds
+                  - subnets
+                  type: object
+              type: object
+            processingInputs:
+              items:
+                properties:
+                  inputName:
+                    type: string
+                  s3Input:
+                    properties:
+                      localPath:
+                        maxLength: 256
+                        type: string
+                      s3CompressionType:
+                        enum:
+                        - None
+                        - Gzip
+                        type: string
+                      s3DataDistributionType:
+                        allOf:
+                        - enum:
+                          - FullyReplicated
+                          - ShardedByS3Key
+                        - enum:
+                          - FullyReplicated
+                          - ShardedByS3Key
+                        type: string
+                      s3DataType:
+                        enum:
+                        - S3Prefix
+                        - ManifestFile
+                        type: string
+                      s3InputMode:
+                        allOf:
+                        - enum:
+                          - File
+                          - Pipe
+                        - enum:
+                          - Pipe
+                          - File
+                        type: string
+                      s3Uri:
+                        pattern: ^(https|s3)://([^/]+)/?(.*)$
+                        type: string
+                    required:
+                    - localPath
+                    - s3DataType
+                    - s3InputMode
+                    - s3Uri
+                    type: object
+                required:
+                - inputName
+                - s3Input
+                type: object
+              maxItems: 10
+              type: array
+            processingOutputConfig:
+              properties:
+                kmsKeyId:
+                  maxLength: 1024
+                  type: string
+                outputs:
+                  items:
+                    properties:
+                      outputName:
+                        type: string
+                      s3Output:
+                        properties:
+                          localPath:
+                            maxLength: 256
+                            type: string
+                          s3UploadMode:
+                            enum:
+                            - Continuous
+                            - EndOfJob
+                            type: string
+                          s3Uri:
+                            pattern: ^(https|s3)://([^/]+)/?(.*)$
+                            type: string
+                        required:
+                        - localPath
+                        - s3UploadMode
+                        - s3Uri
+                        type: object
+                    required:
+                    - outputName
+                    - s3Output
+                    type: object
+                  maxItems: 10
+                  type: array
+              required:
+              - outputs
+              type: object
+            processingResources:
+              properties:
+                clusterConfig:
+                  properties:
+                    instanceCount:
+                      format: int64
+                      minimum: 1
+                      type: integer
+                    instanceType:
+                      minLength: 1
+                      type: string
+                    volumeKmsKeyId:
+                      type: string
+                    volumeSizeInGB:
+                      format: int64
+                      minimum: 1
+                      type: integer
+                  required:
+                  - instanceCount
+                  - instanceType
+                  - volumeSizeInGB
+                  type: object
+              required:
+              - clusterConfig
+              type: object
+            region:
+              minLength: 1
+              type: string
+            roleArn:
+              maxLength: 2048
+              minLength: 20
+              type: string
+            sageMakerEndpoint:
+              description: A custom SageMaker endpoint to use when communicating with
+                SageMaker.
+              pattern: ^(https|http)://.*$
+              type: string
+            stoppingCondition:
+              description: StoppingConditionNoSpot is used for APIs which do not support
+                WaitTime param i.e. managed spot training not supported
+              properties:
+                maxRuntimeInSeconds:
+                  format: int64
+                  minimum: 1
+                  type: integer
+              type: object
+            tags:
+              items:
+                properties:
+                  key:
+                    minLength: 1
+                    type: string
+                  value:
+                    type: string
+                required:
+                - key
+                - value
+                type: object
+              maxItems: 50
+              type: array
+          required:
+          - appSpecification
+          - processingResources
+          - region
+          - roleArn
+          type: object
+        status:
+          description: ProcessingJobStatus defines the observed state of ProcessingJob
+          properties:
+            additional:
+              description: Field to store additional information, for example if we
+                are unable to check the status we update this.
+              type: string
+            cloudWatchLogUrl:
+              description: CloudWatch URL for log
+              type: string
+            lastCheckTime:
+              description: The last time that we checked the status of the SageMaker
+                job.
+              format: date-time
+              type: string
+            processingJobStatus:
+              description: The status of the processing job. https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_DescribeProcessingJob.html#sagemaker-DescribeProcessingJob-response-ProcessingJobStatus
+              type: string
+            sageMakerProcessingJobName:
+              description: SageMaker processing job name
+              type: string
+          type: object
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.3.0
+  creationTimestamp: null
+  name: trainingjobs.sagemaker.aws.amazon.com
+spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.trainingJobStatus
+    name: Status
+    type: string
+  - JSONPath: .status.secondaryStatus
+    name: Secondary-Status
+    type: string
+  - JSONPath: .metadata.creationTimestamp
+    format: date
+    name: Creation-Time
+    type: string
+  - JSONPath: .status.sageMakerTrainingJobName
+    name: Sagemaker-Job-Name
+    type: string
+  group: sagemaker.aws.amazon.com
+  names:
+    kind: TrainingJob
+    listKind: TrainingJobList
+    plural: trainingjobs
+    singular: trainingjob
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: TrainingJob is the Schema for the trainingjobs API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: TrainingJobSpec defines the desired state of TrainingJob
+          properties:
+            algorithmSpecification:
+              properties:
+                algorithmName:
+                  minLength: 1
+                  type: string
+                metricDefinitions:
+                  items:
+                    properties:
+                      name:
+                        minLength: 1
+                        type: string
+                      regex:
+                        minLength: 1
+                        type: string
+                    required:
+                    - name
+                    - regex
+                    type: object
+                  type: array
+                trainingImage:
+                  minLength: 1
+                  type: string
+                trainingInputMode:
+                  enum:
+                  - File
+                  - Pipe
+                  type: string
+              required:
+              - trainingInputMode
+              type: object
+            checkpointConfig:
+              properties:
+                localPath:
+                  type: string
+                s3Uri:
+                  pattern: ^(https|s3)://([^/]+)/?(.*)$
+                  type: string
+              required:
+              - s3Uri
+              type: object
+            debugHookConfig:
+              description: DebugHookConfig https://docs.aws.amazon.com/sagemaker/latest/dg/API_DebugHookConfig.html
+              properties:
+                collectionConfigurations:
+                  items:
+                    description: CollectionConfiguration https://docs.aws.amazon.com/sagemaker/latest/dg/API_CollectionConfiguration.html
+                    properties:
+                      collectionName:
+                        type: string
+                      collectionParameters:
+                        items:
+                          description: Used in describing maps in Kubernetes.
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          type: object
+                        type: array
+                    type: object
+                  type: array
+                localPath:
+                  type: string
+                ruleParameters:
+                  items:
+                    description: Used in describing maps in Kubernetes.
+                    properties:
+                      name:
+                        type: string
+                      value:
+                        type: string
+                    type: object
+                  type: array
+                s3OutputPath:
+                  pattern: ^(https|s3)://([^/]+)/?(.*)$
+                  type: string
+              required:
+              - s3OutputPath
+              type: object
+            debugRuleConfigurations:
+              items:
+                description: DebugRuleConfiguration https://docs.aws.amazon.com/sagemaker/latest/dg/API_DebugRuleConfiguration.html
+                properties:
+                  instanceType:
+                    type: string
+                  localPath:
+                    type: string
+                  ruleConfigurationName:
+                    type: string
+                  ruleEvaluatorImage:
+                    type: string
+                  ruleParameters:
+                    items:
+                      description: Used in describing maps in Kubernetes.
+                      properties:
+                        name:
+                          type: string
+                        value:
+                          type: string
+                      type: object
+                    type: array
+                  s3OutputPath:
+                    pattern: ^(https|s3)://([^/]+)/?(.*)$
+                    type: string
+                  volumeSizeInGB:
+                    format: int64
+                    minimum: 1
+                    type: integer
+                required:
+                - ruleConfigurationName
+                - ruleEvaluatorImage
+                type: object
+              type: array
+            enableInterContainerTrafficEncryption:
+              type: boolean
+            enableManagedSpotTraining:
+              type: boolean
+            enableNetworkIsolation:
+              type: boolean
+            hyperParameters:
+              items:
+                description: Used in describing maps in Kubernetes.
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+                type: object
+              type: array
+            inputDataConfig:
+              items:
+                properties:
+                  channelName:
+                    minLength: 1
+                    pattern: '[A-Za-z0-9\.\-_]+'
+                    type: string
+                  compressionType:
+                    enum:
+                    - None
+                    - Gzip
+                    type: string
+                  contentType:
+                    type: string
+                  dataSource:
+                    properties:
+                      fileSystemDataSource:
+                        properties:
+                          directoryPath:
+                            type: string
+                          fileSystemAccessMode:
+                            type: string
+                          fileSystemId:
+                            type: string
+                          fileSystemType:
+                            type: string
+                        required:
+                        - directoryPath
+                        - fileSystemAccessMode
+                        - fileSystemId
+                        - fileSystemType
+                        type: object
+                      s3DataSource:
+                        properties:
+                          attributeNames:
+                            items:
+                              type: string
+                            type: array
+                          s3DataDistributionType:
+                            enum:
+                            - FullyReplicated
+                            - ShardedByS3Key
+                            type: string
+                          s3DataType:
+                            enum:
+                            - S3Prefix
+                            - ManifestFile
+                            - AugmentedManifestFile
+                            type: string
+                          s3Uri:
+                            pattern: ^(https|s3)://([^/]+)/?(.*)$
+                            type: string
+                        required:
+                        - s3DataType
+                        - s3Uri
+                        type: object
+                    type: object
+                  inputMode:
+                    enum:
+                    - Pipe
+                    - File
+                    type: string
+                  recordWrapperType:
+                    type: string
+                  shuffleConfig:
+                    properties:
+                      seed:
+                        format: int64
+                        type: integer
+                    required:
+                    - seed
+                    type: object
+                required:
+                - channelName
+                - dataSource
+                type: object
+              minItems: 1
+              type: array
+            outputDataConfig:
+              properties:
+                kmsKeyId:
+                  type: string
+                s3OutputPath:
+                  pattern: ^(https|s3)://([^/]+)/?(.*)$
+                  type: string
+              required:
+              - s3OutputPath
+              type: object
+            region:
+              minLength: 1
+              type: string
+            resourceConfig:
+              properties:
+                instanceCount:
+                  format: int64
+                  minimum: 1
+                  type: integer
+                instanceType:
+                  minLength: 1
+                  type: string
+                volumeKmsKeyId:
+                  type: string
+                volumeSizeInGB:
+                  format: int64
+                  minimum: 1
+                  type: integer
+              required:
+              - instanceCount
+              - instanceType
+              - volumeSizeInGB
+              type: object
+            roleArn:
+              minLength: 20
+              pattern: ^arn:aws[a-z\-]*:iam::\d{12}:role/?[a-zA-Z_0-9+=,.@\-_/]+$
+              type: string
+            sageMakerEndpoint:
+              description: A custom SageMaker endpoint to use when communicating with
+                SageMaker.
+              pattern: ^(https|http)://.*$
+              type: string
+            stoppingCondition:
+              properties:
+                maxRuntimeInSeconds:
+                  format: int64
+                  minimum: 1
+                  type: integer
+                maxWaitTimeInSeconds:
+                  format: int64
+                  minimum: 1
+                  type: integer
+              type: object
+            tags:
+              items:
+                properties:
+                  key:
+                    minLength: 1
+                    type: string
+                  value:
+                    type: string
+                required:
+                - key
+                - value
+                type: object
+              type: array
+            tensorBoardOutputConfig:
+              description: TensorBoardOutputConfig https://docs.aws.amazon.com/sagemaker/latest/dg/API_TensorBoardOutputConfig.html
+              properties:
+                localPath:
+                  type: string
+                s3OutputPath:
+                  pattern: ^(https|s3)://([^/]+)/?(.*)$
+                  type: string
+              required:
+              - s3OutputPath
+              type: object
+            trainingJobName:
+              description: The SageMaker training job name. This is optional for the
+                SageMaker K8s operator. If it is empty, the operator will populate
+                it with a generated name.
+              maxLength: 63
+              type: string
+            vpcConfig:
+              properties:
+                securityGroupIds:
+                  items:
+                    type: string
+                  maxItems: 5
+                  minItems: 1
+                  type: array
+                subnets:
+                  items:
+                    type: string
+                  maxItems: 16
+                  minItems: 1
+                  type: array
+              required:
+              - securityGroupIds
+              - subnets
+              type: object
+          required:
+          - algorithmSpecification
+          - outputDataConfig
+          - region
+          - resourceConfig
+          - roleArn
+          - stoppingCondition
+          type: object
+        status:
+          description: TrainingJobStatus defines the observed state of TrainingJob
+          properties:
+            additional:
+              description: Field to store additional information, for example if we
+                are unable to check the status we update this.
+              type: string
+            cloudWatchLogUrl:
+              description: Cloud Watch url for training log
+              type: string
+            debugRuleEvaluationStatuses:
+              description: Status of rule evaluation jobs, obtained from DebugRuleEvaluationStatuses.
+                https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_DescribeTrainingJob.html#sagemaker-DescribeTrainingJob-response-DebugRuleEvaluationStatuses
+              items:
+                description: DebugRuleEvaluationStatus https://docs.aws.amazon.com/sagemaker/latest/dg/API_DebugRuleEvaluationStatus.html
+                properties:
+                  lastModifiedTime:
+                    format: date-time
+                    type: string
+                  ruleConfigurationName:
+                    type: string
+                  ruleEvaluationJobArn:
+                    type: string
+                  ruleEvaluationStatus:
+                    type: string
+                  statusDetail:
+                    type: string
+                type: object
+              type: array
+            lastCheckTime:
+              description: The last time that we checked the status of the SageMaker
+                job.
+              format: date-time
+              type: string
+            modelPath:
+              description: Full path to the training artifact (model)
+              type: string
+            sageMakerTrainingJobName:
+              description: SageMaker training job name
+              type: string
+            secondaryStatus:
+              description: The secondary, more granular status of the training job.
+                https://docs.aws.amazon.com/sagemaker/latest/dg/API_DescribeTrainingJob.html#SageMaker-DescribeTrainingJob-response-SecondaryStatus
+              type: string
+            trainingJobStatus:
+              description: The status of the training job. https://docs.aws.amazon.com/sagemaker/latest/dg/API_DescribeTrainingJob.html#SageMaker-DescribeTrainingJob-response-TrainingJobStatus
+              type: string
+          type: object
+      required:
+      - spec
+      type: object
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

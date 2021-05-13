@@ -103,7 +103,7 @@ def package_chart(repo: str, chart_path: str, values: Optional[Dict[str, Any]]) 
             chart_package = line.replace("Successfully packaged chart and saved it to: ", "")
             _logger.debug("Created package: %s", chart_package)
 
-    _logger.debug("Pusing %s to %s repository", chart_package, repo)
+    _logger.debug("Pushing %s to %s repository", chart_package, repo)
     sh.run(f"helm s3 push --force {chart_package} {repo}")
     return chart_name, chart_version, chart_package
 
@@ -127,6 +127,14 @@ def uninstall_chart(name: str) -> None:
     try:
         _logger.debug("Uninstalling %s", name)
         sh.run(f"helm uninstall --debug {name}")
+    except exceptions.FailedShellCommand as e:
+        _logger.error(e)
+
+
+def uninstall_chart_in_namespace(name: str, namespace: str) -> None:
+    try:
+        _logger.debug("Uninstalling %s", name)
+        sh.run(f"helm uninstall --debug --namespace {namespace} {name}")
     except exceptions.FailedShellCommand as e:
         _logger.error(e)
 

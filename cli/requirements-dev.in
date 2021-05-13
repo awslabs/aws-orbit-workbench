@@ -43,4 +43,5 @@ aws-cdk.aws-stepfunctions-tasks~=1.100.0
 -e ../plugins/overprovisioning
 -e ../plugins/lustre
 -e ../plugins/ray/
+-e ../plugins/sm-operator/
 
