@@ -38,7 +38,7 @@ def get_client() -> dynamic.DynamicClient:
 
 def get_pod_settings(client: dynamic.DynamicClient) -> List[Dict[str, Any]]:
     api = client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="PodSetting")
-    pod_settings = api.get(label_selector="orbit/space")
+    pod_settings = api.get()
     return cast(List[Dict[str, Any]], pod_settings.to_dict().get("items", []))
 
 
