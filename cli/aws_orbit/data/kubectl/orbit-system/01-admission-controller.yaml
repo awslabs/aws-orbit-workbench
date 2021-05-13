@@ -205,7 +205,7 @@ webhooks:
         apiVersions: ["v1"]
         resources: ["pods"]
     clientConfig:
-      caBundled: ""
+      caBundle: ""
       service:
         namespace: orbit-system
         name: admission-controller-pod
