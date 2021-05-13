@@ -112,7 +112,11 @@ def apply_pod_setting_to_pod(pod_setting: Dict[str, Any], pod: Dict[str, Any], l
         # Extend pod volumes with pod_setting volumes
         pod_spec["volumes"].extend(ps_spec.get("volumes", []))
 
-    containerSelector = re.compile(ps_spec["containerSelector"]["regex"])
+    containerSelector = (
+        re.compile(r".*")
+        if ps_spec["containerSelector"]["regex"] == "*"
+        else re.compile(ps_spec["containerSelector"]["regex"])
+    )
     for container in pod_spec.get("initContainers", []):
         if containerSelector.match(container.get("name", "")):
             apply_pod_setting_to_container(pod_setting=pod_setting, container=container)
@@ -125,6 +129,7 @@ def apply_pod_setting_to_pod(pod_setting: Dict[str, Any], pod: Dict[str, Any], l
 def apply_pod_setting_to_container(pod_setting: Dict[str, Any], container: Dict[str, Any]) -> None:
     ps_spec = pod_setting["spec"]
 
+    #
     if "image" in ps_spec:
         container["image"] = ps_spec.get("image", None)
 
@@ -133,6 +138,12 @@ def apply_pod_setting_to_container(pod_setting: Dict[str, Any], container: Dict[
 
     if "lifecycle" in ps_spec:
         container["lifecycle"] = {**container.get("lifecycle", {}), **ps_spec.get("lifecycle", {})}
+
+    if "command" in ps_spec:
+        container["command"] = ps_spec["command"]
+
+    if "args" in ps_spec:
+        container["args"] = ps_spec["args"]
 
     if "env" in ps_spec:
         # Filter out any existing env items with names that match pod_setting env items
