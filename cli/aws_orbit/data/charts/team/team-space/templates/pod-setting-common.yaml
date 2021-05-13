@@ -3,15 +3,16 @@ apiVersion: orbit.aws/v1
 kind: PodSetting
 metadata:
   name: orbit-pod-basics
-  namespace: orbit-system
+  namespace: {{ .Values.team }}
+  labels:
+    orbit/space: team
+    {{- include "team-space.labels" . | nindent 4 }}
 spec:
   containerSelector:
-    regex: "jupyter*"
+    regex: "*"
   podSelector:
-    matchLabels:
-      orbit/pod: "yes"
     matchExpressions:
-      - key: someKey
+      - key: notebook-name
         operator: Exists
   volumeMounts:
     - mountPath: /efs
@@ -25,15 +26,15 @@ spec:
     orbit/attach-security-group: "yes"
   env:
     - name: AWS_DEFAULT_REGION
-      value: {{ .Values.region }}
+      value: "{{ .Values.region }}"
     - name: ENV_NAME
-      value: {{ .Values.env }}
+      value: "{{ .Values.env }}"
     - name: TEAM
-      value: {{ .Values.team }}
+      value: "{{ .Values.team }}"
     - name: GRANT_SUDO
-      value: {{ .Values.grant_sudo }}
+      value: "{{ .Values.grant_sudo }}"
     - name: AWS_STS_REGIONAL_ENDPOINTS
-      value: {{ .Values.sts_ep }}
+      value: "{{ .Values.sts_ep }}"
   nodeSelector:
     orbit/usage: teams
     orbit/node-type: ec2
@@ -45,6 +46,10 @@ spec:
     runAsUser: {{ .Values.runAsUser }}
     {{ end }}
     fsGroup: 100
+  lifecycle:
+    postStart:
+      exec:
+        command: ["/bin/sh", "/home/jovyan/.orbit/bootstrap.sh"]
 ---
 # This configures the image policy to force PULL when using development env.
 {{ if .Values.DEVELOPMENT }}
@@ -52,10 +57,12 @@ apiVersion: orbit.aws/v1
 kind: PodSetting
 metadata:
   name: orbit-pod-force-image-pull
-  namespace: orbit-system
+  namespace: {{ .Values.team }}
+  labels:
+    orbit/space: team
 spec:
   containerSelector:
-    regex: "jupyter*"
+    regex: ".*"
   podSelector:
     matchLabels:
       orbit/pod: "yes"
@@ -65,22 +72,3 @@ spec:
   imagePullPolicy: Always
 ---
 {{ end }}
-# This configures the bootstrap script to start once the container is created for interactive notebooks only
-apiVersion: orbit.aws/v1
-kind: PodSetting
-metadata:
-  name: orbit-pod-notebook-interactive
-  namespace: orbit-system
-spec:
-  containerSelector:
-    regex: "jupyter*"
-  podSelector:
-    matchLabels:
-      orbit/pod: "yes"
-    matchExpressions:
-      - key: someKey
-        operator: Exists
-  lifecycle:
-    postStart:
-      exec:
-        command: ["/bin/sh", "/home/jovyan/.orbit/bootstrap.sh"]

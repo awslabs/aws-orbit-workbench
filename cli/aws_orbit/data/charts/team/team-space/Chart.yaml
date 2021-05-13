@@ -1,5 +1,5 @@
 apiVersion: v2
-name: orbit-user
+name: team-space
 description: Helm Chart for the aws-orbit-workbench orbit user namespace
 
 # A chart can be either an 'application' or a 'library' chart.

@@ -1,0 +1,11 @@
+apiVersion: orbit.aws/v1
+kind: NamespaceSetting
+metadata:
+  name: ${team}
+  namespace: orbit-system
+spec:
+  space: team
+  env: ${env_name}
+  team: ${team}
+  user: ${user}
+  email: ${user_email}

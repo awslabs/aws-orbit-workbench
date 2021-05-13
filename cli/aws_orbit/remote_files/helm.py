@@ -202,7 +202,7 @@ def deploy_team(context: Context, team_context: TeamContext) -> None:
 def package_team_space_pkg(context, repo, team_charts_path, team_context):
     chart_name, chart_version, chart_package = package_chart(
         repo=repo,
-        chart_path=os.path.join(team_charts_path, "team-settings"),
+        chart_path=os.path.join(team_charts_path, "team-space"),
         values={
             "env_name": context.name,
             "team": team_context.name,
@@ -214,16 +214,19 @@ def package_team_space_pkg(context, repo, team_charts_path, team_context):
             "grant_sudo": '"yes"' if team_context.grant_sudo else '"no"',
             "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
             "team_role_arn": team_context.eks_pod_role_arn,
+            "DEVELOPMENT": ".dev" in aws_orbit.__version__,
+            "jupyter_team_image": team_context.final_image_address,
+            "runAsUser": 0 if team_context.grant_sudo else 100,
         },
     )
     install_chart(
-        repo=repo, namespace=team_context.name, name="team-settings", chart_name=chart_name, chart_version=chart_version
+        repo=repo, namespace=team_context.name, name="team-space", chart_name=chart_name, chart_version=chart_version
     )
 
 def package_user_space_pkg(context, repo, team_charts_path, team_context):
     chart_name, chart_version, chart_package = package_chart(
         repo=repo,
-        chart_path=os.path.join(team_charts_path, "orbit-user"),
+        chart_path=os.path.join(team_charts_path, "user-space"),
         values={
             "env_name": context.name,
             "team": team_context.name,
@@ -235,6 +238,7 @@ def package_user_space_pkg(context, repo, team_charts_path, team_context):
             "grant_sudo": '"yes"' if team_context.grant_sudo else '"no"',
             "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
             "team_role_arn": team_context.eks_pod_role_arn,
+
         },
     )
 
@@ -258,4 +262,4 @@ def destroy_team(context: Context, team_context: TeamContext) -> None:
         add_repo(repo=repo, repo_location=repo_location)
         kubectl.write_kubeconfig(context=context)
         uninstall_chart(name=f"{team_context.name}-jupyter-hub", namespace=team_context.name)
-        uninstall_chart(name="team-settings", namespace=team_context.name)
+        uninstall_chart(name="team-space", namespace=team_context.name)

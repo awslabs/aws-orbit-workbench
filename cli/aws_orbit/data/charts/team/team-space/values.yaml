@@ -1,19 +1,15 @@
-# Default values for orbit-user.
+# Default values for team-space.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
 # Install parameters when user logs in the first time.
 # Should be coming from the namespace labels
-user: placeholder
-user_email: placeholder@amz.com
-namespace: placeholder
 
-
-# Team paraemeters
+namespace: ${team}
 team: ${team}
 env: ${env_name}
 region: ${region}
-nameOverride: "orbit-user"
+nameOverride: "team-space"
 fullnameOverride: ""
 efsid: ${efsid}
 efsapid: ${efsapid}
@@ -23,3 +19,8 @@ grant_sudo: ${grant_sudo}
 sts_ep: ${sts_ep}
 fsGroup: 100
 team_role_arn: ${team_role_arn}
+runAsUser: ${runAsUser}
+jupyter_team_image: ${jupyter_team_image}
+
+# use to decide if we are in release or dev mode
+DEVELOPMENT: ${DEVELOPMENT}
