@@ -428,7 +428,7 @@ class Env(Stack):
         aws_lambda.Function(
             scope=self,
             id="cognito_post_authentication_lambda",
-            code=aws_lambda.Code.from_asset(_lambda_path("cognito_post_autentication/")),
+            code=aws_lambda.Code.from_asset(_lambda_path("cognito_post_authentication/")),
             function_name="post-auth-test",
             handler="index.handler",
             runtime=aws_lambda.Runtime.PYTHON_3_7,
@@ -450,7 +450,7 @@ class Env(Stack):
         aws_lambda.Function(
             scope=self,
             id="cognito_post_authentication_k8s_lambda",
-            code=aws_lambda.Code.from_asset(_lambda_path("cognito_post_autentication/lambda.zip")),
+            code=aws_lambda.Code.from_asset(_lambda_path("cognito_post_authentication/lambda.zip")),
             function_name="post-auth-k8s-manage",
             handler="k8s_manage.handler",
             runtime=aws_lambda.Runtime.PYTHON_3_7,
