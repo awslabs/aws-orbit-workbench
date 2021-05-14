@@ -131,7 +131,8 @@ data:
         readOnly: false
       configurations:
         # List of labels to be selected, these are the labels from PodDefaults
-        # value:
+        value:
+          - vscode
         #   - add-gcp-secret
         #   - default-editor
         value: []

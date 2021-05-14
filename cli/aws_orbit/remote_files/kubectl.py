@@ -413,7 +413,7 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
 
         with open(input, "r") as file:
             content = file.read()
-        content = utils.resolve_parameters(content, dict(team=team_context.name))
+        content = utils.resolve_parameters(content, dict(orbit_jupyter_user_image=team_context.base_image_address))
         with open(output, "w") as file:
             file.write(content)
 
@@ -422,15 +422,13 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
 
         with open(input, "r") as file:
             patch = file.read()
-        # content = utils.resolve_parameters(content, dict(orbit_jupyter_user_image=team_context.base_image_address))
-        # with open(output, "w") as file:
-        #     file.write(content)
 
         # output_path = _generate_orbit_system_manifest(context=context, clean_up=False)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
         # Patch
         sh.run(f'kubectl patch deployment jupyter-web-app-deployment --patch "{patch}" -n kubeflow')
+        sh.run('kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow')
 
 def destroy_env(context: "Context") -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
