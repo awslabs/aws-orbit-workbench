@@ -1,12 +1,14 @@
 services:
   - title: Jupyter
     image: img/service/jupyter-logo.svg
+    url: integrations/jupyter
   - title: Visual Studio Code
     image: https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Visual_Studio_Code_1.18_icon.svg/1200px-Visual_Studio_Code_1.18_icon.svg.png
   - title: PyCharm
     image: img/service/icon-pycharm.svg
   - title: Voila
     image: img/service/voila-logo.svg
+    url: integrations/voila
   - title: Streamlit
     image: img/service/streamlit_logo.png
   - title: Plotly
@@ -17,6 +19,8 @@ services:
     image: img/service/Amazon-Athena_48.png
   - title: Amazon Redshift
     image: img/service/Amazon-Redshift_48.png
+  - title: AWS Glue DataBrew
+    image: img/service/AWS-GlueDataBrew.png
   - title: AWS Glue
     image: img/service/AWS-Glue_48.png
   - title: Amazon EMR

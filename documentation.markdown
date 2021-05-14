@@ -32,12 +32,20 @@ and the infrastructure you run on.  Advantages of using AWS Orbit Workbench are:
 This section describes the key concepts and terminology you need to understand to use AWS Orbit Workbench effectively.
 
 ### Topics
-* Environment
-* Team Space
-* User Space
-* Apps
-* Integrations
-* Orchestrations
+#### Environment
+#### Team Space
+AWS Orbit Workbench creates a team space for each team.  A team space consists of:
+* Storage:
+  - A shared drive on Amazon EFS that the team can use as block storage
+  - An area on Amazon S3 for object storage
+* A pool of compute (CPU and GPU) resource in a Kubernetes cluster that the team can use to run apps.
+
+#### Apps
+Teams can launch Apps on containers in their Kubernetes cluster.  An App could provide an integrated development environment
+(IDE) such as Jupyter or Visual Code.  It could also provide a service, for example Voila can turn a Jupyter notebook into a 
+stand alone web application, so you can easily share your work with the rest of your organisation.
+#### Integrations
+#### Orchestrations
 
 
 

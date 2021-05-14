@@ -48,14 +48,14 @@ layout: default
                 </div>
             </div>
             <a class="box-link" href="documentation">
-            <div class="box">
-                <div class="box-top"></div>
-                <div class="box-content">
-                    <span class="iconify icon" data-icon="la:book" data-inline="false"></span>
-                    <h3>Documentation</h3>
-                    <h5>View the AWS Orbit Workbench documentation</h5>
+                <div class="box">
+                    <div class="box-top"></div>
+                    <div class="box-content">
+                        <span class="iconify icon" data-icon="la:book" data-inline="false"></span>
+                        <h3>Documentation</h3>
+                        <h5>View the AWS Orbit Workbench documentation</h5>
+                    </div>
                 </div>
-            </div>
             </a>
         </div>
     </section>
@@ -103,6 +103,26 @@ layout: default
         {% include integrations.html %}
 
     </section>
+    <div class="grey-background">
+    <section class="main-content">
+        <h2 id="howitworks">How It Works</h2>
+        <!-- Tab links -->
+        <div class="tab">
+            <button class="tablinks" onclick="onTabChange(event, 'Administrators')" id="defaultOpen">Administrators</button>
+            <button class="tablinks" onclick="onTabChange(event, 'Developers')">Developers</button>
+        </div>
+
+        <!-- Tab content -->
+        <div id="Administrators" class="tabcontent">
+            <img src="img/howitworks/Admin.png">
+        </div>
+
+        <div id="Developers" class="tabcontent">
+            <img src="img/howitworks/dev.png">
+        </div>
+    </section>
+    </div>
+
     <section class="main-content">
 
         <footer class="site-footer">
@@ -116,5 +136,33 @@ layout: default
         </footer>
     </section>
 
+
+    <script>
+        function onTabChange(evt, tabName) {
+            // Declare all variables
+            let i, tabcontent, tablinks;
+
+            // Get all elements with class="tabcontent" and hide them
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+
+            // Get all elements with class="tablinks" and remove the class "active"
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+
+            // Show the current tab, and add an "active" class to the button that opened the tab
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+    </script>
+
+    <script>
+        // Get the element with id="defaultOpen" and click on it
+        document.getElementById("defaultOpen").click();
+    </script>
 
 </div>

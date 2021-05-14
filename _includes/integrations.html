@@ -1,12 +1,14 @@
 <div class="feature-header">
     {% for item in site.data.integrations.services %}
-    <div class="feature-box">
-        <div class="feature-image">
-            <img src="{{ item.image }}" alt="{{ item.title }}">
+    <a class="feature-link" href="{{ item.url }}">
+        <div class="feature-box">
+            <div class="feature-image">
+                <img src="{{ item.image }}" alt="{{ item.title }}">
+            </div>
+            <div class="feature-title">
+                <h4>{{ item.title }}</h4>
+            </div>
         </div>
-        <div class="feature-title">
-            <h4>{{ item.title }}</h4>
-        </div>
-    </div>
+    </a>
     {% endfor %}
 </div>
