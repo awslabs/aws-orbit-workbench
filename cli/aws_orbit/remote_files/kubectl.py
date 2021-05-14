@@ -104,6 +104,13 @@ def _ssm_agent_installer(output_path: str, context: "Context") -> None:
     shutil.copyfile(src=input, dst=output)
 
 
+def _sm_operator_installer(output_path: str, context: "Context") -> None:
+    filename = "10-sm-operator.yaml"
+    input = os.path.join(MODELS_PATH, "apps", filename)
+    output = os.path.join(output_path, filename)
+    shutil.copyfile(src=input, dst=output)
+
+
 def _team(context: "Context", team_context: "TeamContext", output_path: str) -> None:
     input = os.path.join(MODELS_PATH, "apps", "01-team.yaml")
     output = os.path.join(output_path, f"01-{team_context.name}-team.yaml")
@@ -199,6 +206,8 @@ def _generate_env_manifest(context: "Context", clean_up: bool = True) -> str:
 
     if context.install_ssm_agent:
         _ssm_agent_installer(output_path=output_path, context=context)
+
+    _sm_operator_installer(output_path=output_path, context=context)
 
     return output_path
 

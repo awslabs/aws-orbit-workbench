@@ -4,29 +4,9 @@
 #
 #    pip-compile requirements-dev.in
 #
--e ../plugins/code_commit
-    # via -r requirements-dev.in
--e ../plugins/custom_cfn
-    # via -r requirements-dev.in
--e ../plugins/emr_on_eks
-    # via -r requirements-dev.in
--e ../plugins/hello_world
-    # via -r requirements-dev.in
--e ../plugins/lustre
-    # via -r requirements-dev.in
--e ../plugins/overprovisioning
-    # via -r requirements-dev.in
--e ../plugins/ray
-    # via -r requirements-dev.in
--e ../plugins/redshift
-    # via -r requirements-dev.in
--e ../sdk
-    # via -r requirements-dev.in
--e ../plugins/sm-operator
-    # via -r requirements-dev.in
--e ../plugins/team_script_launcher
-    # via -r requirements-dev.in
 -e .
+    # via -r requirements-dev.in
+-e ../../cli
     # via -r requirements-dev.in
 appdirs==1.4.4
     # via black
@@ -34,19 +14,15 @@ attrs==20.3.0
     # via
     #   cattrs
     #   jsii
-    #   jsonschema
 aws-cdk.assets==1.100.0
     # via
     #   aws-cdk.aws-codebuild
     #   aws-cdk.aws-ecr-assets
     #   aws-cdk.aws-s3-assets
 aws-cdk.aws-apigateway==1.100.0
-    # via
-    #   aws-cdk.aws-route53-targets
-    #   aws-cdk.aws-stepfunctions-tasks
+    # via aws-cdk.aws-route53-targets
 aws-cdk.aws-applicationautoscaling==1.100.0
     # via
-    #   aws-cdk.aws-dynamodb
     #   aws-cdk.aws-ecs
     #   aws-cdk.aws-lambda
 aws-cdk.aws-autoscaling-common==1.100.0
@@ -59,7 +35,6 @@ aws-cdk.aws-autoscaling==1.100.0
     # via
     #   aws-cdk.aws-autoscaling-hooktargets
     #   aws-cdk.aws-ecs
-    #   aws-cdk.aws-eks
 aws-cdk.aws-certificatemanager==1.100.0
     # via
     #   aws-cdk.aws-apigateway
@@ -78,7 +53,6 @@ aws-cdk.aws-cloudwatch==1.100.0
     #   aws-cdk.aws-autoscaling
     #   aws-cdk.aws-cloudfront
     #   aws-cdk.aws-codebuild
-    #   aws-cdk.aws-dynamodb
     #   aws-cdk.aws-ec2
     #   aws-cdk.aws-ecs
     #   aws-cdk.aws-elasticloadbalancingv2
@@ -87,76 +61,52 @@ aws-cdk.aws-cloudwatch==1.100.0
     #   aws-cdk.aws-sns
     #   aws-cdk.aws-sqs
     #   aws-cdk.aws-stepfunctions
-    #   aws-cdk.aws-stepfunctions-tasks
 aws-cdk.aws-codebuild==1.100.0
-    # via
-    #   aws-cdk.aws-events-targets
-    #   aws-cdk.aws-stepfunctions-tasks
+    # via aws-cdk.aws-events-targets
 aws-cdk.aws-codecommit==1.100.0
-    # via
-    #   -r requirements-dev.in
-    #   aws-cdk.aws-codebuild
+    # via aws-cdk.aws-codebuild
 aws-cdk.aws-codeguruprofiler==1.100.0
     # via aws-cdk.aws-lambda
 aws-cdk.aws-codepipeline==1.100.0
     # via aws-cdk.aws-events-targets
 aws-cdk.aws-cognito==1.100.0
     # via
-    #   -r requirements-dev.in
     #   aws-cdk.aws-apigateway
     #   aws-cdk.aws-route53-targets
-aws-cdk.aws-databrew==1.100.0
-    # via aws-cdk.aws-stepfunctions-tasks
-aws-cdk.aws-dynamodb==1.100.0
-    # via aws-cdk.aws-stepfunctions-tasks
 aws-cdk.aws-ec2==1.100.0
     # via
-    #   -r requirements-dev.in
     #   aws-cdk.aws-apigateway
     #   aws-cdk.aws-autoscaling
     #   aws-cdk.aws-cloudfront
     #   aws-cdk.aws-codebuild
     #   aws-cdk.aws-ecs
     #   aws-cdk.aws-efs
-    #   aws-cdk.aws-eks
     #   aws-cdk.aws-elasticloadbalancing
     #   aws-cdk.aws-elasticloadbalancingv2
     #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-globalaccelerator
     #   aws-cdk.aws-lambda
-    #   aws-cdk.aws-lambda-python
     #   aws-cdk.aws-redshift
     #   aws-cdk.aws-route53
     #   aws-cdk.aws-route53-targets
     #   aws-cdk.aws-secretsmanager
     #   aws-cdk.aws-servicediscovery
-    #   aws-cdk.aws-stepfunctions-tasks
     #   aws-cdk.custom-resources
 aws-cdk.aws-ecr-assets==1.100.0
     # via
     #   aws-cdk.aws-codebuild
     #   aws-cdk.aws-ecs
     #   aws-cdk.aws-lambda
-    #   aws-cdk.aws-stepfunctions-tasks
 aws-cdk.aws-ecr==1.100.0
     # via
-    #   -r requirements-dev.in
     #   aws-cdk.aws-codebuild
     #   aws-cdk.aws-ecr-assets
     #   aws-cdk.aws-ecs
     #   aws-cdk.aws-lambda
-    #   aws-cdk.aws-stepfunctions-tasks
 aws-cdk.aws-ecs==1.100.0
-    # via
-    #   -r requirements-dev.in
-    #   aws-cdk.aws-events-targets
-    #   aws-cdk.aws-stepfunctions-tasks
+    # via aws-cdk.aws-events-targets
 aws-cdk.aws-efs==1.100.0
-    # via
-    #   -r requirements-dev.in
-    #   aws-cdk.aws-lambda
-aws-cdk.aws-eks==1.100.0
-    # via aws-cdk.aws-stepfunctions-tasks
+    # via aws-cdk.aws-lambda
 aws-cdk.aws-elasticloadbalancing==1.100.0
     # via
     #   aws-cdk.aws-autoscaling
@@ -202,12 +152,10 @@ aws-cdk.aws-iam==1.100.0
     #   aws-cdk.aws-codeguruprofiler
     #   aws-cdk.aws-codepipeline
     #   aws-cdk.aws-cognito
-    #   aws-cdk.aws-dynamodb
     #   aws-cdk.aws-ec2
     #   aws-cdk.aws-ecr
     #   aws-cdk.aws-ecr-assets
     #   aws-cdk.aws-ecs
-    #   aws-cdk.aws-eks
     #   aws-cdk.aws-elasticloadbalancingv2
     #   aws-cdk.aws-events
     #   aws-cdk.aws-events-targets
@@ -226,7 +174,6 @@ aws-cdk.aws-iam==1.100.0
     #   aws-cdk.aws-sqs
     #   aws-cdk.aws-ssm
     #   aws-cdk.aws-stepfunctions
-    #   aws-cdk.aws-stepfunctions-tasks
     #   aws-cdk.custom-resources
 aws-cdk.aws-kinesis==1.100.0
     # via aws-cdk.aws-events-targets
@@ -239,11 +186,9 @@ aws-cdk.aws-kms==1.100.0
     #   aws-cdk.aws-cloudfront
     #   aws-cdk.aws-codebuild
     #   aws-cdk.aws-codepipeline
-    #   aws-cdk.aws-dynamodb
     #   aws-cdk.aws-ec2
     #   aws-cdk.aws-ecs
     #   aws-cdk.aws-efs
-    #   aws-cdk.aws-eks
     #   aws-cdk.aws-kinesis
     #   aws-cdk.aws-lambda
     #   aws-cdk.aws-logs
@@ -254,9 +199,6 @@ aws-cdk.aws-kms==1.100.0
     #   aws-cdk.aws-sns
     #   aws-cdk.aws-sqs
     #   aws-cdk.aws-ssm
-    #   aws-cdk.aws-stepfunctions-tasks
-aws-cdk.aws-lambda-python==1.100.0
-    # via -r requirements-dev.in
 aws-cdk.aws-lambda==1.100.0
     # via
     #   -r requirements-dev.in
@@ -266,18 +208,12 @@ aws-cdk.aws-lambda==1.100.0
     #   aws-cdk.aws-cloudformation
     #   aws-cdk.aws-cloudfront
     #   aws-cdk.aws-cognito
-    #   aws-cdk.aws-dynamodb
     #   aws-cdk.aws-ecs
-    #   aws-cdk.aws-eks
     #   aws-cdk.aws-elasticloadbalancingv2
     #   aws-cdk.aws-events-targets
-    #   aws-cdk.aws-lambda-python
     #   aws-cdk.aws-secretsmanager
     #   aws-cdk.aws-sns-subscriptions
-    #   aws-cdk.aws-stepfunctions-tasks
     #   aws-cdk.custom-resources
-    #   aws-cdk.lambda-layer-awscli
-    #   aws-cdk.lambda-layer-kubectl
 aws-cdk.aws-logs==1.100.0
     # via
     #   aws-cdk.aws-apigateway
@@ -325,7 +261,6 @@ aws-cdk.aws-s3==1.100.0
     #   aws-cdk.aws-route53-targets
     #   aws-cdk.aws-s3-assets
     #   aws-cdk.aws-stepfunctions
-    #   aws-cdk.aws-stepfunctions-tasks
 aws-cdk.aws-sam==1.100.0
     # via aws-cdk.aws-secretsmanager
 aws-cdk.aws-secretsmanager==1.100.0
@@ -351,7 +286,6 @@ aws-cdk.aws-sns==1.100.0
     #   aws-cdk.aws-ecs
     #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-sns-subscriptions
-    #   aws-cdk.aws-stepfunctions-tasks
     #   aws-cdk.custom-resources
 aws-cdk.aws-sqs==1.100.0
     # via
@@ -361,21 +295,13 @@ aws-cdk.aws-sqs==1.100.0
     #   aws-cdk.aws-lambda
     #   aws-cdk.aws-sns
     #   aws-cdk.aws-sns-subscriptions
-    #   aws-cdk.aws-stepfunctions-tasks
 aws-cdk.aws-ssm==1.100.0
     # via
-    #   -r requirements-dev.in
     #   aws-cdk.aws-cloudfront
     #   aws-cdk.aws-ec2
     #   aws-cdk.aws-ecs
-    #   aws-cdk.aws-eks
-aws-cdk.aws-stepfunctions-tasks==1.100.0
-    # via -r requirements-dev.in
 aws-cdk.aws-stepfunctions==1.100.0
-    # via
-    #   -r requirements-dev.in
-    #   aws-cdk.aws-events-targets
-    #   aws-cdk.aws-stepfunctions-tasks
+    # via aws-cdk.aws-events-targets
 aws-cdk.cloud-assembly-schema==1.100.0
     # via
     #   aws-cdk.aws-ec2
@@ -403,14 +329,11 @@ aws-cdk.core==1.100.0
     #   aws-cdk.aws-codeguruprofiler
     #   aws-cdk.aws-codepipeline
     #   aws-cdk.aws-cognito
-    #   aws-cdk.aws-databrew
-    #   aws-cdk.aws-dynamodb
     #   aws-cdk.aws-ec2
     #   aws-cdk.aws-ecr
     #   aws-cdk.aws-ecr-assets
     #   aws-cdk.aws-ecs
     #   aws-cdk.aws-efs
-    #   aws-cdk.aws-eks
     #   aws-cdk.aws-elasticloadbalancing
     #   aws-cdk.aws-elasticloadbalancingv2
     #   aws-cdk.aws-events
@@ -421,7 +344,6 @@ aws-cdk.core==1.100.0
     #   aws-cdk.aws-kinesisfirehose
     #   aws-cdk.aws-kms
     #   aws-cdk.aws-lambda
-    #   aws-cdk.aws-lambda-python
     #   aws-cdk.aws-logs
     #   aws-cdk.aws-redshift
     #   aws-cdk.aws-route53
@@ -437,15 +359,10 @@ aws-cdk.core==1.100.0
     #   aws-cdk.aws-sqs
     #   aws-cdk.aws-ssm
     #   aws-cdk.aws-stepfunctions
-    #   aws-cdk.aws-stepfunctions-tasks
     #   aws-cdk.custom-resources
-    #   aws-cdk.lambda-layer-awscli
-    #   aws-cdk.lambda-layer-kubectl
 aws-cdk.custom-resources==1.100.0
     # via
     #   aws-cdk.aws-cognito
-    #   aws-cdk.aws-dynamodb
-    #   aws-cdk.aws-eks
     #   aws-cdk.aws-events-targets
     #   aws-cdk.aws-globalaccelerator
     #   aws-cdk.aws-route53
@@ -465,10 +382,6 @@ aws-cdk.cx-api==1.100.0
     #   aws-cdk.aws-s3-assets
     #   aws-cdk.aws-secretsmanager
     #   aws-cdk.core
-aws-cdk.lambda-layer-awscli==1.100.0
-    # via aws-cdk.aws-eks
-aws-cdk.lambda-layer-kubectl==1.100.0
-    # via aws-cdk.aws-eks
 aws-cdk.region-info==1.100.0
     # via
     #   aws-cdk.aws-codebuild
@@ -477,26 +390,17 @@ aws-cdk.region-info==1.100.0
     #   aws-cdk.aws-iam
     #   aws-cdk.aws-route53-targets
     #   aws-cdk.core
-aws-sam-translator==1.35.0
-    # via cfn-lint
-backcall==0.2.0
-    # via ipython
 black==20.8b1
     # via -r requirements-dev.in
 bleach==3.3.0
     # via readme-renderer
 boto3==1.17.57
-    # via
-    #   aws-orbit
-    #   aws-orbit-sdk
-    #   aws-sam-translator
+    # via aws-orbit
 botocore==1.20.57
     # via
     #   aws-orbit
     #   boto3
     #   s3transfer
-build==0.3.1.post1
-    # via check-manifest
 cachetools==4.2.1
     # via google-auth
 cattrs==1.5.0
@@ -509,12 +413,8 @@ cffi==1.14.5
     # via cryptography
 cfn-flip==1.2.3
     # via aws-orbit
-cfn-lint==0.44.7
-    # via -r requirements-dev.in
 chardet==4.0.0
     # via requests
-check-manifest==0.46
-    # via -r requirements-dev.in
 click==7.1.2
     # via
     #   aws-orbit
@@ -540,13 +440,11 @@ constructs==3.3.75
     #   aws-cdk.aws-codeguruprofiler
     #   aws-cdk.aws-codepipeline
     #   aws-cdk.aws-cognito
-    #   aws-cdk.aws-dynamodb
     #   aws-cdk.aws-ec2
     #   aws-cdk.aws-ecr
     #   aws-cdk.aws-ecr-assets
     #   aws-cdk.aws-ecs
     #   aws-cdk.aws-efs
-    #   aws-cdk.aws-eks
     #   aws-cdk.aws-elasticloadbalancing
     #   aws-cdk.aws-elasticloadbalancingv2
     #   aws-cdk.aws-events
@@ -557,7 +455,6 @@ constructs==3.3.75
     #   aws-cdk.aws-kinesisfirehose
     #   aws-cdk.aws-kms
     #   aws-cdk.aws-lambda
-    #   aws-cdk.aws-lambda-python
     #   aws-cdk.aws-logs
     #   aws-cdk.aws-redshift
     #   aws-cdk.aws-route53
@@ -573,24 +470,14 @@ constructs==3.3.75
     #   aws-cdk.aws-sqs
     #   aws-cdk.aws-ssm
     #   aws-cdk.aws-stepfunctions
-    #   aws-cdk.aws-stepfunctions-tasks
     #   aws-cdk.core
     #   aws-cdk.custom-resources
-    #   aws-cdk.lambda-layer-awscli
-    #   aws-cdk.lambda-layer-kubectl
 cryptography==3.4.7
     # via secretstorage
-decorator==4.4.2
-    # via
-    #   ipython
-    #   jsonpath-ng
-    #   networkx
+decorator==5.0.7
+    # via jsonpath-ng
 docutils==0.17.1
-    # via
-    #   pyroma
-    #   readme-renderer
-ecdsa==0.14.1
-    # via python-jose
+    # via readme-renderer
 flake8==3.8.4
     # via -r requirements-dev.in
 google-auth==1.29.0
@@ -599,20 +486,11 @@ idna==2.10
     # via requests
 importlib-metadata==4.0.1
     # via
-    #   build
     #   flake8
-    #   jsonschema
     #   keyring
-    #   pep517
     #   twine
-ipython-genutils==0.2.0
-    # via traitlets
-ipython==7.19.0
-    # via aws-orbit-sdk
-isort==5.7.0
+isort==5.6.4
     # via -r requirements-dev.in
-jedi==0.18.0
-    # via ipython
 jeepney==0.6.0
     # via
     #   keyring
@@ -638,14 +516,11 @@ jsii==1.29.0
     #   aws-cdk.aws-codeguruprofiler
     #   aws-cdk.aws-codepipeline
     #   aws-cdk.aws-cognito
-    #   aws-cdk.aws-databrew
-    #   aws-cdk.aws-dynamodb
     #   aws-cdk.aws-ec2
     #   aws-cdk.aws-ecr
     #   aws-cdk.aws-ecr-assets
     #   aws-cdk.aws-ecs
     #   aws-cdk.aws-efs
-    #   aws-cdk.aws-eks
     #   aws-cdk.aws-elasticloadbalancing
     #   aws-cdk.aws-elasticloadbalancingv2
     #   aws-cdk.aws-events
@@ -656,7 +531,6 @@ jsii==1.29.0
     #   aws-cdk.aws-kinesisfirehose
     #   aws-cdk.aws-kms
     #   aws-cdk.aws-lambda
-    #   aws-cdk.aws-lambda-python
     #   aws-cdk.aws-logs
     #   aws-cdk.aws-redshift
     #   aws-cdk.aws-route53
@@ -672,35 +546,18 @@ jsii==1.29.0
     #   aws-cdk.aws-sqs
     #   aws-cdk.aws-ssm
     #   aws-cdk.aws-stepfunctions
-    #   aws-cdk.aws-stepfunctions-tasks
     #   aws-cdk.cloud-assembly-schema
     #   aws-cdk.core
     #   aws-cdk.custom-resources
     #   aws-cdk.cx-api
-    #   aws-cdk.lambda-layer-awscli
-    #   aws-cdk.lambda-layer-kubectl
     #   aws-cdk.region-info
     #   constructs
-jsonpatch==1.32
-    # via cfn-lint
 jsonpath-ng==1.5.2
     # via aws-orbit
-jsonpointer==2.1
-    # via jsonpatch
-jsonschema==3.2.0
-    # via
-    #   aws-sam-translator
-    #   cfn-lint
-junit-xml==1.9
-    # via cfn-lint
-jupyter-packaging==0.7.12
-    # via -r requirements-dev.in
 keyring==23.0.1
     # via twine
 kubernetes==12.0.1
-    # via
-    #   aws-orbit
-    #   aws-orbit-sdk
+    # via aws-orbit
 marshmallow-dataclass[enum,union]==8.3.2
     # via aws-orbit
 marshmallow-enum==1.5.1
@@ -718,41 +575,18 @@ mypy-extensions==0.4.3
     #   typing-inspect
 mypy==0.812
     # via -r requirements-dev.in
-networkx==2.5.1
-    # via cfn-lint
-numpy==1.20.2
-    # via pandas
 oauthlib==3.1.0
     # via requests-oauthlib
 packaging==20.9
-    # via
-    #   bleach
-    #   build
-    #   jupyter-packaging
-pandas==1.2.0
-    # via aws-orbit-sdk
-parso==0.8.2
-    # via jedi
+    # via bleach
 pathspec==0.8.1
     # via black
-pep517==0.10.0
-    # via build
-pexpect==4.8.0
-    # via ipython
-pickleshare==0.7.5
-    # via ipython
 pip-tools==5.5.0
     # via -r requirements-dev.in
 pkginfo==1.7.0
     # via twine
 ply==3.11
     # via jsonpath-ng
-prompt-toolkit==3.0.18
-    # via ipython
-psycopg2-binary==2.8.6
-    # via aws-orbit-sdk
-ptyprocess==0.7.0
-    # via pexpect
 publication==0.0.3
     # via
     #   aws-cdk.assets
@@ -770,14 +604,11 @@ publication==0.0.3
     #   aws-cdk.aws-codeguruprofiler
     #   aws-cdk.aws-codepipeline
     #   aws-cdk.aws-cognito
-    #   aws-cdk.aws-databrew
-    #   aws-cdk.aws-dynamodb
     #   aws-cdk.aws-ec2
     #   aws-cdk.aws-ecr
     #   aws-cdk.aws-ecr-assets
     #   aws-cdk.aws-ecs
     #   aws-cdk.aws-efs
-    #   aws-cdk.aws-eks
     #   aws-cdk.aws-elasticloadbalancing
     #   aws-cdk.aws-elasticloadbalancingv2
     #   aws-cdk.aws-events
@@ -788,7 +619,6 @@ publication==0.0.3
     #   aws-cdk.aws-kinesisfirehose
     #   aws-cdk.aws-kms
     #   aws-cdk.aws-lambda
-    #   aws-cdk.aws-lambda-python
     #   aws-cdk.aws-logs
     #   aws-cdk.aws-redshift
     #   aws-cdk.aws-route53
@@ -804,13 +634,10 @@ publication==0.0.3
     #   aws-cdk.aws-sqs
     #   aws-cdk.aws-ssm
     #   aws-cdk.aws-stepfunctions
-    #   aws-cdk.aws-stepfunctions-tasks
     #   aws-cdk.cloud-assembly-schema
     #   aws-cdk.core
     #   aws-cdk.custom-resources
     #   aws-cdk.cx-api
-    #   aws-cdk.lambda-layer-awscli
-    #   aws-cdk.lambda-layer-kubectl
     #   aws-cdk.region-info
     #   constructs
 pyasn1-modules==0.2.8
@@ -818,52 +645,30 @@ pyasn1-modules==0.2.8
 pyasn1==0.4.8
     # via
     #   pyasn1-modules
-    #   python-jose
     #   rsa
 pycodestyle==2.6.0
     # via flake8
 pycparser==2.20
     # via cffi
-pydot==1.4.2
-    # via -r requirements-dev.in
 pyflakes==2.2.0
     # via flake8
 pygments==2.8.1
-    # via
-    #   ipython
-    #   pyroma
-    #   readme-renderer
+    # via readme-renderer
 pyparsing==2.4.7
-    # via
-    #   packaging
-    #   pydot
-pyroma==3.0.1
-    # via -r requirements-dev.in
-pyrsistent==0.17.3
-    # via jsonschema
+    # via packaging
 python-dateutil==2.8.1
     # via
     #   botocore
     #   jsii
     #   kubernetes
-    #   pandas
-python-jose==3.2.0
-    # via -r requirements-dev.in
 python-slugify==4.0.1
-    # via
-    #   -r requirements-dev.in
-    #   aws-orbit
-    #   aws-orbit-sdk
-pytz==2021.1
-    # via pandas
+    # via aws-orbit
 pyyaml-include==1.2.post2
     # via aws-orbit
 pyyaml==5.4.1
     # via
     #   aws-orbit
-    #   aws-orbit-sdk
     #   cfn-flip
-    #   cfn-lint
     #   kubernetes
     #   pyyaml-include
 readme-renderer==29.0
@@ -876,7 +681,6 @@ requests-toolbelt==0.9.1
     # via twine
 requests==2.25.1
     # via
-    #   aws-orbit-sdk
     #   kubernetes
     #   requests-oauthlib
     #   requests-toolbelt
@@ -884,49 +688,29 @@ requests==2.25.1
 rfc3986==1.4.0
     # via twine
 rsa==4.7.2
-    # via
-    #   google-auth
-    #   python-jose
+    # via google-auth
 s3transfer==0.4.2
     # via boto3
 secretstorage==3.3.1
     # via keyring
 six==1.15.0
     # via
-    #   aws-sam-translator
     #   bleach
     #   cfn-flip
-    #   cfn-lint
-    #   ecdsa
     #   google-auth
     #   jsonpath-ng
-    #   jsonschema
-    #   junit-xml
     #   kubernetes
     #   python-dateutil
-    #   python-jose
     #   readme-renderer
     #   websocket-client
-sqlalchemy-redshift==0.7.9
-    # via aws-orbit-sdk
-sqlalchemy==1.3.15
-    # via
-    #   aws-orbit-sdk
-    #   sqlalchemy-redshift
 text-unidecode==1.3
     # via python-slugify
 toml==0.10.2
-    # via
-    #   black
-    #   build
-    #   check-manifest
-    #   pep517
+    # via black
 tqdm==4.56.2
     # via
     #   aws-orbit
     #   twine
-traitlets==5.0.5
-    # via ipython
 twine==3.3.0
     # via -r requirements-dev.in
 typed-ast==1.4.3
@@ -949,8 +733,6 @@ urllib3==1.26.4
     #   botocore
     #   kubernetes
     #   requests
-wcwidth==0.2.5
-    # via prompt-toolkit
 webencodings==0.5.1
     # via bleach
 websocket-client==0.58.0
@@ -958,9 +740,7 @@ websocket-client==0.58.0
 wheel==0.36.2
     # via -r requirements-dev.in
 zipp==3.4.1
-    # via
-    #   importlib-metadata
-    #   pep517
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

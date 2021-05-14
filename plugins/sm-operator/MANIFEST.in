@@ -1,0 +1,15 @@
+include VERSION
+include LICENSE
+include NOTICE
+include *.in
+include *.sh
+include *.toml
+include *.txt
+include *.yml
+recursive-include sm-operator *.json
+recursive-include sm-operator *.txt
+recursive-include sm-operator *.typed
+recursive-include sm-operator *.yaml
+recursive-include sm-operator *.tpl
+recursive-include sm-operator *.helmignore
+recursive-include sm-operator *.py
