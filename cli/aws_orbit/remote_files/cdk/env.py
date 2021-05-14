@@ -82,7 +82,7 @@ class Env(Stack):
         self.eks_service_lambda = self._create_eks_service_lambda()
         self.cluster_pod_security_group = self._create_cluster_pod_security_group()
         self.context_parameter = self._create_manifest_parameter()
-        self.cognito_post_auth_lambda = self._create_post_authentication_lambda()
+        self._create_post_authentication_lambda()
 
     def _create_role_cluster(self) -> iam.Role:
         name: str = f"orbit-{self.context.name}-eks-cluster-role"
@@ -398,7 +398,21 @@ class Env(Stack):
             ],
         )
 
-    def _create_post_authentication_lambda(self) -> aws_lambda.Function:
+    def _create_post_authentication_lambda(self) -> None:
+        k8s_layer_name = "k8s_base_layer"
+
+        aws_sam.CfnApplication(
+            scope=self,
+            id="awscli_kubectl_helm_lambda_layer_sam",
+            location=aws_sam.CfnApplication.ApplicationLocationProperty(
+                application_id="arn:aws:serverlessrepo:us-east-1:903779448426:applications/lambda-layer-kubectl",
+                semantic_version="2.0.0"
+            ),
+            parameters={
+                "LayerName": k8s_layer_name
+            }
+        )
+
         role_name = f"orbit-{self.context.name}-admin"
         role_arn = f"arn:aws:iam::{self.context.account_id}:role/{role_name}"
         orbit_iam.add_assume_role_statement(
@@ -409,18 +423,41 @@ class Env(Stack):
                 "Action": "sts:AssumeRole",
             },
         )
-        return lambda_python.PythonFunction(
+
+        aws_lambda.Function(
             scope=self,
             id="cognito_post_authentication_lambda",
-            function_name=f"orbit-{self.context.name}-post-authentication",
-            entry=_lambda_path("cognito_post_authentication"),
-            index="index.py",
-            handler="handler",
-            runtime=aws_lambda.Runtime.PYTHON_3_8,
-            timeout=Duration.seconds(5),
-            role=iam.Role.from_role_arn(scope=self, id="orbit-env-admin", role_arn=role_arn),
+            code=aws_lambda.Code.from_asset(_lambda_path("cognito_post_autentication/")),
+            function_name="post-auth-test",
+            handler="index.handler",
+            runtime=aws_lambda.Runtime.PYTHON_3_7,
+            timeout=Duration.seconds(300),
+            role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-role", role_arn='arn:aws:iam::339309931548:role/orbit-dev-env-admin'),
             environment={
-                "REGION": self.context.region,
+                "REGION": "us-east-2",
+            },
+            initial_policy=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=["logs:Create*", "logs:PutLogEvents", "logs:Describe*", "cognito-idp:*", "lambda:*"],
+                    resources=["*"],
+                )
+            ],
+            memory_size=128
+        )
+
+        aws_lambda.Function(
+            scope=self,
+            id="cognito_post_authentication_k8s_lambda",
+            code=aws_lambda.Code.from_asset(_lambda_path("cognito_post_autentication/lambda.zip")),
+            function_name="post-auth-k8s-manage",
+            handler="k8s_manage.handler",
+            runtime=aws_lambda.Runtime.PYTHON_3_7,
+            timeout=Duration.seconds(300),
+            role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-k8s-role", role_arn='arn:aws:iam::339309931548:role/orbit-dev-env-admin'),
+            environment={
+                "REGION": "us-east-2",
+                "PATH" : "/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin:/opt/awscli:/opt/kubectl:/opt/helm"
             },
             initial_policy=[
                 iam.PolicyStatement(
@@ -429,6 +466,14 @@ class Env(Stack):
                     resources=["*"],
                 )
             ],
+            layers=[
+                aws_lambda.LayerVersion.from_layer_version_arn(
+                    scope=self,
+                    id="K8sLambdaLayer",
+                    layer_version_arn=f'arn:aws:lambda:us-east-2:339309931548:layer:{k8s_layer_name}:1'
+                )
+            ],
+            memory_size=256
         )
 
     def _create_manifest_parameter(self) -> ssm.StringParameter:
