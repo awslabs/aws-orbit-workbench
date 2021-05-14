@@ -30,7 +30,7 @@ spec:
   labels:
     orbit/node-type: ec2
     orbit/attach-security-group: "yes"
-    orbit/notebook: yes
+{{/*    orbit/notebook: yes*/}}
   env:
     - name: AWS_DEFAULT_REGION
       value: "{{ .Values.region }}"
