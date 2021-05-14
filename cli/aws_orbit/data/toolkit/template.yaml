@@ -135,6 +135,7 @@ Resources:
             Resource:
               - arn:aws:cloudformation:${region}:${account_id}:stack/${top_level}-${env_name}*
               - arn:aws:cloudformation:${region}:${account_id}:stack/eksctl-${top_level}-${env_name}*
+              - arn:aws:cloudformation:${region}:aws:transform/Serverless-2016-10-31
           - Effect: Allow
             Action:
               - ssm:Get*
@@ -209,6 +210,11 @@ Resources:
               - secretsmanager:*
             Resource:
               - arn:aws:secretsmanager:${region}:${account_id}:secret:${top_level}-redshift-master-${env_name}*
+          - Effect: Allow
+            Action:
+              - serverless:*
+            Resource:
+              - arn:aws:serverlessrepo:us-east-1:903779448426:applications/lambda-layer-kubectl
         Version: '2012-10-17'
       Description: ''
       ManagedPolicyName: ${top_level}-${env_name}-admin-other
