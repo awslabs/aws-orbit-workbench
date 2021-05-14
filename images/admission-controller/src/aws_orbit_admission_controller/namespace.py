@@ -100,7 +100,7 @@ def install_helm_chart(
         # cmd = "/usr/local/bin/helm repo list"
         cmd = (
             f"/usr/local/bin/helm upgrade --install --devel --debug --namespace {namespace} "
-            f"{helm_release} {team}/orbit-user "
+            f"{helm_release} {team}/user-space "
             f"--set user={user},user_email={user_email},namespace={namespace}"
         )
 

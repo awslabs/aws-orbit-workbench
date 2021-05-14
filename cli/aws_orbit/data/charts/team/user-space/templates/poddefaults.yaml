@@ -1,3 +1,4 @@
+{{/*
 apiVersion: kubeflow.org/v1alpha1
 kind: PodDefault
 metadata:
@@ -11,4 +12,6 @@ spec:
       orbit/notebook: yes
   desc: add orbit context to pods
   labels:
-    orbit/ide: vscode
+    orbit/ide: vscode*/
+
+}}
