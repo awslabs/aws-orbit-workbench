@@ -6,6 +6,7 @@ namespace: ${team}
 nameOverride: ${plugin_id}   
 fullnameOverride: ""
 serviceAccountName: ${team}   
+team: ${team} 
 
 image:
   repository: 957583890962.dkr.ecr.us-east-1.amazonaws.com/amazon-sagemaker-operator-for-k8s

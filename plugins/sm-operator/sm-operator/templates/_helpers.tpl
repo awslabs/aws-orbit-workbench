@@ -43,6 +43,7 @@ Create chart name and version as used by the chart label.
 Common labels
 */}}
 {{- define "sm_operator.labels" -}}
+orbit/team: {{ .Values.team}}
 helm.sh/chart: {{ include "sm_operator.chart" . }}
 app: orbit-{{ include "sm_operator.name" . }}
 {{ include "sm_operator.selectorLabels" . }}

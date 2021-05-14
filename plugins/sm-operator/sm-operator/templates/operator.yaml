@@ -3,6 +3,11 @@ kind: Role
 metadata:
   name: sagemaker-k8s-operator-leader-election-role
   namespace: {{ .Release.Namespace | default "sagemaker-k8s-operator-system" | quote }}
+  labels:
+    {{- include "sm_operator.labels" . | nindent 4 }}
+    {{- with .Values.workerLabels }}
+    {{- toYaml . | nindent 4  }}
+    {{- end  }}
 rules:
 - apiGroups:
   - ""
@@ -30,6 +35,11 @@ kind: RoleBinding
 metadata:
   name: sagemaker-k8s-operator-leader-election-rolebinding
   namespace: {{ .Release.Namespace | default "sagemaker-k8s-operator-system" | quote }}
+  labels:
+    {{- include "sm_operator.labels" . | nindent 4 }}
+    {{- with .Values.workerLabels }}
+    {{- toYaml . | nindent 4  }}
+    {{- end  }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -43,6 +53,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: sagemaker-k8s-operator-manager-rolebinding-{{ .Values.namespace }}
+  labels:
+  {{- include "sm_operator.labels" . | nindent 4 }}
+  {{- with .Values.workerLabels }}
+  {{- toYaml . | nindent 4  }}
+  {{- end  }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -56,6 +71,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: sagemaker-k8s-operator-proxy-rolebinding-{{ .Values.namespace }}
+  labels:
+    {{- include "sm_operator.labels" . | nindent 4 }}
+    {{- with .Values.workerLabels }}
+    {{- toYaml . | nindent 4  }}
+    {{- end  }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -74,6 +94,10 @@ metadata:
     prometheus.io/scrape: "true"
   labels:
     control-plane: controller-manager
+    {{- include "sm_operator.labels" . | nindent 4 }}
+    {{- with .Values.workerLabels }}
+    {{- toYaml . | nindent 4  }}
+    {{- end  }}
   name: sagemaker-k8s-operator-controller-manager-metrics-service
   namespace: {{ .Release.Namespace | default "sagemaker-k8s-operator-system" | quote }}
 spec:
@@ -89,6 +113,10 @@ kind: Deployment
 metadata:
   labels:
     control-plane: controller-manager
+    {{- include "sm_operator.labels" . | nindent 4 }}
+    {{- with .Values.workerLabels }}
+    {{- toYaml . | nindent 4  }}
+    {{- end  }}
   name: sagemaker-k8s-operator-controller-manager
   namespace: {{ .Release.Namespace | default "sagemaker-k8s-operator-system" | quote }}
 spec:
@@ -100,10 +128,6 @@ spec:
     metadata:
       labels:
         control-plane: controller-manager
-        {{- include "sm_operator.labels" . | nindent 8 }}
-          {{- with .Values.workerLabels }}
-          {{- toYaml . | nindent 8  }}
-          {{- end  }}
     spec:
       containers:
       - args:
