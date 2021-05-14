@@ -212,7 +212,7 @@ Resources:
               - arn:aws:secretsmanager:${region}:${account_id}:secret:${top_level}-redshift-master-${env_name}*
           - Effect: Allow
             Action:
-              - serverless:*
+              - serverlessrepo:*
             Resource:
               - arn:aws:serverlessrepo:us-east-1:903779448426:applications/lambda-layer-kubectl
         Version: '2012-10-17'
