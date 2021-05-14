@@ -33,22 +33,10 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     _logger.debug("plugin_id: %s", plugin_id)
     release_name = f"{team_context.name}-{plugin_id}"
 
-    ### Logic
-    # If there is a CRD that needs to be installed:
-    #  1. Check if the plugin is installed
-    #     a. YES - then you can run 'helm update --install' via helm.install_chart_no_upgrade and the chart will install 
-    #        but the CRD's will not (they are global and immutable)
-    #     b. NO - install the chart and the crd - 'helm install' via via helm.install_chart
-    #  2. CRD's are global
-    # REF: https://helm.sh/docs/topics/charts/
-    ###
-
-
     _logger.info("Checking Chart %s is installed...", release_name)
     fresh_install = True
     if helm.is_exists_chart_release(release_name, team_context.name):
         _logger.info("Chart %s already installed, removing to begin new install", release_name)
-        fresh_install = True
 
 
     vars: Dict[str, Optional[str]] = dict(
@@ -56,8 +44,7 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
         region=context.region,
         account_id=context.account_id,
         env_name=context.name,
-        plugin_id=plugin_id,
-        roleArn = team_context.eks_pod_role_arn
+        plugin_id=plugin_id
     )
 
 
@@ -74,24 +61,14 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
         repo=repo, chart_path=chart_path, values=vars
     )
    
-    if fresh_install:
-        _logger.info("Chart %s already installed, calling for update ", release_name)
-        helm.install_chart(
-            repo=repo,
-            namespace=team_context.name,
-            name=release_name,
-            chart_name=chart_name,
-            chart_version=chart_version,
-        )
-    else:
-        _logger.info("Chart %s not installed, calling for full install  ", release_name)
-        helm.install_chart_no_upgrade(   
-            repo=repo,
-            namespace=team_context.name,
-            name=release_name,
-            chart_name=chart_name,
-            chart_version=chart_version,
-        )
+    _logger.info("Chart %s installing ", release_name)
+    helm.install_chart(
+        repo=repo,
+        namespace=team_context.name,
+        name=release_name,
+        chart_name=chart_name,
+        chart_version=chart_version,
+    )
 
     chart_name, chart_version, chart_package = helm.package_chart(
         repo=repo, chart_path=chart_path, values=vars

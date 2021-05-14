@@ -6,8 +6,6 @@ namespace: ${team}
 nameOverride: ${plugin_id}   
 fullnameOverride: ""
 serviceAccountName: ${team}   
-roleArn: ${roleArn}
-#### FOR REFERNCE :  roleArn: arn:aws:iam::<acct_no>:role/orbit-env-r16-lake-user-role
 
 image:
   repository: 957583890962.dkr.ecr.us-east-1.amazonaws.com/amazon-sagemaker-operator-for-k8s

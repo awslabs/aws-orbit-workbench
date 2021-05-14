@@ -26,211 +26,6 @@ rules:
   - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  creationTimestamp: null
-  name: sagemaker-k8s-operator-manager-role
-rules:
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - batchtransformjobs
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - batchtransformjobs/status
-  verbs:
-  - get
-  - update
-  - patch
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - endpointconfigs
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - endpointconfigs/status
-  verbs:
-  - get
-  - update
-  - patch
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - hostingautoscalingpolicies
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - hostingautoscalingpolicies/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - hostingdeployments
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - hostingdeployments/status
-  verbs:
-  - get
-  - update
-  - patch
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - models
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - models/status
-  verbs:
-  - get
-  - update
-  - patch
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - hyperparametertuningjobs
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - hyperparametertuningjobs/status
-  verbs:
-  - get
-  - update
-  - patch
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - models
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - models/status
-  verbs:
-  - get
-  - update
-  - patch
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - processingjobs
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - processingjobs/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - trainingjobs
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - sagemaker.aws.amazon.com
-  resources:
-  - trainingjobs/status
-  verbs:
-  - get
-  - update
-  - patch
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: sagemaker-k8s-operator-proxy-role
-rules:
-- apiGroups:
-  - authentication.k8s.io
-  resources:
-  - tokenreviews
-  verbs:
-  - create
-- apiGroups:
-  - authorization.k8s.io
-  resources:
-  - subjectaccessreviews
-  verbs:
-  - create
----
-apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: sagemaker-k8s-operator-leader-election-rolebinding
@@ -247,7 +42,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: sagemaker-k8s-operator-manager-rolebinding
+  name: sagemaker-k8s-operator-manager-rolebinding-{{ .Values.namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -260,7 +55,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: sagemaker-k8s-operator-proxy-rolebinding
+  name: sagemaker-k8s-operator-proxy-rolebinding-{{ .Values.namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -305,6 +100,10 @@ spec:
     metadata:
       labels:
         control-plane: controller-manager
+        {{- include "sm_operator.labels" . | nindent 8 }}
+          {{- with .Values.workerLabels }}
+          {{- toYaml . | nindent 8  }}
+          {{- end  }}
     spec:
       containers:
       - args:
