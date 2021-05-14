@@ -103,6 +103,7 @@ def _ssm_agent_installer(output_path: str, context: "Context") -> None:
     output = os.path.join(output_path, filename)
     shutil.copyfile(src=input, dst=output)
 
+
 def _sm_operator_installer(output_path: str, context: "Context") -> None:
     filename = "10-sm-operator.yaml"
     input = os.path.join(MODELS_PATH, "apps", filename)
