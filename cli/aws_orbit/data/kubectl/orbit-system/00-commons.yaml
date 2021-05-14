@@ -115,13 +115,15 @@ spec:
               properties:
                 desc:
                   type: string
+                injectUserContext:
+                  type: boolean
                 containerSelector:
                   type: object
                   properties:
                     regex:
                       type: string
-                  required:
-                  - regex
+                    jsonpath:
+                      type: string
                 podSelector:
                   type: object
                   properties:

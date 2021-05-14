@@ -40,7 +40,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: admission-controller-namespace
+    app: admission-controller
   namespace: orbit-system
   name: admission-controller-namespace
 spec:
@@ -113,7 +113,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: admission-controller-pod
+    app: admission-controller
   namespace: orbit-system
   name: admission-controller-pod
 spec:

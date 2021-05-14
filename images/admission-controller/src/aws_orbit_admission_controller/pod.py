@@ -19,6 +19,7 @@ import re
 from typing import Any, Dict, List, Optional, cast
 
 import jsonpatch
+import jsonpath_ng
 from aws_orbit_admission_controller import load_config
 from flask import jsonify
 from kubernetes import dynamic
@@ -83,7 +84,32 @@ def filter_pod_settings(
     return filtered_pod_settings
 
 
-def apply_pod_setting_to_pod(pod_setting: Dict[str, Any], pod: Dict[str, Any], logger: logging.Logger) -> None:
+def filter_pod_containers(
+    containers: List[Dict[str, Any]], pod: Dict[str, Any], container_selector: Dict[str, str]
+) -> List[Dict[str, Any]]:
+    filtered_containers = []
+
+    if "regex" in container_selector:
+        container_selector_regex = (
+            re.compile(r".*") if container_selector["regex"] == "*" else re.compile(container_selector["regex"])
+        )
+        filtered_containers.extend([c for c in containers if container_selector_regex.match(c.get("name", ""))])
+    elif "jsonpath" in container_selector:
+        container_selector_jsonpath = jsonpath_ng.parse(container_selector["jsonpath"])
+        filtered_containers.extend(
+            [
+                c
+                for c in containers
+                if c.get("name", "") in [match.value for match in container_selector_jsonpath.find(pod)]
+            ]
+        )
+
+    return filtered_containers
+
+
+def apply_settings_to_pod(
+    namespace_setting: Dict[str, Any], pod_setting: Dict[str, Any], pod: Dict[str, Any], logger: logging.Logger
+) -> None:
     ps_spec = pod_setting["spec"]
     pod_spec = pod["spec"]
 
@@ -118,22 +144,32 @@ def apply_pod_setting_to_pod(pod_setting: Dict[str, Any], pod: Dict[str, Any], l
         # Extend pod volumes with pod_setting volumes
         pod_spec["volumes"].extend(ps_spec.get("volumes", []))
 
-    containerSelector = (
-        re.compile(r".*")
-        if ps_spec["containerSelector"]["regex"] == "*"
-        else re.compile(ps_spec["containerSelector"]["regex"])
-    )
-    for container in pod_spec.get("initContainers", []):
-        if containerSelector.match(container.get("name", "")):
-            apply_pod_setting_to_container(pod_setting=pod_setting, container=container)
-    for container in pod_spec.get("containers", []):
-        if containerSelector.match(container.get("name", "")):
-            apply_pod_setting_to_container(pod_setting=pod_setting, container=container)
+    for container in filter_pod_containers(
+        containers=pod_spec.get("initContainers", []),
+        pod=pod_spec,
+        container_selector=ps_spec.get("containerSelector", {}),
+    ):
+        apply_settings_to_container(namespace_setting=namespace_setting, pod_setting=pod_setting, container=container)
+    for container in filter_pod_containers(
+        containers=pod_spec.get("containers", []), pod=pod, container_selector=ps_spec.get("containerSelector", {})
+    ):
+        apply_settings_to_container(namespace_setting=namespace_setting, pod_setting=pod_setting, container=container)
     logger.debug("modified pod: %s", pod)
 
 
-def apply_pod_setting_to_container(pod_setting: Dict[str, Any], container: Dict[str, Any]) -> None:
+def apply_settings_to_container(
+    namespace_setting: Dict[str, Any], pod_setting: Dict[str, Any], container: Dict[str, Any]
+) -> None:
+    ns_spec = namespace_setting["spec"]
     ps_spec = pod_setting["spec"]
+
+    if ps_spec.get("injectUserContext", False):
+        # Drop any previous USERNAME or USEREMAIL env variables
+        ps_spec["env"] = [e for e in ps_spec.get("env", []) if e["name"] not in ["USERNAME", "USEREMAIL"]]
+        # Appnend new ones
+        ps_spec["env"].extend(
+            [{"name": "USERNAME", "value": ns_spec["user"]}, {"name": "USEREMAIL", "value": ns_spec["email"]}]
+        )
 
     # Replace
     if "image" in ps_spec:
@@ -241,7 +277,9 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     try:
         for pod_setting in team_pod_settings:
             logger.debug("applying podsetting: %s", pod_setting)
-            apply_pod_setting_to_pod(pod_setting=pod_setting, pod=modified_pod, logger=logger)
+            apply_settings_to_pod(
+                namespace_setting=namespace_setting, pod_setting=pod_setting, pod=modified_pod, logger=logger
+            )
     except Exception as e:
         logger.exception(e)
         pass
