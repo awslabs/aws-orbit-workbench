@@ -433,7 +433,7 @@ class Env(Stack):
             handler="index.handler",
             runtime=aws_lambda.Runtime.PYTHON_3_7,
             timeout=Duration.seconds(300),
-            role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-role", role_arn='arn:aws:iam::339309931548:role/orbit-dev-env-admin'),
+            role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-role", role_arn=role_arn),
             environment={
                 "REGION": "us-east-2",
             },
@@ -455,7 +455,7 @@ class Env(Stack):
             handler="k8s_manage.handler",
             runtime=aws_lambda.Runtime.PYTHON_3_7,
             timeout=Duration.seconds(300),
-            role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-k8s-role", role_arn='arn:aws:iam::339309931548:role/orbit-dev-env-admin'),
+            role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-k8s-role", role_arn=role_arn),
             environment={
                 "REGION": "us-east-2",
                 "PATH" : "/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin:/opt/awscli:/opt/kubectl:/opt/helm"
