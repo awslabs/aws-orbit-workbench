@@ -3,6 +3,8 @@ kind: NamespaceSetting
 metadata:
   name: ${team}
   namespace: orbit-system
+  labels:
+    {{- include "user-space.labels" . | nindent 4 }}
 spec:
   space: team
   env: ${env_name}

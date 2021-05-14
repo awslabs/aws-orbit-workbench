@@ -71,6 +71,7 @@ metadata:
   namespace: {{ .Values.team }}
   labels:
     orbit/space: team
+    {{- include "team-space.labels" . | nindent 4 }}
 spec:
   containerSelector:
     regex: ".*"
