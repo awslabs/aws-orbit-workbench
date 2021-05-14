@@ -150,7 +150,6 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
         with open(output, "w") as file:
             file.write(content)
 
-
 def _cleanup_output(output_path: str) -> None:
     files = os.listdir(output_path)
     for file in files:
@@ -404,9 +403,31 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
         k8s_context = get_k8s_context(context=context)
         _logger.debug("kubectl context: %s", k8s_context)
         output_path = _generate_team_context(context=context, team_context=team_context)
+
+        # kubeflow jupyter launcher configmap
+        input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-launcher.yaml")
+        output = os.path.join(output_path, f"kf-jupyter-launcher.yaml")
+
+        with open(input, "r") as file:
+            content = file.read()
+        content = utils.resolve_parameters(content, dict(team=team_context.name))
+        with open(output, "w") as file:
+            file.write(content)
+
+        input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-patch.yaml")
+        output = os.path.join(output_path, f"kf-jupyter-patch.yaml")
+
+        with open(input, "r") as file:
+            patch = file.read()
+        # content = utils.resolve_parameters(content, dict(orbit_jupyter_user_image=team_context.base_image_address))
+        # with open(output, "w") as file:
+        #     file.write(content)
+
         # output_path = _generate_orbit_system_manifest(context=context, clean_up=False)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
+        # Patch
+        sh.run(f'kubectl patch deployment jupyter-web-app-deployment --patch "{patch}" -n kubeflow')
 
 def destroy_env(context: "Context") -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
@@ -444,6 +465,8 @@ def destroy_teams(context: "Context") -> None:
         except exceptions.FailedShellCommand as ex:
             _logger.debug("Skipping: %s", ex)
             pass  # Let's leave for eksctl, it will destroy everything anyway...
+
+
 
 
 def destroy_team(context: "Context", team_context: "TeamContext") -> None:
