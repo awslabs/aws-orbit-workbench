@@ -355,7 +355,7 @@ class IamBuilder:
                                 federated=f"arn:{partition}:iam::{account}:oidc-provider/{context.eks_oidc_provider}",
                                 conditions={
                                     "StringLike": {
-                                        f"{context.eks_oidc_provider}:sub": f"system:serviceaccount:{team_name}:*"
+                                        f"{context.eks_oidc_provider}:sub": f"system:serviceaccount:{team_name}*:*"
                                     }
                                 },
                             ),

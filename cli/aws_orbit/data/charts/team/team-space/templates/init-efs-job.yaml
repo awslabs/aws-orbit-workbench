@@ -1,0 +1,59 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: efs-init-{{ .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: orbit-init-efs
+    volume: {{ .Values.efsid }}
+    job-name: efs-init-{{ .Values.namespace }}
+    {{- include "team-space.labels" . | nindent 4 }}
+spec:
+  template:
+    metadata:
+      labels:
+        app: orbit-init-efs
+        volume: {{ .Values.efsid }}
+        job-name: efs-init-{{ .Values.namespace }}
+        {{- include "team-space.labels" . | nindent 8 }}
+    spec:
+      nodeSelector:
+        orbit/usage: teams
+        orbit/node-type: ec2
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: k8s.amazonaws.com/accelerator
+                    operator: DoesNotExist
+      serviceAccountName: {{ .Values.team }}
+      containers:
+      - name: run-efs-init
+        securityContext:
+          runAsUser: 0
+        image: {{ .Values.jupyter_team_image }}
+        command: ["/bin/bash"]
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "256Mi"
+          requests:
+            cpu: "10m"
+            memory: "20Mi"
+        args:
+          - -c
+          - >-
+            sudo chmod 777 /efs &&
+            ls -ld /efs
+        volumeMounts:
+          - mountPath: /efs
+            name: efs-volume
+      volumes:
+        - name: efs-volume
+          persistentVolumeClaim:
+            claimName: team-efs
+      restartPolicy: Never
+

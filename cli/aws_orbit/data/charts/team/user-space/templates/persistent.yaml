@@ -3,7 +3,7 @@ kind: PersistentVolume
 metadata:
   labels:
     efs-id: {{ .Values.efsid }}
-    {{- include "orbit-user.labels" . | nindent 4 }}
+    {{- include "user-space.labels" . | nindent 4 }}
   name: team-efs-{{ .Values.namespace }}
 spec:
   accessModes:
@@ -23,7 +23,7 @@ metadata:
   name: team-efs
   namespace: {{ .Values.namespace }}
   labels:
-    {{- include "orbit-user.labels" . | nindent 4 }}
+    {{- include "user-space.labels" . | nindent 4 }}
 spec:
   accessModes:
     - ReadWriteMany

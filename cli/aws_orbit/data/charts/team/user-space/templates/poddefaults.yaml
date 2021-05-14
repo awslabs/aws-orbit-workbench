@@ -1,0 +1,14 @@
+apiVersion: kubeflow.org/v1alpha1
+kind: PodDefault
+metadata:
+  name: vscode
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "user-space.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      orbit/notebook: yes
+  desc: add orbit context to pods
+  labels:
+    orbit/ide: vscode
