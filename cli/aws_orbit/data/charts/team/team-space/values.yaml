@@ -19,8 +19,9 @@ grant_sudo: ${grant_sudo}
 sts_ep: ${sts_ep}
 fsGroup: 100
 team_role_arn: ${team_role_arn}
-runAsUser: ${runAsUser}
 jupyter_team_image: ${jupyter_team_image}
+account_id: ${account_id}
+s3_toolkit_bucket: ${s3_toolkit_bucket}
 
 # use to decide if we are in release or dev mode
 DEVELOPMENT: ${DEVELOPMENT}

@@ -8,8 +8,11 @@ metadata:
     orbit/space: team
     {{- include "team-space.labels" . | nindent 4 }}
 spec:
+  command: ["sh","-c", "/usr/local/bin/start.sh jupyter lab --ServerApp.notebook_dir=/home/jovyan --ServerApp.ip=0.0.0.0 --ServerApp.open_browser=False
+        --ServerApp.allow_root=True --ServerApp.port=8888
+        --ServerApp.token='' --ServerApp.password='' --ServerApp.allow_origin='*' --ServerApp.base_url=${NB_PREFIX}"]
   containerSelector:
-    regex: "*"
+    regex: ".*"
   podSelector:
     matchExpressions:
       - key: notebook-name
@@ -27,14 +30,24 @@ spec:
   env:
     - name: AWS_DEFAULT_REGION
       value: "{{ .Values.region }}"
-    - name: ENV_NAME
+    - name: AWS_ORBIT_ENV
       value: "{{ .Values.env }}"
-    - name: TEAM
+    - name: AWS_ORBIT_TEAM_SPACE
       value: "{{ .Values.team }}"
     - name: GRANT_SUDO
       value: "{{ .Values.grant_sudo }}"
-    - name: AWS_STS_REGIONAL_ENDPOINTS
-      value: "{{ .Values.sts_ep }}"
+    - name: JUPYTER_ENABLE_LAB
+      value: "yes"
+    - name: ACCOUNT_ID
+      value: "{{ .Values.account_id }}"
+    - name: AWS_ORBIT_S3_BUCKET
+      value: "{{ .Values.s3_toolkit_bucket }}"
+      # FIXME change this
+    - name: USERNAME
+      value: "amirbo"
+    - name: USEREMAIL
+      value: "amirbo@xx.xxx"
+
   nodeSelector:
     orbit/usage: teams
     orbit/node-type: ec2
@@ -42,9 +55,7 @@ spec:
     AWS_ORBIT_TEAM_SPACE: {{ .Values.team }}
     AWS_ORBIT_ENV: {{ .Values.env }}
   securityContext:
-    {{ if .Values.grant_sudo }}
-    runAsUser: {{ .Values.runAsUser }}
-    {{ end }}
+    runAsUser: 0  # The notebook must run as root, the start up script will switch to jovyan
     fsGroup: 100
   lifecycle:
     postStart:

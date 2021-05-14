@@ -216,7 +216,8 @@ def package_team_space_pkg(context, repo, team_charts_path, team_context):
             "team_role_arn": team_context.eks_pod_role_arn,
             "DEVELOPMENT": ".dev" in aws_orbit.__version__,
             "jupyter_team_image": team_context.final_image_address,
-            "runAsUser": 0 if team_context.grant_sudo else 100,
+            "s3_toolkit_bucket": context.toolkit.s3_bucket,
+            "account_id": context.account_id
         },
     )
     install_chart(
