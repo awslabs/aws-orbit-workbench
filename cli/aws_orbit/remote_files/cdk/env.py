@@ -23,6 +23,7 @@ import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_lambda_python as lambda_python
+import aws_cdk.aws_sam as sam
 import aws_cdk.aws_ssm as ssm
 from aws_cdk import aws_lambda
 from aws_cdk.core import App, Construct, Duration, Environment, IConstruct, Stack, Tags
@@ -401,10 +402,10 @@ class Env(Stack):
     def _create_post_authentication_lambda(self) -> None:
         k8s_layer_name = "k8s_base_layer"
 
-        aws_sam.CfnApplication(
+        sam.CfnApplication(
             scope=self,
             id="awscli_kubectl_helm_lambda_layer_sam",
-            location=aws_sam.CfnApplication.ApplicationLocationProperty(
+            location=sam.CfnApplication.ApplicationLocationProperty(
                 application_id="arn:aws:serverlessrepo:us-east-1:903779448426:applications/lambda-layer-kubectl",
                 semantic_version="2.0.0"
             ),
