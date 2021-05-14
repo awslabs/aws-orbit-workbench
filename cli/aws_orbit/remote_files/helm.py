@@ -21,7 +21,7 @@ import yaml
 
 import aws_orbit
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, sh, utils
-from aws_orbit.models.context import Context, ContextSerDe, TeamContext
+from aws_orbit.models.context import Context, TeamContext
 from aws_orbit.remote_files import kubectl
 from aws_orbit.services import cfn, s3
 
@@ -123,7 +123,7 @@ def install_chart_no_upgrade(repo: str, namespace: str, name: str, chart_name: s
     sh.run(f"helm install --debug --namespace {namespace} --version {chart_version} {name} {repo}/{chart_name}")
 
 
-def uninstall_chart(name: str, namespace: str ) -> None:
+def uninstall_chart(name: str, namespace: str) -> None:
     try:
         _logger.debug("Uninstalling %s", name)
         sh.run(f"helm uninstall --debug {name} -n {namespace}")
@@ -199,7 +199,8 @@ def deploy_team(context: Context, team_context: TeamContext) -> None:
         package_team_space_pkg(context, repo, team_charts_path, team_context)
         package_user_space_pkg(context, repo, team_charts_path, team_context)
 
-def package_team_space_pkg(context, repo, team_charts_path, team_context):
+
+def package_team_space_pkg(context: Context, repo: str, team_charts_path: str, team_context: TeamContext) -> None:
     chart_name, chart_version, chart_package = package_chart(
         repo=repo,
         chart_path=os.path.join(team_charts_path, "team-space"),
@@ -217,14 +218,15 @@ def package_team_space_pkg(context, repo, team_charts_path, team_context):
             "DEVELOPMENT": ".dev" in aws_orbit.__version__,
             "jupyter_team_image": team_context.final_image_address,
             "s3_toolkit_bucket": context.toolkit.s3_bucket,
-            "account_id": context.account_id
+            "account_id": context.account_id,
         },
     )
     install_chart(
         repo=repo, namespace=team_context.name, name="team-space", chart_name=chart_name, chart_version=chart_version
     )
 
-def package_user_space_pkg(context, repo, team_charts_path, team_context):
+
+def package_user_space_pkg(context: Context, repo: str, team_charts_path: str, team_context: TeamContext) -> None:
     chart_name, chart_version, chart_package = package_chart(
         repo=repo,
         chart_path=os.path.join(team_charts_path, "user-space"),
@@ -239,7 +241,6 @@ def package_user_space_pkg(context, repo, team_charts_path, team_context):
             "grant_sudo": '"yes"' if team_context.grant_sudo else '"no"',
             "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
             "team_role_arn": team_context.eks_pod_role_arn,
-
         },
     )
 
@@ -253,6 +254,7 @@ def destroy_env(context: Context) -> None:
         add_repo(repo=repo, repo_location=repo_location)
         kubectl.write_kubeconfig(context=context)
         uninstall_chart(name="image-replicator", namespace="orbit-system")
+
 
 def destroy_team(context: Context, team_context: TeamContext) -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"

@@ -150,6 +150,7 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
         with open(output, "w") as file:
             file.write(content)
 
+
 def _cleanup_output(output_path: str) -> None:
     files = os.listdir(output_path)
     for file in files:
@@ -409,7 +410,7 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
 
         # kubeflow jupyter launcher configmap
         input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-launcher.yaml")
-        output = os.path.join(output_path, f"kf-jupyter-launcher.yaml")
+        output = os.path.join(output_path, "kf-jupyter-launcher.yaml")
 
         with open(input, "r") as file:
             content = file.read()
@@ -418,7 +419,7 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
             file.write(content)
 
         input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-patch.yaml")
-        output = os.path.join(output_path, f"kf-jupyter-patch.yaml")
+        output = os.path.join(output_path, "kf-jupyter-patch.yaml")
 
         with open(input, "r") as file:
             patch = file.read()
@@ -428,7 +429,8 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
 
         # Patch
         sh.run(f'kubectl patch deployment jupyter-web-app-deployment --patch "{patch}" -n kubeflow')
-        sh.run('kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow')
+        sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
+
 
 def destroy_env(context: "Context") -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
@@ -466,8 +468,6 @@ def destroy_teams(context: "Context") -> None:
         except exceptions.FailedShellCommand as ex:
             _logger.debug("Skipping: %s", ex)
             pass  # Let's leave for eksctl, it will destroy everything anyway...
-
-
 
 
 def destroy_team(context: "Context", team_context: "TeamContext") -> None:
