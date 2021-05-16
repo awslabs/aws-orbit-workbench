@@ -96,6 +96,7 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
 def install_helm_chart(
     helm_release: str, logger: logging.Logger, namespace: str, team: str, user: str, user_email: str
 ) -> None:
+
     cmd = (
         f"/usr/local/bin/helm upgrade --install --devel --debug --namespace {namespace} "
         f"{helm_release} {team}/user-space "
