@@ -32,8 +32,8 @@ def load_config(in_cluster: bool = True) -> None:
 def run_command(logger: logging.Logger, cmd: str) -> str:
     """ Module to run shell commands. """
     try:
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True, timeout=3, universal_newlines=True)
+        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True, timeout=29, universal_newlines=True)
     except subprocess.CalledProcessError as exc:
-        logger.debug("Command failed with exit code {}, stderr: {}".format(exc.returncode, exc.output.decode("utf-8")))
-        raise Exception(exc.output.decode("utf-8"))
+        logger.debug("Command failed with exit code {}, stderr: {}".format(exc.returncode, exc.output))
+        raise Exception(exc.output)
     return output
