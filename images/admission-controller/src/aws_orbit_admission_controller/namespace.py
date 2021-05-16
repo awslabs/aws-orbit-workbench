@@ -96,19 +96,17 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
 def install_helm_chart(
     helm_release: str, logger: logging.Logger, namespace: str, team: str, user: str, user_email: str
 ) -> None:
-    try:
-        # cmd = "/usr/local/bin/helm repo list"
-        cmd = (
-            f"/usr/local/bin/helm upgrade --install --devel --debug --namespace {namespace} "
-            f"{helm_release} {team}/orbit-user "
-            f"--set user={user},user_email={user_email},namespace={namespace}"
-        )
+    cmd = (
+        f"/usr/local/bin/helm upgrade --install --devel --debug --namespace {namespace} "
+        f"{helm_release} {team}/user-space "
+        f"--set user={user},user_email={user_email},namespace={namespace}"
+    )
 
-        logger.debug("running cmd: %s", cmd)
-        subprocess.check_output(cmd.split(" "), stderr=sys.stderr)
-    except subprocess.CalledProcessError as exc:
-        logger.debug("Command failed with exit code {}, stderr: {}".format(exc.returncode, exc.output.decode("utf-8")))
-        raise Exception(exc.output.decode("utf-8"))
+    logger.debug("running cmd: %s", cmd)
+    output = run_command(logger, cmd)
+    logger.debug(output)
+    logger.info("finished cmd: %s", cmd)
+
 
 
 def get_team_context(logger: logging.Logger, team: str) -> Dict[str, Any]:
