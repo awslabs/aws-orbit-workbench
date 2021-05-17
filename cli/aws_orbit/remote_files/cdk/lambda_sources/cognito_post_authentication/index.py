@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from typing import Any, Dict, List, Optional
 
 import boto3
@@ -23,6 +24,8 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
 
     expected_user_namespaces = {user_group: user_name + "-" + user_group for user_group in user_groups}
 
+    orbit_env = os.environ.get('ORBIT-ENV')
+
     payload = {
         'user_name': user_name,
         'user_email': user_email,
@@ -30,7 +33,7 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
         'expected_user_namespaces': expected_user_namespaces
     }
     lambda_client.invoke(
-        FunctionName='post-auth-k8s-test',
+        FunctionName=f'orbit-{orbit_env}-post-auth-k8s-manage',
         InvocationType='Event',
         Payload=json.dumps(payload)
     )

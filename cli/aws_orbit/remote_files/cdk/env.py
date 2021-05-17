@@ -429,13 +429,14 @@ class Env(Stack):
             scope=self,
             id="cognito_post_authentication_lambda",
             code=aws_lambda.Code.from_asset(_lambda_path("cognito_post_authentication/")),
-            function_name="orbit-dev-env-post-auth-test",
+            function_name=f"orbit-{self.context.name}-post-authentication",
             handler="index.handler",
             runtime=aws_lambda.Runtime.PYTHON_3_7,
             timeout=Duration.seconds(300),
             role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-role", role_arn=role_arn),
             environment={
                 "REGION": "us-east-2",
+                "ORBIT-ENV": self.context.name
             },
             initial_policy=[
                 iam.PolicyStatement(
@@ -451,14 +452,16 @@ class Env(Stack):
             scope=self,
             id="cognito_post_authentication_k8s_lambda",
             code=aws_lambda.Code.from_asset(_lambda_path("cognito_post_authentication/lambda.zip")),
-            function_name="orbit-dev-env-post-auth-k8s-manage",
+            function_name=f"orbit-{self.context.name}-post-auth-k8s-manage",
             handler="k8s_manage.handler",
             runtime=aws_lambda.Runtime.PYTHON_3_7,
             timeout=Duration.seconds(300),
             role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-k8s-role", role_arn=role_arn),
             environment={
                 "REGION": "us-east-2",
-                "PATH" : "/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin:/opt/awscli:/opt/kubectl:/opt/helm"
+                "PATH" : "/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin:/opt/awscli:/opt/kubectl:/opt/helm",
+                "ORBIT-ENV": self.context.name
+
             },
             initial_policy=[
                 iam.PolicyStatement(
