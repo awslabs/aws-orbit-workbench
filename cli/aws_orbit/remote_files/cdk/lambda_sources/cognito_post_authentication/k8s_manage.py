@@ -2,7 +2,7 @@ import logging
 import os
 import subprocess
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import boto3
 from kubernetes import client, config
@@ -13,10 +13,10 @@ logger.setLevel(logging.INFO)
 
 
 def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
-    user_name = event.get("user_name")
-    user_email = event.get("user_email")
-    user_pool_id = event.get("user_pool_id")
-    expected_user_namespaces = event.get("expected_user_namespaces")
+    user_name = cast(str, event.get("user_name"))
+    user_email = cast(str, event.get("user_email"))
+    user_pool_id = cast(str, event.get("user_pool_id"))
+    expected_user_namespaces = cast(Dict[str, str], event.get("expected_user_namespaces"))
 
     create_kubeconfig()
 
@@ -31,7 +31,7 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
     )
 
 
-def run_command(cmd: str) -> str:
+def run_command(cmd: str) -> None:
     """ Module to run shell commands. """
     cmds = cmd.split(" ")
     try:
@@ -40,10 +40,9 @@ def run_command(cmd: str) -> str:
     except subprocess.CalledProcessError as exc:
         # print("Command failed with exit code {}, stderr: {}".format(exc.returncode, exc.output.decode("utf-8")))
         raise exc
-    return output
 
 
-def create_kubeconfig() -> bool:
+def create_kubeconfig() -> None:
     KUBECONFIG_PATH = "/tmp/.kubeconfig"
     orbit_env = os.environ.get("ORBIT_ENV")
     account_id = os.environ.get("ACCOUNT_ID")
@@ -60,10 +59,9 @@ def create_kubeconfig() -> bool:
     except config.ConfigException:
         raise Exception("Could not configure kubernetes python client")
 
-
 def manage_user_namespace(
     kubernetes_api_client: client.CoreV1Api,
-    expected_user_namespaces: List,
+    expected_user_namespaces: Dict[str, str],
     user_name: str,
     user_email: str,
     user_pool_id: str,
