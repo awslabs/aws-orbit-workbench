@@ -15,7 +15,7 @@ app.logger.info("environ: %s", os.environ)
 def namespace() -> Any:
     # See here for AdmissionReview request/response
     # https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#request
-    return process_namespace_request(logger=app.logger, request=request.json["request"])
+    return process_namespace_request(logger=app.logger, namespace=request.json["request"])
 
 
 @app.route("/pod", methods=["POST"])

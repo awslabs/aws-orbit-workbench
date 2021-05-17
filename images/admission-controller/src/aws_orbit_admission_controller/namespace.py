@@ -18,49 +18,49 @@ import json
 import logging
 import subprocess
 import sys
-from typing import Any, Dict
+import time
+from multiprocessing import Queue, synchronize
+from typing import Any, Dict, Optional, cast
+from click.core import Option
 
 import jsonpatch
-from aws_orbit_admission_controller import load_config, run_command
+from aws_orbit_admission_controller import (
+    ORBIT_API_GROUP,
+    ORBIT_API_VERSION,
+    ORBIT_SYSTEM_NAMESPACE,
+    load_config,
+    logger,
+    run_command,
+)
 from flask import jsonify
 from kubernetes.client import CoreV1Api, V1ConfigMap
+from kubernetes.client.exceptions import OpenApiException
+from kubernetes.watch import Watch
+from urllib3.exceptions import ReadTimeoutError
 
 
-def should_install_team_package(logger: logging.Logger, request: Dict[str, Any]) -> bool:
-    if "dryRun" in request and request["dryRun"]:
-        logger.info("Dry run - Skip Install")
-        return False
-
-    spec = request["object"]["spec"]
-    space = spec["space"]
-    if space == "team":
-        return False
-
-    return True
+def should_install_team_package(labels: Dict[str, str]) -> bool:
+    return labels.get("orbit/space", None) != "team"
 
 
-def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
+def process_added_event(namespace: Dict[str, Any]) -> None:
     logger.debug("loading kubeconfig")
     load_config()
-    spec = request["object"]["spec"]
-    name = request["object"]["metadata"]["name"]
-    modified_spec = copy.deepcopy(spec)
-    logger.info("processing namespace settings")
-    logger.debug("request: %s", request)
+    name = namespace["metadata"]["name"]
+    labels = namespace["metadata"].get("labels", {})
+    annotations = namespace["metadata"].get("annotations", {})
 
-    if not should_install_team_package(logger, request):
-        return jsonify(
-            {
-                "response": {
-                    "allowed": True,
-                    "uid": request["uid"],
-                }
-            }
-        )
-    # env = spec["env"]
-    team = spec["team"]
-    user = spec["user"]
-    user_email = spec["email"]
+    logger.info("processing namespace")
+    logger.debug("namespace: %s", namespace)
+
+    if not should_install_team_package(namespace):
+        return
+
+    env = labels.get("orbit/env", None)
+    space = labels.get("orbit/space", None)
+    team = labels.get("orbit/team", None)
+    user = labels.get("orbit/user", None)
+    user_email = annotations.get("owner", None)
     namespace = name
 
     logger.debug("new namespace: %s,%s,%s,%s", team, user, user_email, namespace)
@@ -70,31 +70,15 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     logger.debug("Adding Helm Repository: %s at %s", team, helm_repo_url)
     helm_release = f"{namespace}-orbit-team"
     # add the team repo
-    run_command(logger, f"helm repo add {team} {helm_repo_url}")
+    run_command(f"helm repo add {team} {helm_repo_url}")
     # install the helm package for this user space
-    install_helm_chart(helm_release, logger, namespace, team, user, user_email)
-
-    try:
-        modified_spec["metadata"]["annotations"]["orbit/helm"] = f"{namespace}-orbit-team"
-    except KeyError:
-        pass
+    install_helm_chart(logger, namespace, team, user, user_email)
 
     logger.info("Helm release %s installed at %s", helm_release, namespace)
-    patch = jsonpatch.JsonPatch.from_diff(spec, modified_spec)
-    return jsonify(
-        {
-            "response": {
-                "allowed": True,
-                "uid": request["uid"],
-                "patch": base64.b64encode(str(patch).encode()).decode(),
-                "patchtype": "JSONPatch",
-            }
-        }
-    )
 
 
 def install_helm_chart(
-    helm_release: str, logger: logging.Logger, namespace: str, team: str, user: str, user_email: str
+    helm_release: str, namespace: str, team: str, user: str, user_email: str
 ) -> None:
     try:
         # cmd = "/usr/local/bin/helm repo list"
@@ -111,7 +95,7 @@ def install_helm_chart(
         raise Exception(exc.output.decode("utf-8"))
 
 
-def get_team_context(logger: logging.Logger, team: str) -> Dict[str, Any]:
+def get_team_context(team: str) -> Dict[str, Any]:
     try:
         api_instance = CoreV1Api()
         team_context_cf: V1ConfigMap = api_instance.read_namespaced_config_map("orbit-team-context", team)
@@ -124,3 +108,50 @@ def get_team_context(logger: logging.Logger, team: str) -> Dict[str, Any]:
         logger.error("Error during fetching team context configmap")
         raise e
     return team_context
+
+
+def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
+    while True:
+        try:
+            load_config()
+            client = CoreV1Api()
+
+            logger.info("Monitoring Namespaces")
+            watcher = Watch()
+
+            kwargs = {"label_selector": "orbit/space", "resource_version": state.get("lastResourceVersion", 0)}
+            for event in watcher.stream(client.list_namespace, **kwargs):
+                namespace = event["object"]
+                state["lastResourceVersion"] = namespace.metadata.resource_version
+                queue_event = {"type": event["type"], "raw_object": event["raw_object"]}
+                logger.debug("Queueing Namespace event for processing: %s", queue_event)
+                queue.put(queue_event)
+        except ReadTimeoutError:
+            logger.warning("There was a timeout error accessing the Kubernetes API. Retrying request.", exc_info=True)
+            time.sleep(1)
+        except Exception:
+            logger.exception("Unknown error in NamespaceWatcher. Failing")
+            raise
+        else:
+            logger.warning(
+                "Watch died gracefully, starting back up with last_resource_version: %s", state["lastResourceVersion"]
+            )
+
+
+def process_namespaces(queue: Queue, state: Dict[str, Any], replicator_id: int) -> int:
+    logger.info("Started Namespace Processor Id: %s", replicator_id)
+    namespace_event: Optional[Dict[str, Any]] = None
+
+    while True:
+        try:
+            namespace_event = cast(Dict[str, Any], queue.get(block=True, timeout=None))
+
+            if namespace_event["type"] == "ADDED":
+                process_added_event(namespace=namespace_event["raw_object"])
+            else:
+                logger.debug("Skipping Namespace event: %s", namespace_event)
+        except Exception:
+            logger.exception("Failed to process Namespace event: %s", namespace_event)
+        finally:
+            namespace_event = None
+            time.sleep(1)
