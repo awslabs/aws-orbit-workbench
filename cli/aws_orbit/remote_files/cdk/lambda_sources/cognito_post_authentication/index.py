@@ -24,7 +24,7 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
 
     expected_user_namespaces = {user_group: user_name + "-" + user_group for user_group in user_groups}
 
-    orbit_env = os.environ.get('ORBIT-ENV')
+    orbit_env = os.environ.get('ORBIT_ENV')
 
     payload = {
         'user_name': user_name,

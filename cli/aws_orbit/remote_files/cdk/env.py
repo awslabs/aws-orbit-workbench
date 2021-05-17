@@ -436,7 +436,7 @@ class Env(Stack):
             role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-role", role_arn=role_arn),
             environment={
                 "REGION": "us-east-2",
-                "ORBIT-ENV": self.context.name
+                "ORBIT_ENV": self.context.name
             },
             initial_policy=[
                 iam.PolicyStatement(
@@ -460,7 +460,7 @@ class Env(Stack):
             environment={
                 "REGION": "us-east-2",
                 "PATH" : "/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin:/opt/awscli:/opt/kubectl:/opt/helm",
-                "ORBIT-ENV": self.context.name
+                "ORBIT_ENV": self.context.name
 
             },
             initial_policy=[
