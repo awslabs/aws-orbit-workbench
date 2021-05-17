@@ -407,11 +407,9 @@ class Env(Stack):
             id="awscli_kubectl_helm_lambda_layer_sam",
             location=sam.CfnApplication.ApplicationLocationProperty(
                 application_id="arn:aws:serverlessrepo:us-east-1:903779448426:applications/lambda-layer-kubectl",
-                semantic_version="2.0.0"
+                semantic_version="2.0.0",
             ),
-            parameters={
-                "LayerName": k8s_layer_name
-            }
+            parameters={"LayerName": k8s_layer_name},
         )
 
         role_name = f"orbit-{self.context.name}-admin"
@@ -437,7 +435,7 @@ class Env(Stack):
             environment={
                 "REGION": self.context.region,
                 "ORBIT_ENV": self.context.name,
-                "ACCOUNT_ID": self.context.account_id
+                "ACCOUNT_ID": self.context.account_id,
             },
             initial_policy=[
                 iam.PolicyStatement(
@@ -446,7 +444,7 @@ class Env(Stack):
                     resources=["*"],
                 )
             ],
-            memory_size=128
+            memory_size=128,
         )
 
         aws_lambda.Function(
@@ -460,9 +458,9 @@ class Env(Stack):
             role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-k8s-role", role_arn=role_arn),
             environment={
                 "REGION": self.context.region,
-                "PATH" : "/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin:/opt/awscli:/opt/kubectl:/opt/helm",
+                "PATH": "/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin:/opt/awscli:/opt/kubectl:/opt/helm",
                 "ORBIT_ENV": self.context.name,
-                "ACCOUNT_ID": self.context.account_id
+                "ACCOUNT_ID": self.context.account_id,
             },
             initial_policy=[
                 iam.PolicyStatement(
@@ -475,10 +473,10 @@ class Env(Stack):
                 aws_lambda.LayerVersion.from_layer_version_arn(
                     scope=self,
                     id="K8sLambdaLayer",
-                    layer_version_arn=f'arn:aws:lambda:{self.context.region}:{self.context.account_id}:layer:{k8s_layer_name}:1'
+                    layer_version_arn=f"arn:aws:lambda:{self.context.region}:{self.context.account_id}:layer:{k8s_layer_name}:1",
                 )
             ],
-            memory_size=256
+            memory_size=256,
         )
 
     def _create_manifest_parameter(self) -> ssm.StringParameter:
