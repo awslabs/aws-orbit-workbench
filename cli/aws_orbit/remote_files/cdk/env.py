@@ -435,8 +435,9 @@ class Env(Stack):
             timeout=Duration.seconds(300),
             role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-role", role_arn=role_arn),
             environment={
-                "REGION": "us-east-2",
-                "ORBIT_ENV": self.context.name
+                "REGION": self.context.region,
+                "ORBIT_ENV": self.context.name,
+                "ACCOUNT_ID": self.context.account_id
             },
             initial_policy=[
                 iam.PolicyStatement(
@@ -458,10 +459,10 @@ class Env(Stack):
             timeout=Duration.seconds(300),
             role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-k8s-role", role_arn=role_arn),
             environment={
-                "REGION": "us-east-2",
+                "REGION": self.context.region,
                 "PATH" : "/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin:/opt/awscli:/opt/kubectl:/opt/helm",
-                "ORBIT_ENV": self.context.name
-
+                "ORBIT_ENV": self.context.name,
+                "ACCOUNT_ID": self.context.account_id
             },
             initial_policy=[
                 iam.PolicyStatement(

@@ -1,4 +1,5 @@
 import logging
+import os
 import sys
 import subprocess
 from typing import Any, Dict, List, Optional
@@ -35,9 +36,11 @@ def run_command(cmd: str) -> str:
 
 def create_kubeconfig() -> bool:
     KUBECONFIG_PATH = "/tmp/.kubeconfig"
+    orbit_env = os.environ.get('ORBIT_ENV')
+    account_id = os.environ.get('ACCOUNT_ID')
 
     logger.info(f'Generating kubeconfig in {KUBECONFIG_PATH}')
-    run_command(f"aws eks update-kubeconfig --name orbit-dev-env --role-arn arn:aws:iam::339309931548:role/orbit-dev-env-admin --kubeconfig {KUBECONFIG_PATH}")
+    run_command(f"aws eks update-kubeconfig --name orbit-{orbit_env} --role-arn arn:aws:iam::{account_id}:role/orbit-{orbit_env}-admin --kubeconfig {KUBECONFIG_PATH}")
     
     logger.info("Loading kubeconfig")
     try:
@@ -58,7 +61,13 @@ def manage_user_namespace(kubernetes_api_client: client.CoreV1Api, expected_user
             logger.info(f'User namespace {user_ns} doesnt exist. Creating...')
             name = user_ns
             annotations = {"owner": user_email}
-            labels = {"orbit/user-space": "enabled", "teams": team, "env": "test-env-kf"}
+            labels = {
+                "orbit/space": "user",
+                "orbit/team": team,
+                "orbit/env": os.environ.get('ORBIT_ENV'),
+                "orbit/user": user_name,
+                "istio-injection": "enabled"
+            }
 
             body = client.V1Namespace()
             body.metadata = client.V1ObjectMeta(name=name, annotations=annotations, labels=labels)
