@@ -473,7 +473,9 @@ class Env(Stack):
                 aws_lambda.LayerVersion.from_layer_version_arn(
                     scope=self,
                     id="K8sLambdaLayer",
-                    layer_version_arn=f"arn:aws:lambda:{self.context.region}:{self.context.account_id}:layer:{k8s_layer_name}:1",
+                    layer_version_arn=(
+                        f"arn:aws:lambda:{self.context.region}:{self.context.account_id}:layer:{k8s_layer_name}:1"
+                    ),
                 )
             ],
             memory_size=256,

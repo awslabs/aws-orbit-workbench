@@ -1,10 +1,8 @@
 import logging
 import os
 import subprocess
-import sys
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, Optional, cast
 
-import boto3
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
@@ -49,7 +47,12 @@ def create_kubeconfig() -> None:
 
     logger.info(f"Generating kubeconfig in {KUBECONFIG_PATH}")
     run_command(
-        f"aws eks update-kubeconfig --name orbit-{orbit_env} --role-arn arn:aws:iam::{account_id}:role/orbit-{orbit_env}-admin --kubeconfig {KUBECONFIG_PATH}"
+        (
+            "aws eks update-kubeconfig "
+            f"--name orbit-{orbit_env} "
+            f"--role-arn arn:aws:iam::{account_id}:role/orbit-{orbit_env}-admin "
+            f"--kubeconfig {KUBECONFIG_PATH}"
+        )
     )
 
     logger.info("Loading kubeconfig")
@@ -58,6 +61,7 @@ def create_kubeconfig() -> None:
         logger.info("Loaded kubeconfig successfully")
     except config.ConfigException:
         raise Exception("Could not configure kubernetes python client")
+
 
 def manage_user_namespace(
     kubernetes_api_client: client.CoreV1Api,
@@ -95,7 +99,7 @@ def manage_user_namespace(
             try:
                 api.create_namespace(body=body)
                 logger.info(f"Created namespace {name}")
-            except ApiException as e:
+            except ApiException:
                 logger.info(f"Exception when trying to create user namespace {name}")
 
     logger.info([item.get("metadata").get("name") for item in api.list_namespace().to_dict()["items"]])
@@ -108,5 +112,5 @@ def manage_user_namespace(
             try:
                 api.delete_namespace(name=user_ns)
                 logger.info(f"Removed namespace {user_ns}")
-            except ApiException as e:
+            except ApiException:
                 logger.info("Exception when trying to remove user namespace {user_ns}")
