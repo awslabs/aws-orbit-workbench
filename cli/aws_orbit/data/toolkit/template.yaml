@@ -101,6 +101,7 @@ Resources:
               - emr-containers:ListVirtualClusters
               - emr-containers:DeleteVirtualCluster
               - redshift:Describe*
+              - s3:GetObject
             Resource: '*'
           - Effect: Allow
             Action:
