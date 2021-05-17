@@ -46,7 +46,13 @@ spec:
       value: "{{ .Values.account_id }}"
     - name: AWS_ORBIT_S3_BUCKET
       value: "{{ .Values.s3_toolkit_bucket }}"
-
+    - name: AWS_STS_REGIONAL_ENDPOINTS
+      value: "{{ .Values.sts_ep }}"
+    # FIXME Chauncy
+    # - name: AWS_ORBIT_USER_SPACE
+    #  value: "{{ .Values.team }}-amirbo"
+    # - name: JUPYTER_IMAGE #AWS_ORBIT_IMAGE (we cannot fix the env name until we build a new image)
+    #  value: "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user:latest"
   nodeSelector:
     orbit/usage: teams
     orbit/node-type: ec2
@@ -56,10 +62,10 @@ spec:
   securityContext:
     runAsUser: 0  # The notebook must run as root, the start up script will switch to jovyan
     fsGroup: 100
-  lifecycle:
-    postStart:
-      exec:
-        command: ["/bin/sh", "/home/jovyan/.orbit/bootstrap.sh"]
+{{/*  lifecycle:*/}}
+{{/*    postStart:*/}}
+{{/*      exec:*/}}
+{{/*        command: ["/bin/sh", "/home/jovyan/.orbit/bootstrap.sh"]*/}}
 ---
 # This configures the image policy to force PULL when using development env.
 {{ if .Values.DEVELOPMENT }}

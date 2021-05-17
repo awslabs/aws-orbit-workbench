@@ -9,7 +9,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ .Values.team }}
+  name: jupyter-user
 subjects:
   - kind: ServiceAccount
     name: default-editor
