@@ -23,6 +23,7 @@ code-server --install-extension ms-toolsai.jupyter --force
 code-server --install-extension mtxr.sqltools --force
 code-server --install-extension rogalmic.bash-debug --force
 code-server --install-extension AmazonWebServices.aws-toolkit-vscode --force
+code-server --install-extension ms-kubernetes-tools.vscode-kubernetes-tools --force
 
 pip install .
 
