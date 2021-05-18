@@ -1,5 +1,7 @@
+import json
 import logging
-from typing import Any, Dict, Optional
+import os
+from typing import Any, Dict, Optional, cast
 
 import boto3
 
@@ -8,15 +10,31 @@ logger.setLevel(logging.INFO)
 
 
 def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
+    orbit_env = os.environ.get("ORBIT_ENV")
+
     cognito_client = boto3.client("cognito-idp")
+    lambda_client = boto3.client("lambda")
 
-    userName = event.get("userName")
-    userPoolId = event.get("userPoolId")
+    user_name = cast(str, event.get("userName"))
+    user_email = cast(str, event["request"]["userAttributes"].get("email", "user@email.com"))
+    user_pool_id = cast(str, event.get("userPoolId"))
 
-    userGroupsInfo = cognito_client.admin_list_groups_for_user(Username=userName, UserPoolId=userPoolId)
-    userGroups = [group.get("GroupName") for group in userGroupsInfo.get("Groups")]
+    user_groups_info = cognito_client.admin_list_groups_for_user(Username=user_name, UserPoolId=user_pool_id)
+    user_groups = [group.get("GroupName").split(f"{orbit_env}-")[1] for group in user_groups_info.get("Groups")]
 
     logger.info("Authenticated successfully:")
-    logger.info(f"userName: {userName}, userPoolId: {userPoolId}, userGroups: {userGroups}")
+    logger.info(f"userName: {user_name}, userPoolId: {user_pool_id}, userGroups: {user_groups}")
+
+    expected_user_namespaces = {user_group: user_name + "-" + user_group for user_group in user_groups}
+
+    payload = {
+        "user_name": user_name,
+        "user_email": user_email,
+        "user_pool_id": user_pool_id,
+        "expected_user_namespaces": expected_user_namespaces,
+    }
+    lambda_client.invoke(
+        FunctionName=f"orbit-{orbit_env}-post-auth-k8s-manage", InvocationType="Event", Payload=json.dumps(payload)
+    )
 
     return event
