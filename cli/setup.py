@@ -66,5 +66,5 @@ setup(
         "Typing :: Typed",
     ],
     include_package_data=True,
-    extras_require={"utils": [f"aws-orbit-sdk~={version}"], "kubespawner": ["jupyterhub-kubespawner~=0.15.0"]},
+    extras_require={"utils": [f"aws-orbit-sdk~={version}"]},
 )
