@@ -40,11 +40,11 @@ def get_pod_settings(client: dynamic.DynamicClient) -> List[Dict[str, Any]]:
     return cast(List[Dict[str, Any]], pod_settings.to_dict().get("items", []))
 
 
-def get_namespace_setting(client: dynamic.DynamicClient, namespace: str, name: str) -> Optional[Dict[str, Any]]:
-    api = client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="NamespaceSetting")
+def get_namespace(client: dynamic.DynamicClient, name: str) -> Optional[Dict[str, Any]]:
+    api = client.resources.get(api_version="v1", kind="Namespace")
 
     try:
-        return cast(Dict[str, Any], api.get(name=name, namespace=namespace).to_dict())
+        return cast(Dict[str, Any], api.get(name=name).to_dict())
     except k8s_exceptions.NotFoundError:
         return None
 
@@ -260,14 +260,16 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     )
     logger.debug("podsettings: %s", ORBIT_SYSTEM_POD_SETTINGS)
 
-    namespace_setting = get_namespace_setting(
-        client=client, namespace=ORBIT_SYSTEM_NAMESPACE, name=request["namespace"]
+    namespace = get_namespace(
+        client=client, name=request["namespace"]
     )
-    if namespace_setting is None:
-        logger.info("namespacesetting named %s not found in namesapce %s", request["namespace"], ORBIT_SYSTEM_NAMESPACE)
+    labels = namespace["metadata"].get("labels", {})
+    team_namespace = labels.get("orbit/team", None)
+
+    if team_namespace is None:
+        logger.info("No orbit/team label found on namespace: %s", request["namespace"])
         return get_response(uid=request["uid"])
 
-    team_namespace = namespace_setting["spec"]["team"]
     team_pod_settings = filter_pod_settings(pod_settings=ORBIT_SYSTEM_POD_SETTINGS, namespace=team_namespace, pod=pod)
     logger.debug("filtered podsettings: %s", team_pod_settings)
 
@@ -275,7 +277,7 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
         for pod_setting in team_pod_settings:
             logger.debug("applying podsetting: %s", pod_setting)
             apply_settings_to_pod(
-                namespace_setting=namespace_setting, pod_setting=pod_setting, pod=modified_pod, logger=logger
+                namespace_setting=namespace, pod_setting=pod_setting, pod=modified_pod, logger=logger
             )
     except Exception as e:
         logger.exception(e)
