@@ -50,9 +50,9 @@ This is the standard 'is everything ok' example of how to configure plugins.
 ### <a name="emreks_plugin">EMR on EKS </a>
 ### <a name="lustre_plugin">Lustre</a>
 ### <a name="ray_plugin">Ray</a>
-### <a name=sm_operator_plugin">Sagemaker Operator</a>
-### <a name=ts_plugin">Team Script Plugin</a>
-### <a name=op_plugin">Overprovisioning Plugin</a>
+### <a name="sm_operator_plugin">Sagemaker Operator</a>
+### <a name="ts_plugin">Team Script Plugin</a>
+### <a name="op_plugin">Overprovisioning Plugin</a>
 
 
 
