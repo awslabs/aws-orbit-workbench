@@ -270,8 +270,8 @@ class IamBuilder:
                         "logs:PutLogEvents",
                     ],
                     resources=[
-                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}:log-stream:*"  # noqa
-                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws-glue-databrew/*:log-stream:*"
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}:log-stream:*",  # noqa
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws-glue-databrew/*:log-stream:*",
                     ],
                 ),
                 iam.PolicyStatement(
@@ -297,6 +297,15 @@ class IamBuilder:
                     ],
                     resources=[
                         f"arn:{partition}:ecr:{region}:{account}:repository/*",
+                    ],
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "eks:DescribeCluster",
+                    ],
+                    resources=[
+                        f"arn:{partition}:eks:{region}:{account}:cluster/orbit-{env_name}",
                     ],
                 ),
             ],
