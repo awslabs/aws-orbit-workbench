@@ -613,11 +613,13 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
     node_selector : List[Dict[str, str]] = list()
     _logger.info("volumes:%s", json.dumps(volumes))
     _logger.info("volume_mounts:%s", json.dumps(volume_mounts))
+
     pod_properties: Dict[str, str] = dict(
         name=job_name,
         image=image,
         cmd=["bash", "-c", "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"],
         port=22,
+        service_account='default-editor',
         node_selector=node_selector,
         run_privileged=False,
         allow_privilege_escalation=True,
@@ -1266,10 +1268,11 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     """
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
     node_type = get_node_type(taskConfiguration)
     username = (os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))).split("@")[0]
-    cronjob_id = f"orbit-{team_name}-{triggerName}"
-    labels = {"app": f"orbit-runner", "orbit/node-type": node_type, "username": username, "cronjob_id": cronjob_id}
+    cronjob_id = f"orbit-{namespace}-{triggerName}"
+    labels = {"app": f"orbit-runner", "orbit/node-type": node_type, "cronjob_id": cronjob_id, "notebook-name": "scheduled"}
 
     job_spec = _create_eks_job_spec(taskConfiguration, labels=labels)
     cron_job_template: V1beta1JobTemplateSpec = V1beta1JobTemplateSpec(spec=job_spec)
@@ -1277,13 +1280,13 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     job = V1beta1CronJob(
         api_version="batch/v1beta1",
         kind="CronJob",
-        metadata=V1ObjectMeta(name=cronjob_id, labels=labels, namespace=team_name),
+        metadata=V1ObjectMeta(name=cronjob_id, labels=labels, namespace=namespace),
         status=V1beta1CronJobStatus(),
         spec=cron_job_spec,
     )
     load_kube_config()
 
-    job_instance: V1beta1CronJob = BatchV1beta1Api().create_namespaced_cron_job(namespace=team_name, body=job)
+    job_instance: V1beta1CronJob = BatchV1beta1Api().create_namespaced_cron_job(namespace=namespace, body=job)
     metadata: V1ObjectMeta = job_instance.metadata
     return {
         "ExecutionType": "eks",
