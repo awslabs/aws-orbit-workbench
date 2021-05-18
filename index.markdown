@@ -2,11 +2,11 @@
 # Feel free to add content and custom Front Matter to this file.
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
-layout: default
+layout: home
 title: Home
 ---
-This is the landing page, content TBD
+AWS Orbit Workbench is an open source framework that provides a single, unified experience for your data, analytics and 
+machine learning projects.  You can collaborate with your team in a secure environment, using a wide range of AWS and 
+partner services to experiment, develop, test and deploy your workloads onto Kubernetes Clusters in production.
 
-## [GitHub Repository](https://github.com/awslabs/aws-orbit-workbench)
 
-{% include carousel.html height="80" unit="%" duration="30" %}

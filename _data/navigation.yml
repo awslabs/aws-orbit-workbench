@@ -1,6 +1,6 @@
 docs_list_title: AWS Orbit Documentation
 docs:
-  - group: Getting Start
+  - group: Getting Started
     sub:
       - title: Introduction
         url: documentation
