@@ -433,6 +433,12 @@ class ContextSerDe(Generic[T, V]):
         context.install_ssm_agent = manifest.install_ssm_agent
         context.install_image_replicator = manifest.install_image_replicator
         ContextSerDe.fetch_toolkit_data(context=context)
+
+        # Set the Helm repositories
+        context.helm_repository = f"s3://{context.toolkit.s3_bucket}/helm/repositories/env"
+        for team_context in context.teams:
+            team_context.helm_repository = f"s3://{context.toolkit.s3_bucket}/helm/repositories/teams/{team_context.name}"
+
         ContextSerDe.dump_context_to_ssm(context=context)
         return context
 

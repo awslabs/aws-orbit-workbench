@@ -40,13 +40,24 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
     if not should_install_team_package(namespace):
         return
 
-    # env = labels.get("orbit/env", None)
-    # space = labels.get("orbit/space", None)
+    env = labels.get("orbit/env", None)
+    space = labels.get("orbit/space", None)
     team = labels.get("orbit/team", None)
     user = labels.get("orbit/user", None)
     user_email = annotations.get("owner", None)
 
     logger.debug("new namespace: %s,%s,%s,%s", team, user, user_email, namespace_name)
+
+    if not env or not space or not team or not user or not user_email:
+        logger.error(
+            "All of env, space, team, user, and user_email are required. Found: %s, %s, %s, %s, %s",
+            env,
+            space,
+            team,
+            user,
+            user_email,
+        )
+        return
 
     team_context = get_team_context(team)
     helm_repo_url = team_context["HelmRepository"]

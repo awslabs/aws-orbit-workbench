@@ -58,18 +58,18 @@ def add_repo(repo: str, repo_location: str) -> None:
 
 
 def init_env_repo(context: Context) -> str:
-    repo_location = f"s3://{context.toolkit.s3_bucket}/helm/repositories/env"
+    repo_location = context.helm_repository
     if not s3.object_exists(bucket=cast(str, context.toolkit.s3_bucket), key="helm/repositories/env/index.yaml"):
         _logger.debug("Initializing Env Helm Respository at %s", repo_location)
         sh.run(f"helm s3 init {repo_location}")
     else:
         _logger.debug("Skipping initialization of existing Env Helm Repository at %s", repo_location)
 
-    context.helm_repository = repo_location
     return repo_location
 
 
 def init_team_repo(context: Context, team_context: TeamContext) -> str:
+    repo_location = team_context.helm_repository
     repo_location = f"s3://{context.toolkit.s3_bucket}/helm/repositories/teams/{team_context.name}"
     if not s3.object_exists(
         bucket=cast(str, context.toolkit.s3_bucket), key=f"helm/repositories/teams/{team_context.name}/index.yaml"
@@ -79,7 +79,6 @@ def init_team_repo(context: Context, team_context: TeamContext) -> str:
     else:
         _logger.debug("Skipping initialization of existing Team Helm Repository at %s", repo_location)
 
-    team_context.helm_repository = repo_location
     return repo_location
 
 

@@ -2,11 +2,11 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: admission-controller-pod
+  name: admission-controller-pod-settings-mutator
   namespace: orbit-system
 spec:
   selector:
-    app: admission-controller-pod
+    app: admission-controller-pod-settings-mutator
   ports:
   - name: https
     protocol: TCP
@@ -16,9 +16,9 @@ spec:
 kind: MutatingWebhookConfiguration
 apiVersion: admissionregistration.k8s.io/v1beta1
 metadata:
-  name: orbit-admission-controller-pod
+  name: orbit-admission-controller-pod-settings-mutator
 webhooks:
-  - name: admission-controller-pod.orbit-system.svc
+  - name: admission-controller-pod-settings-mutator.orbit-system.svc
     sideEffects: None
     reinvocationPolicy: IfNeeded
     failurePolicy: Fail
@@ -39,13 +39,13 @@ webhooks:
       caBundle: ""
       service:
         namespace: orbit-system
-        name: admission-controller-pod
+        name: admission-controller-pod-settings-mutator
         path: /pod
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: admission-controller
+  name: admission-controller-config
   namespace: orbit-system
 data:
   FLASK_DEBUG: "1"
@@ -61,17 +61,17 @@ metadata:
   labels:
     app: admission-controller
   namespace: orbit-system
-  name: admission-controller-pod
+  name: admission-controller-pod-settings-mutator
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: admission-controller-pod
+      app: admission-controller-pod-settings-mutator
   template:
     metadata:
       labels:
-        app: admission-controller-pod
-      name: admission-controller-pod
+        app: admission-controller-pod-settings-mutator
+      name: admission-controller-pod-settings-mutator
     spec:
       serviceAccountName: orbit-${env_name}-admin
       containers:
@@ -84,7 +84,7 @@ spec:
               protocol: TCP
           envFrom:
             - configMapRef:
-                name: admission-controller-pod-config
+                name: admission-controller-config
           command:
             - gunicorn
           args:
@@ -122,7 +122,7 @@ spec:
       volumes:
         - name: admission-controller-certs
           secret:
-            secretName: admission-controller-pod-certs
+            secretName: admission-controller-pod-settings-mutator-certs
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -149,7 +149,7 @@ spec:
           imagePullPolicy: ${image_pull_policy}
           envFrom:
             - configMapRef:
-                name: admission-controller-pod-config
+                name: admission-controller-config
           command:
             - admission-controller
             - watch
