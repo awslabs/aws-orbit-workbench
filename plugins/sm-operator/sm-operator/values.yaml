@@ -9,5 +9,5 @@ serviceAccountName: ${team}
 team: ${team} 
 
 image:
-  repository: 957583890962.dkr.ecr.us-east-1.amazonaws.com/amazon-sagemaker-operator-for-k8s
-  tag: v1
+  repository: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/amazon/amazon-sagemaker-operator-for-k8s
+  tag: latest
