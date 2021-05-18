@@ -10,6 +10,8 @@ logger.setLevel(logging.INFO)
 
 
 def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
+    orbit_env = os.environ.get("ORBIT_ENV")
+
     cognito_client = boto3.client("cognito-idp")
     lambda_client = boto3.client("lambda")
 
@@ -18,14 +20,12 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
     user_pool_id = cast(str, event.get("userPoolId"))
 
     user_groups_info = cognito_client.admin_list_groups_for_user(Username=user_name, UserPoolId=user_pool_id)
-    user_groups = [group.get("GroupName") for group in user_groups_info.get("Groups")]
+    user_groups = [group.get("GroupName").split(f"{orbit_env}-")[1] for group in user_groups_info.get("Groups")]
 
     logger.info("Authenticated successfully:")
     logger.info(f"userName: {user_name}, userPoolId: {user_pool_id}, userGroups: {user_groups}")
 
     expected_user_namespaces = {user_group: user_name + "-" + user_group for user_group in user_groups}
-
-    orbit_env = os.environ.get("ORBIT_ENV")
 
     payload = {
         "user_name": user_name,
