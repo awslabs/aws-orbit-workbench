@@ -1,16 +1,3 @@
-kind: Service
-apiVersion: v1
-metadata:
-  name: admission-controller-namespace
-  namespace: orbit-system
-spec:
-  selector:
-    app: admission-controller-namespace
-  ports:
-  - name: https
-    protocol: TCP
-    port: 443
-    targetPort: 443
 ---
 kind: Service
 apiVersion: v1
@@ -25,79 +12,6 @@ spec:
     protocol: TCP
     port: 443
     targetPort: 443
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: admission-controller-namespace-config
-  namespace: orbit-system
-data:
-  FLASK_DEBUG: "1"
-  FLASK_ENV: development
-  GUNICORN_WORKERS: "1"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: admission-controller
-  namespace: orbit-system
-  name: admission-controller-namespace
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: admission-controller-namespace
-  template:
-    metadata:
-      labels:
-        app: admission-controller-namespace
-      name: admission-controller-namespace
-    spec:
-      serviceAccountName: orbit-${env_name}-admin
-      containers:
-        - name: webhook
-          image: ${admission_controller_image}
-          imagePullPolicy: ${image_pull_policy}
-          envFrom:
-            - configMapRef:
-                name: admission-controller-namespace-config
-          args:
-            - "--bind=0.0.0.0:443"
-            - "--certfile=/certs/tls.crt"
-            - "--keyfile=/certs/tls.key"
-            - "--workers=$(GUNICORN_WORKERS)"
-            - "aws_orbit_admission_controller.app:app"
-            - "--reload"
-          volumeMounts:
-            - readOnly: true
-              mountPath: /certs
-              name: admission-controller-certs
-          readinessProbe:
-            httpGet:
-              path: /health
-              scheme: HTTPS
-              port: 443
-            initialDelaySeconds: 3
-            periodSeconds: 5
-          livenessProbe:
-            httpGet:
-              path: /health
-              scheme: HTTPS
-              port: 443
-            initialDelaySeconds: 3
-            periodSeconds: 5
-          resources:
-            limits:
-              cpu: 2
-              memory: 2G
-            requests:
-              cpu: 1
-              memory: 1G
-      volumes:
-        - name: admission-controller-certs
-          secret:
-            secretName: admission-controller-namespace-certs
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -175,28 +89,6 @@ spec:
         - name: admission-controller-certs
           secret:
             secretName: admission-controller-pod-certs
----
-kind: MutatingWebhookConfiguration
-apiVersion: admissionregistration.k8s.io/v1beta1
-metadata:
-  name: orbit-admission-controller-namespace
-webhooks:
-  - name: admission-controller-namepace.orbit-system.svc
-    sideEffects: NoneOnDryRun
-    reinvocationPolicy: IfNeeded
-    failurePolicy: Fail
-    matchPolicy: Equivalent
-    rules:
-      - operations: ["CREATE", "UPDATE"]
-        apiGroups: ["orbit.aws"]
-        apiVersions: ["v1"]
-        resources: ["namespacesettings"]
-    clientConfig:
-      caBundle: ""
-      service:
-        namespace: orbit-system
-        name: admission-controller-namespace
-        path: /namespace
 ---
 kind: MutatingWebhookConfiguration
 apiVersion: admissionregistration.k8s.io/v1beta1

@@ -52,54 +52,6 @@ subjects:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: cert-manager-setup-namespace
-  namespace: orbit-system
-  labels:
-    app: cert-manager
-spec:
-  template:
-    metadata:
-      labels:
-        orbit/node-type: ec2
-    spec:
-      serviceAccountName: cert-manager-service-account
-      containers:
-        - name: metadata-cert-setup
-          image: ${k8s_utilities_image}
-          imagePullPolicy: IfNotPresent
-          command: ["/cert-manager-scripts/generate_certificate.sh"]
-          args:
-            - "--service"
-            - "admission-controller-namespace"
-            - "--webhook"
-            - "orbit-admission-controller-namespace"
-            - "--secret"
-            - "admission-controller-namespace-certs"
-            - "--namespace"
-            - "orbit-system"
-            - "--force"
-            - "yes"
-          volumeMounts:
-            - name: cert-manager-scripts
-              mountPath: /cert-manager-scripts
-          resources:
-            limits:
-              cpu: 500m
-              memory: 300Mi
-            requests:
-              cpu: 100m
-              memory: 100Mi
-      restartPolicy: Never
-      volumes:
-        - name: cert-manager-scripts
-          configMap:
-            name: cert-manager-scripts
-            defaultMode: 0744
-  backoffLimit: 1
----
-apiVersion: batch/v1
-kind: Job
-metadata:
   name: cert-manager-setup-pod
   namespace: orbit-system
   labels:

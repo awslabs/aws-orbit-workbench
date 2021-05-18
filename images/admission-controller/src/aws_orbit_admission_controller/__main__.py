@@ -16,7 +16,7 @@ import logging
 import os
 from multiprocessing import Manager, Process
 from multiprocessing.managers import SyncManager
-from typing import Dict, Optional, cast
+from typing import Optional, cast
 
 import click
 from aws_orbit_admission_controller import get_module_state, load_config, logger, maintain_module_state, namespace
@@ -52,14 +52,17 @@ def watch_namespaces(workers: Optional[int] = None) -> None:
         monitor.start()
 
         logger.info("Starting Namespace State Updater Processs")
-        state_updater = Process(target=maintain_module_state, kwargs={"module": "namespaceWatcher", "state": module_state})
+        state_updater = Process(
+            target=maintain_module_state, kwargs={"module": "namespaceWatcher", "state": module_state}
+        )
         state_updater.start()
 
         namespace_processors = []
         for i in range(workers):
             logger.info("Starting Namespace Worker Process")
             namespace_processor = Process(
-                target=namespace.process_namespaces, kwargs={"queue": work_queue, "state": module_state, "replicator_id": i}
+                target=namespace.process_namespaces,
+                kwargs={"queue": work_queue, "state": module_state, "replicator_id": i},
             )
             namespace_processors.append(namespace_processor)
             namespace_processor.start()

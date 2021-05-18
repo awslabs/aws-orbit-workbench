@@ -17,7 +17,8 @@ import logging
 import os
 import subprocess
 import time
-from typing import Any, Dict, Optional
+from copy import deepcopy
+from typing import Any, Dict
 
 from kubernetes import config as k8_config
 from kubernetes.client import CoreV1Api, V1ConfigMap
@@ -89,20 +90,24 @@ def get_module_state(module: str) -> Dict[str, Any]:
 
 
 def put_module_state(module: str, state: Dict[str, Any]) -> None:
-        try:
-            body = {"data": {module: json.dumps({k: v for k, v in state.items()})}}
-            logger.debug("Patching admission-controller-state in Namespace %s with %s", ORBIT_SYSTEM_NAMESPACE, body)
-            CoreV1Api().patch_namespaced_config_map(
-                name="admission-controller-state", namespace=ORBIT_SYSTEM_NAMESPACE, body=body
-            )
-        except Exception:
-            logger.exception("Error patching admission-controller-state ConfigMap")
-            raise
+    try:
+        body = {"data": {module: json.dumps({k: v for k, v in state.items()})}}
+        logger.debug("Patching admission-controller-state in Namespace %s with %s", ORBIT_SYSTEM_NAMESPACE, body)
+        CoreV1Api().patch_namespaced_config_map(
+            name="admission-controller-state", namespace=ORBIT_SYSTEM_NAMESPACE, body=body
+        )
+    except Exception:
+        logger.exception("Error patching admission-controller-state ConfigMap")
+        raise
 
 
-def maintain_module_state(module: str, state: Dict[str, Any], sleep_time: int = 3) -> None:
+def maintain_module_state(module: str, state: Dict[str, Any], sleep_time: int = 1) -> None:
+    last_state = None
     while True:
-        put_module_state(module=module, state=state)
+        state_copy = deepcopy(state)
+        if state_copy != last_state:
+            put_module_state(module=module, state=state)
+        last_state = state_copy
         time.sleep(sleep_time)
 
 

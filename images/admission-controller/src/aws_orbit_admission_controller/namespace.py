@@ -12,29 +12,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import base64
-import copy
 import json
-import logging
 import subprocess
 import sys
 import time
-from multiprocessing import Queue, synchronize
+from multiprocessing import Queue
 from typing import Any, Dict, Optional, cast
-from click.core import Option
 
-import jsonpatch
-from aws_orbit_admission_controller import (
-    ORBIT_API_GROUP,
-    ORBIT_API_VERSION,
-    ORBIT_SYSTEM_NAMESPACE,
-    load_config,
-    logger,
-    run_command,
-)
-from flask import jsonify
+from aws_orbit_admission_controller import load_config, logger, run_command
 from kubernetes.client import CoreV1Api, V1ConfigMap
-from kubernetes.client.exceptions import OpenApiException
 from kubernetes.watch import Watch
 from urllib3.exceptions import ReadTimeoutError
 
@@ -46,7 +32,7 @@ def should_install_team_package(labels: Dict[str, str]) -> bool:
 def process_added_event(namespace: Dict[str, Any]) -> None:
     logger.debug("loading kubeconfig")
     load_config()
-    name = namespace["metadata"]["name"]
+    namespace_name = namespace["metadata"]["name"]
     labels = namespace["metadata"].get("labels", {})
     annotations = namespace["metadata"].get("annotations", {})
 
@@ -56,30 +42,27 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
     if not should_install_team_package(namespace):
         return
 
-    env = labels.get("orbit/env", None)
-    space = labels.get("orbit/space", None)
+    # env = labels.get("orbit/env", None)
+    # space = labels.get("orbit/space", None)
     team = labels.get("orbit/team", None)
     user = labels.get("orbit/user", None)
     user_email = annotations.get("owner", None)
-    namespace = name
 
-    logger.debug("new namespace: %s,%s,%s,%s", team, user, user_email, namespace)
+    logger.debug("new namespace: %s,%s,%s,%s", team, user, user_email, namespace_name)
 
-    team_context = get_team_context(logger, team)
+    team_context = get_team_context(team)
     helm_repo_url = team_context["HelmRepository"]
     logger.debug("Adding Helm Repository: %s at %s", team, helm_repo_url)
-    helm_release = f"{namespace}-orbit-team"
+    helm_release = f"{namespace_name}-orbit-team"
     # add the team repo
     run_command(f"helm repo add {team} {helm_repo_url}")
     # install the helm package for this user space
-    install_helm_chart(logger, namespace, team, user, user_email)
+    install_helm_chart(helm_release, namespace_name, team, user, user_email)
 
-    logger.info("Helm release %s installed at %s", helm_release, namespace)
+    logger.info("Helm release %s installed at %s", helm_release, namespace_name)
 
 
-def install_helm_chart(
-    helm_release: str, namespace: str, team: str, user: str, user_email: str
-) -> None:
+def install_helm_chart(helm_release: str, namespace: str, team: str, user: str, user_email: str) -> None:
     try:
         # cmd = "/usr/local/bin/helm repo list"
         cmd = (
@@ -138,7 +121,7 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
             )
 
 
-def process_namespaces(queue: Queue, state: Dict[str, Any], replicator_id: int) -> int:
+def process_namespaces(queue: Queue, state: Dict[str, Any], replicator_id: int) -> int:  # type: ignore
     logger.info("Started Namespace Processor Id: %s", replicator_id)
     namespace_event: Optional[Dict[str, Any]] = None
 
