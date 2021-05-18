@@ -162,8 +162,6 @@ def manage_user_namespace(event: Dict[str, Any], api: client.CoreV1Api) -> None:
         namespaces=all_ns,
     )
 
-    logger.info([item.get("metadata").get("name") for item in api.list_namespace().to_dict()["items"]])
-
     delete_user_namespace(
         api=api,
         user_name=user_name,
