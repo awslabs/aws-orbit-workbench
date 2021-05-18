@@ -1,32 +1,31 @@
+import json
 import logging
 import os
 import subprocess
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
+import boto3
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+ORBIT_ENV = os.environ.get("ORBIT_ENV")
+ACCOUNT_ID = os.environ.get("ACCOUNT_ID")
+
+ssm = boto3.client("ssm")
+
+context = ssm.get_parameter(Name=f"/orbit/{ORBIT_ENV}/context")
+EFS_FS_ID = json.loads(context.get("Parameter").get("Value")).get("SharedEfsFsId")
+
 
 def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
-    user_name = cast(str, event.get("user_name"))
-    user_email = cast(str, event.get("user_email"))
-    user_pool_id = cast(str, event.get("user_pool_id"))
-    expected_user_namespaces = cast(Dict[str, str], event.get("expected_user_namespaces"))
-
     create_kubeconfig()
 
-    api = client.CoreV1Api()
+    api_CoreV1 = client.CoreV1Api()
 
-    manage_user_namespace(
-        kubernetes_api_client=api,
-        expected_user_namespaces=expected_user_namespaces,
-        user_name=user_name,
-        user_email=user_email,
-        user_pool_id=user_pool_id,
-    )
+    manage_user_namespace(event, api_CoreV1)
 
 
 def run_command(cmd: str) -> None:
@@ -41,54 +40,59 @@ def run_command(cmd: str) -> None:
 
 
 def create_kubeconfig() -> None:
-    KUBECONFIG_PATH = "/tmp/.kubeconfig"
-    orbit_env = os.environ.get("ORBIT_ENV")
-    account_id = os.environ.get("ACCOUNT_ID")
+    kubeconfig_path = "/tmp/.kubeconfig"
 
-    logger.info(f"Generating kubeconfig in {KUBECONFIG_PATH}")
+    logger.info(f"Generating kubeconfig in {kubeconfig_path}")
     run_command(
         (
             "aws eks update-kubeconfig "
-            f"--name orbit-{orbit_env} "
-            f"--role-arn arn:aws:iam::{account_id}:role/orbit-{orbit_env}-admin "
-            f"--kubeconfig {KUBECONFIG_PATH}"
+            f"--name orbit-{ORBIT_ENV} "
+            f"--role-arn arn:aws:iam::{ACCOUNT_ID}:role/orbit-{ORBIT_ENV}-admin "
+            f"--kubeconfig {kubeconfig_path}"
         )
     )
 
     logger.info("Loading kubeconfig")
     try:
-        config.load_kube_config(KUBECONFIG_PATH)
+        config.load_kube_config(kubeconfig_path)
         logger.info("Loaded kubeconfig successfully")
     except config.ConfigException:
         raise Exception("Could not configure kubernetes python client")
 
 
-def manage_user_namespace(
-    kubernetes_api_client: client.CoreV1Api,
-    expected_user_namespaces: Dict[str, str],
+def create_user_efs_endpoint(user: str) -> Dict[str, Any]:
+    efs = boto3.client("efs")
+
+    return cast(
+        Dict[str, str],
+        efs.create_access_point(
+            FileSystemId=EFS_FS_ID, PosixUser={"Uid": 1000, "Gid": 100}, RootDirectory={"Path": f"/efs/private/{user}"}
+        ),
+    )
+
+
+def create_user_namespace(
+    api: client.CoreV1Api,
     user_name: str,
     user_email: str,
-    user_pool_id: str,
+    expected_user_namespaces: Dict[str, str],
+    namespaces: List[str],
 ) -> None:
-    api = kubernetes_api_client
-
-    all_ns_raw = api.list_namespace().to_dict()
-    all_ns = [
-        item.get("metadata").get("name")
-        for item in all_ns_raw["items"]
-        if item.get("metadata").get("name").startswith(user_name)
-    ]
-
-    # Create user namespace
     for team, user_ns in expected_user_namespaces.items():
-        if user_ns not in all_ns:
+        if user_ns not in namespaces:
+            logger.info(f"Creating EFS endpoint for {user_ns}...")
+            resp = create_user_efs_endpoint(user=user_name)
+            access_point_id = resp.get("AccessPointId")
+
             logger.info(f"User namespace {user_ns} doesnt exist. Creating...")
             name = user_ns
             annotations = {"owner": user_email}
             labels = {
+                "orbit/efs-access-point-id": access_point_id,
+                "orbit/efs-id": EFS_FS_ID,
+                "orbit/env": os.environ.get("ORBIT_ENV"),
                 "orbit/space": "user",
                 "orbit/team": team,
-                "orbit/env": os.environ.get("ORBIT_ENV"),
                 "orbit/user": user_name,
                 "istio-injection": "enabled",
             }
@@ -100,17 +104,69 @@ def manage_user_namespace(
                 api.create_namespace(body=body)
                 logger.info(f"Created namespace {name}")
             except ApiException:
-                logger.info(f"Exception when trying to create user namespace {name}")
+                logger.error(f"Exception when trying to create user namespace {name}")
 
-    logger.info([item.get("metadata").get("name") for item in api.list_namespace().to_dict()["items"]])
 
-    # Remove user namespace
-    for user_ns in all_ns:
+def delete_user_efs_endpoint(access_point_id: str) -> None:
+    efs = boto3.client("efs")
+
+    try:
+        efs.delete_access_point(AccessPointId=access_point_id)
+    except efs.exception.AccessPointNotFound:
+        logger.info
+
+
+def delete_user_namespace(
+    api: client.CoreV1Api, user_name: str, expected_user_namespaces: Dict[str, str], namespaces: List[str]
+) -> None:
+    for user_ns in namespaces:
         if user_ns not in expected_user_namespaces.values():
+            logger.info(f"Fetching the EFS access point in the namespace {user_ns} for user {user_name}")
+
+            try:
+                user_namespace = api.read_namespace(name=user_ns).to_dict()
+                efs_access_point_id = user_namespace.get("metadata").get("labels").get("orbit/efs-access-point-id")
+            except ApiException:
+                logger.info(f"Exception when trying to read namespace {user_ns}")
+
+            logger.info(f"Deleting the EFS access point {efs_access_point_id} for user {user_name}")
+
+            delete_user_efs_endpoint(access_point_id=efs_access_point_id)
+
             logger.info(f"User {user_name} is not expected to be part of the {user_ns} namespace. Removing...")
 
             try:
                 api.delete_namespace(name=user_ns)
                 logger.info(f"Removed namespace {user_ns}")
             except ApiException:
-                logger.info("Exception when trying to remove user namespace {user_ns}")
+                logger.error(f"Exception when trying to remove user namespace {user_ns}")
+
+
+def manage_user_namespace(event: Dict[str, Any], api: client.CoreV1Api) -> None:
+    user_name = cast(str, event.get("user_name"))
+    user_email = cast(str, event.get("user_email"))
+    expected_user_namespaces = cast(Dict[str, str], event.get("expected_user_namespaces"))
+
+    all_ns_raw = api.list_namespace().to_dict()
+    all_ns = [
+        item.get("metadata").get("name")
+        for item in all_ns_raw["items"]
+        if item.get("metadata").get("name").startswith(user_name)
+    ]
+
+    create_user_namespace(
+        api=api,
+        user_name=user_name,
+        user_email=user_email,
+        expected_user_namespaces=expected_user_namespaces,
+        namespaces=all_ns,
+    )
+
+    logger.info([item.get("metadata").get("name") for item in api.list_namespace().to_dict()["items"]])
+
+    delete_user_namespace(
+        api=api,
+        user_name=user_name,
+        expected_user_namespaces=expected_user_namespaces,
+        namespaces=all_ns,
+    )
