@@ -13,15 +13,47 @@ spec:
     port: 443
     targetPort: 443
 ---
+kind: MutatingWebhookConfiguration
+apiVersion: admissionregistration.k8s.io/v1beta1
+metadata:
+  name: orbit-admission-controller-pod
+webhooks:
+  - name: admission-controller-pod.orbit-system.svc
+    sideEffects: None
+    reinvocationPolicy: IfNeeded
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    namespaceSelector:
+      matchExpressions:
+        - key: orbit/space
+          operator: In
+          values:
+            - team
+            - user
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+    clientConfig:
+      caBundle: ""
+      service:
+        namespace: orbit-system
+        name: admission-controller-pod
+        path: /pod
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: admission-controller-pod-config
+  name: admission-controller
   namespace: orbit-system
 data:
   FLASK_DEBUG: "1"
   FLASK_ENV: development
   GUNICORN_WORKERS: "1"
+  ADMISSION_CONTROLLER_DEBUG: "1"
+  IN_CLUSTER_DEPLOYMENT: "1"
+  NAMESPACE_WATCHER_WORKERS: "1"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -53,13 +85,15 @@ spec:
           envFrom:
             - configMapRef:
                 name: admission-controller-pod-config
+          command:
+            - gunicorn
           args:
             - "--bind=0.0.0.0:443"
             - "--certfile=/certs/tls.crt"
             - "--keyfile=/certs/tls.key"
             - "--workers=$(GUNICORN_WORKERS)"
             - "--reload"
-            - "aws_orbit_admission_controller.app:app"
+            - "aws_orbit_admission_controller.server:app"
           volumeMounts:
             - readOnly: true
               mountPath: /certs
@@ -90,31 +124,42 @@ spec:
           secret:
             secretName: admission-controller-pod-certs
 ---
-kind: MutatingWebhookConfiguration
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: orbit-admission-controller-pod
-webhooks:
-  - name: admission-controller-pod.orbit-system.svc
-    sideEffects: None
-    reinvocationPolicy: IfNeeded
-    failurePolicy: Fail
-    matchPolicy: Equivalent
-    namespaceSelector:
-      matchExpressions:
-        - key: orbit/space
-          operator: In
-          values:
-            - team
-            - user
-    rules:
-      - operations: ["CREATE", "UPDATE"]
-        apiGroups: [""]
-        apiVersions: ["v1"]
-        resources: ["pods"]
-    clientConfig:
-      caBundle: ""
-      service:
-        namespace: orbit-system
-        name: admission-controller-pod
-        path: /pod
+  labels:
+    app: admission-controller
+  namespace: orbit-system
+  name: admission-controller-namespace-watcher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admission-controller-namespace-watcher
+  template:
+    metadata:
+      labels:
+        app: admission-controller-namespace-watcher
+      name: admission-controller-namespace-watcher
+    spec:
+      serviceAccountName: orbit-${env_name}-admin
+      containers:
+        - name: namesapce-watcher
+          image: ${admission_controller_image}
+          imagePullPolicy: ${image_pull_policy}
+          envFrom:
+            - configMapRef:
+                name: admission-controller-pod-config
+          command:
+            - admission-controller
+            - watch
+            - namespaces
+          args:
+            - "--workers=$(NAMESPACE_WATCHER_WORKERS)"
+          resources:
+            limits:
+              cpu: 2
+              memory: 2G
+            requests:
+              cpu: 1
+              memory: 1G
