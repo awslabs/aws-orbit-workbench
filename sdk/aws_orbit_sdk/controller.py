@@ -29,8 +29,9 @@ from kubernetes import config as k8_config
 from kubernetes import watch as k8_watch
 from kubernetes.client import *
 from slugify import slugify
-from aws_orbit_sdk.common_pod_specification import TeamConstants
+
 from aws_orbit_sdk.common import get_properties, get_stepfunctions_waiter_config
+from aws_orbit_sdk.common_pod_specification import TeamConstants
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -60,6 +61,7 @@ def read_team_manifest_ssm(env_name: str, team_name: str) -> Optional[MANIFEST_T
         return None
     _logger.debug("Team %s Manifest SSM parameter found.", team_name)
     return cast(MANIFEST_TEAM_TYPE, json.loads(json_str))
+
 
 def get_parameter(client, name: str) -> Dict[str, Any]:
     try:
@@ -321,6 +323,7 @@ def list_my_running_jobs():
     namespace = team_name
     return list_running_jobs(namespace)
 
+
 def list_running_jobs(namespace: str):
     props = get_properties()
     load_kube_config()
@@ -394,7 +397,7 @@ def delete_storage_pvc(pvc_name: str):
     props = get_properties()
     params = dict()
     params["name"] = pvc_name
-    params["namespace"] = os.environ.get("AWS_ORBIT_USER_SPACE",team_name)
+    params["namespace"] = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
     params["_preload_content"] = False
     try:
         api_response = api_instance.delete_namespaced_persistent_volume_claim(**params)
@@ -499,7 +502,7 @@ def delete_job(job_name: str, grace_period_seconds: int = 30):
     try:
         api_instance.delete_namespaced_job(
             name=job_name,
-            namespace=os.environ.get("AWS_ORBIT_USER_SPACE",team_name),
+            namespace=os.environ.get("AWS_ORBIT_USER_SPACE", team_name),
             _preload_content=False,
             grace_period_seconds=grace_period_seconds,
             orphan_dependents=False,
@@ -516,7 +519,7 @@ def delete_cronjob(job_name: str, grace_period_seconds: int = 30):
     try:
         api_instance.delete_namespaced_cron_job(
             name=job_name,
-            namespace=os.environ.get("AWS_ORBIT_USER_SPACE",team_name),
+            namespace=os.environ.get("AWS_ORBIT_USER_SPACE", team_name),
             _preload_content=False,
             grace_period_seconds=grace_period_seconds,
             orphan_dependents=False,
@@ -528,7 +531,7 @@ def delete_cronjob(job_name: str, grace_period_seconds: int = 30):
 
 def delete_all_my_jobs():
     props = get_properties()
-    namespace = os.environ.get("AWS_ORBIT_USER_SPACE",team_name)
+    namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
 
     load_kube_config()
     api_instance = BatchV1Api()
@@ -544,7 +547,7 @@ def delete_all_my_jobs():
 
 def list_running_cronjobs():
     props = get_properties()
-    namespace = os.environ.get("AWS_ORBIT_USER_SPACE",team_name)
+    namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
     load_kube_config()
     api_instance = BatchV1beta1Api()
     try:
@@ -588,8 +591,8 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
     node_type = get_node_type(taskConfiguration)
 
     job_name: str = f'run-{taskConfiguration["task_type"]}'
-    volumes : List[Dict[str, Any]] = list()
-    volume_mounts : List[Dict[str, Any]] = list()
+    volumes: List[Dict[str, Any]] = list()
+    volume_mounts: List[Dict[str, Any]] = list()
     grant_sudo = False
     if "kubespawner_override" in profile:
         if "volumes" in profile["kubespawner_override"]:
@@ -610,7 +613,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
             _logger.info("task override is mounting volumes: %s", volume_mounts)
         if "labels" in taskConfiguration["compute"]:
             labels = {**labels, **taskConfiguration["compute"]["labels"]}
-    node_selector : List[Dict[str, str]] = list()
+    node_selector: List[Dict[str, str]] = list()
     _logger.info("volumes:%s", json.dumps(volumes))
     _logger.info("volume_mounts:%s", json.dumps(volume_mounts))
 
@@ -619,7 +622,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
         image=image,
         cmd=["bash", "-c", "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"],
         port=22,
-        service_account='default-editor',
+        service_account="default-editor",
         node_selector=node_selector,
         run_privileged=False,
         allow_privilege_escalation=True,
@@ -649,6 +652,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
     )
 
     return job_spec
+
 
 def make_pod(
     name,
@@ -854,14 +858,10 @@ def make_pod(
     pod.kind = "Pod"
     pod.api_version = "v1"
 
-    pod.metadata = V1ObjectMeta(
-        name=name,
-        labels=(labels or {}).copy(),
-        annotations=(annotations or {}).copy()
-    )
+    pod.metadata = V1ObjectMeta(name=name, labels=(labels or {}).copy(), annotations=(annotations or {}).copy())
 
     pod.spec = V1PodSpec(containers=[])
-    pod.spec.restart_policy = 'OnFailure'
+    pod.spec.restart_policy = "OnFailure"
 
     if image_pull_secrets is not None:
         # image_pull_secrets as received by the make_pod function should always
@@ -869,8 +869,8 @@ def make_pod(
         # "a-string"} elements.
         pod.spec.image_pull_secrets = [
             V1LocalObjectReference(name=secret_ref)
-            if type(secret_ref) == str else
-            get_k8s_model(V1LocalObjectReference, secret_ref)
+            if type(secret_ref) == str
+            else get_k8s_model(V1LocalObjectReference, secret_ref)
             for secret_ref in image_pull_secrets
         ]
 
@@ -894,9 +894,9 @@ def make_pod(
     # ref: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#podsecuritycontext-v1-core (pod)
     pod_security_context = V1PodSecurityContext()
     if fs_gid is not None:
-       pod_security_context.fs_group = int(fs_gid)
+        pod_security_context.fs_group = int(fs_gid)
     if supplemental_gids is not None and supplemental_gids:
-       pod_security_context.supplemental_groups = [int(gid) for gid in supplemental_gids]
+        pod_security_context.supplemental_groups = [int(gid) for gid in supplemental_gids]
     # Only clutter pod spec with actual content
     if not all([e is None for e in pod_security_context.to_dict().values()]):
         pod.spec.security_context = pod_security_context
@@ -927,10 +927,10 @@ def make_pod(
         else:
             prepared_env.append(V1EnvVar(name=k, value=v))
     notebook_container = V1Container(
-        name='orbit-runner',
+        name="orbit-runner",
         image=image,
         working_dir=working_dir,
-        ports=[V1ContainerPort(name='notebook-port', container_port=port)],
+        ports=[V1ContainerPort(name="notebook-port", container_port=port)],
         env=prepared_env,
         args=cmd,
         image_pull_policy=image_pull_policy,
@@ -947,20 +947,19 @@ def make_pod(
     else:
         pod.spec.service_account_name = service_account
 
-
     notebook_container.resources.requests = {}
     if cpu_guarantee:
-        notebook_container.resources.requests['cpu'] = cpu_guarantee
+        notebook_container.resources.requests["cpu"] = cpu_guarantee
     if mem_guarantee:
-        notebook_container.resources.requests['memory'] = mem_guarantee
+        notebook_container.resources.requests["memory"] = mem_guarantee
     if extra_resource_guarantees:
         notebook_container.resources.requests.update(extra_resource_guarantees)
 
     notebook_container.resources.limits = {}
     if cpu_limit:
-        notebook_container.resources.limits['cpu'] = cpu_limit
+        notebook_container.resources.limits["cpu"] = cpu_limit
     if mem_limit:
-        notebook_container.resources.limits['memory'] = mem_limit
+        notebook_container.resources.limits["memory"] = mem_limit
     if extra_resource_limits:
         notebook_container.resources.limits.update(extra_resource_limits)
 
@@ -1000,7 +999,9 @@ def make_pod(
 
         preferred_scheduling_terms = None
         if node_affinity_preferred:
-            preferred_scheduling_terms = [get_k8s_model(V1PreferredSchedulingTerm, obj) for obj in node_affinity_preferred]
+            preferred_scheduling_terms = [
+                get_k8s_model(V1PreferredSchedulingTerm, obj) for obj in node_affinity_preferred
+            ]
 
         node_affinity = V1NodeAffinity(
             preferred_during_scheduling_ignored_during_execution=preferred_scheduling_terms,
@@ -1011,7 +1012,9 @@ def make_pod(
     if pod_affinity_preferred or pod_affinity_required:
         weighted_pod_affinity_terms = None
         if pod_affinity_preferred:
-            weighted_pod_affinity_terms = [get_k8s_model(V1WeightedPodAffinityTerm, obj) for obj in pod_affinity_preferred]
+            weighted_pod_affinity_terms = [
+                get_k8s_model(V1WeightedPodAffinityTerm, obj) for obj in pod_affinity_preferred
+            ]
 
         pod_affinity_terms = None
         if pod_affinity_required:
@@ -1026,7 +1029,9 @@ def make_pod(
     if pod_anti_affinity_preferred or pod_anti_affinity_required:
         weighted_pod_affinity_terms = None
         if pod_anti_affinity_preferred:
-            weighted_pod_affinity_terms = [get_k8s_model(V1WeightedPodAffinityTerm, obj) for obj in pod_anti_affinity_preferred]
+            weighted_pod_affinity_terms = [
+                get_k8s_model(V1WeightedPodAffinityTerm, obj) for obj in pod_anti_affinity_preferred
+            ]
 
         pod_affinity_terms = None
         if pod_anti_affinity_required:
@@ -1038,7 +1043,7 @@ def make_pod(
         )
 
     affinity = None
-    if (node_affinity or pod_affinity or pod_anti_affinity):
+    if node_affinity or pod_affinity or pod_anti_affinity:
         affinity = V1Affinity(
             node_affinity=node_affinity,
             pod_affinity=pod_affinity,
@@ -1061,6 +1066,7 @@ def make_pod(
         )
 
     return pod
+
 
 def resolve_image(__CURRENT_TEAM_MANIFEST__, profile):
     if not profile or "kubespawner_override" not in profile or "image" not in profile["kubespawner_override"]:
@@ -1114,9 +1120,7 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     username = (os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))).split("@")[0]
     node_type = get_node_type(taskConfiguration)
-    labels = {"app": f"orbit-runner",
-              "orbit/node-type": node_type,
-              "notebook-name": os.environ.get("HOSTNAME") }
+    labels = {"app": f"orbit-runner", "orbit/node-type": node_type, "notebook-name": os.environ.get("HOSTNAME")}
     if node_type == "ec2":
         labels["orbit/attach-security-group"] = "yes"
     job_spec = _create_eks_job_spec(taskConfiguration, labels=labels)
@@ -1128,12 +1132,14 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
         api_version="batch/v1",
         kind="Job",
         metadata=V1ObjectMeta(
-            generate_name=f"orbit-{team_name}-{node_type}-runner-", labels=labels, namespace=os.environ.get("AWS_ORBIT_USER_SPACE",team_name)
+            generate_name=f"orbit-{team_name}-{node_type}-runner-",
+            labels=labels,
+            namespace=os.environ.get("AWS_ORBIT_USER_SPACE", team_name),
         ),
         spec=job_spec,
     )
     job_instance: V1Job = BatchV1Api().create_namespaced_job(
-        namespace=os.environ.get("AWS_ORBIT_USER_SPACE",team_name),
+        namespace=os.environ.get("AWS_ORBIT_USER_SPACE", team_name),
         body=job,
     )
     metadata: V1ObjectMeta = job_instance.metadata
@@ -1272,7 +1278,12 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     node_type = get_node_type(taskConfiguration)
     username = (os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))).split("@")[0]
     cronjob_id = f"orbit-{namespace}-{triggerName}"
-    labels = {"app": f"orbit-runner", "orbit/node-type": node_type, "cronjob_id": cronjob_id, "notebook-name": "scheduled"}
+    labels = {
+        "app": f"orbit-runner",
+        "orbit/node-type": node_type,
+        "cronjob_id": cronjob_id,
+        "notebook-name": "scheduled",
+    }
 
     job_spec = _create_eks_job_spec(taskConfiguration, labels=labels)
     cron_job_template: V1beta1JobTemplateSpec = V1beta1JobTemplateSpec(spec=job_spec)
@@ -1375,7 +1386,7 @@ def wait_for_tasks_to_complete(
     incomplete_tasks = []
     _logger.info("Waiting for %s tasks %s", len(tasks), tasks)
     load_kube_config()
-    namespace = os.environ.get("AWS_ORBIT_USER_SPACE",team_name)
+    namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
     while True:
         for task in tasks:
             _logger.debug("Checking execution state of: %s", task)
