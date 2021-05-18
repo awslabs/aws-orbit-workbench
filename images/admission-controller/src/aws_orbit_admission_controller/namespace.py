@@ -13,8 +13,6 @@
 #    limitations under the License.
 
 import json
-import subprocess
-import sys
 import time
 from multiprocessing import Queue
 from typing import Any, Dict, Optional, cast
@@ -70,10 +68,9 @@ def install_helm_chart(helm_release: str, namespace: str, team: str, user: str, 
     )
 
     logger.debug("running cmd: %s", cmd)
-    output = run_command(logger, cmd)
+    output = run_command(cmd)
     logger.debug(output)
     logger.info("finished cmd: %s", cmd)
-
 
 
 def get_team_context(team: str) -> Dict[str, Any]:

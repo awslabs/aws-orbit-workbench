@@ -151,7 +151,7 @@ def filter_pod_containers(
 
 
 def apply_settings_to_pod(
-    namespace_setting: Dict[str, Any], pod_setting: Dict[str, Any], pod: Dict[str, Any], logger: logging.Logger
+    namespace: Dict[str, Any], pod_setting: Dict[str, Any], pod: Dict[str, Any], logger: logging.Logger
 ) -> None:
     ps_spec = pod_setting["spec"]
     pod_spec = pod["spec"]
@@ -192,26 +192,40 @@ def apply_settings_to_pod(
         pod=pod_spec,
         container_selector=ps_spec.get("containerSelector", {}),
     ):
-        apply_settings_to_container(namespace_setting=namespace_setting, pod_setting=pod_setting, container=container)
+        apply_settings_to_container(namespace=namespace, pod_setting=pod_setting, container=container)
     for container in filter_pod_containers(
         containers=pod_spec.get("containers", []), pod=pod, container_selector=ps_spec.get("containerSelector", {})
     ):
-        apply_settings_to_container(namespace_setting=namespace_setting, pod_setting=pod_setting, container=container)
+        apply_settings_to_container(namespace=namespace, pod_setting=pod_setting, container=container)
     logger.debug("modified pod: %s", pod)
 
 
 def apply_settings_to_container(
-    namespace_setting: Dict[str, Any], pod_setting: Dict[str, Any], container: Dict[str, Any]
+    namespace: Dict[str, Any], pod_setting: Dict[str, Any], container: Dict[str, Any]
 ) -> None:
-    ns_spec = namespace_setting["spec"]
+    ns_labels = namespace["metadata"].get("labels", {})
+    ns_annotations = namespace["metadata"].get("annotations", {})
     ps_spec = pod_setting["spec"]
+
+    # Drop any previous AWS_ORBIT_USER_SPACE or AWS_ORBIT_IMAGE env variables
+    ps_spec["env"] = [e for e in ps_spec.get("env", []) if e["name"] not in ["AWS_ORBIT_USER_SPACE", "AWS_ORBIT_IMAGE"]]
+    # Append new ones
+    ps_spec["env"].extend(
+        [
+            {"name": "AWS_ORBIT_USER_SPACE", "value": namespace["metadata"].get("name", "")},
+            {"name": "AWS_ORBIT_IMAGE", "value": container.get("image", "")},
+        ]
+    )
 
     if ps_spec.get("injectUserContext", False):
         # Drop any previous USERNAME or USEREMAIL env variables
         ps_spec["env"] = [e for e in ps_spec.get("env", []) if e["name"] not in ["USERNAME", "USEREMAIL"]]
-        # Appnend new ones
+        # Append new ones
         ps_spec["env"].extend(
-            [{"name": "USERNAME", "value": ns_spec["user"]}, {"name": "USEREMAIL", "value": ns_spec["email"]}]
+            [
+                {"name": "USERNAME", "value": ns_labels.get("orbit/user", "")},
+                {"name": "USEREMAIL", "value": ns_annotations.get("owner", "")},
+            ]
         )
 
     # Replace
@@ -261,32 +275,14 @@ def apply_settings_to_container(
 
 
 def get_response(uid: str, patch: Optional[Dict[str, Any]] = None) -> str:
+    response = {
+        "allowed": True,
+        "uid": uid,
+    }
     if patch:
-        return cast(
-            str,
-            jsonify(
-                {
-                    "response": {
-                        "allowed": True,
-                        "uid": uid,
-                        "patch": base64.b64encode(str(patch).encode()).decode(),
-                        "patchtype": "JSONPatch",
-                    }
-                }
-            ),
-        )
-    else:
-        return cast(
-            str,
-            jsonify(
-                {
-                    "response": {
-                        "allowed": True,
-                        "uid": uid,
-                    }
-                }
-            ),
-        )
+        response.update({"patch": base64.b64encode(str(patch).encode()).decode(), "patchtype": "JSONPatch"})
+
+    return cast(str, jsonify({"response": response}))
 
 
 def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
@@ -306,9 +302,11 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     )
     logger.debug("podsettings: %s", ORBIT_SYSTEM_POD_SETTINGS)
 
-    namespace = get_namespace(
-        client=client, name=request["namespace"]
-    )
+    namespace = get_namespace(client=client, name=request["namespace"])
+    if namespace is None:
+        logger.error("Fatal error, Namespace %s not found", name=request["namespace"])
+        return get_response(uid=request["uid"])
+
     labels = namespace["metadata"].get("labels", {})
     team_namespace = labels.get("orbit/team", None)
 
@@ -324,9 +322,7 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     try:
         for pod_setting in team_pod_settings:
             logger.debug("applying podsetting: %s", pod_setting)
-            apply_settings_to_pod(
-                namespace_setting=namespace, pod_setting=pod_setting, pod=modified_pod, logger=logger
-            )
+            apply_settings_to_pod(namespace=namespace, pod_setting=pod_setting, pod=modified_pod, logger=logger)
     except Exception as e:
         logger.exception(e)
         pass
