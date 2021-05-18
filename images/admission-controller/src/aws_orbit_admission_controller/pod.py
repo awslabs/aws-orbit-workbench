@@ -50,34 +50,80 @@ def get_namespace(client: dynamic.DynamicClient, name: str) -> Optional[Dict[str
 
 
 def filter_pod_settings(
-    pod_settings: List[Dict[str, Any]], namespace: str, pod: Dict[str, Any]
+    logger: logging.Logger, pod_settings: List[Dict[str, Any]], namespace: str, pod: Dict[str, Any]
 ) -> List[Dict[str, Any]]:
     filtered_pod_settings: List[Dict[str, Any]] = []
-    for pod_setting in pod_settings:
-        if pod_setting["metadata"]["namespace"] != namespace:
-            continue
 
-        pod_labels = pod["metadata"].get("labels", {})
+    def labels_match(labels: Dict[str, str], selector_labels: Dict[str, str]) -> bool:
+        for key, value in selector_labels.items():
+            label_value = labels.get(key, None)
+            if label_value != value:
+                logger.debug(
+                    "Failed Label value check, label %s with value %s does not equal %s", key, label_value, value
+                )
+                return False
+        return True
 
-        for key, value in pod_setting["spec"]["podSelector"].get("matchLabels", {}).items():
-            if pod_labels.get(key, None) != value:
-                continue
-
-        for match_expression in pod_setting["spec"]["podSelector"].get("matchExpressions", []):
-            pod_label_value = pod_labels.get(match_expression["key"], None)
+    def expressions_match(labels: Dict[str, str], selector_expressions: List[Dict[str, Any]]) -> bool:
+        for match_expression in selector_expressions:
+            pod_label_value = labels.get(match_expression["key"], None)
             operator = match_expression["operator"]
             values = match_expression.get("values", [])
 
             if operator == "Exists" and pod_label_value is None:
-                continue
+                logger.debug("Failed Exists check, label %s does not exist", match_expression["key"])
+                return False
             if operator == "NotExists" and pod_label_value is not None:
-                continue
+                logger.debug(
+                    "Failed NotExists check, label %s does exist with value %s",
+                    match_expression["key"],
+                    pod_label_value,
+                )
+                return False
             if operator == "In" and pod_label_value not in values:
-                continue
+                logger.debug(
+                    "Failed In check, label %s has value %s which is not in %s",
+                    match_expression["key"],
+                    pod_label_value,
+                    values,
+                )
+                return False
             if operator == "NotIn" and pod_label_value in values:
-                continue
+                logger.debug(
+                    "Failed NotIn check, label %s has value %s which is in %s",
+                    match_expression["key"],
+                    pod_label_value,
+                    values,
+                )
+                return False
+        return True
 
-        filtered_pod_settings.append(pod_setting)
+    for pod_setting in pod_settings:
+        if pod_setting["metadata"]["namespace"] != namespace:
+            logger.debug("Failed PodSetting namespace check. Namespace: %s PodSetting: %s", namespace, pod_setting)
+            continue
+
+        pod_labels = pod["metadata"].get("labels", {})
+        selector_labels = pod_setting["spec"]["podSelector"].get("matchLabels", {})
+        selector_expressions = pod_setting["spec"]["podSelector"].get("matchExpressions", [])
+
+        if pod_labels == {}:
+            logger.debug("Pod contains no labels to match against: %s", pod)
+            continue
+        elif selector_labels == {} and selector_expressions == []:
+            logger.debug("PodSetting contains no podSelectors to match against: %s", pod_setting)
+            continue
+        elif not labels_match(pod_labels, selector_labels):
+            logger.debug("Pod labels and PodSetting matchLabels do not match. Pod: %s PodSetting: %s", pod, pod_setting)
+            continue
+        elif not expressions_match(pod_labels, selector_expressions):
+            logger.debug(
+                "Pod labels and PodSetting matchExpressions do not match. Pod: %s PodSetting: %s", pod, pod_setting
+            )
+            continue
+        else:
+            logger.debug("Pod labels and PodSetting podSelectors match. Pod: %s PodSetting: %s", pod, pod_setting)
+            filtered_pod_settings.append(pod_setting)
     return filtered_pod_settings
 
 
@@ -270,7 +316,9 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
         logger.info("No orbit/team label found on namespace: %s", request["namespace"])
         return get_response(uid=request["uid"])
 
-    team_pod_settings = filter_pod_settings(pod_settings=ORBIT_SYSTEM_POD_SETTINGS, namespace=team_namespace, pod=pod)
+    team_pod_settings = filter_pod_settings(
+        logger=logger, pod_settings=ORBIT_SYSTEM_POD_SETTINGS, namespace=team_namespace, pod=pod
+    )
     logger.debug("filtered podsettings: %s", team_pod_settings)
 
     try:
