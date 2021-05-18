@@ -8,7 +8,6 @@ permalink: plugin-installation
 ---
 
 Orbit plugins are individual python modules published PyPi.  We are continually adding plugin capabilites to the platform.  This is the current list of published plugins:
- - [Hello World Plugin](#hw_plugin)
  - [Amazon Redshift Plugin](#rs_plugin)
  - [AWS Code Commit Plugin](#codecommit_plugin)
  - [Custom AWS Cloudformation Plugin](#cfn_plugin)
@@ -16,7 +15,7 @@ Orbit plugins are individual python modules published PyPi.  We are continually 
  - [Lustre Plugin](#lustre_plugin)
  - [Ray Plugin](#ray_plugin)
  - [SageMaker-Operators for K8s Plugin](#sm_operator_plugin)
- - [Team Script Plugin](#ts_plugin)
+ - [Team Script Launcher Plugin](#ts_plugin)
  - [Overprovisioning Plugin](#op_plugin)
 
 Each Plugin has a configuration that you need to define.  The structure is as follows (in yaml format):
@@ -24,6 +23,7 @@ Each Plugin has a configuration that you need to define.  The structure is as fo
 ```
 - PluginId: <the name of the plugin>
   Module: <the module name>
+  Path: <relative path of plugin src code>
   Parameters:
     - parameter 1: <value>
     - parameter 2: <value>
@@ -31,23 +31,11 @@ Each Plugin has a configuration that you need to define.  The structure is as fo
     - parameter N: <value>
 ```
 
-### <a name="hw_plugin">Hello World </a>
-This is the standard 'is everything ok' example of how to configure plugins.
-```
-- PluginId: hello_world
-  Module: hello_world
-  Parameters:
-    - parameter 1: <value>
-    - parameter 2: <value>
-    ...
-    - parameter N: <value>
-  
-```
-#### Parameters    
 ### <a name="rs_plugin">Amazon Redshift </a>
 ```
 - PluginId: 
   Module: 
+  Path: ../plugins/redshift/
   Parameters:
     - parameter 1: <value>
     - parameter 2: <value>
@@ -59,7 +47,8 @@ This is the standard 'is everything ok' example of how to configure plugins.
 ### <a name="codecommit_plugin">AWS Code Commit </a>
 ```
 - PluginId: code_commit
-  Module: code_commit 
+  Module: code_commit
+  Path: ../plugins/code_commit/ 
 ```
 #### Parameters 
 None
@@ -67,6 +56,7 @@ None
 ```
 - PluginId: 
   Module: 
+  Path: ../plugins/custom_cfn/
   Parameters:
     - parameter 1: <value>
     - parameter 2: <value>
@@ -79,6 +69,7 @@ None
 ```
 - PluginId: enable_emr_on_eks
   Module: emr_on_eks
+  Path: ../plugins/emr_on_eks/
 ```
 #### Parameters 
 None
@@ -86,6 +77,7 @@ None
 ```
 - PluginId: fast_fs_lustre
   Module: lustre
+  Path: ../plugins/lustre/
 ```
 #### Parameters 
 None
@@ -93,7 +85,8 @@ None
 ```
 - PluginId: 
   Module: 
-    Parameters:
+  Path: ../plugins/ray/
+  Parameters:
     - parameter 1: <value>
     - parameter 2: <value>
     ...
@@ -105,13 +98,15 @@ None
 ```
 - PluginId: sm-operator
   Module: sm-operator
+  Path: ../plugins/sm-operator/
 ```
 #### Parameters
 None 
-### <a name="ts_plugin">Team Script Plugin</a>
+### <a name="ts_plugin">Team Script Launcher Plugin</a>
 ```
 - PluginId:  
-  Module:  
+  Module: 
+  Path: ../plugins/team_script_launcher/ 
     Parameters:
     - parameter 1: <value>
     - parameter 2: <value>
@@ -123,7 +118,8 @@ None
 ### <a name="op_plugin">Overprovisioning Plugin</a>
 ```
 - PluginId: 
-  Module: 
+  Module:
+  Path: ../plugins/overprovisioning/ 
     Parameters:
     - parameter 1: <value>
     - parameter 2: <value>
