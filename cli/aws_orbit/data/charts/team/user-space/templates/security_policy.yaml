@@ -4,7 +4,7 @@ metadata:
   name: team-security-group-policy
   namespace: {{ .Values.namespace }}
   labels:
-    {{- include "orbit-user.labels" . | nindent 4 }}
+    {{- include "user-space.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:
@@ -19,7 +19,7 @@ metadata:
   name: cluster-pod-security-group-policy
   namespace: {{ .Values.namespace }}
   labels:
-    {{- include "orbit-user.labels" . | nindent 4 }}
+    {{- include "user-space.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:

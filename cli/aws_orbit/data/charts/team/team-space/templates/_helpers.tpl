@@ -1,7 +1,7 @@
-{{/*
+                                                                                                                                            {{/*
 Expand the name of the chart.
 */}}
-{{- define "orbit-user.name" -}}
+{{- define "team-space.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "orbit-user.fullname" -}}
+{{- define "team-space.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,17 +26,17 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "orbit-user.chart" -}}
+{{- define "team-space.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "orbit-user.labels" -}}
-helm.sh/chart: {{ include "orbit-user.chart" . }}
-app: orbit-{{ include "orbit-user.name" . }}
-{{ include "orbit-user.selectorLabels" . }}
+{{- define "team-space.labels" -}}
+helm.sh/chart: {{ include "team-space.chart" . }}
+app: orbit-{{ include "team-space.name" . }}
+{{ include "team-space.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -46,17 +46,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "orbit-user.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "orbit-user.name" . }}
+{{- define "team-space.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "team-space.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "orbit-user.serviceAccountName" -}}
+{{- define "team-space.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "orbit-user.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "team-space.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}

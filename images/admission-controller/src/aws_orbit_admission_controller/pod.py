@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional, cast
 
 import jsonpatch
 import jsonpath_ng
-from aws_orbit_admission_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, ORBIT_SYSTEM_NAMESPACE, load_config
+from aws_orbit_admission_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, load_config
 from flask import jsonify
 from kubernetes import dynamic
 from kubernetes.client import api_client

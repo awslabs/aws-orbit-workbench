@@ -1,9 +1,9 @@
 apiVersion: kubeflow.org/v1
 kind: Profile
 metadata:
-  name: {{ .Values.user }}-{{ .Values.team }}
+  name: {{ .Values.team }}-{{ .Values.user }}
   labels:
-    {{- include "orbit-user.labels" . | nindent 4 }}
+    {{- include "user-space.labels" . | nindent 4 }}
     orbit/team: {{ .Values.team }}
 spec:
   owner:

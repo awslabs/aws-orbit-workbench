@@ -134,6 +134,7 @@ def deploy_teams(
     "-f",
     type=str,
     help="The target Orbit Workbench manifest file (yaml).",
+    required=True,
 )
 @click.option(
     "--username",

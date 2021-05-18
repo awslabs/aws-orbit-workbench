@@ -21,7 +21,7 @@ import yaml
 
 import aws_orbit
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, sh, utils
-from aws_orbit.models.context import Context, ContextSerDe, TeamContext
+from aws_orbit.models.context import Context, TeamContext
 from aws_orbit.remote_files import kubectl
 from aws_orbit.services import cfn, s3
 
@@ -123,10 +123,10 @@ def install_chart_no_upgrade(repo: str, namespace: str, name: str, chart_name: s
     sh.run(f"helm install --debug --namespace {namespace} --version {chart_version} {name} {repo}/{chart_name}")
 
 
-def uninstall_chart(name: str) -> None:
+def uninstall_chart(name: str, namespace: str) -> None:
     try:
         _logger.debug("Uninstalling %s", name)
-        sh.run(f"helm uninstall --debug {name}")
+        sh.run(f"helm uninstall --debug {name} -n {namespace}")
     except exceptions.FailedShellCommand as e:
         _logger.error(e)
 
@@ -163,36 +163,6 @@ def deploy_env(context: Context) -> None:
         add_repo(repo=repo, repo_location=repo_location)
         kubectl.write_kubeconfig(context=context)
 
-        chart_name, chart_version, chart_package = package_chart(
-            repo=repo,
-            chart_path=os.path.join(CHARTS_PATH, "env", "landing-page"),
-            values={
-                "region": context.region,
-                "env_name": context.name,
-                "user_pool_id": context.user_pool_id,
-                "user_pool_client_id": context.user_pool_client_id,
-                "identity_pool_id": context.identity_pool_id,
-                "ssl_cert_arn": context.networking.frontend.ssl_cert_arn,
-                "repository": context.images.landing_page.repository,
-                "tag": context.images.landing_page.version,
-                "cognito_external_provider": context.cognito_external_provider,
-                "cognito_external_provider_label": context.cognito_external_provider
-                if context.cognito_external_provider_label is None
-                else context.cognito_external_provider_label,
-                "cognito_external_provider_domain": "null"
-                if context.cognito_external_provider_domain is None
-                else context.cognito_external_provider_domain,
-                "cognito_external_provider_redirect": "null"
-                if context.cognito_external_provider_redirect is None
-                else context.cognito_external_provider_redirect,
-                "internal_load_balancer": '"false"' if context.networking.frontend.load_balancers_subnets else '"true"',
-                "image_pull_policy": "Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
-            },
-        )
-        install_chart(
-            repo=repo, namespace="env", name="landing-page", chart_name=chart_name, chart_version=chart_version
-        )
-
         if context.install_image_replicator or not context.networking.data.internet_accessible:
             chart_name, chart_version, chart_package = package_chart(
                 repo=repo,
@@ -226,30 +196,53 @@ def deploy_team(context: Context, team_context: TeamContext) -> None:
         kubectl.write_kubeconfig(context=context)
 
         team_charts_path = create_team_charts_copy(team_context=team_context, path=os.path.join(CHARTS_PATH, "team"))
-        # Write the context into configmap
-        env_context_path = os.path.join(team_charts_path, "orbit-user", "src", "env-context.json")
-        with open(env_context_path, "w") as file:
-            file.write(ContextSerDe.dump_context_to_str(context))
-        team_context_path = os.path.join(team_charts_path, "orbit-user", "src", "team-context.json")
-        with open(team_context_path, "w") as file:
-            file.write(ContextSerDe.dump_context_to_str(team_context))
+        package_team_space_pkg(context, repo, team_charts_path, team_context)
+        package_user_space_pkg(context, repo, team_charts_path, team_context)
 
-        chart_name, chart_version, chart_package = package_chart(
-            repo=repo,
-            chart_path=os.path.join(team_charts_path, "orbit-user"),
-            values={
-                "env_name": context.name,
-                "team": team_context.name,
-                "efsid": context.shared_efs_fs_id,
-                "efsapid": team_context.efs_ap_id,
-                "region": context.region,
-                "cluster_pod_security_group_id": context.cluster_pod_sg_id,
-                "team_security_group_id": team_context.team_security_group_id,
-                "grant_sudo": '"yes"' if team_context.grant_sudo else '"no"',
-                "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
-                "team_role_arn": team_context.eks_pod_role_arn,
-            },
-        )
+
+def package_team_space_pkg(context: Context, repo: str, team_charts_path: str, team_context: TeamContext) -> None:
+    chart_name, chart_version, chart_package = package_chart(
+        repo=repo,
+        chart_path=os.path.join(team_charts_path, "team-space"),
+        values={
+            "env_name": context.name,
+            "team": team_context.name,
+            "efsid": context.shared_efs_fs_id,
+            "efsapid": team_context.efs_ap_id,
+            "region": context.region,
+            "cluster_pod_security_group_id": context.cluster_pod_sg_id,
+            "team_security_group_id": team_context.team_security_group_id,
+            "grant_sudo": '"yes"' if team_context.grant_sudo else '"no"',
+            "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
+            "team_role_arn": team_context.eks_pod_role_arn,
+            "DEVELOPMENT": ".dev" in aws_orbit.__version__,
+            "jupyter_team_image": team_context.final_image_address,
+            "s3_toolkit_bucket": context.toolkit.s3_bucket,
+            "account_id": context.account_id,
+        },
+    )
+    install_chart(
+        repo=repo, namespace=team_context.name, name="team-space", chart_name=chart_name, chart_version=chart_version
+    )
+
+
+def package_user_space_pkg(context: Context, repo: str, team_charts_path: str, team_context: TeamContext) -> None:
+    chart_name, chart_version, chart_package = package_chart(
+        repo=repo,
+        chart_path=os.path.join(team_charts_path, "user-space"),
+        values={
+            "env_name": context.name,
+            "team": team_context.name,
+            "efsid": context.shared_efs_fs_id,
+            "efsapid": team_context.efs_ap_id,
+            "region": context.region,
+            "cluster_pod_security_group_id": context.cluster_pod_sg_id,
+            "team_security_group_id": team_context.team_security_group_id,
+            "grant_sudo": '"yes"' if team_context.grant_sudo else '"no"',
+            "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
+            "team_role_arn": team_context.eks_pod_role_arn,
+        },
+    )
 
 
 def destroy_env(context: Context) -> None:
@@ -260,7 +253,7 @@ def destroy_env(context: Context) -> None:
         repo = context.name
         add_repo(repo=repo, repo_location=repo_location)
         kubectl.write_kubeconfig(context=context)
-        uninstall_chart(name="landing-page")
+        uninstall_chart(name="image-replicator", namespace="orbit-system")
 
 
 def destroy_team(context: Context, team_context: TeamContext) -> None:
@@ -271,4 +264,5 @@ def destroy_team(context: Context, team_context: TeamContext) -> None:
         repo = team_context.name
         add_repo(repo=repo, repo_location=repo_location)
         kubectl.write_kubeconfig(context=context)
-        uninstall_chart(name=f"{team_context.name}-jupyter-hub")
+        uninstall_chart(name=f"{team_context.name}-jupyter-hub", namespace=team_context.name)
+        uninstall_chart(name="team-space", namespace=team_context.name)
