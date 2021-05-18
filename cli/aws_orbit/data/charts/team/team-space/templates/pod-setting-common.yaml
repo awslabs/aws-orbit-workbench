@@ -10,10 +10,6 @@ metadata:
 spec:
   desc:  Orbit common pod settings for jupyter-base notebooks
   injectUserContext: true
-
-  command: ["sh","-c", "/usr/local/bin/start.sh jupyter lab --ServerApp.notebook_dir=/home/jovyan --ServerApp.ip=0.0.0.0 --ServerApp.open_browser=False
-        --ServerApp.allow_root=True --ServerApp.port=8888
-        --ServerApp.token='' --ServerApp.password='' --ServerApp.allow_origin='*' --ServerApp.base_url=${NB_PREFIX}"]
   containerSelector:
     jsonpath: "metadata.labels.app"
   podSelector:
@@ -49,10 +45,10 @@ spec:
     - name: AWS_STS_REGIONAL_ENDPOINTS
       value: "{{ .Values.sts_ep }}"
     # FIXME Chauncy
-    # - name: AWS_ORBIT_USER_SPACE
-    #  value: "{{ .Values.team }}-amirbo"
-    # - name: JUPYTER_IMAGE #AWS_ORBIT_IMAGE (we cannot fix the env name until we build a new image)
-    #  value: "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user:latest"
+    - name: AWS_ORBIT_USER_SPACE
+      value: lake-user-amirbo
+    - name: JUPYTER_IMAGE #AWS_ORBIT_IMAGE (we cannot fix the env name until we build a new image)
+      value: "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user:latest"
   nodeSelector:
     orbit/usage: teams
     orbit/node-type: ec2
@@ -66,6 +62,31 @@ spec:
 {{/*    postStart:*/}}
 {{/*      exec:*/}}
 {{/*        command: ["/bin/sh", "/home/jovyan/.orbit/bootstrap.sh"]*/}}
+---
+# This is the lowest commond properties which every orbit-based container requires.
+apiVersion: orbit.aws/v1
+kind: PodSetting
+metadata:
+  name: orbit-pod-interactive-notebook
+  namespace: {{ .Values.team }}
+  labels:
+    orbit/space: team
+    {{- include "team-space.labels" . | nindent 4 }}
+spec:
+  desc:  Orbit interactive notebook settings for jupyter-base notebooks
+  command: ["sh","-c", "/usr/local/bin/start.sh jupyter lab --ServerApp.notebook_dir=/home/jovyan --ServerApp.ip=0.0.0.0 --ServerApp.open_browser=False
+        --ServerApp.allow_root=True --ServerApp.port=8888
+        --ServerApp.token='' --ServerApp.password='' --ServerApp.allow_origin='*' --ServerApp.base_url=${NB_PREFIX}"]
+  containerSelector:
+    jsonpath: "metadata.labels.app"
+  podSelector:
+    matchExpressions:
+      - key: notebook-name
+        operator: Exists
+      - key: app
+        operator: NotIn
+        values:
+          - "orbit-runner"
 ---
 # This configures the image policy to force PULL when using development env.
 {{ if .Values.DEVELOPMENT }}

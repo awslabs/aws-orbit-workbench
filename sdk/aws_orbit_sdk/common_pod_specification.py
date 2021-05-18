@@ -26,59 +26,11 @@ PROFILES_TYPE = List[PROFILE_TYPE]
 
 
 class TeamConstants:
-    def __init__(self, username=None) -> None:
+    def __init__(self) -> None:
         self.env_name = os.environ["AWS_ORBIT_ENV"]
         self.team_name = os.environ["AWS_ORBIT_TEAM_SPACE"]
         self.region = os.environ["AWS_DEFAULT_REGION"]
         self.account_id = str(boto3.client("sts").get_caller_identity().get("Account"))
-        if username:
-            self.username = username
-        else:
-            self.username = (
-                os.environ["JUPYTERHUB_USER"]
-                if "JUPYTERHUB_USER" in os.environ
-                else os.environ["USERNAME"]
-                if "USERNAME" in os.environ
-                else None
-            )
-        self.pvc_name_template = f"orbit-{self.username}"
-
-    def image_pull_policy(self) -> str:
-        return "Always"
-
-    def gid(self) -> int:
-        return 100
-
-    def uid(self, grant_sudo: bool) -> int:
-        if grant_sudo:
-            return 0
-        return 1000
-
-    def node_selector(self, node_type: str) -> List[Dict[str, str]]:
-        node_selector = {"orbit/usage": "teams"}
-        if node_type == "ec2":
-            node_selector["orbit/node-type"] = "ec2"
-        return node_selector
-
-    def volume_mounts(self) -> List[Dict[str, Any]]:
-        mounts = [{"mountPath": "/efs", "name": "efs-volume"}]
-        return mounts
-
-    def volumes(self) -> List[Dict[str, Any]]:
-        vols = [
-            {"name": "efs-volume", "persistentVolumeClaim": {"claimName": "jupyterhub"}},
-        ]
-        return vols
-
-    def default_image(self) -> str:
-        return f"{self.account_id}.dkr.ecr.{self.region}.amazonaws.com/orbit-{self.env_name}-{self.team_name}:latest"
-
-    def env(self) -> Dict[str, str]:
-        env = dict()
-        env["AWS_ORBIT_ENV"] = self.env_name
-        env["AWS_ORBIT_TEAM_SPACE"] = self.team_name
-        env["AWS_STS_REGIONAL_ENDPOINTS"] = "regional"
-        return env
 
     def default_profiles(self) -> PROFILES_TYPE:
         return [
@@ -151,29 +103,3 @@ class TeamConstants:
             if p["slug"] == name:
                 return p
         return None
-
-    def init_containers(self, image):
-        return [
-            {
-                "name": "take-ebs-dir-ownership",
-                "image": image,
-                "command": ["sh", "-c", "sudo chmod -R 777 /ebs"],
-                "securityContext": {"runAsUser": 0},
-                "volumeMounts": [{"mountPath": "/ebs", "name": "ebs-volume"}],
-            }
-        ]
-
-    def life_cycle_hooks(self):
-        return {}
-        # return {"postStart": {"exec": {"command": ["/bin/sh", "/efs/shared/bootstrap.sh"]}}}
-
-        # return {"postStart": {"exec": {"command": ["/bin/sh", "/etc/jupyterhub/bootstrap.sh", "2>&1","|","tee /efs/shared/bootstrap.log"]}}}
-
-    def annotations(self) -> Dict[str, str]:
-        anno = {"AWS_ORBIT_TEAM_SPACE": self.team_name, "AWS_ORBIT_ENV": self.env_name}
-
-    def storage_class(self) -> str:
-        return f"ebs-{self.team_name}-gp2"
-
-    def ebs_access_mode(self) -> List[str]:
-        return ["ReadWriteOnce"]
