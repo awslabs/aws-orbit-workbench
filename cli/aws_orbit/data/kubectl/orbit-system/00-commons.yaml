@@ -115,13 +115,15 @@ spec:
               properties:
                 desc:
                   type: string
+                injectUserContext:
+                  type: boolean
                 containerSelector:
                   type: object
                   properties:
                     regex:
                       type: string
-                  required:
-                  - regex
+                    jsonpath:
+                      type: string
                 podSelector:
                   type: object
                   properties:
@@ -162,6 +164,14 @@ spec:
                     required:
                     - name
                     - mountPath
+                command:
+                  type: array
+                  items:
+                    type: string
+                args:
+                  type: array
+                  items:
+                    type: string
                 labels:
                   type: object
                   additionalProperties:

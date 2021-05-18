@@ -1,0 +1,27 @@
+# Default values for team-space.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Install parameters when user logs in the first time.
+# Should be coming from the namespace labels
+
+namespace: ${team}
+team: ${team}
+env: ${env_name}
+region: ${region}
+nameOverride: "team-space"
+fullnameOverride: ""
+efsid: ${efsid}
+efsapid: ${efsapid}
+cluster_pod_security_group_id: ${cluster_pod_security_group_id}
+team_security_group_id: ${team_security_group_id}
+grant_sudo: ${grant_sudo}
+sts_ep: ${sts_ep}
+fsGroup: 100
+team_role_arn: ${team_role_arn}
+jupyter_team_image: ${jupyter_team_image}
+account_id: ${account_id}
+s3_toolkit_bucket: ${s3_toolkit_bucket}
+
+# use to decide if we are in release or dev mode
+DEVELOPMENT: ${DEVELOPMENT}

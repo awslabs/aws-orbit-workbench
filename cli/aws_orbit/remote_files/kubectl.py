@@ -396,6 +396,9 @@ def deploy_env(context: "Context") -> None:
         # Enable ENIs
         sh.run(f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} ENABLE_POD_ENI=true")
 
+        # Restart orbit-system deployments to force reload of caches
+        sh.run(f"kubectl rollout restart deployments -n orbit-system --context {k8s_context}")
+
 
 def deploy_team(context: "Context", team_context: "TeamContext") -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
@@ -404,8 +407,29 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
         k8s_context = get_k8s_context(context=context)
         _logger.debug("kubectl context: %s", k8s_context)
         output_path = _generate_team_context(context=context, team_context=team_context)
+
+        # kubeflow jupyter launcher configmap
+        input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-launcher.yaml")
+        output = os.path.join(output_path, "kf-jupyter-launcher.yaml")
+
+        with open(input, "r") as file:
+            content = file.read()
+        content = utils.resolve_parameters(content, dict(orbit_jupyter_user_image=team_context.base_image_address))
+        with open(output, "w") as file:
+            file.write(content)
+
+        input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-patch.yaml")
+        output = os.path.join(output_path, "kf-jupyter-patch.yaml")
+
+        with open(input, "r") as file:
+            patch = file.read()
+
         # output_path = _generate_orbit_system_manifest(context=context, clean_up=False)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
+
+        # Patch
+        sh.run(f'kubectl patch deployment jupyter-web-app-deployment --patch "{patch}" -n kubeflow')
+        sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
 
 
 def destroy_env(context: "Context") -> None:

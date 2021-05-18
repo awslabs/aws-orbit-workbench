@@ -23,7 +23,7 @@ from typing import Any, Dict
 import jsonpatch
 from aws_orbit_admission_controller import load_config, run_command
 from flask import jsonify
-from kubernetes.client import *
+from kubernetes.client import CoreV1Api, V1ConfigMap
 
 
 def should_install_team_package(logger: logging.Logger, request: Dict[str, Any]) -> bool:
@@ -93,23 +93,24 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     )
 
 
-def install_helm_chart(helm_release, logger, namespace, team, user, user_email):
-    try:
-        # cmd = "/usr/local/bin/helm repo list"
-        cmd = (
-            f"/usr/local/bin/helm upgrade --install --devel --debug --namespace {namespace} "
-            f"{helm_release} {team}/orbit-user "
-            f"--set user={user},user_email={user_email},namespace={namespace}"
-        )
+def install_helm_chart(
+    helm_release: str, logger: logging.Logger, namespace: str, team: str, user: str, user_email: str
+) -> None:
 
-        logger.debug("running cmd: %s", cmd)
-        subprocess.check_output(cmd.split(" "), stderr=sys.stderr)
-    except subprocess.CalledProcessError as exc:
-        logger.debug("Command failed with exit code {}, stderr: {}".format(exc.returncode, exc.output.decode("utf-8")))
-        raise Exception(exc.output.decode("utf-8"))
+    cmd = (
+        f"/usr/local/bin/helm upgrade --install --devel --debug --namespace {namespace} "
+        f"{helm_release} {team}/user-space "
+        f"--set user={user},user_email={user_email},namespace={namespace}"
+    )
+
+    logger.debug("running cmd: %s", cmd)
+    output = run_command(logger, cmd)
+    logger.debug(output)
+    logger.info("finished cmd: %s", cmd)
 
 
-def get_team_context(logger, team):
+
+def get_team_context(logger: logging.Logger, team: str) -> Dict[str, Any]:
     try:
         api_instance = CoreV1Api()
         team_context_cf: V1ConfigMap = api_instance.read_namespaced_config_map("orbit-team-context", team)
