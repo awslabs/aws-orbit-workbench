@@ -102,6 +102,7 @@ Resources:
               - emr-containers:DeleteVirtualCluster
               - redshift:Describe*
               - s3:GetObject
+              - lambda:PublishLayerVersion
             Resource: '*'
           - Effect: Allow
             Action:
