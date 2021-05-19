@@ -54,7 +54,10 @@ The plugin configurations are located in a yaml configuration file that is refer
   
 ```
 #### Parameters 
+TBD
 
+References:
+- [Amazon Redshift](https://docs.aws.amazon.com/redshift/index.html)
 ----
 ### <a name="codecommit_plugin">AWS Code Commit </a>
 This plugin enables Orbit users to have access to an AWS Code Commit repository.
@@ -66,6 +69,8 @@ This plugin enables Orbit users to have access to an AWS Code Commit repository.
 #### Parameters 
 *None*
 
+References
+- [AWS CodeCommit](https://docs.aws.amazon.com/codecommit/latest/userguide/welcome.html)
 ----
 ### <a name="cfn_plugin">AWS Cloudformation </a>
 This plugin enables the execution of a custom AWS Cloudformation template.
@@ -80,7 +85,8 @@ This plugin enables the execution of a custom AWS Cloudformation template.
 #### Parameters 
  - *CfnTemplatePath* - this defines where the template to be executed is located.  Orbit creates a 'bundle' of all code to be deployed.  In the example above, the path specifies a template that is in the 'bundle' at the same level as the manifests - [demo-lake-user-cfn-template.yaml](https://github.com/awslabs/aws-orbit-workbench/blob/main/samples/manifests/plugins/demo-lake-user-cfn-template.yaml)
 
-References: [AWS Cloudformation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html)
+References: 
+- [AWS Cloudformation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html)
 
 ----
 ### <a name="emreks_plugin">EMR on EKS </a>
@@ -93,7 +99,8 @@ This plugin enables the orbit workspace to interact and submit spark jobs to EKS
 #### Parameters 
 *None*
 
-References: [Amazon EMR on EKS](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks.html)
+References: 
+- [Amazon EMR on EKS](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks.html)
 
 ----
 ### <a name="lustre_plugin">Lustre</a>
@@ -106,7 +113,8 @@ This plugin enables Amazon FSx for Lustre file system availabilty to the Orbit p
 #### Parameters 
 *None*
 
-References: [Amazon Amazon FSx for Lustre](https://docs.aws.amazon.com/fsx/latest/LustreGuide/what-is.html)
+References: 
+- [Amazon Amazon FSx for Lustre](https://docs.aws.amazon.com/fsx/latest/LustreGuide/what-is.html)
 
 ----
 ### <a name="ray_plugin">Ray</a>
