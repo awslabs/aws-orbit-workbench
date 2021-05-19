@@ -112,8 +112,10 @@ def delete_user_efs_endpoint(access_point_id: str) -> None:
 
     try:
         efs.delete_access_point(AccessPointId=access_point_id)
-    except efs.exception.AccessPointNotFound:
-        logger.info
+    except efs.exceptions.AccessPointNotFound:
+        logger.error(f"Access point not found: {access_point_id}")
+    except efs.exceptions.InternalServerError as e:
+        logger.error(e)
 
 
 def delete_user_namespace(
