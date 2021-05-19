@@ -414,21 +414,14 @@ class Env(Stack):
 
         role_name = f"orbit-{self.context.name}-admin"
         role_arn = f"arn:aws:iam::{self.context.account_id}:role/{role_name}"
-        orbit_iam.add_assume_role_statement(
-            role_name=role_name,
-            statement={
-                "Effect": "Allow",
-                "Principal": {"Service": "lambda.amazonaws.com"},
-                "Action": "sts:AssumeRole",
-            },
-        )
 
-        aws_lambda.Function(
+        lambda_python.PythonFunction(
             scope=self,
             id="cognito_post_authentication_lambda",
-            code=aws_lambda.Code.from_asset(_lambda_path("cognito_post_authentication/")),
             function_name=f"orbit-{self.context.name}-post-authentication",
-            handler="index.handler",
+            entry=_lambda_path("cognito_post_authentication"),
+            index="index.py",
+            handler="handler",
             runtime=aws_lambda.Runtime.PYTHON_3_7,
             timeout=Duration.seconds(300),
             role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-role", role_arn=role_arn),
@@ -437,22 +430,16 @@ class Env(Stack):
                 "ORBIT_ENV": self.context.name,
                 "ACCOUNT_ID": self.context.account_id,
             },
-            initial_policy=[
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=["logs:Create*", "logs:PutLogEvents", "logs:Describe*", "cognito-idp:*", "lambda:*"],
-                    resources=["*"],
-                )
-            ],
             memory_size=128,
         )
 
-        aws_lambda.Function(
+        lambda_python.PythonFunction(
             scope=self,
             id="cognito_post_authentication_k8s_lambda",
-            code=aws_lambda.Code.from_asset(_lambda_path("cognito_post_authentication/lambda.zip")),
+            entry=_lambda_path("cognito_post_authentication"),
             function_name=f"orbit-{self.context.name}-post-auth-k8s-manage",
-            handler="k8s_manage.handler",
+            index="k8s_manage.py",
+            handler="handler",
             runtime=aws_lambda.Runtime.PYTHON_3_7,
             timeout=Duration.seconds(300),
             role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-k8s-role", role_arn=role_arn),
@@ -462,13 +449,6 @@ class Env(Stack):
                 "ORBIT_ENV": self.context.name,
                 "ACCOUNT_ID": self.context.account_id,
             },
-            initial_policy=[
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=["logs:Create*", "logs:PutLogEvents", "logs:Describe*", "cognito-idp:*"],
-                    resources=["*"],
-                )
-            ],
             layers=[
                 aws_lambda.LayerVersion.from_layer_version_arn(
                     scope=self,
