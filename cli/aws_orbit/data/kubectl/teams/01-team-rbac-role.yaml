@@ -30,7 +30,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: ${team}-jupyter-user-system-access
+  name: jupyter-user-system-access-${team}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
