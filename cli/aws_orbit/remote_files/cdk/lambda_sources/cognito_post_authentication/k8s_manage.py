@@ -14,6 +14,7 @@ logger.setLevel(logging.INFO)
 
 ORBIT_ENV = os.environ.get("ORBIT_ENV")
 ACCOUNT_ID = os.environ.get("ACCOUNT_ID")
+KUBECONFIG_PATH = "/tmp/.kubeconfig"
 
 ssm = boto3.client("ssm")
 
@@ -41,21 +42,19 @@ def run_command(cmd: str) -> None:
 
 
 def create_kubeconfig() -> None:
-    kubeconfig_path = "/tmp/.kubeconfig"
-
-    logger.info(f"Generating kubeconfig in {kubeconfig_path}")
+    logger.info(f"Generating kubeconfig in {KUBECONFIG_PATH}")
     run_command(
         (
             "aws eks update-kubeconfig "
             f"--name orbit-{ORBIT_ENV} "
             f"--role-arn arn:aws:iam::{ACCOUNT_ID}:role/orbit-{ORBIT_ENV}-admin "
-            f"--kubeconfig {kubeconfig_path}"
+            f"--kubeconfig {KUBECONFIG_PATH}"
         )
     )
 
     logger.info("Loading kubeconfig")
     try:
-        config.load_kube_config(kubeconfig_path)
+        config.load_kube_config(KUBECONFIG_PATH)
         logger.info("Loaded kubeconfig successfully")
     except config.ConfigException:
         raise Exception("Could not configure kubernetes python client")
@@ -150,7 +149,7 @@ def delete_user_namespace(
 
 def delete_user_profile(user_profile: str) -> None:
     logger.info(f"Removing profile {user_profile}")
-    run_command(f"kubectl delete profile {user_profile}")
+    run_command(f"kubectl delete profile {user_profile} --kubeconfig {KUBECONFIG_PATH}")
 
     time.sleep(5)
 
