@@ -6,7 +6,7 @@ layout: documentation
 title: Plugin Installation
 permalink: plugin-installation
 ---
-##  Oribt Plugin Definiton and Configuration
+##  Orbit Plugin Definiton and Configuration
 Orbit plugins are individual python modules published PyPi.  We are continually adding plugin capabilites to the platform.  This is the current list of published plugins:
  - [Amazon Redshift Plugin](#rs_plugin)
  - [AWS Code Commit Plugin](#codecommit_plugin)
