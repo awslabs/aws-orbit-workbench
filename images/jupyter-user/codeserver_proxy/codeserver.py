@@ -1,8 +1,8 @@
 def setup_codeserver():
-    
+
     def _command(port):
         return ["bash", "/opt/orbit/codeserver_proxy/startup.sh", "{port}"]
-                           
+
     return {
         "command": _command,
         "timeout": 120,
