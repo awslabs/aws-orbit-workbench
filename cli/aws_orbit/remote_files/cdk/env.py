@@ -31,7 +31,6 @@ from aws_cdk.core import App, Construct, Duration, Environment, IConstruct, Stac
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.cdk import _lambda_path
 from aws_orbit.services import cognito as orbit_cognito
-from aws_orbit.services import iam as orbit_iam
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
