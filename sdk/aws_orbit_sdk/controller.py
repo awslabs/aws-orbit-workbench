@@ -633,7 +633,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str], team_c
     pod_properties: Dict[str, str] = dict(
         name=job_name,
         image=image,
-        cmd=["bash", "-c", "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"],
+        cmd=["bash", "-c", "/opt/orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"],
         port=22,
         image_pull_policy=team_constants.image_pull_policy(),
         image_pull_secrets=None,

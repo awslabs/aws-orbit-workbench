@@ -14,13 +14,13 @@ if [ -d "/home/jovyan/.local/share/code-server/extensions" ] && ! [ -d "/home/jo
 fi
 
 # Populate an aws/credentials file base on the attached role
-python3 /home/jovyan/.orbit/apps/codeserver_proxy/getcreds.py
+python3 /opt/orbit/codeserver_proxy/getcreds.py
 
 # get the k8s info and create a config on start
-chmod +x /home/jovyan/.orbit/apps/codeserver_proxy/create_kubeconfig.sh
-/home/jovyan/.orbit/apps/codeserver_proxy/create_kubeconfig.sh
+chmod +x /opt/orbit/codeserver_proxy/create_kubeconfig.sh 
+/opt/orbit/codeserver_proxy/create_kubeconfig.sh
 
 # Start codeserver 
-chmod +x /home/jovyan/.orbit/apps/codeserver_proxy/start_codeserver.sh
-/home/jovyan/.orbit/apps/codeserver_proxy/start_codeserver.sh $1
+chmod +x /opt/orbit/codeserver_proxy/start_codeserver.sh
+/opt/orbit/codeserver_proxy/start_codeserver.sh $1
 
