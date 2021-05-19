@@ -72,7 +72,9 @@ This plugin enables Orbit users to have access to an AWS Code Commit repository.
 
 References
 - [AWS CodeCommit](https://docs.aws.amazon.com/codecommit/latest/userguide/welcome.html)
+
 ----
+
 ### <a name="cfn_plugin">AWS Cloudformation </a>
 This plugin enables the execution of a custom AWS Cloudformation template.
 ```
