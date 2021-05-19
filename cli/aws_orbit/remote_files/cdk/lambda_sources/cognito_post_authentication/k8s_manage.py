@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import subprocess
+import time
 from typing import Any, Dict, List, Optional, cast
 
 import boto3
@@ -107,13 +108,24 @@ def create_user_namespace(
                 logger.error(f"Exception when trying to create user namespace {name}")
 
 
-def delete_user_efs_endpoint(access_point_id: str) -> None:
+def delete_user_efs_endpoint(user_name: str, user_namespace: str, api: client.CoreV1Api) -> None:
     efs = boto3.client("efs")
 
+    logger.info(f"Fetching the EFS access point in the namespace {user_ns} for user {user_name}")
+
     try:
-        efs.delete_access_point(AccessPointId=access_point_id)
+        user_namespace = api.read_namespace(name=user_ns).to_dict()
+        efs_access_point_id = user_namespace.get("metadata").get("labels").get("orbit/efs-access-point-id")
+    except ApiException:
+        logger.info(f"Exception when trying to read namespace {user_ns}")
+
+    logger.info(f"Deleting the EFS access point {efs_access_point_id} for user {user_name}")
+
+    try:
+        efs.delete_access_point(AccessPointId=efs_access_point_id)
+        logger.info(f"Access point {efs_access_point_id} deleted")
     except efs.exceptions.AccessPointNotFound:
-        logger.error(f"Access point not found: {access_point_id}")
+        logger.error(f"Access point not found: {efs_access_point_id}")
     except efs.exceptions.InternalServerError as e:
         logger.error(e)
 
@@ -123,17 +135,9 @@ def delete_user_namespace(
 ) -> None:
     for user_ns in namespaces:
         if user_ns not in expected_user_namespaces.values():
-            logger.info(f"Fetching the EFS access point in the namespace {user_ns} for user {user_name}")
+            delete_user_profile(user_profile=user_ns)
 
-            try:
-                user_namespace = api.read_namespace(name=user_ns).to_dict()
-                efs_access_point_id = user_namespace.get("metadata").get("labels").get("orbit/efs-access-point-id")
-            except ApiException:
-                logger.info(f"Exception when trying to read namespace {user_ns}")
-
-            logger.info(f"Deleting the EFS access point {efs_access_point_id} for user {user_name}")
-
-            delete_user_efs_endpoint(access_point_id=efs_access_point_id)
+            delete_user_efs_endpoint(user_name=user_name, user_namespace=user_ns, api=api)
 
             logger.info(f"User {user_name} is not expected to be part of the {user_ns} namespace. Removing...")
 
@@ -143,6 +147,12 @@ def delete_user_namespace(
             except ApiException:
                 logger.error(f"Exception when trying to remove user namespace {user_ns}")
 
+
+def delete_user_profile(user_profile: str) -> None:
+    logger.info(f"Removing profile {user_profile}")
+    run_command(f"kubectl delete profile {user_profile}")
+
+    time.sleep(5)
 
 def manage_user_namespace(event: Dict[str, Any], api: client.CoreV1Api) -> None:
     user_name = cast(str, event.get("user_name"))
