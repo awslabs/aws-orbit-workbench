@@ -58,6 +58,7 @@ TBD
 
 References:
 - [Amazon Redshift](https://docs.aws.amazon.com/redshift/index.html)
+
 ----
 ### <a name="codecommit_plugin">AWS Code Commit </a>
 This plugin enables Orbit users to have access to an AWS Code Commit repository.
