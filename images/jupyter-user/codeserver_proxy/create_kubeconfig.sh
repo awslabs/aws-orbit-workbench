@@ -9,7 +9,7 @@ up=$(env | grep $user_param)
 team_name=${up/$user_param/}
 
 server=$(aws eks describe-cluster --name $cluster_name --query 'cluster.endpoint' | sed "s/\"//g")
-name=$(kubectl get secret -oname | grep lake-user-token)
+name=$(kubectl get secret -oname | grep $team_name-token)
 
 ca=$(kubectl get $name -o jsonpath='{.data.ca\.crt}')
 token=$(kubectl get $name -o jsonpath='{.data.token}' | base64 --decode)
@@ -22,6 +22,10 @@ namespace=$(kubectl get $name -o jsonpath='{.data.namespace}' | base64 --decode)
 #echo $namespace
 #echo $team_name
 #echo $cluster_name
+
+if ! [ -d "/home/jovyan/.kube" ]; then
+  mkdir /home/jovyan/.kube
+fi
 
 echo "
 apiVersion: v1
@@ -42,7 +46,7 @@ users:
 - name: ${team_name}
   user:
     token: ${token}
-" > sa.kubeconfig
+" > /home/jovyan/.kube/config
 
-mkdir /home/jovyan/.kube -p
+#mkdir /home/jovyan/.kube -p
 #cp sa.kubeconfig /home/jovyan/.kube/config
