@@ -54,6 +54,8 @@ The plugin configurations are located in a yaml configuration file that is refer
   
 ```
 #### Parameters 
+
+----
 ### <a name="codecommit_plugin">AWS Code Commit </a>
 This plugin enables Orbit users to have access to an AWS Code Commit repository.
 ```
