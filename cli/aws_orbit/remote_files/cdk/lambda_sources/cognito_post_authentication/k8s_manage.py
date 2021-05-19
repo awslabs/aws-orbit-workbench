@@ -113,8 +113,8 @@ def delete_user_efs_endpoint(user_name: str, user_namespace: str, api: client.Co
     logger.info(f"Fetching the EFS access point in the namespace {user_namespace} for user {user_name}")
 
     try:
-        user_namespace = api.read_namespace(name=user_namespace).to_dict()
-        efs_access_point_id = user_namespace.get("metadata").get("labels").get("orbit/efs-access-point-id")
+        user_namespace_info = api.read_namespace(name=user_namespace).to_dict()
+        efs_access_point_id = user_namespace_info.get("metadata").get("labels").get("orbit/efs-access-point-id")
     except ApiException:
         logger.info(f"Exception when trying to read namespace {user_namespace}")
 
@@ -152,6 +152,7 @@ def delete_user_profile(user_profile: str) -> None:
     run_command(f"kubectl delete profile {user_profile} --kubeconfig {KUBECONFIG_PATH}")
 
     time.sleep(5)
+
 
 def manage_user_namespace(event: Dict[str, Any], api: client.CoreV1Api) -> None:
     user_name = cast(str, event.get("user_name"))
