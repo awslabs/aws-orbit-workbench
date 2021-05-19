@@ -111,13 +111,13 @@ def create_user_namespace(
 def delete_user_efs_endpoint(user_name: str, user_namespace: str, api: client.CoreV1Api) -> None:
     efs = boto3.client("efs")
 
-    logger.info(f"Fetching the EFS access point in the namespace {user_ns} for user {user_name}")
+    logger.info(f"Fetching the EFS access point in the namespace {user_namespace} for user {user_name}")
 
     try:
-        user_namespace = api.read_namespace(name=user_ns).to_dict()
+        user_namespace = api.read_namespace(name=user_namespace).to_dict()
         efs_access_point_id = user_namespace.get("metadata").get("labels").get("orbit/efs-access-point-id")
     except ApiException:
-        logger.info(f"Exception when trying to read namespace {user_ns}")
+        logger.info(f"Exception when trying to read namespace {user_namespace}")
 
     logger.info(f"Deleting the EFS access point {efs_access_point_id} for user {user_name}")
 
