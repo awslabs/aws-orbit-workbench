@@ -65,7 +65,7 @@ def init_env_repo(context: Context) -> str:
     else:
         _logger.debug("Skipping initialization of existing Env Helm Repository at %s", repo_location)
 
-    return repo_location
+    return cast(str, repo_location)
 
 
 def init_team_repo(context: Context, team_context: TeamContext) -> str:

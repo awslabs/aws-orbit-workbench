@@ -587,12 +587,17 @@ class ContextSerDe(Generic[T, V]):
             f"{top_level}-{context.name}-cdk-toolkit-{context.account_id}-{context.toolkit.deploy_id}"
         )
 
-        # Set the Helm repositories
-        _logger.debug(f"context.helm_repository: s3://{context.toolkit.s3_bucket}/helm/repositories/env")
-        context.helm_repository = f"s3://{context.toolkit.s3_bucket}/helm/repositories/env"
-        for team_context in context.teams:
-            _logger.debug(f"team_context.helm_repository: s3://{context.toolkit.s3_bucket}/helm/repositories/teams/{team_context.name}")
-            team_context.helm_repository = f"s3://{context.toolkit.s3_bucket}/helm/repositories/teams/{team_context.name}"
+        if isinstance(context, Context):
+            # Set the Helm repositories
+            _logger.debug(f"context.helm_repository: s3://{context.toolkit.s3_bucket}/helm/repositories/env")
+            context.helm_repository = f"s3://{context.toolkit.s3_bucket}/helm/repositories/env"
+            for team_context in context.teams:
+                _logger.debug(
+                    f"team_context.helm_repository: s3://{context.toolkit.s3_bucket}/helm/repositories/teams/{team_context.name}"
+                )
+                team_context.helm_repository = (
+                    f"s3://{context.toolkit.s3_bucket}/helm/repositories/teams/{team_context.name}"
+                )
+            _logger.debug("context.toolkit: %s", context.toolkit)
 
-        _logger.debug("context.toolkit: %s", context.toolkit)
         _logger.debug("Toolkit data fetched successfully.")
