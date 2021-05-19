@@ -8,5 +8,4 @@ RUN cd /var/admission-controller/ && \
     pip3 install -e .
 
 WORKDIR /var/admission-controller/
-ENTRYPOINT ["gunicorn"]
-CMD ["aws_orbit_admission_controller.app:app"]
+CMD ["bash"]

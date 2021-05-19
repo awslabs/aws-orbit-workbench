@@ -432,6 +432,7 @@ class ContextSerDe(Generic[T, V]):
             )
         context.install_ssm_agent = manifest.install_ssm_agent
         context.install_image_replicator = manifest.install_image_replicator
+
         ContextSerDe.fetch_toolkit_data(context=context)
         ContextSerDe.dump_context_to_ssm(context=context)
         return context
@@ -507,6 +508,7 @@ class ContextSerDe(Generic[T, V]):
             raise ValueError("Unknown 'context' Type")
 
         ssm.put_parameter(name=ssm_parameter_name, obj=content)
+        _logger.debug("Context written to SSM: %s", content)
 
     @staticmethod
     def load_context_from_ssm(env_name: str, type: Type[V]) -> V:
@@ -584,4 +586,18 @@ class ContextSerDe(Generic[T, V]):
         context.cdk_toolkit.s3_bucket = (
             f"{top_level}-{context.name}-cdk-toolkit-{context.account_id}-{context.toolkit.deploy_id}"
         )
+
+        if isinstance(context, Context):
+            # Set the Helm repositories
+            _logger.debug(f"context.helm_repository: s3://{context.toolkit.s3_bucket}/helm/repositories/env")
+            context.helm_repository = f"s3://{context.toolkit.s3_bucket}/helm/repositories/env"
+            for team_context in context.teams:
+                _logger.debug(
+                    f"team_context.helm_repository: s3://{context.toolkit.s3_bucket}/helm/repositories/teams/{team_context.name}"
+                )
+                team_context.helm_repository = (
+                    f"s3://{context.toolkit.s3_bucket}/helm/repositories/teams/{team_context.name}"
+                )
+            _logger.debug("context.toolkit: %s", context.toolkit)
+
         _logger.debug("Toolkit data fetched successfully.")
