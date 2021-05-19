@@ -153,7 +153,7 @@ def manage_user_namespace(event: Dict[str, Any], api: client.CoreV1Api) -> None:
     all_ns = [
         item.get("metadata").get("name")
         for item in all_ns_raw["items"]
-        if item.get("metadata").get("name").startswith(user_name)
+        if item.get("metadata").get("name").endswith(user_name)
     ]
 
     create_user_namespace(
