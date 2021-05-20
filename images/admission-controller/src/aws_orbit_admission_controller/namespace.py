@@ -109,14 +109,14 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
     # add the team repo
     run_command(f"helm repo add {team} {helm_repo_url}")
     # install the helm package for this user space
-    install_helm_chart(helm_release, team, team, user, user_email,user_efsapid)
+    install_helm_chart(helm_release, namespace_name, team, user, user_email, user_efsapid)
 
     logger.info("Helm release %s installed at %s", helm_release, namespace_name)
 
 def install_helm_chart(helm_release: str, namespace: str, team: str, user: str, user_email: str,
                        user_efsapid: str) -> None:
     cmd = (
-        f"/usr/local/bin/helm upgrade --install --devel --debug --namespace {namespace} "
+        f"/usr/local/bin/helm upgrade --install --devel --debug --namespace {team} "
         f"{helm_release} {team}/user-space "
         f"--set user={user},user_email={user_email},namespace={namespace},user_efsapid={user_efsapid}"
     )
@@ -131,10 +131,10 @@ def uninstall_chart(helm_release: str, namespace: str) -> None:
     cmd = (
         f"/usr/local/bin/helm uninstall --debug --namespace {namespace} {helm_release}"
     )
-    logger.debug("running cmd: %s", cmd)
+    logger.debug("running uninstall cmd: %s", cmd)
     output = run_command(cmd)
     logger.debug(output)
-    logger.info("finished cmd: %s", cmd)
+    logger.info("finished uninstall cmd: %s", cmd)
 
 
 def get_team_context(team: str) -> Dict[str, Any]:

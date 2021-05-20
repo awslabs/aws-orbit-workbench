@@ -102,7 +102,7 @@ def package_chart(repo: str, chart_path: str, values: Optional[Dict[str, Any]]) 
             chart_package = line.replace("Successfully packaged chart and saved it to: ", "")
             _logger.debug("Created package: %s", chart_package)
 
-    _logger.debug("Pusing %s to %s repository", chart_package, repo)
+    _logger.debug("Pushing %s to %s repository", chart_package, repo)
     sh.run(f"helm s3 push --force {chart_package} {repo}")
     return chart_name, chart_version, chart_package
 
