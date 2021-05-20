@@ -146,6 +146,14 @@ def uninstall_chart_in_namespace(name: str, namespace: str) -> None:
         _logger.error(e)
 
 
+def uninstall_chart_in_namespace(name: str, namespace: str) -> None:
+    try:
+        _logger.debug("Uninstalling %s", name)
+        sh.run(f"helm uninstall --debug --namespace {namespace} {name}")
+    except exceptions.FailedShellCommand as e:
+        _logger.error(e)
+
+
 def is_exists_chart_release(name: str, namespace: str) -> bool:
     try:
         _logger.info("Installed charts at %s", namespace)

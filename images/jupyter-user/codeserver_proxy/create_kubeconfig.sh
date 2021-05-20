@@ -8,14 +8,15 @@ user_param='AWS_ORBIT_TEAM_SPACE='
 up=$(env | grep $user_param)
 team_name=${up/$user_param/}
 
-server=$(aws eks describe-cluster --name $cluster_name --query 'cluster.endpoint' | sed "s/\"//g")
+#server=$(aws eks describe-cluster --name $cluster_name --query 'cluster.endpoint' | sed "s/\"//g")
+server=""
 name=$(kubectl get secret -oname | grep $team_name-token)
 
 ca=$(kubectl get $name -o jsonpath='{.data.ca\.crt}')
 token=$(kubectl get $name -o jsonpath='{.data.token}' | base64 --decode)
 namespace=$(kubectl get $name -o jsonpath='{.data.namespace}' | base64 --decode)
 
-#echo $server 
+#echo $server
 #echo $name
 #echo $ca
 #echo $token
