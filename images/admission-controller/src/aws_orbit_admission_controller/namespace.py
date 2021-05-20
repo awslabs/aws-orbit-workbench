@@ -64,7 +64,7 @@ def process_removed_event(namespace: Dict[str, Any]) -> None:
 
         team_context = get_team_context(team)
         helm_repo_url = team_context["HelmRepository"]
-        helm_release = f"{namespace_name}-{user}-orbit-team"
+        helm_release = f"{namespace_name}-orbit-team"
         logger.debug("Adding Helm Repository: %s at %s", team, helm_repo_url)
         uninstall_chart(helm_release, team)
 
@@ -105,7 +105,7 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
     team_context = get_team_context(team)
     helm_repo_url = team_context["HelmRepository"]
     logger.debug("Adding Helm Repository: %s at %s", team, helm_repo_url)
-    helm_release = f"{namespace_name}-{user}-orbit-team"
+    helm_release = f"{namespace_name}-orbit-team"
     # add the team repo
     run_command(f"helm repo add {team} {helm_repo_url}")
     # install the helm package for this user space

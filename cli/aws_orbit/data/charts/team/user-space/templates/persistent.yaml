@@ -4,7 +4,7 @@ metadata:
   labels:
     efs-id: {{ .Values.efsid }}
     {{- include "user-space.labels" . | nindent 4 }}
-  name: team-efs-{{ .Values.namespace }}
+  name: team-efs-{{ .Values.namespace }}-{{ .Values.user }}
 spec:
   accessModes:
     - ReadWriteMany
@@ -31,7 +31,7 @@ spec:
     requests:
       storage: 5Gi
   storageClassName: efs-storage-class
-  volumeName: team-efs-{{ .Values.namespace }}
+  volumeName: team-efs-{{ .Values.namespace }}-{{ .Values.user }}
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -39,7 +39,7 @@ metadata:
   labels:
     efs-id: {{ .Values.efsid }}
     {{- include "user-space.labels" . | nindent 4 }}
-  name: user-efs-{{ .Values.namespace }}
+  name: user-efs-{{ .Values.namespace }}-{{ .Values.user }}
 spec:
   accessModes:
     - ReadWriteMany
@@ -66,4 +66,4 @@ spec:
     requests:
       storage: 5Gi
   storageClassName: efs-storage-class
-  volumeName: team-efs-{{ .Values.namespace }}
+  volumeName: team-efs-{{ .Values.namespace }}-{{ .Values.user }}
