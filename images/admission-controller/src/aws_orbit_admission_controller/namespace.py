@@ -27,6 +27,44 @@ def should_install_team_package(labels: Dict[str, str]) -> bool:
     return labels.get("orbit/space", None) != "team"
 
 
+def process_removed_event(namespace: Dict[str, Any]) -> None:
+    logger.debug("loading kubeconfig")
+    load_config()
+    namespace_name = namespace["metadata"]["name"]
+    labels = namespace["metadata"].get("labels", {})
+    annotations = namespace["metadata"].get("annotations", {})
+
+    logger.info("processing removed namespace %s", namespace)
+
+    if not should_install_team_package(namespace):
+        return
+
+    env = labels.get("orbit/env", None)
+    space = labels.get("orbit/space", None)
+    team = labels.get("orbit/team", None)
+    user = labels.get("orbit/user", None)
+    user_email = annotations.get("owner", None)
+
+    logger.debug("removed namespace: %s,%s,%s,%s", team, user, user_email, namespace_name)
+
+    if not env or not space or not team or not user or not user_email:
+        logger.error(
+            "All of env, space, team, user, and user_email are required. Found: %s, %s, %s, %s, %s",
+            env,
+            space,
+            team,
+            user,
+            user_email,
+        )
+        return
+
+    team_context = get_team_context(team)
+    helm_repo_url = team_context["HelmRepository"]
+    logger.debug("Adding Helm Repository: %s at %s", team, helm_repo_url)
+    helm_release = f"{namespace_name}-{user}-orbit-team"
+    uninstall_chart(helm_release, team)
+
+
 def process_added_event(namespace: Dict[str, Any]) -> None:
     logger.debug("loading kubeconfig")
     load_config()
@@ -62,11 +100,11 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
     team_context = get_team_context(team)
     helm_repo_url = team_context["HelmRepository"]
     logger.debug("Adding Helm Repository: %s at %s", team, helm_repo_url)
-    helm_release = f"{namespace_name}-orbit-team"
+    helm_release = f"{namespace_name}-{user}-orbit-team"
     # add the team repo
     run_command(f"helm repo add {team} {helm_repo_url}")
     # install the helm package for this user space
-    install_helm_chart(helm_release, namespace_name, team, user, user_email)
+    install_helm_chart(helm_release, team, team, user, user_email)
 
     logger.info("Helm release %s installed at %s", helm_release, namespace_name)
 
@@ -78,6 +116,16 @@ def install_helm_chart(helm_release: str, namespace: str, team: str, user: str, 
         f"--set user={user},user_email={user_email},namespace={namespace}"
     )
 
+    logger.debug("running cmd: %s", cmd)
+    output = run_command(cmd)
+    logger.debug(output)
+    logger.info("finished cmd: %s", cmd)
+
+
+def uninstall_chart(helm_release: str, namespace: str) -> None:
+    cmd = (
+        f"/usr/local/bin/helm uninstall --debug --namespace {namespace} {helm_release}"
+    )
     logger.debug("running cmd: %s", cmd)
     output = run_command(cmd)
     logger.debug(output)
@@ -137,6 +185,8 @@ def process_namespaces(queue: Queue, state: Dict[str, Any], replicator_id: int) 
 
             if namespace_event["type"] == "ADDED":
                 process_added_event(namespace=namespace_event["raw_object"])
+            elif namespace_event["type"] == "DELETED":
+                process_removed_event(namespace=namespace_event["raw_object"])
             else:
                 logger.debug("Skipping Namespace event: %s", namespace_event)
         except Exception:
