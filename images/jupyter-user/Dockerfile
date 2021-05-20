@@ -142,9 +142,9 @@ RUN rm -rf ./databrew
 RUN mkdir -p /opt/orbit/codeserver_proxy
 COPY codeserver_proxy /opt/orbit/codeserver_proxy
 RUN chmod -R a+xr /opt/orbit/codeserver_proxy/*.sh
-RUN chown -R jovyan /opt/orbit/codeserver_proxy
 WORKDIR /opt/orbit/codeserver_proxy
 RUN /opt/orbit/codeserver_proxy/install.sh
+RUN chown -R jovyan /opt/orbit/codeserver_proxy
 
 
 WORKDIR /home/${NB_USER}
