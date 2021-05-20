@@ -315,12 +315,15 @@ def run_notebooks(taskConfiguration: dict) -> Any:
 
 
 def list_team_running_jobs():
-    namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
-    return list_running_jobs(namespace)
+    props = get_properties()
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    return list_running_jobs(team_name)
 
 
 def list_my_running_jobs():
-    namespace = team_name
+    props = get_properties()
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
     return list_running_jobs(namespace)
 
 
@@ -348,27 +351,28 @@ def list_running_jobs(namespace: str):
     return res["items"]
 
 
-# def list_current_pods(label_selector: str = None):
-#     props = get_properties()
-#     team_name = props["AWS_ORBIT_TEAM_SPACE"]
-#     load_kube_config()
-#     api_instance = CoreV1Api()
-#     try:
-#         params = dict()
-#         params["namespace"] = team_name
-#         params["_preload_content"] = False
-#         if label_selector:
-#             params["label_selector"] = label_selector
-#         api_response = api_instance.list_namespaced_pod(**params)
-#         res = json.loads(api_response.data)
-#     except ApiException as e:
-#         _logger.info("Exception when calling BatchV1Api->list_namespaced_job: %s\n" % e)
-#         raise e
-#
-#     if "items" not in res:
-#         return []
-#
-#     return res["items"]
+def list_current_pods(label_selector: str = None):
+    props = get_properties()
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
+    load_kube_config()
+    api_instance = CoreV1Api()
+    try:
+        params = dict()
+        params["namespace"] = namespace
+        params["_preload_content"] = False
+        if label_selector:
+            params["label_selector"] = label_selector
+        api_response = api_instance.list_namespaced_pod(**params)
+        res = json.loads(api_response.data)
+    except ApiException as e:
+        _logger.info("Exception when calling BatchV1Api->list_namespaced_job: %s\n" % e)
+        raise e
+
+    if "items" not in res:
+        return []
+
+    return res["items"]
 
 
 def list_storage_pvc():
@@ -376,6 +380,7 @@ def list_storage_pvc():
     api_instance = CoreV1Api()
     props = get_properties()
     params = dict()
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
     params["namespace"] = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
     params["_preload_content"] = False
     try:
@@ -397,6 +402,7 @@ def delete_storage_pvc(pvc_name: str):
     props = get_properties()
     params = dict()
     params["name"] = pvc_name
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
     params["namespace"] = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
     params["_preload_content"] = False
     try:
@@ -514,6 +520,7 @@ def delete_job(job_name: str, grace_period_seconds: int = 30):
 
 def delete_cronjob(job_name: str, grace_period_seconds: int = 30):
     props = get_properties()
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
     load_kube_config()
     api_instance = BatchV1beta1Api()
     try:
@@ -531,6 +538,7 @@ def delete_cronjob(job_name: str, grace_period_seconds: int = 30):
 
 def delete_all_my_jobs():
     props = get_properties()
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
     namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
 
     load_kube_config()
@@ -547,6 +555,7 @@ def delete_all_my_jobs():
 
 def list_running_cronjobs():
     props = get_properties()
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
     namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
     load_kube_config()
     api_instance = BatchV1beta1Api()
@@ -1324,9 +1333,10 @@ def delete_task_schedule(triggerName: str, compute_type: str = "eks") -> None:
 def delete_task_schedule_eks(triggerName: str) -> None:
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
     load_kube_config()
 
-    BatchV1beta1Api().delete_namespaced_cron_job(name=f"orbit-{team_name}-{triggerName}", namespace=team_name)
+    BatchV1beta1Api().delete_namespaced_cron_job(name=f"orbit-{team_name}-{triggerName}", namespace=namespace)
 
 
 def order_def(task_definition: Any) -> datetime:

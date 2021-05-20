@@ -80,8 +80,8 @@ ADD pip.conf /etc/pip.conf
 ADD VERSION /home/jovyan/.orbit/VERSION
 RUN chown jovyan /home/jovyan/.orbit/VERSION
 RUN conda run pip install --upgrade \
-    aws-orbit~=$(cat /home/jovyan/.orbit/VERSION) \
-    aws-orbit-sdk~=$(cat /home/jovyan/.orbit/VERSION)
+    aws-orbit==$(cat /home/jovyan/.orbit/VERSION) \
+    aws-orbit-sdk==$(cat /home/jovyan/.orbit/VERSION)
 RUN rm /etc/pip.conf
 
 # add the boostrap script and change permission to jovyan
