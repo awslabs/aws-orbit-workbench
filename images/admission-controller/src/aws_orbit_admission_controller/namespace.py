@@ -35,35 +35,38 @@ def process_removed_event(namespace: Dict[str, Any]) -> None:
     annotations = namespace["metadata"].get("annotations", {})
 
     logger.info("processing removed namespace %s", namespace)
-
-    if not should_install_team_package(namespace):
-        return
-
-    env = labels.get("orbit/env", None)
     space = labels.get("orbit/space", None)
-    team = labels.get("orbit/team", None)
-    user = labels.get("orbit/user", None)
-    user_email = annotations.get("owner", None)
 
-    logger.debug("removed namespace: %s,%s,%s,%s", team, user, user_email, namespace_name)
+    if space == 'team':
+        logger.info("delete all namespaces that belong to the team %s", namespace_name)
+        run_command(f"kubectl delete profile -l orbit/team={namespace_name}")
+        time.sleep(60)
+        run_command(f"kubectl delete namespace -l orbit/team={namespace_name}")
+        logger.info("all namespaces that belong to the team %s are deleted", namespace_name)
+    elif space == 'user':
+        env = labels.get("orbit/env", None)
+        team = labels.get("orbit/team", None)
+        user = labels.get("orbit/user", None)
+        user_email = annotations.get("owner", None)
 
-    if not env or not space or not team or not user or not user_email:
-        logger.error(
-            "All of env, space, team, user, and user_email are required. Found: %s, %s, %s, %s, %s",
-            env,
-            space,
-            team,
-            user,
-            user_email,
-        )
-        return
+        logger.debug("removed namespace: %s,%s,%s,%s", team, user, user_email, namespace_name)
 
-    team_context = get_team_context(team)
-    helm_repo_url = team_context["HelmRepository"]
-    logger.debug("Adding Helm Repository: %s at %s", team, helm_repo_url)
-    helm_release = f"{namespace_name}-{user}-orbit-team"
-    uninstall_chart(helm_release, team)
+        if not env or not space or not team or not user or not user_email:
+            logger.error(
+                "All of env, space, team, user, and user_email are required. Found: %s, %s, %s, %s, %s",
+                env,
+                space,
+                team,
+                user,
+                user_email,
+            )
+            return
 
+        team_context = get_team_context(team)
+        helm_repo_url = team_context["HelmRepository"]
+        helm_release = f"{namespace_name}-{user}-orbit-team"
+        logger.debug("Adding Helm Repository: %s at %s", team, helm_repo_url)
+        uninstall_chart(helm_release, team)
 
 def process_added_event(namespace: Dict[str, Any]) -> None:
     logger.debug("loading kubeconfig")
@@ -83,17 +86,19 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
     team = labels.get("orbit/team", None)
     user = labels.get("orbit/user", None)
     user_email = annotations.get("owner", None)
+    user_efsapid = annotations.get("orbit/efs-access-point-id", None)
 
     logger.debug("new namespace: %s,%s,%s,%s", team, user, user_email, namespace_name)
 
     if not env or not space or not team or not user or not user_email:
         logger.error(
-            "All of env, space, team, user, and user_email are required. Found: %s, %s, %s, %s, %s",
+            "All of env, space, team, user, and user_email are required. Found: %s, %s, %s, %s, %s, %s",
             env,
             space,
             team,
             user,
             user_email,
+            user_efsapid,
         )
         return
 
@@ -104,16 +109,16 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
     # add the team repo
     run_command(f"helm repo add {team} {helm_repo_url}")
     # install the helm package for this user space
-    install_helm_chart(helm_release, team, team, user, user_email)
+    install_helm_chart(helm_release, team, team, user, user_email,user_efsapid)
 
     logger.info("Helm release %s installed at %s", helm_release, namespace_name)
 
-
-def install_helm_chart(helm_release: str, namespace: str, team: str, user: str, user_email: str) -> None:
+def install_helm_chart(helm_release: str, namespace: str, team: str, user: str, user_email: str,
+                       user_efsapid: str) -> None:
     cmd = (
         f"/usr/local/bin/helm upgrade --install --devel --debug --namespace {namespace} "
         f"{helm_release} {team}/user-space "
-        f"--set user={user},user_email={user_email},namespace={namespace}"
+        f"--set user={user},user_email={user_email},namespace={namespace},user_efsapid={user_efsapid}"
     )
 
     logger.debug("running cmd: %s", cmd)

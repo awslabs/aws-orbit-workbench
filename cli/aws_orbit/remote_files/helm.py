@@ -129,6 +129,12 @@ def uninstall_chart(name: str, namespace: str) -> None:
     except exceptions.FailedShellCommand as e:
         _logger.error(e)
 
+def uninstall_all_charts(namespace: str) -> None:
+    try:
+        _logger.debug("Uninstalling all charts in namespace %s", namespace)
+        sh.run(f"helm ls --all --short -n {namespace} | xargs -L1 helm uninstall --debug -n {namespace}")
+    except exceptions.FailedShellCommand as e:
+        _logger.error(e)
 
 def is_exists_chart_release(name: str, namespace: str) -> bool:
     try:
@@ -263,5 +269,4 @@ def destroy_team(context: Context, team_context: TeamContext) -> None:
         repo = team_context.name
         add_repo(repo=repo, repo_location=repo_location)
         kubectl.write_kubeconfig(context=context)
-        uninstall_chart(name=f"{team_context.name}-jupyter-hub", namespace=team_context.name)
-        uninstall_chart(name="team-space", namespace=team_context.name)
+        uninstall_all_charts(namespace=team_context.name)
