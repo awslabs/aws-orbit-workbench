@@ -94,7 +94,7 @@ def create_user_namespace(
                 "orbit/space": "user",
                 "orbit/team": team,
                 "orbit/user": user_name,
-                "istio-injection": "enabled",
+                # "istio-injection": "enabled",
             }
 
             body = client.V1Namespace()

@@ -80,13 +80,9 @@ ADD pip.conf /etc/pip.conf
 ADD VERSION /home/jovyan/.orbit/VERSION
 RUN chown jovyan /home/jovyan/.orbit/VERSION
 RUN conda run pip install --upgrade \
-    aws-orbit~=$(cat /home/jovyan/.orbit/VERSION) \
-    aws-orbit-sdk~=$(cat /home/jovyan/.orbit/VERSION)
+    aws-orbit==$(cat /home/jovyan/.orbit/VERSION) \
+    aws-orbit-sdk==$(cat /home/jovyan/.orbit/VERSION)
 RUN rm /etc/pip.conf
-
-# remove the auto includes with the kubespawner package as we just using the helper class.
-RUN conda run pip install --no-deps jupyterhub-kubespawner~=0.15.0
-RUN echo "" > `conda run pip  show jupyterhub-kubespawner | grep "Location:" | cut -d ':' -f 2`/kubespawner/__init__.py
 
 # add the boostrap script and change permission to jovyan
 RUN mkdir -p /home/jovyan/.orbit

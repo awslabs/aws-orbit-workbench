@@ -102,7 +102,7 @@ def package_chart(repo: str, chart_path: str, values: Optional[Dict[str, Any]]) 
             chart_package = line.replace("Successfully packaged chart and saved it to: ", "")
             _logger.debug("Created package: %s", chart_package)
 
-    _logger.debug("Pusing %s to %s repository", chart_package, repo)
+    _logger.debug("Pushing %s to %s repository", chart_package, repo)
     sh.run(f"helm s3 push --force {chart_package} {repo}")
     return chart_name, chart_version, chart_package
 
@@ -126,6 +126,14 @@ def uninstall_chart(name: str, namespace: str) -> None:
     try:
         _logger.debug("Uninstalling %s", name)
         sh.run(f"helm uninstall --debug {name} -n {namespace}")
+    except exceptions.FailedShellCommand as e:
+        _logger.error(e)
+
+
+def uninstall_all_charts(namespace: str) -> None:
+    try:
+        _logger.debug("Uninstalling all charts in namespace %s", namespace)
+        sh.run(f"helm ls --all --short -n {namespace} | xargs -L1 helm uninstall --debug -n {namespace}")
     except exceptions.FailedShellCommand as e:
         _logger.error(e)
 
@@ -263,5 +271,4 @@ def destroy_team(context: Context, team_context: TeamContext) -> None:
         repo = team_context.name
         add_repo(repo=repo, repo_location=repo_location)
         kubectl.write_kubeconfig(context=context)
-        uninstall_chart(name=f"{team_context.name}-jupyter-hub", namespace=team_context.name)
-        uninstall_chart(name="team-space", namespace=team_context.name)
+        uninstall_all_charts(namespace=team_context.name)

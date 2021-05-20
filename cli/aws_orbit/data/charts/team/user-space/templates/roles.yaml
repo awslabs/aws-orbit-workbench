@@ -9,7 +9,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ .Values.team }}
+  name: jupyter-user
 subjects:
   - kind: ServiceAccount
     name: default-editor
@@ -17,7 +17,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: jupyter-user-system-access-{{ .Values.team }}
+  name: jupyter-user-system-access-{{ .Values.team }}-{{ .Values.user }}
   labels:
     {{- include "user-space.labels" . | nindent 4 }}
 roleRef:
