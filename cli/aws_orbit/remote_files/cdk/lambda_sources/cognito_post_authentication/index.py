@@ -25,7 +25,7 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
     logger.info("Authenticated successfully:")
     logger.info(f"userName: {user_name}, userPoolId: {user_pool_id}, userGroups: {user_groups}")
 
-    expected_user_namespaces = {user_group: user_name + "-" + user_group for user_group in user_groups}
+    expected_user_namespaces = {user_group: user_group + "-" + user_name for user_group in user_groups}
 
     payload = {
         "user_name": user_name,
