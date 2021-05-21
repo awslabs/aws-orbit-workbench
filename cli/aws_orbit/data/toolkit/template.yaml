@@ -71,18 +71,23 @@ Resources:
               - iam:DeleteServerCertificate
               - iam:ListRoleTags
               - iam:GetOpenIDConnectProvider
+              - cognito-idp:AdminListGroupsForUser
               - cognito-idp:CreateUserPool
               - cognito-idp:DeleteUserPool
+              - cognito-idp:UpdateUserPoolClient
               - cognito-idp:CreateUserPoolClient
               - cognito-idp:DeleteUserPoolClient
               - cognito-idp:CreateGroup
               - cognito-idp:DeleteGroup
               - cognito-idp:TagResource
+              - cognito-idp:UpdateUserPool
               - cognito-identity:CreateIdentityPool
               - cognito-identity:DeleteIdentityPool
               - cognito-identity:UntagResource
               - cognito-identity:TagResource
               - cognito-identity:SetIdentityPoolRoles
+              - cognito-idp:CreateUserPoolDomain
+              - cognito-idp:DeleteUserPoolDomain
               - ec2:*
               - elasticloadbalancing:*
               - ecs:CreateCluster
@@ -98,6 +103,7 @@ Resources:
               - emr-containers:ListVirtualClusters
               - emr-containers:DeleteVirtualCluster
               - redshift:Describe*
+              - s3:GetObject
             Resource: '*'
           - Effect: Allow
             Action:
@@ -132,6 +138,7 @@ Resources:
             Resource:
               - arn:aws:cloudformation:${region}:${account_id}:stack/${top_level}-${env_name}*
               - arn:aws:cloudformation:${region}:${account_id}:stack/eksctl-${top_level}-${env_name}*
+              - arn:aws:cloudformation:${region}:aws:transform/Serverless-2016-10-31
           - Effect: Allow
             Action:
               - ssm:Get*
@@ -175,6 +182,7 @@ Resources:
               - lambda:*
             Resource:
               - arn:aws:lambda:${region}:${account_id}:function:${top_level}-${env_name}-*
+              - arn:aws:lambda:${region}:${account_id}:layer:${top_level}-${env_name}-*
           - Effect: Allow
             Action:
               - codeartifact:GetAuthorizationToken
@@ -206,6 +214,11 @@ Resources:
               - secretsmanager:*
             Resource:
               - arn:aws:secretsmanager:${region}:${account_id}:secret:${top_level}-redshift-master-${env_name}*
+          - Effect: Allow
+            Action:
+              - serverlessrepo:*
+            Resource:
+              - arn:aws:serverlessrepo:us-east-1:903779448426:applications/lambda-layer-kubectl
         Version: '2012-10-17'
       Description: ''
       ManagedPolicyName: ${top_level}-${env_name}-admin-other
@@ -262,6 +275,8 @@ Resources:
             Resource:
               - arn:aws:iam::${account_id}:role/${top_level}-${env_name}-*
               - arn:aws:iam::${account_id}:role/eksctl-${top_level}-${env_name}-*
+              - arn:aws:iam::${account_id}:role/kf-user-${region}-${top_level}-${env_name}
+              - arn:aws:iam::${account_id}:role/kf-admin-${region}-${top_level}-${env_name}
           - Effect: Allow
             Action:
               - iam:CreateServiceLinkedRole
@@ -319,6 +334,10 @@ Resources:
           - Effect: Allow
             Principal:
               Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
             Action: sts:AssumeRole
   CodeBuild:
     Type: AWS::CodeBuild::Project

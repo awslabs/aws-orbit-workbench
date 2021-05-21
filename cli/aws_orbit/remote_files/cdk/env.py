@@ -23,6 +23,7 @@ import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_lambda_python as lambda_python
+import aws_cdk.aws_sam as sam
 import aws_cdk.aws_ssm as ssm
 from aws_cdk import aws_lambda
 from aws_cdk.core import App, Construct, Duration, Environment, IConstruct, Stack, Tags
@@ -81,6 +82,7 @@ class Env(Stack):
         self.eks_service_lambda = self._create_eks_service_lambda()
         self.cluster_pod_security_group = self._create_cluster_pod_security_group()
         self.context_parameter = self._create_manifest_parameter()
+        self._create_post_authentication_lambda()
 
     def _create_role_cluster(self) -> iam.Role:
         name: str = f"orbit-{self.context.name}-eks-cluster-role"
@@ -237,7 +239,7 @@ class Env(Stack):
             id="user-pool-client",
             user_pool=cast(cognito.IUserPool, self.user_pool),
             auth_flows=cognito.AuthFlow(user_srp=True, admin_user_password=False, custom=False),
-            generate_secret=False,
+            generate_secret=True,
             prevent_user_existence_errors=True,
             user_pool_client_name="orbit",
         )
@@ -394,6 +396,66 @@ class Env(Stack):
                     ],
                 )
             ],
+        )
+
+    def _create_post_authentication_lambda(self) -> None:
+        k8s_layer_name = f"orbit-{self.context.name}-k8s-base-layer"
+
+        sam_app = sam.CfnApplication(
+            scope=self,
+            id="awscli_kubectl_helm_lambda_layer_sam",
+            location=sam.CfnApplication.ApplicationLocationProperty(
+                application_id="arn:aws:serverlessrepo:us-east-1:903779448426:applications/lambda-layer-kubectl",
+                semantic_version="2.0.0",
+            ),
+            parameters={"LayerName": k8s_layer_name},
+        )
+
+        role_name = f"orbit-{self.context.name}-admin"
+        role_arn = f"arn:aws:iam::{self.context.account_id}:role/{role_name}"
+
+        lambda_python.PythonFunction(
+            scope=self,
+            id="cognito_post_authentication_lambda",
+            function_name=f"orbit-{self.context.name}-post-authentication",
+            entry=_lambda_path("cognito_post_authentication"),
+            index="index.py",
+            handler="handler",
+            runtime=aws_lambda.Runtime.PYTHON_3_7,
+            timeout=Duration.seconds(300),
+            role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-role", role_arn=role_arn),
+            environment={
+                "REGION": self.context.region,
+                "ORBIT_ENV": self.context.name,
+                "ACCOUNT_ID": self.context.account_id,
+            },
+            memory_size=128,
+        )
+
+        lambda_python.PythonFunction(
+            scope=self,
+            id="cognito_post_authentication_k8s_lambda",
+            entry=_lambda_path("cognito_post_authentication"),
+            function_name=f"orbit-{self.context.name}-post-auth-k8s-manage",
+            index="k8s_manage.py",
+            handler="handler",
+            runtime=aws_lambda.Runtime.PYTHON_3_7,
+            timeout=Duration.seconds(300),
+            role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-k8s-role", role_arn=role_arn),
+            environment={
+                "REGION": self.context.region,
+                "PATH": "/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin:/opt/awscli:/opt/kubectl:/opt/helm",
+                "ORBIT_ENV": self.context.name,
+                "ACCOUNT_ID": self.context.account_id,
+            },
+            layers=[
+                aws_lambda.LayerVersion.from_layer_version_arn(
+                    scope=self,
+                    id="K8sLambdaLayer",
+                    layer_version_arn=(sam_app.get_att("Outputs.LayerVersionArn").to_string()),
+                )
+            ],
+            memory_size=256,
         )
 
     def _create_manifest_parameter(self) -> ssm.StringParameter:

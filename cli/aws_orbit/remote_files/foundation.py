@@ -32,7 +32,7 @@ def deploy(context: "FoundationContext") -> None:
     stack_name: str = cast(str, context.stack_name)
 
     _logger.debug("Deploying self signed cert...")
-    ssl_cert_arn = deploy_selfsigned_cert()
+    ssl_cert_arn = deploy_selfsigned_cert(context=context)
 
     _logger.debug("Deploying %s Foundation...", stack_name)
     cdk.deploy(
@@ -50,7 +50,7 @@ def deploy(context: "FoundationContext") -> None:
 def destroy(context: "FoundationContext") -> None:
     if cfn.does_stack_exist(stack_name=cast(str, context.stack_name)):
         cleanup.foundation_remaining_dependencies(context=context)
-        cleanup.delete_cert_from_iam()
+        cleanup.delete_cert_from_iam(context=context)
         _logger.debug("Destroying Foundation...")
         cdk.destroy(
             context=context,

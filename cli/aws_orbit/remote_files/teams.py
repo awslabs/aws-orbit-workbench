@@ -160,6 +160,11 @@ def deploy_team(context: "Context", manifest: Manifest, team_manifest: TeamManif
         team_context = create_team_context_from_manifest(manifest=manifest, team_manifest=team_manifest)
         team_context.fetch_team_data()
         context.teams.append(team_context)
+
+    _logger.debug(
+        f"team_context.helm_repository: s3://{context.toolkit.s3_bucket}/helm/repositories/teams/{team_context.name}"
+    )
+    team_context.helm_repository = f"s3://{context.toolkit.s3_bucket}/helm/repositories/teams/{team_context.name}"
     ContextSerDe.dump_context_to_ssm(context=context)
 
 

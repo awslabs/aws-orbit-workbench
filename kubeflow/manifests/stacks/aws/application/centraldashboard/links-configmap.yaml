@@ -1,0 +1,102 @@
+apiVersion: v1
+data:
+  links: |-
+    {
+      "menuLinks": [
+        {
+          "link": "/pipeline/",
+          "text": "Pipelines"
+        },
+        {
+          "link": "/jupyter/",
+          "text": "Notebook Servers"
+        },
+        {
+          "link": "/katib/",
+          "text": "Katib"
+        },
+         {
+           "link": "/voila",
+           "text": "Voila"
+         }
+      ],
+      "externalLinks": [
+
+       ],
+      "quickLinks": [
+        {
+          "text": "Upload a pipeline",
+          "desc": "Pipelines",
+          "link": "/pipeline/"
+        },
+        {
+          "text": "View all pipeline runs",
+          "desc": "Pipelines",
+          "link": "/pipeline/#/runs"
+        },
+        {
+          "text": "Create a new Notebook server",
+          "desc": "Notebook Servers",
+          "link": "/jupyter/new?namespace=kubeflow"
+        },
+        {
+          "text": "View Katib Experiments",
+          "desc": "Katib",
+          "link": "/katib/"
+        }
+      ],
+      "documentationItems": [
+        {
+          "text": "Orbit Home Page",
+          "desc": "Orbit Workbench Home page",
+          "link": "https://awslabs.github.io/aws-orbit-workbench/"
+        },
+        {
+          "text": "Getting Started with Kubeflow",
+          "desc": "Get your machine-learning workflow up and running on Kubeflow",
+          "link": "https://www.kubeflow.org/docs/started/getting-started/"
+        },
+        {
+          "text": "EMR on EKS",
+          "desc": "Amazon EMR on EKS provides a deployment option for Amazon EMR that allows you to run open-source big data frameworks on Amazon Elastic Kubernetes Service (Amazon EKS). With this deployment option, you can focus on running analytics workloads while Amazon EMR on EKS builds, configures, and manages containers for open-source applications. ",
+          "link": "https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks.html"
+        },
+        {
+          "text": "AWS Glue DataBrew",
+          "desc": "AWS Glue DataBrew is a new visual data preparation tool that makes it easy for data analysts and data scientists to clean and normalize data to prepare it for analytics and machine learning. ",
+          "link": "https://aws.amazon.com/glue/features/databrew/"
+        },
+        {
+          "text": "Amazon FSx for Lustre",
+          "desc": "Fast and scalable shared storage to power your compute workloads. ",
+          "link": "https://aws.amazon.com/fsx/lustre/"
+        },
+        {
+          "text": "Amazon Redshift",
+          "desc": "Analyze all of your data with the fastest and most widely used cloud data warehouse.",
+          "link": "https://aws.amazon.com/redshift/?whats-new-cards.sort-by=item.additionalFields.postDateTime&whats-new-cards.sort-order=desc"
+        },
+        {
+          "text": "Amazon SageMaker",
+          "desc": "Machine learning for every data scientist and developer",
+          "link": "https://aws.amazon.com/sagemaker/"
+        },
+        {
+          "text": "Apache Ray",
+          "desc": "Ray is a distributed execution framework that makes it easy to scale your applications and to leverage state of the art machine learning libraries.",
+          "link": "https://ray.io"
+        },
+        {
+          "text": "Voila",
+          "desc": "Voilà turns Jupyter notebooks into standalone web applications.",
+          "link": "https://github.com/voila-dashboards/voila"
+        }
+      ]
+    }
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: centraldashboard
+    app.kubernetes.io/name: centraldashboard
+  name: centraldashboard-links-config
+  namespace: kubeflow

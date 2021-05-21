@@ -16,7 +16,7 @@ ca=$(kubectl get $name -o jsonpath='{.data.ca\.crt}')
 token=$(kubectl get $name -o jsonpath='{.data.token}' | base64 --decode)
 namespace=$(kubectl get $name -o jsonpath='{.data.namespace}' | base64 --decode)
 
-#echo $server 
+#echo $server
 #echo $name
 #echo $ca
 #echo $token
