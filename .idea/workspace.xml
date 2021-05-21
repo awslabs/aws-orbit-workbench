@@ -2,19 +2,35 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4d80edc0-ea25-4324-97ca-007856d4ebf0" name="Default Changelist" comment="Updated description">
-      <change afterPath="$PROJECT_DIR$/_layouts/integration.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/img/service/AWS-GlueDataBrew.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/integrations/jupyter.markdown" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/integrations/voila.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/athena.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/cognito.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/databrew.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/ebs.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/ec2.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/ecr.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/efs.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/eks.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/emr.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/fargate.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/fsx-lustre.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/glue.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/lambda.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/okta.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/plotly.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/pycharm.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/ray.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/redshift.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/s3.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/sagemaker.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/streamlit.markdown" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/integrations/vscode.markdown" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Gemfile.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Gemfile.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/_config.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/_data/integrations.yml" beforeDir="false" afterPath="$PROJECT_DIR$/_data/integrations.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_includes/integrations.html" beforeDir="false" afterPath="$PROJECT_DIR$/_includes/integrations.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_layouts/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/_layouts/default.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/_layouts/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/_layouts/home.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/assets/css/style.scss" beforeDir="false" afterPath="$PROJECT_DIR$/assets/css/style.scss" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/documentation.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/documentation.markdown" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/img/howitworks/Admin.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/img/howitworks/dev.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/img/service/AWS-GlueDataBrew.png" beforeDir="false" afterPath="$PROJECT_DIR$/img/service/AWS-GlueDataBrew.png" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

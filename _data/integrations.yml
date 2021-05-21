@@ -4,48 +4,70 @@ services:
     url: integrations/jupyter
   - title: Visual Studio Code
     image: https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Visual_Studio_Code_1.18_icon.svg/1200px-Visual_Studio_Code_1.18_icon.svg.png
+    url: integrations/vscode
   - title: PyCharm
     image: img/service/icon-pycharm.svg
+    url: integrations/pycharm
   - title: Voila
     image: img/service/voila-logo.svg
     url: integrations/voila
   - title: Streamlit
     image: img/service/streamlit_logo.png
+    url: integrations/streamlit
   - title: Plotly
     image: img/service/plotly-logo.png
+    url: integrations/plotly
   - title: Amazon Sagemaker
     image: img/service/Amazon-SageMaker_48.png
+    url: integrations/sagemaker
   - title: Amazon Athena
     image: img/service/Amazon-Athena_48.png
+    url: integrations/athena
   - title: Amazon Redshift
     image: img/service/Amazon-Redshift_48.png
+    url: integrations/redshift
   - title: AWS Glue DataBrew
     image: img/service/AWS-GlueDataBrew.png
+    url: integrations/glue-data-brew
   - title: AWS Glue
     image: img/service/AWS-Glue_48.png
+    url: integrations/glue
   - title: Amazon EMR
     image: img/service/Amazon-EMR_48.png
+    url: integrations/emr
   - title: Ray
     image: img/service/ray_logo.png
+    url: integrations/ray
   - title: Amazon EKS
     image: img/service/Amazon-Elastic-Kubernetes-Service_48.png
+    url: integrations/eks
   - title: AWS Fargate
     image: img/service/AWS-Fargate_48.png
+    url: integrations/fargate
   - title: Amazon ECR
     image: img/service/Amazon-Elastic-Container-Registry_48.png
+    url: integrations/ecr
   - title: Amazon EC2
     image: img/service/Amazon-EC2_48.png
+    url: integrations/ec2
   - title: AWS Lambda
     image: img/service/AWS-Lambda_48.png
+    url: integrations/lambda
   - title: Amazon S3
     image: img/service/Amazon-Simple-Storage-Service_48.png
+    url: integrations/s3
   - title: Amazon EFS
     image: img/service/Amazon-Elastic-File-System_48.png
+    url: integrations/efs
   - title: Amazon FSx for Lustre
     image: img/service/Amazon-FSx-for-Lustre_48.png
+    url: integrations/fsx-lustre
   - title: Amazon EBS
     image: img/service/Amazon-Elastic-Block-Store_48.png
+    url: integrations/ebs
   - title: Amazon Cognito
     image: img/service/Amazon-Cognito_48.png
+    url: integrations/cognito
   - title: Okta
     image: img/service/Logo_Okta_Blue_RGB.png
+    url: integrations/okta
