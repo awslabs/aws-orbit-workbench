@@ -596,7 +596,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
 
     env = build_env(__CURRENT_ENV_MANIFEST__, env_name, taskConfiguration, team_name)
     profile = resolve_profile(taskConfiguration)
-    image = resolve_image(__CURRENT_TEAM_MANIFEST__, profile)
+    image = resolve_image(__CURRENT_ENV_MANIFEST__, profile)
     node_type = get_node_type(taskConfiguration)
 
     job_name: str = f'run-{taskConfiguration["task_type"]}'
@@ -1077,9 +1077,12 @@ def make_pod(
     return pod
 
 
-def resolve_image(__CURRENT_TEAM_MANIFEST__, profile):
+def resolve_image(__CURRENT_ENV_MANIFEST__, profile):
     if not profile or "kubespawner_override" not in profile or "image" not in profile["kubespawner_override"]:
-        repository = __CURRENT_TEAM_MANIFEST__["FinalImageAddress"]
+        repository = (
+            f'{__CURRENT_ENV_MANIFEST__["Images"]["JupyterUser"]["Repository"]}:'
+            f'{__CURRENT_ENV_MANIFEST__["Images"]["JupyterUser"]["Version"]}'
+        )
         image = f"{repository}"
     else:
         image = profile["kubespawner_override"]["image"]
