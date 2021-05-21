@@ -13,6 +13,7 @@ cd ${DIR}/../$MODULE \
 
 VERSION=$(cat VERSION)
 rm dist/* && echo "Removed dist/" || echo "No dist/ to delete"
+rm build/* && echo "Removed build/" || echo "No build/ to delete"
 
 aws codeartifact login --tool twine --domain ${DOMAIN} --repository ${REPOSITORY} \
     && echo "Logged in to codeartifact domain/repository: ${DOMAIN}/${REPOSITORY}" \

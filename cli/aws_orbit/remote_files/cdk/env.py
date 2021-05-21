@@ -399,9 +399,9 @@ class Env(Stack):
         )
 
     def _create_post_authentication_lambda(self) -> None:
-        k8s_layer_name = "k8s_base_layer"
+        k8s_layer_name = f"orbit-{self.context.name}-k8s-base-layer"
 
-        sam.CfnApplication(
+        sam_app = sam.CfnApplication(
             scope=self,
             id="awscli_kubectl_helm_lambda_layer_sam",
             location=sam.CfnApplication.ApplicationLocationProperty(
@@ -452,9 +452,7 @@ class Env(Stack):
                 aws_lambda.LayerVersion.from_layer_version_arn(
                     scope=self,
                     id="K8sLambdaLayer",
-                    layer_version_arn=(
-                        f"arn:aws:lambda:{self.context.region}:{self.context.account_id}:layer:{k8s_layer_name}:1"
-                    ),
+                    layer_version_arn=(sam_app.get_att("Outputs.LayerVersionArn").to_string()),
                 )
             ],
             memory_size=256,

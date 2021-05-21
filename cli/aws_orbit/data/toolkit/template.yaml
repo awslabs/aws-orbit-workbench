@@ -104,7 +104,6 @@ Resources:
               - emr-containers:DeleteVirtualCluster
               - redshift:Describe*
               - s3:GetObject
-              - lambda:PublishLayerVersion
             Resource: '*'
           - Effect: Allow
             Action:
@@ -183,6 +182,7 @@ Resources:
               - lambda:*
             Resource:
               - arn:aws:lambda:${region}:${account_id}:function:${top_level}-${env_name}-*
+              - arn:aws:lambda:${region}:${account_id}:layer:${top_level}-${env_name}-*
           - Effect: Allow
             Action:
               - codeartifact:GetAuthorizationToken
