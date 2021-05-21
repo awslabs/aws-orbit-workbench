@@ -16,6 +16,7 @@ $menu-bg-color: #BBC0C1 !default;
 $section-headings-color: #232F3E !default;
 $body-text-color: #757575 !default;
 $body-link-color:#00a1c9 !default;
+$smile: #ff9900 !default;
 
 
 // Code
@@ -214,6 +215,9 @@ a.box-link {
   background-color: $btn-background-color-hover;
 }
 
+a.feature-link {
+  text-decoration: none;
+}
 
 .feature-box {
   display: flex;
@@ -243,7 +247,6 @@ a.box-link {
   justify-content: center;
   align-items: center;
 }
-
 
 .feature-title {
   margin-left: 10px;
@@ -426,4 +429,59 @@ nav ul li ul li {
 
 .documentation-content {
   padding: 2rem;
+}
+
+/* Style the tab */
+.tab {
+  overflow: hidden;
+  border: 1px solid #D5DBDB;
+  background-color: #FAFAFA;
+}
+
+/* Style the buttons that are used to open the tab content */
+.tab button {
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+  font-size: 14px;
+  color: $body-link-color
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+  color: $smile;
+}
+
+/* Create an active/current tablink class */
+.tab button.active {
+  background-color: #fff;
+  color: $smile;
+  border-top: 1px solid $smile;
+  border-left: 1px solid #D5DBDB;
+  border-right: 1px solid #D5DBDB;
+}
+
+.tab button:first-child.active {
+  border-left: none;
+}
+
+/* Style the tab content */
+.tabcontent {
+  display: none;
+  padding: 6px 12px;
+  border: 1px solid #D5DBDB;
+  border-top: none;
+  text-align: center;
+}
+
+.integration-header {
+  display: flex;
+}
+
+.integration-title {
+  margin-left: 12px;
 }
