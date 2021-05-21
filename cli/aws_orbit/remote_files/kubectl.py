@@ -19,6 +19,7 @@ from typing import Any, Dict, List
 
 import aws_orbit
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
+from aws_orbit.exceptions import FailedShellCommand
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.remote_files.utils import get_k8s_context
 from aws_orbit.services import cfn, elb
@@ -104,7 +105,7 @@ def _ssm_agent_installer(output_path: str, context: "Context") -> None:
 
 def _sm_operator_installer(output_path: str, context: "Context") -> None:
     filename = "10-sm-operator.yaml"
-    input = os.path.join(MODELS_PATH, "apps", filename)
+    input = os.path.join(MODELS_PATH, "orbit-system", filename)
     output = os.path.join(output_path, filename)
     shutil.copyfile(src=input, dst=output)
 
@@ -445,11 +446,21 @@ def destroy_env(context: "Context") -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(stack_name=eks_stack_name):
-        sh.run(f"eksctl utils write-kget_k8s_contextubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
+        sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
         k8s_context = get_k8s_context(context=context)
         _logger.debug("kubectl k8s_context: %s", k8s_context)
         output_path = _generate_orbit_system_manifest(context=context)
         try:
+            # Here we remove some finalizers that can cause our delete to hang indefinitely
+            try:
+                sh.run(
+                    "kubectl patch crd/trainingjobs.sagemaker.aws.amazon.com "
+                    '--patch \'{"metadata":{"finalizers":[]}}\' --type=merge'
+                    f" --context {k8s_context}"
+                )
+            except FailedShellCommand:
+                _logger.debug("Ignoring patch failure")
+
             sh.run(
                 f"kubectl delete -f {output_path} --grace-period=0 --force "
                 f"--ignore-not-found --wait --context {k8s_context}"
