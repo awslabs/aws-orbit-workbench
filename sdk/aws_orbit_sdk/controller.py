@@ -1079,7 +1079,8 @@ def make_pod(
 
 def resolve_image(__CURRENT_ENV_MANIFEST__, profile):
     if not profile or "kubespawner_override" not in profile or "image" not in profile["kubespawner_override"]:
-        repository = __CURRENT_TEAM_MANIFEST__["FinalImageAddress"]
+        repository = f'{__CURRENT_ENV_MANIFEST__["Images"]["JupyterUser"]["Repository"]}:' \
+                     f'{__CURRENT_ENV_MANIFEST__["Images"]["JupyterUser"]["Version"]}'
         image = f"{repository}"
     else:
         image = profile["kubespawner_override"]["image"]
