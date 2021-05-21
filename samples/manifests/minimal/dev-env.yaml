@@ -20,6 +20,9 @@ Images:
     LandingPage:
         Repository: !ENV ${LANDING_PAGE_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/landing-page}
         Version: !ENV ${VERSION::latest}
+    AdmissionController:
+        Repository: !ENV ${ADMISSION_CONTROLLER_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/admission-controller}
+        Version: !ENV ${VERSION::latest}
 Networking:
     VpcId: !SSM ${/orbit-foundation/dev-env/resources::VpcId}
     PublicSubnets: !SSM ${/orbit-foundation/dev-env/resources::PublicSubnets}
