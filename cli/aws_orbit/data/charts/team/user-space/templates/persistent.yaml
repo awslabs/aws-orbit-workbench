@@ -66,4 +66,4 @@ spec:
     requests:
       storage: 5Gi
   storageClassName: efs-storage-class
-  volumeName: team-efs-{{ .Values.namespace }}-{{ .Values.user }}
+  volumeName: user-efs-{{ .Values.namespace }}-{{ .Values.user }}
