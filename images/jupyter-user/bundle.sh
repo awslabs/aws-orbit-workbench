@@ -31,10 +31,10 @@ cp -r ${DIR}/extensions ${ARCHIVE_DIR}/
 cp -r ${DIR}/codeserver_proxy ${ARCHIVE_DIR}/
 cp ${DIR}/jupyter_server_config.py ${ARCHIVE_DIR}/
 cp ${DIR}/requirements.txt ${ARCHIVE_DIR}/
-cp ${DIR}/bootstrap.sh ${ARCHIVE_DIR}/
 cp ${DIR}/bundle.sh ${ARCHIVE_DIR}/
 cp ${DIR}/Dockerfile ${ARCHIVE_DIR}/
 cp ${DIR}/VERSION ${ARCHIVE_DIR}/
+cp ${DIR}/bashrc ${ARCHIVE_DIR}/
 
 touch ${ARCHIVE_DIR}/pip.conf
 

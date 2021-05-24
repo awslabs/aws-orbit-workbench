@@ -85,8 +85,8 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
     space = labels.get("orbit/space", None)
     team = labels.get("orbit/team", None)
     user = labels.get("orbit/user", None)
+    user_efsapid = labels.get("orbit/efs-access-point-id", None)
     user_email = annotations.get("owner", None)
-    user_efsapid = annotations.get("orbit/efs-access-point-id", None)
 
     logger.debug("new namespace: %s,%s,%s,%s", team, user, user_email, namespace_name)
 

@@ -133,7 +133,7 @@ def uninstall_chart(name: str, namespace: str) -> None:
 def uninstall_all_charts(namespace: str) -> None:
     try:
         _logger.debug("Uninstalling all charts in namespace %s", namespace)
-        sh.run(f"helm ls --all --short -n {namespace} | xargs -L1 helm uninstall --debug -n {namespace}")
+        sh.run(f"./uninstall_namespace_charts.sh {namespace}", cwd=CHARTS_PATH)
     except exceptions.FailedShellCommand as e:
         _logger.error(e)
 

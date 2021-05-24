@@ -66,7 +66,12 @@ def create_user_efs_endpoint(user: str) -> Dict[str, Any]:
     return cast(
         Dict[str, str],
         efs.create_access_point(
-            FileSystemId=EFS_FS_ID, PosixUser={"Uid": 1000, "Gid": 100}, RootDirectory={"Path": f"/efs/private/{user}"}
+            FileSystemId=EFS_FS_ID,
+            PosixUser={"Uid": 1000, "Gid": 100},
+            RootDirectory={
+                "Path": f"/efs/private/{user}",
+                "CreationInfo": {"OwnerUid": 1000, "OwnerGid": 100, "Permissions": "770"},
+            },
         ),
     )
 

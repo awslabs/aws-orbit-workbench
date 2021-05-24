@@ -629,7 +629,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
     pod_properties: Dict[str, str] = dict(
         name=job_name,
         image=image,
-        cmd=["bash", "-c", "/opt/orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"],
+        cmd=["bash", "-c", "python /opt/python-utils/notebook_cli.py"],
         port=22,
         service_account="default-editor",
         node_selector=node_selector,
