@@ -29,8 +29,16 @@ ORBIT_CUSTOM_CFN_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 @hooks.pre
-def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
-    _logger.debug("Deploying Custom CloudFormation plugin resources for team %s", team_context.name)
+def deploy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
+    _logger.debug(
+        "Deploying Custom CloudFormation plugin resources for team %s",
+        team_context.name,
+    )
     if parameters["CfnTemplatePath"] and os.path.isfile(parameters["CfnTemplatePath"]):
         _logger.info(f"CloudFormation template found at {parameters['CfnTemplatePath']}")
     else:
@@ -56,8 +64,16 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
 
 
 @hooks.post
-def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
-    _logger.debug("Destroying Custom CloudFormation  plugin resources for team %s", team_context.name)
+def destroy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
+    _logger.debug(
+        "Destroying Custom CloudFormation  plugin resources for team %s",
+        team_context.name,
+    )
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
     env_name = context.name
     acct: str = context.account_id
