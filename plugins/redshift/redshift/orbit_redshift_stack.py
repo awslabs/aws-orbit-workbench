@@ -83,10 +83,12 @@ class RedshiftClustersCommon(core.Construct):
                     parameter_value=plugin_params.get("enable_user_activity_logging", "true"),
                 ),
                 redshift.CfnClusterParameterGroup.ParameterProperty(
-                    parameter_name="require_ssl", parameter_value=plugin_params.get("require_ssl", "true")
+                    parameter_name="require_ssl",
+                    parameter_value=plugin_params.get("require_ssl", "true"),
                 ),
                 redshift.CfnClusterParameterGroup.ParameterProperty(
-                    parameter_name="use_fips_ssl", parameter_value=plugin_params.get("use_fips_ssl", "true")
+                    parameter_name="use_fips_ssl",
+                    parameter_value=plugin_params.get("use_fips_ssl", "true"),
                 ),
             ],
         )
@@ -150,7 +152,9 @@ class RedshiftClustersCommon(core.Construct):
                             ],
                         ),
                         iam.PolicyStatement(
-                            effect=iam.Effect.ALLOW, actions=["kms:*"], resources=[self.team_kms_key_arn]
+                            effect=iam.Effect.ALLOW,
+                            actions=["kms:*"],
+                            resources=[self.team_kms_key_arn],
                         ),
                         iam.PolicyStatement(
                             effect=iam.Effect.ALLOW,
@@ -228,7 +232,12 @@ class RedshiftFunctionStandard(core.Construct):
 
 class RedshiftStack(Stack):
     def __init__(
-        self, scope: Construct, id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]
+        self,
+        scope: Construct,
+        id: str,
+        context: "Context",
+        team_context: "TeamContext",
+        parameters: Dict[str, Any],
     ) -> None:
 
         super().__init__(

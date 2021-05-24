@@ -29,7 +29,12 @@ PLUGIN_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 @hooks.deploy
-def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+def deploy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
     _logger.debug("Running hello_world deploy!")
     sh.run(f"echo 'Team name: {team_context.name} | Plugin ID: {plugin_id}'")
     cdk_deploy(
@@ -42,7 +47,12 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
 
 
 @hooks.destroy
-def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+def destroy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
     _logger.debug("Running hello_world destroy!")
     sh.run(f"echo 'Team name: {team_context.name} | Plugin ID: {plugin_id}'")
     cdk_destroy(
@@ -56,15 +66,26 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
 
 @hooks.dockerfile_injection
 def dockerfile_injection(
-    plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
 ) -> List[str]:
-    _logger.debug("Team Env: %s | Team: %s | Image: %s", context.name, team_context.name, team_context.image)
+    _logger.debug(
+        "Team Env: %s | Team: %s | Image: %s",
+        context.name,
+        team_context.name,
+        team_context.image,
+    )
     return ["RUN echo 'Hello World!' > /home/jovyan/hello-world-plugin.txt"]
 
 
 @hooks.bootstrap_injection
 def bootstrap_injection(
-    plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
 ) -> str:
     _logger.debug("Injecting CodeCommit plugin commands for team %s Bootstrap", team_context.name)
     return """
