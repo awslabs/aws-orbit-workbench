@@ -52,29 +52,29 @@ data:
           type:
             # The Type of the Workspace Volume
             # Supported values: 'New', 'Existing'
-            value: New
+            value: Existing
           name:
             # The Name of the Workspace Volume
             # Note that this is a templated value. Special values:
             # {notebook-name}: Replaced with the name of the Notebook. The frontend
             #                  will replace this value as the user types the name
-            value: 'workspace-{notebook-name}'
+            value: 'user-efs'
           size:
             # The Size of the Workspace Volume (in Gi)
-            value: '10Gi'
+            value:
           mountPath:
             # The Path that the Workspace Volume will be mounted
             value: /home/jovyan
           accessModes:
             # The Access Mode of the Workspace Volume
             # Supported values: 'ReadWriteOnce', 'ReadWriteMany', 'ReadOnlyMany'
-            value: ReadWriteOnce
+            value: ReadWriteMany
           class:
             # The StrageClass the PVC will use if type is New. Special values are:
             # {none}: default StorageClass
             # {empty}: empty string ""
             value: '{none}'
-        readOnly: false
+        readOnly: true
       dataVolumes:
         # List of additional Data Volumes to be attached to the user's Notebook
         value: []
