@@ -1,4 +1,4 @@
--   PluginId: team_script_launcher
+-   PluginId: clean_regression_files
     Module: team_script_launcher
     Path: ../plugins/team_script_launcher/
     Parameters:
@@ -11,6 +11,15 @@
             done
             echo "DONE LOOP"
         restartPolicy: Never
+-   PluginId: copy_samples
+    Module: team_script_launcher
+    Path: ../plugins/team_script_launcher/
+    Parameters:
+        script: |
+            echo "Copy data & samples from orbit-regression image"
+            /opt/orbit/scripts/stage_all_data.sh "${env_name}"
+        restartPolicy: Never
+        image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/regression-data:latest
 -   PluginId: custom_cfn
     Module: custom_cfn
     Path: ../plugins/custom_cfn/

@@ -38,7 +38,6 @@ spec:
         args:
           - -c
           - >-
-            ln -s /efs/shared /home/jovyan/shared &&
             source /scripts/{{ .Values.scriptFile }} &&
             echo "DONE EXECUTING SCRIPT"
         resources:
@@ -52,7 +51,7 @@ spec:
       volumes:
         - name: efs-volume
           persistentVolumeClaim:
-            claimName: jupyterhub
+            claimName: team-efs
         - name: scripts
           configMap:
             name: {{ .Values.configMapName }}

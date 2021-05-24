@@ -31,7 +31,12 @@ PLUGIN_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 @hooks.deploy
-def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+def deploy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
     _logger.debug("Deploying Redshift plugin resources for team %s", team_context.name)
     sh.run(f"echo 'Team name: {team_context.name} | Plugin ID: {plugin_id}'")
     cdk_deploy(
@@ -44,7 +49,12 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
 
 
 @hooks.destroy
-def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+def destroy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
     _logger.debug("Destroying Redshift plugin resources for team %s", team_context.name)
     sh.run(f"echo 'Team name: {team_context.name} | Plugin ID: {plugin_id}'")
     # Delete left over redshift cluster(s) before deleting plugin resources
