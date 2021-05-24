@@ -178,19 +178,22 @@ References:
 
 ----
 ### <a name="op_plugin">Overprovisioning Plugin</a>
+This plugin preserve idle capacity on the EKS cluster to allow quick startup time of containers even 
+when the cluster has reached its capacity and need to scale up.  Administrator can define how much capacity 
+in terms of cpu and memory to preserve for the next containers.  When cluster has utilized all space other than this 
+reserve space, it will initiate scale up, but the containers that fits this preserve space can still start immediately. 
 ```
 - PluginId: 
   Module:
   Path: ../plugins/overprovisioning/ 
-    Parameters:
-    - parameter 1: <value>
-    - parameter 2: <value>
-    ...
-    - parameter N: <value>
+  Parameters:
+    replicas: 3
+    cpu: 2
+    memory: 4Gi
   
 ```
 #### Parameters 
-TBD
-
-
+- *replicas* - number of containers to allocate for the reserve space
+- *cpu* - number of cpu for each allocated containers. e.g., '2'
+- *memory* - Memory capacity for each container. e.g., '4Gi'
 
