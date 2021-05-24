@@ -1,0 +1,13 @@
+
+
+*****  LOOK!!!!!  READ THIS!!!  *****
+This image NEEDS to be build from the /aws-orbit-workbench directory so we can include the samples dir and cli/aws_orbit/data/cms/schema dir!!!!!
+
+REF: docker build -t public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data  -f images/utility-data/Dockerfile .
+
+The extensions/ dir is a placeholder directory....and is meant to be empty.  It is meant to store VSIX drivers to bake into an image.
+
+BUT we should NOT store binary images in github...so you need to run script to fetch the image
+
+Or browse to https://marketplace.visualstudio.com/_apis/public/gallery/publishers/mtxr/vsextensions/sqltools-driver-pg/0.2.0/vspackage
+and download it....
