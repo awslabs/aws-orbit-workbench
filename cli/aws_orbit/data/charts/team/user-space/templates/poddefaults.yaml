@@ -5,5 +5,5 @@ metadata:
 spec:
   selector:
     matchLabels:
-      orbit/vscode: ''
+      orbit/podsetting/vscode: ''
   desc: Start VSCode
