@@ -31,7 +31,12 @@ ORBIT_EMR_ON_EKS_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 @hooks.deploy
-def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+def deploy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
     _logger.debug("Running emr_on_eks deploy!")
     sh.run(f"echo 'Team name: {team_context.name} | Plugin ID: {plugin_id}'")
     cluster_name = f"orbit-{context.name}"
@@ -83,14 +88,21 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
 
 
 @hooks.destroy
-def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+def destroy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
     _logger.debug("Running emr_on_eks destroy!")
     sh.run(f"echo 'Team name: {team_context.name} | Plugin ID: {plugin_id}'")
 
     virtual_cluster_name = f"orbit-{context.name}-{team_context.name}"
     emr = boto3.client("emr-containers")
     response = emr.list_virtual_clusters(
-        containerProviderId=f"orbit-{context.name}", containerProviderType="EKS", maxResults=500
+        containerProviderId=f"orbit-{context.name}",
+        containerProviderType="EKS",
+        maxResults=500,
     )
     if "virtualClusters" in response:
         for c in response["virtualClusters"]:

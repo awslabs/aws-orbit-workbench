@@ -41,15 +41,22 @@ def update_file(file_path: str, values: Dict[str, Any]) -> str:
     return content
 
 
-def create_team_charts_copy(team_context: TeamContext, path: str) -> str:
+def create_team_charts_copy(team_context: TeamContext, path: str, target_path: Optional[str] = None) -> str:
     dirs = path.split("/")
     charts_dir = dirs.pop()
     charts_path = "/".join(dirs)
     team_charts_path = os.path.join(charts_path, ".output", team_context.name)
     os.makedirs(team_charts_path, exist_ok=True)
-    return str(
-        shutil.copytree(src=os.path.join(charts_path, charts_dir), dst=os.path.join(team_charts_path, charts_dir))
-    )
+    if target_path:
+        return str(
+            shutil.copytree(
+                src=os.path.join(charts_path, charts_dir), dst=os.path.join(team_charts_path, target_path, charts_dir)
+            )
+        )
+    else:
+        return str(
+            shutil.copytree(src=os.path.join(charts_path, charts_dir), dst=os.path.join(team_charts_path, charts_dir))
+        )
 
 
 def add_repo(repo: str, repo_location: str) -> None:

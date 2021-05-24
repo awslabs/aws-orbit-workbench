@@ -20,14 +20,19 @@ from aws_orbit import sh, utils
 from aws_orbit.plugins import hooks
 from aws_orbit.remote_files import helm
 
-
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
 _logger: logging.Logger = logging.getLogger("aws_orbit")
 CHART_PATHS = os.path.join(os.path.dirname(__file__))
 
+
 @hooks.deploy
-def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+def deploy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
@@ -38,17 +43,15 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     if helm.is_exists_chart_release(release_name, team_context.name):
         _logger.info("Chart %s already installed, removing to begin new install", release_name)
 
-
     vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
         region=context.region,
         account_id=context.account_id,
         env_name=context.name,
-        plugin_id=plugin_id
+        plugin_id=plugin_id,
     )
 
-
-    chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATHS)
+    chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATHS, target_path=plugin_id)
     _logger.debug("package dir")
     utils.print_dir(CHART_PATHS)
     _logger.debug("copy chart dir")
@@ -57,10 +60,8 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     repo_location = helm.init_team_repo(context=context, team_context=team_context)
     repo = team_context.name
     helm.add_repo(repo=repo, repo_location=repo_location)
-    chart_name, chart_version, chart_package = helm.package_chart(
-        repo=repo, chart_path=chart_path, values=vars
-    )
-   
+    chart_name, chart_version, chart_package = helm.package_chart(repo=repo, chart_path=chart_path, values=vars)
+
     _logger.info("Chart %s installing ", release_name)
     helm.install_chart(
         repo=repo,
@@ -70,13 +71,23 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
         chart_version=chart_version,
     )
 
-    chart_name, chart_version, chart_package = helm.package_chart(
-        repo=repo, chart_path=chart_path, values=vars
+    chart_name, chart_version, chart_package = helm.package_chart(repo=repo, chart_path=chart_path, values=vars)
+    _logger.info(
+        f"Sagemaker Operator Helm Chart {chart_name}@{chart_version} installed for {team_context.name} at {chart_package}"
     )
-    _logger.info(f"Sagemaker Operator Helm Chart {chart_name}@{chart_version} installed for {team_context.name} at {chart_package}")
 
 
 @hooks.destroy
-def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
-    _logger.debug("Delete Plugin %s of Team Env name: %s | Team name: %s", plugin_id, context.name, team_context.name)
-    helm.uninstall_chart_in_namespace(f"{team_context.name}-{plugin_id}",team_context.name)
+def destroy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
+    _logger.debug(
+        "Delete Plugin %s of Team Env name: %s | Team name: %s",
+        plugin_id,
+        context.name,
+        team_context.name,
+    )
+    helm.uninstall_chart_in_namespace(f"{team_context.name}-{plugin_id}", team_context.name)

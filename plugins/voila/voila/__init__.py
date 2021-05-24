@@ -27,11 +27,16 @@ CHART_PATH = os.path.join(os.path.dirname(__file__))
 
 
 @hooks.deploy
-def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+def deploy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
-    chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATH)
+    chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATH, target_path=plugin_id)
 
     vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
@@ -60,6 +65,16 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
 
 
 @hooks.destroy
-def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
-    _logger.debug("Delete Plugin %s of Team Env name: %s | Team name: %s", plugin_id, context.name, team_context.name)
+def destroy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
+    _logger.debug(
+        "Delete Plugin %s of Team Env name: %s | Team name: %s",
+        plugin_id,
+        context.name,
+        team_context.name,
+    )
     helm.uninstall_chart(f"{team_context.name}-{plugin_id}", namespace=team_context.name)
