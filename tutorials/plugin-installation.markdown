@@ -3,8 +3,8 @@
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
 layout: documentation
-title: Plugin Installation
-permalink: plugin-installation
+title: Plugin Library
+permalink: plugin-library
 ---
 ##  Orbit Plugin Definiton and Configuration
 Orbit plugins are individual python modules published PyPi.  We are continually adding plugin capabilites to the platform.  This is the current list of published plugins:

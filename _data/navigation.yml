@@ -24,8 +24,8 @@ docs:
         url: administrative-teams
       - title: Prepare User Local Access
         url: prepare-user-local-access
-      - title: Plugin Installation
-        url: plugin-installation
+      - title: Plugins Library
+        url: plugin-library
   - group: For Users
     sub:
       - title: Your Team Guideline
