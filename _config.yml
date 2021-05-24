@@ -57,6 +57,7 @@ plugins:
 header_pages:
   - index.markdown
   - documentation.markdown
+  - integrations.markdown
   - tour.markdown
   - tutorial.markdown
   - about.markdown

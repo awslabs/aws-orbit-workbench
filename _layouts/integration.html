@@ -1,0 +1,22 @@
+---
+layout: default
+---
+<div>
+    <section class="main-content">
+        <div class="integration-header">
+            <div class="integration-image">
+                <img src="{{ page.image }}" alt="{{ page.title }}" height="50px">
+            </div>
+            <div class="integration-title">
+                <h1>{{ page.title }}</h1>
+            </div>
+        </div>
+
+        <h2>What is {{ page.title }}?</h2>
+        {{ page.whatIs }}
+        <h2>How does AWS Workbench integrate with {{ page.title }}?</h2>
+        {{ content }}
+    </section>
+
+
+</div>

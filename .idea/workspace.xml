@@ -1,39 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="4d80edc0-ea25-4324-97ca-007856d4ebf0" name="Default Changelist" comment="Updated description">
-      <change afterPath="$PROJECT_DIR$/_data/integrations.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/_includes/integrations.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/_layouts/documentation.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/_layouts/generic.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tour.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/_config.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_data/navigation.yml" beforeDir="false" afterPath="$PROJECT_DIR$/_data/navigation.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_includes/navigation.html" beforeDir="false" afterPath="$PROJECT_DIR$/_includes/navigation.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_layouts/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/_layouts/default.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_layouts/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/_layouts/home.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_layouts/tutorial.html" beforeDir="false" afterPath="$PROJECT_DIR$/_layouts/tutorial.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/css/style.scss" beforeDir="false" afterPath="$PROJECT_DIR$/assets/css/style.scss" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/documentation.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/documentation.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/administrative-teams.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/administrative-teams.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/architecture.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/architecture.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/built-in-plugin-directory.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/built-in-plugin-directory.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/cli-development.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/cli-development.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/cli-guide.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/cli-guide.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/code-of-conduct.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/code-of-conduct.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/contribution-guide.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/contribution-guide.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/deploying-from-source.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/deploying-from-source.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/deployment-guideline.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/deployment-guideline.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/okta-integration.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/okta-integration.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/orbit-manifest-guide.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/orbit-manifest-guide.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/plugin-installation.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/plugin-installation.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/prepare-user-local-access.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/prepare-user-local-access.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/quick-demo-deployment.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/quick-demo-deployment.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/running-and-scheduling-tasks-as-containers.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/running-and-scheduling-tasks-as-containers.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/usage-architecture.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/usage-architecture.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/working-remotely-with-local-workspace.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/working-remotely-with-local-workspace.markdown" afterDir="false" />
-    </list>
+    <list default="true" id="4d80edc0-ea25-4324-97ca-007856d4ebf0" name="Default Changelist" comment="Updated description" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -49,7 +17,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="ui-enhancements1" />
+        <entry key="$PROJECT_DIR$" value="main" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -63,6 +31,7 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="DefaultHtmlFileTemplate" value="HTML File" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
@@ -96,7 +65,8 @@
       <workItem from="1619429981902" duration="13556000" />
       <workItem from="1619616997664" duration="12965000" />
       <workItem from="1620380188076" duration="5507000" />
-      <workItem from="1620404359334" duration="817000" />
+      <workItem from="1620404359334" duration="4211000" />
+      <workItem from="1620663273501" duration="23000" />
     </task>
     <task id="LOCAL-00001" summary="Update to site description">
       <created>1619703622627</created>
@@ -138,6 +108,7 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
     <MESSAGE value="Update to site description" />
     <MESSAGE value="Updated description" />
     <option name="LAST_COMMIT_MESSAGE" value="Updated description" />
