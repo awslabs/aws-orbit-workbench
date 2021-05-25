@@ -50,6 +50,7 @@ MANIFEST_PROPERTY_MAP_TYPE = Dict[str, Union[str, Dict[str, Any]]]
 __CURRENT_TEAM_MANIFEST__: MANIFEST_TEAM_TYPE = None
 __CURRENT_ENV_MANIFEST__: MANIFEST_TEAM_TYPE = None
 
+APP_LABEL_SELECTOR: [str] = ["orbit-runner", "emr-spark"]
 
 def read_team_manifest_ssm(env_name: str, team_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
     parameter_name: str = f"/orbit/{env_name}/teams/{team_name}/manifest"
@@ -376,7 +377,8 @@ def list_running_pods(team_only: bool = False):
     else:
         operand = "="
 
-    label_selector = f"app in (orbit-runner, emr-spark),username{operand}{username}"
+    app_list = ",".join(APP_LABEL_SELECTOR)
+    label_selector = f"app in ({app_list}),username{operand}{username}"
     _logger.info("using job selector %s", label_selector)
     try:
         api_response = api_instance.list_namespaced_pod(

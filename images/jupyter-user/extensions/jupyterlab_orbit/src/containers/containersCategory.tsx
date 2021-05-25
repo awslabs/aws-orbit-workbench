@@ -24,11 +24,13 @@ const Item = (props: {
   item: IItem;
   openItemCallback: (name: string) => void;
   closeItemCallback: (name: string) => void;
-  connect: (container: string) => Promise<void>;
-  logs: (container: string) => Promise<void>;
+  connect: (podName: string, containerName: string) => Promise<void>;
+  logs: (podName: string, containerName: string) => Promise<void>;
 }) => {
   const { title, color, icon } = getStateIcon(props.item.job_state);
-
+  console.log('**********$$$$$***********************');
+  console.log(props.item);
+  console.log('*********************************');
   return (
     <Tooltip placement="topLeft" title={title} color={color} key={'Orbit'}>
       <li className={ITEM_CLASS}>
@@ -45,14 +47,16 @@ const Item = (props: {
         <ToolbarButtonComponent
           className={SHUTDOWN_BUTTON_CLASS}
           icon={bugIcon}
-          onClick={() => props.connect(props.item.name)}
+          onClick={() =>
+            props.connect(props.item.name, props.item.container_name)
+          }
           tooltip={'Connect terminal!'}
           enabled={props.item.job_state === 'running'}
         />
         <ToolbarButtonComponent
           className={SHUTDOWN_BUTTON_CLASS}
           icon={searchIcon}
-          onClick={() => props.logs(props.item.name)}
+          onClick={() => props.logs(props.item.name, props.item.container_name)}
           tooltip={'Tail logs!'}
           enabled={props.item.job_state === 'running'}
         />
@@ -70,8 +74,8 @@ const Item = (props: {
 const Items = (props: {
   data: IItem[];
   closeItemCallback: (name: string) => void;
-  connect: (container: string) => Promise<void>;
-  logs: (container: string) => Promise<void>;
+  connect: (podName: string, containerName: string) => Promise<void>;
+  logs: (podName: string, containerName: string) => Promise<void>;
 }) => (
   <>
     {' '}

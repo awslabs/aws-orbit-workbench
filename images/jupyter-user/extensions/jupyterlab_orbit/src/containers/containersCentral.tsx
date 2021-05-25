@@ -2,7 +2,12 @@ import React, { useEffect } from 'react';
 import * as utils from '../typings/utils';
 import { TableWidget } from './table/table';
 import ReactJson from 'react-json-view';
-import { IUseItemsReturn, getStateIcon, getNodeType } from '../containers';
+import {
+  IUseItemsReturn,
+  getStateIcon,
+  getNodeType,
+  getAppType
+} from '../containers';
 import { Tooltip } from 'antd';
 import { JupyterFrontEnd } from '@jupyterlab/application';
 
@@ -102,6 +107,23 @@ const columns = [
     sorter: {
       compare: utils.Sorter.DEFAULT,
       multiple: 5
+    }
+  },
+  {
+    title: 'Application Type',
+    dataIndex: 'pod_app',
+    align: 'center',
+    sorter: {
+      compare: utils.Sorter.DEFAULT,
+      multiple: 6
+    },
+    render: (text: any, record: any) => {
+      const { title, color, icon } = getAppType(text);
+      return (
+        <Tooltip placement="topLeft" title={title} color={color} key={'Orbit'}>
+          <div>{icon}</div>
+        </Tooltip>
+      );
     }
   }
 ];

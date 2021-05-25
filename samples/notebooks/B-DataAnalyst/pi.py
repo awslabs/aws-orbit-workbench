@@ -43,8 +43,9 @@ if __name__ == "__main__":
 
     count = spark.sparkContext.parallelize(range(1, n + 1), partitions).map(f).reduce(add)
     print("Pi is roughly %f" % (4.0 * count / n))
-    for in in range(1,1000):
-        time.sleep(300)
+    for in in range(1,100):
+        count = spark.sparkContext.parallelize(range(1, n + 1), partitions).map(f).reduce(add)
+        time.sleep(100000)
         print("sleeping")
         
     spark.stop()

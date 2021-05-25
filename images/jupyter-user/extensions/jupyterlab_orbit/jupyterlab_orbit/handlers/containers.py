@@ -160,17 +160,16 @@ class ContainersRouteHandler(APIHandler):
     @staticmethod
     def _dump_pod(clist) -> str:
         data: List[Dict[str, str]] = []
-        pod_type: str = ""
         for c in clist:
             container: Dict[str, str] = dict()
             container["name"] = c["metadata"]["name"]
-            if "app" in c["metadata"]["labels"] and "emr-spark" == c["metadata"]["labels"]["app"]:
-                container["job_name"] = c["metadata"]["labels"]["emr-containers.amazonaws.com/job.id"]
-                pod_type = "emr-spark"
-            else:
-                container["job_name"] = c["metadata"]["labels"]["job-name"]
+            if "app" in c["metadata"]["labels"]:
+                container["pod_app"] = c["metadata"]["labels"]["app"]
+                if "emr-spark" == c["metadata"]["labels"]["app"]:
+                    container["job_name"] = c["metadata"]["labels"]["emr-containers.amazonaws.com/job.id"]
+                else:
+                    container["job_name"] = c["metadata"]["labels"]["job-name"]
 
-            # else:
             container["time"] = c["metadata"]["creationTimestamp"]
             response_datetime_format = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -178,7 +177,7 @@ class ContainersRouteHandler(APIHandler):
                 # Succeeded / Completed
                 constainer_phase_status = (c["status"]["phase"]).lower()
                 if constainer_phase_status in ["succeeded","failed"]:
-                    if pod_type == "emr-spark":
+                    if container["pod_app"] == "emr-spark":
                         container_status = [cs for cs in c["status"]["containerStatuses"]
                                              if "spark-kubernetes-driver" == cs["name"]][0]
                     else:
@@ -205,12 +204,13 @@ class ContainersRouteHandler(APIHandler):
                 container["duration"] = ""
                 container["job_state"] = "unknown"
 
-            if pod_type == "emr-spark":
+            if container["pod_app"] == "emr-spark":
                 container_task = [ct for ct in c["spec"]["containers"]
                                     if "spark-kubernetes-driver" == ct["name"]][0]
                 container["hint"] = json.dumps(container_task, indent=4)
                 container["tasks"] = container_task["args"]
                 container["notebook"] = container_task["args"][-2].split("/")[-1]
+                container["container_name"] = "spark-kubernetes-driver"
             else:
                 envs = c["spec"]["containers"][0]["env"]
                 tasks = json.loads([e["value"] for e in envs if e["name"] == "tasks"][0])
@@ -221,6 +221,7 @@ class ContainersRouteHandler(APIHandler):
                     if "notebookName" in tasks["tasks"][0]
                     else f'{tasks["tasks"][0]["moduleName"]}.{tasks["tasks"][0]["functionName"]}'
                 )
+                container["container_name"] = ""
 
 
             if "labels" in c["metadata"]:
