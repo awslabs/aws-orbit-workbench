@@ -37,7 +37,7 @@ kind: ClusterRole
 metadata:
   labels:
     app: orbit-users
-  name: jupyter-user-system-access
+  name: default-editor-system-access
 rules:
   - apiGroups:
       - ""

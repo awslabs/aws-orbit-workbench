@@ -5,7 +5,7 @@
 namespace: ${team}
 nameOverride: ${plugin_id}
 fullnameOverride: ""
-serviceAccountName: ${team}
+serviceAccountName: default-editor
 configMapName: ${plugin_id}-script
 scriptFile: ${plugin_id}-script.sh
 
