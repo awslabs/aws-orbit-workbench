@@ -1,40 +1,40 @@
-Name: !ENV ${ORBIT_ENV_NAME::dev-env-public}
+Name: !ENV ${ORBIT_ENV_NAME::public2}
 CodeartifactDomain: !ENV ${CODEARTIFACT_DOMAIN::}
 CodeartifactRepository: !ENV ${CODEARTIFACT_REPOSITORY::}
 EksSystemMastersRoles:
 -   !ENV ${ORBIT_ADMIN_ROLE::Admin}
-ScratchBucketArn: !SSM ${/orbit-foundation/dev-env-public/resources::ScratchBucketArn}
-UserPoolId: !SSM ${/orbit-foundation/dev-env-public/resources::UserPoolId}
-SharedEfsFsId: !SSM ${/orbit-foundation/dev-env-public/resources::SharedEfsFsId}
-SharedEfsSgId: !SSM ${/orbit-foundation/dev-env-public/resources::SharedEfsSgId}
+ScratchBucketArn: !SSM ${/orbit-foundation/public2/resources::ScratchBucketArn}
+UserPoolId: !SSM ${/orbit-foundation/public2/resources::UserPoolId}
+SharedEfsFsId: !SSM ${/orbit-foundation/public2/resources::SharedEfsFsId}
+SharedEfsSgId: !SSM ${/orbit-foundation/public2/resources::SharedEfsSgId}
 InstallSsmAgent: true
 Images:
-    JupyterHub:
-        Repository: !ENV ${JUPYTER_HUB_REPO::aws-orbit-jupyter-hub}
-        Source: !ENV ${IMAGE_SOURCE::code}
-        Path: !ENV ${IMAGE_PATH::../../../images/jupyter-hub}
-        Version: !ENV ${VERSION::latest}
+# FIXME: Remove the images section
+#    JupyterHub:
+#        Repository: !ENV ${JUPYTER_HUB_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-hub}
+#        Version: !ENV ${VERSION::latest}
     JupyterUser:
-        Repository: !ENV ${JUPYTER_USER_REPO::aws-orbit-jupyter-user}
-        Source: !ENV ${IMAGE_SOURCE::code}
-        Path: !ENV ${IMAGE_PATH::../../../images/jupyter-user}
-        Version: !ENV ${VERSION::latest}
+#        Repository: !ENV ${JUPYTER_USER_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user}
+        Path: ../../../images/jupyter-user
+#    LandingPage:
+#        Repository: !ENV ${LANDING_PAGE_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/landing-page}
+#        Version: !ENV ${VERSION::latest}
     LandingPage:
-        Repository: !ENV ${LANDING_PAGE_REPO::aws-orbit-landing-page}
-        Source: !ENV ${IMAGE_SOURCE::code}
-        Path: !ENV ${IMAGE_PATH::../../../images/landing-page}
-        Version: !ENV ${VERSION::latest}
+        Path: ../../../images/landing-page
+    AdmissionController:
+#        Version: !ENV ${VERSION::latest}
+        Path: ../../../images/admission-controller
 Networking:
-    VpcId: !SSM ${/orbit-foundation/dev-env-public/resources::VpcId}
-    PublicSubnets: !SSM ${/orbit-foundation/dev-env-public/resources::PublicSubnets}
-    PrivateSubnets: !SSM ${/orbit-foundation/dev-env-public/resources::PrivateSubnets}
-    IsolatedSubnets: !SSM ${/orbit-foundation/dev-env-public/resources::IsolatedSubnets}
+    VpcId: !SSM ${/orbit-foundation/public2/resources::VpcId}
+    PublicSubnets: !SSM ${/orbit-foundation/public2/resources::PublicSubnets}
+    PrivateSubnets: !SSM ${/orbit-foundation/public2/resources::PrivateSubnets}
+    IsolatedSubnets: !SSM ${/orbit-foundation/public2/resources::IsolatedSubnets}
     Data:
         InternetAccessible: !ENV ${INTERNET_ACCESSIBLE::false}
-        NodesSubnets: !SSM ${/orbit-foundation/dev-env-public/resources::NodesSubnets}
+        NodesSubnets: !SSM ${/orbit-foundation/public2/resources::NodesSubnets}
     Frontend:
-        LoadBalancersSubnets: !SSM ${/orbit-foundation/dev-env-public/resources::LoadBalancersSubnets}
-        SslCertArn: !SSM ${/orbit-foundation/dev-env-public/resources::SslCertArn}
+        LoadBalancersSubnets: !SSM ${/orbit-foundation/public2/resources::LoadBalancersSubnets}
+        SslCertArn: !SSM ${/orbit-foundation/public2/resources::SslCertArn}
 ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge
@@ -47,7 +47,7 @@ ManagedNodegroups:
 Teams:
 -   Name: lake-creator
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::dev-env-public}-demo-lake-creator-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::public2}-demo-lake-creator-add-policy
     GrantSudo: true
     Fargate: false
     K8Admin: true
@@ -57,7 +57,7 @@ Teams:
     EfsLifeCycle: AFTER_7_DAYS
 -   Name: lake-user
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::dev-env-public}-demo-lake-user-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::public2}-demo-lake-user-add-policy
     JupyterhubInboundRanges:
     - 0.0.0.0/0
     GrantSudo: true

@@ -225,10 +225,16 @@ def get_pod_to_cluster_rules(group_id: str) -> List[IpPermission]:
             user_id_group_pairs=[UserIdGroupPair(description="Kubernetes API from Pod", group_id=group_id)],
         ),
         IpPermission(
-            from_port=10250,
-            to_port=10250,
+            from_port=15000,
+            to_port=16000,
             ip_protocol="tcp",
-            user_id_group_pairs=[UserIdGroupPair(description="Kubelet from Pod", group_id=group_id)],
+            user_id_group_pairs=[UserIdGroupPair(description="Health Probes", group_id=group_id)],
+        ),
+        IpPermission(
+            from_port=9411,
+            to_port=9411,
+            ip_protocol="tcp",
+            user_id_group_pairs=[UserIdGroupPair(description="Zipkin", group_id=group_id)],
         ),
     ]
 
@@ -439,7 +445,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
             "Action": "sts:AssumeRoleWithWebIdentity",
             "Condition": {
                 "StringLike": {
-                    f"{context.eks_oidc_provider}:sub": f"system:serviceaccount:kube-system:orbit-{context.name}-admin"
+                    f"{context.eks_oidc_provider}:sub": f"system:serviceaccount:orbit-system:orbit-{context.name}-admin"
                 }
             },
         },

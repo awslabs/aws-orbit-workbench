@@ -29,7 +29,12 @@ CHARTS_PATH = os.path.join(os.path.dirname(__file__), "charts")
 
 
 @hooks.deploy
-def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+def deploy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
@@ -41,7 +46,10 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     try:
         sh.run(f"kubectl delete sc fsx-lustre-{team_context.name}-fast-fs-lustre")
     except Exception as e:
-        _logger.error(f"Deleting prior sc 'fsx-lustre-{team_context.name}-fast-fs-lustre' failed with:%s", str(e))
+        _logger.error(
+            f"Deleting prior sc 'fsx-lustre-{team_context.name}-fast-fs-lustre' failed with:%s",
+            str(e),
+        )
 
     vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
@@ -64,13 +72,16 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
                 to_port=988,
                 ip_protocol="tcp",
                 user_id_group_pairs=[
-                    UserIdGroupPair(description="All from Cluster", group_id=cast(str, context.cluster_sg_id))
+                    UserIdGroupPair(
+                        description="All from Cluster",
+                        group_id=cast(str, context.cluster_sg_id),
+                    )
                 ],
             )
         ],
     )
 
-    chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHARTS_PATH)
+    chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHARTS_PATH, target_path=plugin_id)
     _logger.debug("package dir")
     utils.print_dir(CHARTS_PATH)
     _logger.debug("copy chart dir")
@@ -97,6 +108,16 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
 
 
 @hooks.destroy
-def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
-    _logger.debug("Delete Plugin %s of Team Env name: %s | Team name: %s", plugin_id, context.name, team_context.name)
-    helm.uninstall_chart(f"{team_context.name}-{plugin_id}")
+def destroy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
+    _logger.debug(
+        "Delete Plugin %s of Team Env name: %s | Team name: %s",
+        plugin_id,
+        context.name,
+        team_context.name,
+    )
+    helm.uninstall_chart(f"{team_context.name}-{plugin_id}", namespace=team_context.name)

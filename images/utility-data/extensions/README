@@ -1,0 +1,8 @@
+
+The extensions/ dir is a placeholder directory..and is meant to be empty.  It is meant to store VSIX drivers to bake into an image.
+
+BUT we should NOT store binary images in github...so you need to run script to fetch the image
+BEFORE creating a new image, run the get_extensions.sh from this directory to fetch it.
+
+Or browse to https://marketplace.visualstudio.com/_apis/public/gallery/publishers/mtxr/vsextensions/sqltools-driver-pg/0.2.0/vspackage
+and download it....

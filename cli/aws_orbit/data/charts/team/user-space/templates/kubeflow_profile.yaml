@@ -1,0 +1,15 @@
+apiVersion: kubeflow.org/v1
+kind: Profile
+metadata:
+  name: {{ .Values.team }}-{{ .Values.user }}
+  labels:
+    {{- include "user-space.labels" . | nindent 4 }}
+    orbit/team: {{ .Values.team }}
+spec:
+  owner:
+    kind: User
+    name: {{ .Values.user_email }}
+  plugins:
+  - kind: AwsIamForServiceAccount
+    spec:
+      awsIamRole: {{ .Values.team_role_arn }}

@@ -34,7 +34,7 @@ RUN cd /usr/local/bin \
     && sudo chmod 755 /usr/local/bin/kubectl
 
 ######################################
-# Kubectl installation
+# Helm installation
 ######################################
 RUN curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash && \
     helm version --short && \
@@ -51,18 +51,18 @@ ADD transformations/ /opt/transformations/
 RUN chmod -R 755 /opt/transformations/
 
 # add the boostrap script and change permission to jovyan
-RUN mkdir -p /home/jovyan/.orbit
-ADD bootstrap.sh /home/jovyan/.orbit/bootstrap.sh
-RUN chown -R jovyan /home/jovyan/.orbit
-RUN chmod a+xr /home/jovyan/.orbit/bootstrap.sh
+RUN mkdir -p /opt/orbit
+ADD bootstrap.sh /opt/orbit/bootstrap.sh
+RUN chown -R jovyan /opt/orbit
+RUN chmod a+xr /opt/orbit/bootstrap.sh
 
 ######################################
 # Jupyter Environment configuration
 ######################################
 
-RUN mkdir -p /home/jovyan/.local/share/jupyter
-RUN chown -R jovyan /home/jovyan/.local/share/jupyter
-ADD jupyter_server_config.py /home/jovyan/.jupyter/jupyter_server_config.py
+#RUN mkdir -p /home/jovyan/.local/share/jupyter
+#RUN chown -R jovyan /home/jovyan/.local/share/jupyter
+#ADD jupyter_server_config.py /home/jovyan/.jupyter/jupyter_server_config.py
 
 ######################################
 # Python/Conda packages
@@ -77,26 +77,22 @@ RUN conda run pip install -r /etc/jupyter/requirements.txt && \
 ######################################
 
 ADD pip.conf /etc/pip.conf
-ADD VERSION /home/jovyan/.orbit/VERSION
-RUN chown jovyan /home/jovyan/.orbit/VERSION
+ADD VERSION /opt/orbit/VERSION
+RUN chown jovyan /opt/orbit/VERSION
 RUN conda run pip install --upgrade \
-    aws-orbit~=$(cat /home/jovyan/.orbit/VERSION) \
-    aws-orbit-sdk~=$(cat /home/jovyan/.orbit/VERSION)
+    aws-orbit==$(cat /opt/orbit/VERSION) \
+    aws-orbit-sdk==$(cat /opt/orbit/VERSION)
 RUN rm /etc/pip.conf
 
-# remove the auto includes with the kubespawner package as we just using the helper class.
-RUN conda run pip install --no-deps jupyterhub-kubespawner~=0.15.0
-RUN echo "" > `conda run pip  show jupyterhub-kubespawner | grep "Location:" | cut -d ':' -f 2`/kubespawner/__init__.py
-
 # add the boostrap script and change permission to jovyan
-RUN mkdir -p /home/jovyan/.orbit
-ADD bootstrap.sh /home/jovyan/.orbit/bootstrap.sh
-RUN chown -R jovyan /home/jovyan/.orbit
-RUN chmod a+xr /home/jovyan/.orbit/bootstrap.sh
+RUN mkdir -p /opt/orbit
+ADD bootstrap.sh /opt/orbit/bootstrap.sh
+RUN chown -R jovyan /opt/orbit
+RUN chmod a+xr /opt/orbit/bootstrap.sh
 
 # add bundle with docker image sources
-COPY aws-orbit_jupyter-user.tar.gz /home/jovyan/.orbit/aws-orbit_jupyter-user.tar.gz
-RUN chown jovyan /home/jovyan/.orbit/aws-orbit_jupyter-user.tar.gz
+COPY aws-orbit_jupyter-user.tar.gz /opt/orbit/aws-orbit_jupyter-user.tar.gz
+RUN chown jovyan /opt/orbit/aws-orbit_jupyter-user.tar.gz
 
 
 
@@ -121,13 +117,13 @@ RUN jupyter serverextension enable --py jupyterlab --sys-prefix && \
 
 ADD extensions/jupyterlab_orbit/ /etc/extensions/jupyterlab_orbit/
 
+RUN mkdir -p /opt/orbit/databrew
+COPY aws-glue-databrew-jupyter-extension.tar.gz /opt/orbit/databrew/aws-glue-databrew-jupyter-extension.tar.gz
 
-COPY aws-glue-databrew-jupyter-extension.tar.gz /home/${NB_USER}/.orbit/databrew/aws-glue-databrew-jupyter-extension.tar.gz
-
-WORKDIR /home/${NB_USER}/.orbit/databrew/
+WORKDIR /opt/orbit/databrew
 RUN tar xvzf aws-glue-databrew-jupyter-extension.tar.gz
 
-WORKDIR /home/${NB_USER}/.orbit/databrew/aws-glue-databrew-jupyter-extension/
+WORKDIR /opt/orbit/databrew/aws-glue-databrew-jupyter-extension/
 
 RUN npm install && \
     npm run build && \
@@ -135,8 +131,18 @@ RUN npm install && \
     jupyter labextension install ./ && \
     jupyter lab build
 
-WORKDIR /home/${NB_USER}/.orbit/
+WORKDIR /opt/orbit/databrew
 RUN rm -rf ./databrew
+
+#Add in VSCode support
+RUN mkdir -p /opt/orbit/codeserver_proxy
+COPY codeserver_proxy /opt/orbit/codeserver_proxy
+RUN chmod -R a+xr /opt/orbit/codeserver_proxy/*.sh
+RUN chown -R jovyan /opt/orbit/codeserver_proxy
+WORKDIR /opt/orbit/codeserver_proxy
+RUN /opt/orbit/codeserver_proxy/install.sh
+RUN chown -R jovyan /opt/orbit/codeserver_proxy
+
 
 WORKDIR /home/${NB_USER}
 

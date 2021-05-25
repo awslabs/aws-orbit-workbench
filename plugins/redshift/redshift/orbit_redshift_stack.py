@@ -14,7 +14,7 @@
 
 import logging
 import os
-from typing import TYPE_CHECKING, Any, Dict, cast
+from typing import TYPE_CHECKING, Any, Dict, Optional, cast
 
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
@@ -83,10 +83,12 @@ class RedshiftClustersCommon(core.Construct):
                     parameter_value=plugin_params.get("enable_user_activity_logging", "true"),
                 ),
                 redshift.CfnClusterParameterGroup.ParameterProperty(
-                    parameter_name="require_ssl", parameter_value=plugin_params.get("require_ssl", "true")
+                    parameter_name="require_ssl",
+                    parameter_value=plugin_params.get("require_ssl", "true"),
                 ),
                 redshift.CfnClusterParameterGroup.ParameterProperty(
-                    parameter_name="use_fips_ssl", parameter_value=plugin_params.get("use_fips_ssl", "true")
+                    parameter_name="use_fips_ssl",
+                    parameter_value=plugin_params.get("use_fips_ssl", "true"),
                 ),
             ],
         )
@@ -121,7 +123,7 @@ class RedshiftClustersCommon(core.Construct):
         self._lambda_role: iam.Role = iam.Role(
             self,
             "lambda_orbit_lake_formation_trigger",
-            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+            assumed_by=cast(iam.IPrincipal, iam.ServicePrincipal("lambda.amazonaws.com")),
             inline_policies={
                 "lambda-policy": iam.PolicyDocument(
                     statements=[
@@ -150,7 +152,9 @@ class RedshiftClustersCommon(core.Construct):
                             ],
                         ),
                         iam.PolicyStatement(
-                            effect=iam.Effect.ALLOW, actions=["kms:*"], resources=[self.team_kms_key_arn]
+                            effect=iam.Effect.ALLOW,
+                            actions=["kms:*"],
+                            resources=[self.team_kms_key_arn],
                         ),
                         iam.PolicyStatement(
                             effect=iam.Effect.ALLOW,
@@ -206,7 +210,7 @@ class RedshiftFunctionStandard(core.Construct):
             handler="redshift_functions.lambda_handler",
             runtime=aws_lambda.Runtime.PYTHON_3_7,
             timeout=core.Duration.minutes(13),
-            role=redshift_common._lambda_role,
+            role=cast(Optional[iam.IRole], redshift_common._lambda_role),
             environment={
                 "ClusterType": "multi-node",
                 "NodeType": plugin_params.get("node_type", "DC2.large"),
@@ -228,7 +232,12 @@ class RedshiftFunctionStandard(core.Construct):
 
 class RedshiftStack(Stack):
     def __init__(
-        self, scope: Construct, id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]
+        self,
+        scope: Construct,
+        id: str,
+        context: "Context",
+        team_context: "TeamContext",
+        parameters: Dict[str, Any],
     ) -> None:
 
         super().__init__(

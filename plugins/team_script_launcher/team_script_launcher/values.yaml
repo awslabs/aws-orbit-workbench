@@ -5,16 +5,17 @@
 namespace: ${team}
 nameOverride: ${plugin_id}
 fullnameOverride: ""
-serviceAccountName: ${team}
+serviceAccountName: default-editor
 configMapName: ${plugin_id}-script
 scriptFile: ${plugin_id}-script.sh
 
 securityContext:
-  fsGroup: 100
+  runAsUser: ${uid}
+  runAsGroup: ${gid}
 
 image:
-  repository: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${env_name}-jupyter-user:${tag}
-  pullPolicy: Always
+  repository: ${image}
+  pullPolicy: ${image_pull_policy}
 env:
   - name: AWS_DEFAULT_REGION
     value: ${region}

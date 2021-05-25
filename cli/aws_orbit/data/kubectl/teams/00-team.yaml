@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${team}
+  labels:
+    orbit/space: team
+    orbit/team: ${team}
+    orbit/env: ${env_name}
+---
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: ebs-${team}-gp2
+provisioner: kubernetes.io/aws-ebs
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+parameters:
+  type: gp2
+  fsType: ext4
+  encrypted: "true"
+  kmsKeyId: ${team_kms_key_arn}
+volumeBindingMode: Immediate
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    app: team-efs
+    efs-id: ${efsid}
+  name: team-efs-${team}
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 5Gi
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${efsid}::${efsapid}
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: efs-storage-class
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: team-efs
+  namespace: ${team}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: efs-storage-class
+  volumeName: team-efs-${team}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    team: ${team}
+  name: default-editor
+  namespace: ${team}
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::${account_id}:role/orbit-${env_name}-${team}-role
+---
+apiVersion: vpcresources.k8s.aws/v1beta1
+kind: SecurityGroupPolicy
+metadata:
+  name: ${team}-security-group-policy
+  namespace: ${team}
+spec:
+  podSelector:
+    matchLabels:
+      orbit/attach-security-group: "yes"
+  securityGroups:
+    groupIds:
+      - ${team_security_group_id}
+---
+apiVersion: vpcresources.k8s.aws/v1beta1
+kind: SecurityGroupPolicy
+metadata:
+  name: cluster-pod-security-group-policy
+  namespace: ${team}
+spec:
+  podSelector:
+    matchLabels:
+      orbit/node-type: ec2
+  securityGroups:
+    groupIds:
+      - ${cluster_pod_security_group_id}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orbit-team-context
+  namespace: ${team}
+  labels:
+    orbit/team: ${team}
+    orbit/env: ${env_name}
+data:
+  team: |
+    ${team_context}
+  env: |
+    ${env_context}

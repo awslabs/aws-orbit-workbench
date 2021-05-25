@@ -5,7 +5,7 @@
 namespace: ${team}
 nameOverride: ${plugin_id}
 fullnameOverride: ""
-serviceAccountName: ${team}
+serviceAccountName: default-editor
 
 securityContext:
   fsGroup: 100
@@ -16,7 +16,7 @@ ray:
 
 images:
   ray: rayproject/ray:${release_tag}
-  pullPolicy: Always
+  pullPolicy: ${image_pull_policy}
 env:
   - name: AWS_DEFAULT_REGION
     value: ${region}

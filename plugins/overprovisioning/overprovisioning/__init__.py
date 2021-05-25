@@ -16,9 +16,10 @@ import logging
 import os
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+import yaml
 from aws_orbit.plugins import hooks
 from aws_orbit.remote_files import helm
-import yaml
+
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
 _logger: logging.Logger = logging.getLogger("aws_orbit")
@@ -26,17 +27,22 @@ CHART_PATH = os.path.join(os.path.dirname(__file__))
 
 
 @hooks.deploy
-def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+def deploy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
-    chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATH)
+    chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATH, target_path=plugin_id)
     containers = parameters["replicas"] if "replicas" in parameters else 1
     del parameters["replicas"]
-    if 'cpu' not in parameters:
-        parameters['cpu'] = '1'
+    if "cpu" not in parameters:
+        parameters["cpu"] = "1"
 
-    resources = {'resources': parameters}
+    resources = {"resources": parameters}
 
     _logger.info(f"overprovisioning installed with {containers} containers of profile:  {resources}.")
 
@@ -66,6 +72,16 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
 
 
 @hooks.destroy
-def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
-    _logger.debug("Delete Plugin %s of Team Env name: %s | Team name: %s", plugin_id, context.name, team_context.name)
-    helm.uninstall_chart(f"{team_context.name}-{plugin_id}")
+def destroy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
+    _logger.debug(
+        "Delete Plugin %s of Team Env name: %s | Team name: %s",
+        plugin_id,
+        context.name,
+        team_context.name,
+    )
+    helm.uninstall_chart(f"{team_context.name}-{plugin_id}", namespace=team_context.name)

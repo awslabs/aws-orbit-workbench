@@ -27,7 +27,12 @@ _logger: logging.Logger = logging.getLogger("aws_orbit")
 
 class MyStack(Stack):
     def __init__(
-        self, scope: Construct, id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]
+        self,
+        scope: Construct,
+        id: str,
+        context: "Context",
+        team_context: "TeamContext",
+        parameters: Dict[str, Any],
     ) -> None:
 
         super().__init__(
@@ -42,7 +47,10 @@ class MyStack(Stack):
         # for the team is allowing the creation and destruction of the resource.
         ssm_parameter: str = f"/orbit/{context.name}/{team_context.name}/hello-plugin"
         ssm.StringParameter(
-            scope=self, id="param", string_value="testing plugin hello world", parameter_name=ssm_parameter
+            scope=self,
+            id="param",
+            string_value="testing plugin hello world",
+            parameter_name=ssm_parameter,
         )
 
 

@@ -30,7 +30,7 @@ spec:
           imagePullPolicy: Always
           command: [ "/bin/bash", "-c", "--" ]
           args:
-            - "python /efs/shared/samples/notebooks/H-Model-Development/tune.py"
+            - "python /home/jovyan/shared/samples/notebooks/H-Model-Development/tune.py"
           resources:
             requests:
               cpu: 100m

@@ -12,10 +12,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from marshmallow import Schema, fields
+from marshmallow import EXCLUDE, Schema, fields
 
 
 class BaseSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     @staticmethod
     def _from_snake_to_camel(name: str) -> str:
         return "".join(map(str.title, name.split("_")))

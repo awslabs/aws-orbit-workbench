@@ -239,7 +239,7 @@
                             "args": [
                                 "bash",
                                 "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
+                                "/opt/orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
                             ],
                             "ports": [
                                 {
@@ -583,7 +583,7 @@
                             "args": [
                                 "bash",
                                 "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
+                                "/opt/orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
                             ],
                             "ports": [
                                 {
@@ -927,7 +927,7 @@
                             "args": [
                                 "bash",
                                 "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
+                                "/opt/orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
                             ],
                             "ports": [
                                 {
@@ -1270,7 +1270,7 @@
                             "args": [
                                 "bash",
                                 "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
+                                "/opt/orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
                             ],
                             "ports": [
                                 {
@@ -1613,7 +1613,7 @@
                             "args": [
                                 "bash",
                                 "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
+                                "/opt/orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
                             ],
                             "ports": [
                                 {
@@ -1956,7 +1956,7 @@
                             "args": [
                                 "bash",
                                 "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
+                                "/opt/orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
                             ],
                             "ports": [
                                 {
@@ -2299,7 +2299,7 @@
                             "args": [
                                 "bash",
                                 "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
+                                "/opt/orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
                             ],
                             "ports": [
                                 {
@@ -2642,7 +2642,7 @@
                             "args": [
                                 "bash",
                                 "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
+                                "/opt/orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
                             ],
                             "ports": [
                                 {
@@ -2985,7 +2985,7 @@
                             "args": [
                                 "bash",
                                 "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
+                                "/opt/orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
                             ],
                             "ports": [
                                 {
@@ -3329,7 +3329,7 @@
                             "args": [
                                 "bash",
                                 "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
+                                "/opt/orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
                             ],
                             "ports": [
                                 {
@@ -3673,7 +3673,7 @@
                             "args": [
                                 "bash",
                                 "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
+                                "/opt/orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
                             ],
                             "ports": [
                                 {
@@ -4016,7 +4016,7 @@
                             "args": [
                                 "bash",
                                 "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
+                                "/opt/orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
                             ],
                             "ports": [
                                 {
@@ -4359,7 +4359,7 @@
                             "args": [
                                 "bash",
                                 "-c",
-                                "/home/jovyan/.orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
+                                "/opt/orbit/bootstrap.sh && python /opt/python-utils/notebook_cli.py"
                             ],
                             "ports": [
                                 {

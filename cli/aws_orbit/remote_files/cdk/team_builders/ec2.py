@@ -57,7 +57,7 @@ class Ec2Builder:
                     connection=ec2.Port.tcp(port=2049),
                     description=f"Allowing internal access from subnet {subnet.subnet_id}.",
                 )
-        core.Tags.of(scope=sg).add(key="Name", value=name)
+        core.Tags.of(scope=cast(core.IConstruct, sg)).add(key="Name", value=name)
         return sg
 
     @staticmethod
@@ -67,9 +67,9 @@ class Ec2Builder:
         name: str = f"orbit-{context.name}-{team_name}-sg"
         sg = ec2.SecurityGroup(scope=scope, id=name, security_group_name=name, vpc=vpc, allow_all_outbound=True)
         sg.add_ingress_rule(
-            peer=sg,
+            peer=cast(ec2.IPeer, sg),
             connection=ec2.Port.all_traffic(),
             description=f"Allow ingress from all resources utilizing the Team ({team_name}) security group",
         )
-        core.Tags.of(scope=sg).add(key="Name", value=name)
+        core.Tags.of(scope=cast(core.IConstruct, sg)).add(key="Name", value=name)
         return sg
