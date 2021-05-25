@@ -163,3 +163,75 @@ spec:
             requests:
               cpu: 1
               memory: 1G
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: landing-page
+  namespace: orbit-system
+  name: landing-page-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: landing-page-service
+  template:
+    metadata:
+      labels:
+        app: landing-page-service
+      name: landing-page-service
+    spec:
+      serviceAccountName: orbit-${env_name}-admin
+      containers:
+        - name: webhook
+          image: ${admission_controller_image}
+          imagePullPolicy: ${image_pull_policy}
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: landing-page-config
+          command:
+            - gunicorn
+          args:
+            - "--bind=0.0.0.0:80"
+            - "--workers=$(GUNICORN_WORKERS)"
+            - "--reload"
+            - "aws_orbit_admission_controller.server:app"
+          readinessProbe:
+            httpGet:
+              path: /health
+              scheme: HTTP
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              scheme: HTTP
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            limits:
+              cpu: 2
+              memory: 2G
+            requests:
+              cpu: 1
+              memory: 1G
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: landing-page-config
+  namespace: orbit-system
+data:
+  FLASK_DEBUG: "1"
+  FLASK_ENV: development
+  GUNICORN_WORKERS: "1"
+  ADMISSION_CONTROLLER_DEBUG: "1"
+  IN_CLUSTER_DEPLOYMENT: "1"
+  NAMESPACE_WATCHER_WORKERS: "1"

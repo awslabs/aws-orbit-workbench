@@ -47,12 +47,12 @@ def hello() -> Any:
 
 @app.route("/login")
 def login_request() -> Any:
-    return login(logger=app.logger, request=request.json["request"])
+    return login(logger=app.logger, request=request.json)
 
 
 @app.route("/logout")
 def logout_request() -> Any:
-    return logout(logger=app.logger, request=request.json["request"])
+    return logout(logger=app.logger, request=request.json)
 
 
 if __name__ == "__main__":
