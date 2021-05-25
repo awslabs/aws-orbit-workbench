@@ -4,6 +4,8 @@ metadata:
   name: ${team}
   labels:
     orbit/space: team
+    orbit/team: ${team}
+    orbit/env: ${env_name}
 ---
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
