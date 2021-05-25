@@ -9,6 +9,8 @@ metadata:
     {{- include "team_script_launcher.labels" . | nindent 4 }}
 
 spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 600
   template:
     spec:
       {{- with .Values.nodeSelector }}
@@ -29,7 +31,7 @@ spec:
       containers:
       - name: kubectl-aws
         securityContext:
-          runAsUser: 1000
+          {{- toYaml .Values.securityContext | nindent 10 }}
         imagePullPolicy: {{ .Values.image.pullPolicy}}
         image: {{ .Values.image.repository }}
         env:
@@ -38,8 +40,7 @@ spec:
         args:
           - -c
           - >-
-            source /scripts/{{ .Values.scriptFile }} &&
-            echo "DONE EXECUTING SCRIPT"
+            source /scripts/{{ .Values.scriptFile }}
         resources:
           {{- toYaml .Values.jobResources | nindent 12 }}
 

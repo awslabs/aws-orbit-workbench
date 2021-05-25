@@ -30,7 +30,7 @@ spec:
           imagePullPolicy: IfNotPresent
           command: [ "/bin/bash", "-c", "--" ]
           args:
-            - "python /efs/shared/samples/notebooks/H-Model-Development/job_example.py"
+            - "python /home/jovyan/shared/samples/notebooks/H-Model-Development/job_example.py"
           resources:
             requests:
               cpu: 100m
