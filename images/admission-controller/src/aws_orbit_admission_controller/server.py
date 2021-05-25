@@ -19,6 +19,9 @@ from typing import Any
 
 from aws_orbit_admission_controller.pod import process_request as process_pod_request
 from flask import Flask, request
+from flask import render_template
+
+from aws_orbit_admission_controller.home import login,logout
 
 app = Flask(__name__)
 app.logger.info("environ: %s", os.environ)
@@ -40,6 +43,16 @@ def health() -> Any:
 def hello() -> Any:
     r = random.randint(0, 1000)
     return f"Hello! random number gen: {r}"
+
+
+@app.route("/login")
+def login_request() -> Any:
+    return login(logger=app.logger, request=request.json["request"])
+
+
+@app.route("/logout")
+def logout_request() -> Any:
+    return logout(logger=app.logger, request=request.json["request"])
 
 
 if __name__ == "__main__":
