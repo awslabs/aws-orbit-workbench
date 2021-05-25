@@ -20,6 +20,7 @@ RUN apt -y update && \
     openssl \
     vim-tiny \
     nano-tiny \
+    procps \
     # ---- Clean up ----
     && apt-get clean && rm -rf /var/lib/apt/lists/* && \
     update-alternatives --install /usr/bin/nano nano /bin/nano-tiny 10 && \
