@@ -12,8 +12,8 @@ cat <<EOF |  orbit schedule notebook --env $ENV_NAME --team lake-creator --user 
       },
       "tasks":  [{
           "notebookName": "sanity-good.ipynb",
-          "sourcePath": "/efs/shared/samples/notebooks/Z-Tests",
-          "targetPath": "/efs/shared/regression/notebooks/Z-Tests",
+          "sourcePath": "/home/jovyan/shared/samples/notebooks/Z-Tests",
+          "targetPath": "/home/jovyan/shared/regression/notebooks/Z-Tests",
           "params": {
           }
         }]
