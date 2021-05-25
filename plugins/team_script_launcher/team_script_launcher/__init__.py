@@ -54,6 +54,8 @@ def deploy(
         toolkit_s3_bucket=context.toolkit.s3_bucket,
         image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
         image=parameters["image"] if "image" in parameters else default_image,
+        uid=parameters["uid"] if "uid" in parameters else "1000",
+        gid=parameters["gid"] if "gid" in parameters else "100",
     )
 
     if "script" in parameters:
