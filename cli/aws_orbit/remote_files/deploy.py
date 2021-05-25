@@ -55,7 +55,8 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
         ecr.create_repository(repository_name=ecr_repo, env_name=context.name)
 
     image_def: ImageManifest = getattr(manifest.images, image_name.replace("-", "_"))
-    if image_def.get_source(account_id=context.account_id, region=context.region) == "code":
+    source = image_def.get_source(account_id=context.account_id, region=context.region)
+    if source == "code":
         _logger.debug("Building and deploy docker image from source...")
         path = os.path.join(os.getcwd(), "bundle", dir)
         _logger.debug("path: %s", path)
@@ -71,7 +72,14 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
         )
     else:
         _logger.debug("Replicating docker image to ECR...")
-        docker.replicate_image(context=context, image_name=image_name, deployed_name=ecr_repo)
+        docker.replicate_image(
+            context=context,
+            image_name=image_name,
+            deployed_name=ecr_repo,
+            source=source,
+            source_repository=image_def.repository,
+            source_version=image_def.version,
+        )
 
     _logger.debug("Docker Image Deployed to ECR")
 
