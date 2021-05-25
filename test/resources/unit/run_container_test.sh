@@ -12,8 +12,8 @@ cat <<EOF |  orbit run notebook --env $ENV_NAME --team $TEST_TEAM_SPACE --user t
       },
       "tasks":  [{
           "notebookName": "sanity-good.ipynb",
-          "sourcePath": "/efs/shared/samples/notebooks/Z-Tests",
-          "targetPath": "/efs/shared/regression/notebooks/Z-Tests",
+          "sourcePath": "/home/jovyan/shared/samples/notebooks/Z-Tests",
+          "targetPath": "/home/jovyan/shared/regression/notebooks/Z-Tests",
           "params": {
           }
         }]
