@@ -39,8 +39,12 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
     script: Optional[str] = args[3] if args[3] != "NO_SCRIPT" else None
     build_args = args[4:]
 
+    manifest = ManifestSerDe.load_manifest_from_ssm(env_name=env, type=Manifest)
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
     _logger.debug("context: %s", vars(context))
+
+    if manifest is None:
+        raise Exception("Unable to load required Manifest from SSM")
 
     docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
@@ -50,7 +54,7 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
     if not ecr.describe_repositories(repository_names=[ecr_repo]):
         ecr.create_repository(repository_name=ecr_repo, env_name=context.name)
 
-    image_def: ImageManifest = getattr(context.images, image_name.replace("-", "_"))
+    image_def: ImageManifest = getattr(manifest.images, image_name.replace("-", "_"))
     if image_def.get_source(account_id=context.account_id, region=context.region) == "code":
         _logger.debug("Building and deploy docker image from source...")
         path = os.path.join(os.getcwd(), "bundle", dir)

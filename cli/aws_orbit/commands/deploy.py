@@ -368,7 +368,7 @@ def _deploy_image(
         context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
 
         if cfn.does_stack_exist(stack_name=f"orbit-{context.name}") is False:
-            msg_ctx.error("Please, deploy your environment before deploy any addicional docker image")
+            msg_ctx.error("Please, deploy your environment before deploy any additional docker image")
             return
 
         plugins.PLUGINS_REGISTRIES.load_plugins(
