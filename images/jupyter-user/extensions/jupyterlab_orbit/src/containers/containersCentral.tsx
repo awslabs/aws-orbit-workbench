@@ -8,8 +8,8 @@ import { JupyterFrontEnd } from '@jupyterlab/application';
 
 const columns = [
   {
-    title: 'Name',
-    dataIndex: 'name',
+    title: 'Job Name',
+    dataIndex: 'job_name',
     sorter: {
       compare: utils.Sorter.DEFAULT,
       multiple: 2

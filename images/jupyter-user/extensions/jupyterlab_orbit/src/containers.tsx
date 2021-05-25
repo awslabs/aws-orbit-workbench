@@ -43,6 +43,7 @@ export interface IItem {
   time: string;
   node_type: string;
   job_state: string;
+  job_name: string;
 }
 
 export interface IUseItemsReturn {
@@ -161,10 +162,14 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
       name: session.name
     });
     // await delay(20000);
+    // const command =
+    //   'kubectl -n $AWS_ORBIT_TEAM_SPACE exec --stdin --tty `kubectl get pods -n $AWS_ORBIT_TEAM_SPACE -l job-name=' +
+    //   container +
+    //   ' -o=name` -- /bin/bash \n';
     const command =
-      'kubectl -n $AWS_ORBIT_TEAM_SPACE exec --stdin --tty `kubectl get pods -n $AWS_ORBIT_TEAM_SPACE -l job-name=' +
+      'kubectl -n $AWS_ORBIT_TEAM_SPACE exec --stdin --tty ' +
       container +
-      ' -o=name` -- /bin/bash \n';
+      ' -- /bin/bash \n';
     terminal.content.session.send({
       type: 'stdin',
       content: [command]
@@ -179,11 +184,12 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
       name: session.name
     });
 
+    // const command =
+    //   'kubectl logs -n $AWS_ORBIT_TEAM_SPACE --tail=-1 -f `kubectl get pods -n $AWS_ORBIT_TEAM_SPACE -l job-name=' +
+    //   container +
+    //   ' -o=name` \n';
     const command =
-      'kubectl logs -n $AWS_ORBIT_TEAM_SPACE --tail=-1 -f `kubectl get pods -n $AWS_ORBIT_TEAM_SPACE -l job-name=' +
-      container +
-      ' -o=name` \n';
-
+      'kubectl logs -n $AWS_ORBIT_TEAM_SPACE --tail=-1 -f ' + container + ' \n';
     terminal.content.session.send({
       type: 'stdin',
       content: [command]

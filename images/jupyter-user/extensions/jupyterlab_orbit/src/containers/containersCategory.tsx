@@ -38,7 +38,7 @@ const Item = (props: {
           title={props.item.hint}
           onClick={() => props.openItemCallback(props.item.name)}
         >
-          {props.item.name}
+          {props.item.job_name}
         </span>
         <span className={ITEM_DETAIL_CLASS}>{props.item.time}</span>
         <span className={ITEM_DETAIL_CLASS}>{props.item.node_type}</span>
