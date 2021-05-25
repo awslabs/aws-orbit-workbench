@@ -51,6 +51,7 @@ __CURRENT_ENV_MANIFEST__: MANIFEST_TEAM_TYPE = None
 
 APP_LABEL_SELECTOR: [str] = ["orbit-runner", "emr-spark"]
 
+
 def read_team_manifest_ssm(env_name: str, team_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
     parameter_name: str = f"/orbit/{env_name}/teams/{team_name}/manifest"
     _logger.debug("Trying to read manifest from SSM parameter (%s).", parameter_name)
@@ -353,39 +354,35 @@ def list_running_jobs(namespace: str):
 
 
 def list_team_running_pods():
-    return list_running_pods(True)
+    props = get_properties()
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    return list_running_pods(team_name)
 
 
 def list_my_running_pods():
-    return list_running_pods(False)
-
-
-def list_running_pods(team_only: bool = False):
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
+    return list_running_pods(namespace)
+
+
+def list_running_pods(namespace: str):
     load_kube_config()
-    username = (os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))).split("@")[0]
     api_instance = CoreV1Api()
-    # field_selector = "status.successful!=1"
-    if team_only:
-        operand = "!="
-    else:
-        operand = "="
 
     app_list = ",".join(APP_LABEL_SELECTOR)
-    label_selector = f"app in ({app_list}),username{operand}{username}"
-    _logger.info("using job selector %s", label_selector)
+    label_selector = f"app in ({app_list})"
+    _logger.debug("using job selector %s", label_selector)
     try:
         api_response = api_instance.list_namespaced_pod(
-            namespace=team_name,
+            namespace=namespace,
             _preload_content=False,
             label_selector=label_selector,
-            # field_selector=field_selector,
             watch=False,
         )
         res = json.loads(api_response.data)
     except ApiException as e:
-        _logger.info("Exception when calling BatchV1Api->list_namespaced_job: %s\n" % e)
+        _logger.info("Exception when calling CoreV1Api->list_namespaced_job: %s\n" % e)
         raise e
 
     if "items" not in res:
@@ -545,14 +542,13 @@ def get_nodegroups(cluster_name: str):
 def delete_pod(pod_name: str, grace_period_seconds: int = 30):
     props = get_properties()
     global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
-    env_name = props["AWS_ORBIT_ENV"]
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     load_kube_config()
     api_instance = CoreV1Api()
     try:
         api_instance.delete_namespaced_pod(
             name=pod_name,
-            namespace=team_name,
+            namespace=os.environ.get("AWS_ORBIT_USER_SPACE", team_name),
             _preload_content=False,
             grace_period_seconds=grace_period_seconds,
             orphan_dependents=False,
@@ -565,7 +561,7 @@ def delete_pod(pod_name: str, grace_period_seconds: int = 30):
 def delete_job(job_name: str, grace_period_seconds: int = 30):
     props = get_properties()
     global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
-    env_name = props["AWS_ORBIT_ENV"]
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
     load_kube_config()
     api_instance = BatchV1Api()
     try:
@@ -602,16 +598,17 @@ def delete_cronjob(job_name: str, grace_period_seconds: int = 30):
 def delete_all_my_pods():
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
-    username = (os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))).split("@")[0]
+    namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
     load_kube_config()
     api_instance = CoreV1Api()
-    label_selector = f"app=orbit-runner,username={username}"
+    app_list = ",".join(APP_LABEL_SELECTOR)
+    label_selector = f"app in ({app_list})"
     try:
         api_instance.delete_collection_namespaced_pod(
-            namespace=team_name, _preload_content=False, orphan_dependents=False, label_selector=label_selector
+            namespace=namespace, _preload_content=False, orphan_dependents=False, label_selector=label_selector
         )
     except ApiException as e:
-        _logger.info("Exception when calling CoreV1Api->delete_all_my_pods: %s\n" % e)
+        _logger.info("Exception when calling CoreV1Api->delete_collection_namespaced_pod: %s\n" % e)
         raise e
 
 

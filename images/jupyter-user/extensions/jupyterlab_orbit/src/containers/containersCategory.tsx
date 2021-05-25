@@ -28,9 +28,6 @@ const Item = (props: {
   logs: (podName: string, containerName: string) => Promise<void>;
 }) => {
   const { title, color, icon } = getStateIcon(props.item.job_state);
-  console.log('**********$$$$$***********************');
-  console.log(props.item);
-  console.log('*********************************');
   return (
     <Tooltip placement="topLeft" title={title} color={color} key={'Orbit'}>
       <li className={ITEM_CLASS}>

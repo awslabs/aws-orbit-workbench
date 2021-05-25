@@ -28,83 +28,6 @@ CRONJOBS: List[Dict[str, str]] = []
 
 
 class ContainersRouteHandler(APIHandler):
-    @staticmethod
-    def _dump(clist, type) -> str:
-        data: List[Dict[str, str]] = []
-        for c in clist:
-            container: Dict[str, str] = dict()
-            container["name"] = c["metadata"]["name"]
-            if type == "cron":
-                job_template = c["spec"]["jobTemplate"]["spec"]["template"]
-                container["time"] = c["spec"]["schedule"]
-                container["job_state"] = "active"
-            else:
-                job_template = c["spec"]["template"]
-                container["time"] = c["metadata"]["creationTimestamp"]
-                response_datetime_format = "%Y-%m-%dT%H:%M:%SZ"
-                creation_dt = datetime.strptime(c["metadata"]["creationTimestamp"], response_datetime_format)
-
-                if "status" in c and "completionTime" in c["status"]:
-                    container["completionTime"] = c["status"]["completionTime"]
-                    completion_dt = datetime.strptime(c["status"]["completionTime"], response_datetime_format)
-                    duration = completion_dt - creation_dt
-                    container["duration"] = str(duration)
-                elif "status" in c and "active" in c["status"] and c["status"]["active"] == 1:
-                    duration = datetime.utcnow() - creation_dt
-                    container["duration"] = str(duration).split(".")[0]
-                    container["completionTime"] = ""
-                elif "status" in c and "failed" in c["status"] and c["status"]["failed"] == 1:
-                    last_transition_dt = datetime.strptime(
-                        c["status"]["conditions"][0]["lastTransitionTime"],
-                        response_datetime_format,
-                    )
-                    duration = last_transition_dt - creation_dt
-                    container["duration"] = str(duration)
-                    container["completionTime"] = ""
-                else:
-                    container["completionTime"] = ""
-                    container["duration"] = ""
-
-                if "status" in c:
-                    if "failed" in c["status"] and c["status"]["failed"] == 1:
-                        container["job_state"] = "failed"
-                    elif "active" in c["status"] and c["status"]["active"] == 1:
-                        container["job_state"] = "running"
-                    elif "succeeded" in c["status"] and c["status"]["succeeded"] == 1:
-                        container["job_state"] = "succeeded"
-                    else:
-                        container["job_state"] = "unknown"
-            envs = job_template["spec"]["containers"][0]["env"]
-            tasks = json.loads([e["value"] for e in envs if e["name"] == "tasks"][0])
-            container["hint"] = json.dumps(tasks, indent=4)
-            container["tasks"] = tasks["tasks"]
-
-            if "labels" in c["metadata"] and "orbit/node-type" in c["metadata"]["labels"]:
-                container["node_type"] = c["metadata"]["labels"]["orbit/node-type"]
-            else:
-                container["node_type"] = "unknown"
-
-            container["notebook"] = (
-                tasks["tasks"][0]["notebookName"]
-                if "notebookName" in tasks["tasks"][0]
-                else f'{tasks["tasks"][0]["moduleName"]}.{tasks["tasks"][0]["functionName"]}'
-            )
-            if container["job_state"] == "running":
-                container["rank"] = 1
-            else:
-                container["rank"] = 2
-            container["info"] = c
-            data.append(container)
-
-        data = sorted(
-            data,
-            key=lambda i: (
-                i["rank"],
-                i["creationTimestamp"] if "creationTimestamp" in i else i["name"],
-            ),
-        )
-
-        return json.dumps(data)
 
     @staticmethod
     def _dump_job(clist, type) -> str:
@@ -234,11 +157,6 @@ class ContainersRouteHandler(APIHandler):
                     c["metadata"]["labels"]["app"] if "app" in c["metadata"]["labels"] else "unknown"
                 )
 
-            # container["notebook"] = (
-            #     tasks["tasks"][0]["notebookName"]
-            #     if "notebookName" in tasks["tasks"][0]
-            #     else f'{tasks["tasks"][0]["moduleName"]}.{tasks["tasks"][0]["functionName"]}'
-            # )
             if container["job_state"] == "running":
                 container["rank"] = 1
             else:
@@ -290,16 +208,13 @@ class ContainersRouteHandler(APIHandler):
             with open(path) as f:
                 if type == "user":
                     MYJOBS = json.load(f)
-                    data = MYJOBS
-                    self.finish(self._dump_pod(data))
+                    self.finish(self._dump_pod(MYJOBS))
                 elif type == "team":
                     TEAMJOBS = json.load(f)
-                    data = TEAMJOBS
-                    self.finish(self._dump_pod(data))
+                    self.finish(self._dump_pod(TEAMJOBS))
                 elif type == "cron":
                     CRONJOBS = json.load(f)
-                    data = CRONJOBS
-                    self.finish(self._dump_job(data, type))
+                    self.finish(self._dump_job(CRONJOBS, type))
                 else:
                     raise Exception("Unknown type: %s", type)
 
@@ -322,14 +237,18 @@ class ContainersRouteHandler(APIHandler):
         if job_type == "user":
             controller.delete_pod(name)
             data = MYJOBS
+            self._delete(name, data)
+            self.finish(self._dump_pod(data, type))
         elif job_type == "team":
             controller.delete_pod(name)
             data = TEAMJOBS
+            self._delete(name, data)
+            self.finish(self._dump_pod(data, type))
         elif job_type == "cron":
             controller.delete_cronjob(name)
             data = CRONJOBS
+            self._delete(name, data)
+            self.finish(self._dump_job(data, type))
         else:
             raise Exception("Unknown job_type: %s", job_type)
 
-        self._delete(name, data)
-        self.finish(self._dump(data, type))

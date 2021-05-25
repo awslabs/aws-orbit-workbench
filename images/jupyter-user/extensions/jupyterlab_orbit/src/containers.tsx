@@ -201,20 +201,8 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
       name: session.name
     });
     // await delay(20000);
-    // const command =
-    //   'kubectl -n $AWS_ORBIT_TEAM_SPACE exec --stdin --tty `kubectl get pods -n $AWS_ORBIT_TEAM_SPACE -l job-name=' +
-    //   container +
-    //   ' -o=name` -- /bin/bash \n';
-    // const command =
-    //   'kubectl -n $AWS_ORBIT_TEAM_SPACE exec --stdin --tty ' +
-    //   podName +
-    //   ' -- /bin/bash \n';
 
     let command;
-    console.log('*********************************');
-    console.log(podName);
-    console.log(containerName);
-    console.log('*********************************');
     if (typeof containerName === 'undefined' || containerName === null) {
       command =
         'kubectl -n $AWS_ORBIT_TEAM_SPACE exec --stdin --tty ' +
@@ -246,15 +234,7 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
       name: session.name
     });
 
-    // const command =
-    //   'kubectl logs -n $AWS_ORBIT_TEAM_SPACE --tail=-1 -f `kubectl get pods -n $AWS_ORBIT_TEAM_SPACE -l job-name=' +
-    //   container +
-    //   ' -o=name` \n';
     let command;
-    console.log('*********************************');
-    console.log(podName);
-    console.log(containerName);
-    console.log('*********************************');
     if (typeof containerName === 'undefined' || containerName === null) {
       command =
         'kubectl logs -n $AWS_ORBIT_TEAM_SPACE --tail=-1 -f ' + podName + ' \n';
@@ -266,9 +246,7 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
         containerName +
         ' \n';
     }
-    console.log('*********************************');
-    console.log(command);
-    console.log('*********************************');
+
     terminal.content.session.send({
       type: 'stdin',
       content: [command]
