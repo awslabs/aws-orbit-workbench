@@ -12,7 +12,7 @@
             i=0
             while [ $i -lt 1 ];
             do
-              find /efs/shared/regression -mtime +5 -exec rm {} \;
+              find /home/jovyan/shared/regression -mtime +5 -exec rm {} \;
               sleep 60
             done
             echo "DONE LOOP"
@@ -29,3 +29,11 @@
     Module: custom_cfn
     Parameters:
         CfnTemplatePath: "./bundle/plugins/demo-lake-creator-cfn-template.yaml"
+-   PluginId: fast_fs_lustre
+    Module: lustre
+-   PluginId: overprovisioning1
+    Module: overprovisioning
+    Parameters:
+        replicas: 3
+        cpu: 2
+        memory: 4G

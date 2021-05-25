@@ -23,7 +23,7 @@ from typing import Any, ClassVar, Dict, Generic, List, Optional, Set, Type, Type
 import jsonpath_ng as jsonpath_ng
 import yaml
 from dataclasses import field
-from marshmallow import Schema
+from marshmallow import EXCLUDE, Schema
 from marshmallow_dataclass import dataclass
 from yamlinclude import YamlIncludeConstructor
 
@@ -66,9 +66,24 @@ class TeamManifest:
 class ImageManifest:
     Schema: ClassVar[Type[Schema]] = Schema
     repository: Optional[str]
-    source: Optional[str] = "ecr-public"
-    version: Optional[str] = aws_orbit.__version__
+    version: Optional[str] = "latest" if aws_orbit.__version__.endswith(".dev0") else aws_orbit.__version__
     path: Optional[str] = None
+
+    def get_source(self, account_id: str, region: str) -> str:
+        external_ecr_match = re.compile(r"^[0-9]{12}\.dkr\.ecr\..+\.amazonaws.com/")
+        public_ecr_match = re.compile(r"^public.ecr.aws/.+/")
+        repository = cast(str, self.repository)
+
+        if self.path:
+            return "code"
+        elif repository.startswith(f"{account_id}.dkr.ecr.{region}.amazonaws.com"):
+            return "ecr-internal"
+        elif external_ecr_match.match(repository):
+            return "ecr-external"
+        elif public_ecr_match.match(repository):
+            return "ecr-public"
+        else:
+            return "public"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -87,7 +102,7 @@ class ManagedNodeGroupManifest:
 @dataclass(base_schema=BaseSchema, frozen=True)
 class CodeBuildImageManifest(ImageManifest):
     repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base"
-    version: Optional[str] = "latest"
+    version: Optional[str] = "1.0.0"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -106,68 +121,20 @@ class LandingPageImageManifest(ImageManifest):
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
+class AdmissionControllerImageManifest(ImageManifest):
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/admission-controller"
+
+
+@dataclass(base_schema=BaseSchema, frozen=True)
 class ImageReplicatorImageManifest(ImageManifest):
     repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/image-replicator"
+    version: Optional[str] = "1.0.0"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
-class AwsEfsDriverImageManifest(ImageManifest):
-    repository: Optional[str] = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/aws-efs-csi-driver"
-    source: Optional[str] = "ecr-external"
-    version: Optional[str] = "v1.0.0"
-
-
-@dataclass(base_schema=BaseSchema, frozen=True)
-class LivenessprobeImageManifest(ImageManifest):
-    repository: Optional[str] = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/livenessprobe"
-    source: Optional[str] = "ecr-external"
-    version: Optional[str] = "v2.0.0"
-
-
-@dataclass(base_schema=BaseSchema, frozen=True)
-class CsiNodeDriverRegistrarImageManifest(ImageManifest):
-    repository: Optional[str] = "602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/csi-node-driver-registrar"
-    source: Optional[str] = "ecr-external"
-    version: Optional[str] = "v1.3.0"
-
-
-# https://github.com/kubernetes/dashboard/releases
-@dataclass(base_schema=BaseSchema, frozen=True)
-class K8Dashboard(ImageManifest):
-    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/kubernetesui/dashboard"
-    version: Optional[str] = "v2.2.0"
-
-
-@dataclass(base_schema=BaseSchema, frozen=True)
-class MetricsScraper(ImageManifest):
-    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/kubernetesui/metrics-scraper"
-    version: Optional[str] = "v1.0.6"
-
-
-# https://github.com/kubernetes-sigs/metrics-server/releases
-@dataclass(base_schema=BaseSchema, frozen=True)
-class MetricsServer(ImageManifest):
-    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s.gcr.io/metrics-server/metrics-server"
-    version: Optional[str] = "v0.4.2"
-
-
-# https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider/aws
-@dataclass(base_schema=BaseSchema, frozen=True)
-class ClusterAutoscaler(ImageManifest):
-    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s.gcr.io/autoscaling/cluster-autoscaler"
-    version: Optional[str] = "v1.18.3"
-
-
-@dataclass(base_schema=BaseSchema, frozen=True)
-class SsmAgentInstaller(ImageManifest):
-    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/ssm-agent-installer"
-    version: Optional[str] = "latest"
-
-
-@dataclass(base_schema=BaseSchema, frozen=True)
-class PauseImage(ImageManifest):
-    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/gcr.io/google-containers/pause"
-    version: Optional[str] = "2.0"
+class K8sUtilitiesImageManifest(ImageManifest):
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s-utilities"
+    version: Optional[str] = "1.0.0"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -185,20 +152,13 @@ class FoundationImagesManifest:
 @dataclass(base_schema=BaseSchema, frozen=True)
 class ImagesManifest:
     Schema: ClassVar[Type[Schema]] = Schema
-    code_build: CodeBuildImageManifest = CodeBuildImageManifest()
-    jupyter_hub: JupyterHubImageManifest = JupyterHubImageManifest()
-    jupyter_user: JupyterUserImageManifest = JupyterUserImageManifest()
-    landing_page: LandingPageImageManifest = LandingPageImageManifest()
-    image_replicator: ImageReplicatorImageManifest = ImageReplicatorImageManifest()
-    aws_efs_csi_driver: AwsEfsDriverImageManifest = AwsEfsDriverImageManifest()
-    livenessprobe: LivenessprobeImageManifest = LivenessprobeImageManifest()
-    csi_node_driver_registrar: CsiNodeDriverRegistrarImageManifest = CsiNodeDriverRegistrarImageManifest()
-    k8_dashboard: K8Dashboard = K8Dashboard()
-    k8_metrics_scraper: MetricsScraper = MetricsScraper()
-    k8_metrics_server: MetricsServer = MetricsServer()
-    cluster_autoscaler: ClusterAutoscaler = ClusterAutoscaler()
-    ssm_agent_installer: SsmAgentInstaller = SsmAgentInstaller()
-    pause: PauseImage = PauseImage()
+    code_build: ImageManifest = CodeBuildImageManifest()
+    jupyter_hub: ImageManifest = JupyterHubImageManifest()
+    jupyter_user: ImageManifest = JupyterUserImageManifest()
+    landing_page: ImageManifest = LandingPageImageManifest()
+    admission_controller: ImageManifest = AdmissionControllerImageManifest()
+    image_replicator: ImageManifest = ImageReplicatorImageManifest()
+    k8s_utilities: ImageManifest = K8sUtilitiesImageManifest()
     names: List[str] = field(
         metadata=dict(load_only=True),
         default_factory=lambda: [
@@ -206,16 +166,9 @@ class ImagesManifest:
             "jupyter_hub",
             "jupyter_user",
             "landing_page",
+            "admission_controller",
             "image_replicator",
-            "aws_efs_csi_driver",
-            "livenessprobe",
-            "csi_node_driver_registrar",
-            "k8_dashboard",
-            "k8_metrics_scraper",
-            "k8_metrics_server",
-            "cluster_autoscaler",
-            "ssm_agent_installer",
-            "pause",
+            "k8s_utilities",
         ],
     )
 
@@ -418,10 +371,10 @@ class ManifestSerDe(Generic[T]):
         _logger.debug("raw: %s", raw)
         if type is Manifest:
             raw["SsmParameterName"] = f"/orbit/{raw['Name']}/manifest"
-            manifest: T = cast(T, Manifest.Schema().load(data=raw, many=False, partial=False, unknown="RAISE"))
+            manifest: T = cast(T, Manifest.Schema().load(data=raw, many=False, partial=False, unknown=EXCLUDE))
         elif type is FoundationManifest:
             raw["SsmParameterName"] = f"/orbit-foundation/{raw['Name']}/manifest"
-            manifest = cast(T, FoundationManifest.Schema().load(data=raw, many=False, partial=False, unknown="RAISE"))
+            manifest = cast(T, FoundationManifest.Schema().load(data=raw, many=False, partial=False, unknown=EXCLUDE))
         else:
             raise ValueError("Unknown 'manifest' Type")
         ManifestSerDe.dump_manifest_to_ssm(manifest=manifest)
@@ -474,12 +427,12 @@ class ManifestSerDe(Generic[T]):
             _logger.debug("teams_parameters (/orbit/%s/teams/): %s", env_name, teams_parameters)
             teams = [ssm.get_parameter(name=p) for p in teams_parameters if p.endswith("/manifest")]
             main["Teams"] = teams
-            return cast(T, Manifest.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
+            return cast(T, Manifest.Schema().load(data=main, many=False, partial=False, unknown=EXCLUDE))
         elif type is FoundationManifest:
             context_parameter_name = f"/orbit-foundation/{env_name}/manifest"
             main = ssm.get_parameter_if_exists(name=context_parameter_name)
             if main is None:
                 return None
-            return cast(T, FoundationManifest.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
+            return cast(T, FoundationManifest.Schema().load(data=main, many=False, partial=False, unknown=EXCLUDE))
         else:
             raise ValueError("Unknown 'manifest' Type")

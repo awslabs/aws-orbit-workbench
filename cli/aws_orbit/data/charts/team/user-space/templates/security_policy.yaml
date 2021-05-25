@@ -1,0 +1,29 @@
+apiVersion: vpcresources.k8s.aws/v1beta1
+kind: SecurityGroupPolicy
+metadata:
+  name: team-security-group-policy
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "user-space.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      orbit/attach-security-group: "yes"
+  securityGroups:
+    groupIds:
+      - {{ .Values.team_security_group_id }}
+---
+apiVersion: vpcresources.k8s.aws/v1beta1
+kind: SecurityGroupPolicy
+metadata:
+  name: cluster-pod-security-group-policy
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "user-space.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      orbit/node-type: ec2
+  securityGroups:
+    groupIds:
+      - {{ .Values.cluster_pod_security_group_id }}

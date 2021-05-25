@@ -5,7 +5,7 @@
 namespace: ${team}
 nameOverride: ${plugin_id}
 fullnameOverride: ""
-serviceAccountName: ${team}
+serviceAccountName: default-editor
 storageClassName: fsx-lustre-${team}-${plugin_id}
 
 ## Change this to modify the storage file system and create new file systems

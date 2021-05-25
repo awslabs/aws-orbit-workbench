@@ -5,7 +5,7 @@
 namespace: ${team}
 nameOverride: overprovisioning-${plugin_id}
 fullnameOverride: ""
-serviceAccountName: ${team}
+serviceAccountName: default-editor
 
 securityContext:
   fsGroup: 100

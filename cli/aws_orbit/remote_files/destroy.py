@@ -17,7 +17,7 @@ from typing import Tuple
 
 from aws_orbit import plugins
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
-from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, teams
+from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, kubeflow, teams
 from aws_orbit.services import ecr, ssm
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -33,9 +33,9 @@ def delete_image(args: Tuple[str, ...]) -> None:
     else:
         raise ValueError("Unexpected number of values in args.")
 
-    env.deploy(context=context, add_images=[], remove_images=[image_name], eks_system_masters_roles_changes=None)
+    env.deploy(context=context, eks_system_masters_roles_changes=None)
     _logger.debug("Env changes deployed")
-    ecr.delete_repo(repo=f"orbit-{context.name}-{image_name}")
+    ecr.delete_repo(repo=f"orbit-{context.name}/{image_name}")
     _logger.debug("Docker Image Destroyed from ECR")
 
 
@@ -71,6 +71,10 @@ def destroy_env(args: Tuple[str, ...]) -> None:
 
     helm.destroy_env(context=context)
     _logger.debug("Helm Charts uninstalled")
+
+    kubeflow.destroy_kubeflow(context=context)
+    _logger.debug("Kubeflow uninstalled")
+
     kubectl.destroy_env(context=context)
     _logger.debug("Kubernetes Environment components destroyed")
     eksctl.destroy_env(context=context)

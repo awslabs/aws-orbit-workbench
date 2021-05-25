@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, cast
 
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_kms as kms
@@ -191,7 +191,7 @@ class IamBuilder:
                     actions=[
                         "ecr:*",
                     ],
-                    resources=[f"arn:{partition}:ecr:{region}:{account}:repository/orbit-{env_name}-users-*"],
+                    resources=[f"arn:{partition}:ecr:{region}:{account}:repository/orbit-{env_name}/users/*"],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -270,8 +270,8 @@ class IamBuilder:
                         "logs:PutLogEvents",
                     ],
                     resources=[
-                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}:log-stream:*"  # noqa
-                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws-glue-databrew/*:log-stream:*"
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}:log-stream:*",  # noqa
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws-glue-databrew/*:log-stream:*",
                     ],
                 ),
                 iam.PolicyStatement(
@@ -299,6 +299,15 @@ class IamBuilder:
                         f"arn:{partition}:ecr:{region}:{account}:repository/*",
                     ],
                 ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "eks:DescribeCluster",
+                    ],
+                    resources=[
+                        f"arn:{partition}:eks:{region}:{account}:cluster/orbit-{env_name}",
+                    ],
+                ),
             ],
         )
 
@@ -321,22 +330,27 @@ class IamBuilder:
             if "orbit" in policy_name
         ]
 
-        managed_policies = managed_policies + aws_managed_user_policies + orbit_custom_policies
+        managed_policies = (
+            managed_policies + cast(List[object], aws_managed_user_policies) + cast(List[object], orbit_custom_policies)
+        )
 
         role = iam.Role(
             scope=scope,
             id=lake_role_name,
             role_name=lake_role_name,
-            assumed_by=iam.CompositePrincipal(
-                iam.ServicePrincipal("ec2.amazonaws.com"),
-                iam.ServicePrincipal("glue.amazonaws.com"),
-                iam.ServicePrincipal("sagemaker.amazonaws.com"),
-                iam.ServicePrincipal("redshift.amazonaws.com"),
-                iam.ServicePrincipal("codepipeline.amazonaws.com"),
-                iam.ServicePrincipal("personalize.amazonaws.com"),
-                iam.ServicePrincipal("databrew.amazonaws.com"),
+            assumed_by=cast(
+                iam.IPrincipal,
+                iam.CompositePrincipal(
+                    iam.ServicePrincipal("ec2.amazonaws.com"),
+                    iam.ServicePrincipal("glue.amazonaws.com"),
+                    iam.ServicePrincipal("sagemaker.amazonaws.com"),
+                    iam.ServicePrincipal("redshift.amazonaws.com"),
+                    iam.ServicePrincipal("codepipeline.amazonaws.com"),
+                    iam.ServicePrincipal("personalize.amazonaws.com"),
+                    iam.ServicePrincipal("databrew.amazonaws.com"),
+                ),
             ),
-            managed_policies=managed_policies,
+            managed_policies=cast(Optional[Sequence[iam.IManagedPolicy]], managed_policies),
         )
         if role.assume_role_policy:
             role.assume_role_policy.add_statements(
@@ -344,13 +358,16 @@ class IamBuilder:
                     effect=iam.Effect.ALLOW,
                     actions=["sts:AssumeRoleWithWebIdentity"],
                     principals=[
-                        iam.FederatedPrincipal(
-                            federated=f"arn:{partition}:iam::{account}:oidc-provider/{context.eks_oidc_provider}",
-                            conditions={
-                                "StringLike": {
-                                    f"{context.eks_oidc_provider}:sub": f"system:serviceaccount:{team_name}:*"
-                                }
-                            },
+                        cast(
+                            iam.IPrincipal,
+                            iam.FederatedPrincipal(
+                                federated=f"arn:{partition}:iam::{account}:oidc-provider/{context.eks_oidc_provider}",
+                                conditions={
+                                    "StringLike": {
+                                        f"{context.eks_oidc_provider}:sub": f"system:serviceaccount:{team_name}*:*"
+                                    }
+                                },
+                            ),
                         )
                     ],
                 ),

@@ -28,6 +28,7 @@ from aws_orbit.models.manifest import (
     DataNetworkingManifest,
     FoundationManifest,
     ImageManifest,
+    ImagesManifest,
     Manifest,
     ManifestSerDe,
     NetworkingManifest,
@@ -40,9 +41,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 def _request_dockerhub_credential(msg_ctx: MessagesContext) -> Tuple[str, str]:
     if msg_ctx.pbar is not None:
         msg_ctx.pbar.clear()
-    msg_ctx.info(
-        "When Container Images are built from source or pulled from Dockerhub, " "a Dockerhub login is required."
-    )
+    msg_ctx.info("When Container Images are from Dockerhub, " "a Dockerhub login is required.")
     username = cast(
         str,
         click.prompt("Please enter the DockerHub username", type=str, hide_input=False),
@@ -60,11 +59,11 @@ def _get_images_dirs(context: "Context", manifest_filename: str, skip_images: bo
     else:
         refdir: str = os.path.dirname(os.path.abspath(manifest_filename))
         _logger.debug("refdir: %s", refdir)
-        _logger.debug(context.images.jupyter_hub.source)
+        _logger.debug(context.images.jupyter_hub.get_source(account_id=context.account_id, region=context.region))
         dirs = [
             (os.path.join(refdir, getattr(context.images, name).path), name.replace("_", "-"))
             for name in context.images.names
-            if getattr(context.images, name).source == "code"
+            if getattr(context.images, name).get_source(account_id=context.account_id, region=context.region) == "code"
         ]
         _logger.debug("dirs: %s", dirs)
     return dirs
@@ -89,7 +88,9 @@ def deploy_toolkit(
     stack_exist: bool = cfn.does_stack_exist(stack_name=context.toolkit.stack_name)
     credential_exist: bool = dockerhub.does_credential_exist(context=context) if stack_exist else False
     image_manifests = [cast(ImageManifest, getattr(context.images, i)) for i in context.images.names]
-    credential_required: bool = any([im.source == "dockerhub" or im.source == "code" for im in image_manifests])
+    credential_required: bool = any(
+        [im.get_source(account_id=context.account_id, region=context.region) == "dockerhub" for im in image_manifests]
+    )
 
     if stack_exist:
         if credential_required and not credential_exist and not credential_received:
@@ -213,6 +214,15 @@ def deploy_env(
         msg_ctx.progress(3)
 
         context: "Context" = ContextSerDe.load_context_from_manifest(manifest=manifest)
+        image_manifests = {"code_build": manifest.images.code_build, "landing_page": manifest.images.landing_page}
+
+        for name in context.images.names:
+            # We don't allow these images to be managed with an input Manifest
+            # These images should be changed/maintained in manifests.py
+            if name not in ["code_build", "image_replicator", "k8s-utilities"]:
+                image_manifests[name] = getattr(context.images, name) if skip_images else getattr(manifest.images, name)
+        context.images = ImagesManifest(**image_manifests)  # type: ignore
+
         msg_ctx.info("Current Context loaded")
         msg_ctx.progress(4)
 
@@ -358,7 +368,7 @@ def _deploy_image(
         context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
 
         if cfn.does_stack_exist(stack_name=f"orbit-{context.name}") is False:
-            msg_ctx.error("Please, deploy your environment before deploy any addicional docker image")
+            msg_ctx.error("Please, deploy your environment before deploy any additional docker image")
             return
 
         plugins.PLUGINS_REGISTRIES.load_plugins(

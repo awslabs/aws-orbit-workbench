@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-from typing import List
+from typing import List, Optional, cast
 
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_efs as efs
@@ -43,7 +43,7 @@ class EfsBuilder:
             throughput_mode=efs.ThroughputMode.BURSTING,
             security_group=efs_security_group,
             vpc_subnets=ec2.SubnetSelection(subnets=subnets),
-            kms_key=team_kms_key,
+            kms_key=cast(Optional[kms.IKey], team_kms_key),
         )
         return efs_fs
 
@@ -55,8 +55,8 @@ class EfsBuilder:
         return efs.AccessPoint(
             scope=scope,
             id=ap_name,
-            file_system=shared_fs,
-            path=f"/{team_name}",
+            file_system=cast(efs.IFileSystem, shared_fs),
+            path=f"/{team_name}/shared",
             posix_user=efs.PosixUser(gid="100", uid="1000"),
             create_acl=efs.Acl(owner_gid="100", owner_uid="1000", permissions="770"),
         )

@@ -17,21 +17,20 @@ import logging
 import os
 import shutil
 import sys
-from typing import List, cast
+from typing import cast
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2
-import aws_cdk.aws_ecr as ecr
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_lambda_python as lambda_python
+import aws_cdk.aws_sam as sam
 import aws_cdk.aws_ssm as ssm
 from aws_cdk import aws_lambda
-from aws_cdk.core import App, CfnOutput, Construct, Duration, Environment, IConstruct, Stack, Tags
+from aws_cdk.core import App, Construct, Duration, Environment, IConstruct, Stack, Tags
 
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.cdk import _lambda_path
 from aws_orbit.services import cognito as orbit_cognito
-from aws_orbit.utils import extract_images_names
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -42,14 +41,10 @@ class Env(Stack):
         scope: Construct,
         id: str,
         context: "Context",
-        add_images: List[str],
-        remove_images: List[str],
     ) -> None:
         self.scope = scope
         self.id = id
         self.context = context
-        self.add_images = add_images
-        self.remove_images = remove_images
         super().__init__(
             scope=scope,
             id=id,
@@ -67,7 +62,6 @@ class Env(Stack):
             vpc_id=self.context.networking.vpc_id,
             availability_zones=self.context.networking.availability_zones,
         )
-        self.repos = self._create_ecr_repos()
         self.role_eks_cluster = self._create_role_cluster()
         self.role_eks_env_nodegroup = self._create_env_nodegroup_role()
         self.role_fargate_profile = self._create_role_fargate_profile()
@@ -88,31 +82,7 @@ class Env(Stack):
         self.eks_service_lambda = self._create_eks_service_lambda()
         self.cluster_pod_security_group = self._create_cluster_pod_security_group()
         self.context_parameter = self._create_manifest_parameter()
-
-    def create_repo(self, image_name: str) -> ecr.Repository:
-        return ecr.Repository(
-            scope=self,
-            id=f"repo-{image_name}",
-            repository_name=f"orbit-{self.context.name}-{image_name}",
-        )
-
-    def _create_ecr_repos(self) -> List[ecr.Repository]:
-        current_images_names = extract_images_names(env_name=self.context.name)
-        current_images_names = list(set(current_images_names) - set(self.remove_images))
-        repos = [self.create_repo(image_name=r) for r in current_images_names]
-        for image_name in self.add_images:
-            if image_name not in current_images_names:
-                repos.append(self.create_repo(image_name=image_name))
-                current_images_names.append(image_name)
-        if current_images_names:
-            current_images_names.sort()
-            CfnOutput(
-                scope=self,
-                id="repos",
-                export_name=f"orbit-{self.context.name}-repos",
-                value=",".join([x for x in current_images_names]),
-            )
-        return repos
+        self._create_post_authentication_lambda()
 
     def _create_role_cluster(self) -> iam.Role:
         name: str = f"orbit-{self.context.name}-eks-cluster-role"
@@ -120,9 +90,12 @@ class Env(Stack):
             scope=self,
             id=name,
             role_name=name,
-            assumed_by=iam.CompositePrincipal(
-                iam.ServicePrincipal("eks.amazonaws.com"),
-                iam.ServicePrincipal("eks-fargate-pods.amazonaws.com"),
+            assumed_by=cast(
+                iam.IPrincipal,
+                iam.CompositePrincipal(
+                    iam.ServicePrincipal("eks.amazonaws.com"),
+                    iam.ServicePrincipal("eks-fargate-pods.amazonaws.com"),
+                ),
             ),
             managed_policies=[
                 iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name="AmazonEKSClusterPolicy"),
@@ -175,9 +148,12 @@ class Env(Stack):
             scope=self,
             id=name,
             role_name=name,
-            assumed_by=iam.CompositePrincipal(
-                iam.ServicePrincipal("eks.amazonaws.com"),
-                iam.ServicePrincipal("eks-fargate-pods.amazonaws.com"),
+            assumed_by=cast(
+                iam.IPrincipal,
+                iam.CompositePrincipal(
+                    iam.ServicePrincipal("eks.amazonaws.com"),
+                    iam.ServicePrincipal("eks-fargate-pods.amazonaws.com"),
+                ),
             ),
             managed_policies=[
                 iam.ManagedPolicy.from_aws_managed_policy_name(
@@ -229,7 +205,7 @@ class Env(Stack):
             scope=self,
             id=name,
             role_name=name,
-            assumed_by=iam.ServicePrincipal("eks.amazonaws.com"),
+            assumed_by=cast(iam.IPrincipal, iam.ServicePrincipal("eks.amazonaws.com")),
             inline_policies={
                 "Logging": iam.PolicyDocument(
                     statements=[
@@ -261,9 +237,9 @@ class Env(Stack):
         return cognito.UserPoolClient(
             scope=self,
             id="user-pool-client",
-            user_pool=self.user_pool,
+            user_pool=cast(cognito.IUserPool, self.user_pool),
             auth_flows=cognito.AuthFlow(user_srp=True, admin_user_password=False, custom=False),
-            generate_secret=False,
+            generate_secret=True,
             prevent_user_existence_errors=True,
             user_pool_client_name="orbit",
         )
@@ -293,13 +269,16 @@ class Env(Stack):
             scope=self,
             id=name,
             role_name=name,
-            assumed_by=iam.FederatedPrincipal(
-                federated="cognito-identity.amazonaws.com",
-                conditions={
-                    "StringEquals": {"cognito-identity.amazonaws.com:aud": pool.ref},
-                    "ForAnyValue:StringLike": {"cognito-identity.amazonaws.com:amr": "authenticated"},
-                },
-                assume_role_action="sts:AssumeRoleWithWebIdentity",
+            assumed_by=cast(
+                iam.IPrincipal,
+                iam.FederatedPrincipal(
+                    federated="cognito-identity.amazonaws.com",
+                    conditions={
+                        "StringEquals": {"cognito-identity.amazonaws.com:aud": pool.ref},
+                        "ForAnyValue:StringLike": {"cognito-identity.amazonaws.com:amr": "authenticated"},
+                    },
+                    assume_role_action="sts:AssumeRoleWithWebIdentity",
+                ),
             ),
             inline_policies={
                 "cognito-default": iam.PolicyDocument(
@@ -332,13 +311,16 @@ class Env(Stack):
             scope=self,
             id=name,
             role_name=name,
-            assumed_by=iam.FederatedPrincipal(
-                federated="cognito-identity.amazonaws.com",
-                conditions={
-                    "StringEquals": {"cognito-identity.amazonaws.com:aud": pool.ref},
-                    "ForAnyValue:StringLike": {"cognito-identity.amazonaws.com:amr": "unauthenticated"},
-                },
-                assume_role_action="sts:AssumeRoleWithWebIdentity",
+            assumed_by=cast(
+                iam.IPrincipal,
+                iam.FederatedPrincipal(
+                    federated="cognito-identity.amazonaws.com",
+                    conditions={
+                        "StringEquals": {"cognito-identity.amazonaws.com:aud": pool.ref},
+                        "ForAnyValue:StringLike": {"cognito-identity.amazonaws.com:amr": "unauthenticated"},
+                    },
+                    assume_role_action="sts:AssumeRoleWithWebIdentity",
+                ),
             ),
             inline_policies={
                 "cognito-default": iam.PolicyDocument(
@@ -416,6 +398,66 @@ class Env(Stack):
             ],
         )
 
+    def _create_post_authentication_lambda(self) -> None:
+        k8s_layer_name = f"orbit-{self.context.name}-k8s-base-layer"
+
+        sam_app = sam.CfnApplication(
+            scope=self,
+            id="awscli_kubectl_helm_lambda_layer_sam",
+            location=sam.CfnApplication.ApplicationLocationProperty(
+                application_id="arn:aws:serverlessrepo:us-east-1:903779448426:applications/lambda-layer-kubectl",
+                semantic_version="2.0.0",
+            ),
+            parameters={"LayerName": k8s_layer_name},
+        )
+
+        role_name = f"orbit-{self.context.name}-admin"
+        role_arn = f"arn:aws:iam::{self.context.account_id}:role/{role_name}"
+
+        lambda_python.PythonFunction(
+            scope=self,
+            id="cognito_post_authentication_lambda",
+            function_name=f"orbit-{self.context.name}-post-authentication",
+            entry=_lambda_path("cognito_post_authentication"),
+            index="index.py",
+            handler="handler",
+            runtime=aws_lambda.Runtime.PYTHON_3_7,
+            timeout=Duration.seconds(300),
+            role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-role", role_arn=role_arn),
+            environment={
+                "REGION": self.context.region,
+                "ORBIT_ENV": self.context.name,
+                "ACCOUNT_ID": self.context.account_id,
+            },
+            memory_size=128,
+        )
+
+        lambda_python.PythonFunction(
+            scope=self,
+            id="cognito_post_authentication_k8s_lambda",
+            entry=_lambda_path("cognito_post_authentication"),
+            function_name=f"orbit-{self.context.name}-post-auth-k8s-manage",
+            index="k8s_manage.py",
+            handler="handler",
+            runtime=aws_lambda.Runtime.PYTHON_3_7,
+            timeout=Duration.seconds(300),
+            role=iam.Role.from_role_arn(scope=self, id="cognito-post-auth-k8s-role", role_arn=role_arn),
+            environment={
+                "REGION": self.context.region,
+                "PATH": "/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin:/opt/awscli:/opt/kubectl:/opt/helm",
+                "ORBIT_ENV": self.context.name,
+                "ACCOUNT_ID": self.context.account_id,
+            },
+            layers=[
+                aws_lambda.LayerVersion.from_layer_version_arn(
+                    scope=self,
+                    id="K8sLambdaLayer",
+                    layer_version_arn=(sam_app.get_att("Outputs.LayerVersionArn").to_string()),
+                )
+            ],
+            memory_size=256,
+        )
+
     def _create_manifest_parameter(self) -> ssm.StringParameter:
         parameter: ssm.StringParameter = ssm.StringParameter(
             scope=self,
@@ -448,16 +490,14 @@ class Env(Stack):
             security_group_name=name,
             vpc=self.i_vpc,
         )
-        Tags.of(scope=sg).add(key="Name", value=name)
+        Tags.of(scope=cast(IConstruct, sg)).add(key="Name", value=name)
         return sg
 
 
 def main() -> None:
     _logger.debug("sys.argv: %s", sys.argv)
-    if len(sys.argv) == 4:
+    if len(sys.argv) == 2:
         context: "Context" = ContextSerDe.load_context_from_ssm(env_name=sys.argv[1], type=Context)
-        add_images = [] if sys.argv[2] == "null" else sys.argv[2].split(sep=",")
-        remove_images = [] if sys.argv[3] == "null" else sys.argv[3].split(sep=",")
     else:
         raise ValueError(f"Unexpected number of values in sys.argv ({len(sys.argv)}), {sys.argv}")
 
@@ -470,8 +510,6 @@ def main() -> None:
         scope=app,
         id=context.env_stack_name,
         context=context,
-        add_images=add_images,
-        remove_images=remove_images,
     )
     app.synth(force=True)
 

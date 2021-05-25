@@ -1,0 +1,102 @@
+# This is the lowest commond properties which every orbit-based container requires.
+apiVersion: orbit.aws/v1
+kind: PodSetting
+metadata:
+  name: orbit-pod-basics
+  namespace: {{ .Values.team }}
+  labels:
+    orbit/space: team
+    {{- include "team-space.labels" . | nindent 4 }}
+spec:
+  desc:  Orbit common pod settings for jupyter-base notebooks
+  injectUserContext: true
+  containerSelector:
+    jsonpath: "metadata.labels.app"
+  podSelector:
+    matchExpressions:
+      - key: notebook-name
+        operator: Exists
+  volumeMounts:
+    - mountPath: /home/jovyan/shared
+      name: efs-volume
+  volumes:
+    - name: efs-volume
+      persistentVolumeClaim:
+        claimName: team-efs
+  labels:
+    orbit/node-type: ec2
+    orbit/attach-security-group: "yes"
+{{/*    orbit/notebook: yes*/}}
+  env:
+    - name: AWS_DEFAULT_REGION
+      value: "{{ .Values.region }}"
+    - name: AWS_ORBIT_ENV
+      value: "{{ .Values.env }}"
+    - name: AWS_ORBIT_TEAM_SPACE
+      value: "{{ .Values.team }}"
+    - name: GRANT_SUDO
+      value: "{{ .Values.grant_sudo }}"
+    - name: JUPYTER_ENABLE_LAB
+      value: "yes"
+    - name: ACCOUNT_ID
+      value: "{{ .Values.account_id }}"
+    - name: AWS_ORBIT_S3_BUCKET
+      value: "{{ .Values.s3_toolkit_bucket }}"
+    - name: AWS_STS_REGIONAL_ENDPOINTS
+      value: "{{ .Values.sts_ep }}"
+  nodeSelector:
+    orbit/usage: teams
+    orbit/node-type: ec2
+  annotations:
+    AWS_ORBIT_TEAM_SPACE: {{ .Values.team }}
+    AWS_ORBIT_ENV: {{ .Values.env }}
+  securityContext:
+    runAsUser: 0  # The notebook must run as root, the start up script will switch to jovyan
+    fsGroup: 100
+---
+# This is the lowest commond properties which every orbit-based container requires.
+apiVersion: orbit.aws/v1
+kind: PodSetting
+metadata:
+  name: orbit-pod-interactive-notebook
+  namespace: {{ .Values.team }}
+  labels:
+    orbit/space: team
+    {{- include "team-space.labels" . | nindent 4 }}
+spec:
+  desc:  Orbit interactive notebook settings for jupyter-base notebooks
+  command: ["sh","-c", "/usr/local/bin/start.sh jupyter lab --ServerApp.notebook_dir=/home/jovyan --ServerApp.ip=0.0.0.0 --ServerApp.open_browser=False
+        --ServerApp.allow_root=True --ServerApp.port=8888
+        --ServerApp.token='' --ServerApp.password='' --ServerApp.allow_origin='*' --ServerApp.base_url=${NB_PREFIX}"]
+  containerSelector:
+    jsonpath: "metadata.labels.app"
+  podSelector:
+    matchExpressions:
+      - key: notebook-name
+        operator: Exists
+      - key: app
+        operator: NotIn
+        values:
+          - "orbit-runner"
+---
+# This configures the image policy to force PULL when using development env.
+{{ if .Values.DEVELOPMENT }}
+apiVersion: orbit.aws/v1
+kind: PodSetting
+metadata:
+  name: orbit-pod-force-image-pull
+  namespace: {{ .Values.team }}
+  labels:
+    orbit/space: team
+    {{- include "team-space.labels" . | nindent 4 }}
+spec:
+  desc:  Orbit common pod settings for jupyter-base notebooks
+  containerSelector:
+    jsonpath: "metadata.name"
+  podSelector:
+    matchExpressions:
+      - key: notebook-name
+        operator: Exists
+  imagePullPolicy: Always
+---
+{{ end }}

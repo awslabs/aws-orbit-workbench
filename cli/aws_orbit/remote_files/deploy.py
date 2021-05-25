@@ -21,9 +21,10 @@ from typing import Any, List, Optional, Tuple, cast
 from aws_orbit import bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, TeamContext
-from aws_orbit.models.manifest import ImageManifest, Manifest, ManifestSerDe
-from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, teams, utils
-from aws_orbit.services import codebuild
+from aws_orbit.models.manifest import ImageManifest, ImagesManifest, Manifest, ManifestSerDe
+from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, kubeflow, teams, utils
+from aws_orbit.services import codebuild, ecr
+from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -38,15 +39,24 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
     script: Optional[str] = args[3] if args[3] != "NO_SCRIPT" else None
     build_args = args[4:]
 
+    manifest = ManifestSerDe.load_manifest_from_ssm(env_name=env, type=Manifest)
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
-    _logger.debug("manifest.name: %s", context.name)
+    _logger.debug("context: %s", vars(context))
+
+    if manifest is None:
+        raise Exception("Unable to load required Manifest from SSM")
 
     docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
     _logger.debug("Deploying the %s Docker image", image_name)
 
-    image_def: ImageManifest = getattr(context.images, image_name.replace("-", "_"))
-    if image_def.source == "code":
+    ecr_repo = f"orbit-{context.name}/{image_name}"
+    if not ecr.describe_repositories(repository_names=[ecr_repo]):
+        ecr.create_repository(repository_name=ecr_repo, env_name=context.name)
+
+    image_def: ImageManifest = getattr(manifest.images, image_name.replace("-", "_"))
+    source = image_def.get_source(account_id=context.account_id, region=context.region)
+    if source == "code":
         _logger.debug("Building and deploy docker image from source...")
         path = os.path.join(os.getcwd(), "bundle", dir)
         _logger.debug("path: %s", path)
@@ -56,14 +66,19 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
         docker.deploy_image_from_source(
             context=context,
             dir=path,
-            name=f"orbit-{context.name}-{image_name}",
+            name=ecr_repo,
             build_args=cast(Optional[List[str]], build_args),
             tag=tag,
         )
     else:
         _logger.debug("Replicating docker image to ECR...")
         docker.replicate_image(
-            context=context, image_name=image_name, deployed_name=f"orbit-{context.name}-{image_name}"
+            context=context,
+            image_name=image_name,
+            deployed_name=ecr_repo,
+            source=source,
+            source_repository=image_def.repository,
+            source_version=image_def.version,
         )
 
     _logger.debug("Docker Image Deployed to ECR")
@@ -85,6 +100,7 @@ def _deploy_image_remotely(context: "Context", name: str, bundle_path: str, buil
 def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[str], Optional[str], List[str]]]) -> None:
     _logger.debug("images:\n%s", images)
 
+    new_images_manifest = {name: getattr(context.images, name) for name in context.images.names}
     max_workers = 5
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures: List[Future[Any]] = []
@@ -99,7 +115,10 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
             path = os.path.join(os.getcwd(), "bundle", name)
             _logger.debug("path: %s", path)
 
-            if getattr(context.images, name.replace("-", "_")).source == "code":
+            image_attr_name = name.replace("-", "_")
+            image_def: ImageManifest = getattr(context.images, image_attr_name)
+            tag = image_def.version
+            if image_def.get_source(account_id=context.account_id, region=context.region) == "code":
                 dirs: List[Tuple[str, str]] = [(path, cast(str, dir))]
             else:
                 dirs = []
@@ -116,34 +135,37 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
                     f"{context.name} {name} {dir} {script_str} {' '.join(build_args)}"
                 ],
             )
+            new_images_manifest[image_attr_name] = ImageManifest(
+                repository=f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}/{name}",
+                version=tag,
+                path=None,
+            )
             futures.append(executor.submit(_deploy_image_remotely, context, name, bundle_path, buildspec))
 
         for f in futures:
             f.result()
 
+        context.images = ImagesManifest(**new_images_manifest)
+        ContextSerDe.dump_context_to_ssm(context=context)
 
-def deploy_images_remotely(context: "Context") -> None:
-    # Required images
+
+def deploy_images_remotely(context: "Context", skip_images: bool = True) -> None:
+    # Required images we always build/replicate
     images: List[Tuple[str, Optional[str], Optional[str], List[str]]] = [
-        ("jupyter-hub", "jupyter-hub", None, []),
-        ("jupyter-user", "jupyter-user", "build.sh", []),
-        ("landing-page", "landing-page", "build.sh", []),
         ("image-replicator", "image-replicator", None, []),
+        ("k8s-utilities", "k8s-utilities", None, []),
+        ("admission-controller", "admission-controller", None, []),
     ]
 
-    # Secondary images required if internet is not accessible
-    if context.networking.data.internet_accessible is False:
-        images += [
-            ("aws-efs-csi-driver", None, None, []),
-            ("livenessprobe", None, None, []),
-            ("csi-node-driver-registrar", None, None, []),
-            ("k8-dashboard", None, None, []),
-            ("k8-metrics-scraper", None, None, []),
-            ("k8-metrics-server", None, None, []),
-            ("cluster-autoscaler", None, None, []),
-            ("ssm-agent-installer", None, None, []),
-            ("pause", None, None, []),
-        ]
+    # Secondary images we can optionally skip
+    if not skip_images:
+        images += []
+        if context.images.landing_page.get_source(context.account_id, context.region) != "ecr-public":
+            images.append(("landing-page", "landing-page", "build.sh", []))
+        if context.images.jupyter_hub.get_source(context.account_id, context.region) != "ecr-public":
+            images.append(("jupyter-hub", "jupyter-hub", None, []))
+        if context.images.jupyter_user.get_source(context.account_id, context.region) != "ecr-public":
+            images.append(("jupyter-user", "jupyter-user", "build.sh", []))
 
     _logger.debug("Building/repclicating Container Images")
     _deploy_images_batch(context=context, images=images)
@@ -183,16 +205,12 @@ def deploy_env(args: Tuple[str, ...]) -> None:
     _logger.debug("CDK Toolkit Stack deployed")
     env.deploy(
         context=context,
-        add_images=[],
-        remove_images=[],
         eks_system_masters_roles_changes=changeset.eks_system_masters_roles_changeset if changeset else None,
     )
+
     _logger.debug("Env Stack deployed")
-    if skip_images_remote_flag == "skip-images":
-        _logger.debug("Docker images build skipped")
-    else:
-        deploy_images_remotely(context=context)
-        _logger.debug("Docker Images deployed")
+    deploy_images_remotely(context=context, skip_images=skip_images_remote_flag == "skip-images")
+    _logger.debug("Docker Images deployed")
     eksctl.deploy_env(
         context=context,
         changeset=changeset,
@@ -200,12 +218,50 @@ def deploy_env(args: Tuple[str, ...]) -> None:
     _logger.debug("EKS Environment Stack deployed")
     kubectl.deploy_env(context=context)
     _logger.debug("Kubernetes Environment components deployed")
+
+    kubeflow.deploy_kubeflow(context=context)
+
     helm.deploy_env(context=context)
     _logger.debug("Helm Charts installed")
 
     k8s_context = utils.get_k8s_context(context=context)
-    kubectl.fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=False)
+    kubectl.fetch_kubectl_data(context=context, k8s_context=k8s_context)
     ContextSerDe.dump_context_to_ssm(context=context)
+    _logger.debug("Updating userpool redirect")
+    _update_userpool_client(context=context)
+    _update_userpool(context=context)
+
+
+def _update_userpool(context: Context) -> None:
+    cognito_client = boto3_client("cognito-idp")
+
+    function_arn = (
+        f"arn:aws:lambda:{context.region}:{context.account_id}:function:orbit-{context.name}-post-authentication"
+    )
+
+    cognito_client.update_user_pool(UserPoolId=context.user_pool_id, LambdaConfig={"PostAuthentication": function_arn})
+
+
+def _update_userpool_client(context: Context) -> None:
+    cognito = boto3_client("cognito-idp")
+    cognito.update_user_pool_client(
+        UserPoolId=context.user_pool_id,
+        ClientId=context.user_pool_client_id,
+        CallbackURLs=[
+            f"{context.landing_page_url}/oauth2/idpresponse",
+        ],
+        LogoutURLs=[],
+        ExplicitAuthFlows=["ALLOW_CUSTOM_AUTH", "ALLOW_USER_SRP_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"],
+        SupportedIdentityProviders=["COGNITO"],
+        AllowedOAuthFlows=["code"],
+        AllowedOAuthScopes=["aws.cognito.signin.user.admin", "email", "openid", "profile"],
+        AllowedOAuthFlowsUserPoolClient=True,
+        PreventUserExistenceErrors="ENABLED",
+        TokenValidityUnits={"AccessToken": "minutes", "IdToken": "minutes", "RefreshToken": "minutes"},
+        RefreshTokenValidity=1440,
+        AccessTokenValidity=60,
+        IdTokenValidity=60,
+    )
 
 
 def deploy_teams(args: Tuple[str, ...]) -> None:
@@ -279,6 +335,4 @@ def deploy_teams(args: Tuple[str, ...]) -> None:
         ContextSerDe.dump_context_to_ssm(context=context)
         _logger.debug("Team Plugins deployed")
 
-    k8s_context = utils.get_k8s_context(context=context)
-    kubectl.fetch_kubectl_data(context=context, k8s_context=k8s_context, include_teams=True)
     _logger.debug("Teams deployed")

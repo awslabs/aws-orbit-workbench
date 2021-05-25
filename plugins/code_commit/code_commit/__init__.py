@@ -28,7 +28,12 @@ ORBIT_CODE_COMMIT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 @hooks.deploy
-def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+def deploy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
     _logger.debug("Deploying CodeCommit plugin resources for team %s", team_context.name)
     cdk_deploy(
         stack_name=f"orbit-{context.name}-{team_context.name}-codecommit",
@@ -40,7 +45,12 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
 
 
 @hooks.destroy
-def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+def destroy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
     _logger.debug("Destroying CodeCommit plugin resources for team %s", team_context.name)
     cdk_destroy(
         stack_name=f"orbit-{context.name}-{team_context.name}-codecommit",
@@ -53,7 +63,10 @@ def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", par
 
 @hooks.dockerfile_injection
 def dockerfile_injection(
-    plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
 ) -> List[str]:
     _logger.debug("Injecting CodeCommit plugin commands for team %s Image", team_context.name)
     return [
@@ -66,7 +79,10 @@ def dockerfile_injection(
 
 @hooks.bootstrap_injection
 def bootstrap_injection(
-    plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
 ) -> str:
     _logger.debug("Injecting CodeCommit plugin commands for team %s Bootstrap", team_context.name)
     return """

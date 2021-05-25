@@ -50,7 +50,7 @@ if __name__ == "__main__":
         
     spark.stop()
 
-    with open("/efs/shared/jobs/output.txt", "w") as text_file:
+    with open("/home/jovyan/shared/jobs/output.txt", "w") as text_file:
         text_file.write("Pi is roughly %f" % (4.0 * count / n))
         text_file.write("\n\n env: \n")
         for k, v in os.environ.items():

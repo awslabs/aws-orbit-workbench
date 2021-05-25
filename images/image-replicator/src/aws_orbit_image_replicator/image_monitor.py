@@ -17,8 +17,27 @@ import time
 from multiprocessing import Queue, synchronize
 from typing import Any, Dict, List, Tuple
 
+import boto3
 from aws_orbit_image_replicator import load_config, logger
-from kubernetes.client import AppsV1Api
+from kubernetes.client import AppsV1Api, BatchV1Api, CoreV1Api
+
+
+def image_replicated(image: str) -> bool:
+    try:
+        repo, tag = image.split(":")
+        repo = "/".join(repo.split("/")[1:])
+        client = boto3.client("ecr")
+        paginator = client.get_paginator("list_images")
+        for page in paginator.paginate(repositoryName=repo):
+            for imageId in page["imageIds"]:
+                if imageId.get("imageTag", None) == tag:
+                    logger.debug("ECR Repository contains Image: %s", image)
+                    return True
+        logger.debug("Tag %s not found in ECR Repository %s", tag, repo)
+        return False
+    except Exception as e:
+        logger.exception(e)
+        return False
 
 
 def _get_desired_image(config: Dict[str, Any], image: str) -> str:
@@ -49,10 +68,15 @@ def _get_replication_status(
         status = replication_statuses.get(desired_image, "Unknown")
 
         if status == "Unknown":
-            logger.info("Queueing Replication Task: %s -> %s", image, desired_image)
-            status = "Pending:1"
-            replication_statuses[desired_image] = status
-            replications_queue.put({"src": image, "dest": desired_image})
+            if image_replicated(desired_image):
+                logger.info("Skipping previously completed Replication Task: %s -> %s", image, desired_image)
+                status = "Complete"
+                replication_statuses[desired_image] = status
+            else:
+                logger.info("Queueing Replication Task: %s -> %s", image, desired_image)
+                status = "Pending:1"
+                replication_statuses[desired_image] = status
+                replications_queue.put({"src": image, "dest": desired_image})
         elif status.startswith("Failed"):
             attempt = int(status.split(":")[1])
             if attempt < 3:
@@ -66,54 +90,32 @@ def _get_replication_status(
         return status
 
 
-def _inspect_item(
+def _inspect_containers(
     config: Dict[str, Any],
     lock: synchronize.Lock,
     replications_queue: Queue,  # type: ignore
     replication_statuses: Dict[str, str],
-    item: Any,
-) -> Tuple[Dict[str, Any], List[str]]:
-    statuses = []
-    containers = []
-    init_containers = []
+    containers: List[Any],
+) -> Tuple[List[Dict[str, str]], List[str]]:
+    statuses: List[str] = []
+    desired_containers: List[Dict[str, str]] = []
 
-    for container in item.spec.template.spec.containers:
-        desired_image = _get_desired_image(config, container.image)
-        logger.debug("Container Image: %s -> %s", container.image, desired_image)
-        containers.append({"name": container.name, "image": desired_image})
+    for container in containers:
+        name, image = (
+            (container["name"], container["image"])
+            if isinstance(container, dict)
+            else (container.name, container.image)
+        )
+        desired_image = _get_desired_image(config, image)
+        logger.debug("Container Image: %s -> %s", image, desired_image)
+        desired_containers.append({"name": name, "image": desired_image})
 
-        if container.image != desired_image:
-            status = _get_replication_status(
-                lock, replications_queue, replication_statuses, container.image, desired_image
-            )
-            logger.info("Image: %s -> %s, Replication Status: %s", container.image, desired_image, status)
+        if image != desired_image:
+            status = _get_replication_status(lock, replications_queue, replication_statuses, image, desired_image)
+            logger.info("Image: %s -> %s, Replication Status: %s", image, desired_image, status)
             statuses.append(status)
 
-    if item.spec.template.spec.init_containers:
-        for container in item.spec.template.spec.init_containers:
-            desired_image = _get_desired_image(config, container.image)
-            logger.debug("Init Container Image: %s -> %s", container.image, desired_image)
-            init_containers.append({"name": container.name, "image": desired_image})
-
-            if container.image != desired_image:
-                status = _get_replication_status(
-                    lock, replications_queue, replication_statuses, container.image, desired_image
-                )
-                logger.info("Image: %s -> %s, Replication Status: %s", container.image, desired_image, status)
-                statuses.append(status)
-
-    body = {
-        "spec": {
-            "template": {
-                "spec": {
-                    "containers": containers,
-                    "initContainers": init_containers,
-                }
-            }
-        }
-    }
-
-    return body, statuses
+    return desired_containers, statuses
 
 
 def _inspect_deployments(
@@ -124,14 +126,33 @@ def _inspect_deployments(
 ) -> None:
     deployments = AppsV1Api().list_deployment_for_all_namespaces()
     for deployment in deployments.items:
-        body, statuses = _inspect_item(config, lock, replications_queue, replication_statuses, deployment)
+        spec = deployment.spec.template.spec
+        containers, statuses = _inspect_containers(
+            config, lock, replications_queue, replication_statuses, spec.containers
+        )
+        init_containers, init_statuses = (
+            _inspect_containers(config, lock, replications_queue, replication_statuses, spec.init_containers)
+            if spec.init_containers
+            else ([], [])
+        )
 
-        if len(statuses) > 0 and all([status == "Complete" for status in statuses]):
+        all_statuses = statuses + init_statuses
+        all_containers = containers + init_containers
+        if len(all_statuses) > 0 and all([status == "Complete" for status in all_statuses]):
             with lock:
-                for container in (
-                    body["spec"]["template"]["spec"]["containers"] + body["spec"]["template"]["spec"]["initContainers"]
-                ):
+                for container in all_containers:
                     del replication_statuses[container["image"]]
+
+            body = {
+                "spec": {
+                    "template": {
+                        "spec": {
+                            "containers": containers,
+                            "initContainers": init_containers,
+                        }
+                    }
+                }
+            }
 
             AppsV1Api().patch_namespaced_deployment(
                 name=deployment.metadata.name,
@@ -151,14 +172,33 @@ def _inspect_daemon_sets(
 ) -> None:
     daemon_sets = AppsV1Api().list_daemon_set_for_all_namespaces()
     for daemon_set in daemon_sets.items:
-        body, statuses = _inspect_item(config, lock, replications_queue, replication_statuses, daemon_set)
+        spec = daemon_set.spec.template.spec
+        containers, statuses = _inspect_containers(
+            config, lock, replications_queue, replication_statuses, spec.containers
+        )
+        init_containers, init_statuses = (
+            _inspect_containers(config, lock, replications_queue, replication_statuses, spec.init_containers)
+            if spec.init_containers
+            else ([], [])
+        )
 
-        if len(statuses) > 0 and all([status == "Complete" for status in statuses]):
+        all_statuses = statuses + init_statuses
+        all_containers = containers + init_containers
+        if len(all_statuses) > 0 and all([status == "Complete" for status in all_statuses]):
             with lock:
-                for container in (
-                    body["spec"]["template"]["spec"]["containers"] + body["spec"]["template"]["spec"]["initContainers"]
-                ):
+                for container in all_containers:
                     del replication_statuses[container["image"]]
+
+            body = {
+                "spec": {
+                    "template": {
+                        "spec": {
+                            "containers": containers,
+                            "initContainers": init_containers,
+                        }
+                    }
+                }
+            }
 
             AppsV1Api().patch_namespaced_daemon_set(
                 name=daemon_set.metadata.name,
@@ -168,6 +208,100 @@ def _inspect_daemon_sets(
             logger.info(
                 "Patched Daemon Set: %s, Namespace: %s", daemon_set.metadata.name, daemon_set.metadata.namespace
             )
+
+
+def _inspect_jobs(
+    config: Dict[str, Any],
+    lock: synchronize.Lock,
+    replications_queue: Queue,  # type: ignore
+    replication_statuses: Dict[str, str],
+) -> None:
+    jobs = BatchV1Api().list_job_for_all_namespaces()
+    for job in jobs.items:
+        spec = job.spec.template.spec
+        containers, statuses = _inspect_containers(
+            config, lock, replications_queue, replication_statuses, spec.containers
+        )
+        init_containers, init_statuses = (
+            _inspect_containers(config, lock, replications_queue, replication_statuses, spec.init_containers)
+            if spec.init_containers
+            else ([], [])
+        )
+
+        all_statuses = statuses + init_statuses
+        all_containers = containers + init_containers
+        if len(all_statuses) > 0 and all([status == "Complete" for status in all_statuses]):
+            with lock:
+                for container in all_containers:
+                    del replication_statuses[container["image"]]
+
+            body = {
+                "spec": {
+                    "template": {
+                        "spec": {
+                            "containers": containers,
+                            "initContainers": init_containers,
+                        }
+                    }
+                }
+            }
+
+            BatchV1Api().patch_namespaced_job(
+                name=job.metadata.name,
+                namespace=job.metadata.namespace,
+                body=body,
+            )
+            logger.info("Patched Deployment: %s, Namespace: %s", job.metadata.name, job.metadata.namespace)
+
+
+def _inspect_standalone_pods(
+    config: Dict[str, Any],
+    lock: synchronize.Lock,
+    replications_queue: Queue,  # type: ignore
+    replication_statuses: Dict[str, str],
+) -> None:
+    pods = CoreV1Api().list_pod_for_all_namespaces()
+    for pod in pods.items:
+        if pod.metadata.owner_references:
+            owner_reference = pod.metadata.owner_references[0]
+            if owner_reference.kind != "Job":
+                logger.debug("Skipping Owned Pod: %s/%s", pod.metadata.namespace, pod.metadata.name)
+                continue
+            else:
+                logger.info(
+                    "Found Pod: %s/%s for Job: %s", pod.metadata.namespace, pod.metadata.name, owner_reference.name
+                )
+
+        spec = pod.spec
+        containers, statuses = _inspect_containers(
+            config, lock, replications_queue, replication_statuses, spec.containers
+        )
+        init_containers, init_statuses = (
+            _inspect_containers(config, lock, replications_queue, replication_statuses, spec.init_containers)
+            if spec.init_containers
+            else ([], [])
+        )
+
+        all_statuses = statuses + init_statuses
+        all_containers = containers + init_containers
+        if len(all_statuses) > 0 and all([status == "Complete" for status in all_statuses]):
+            with lock:
+                for container in all_containers:
+                    del replication_statuses[container["image"]]
+
+            body = {
+                "spec": {
+                    "containers": containers,
+                    "initContainers": init_containers,
+                }
+            }
+
+            CoreV1Api().patch_namespaced_pod(
+                name=pod.metadata.name,
+                namespace=pod.metadata.namespace,
+                body=body,
+            )
+            logger.info("Patched Pod: %s, Namespace: %s", pod.metadata.name, pod.metadata.namespace)
 
 
 def monitor(
@@ -180,13 +314,19 @@ def monitor(
         while True:
             load_config(config["in_cluster_deployment"])
 
-            logger.debug("Monitoring Deployments")
+            logger.info("Monitoring Deployments")
             _inspect_deployments(config, lock, replications_queue, replication_statuses)
 
-            logger.debug("Monitoring Daemon Sets")
+            logger.info("Monitoring Daemon Sets")
             _inspect_daemon_sets(config, lock, replications_queue, replication_statuses)
 
-            time.sleep(30)
+            # logger.info("Monitoring Jobs")
+            # _inspect_jobs(config, lock, replications_queue, replication_statuses)
+
+            logger.info("Monitoring Standalone Pods")
+            _inspect_standalone_pods(config, lock, replications_queue, replication_statuses)
+
+            time.sleep(20)
     except Exception as e:
         logger.exception(e)
         return -1

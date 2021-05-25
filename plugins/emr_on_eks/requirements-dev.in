@@ -7,7 +7,7 @@ wheel~=0.36.2
 twine~=3.3.0
 -e ../../cli/
 -e .
-aws-cdk.core~=1.67.0
-aws-cdk.aws-s3~=1.67.0
-aws-cdk.aws-ssm~=1.67.0
-aws-cdk.aws-iam~=1.67.0
+aws-cdk.core~=1.100.0
+aws-cdk.aws-s3~=1.100.0
+aws-cdk.aws-ssm~=1.100.0
+aws-cdk.aws-iam~=1.100.0

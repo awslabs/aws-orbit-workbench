@@ -290,20 +290,15 @@ class Context:
 
     def fetch_cognito_external_idp_data(self) -> None:
         _logger.debug("Fetching Cognito External IdP data...")
-        if self.cognito_external_provider:
-            client = boto3_client(service_name="cognito-idp")
-            response: Dict[str, Any] = client.describe_user_pool(UserPoolId=self.user_pool_id)
-            domain: str = response["UserPool"].get("Domain")
-            self.cognito_external_provider_domain = f"{domain}.auth.{self.region}.amazoncognito.com"
-            _logger.debug("cognito_external_provider_domain: %s", self.cognito_external_provider_domain)
-            response = client.describe_user_pool_client(UserPoolId=self.user_pool_id, ClientId=self.user_pool_client_id)
-            self.cognito_external_provider_redirect = response["UserPoolClient"]["CallbackURLs"][0]
-            _logger.debug("cognito_external_provider_redirect: %s", self.cognito_external_provider_redirect)
-            _logger.debug("Cognito External IdP data fetched successfully.")
-        else:
-            self.cognito_external_provider_domain = None
-            self.cognito_external_provider_domain_label = None
-            _logger.debug("No Cognito External IdP data to fetch.")
+        client = boto3_client(service_name="cognito-idp")
+        response: Dict[str, Any] = client.describe_user_pool(UserPoolId=self.user_pool_id)
+        domain: str = response["UserPool"].get("Domain")
+        self.cognito_external_provider_domain = f"{domain}.auth.{self.region}.amazoncognito.com"
+        _logger.debug("cognito_external_provider_domain: %s", self.cognito_external_provider_domain)
+        response = client.describe_user_pool_client(UserPoolId=self.user_pool_id, ClientId=self.user_pool_client_id)
+        self.cognito_external_provider_redirect = response["UserPoolClient"]["CallbackURLs"][0]
+        _logger.debug("cognito_external_provider_redirect: %s", self.cognito_external_provider_redirect)
+        _logger.debug("Cognito External IdP data fetched successfully.")
 
     def fetch_teams_data(self) -> None:
         _logger.debug("Fetching Teams data...")
@@ -318,7 +313,12 @@ def create_team_context_from_manifest(manifest: "Manifest", team_manifest: "Team
     region: str = utils.get_region()
     ssm_parameter_name: str = f"/orbit/{manifest.name}/teams/{team_manifest.name}/context"
     version = manifest.images.jupyter_user.version
-    base_image_address = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}-jupyter-user:{version}"
+    _logger.debug("Team Base Image: %s - %s", team_manifest.name, manifest.images.jupyter_user)
+    base_image_address = (
+        f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}/jupyter-user:{version}"
+        if manifest.images.jupyter_user.get_source(account_id=account_id, region=region) == "code"
+        else f"{manifest.images.jupyter_user.repository}:{version}"
+    )
     final_image_address = base_image_address
     return TeamContext(
         base_image_address=base_image_address,
@@ -383,7 +383,6 @@ class ContextSerDe(Generic[T, V]):
         context_parameter_name: str = f"/orbit/{manifest.name}/context"
         if ssm.does_parameter_exist(name=context_parameter_name):
             context: Context = ContextSerDe.load_context_from_ssm(env_name=manifest.name, type=Context)
-            context.images = manifest.images
             context.networking = create_networking_context_from_manifest(networking=manifest.networking)
             context.user_pool_id = manifest.user_pool_id
             context.shared_efs_fs_id = manifest.shared_efs_fs_id
@@ -433,6 +432,7 @@ class ContextSerDe(Generic[T, V]):
             )
         context.install_ssm_agent = manifest.install_ssm_agent
         context.install_image_replicator = manifest.install_image_replicator
+
         ContextSerDe.fetch_toolkit_data(context=context)
         ContextSerDe.dump_context_to_ssm(context=context)
         return context
@@ -447,6 +447,8 @@ class ContextSerDe(Generic[T, V]):
             )
             context.images = manifest.images
             context.policies = manifest.policies
+            context.codeartifact_domain = manifest.codeartifact_domain
+            context.codeartifact_repository = manifest.codeartifact_repository
         else:
             context = FoundationContext(
                 name=manifest.name,
@@ -477,6 +479,8 @@ class ContextSerDe(Generic[T, V]):
             content: Dict[str, Any] = cast(Dict[str, Any], Context.Schema().dump(context))
         elif isinstance(context, FoundationContext):
             content = cast(Dict[str, Any], FoundationContext.Schema().dump(context))
+        elif isinstance(context, TeamContext):
+            content = cast(Dict[str, Any], TeamContext.Schema().dump(context))
         else:
             raise ValueError("Unknown 'context' Type")
         return str(json.dumps(obj=content, sort_keys=True))
@@ -504,6 +508,7 @@ class ContextSerDe(Generic[T, V]):
             raise ValueError("Unknown 'context' Type")
 
         ssm.put_parameter(name=ssm_parameter_name, obj=content)
+        _logger.debug("Context written to SSM: %s", content)
 
     @staticmethod
     def load_context_from_ssm(env_name: str, type: Type[V]) -> V:
@@ -515,15 +520,16 @@ class ContextSerDe(Generic[T, V]):
                 msg = f"SSM parameter {context_parameter_name} not found for env {env_name}"
                 _logger.error(msg)
                 raise Exception(msg)
+            _logger.debug("Raw SSM: %s", main)
             teams_parameters = ssm.list_parameters(prefix=f"/orbit/{env_name}/teams/")
             _logger.debug("teams_parameters: %s", teams_parameters)
             teams = [ssm.get_parameter_if_exists(name=p) for p in teams_parameters if p.endswith("/context")]
             main["Teams"] = [t for t in teams if t]
-            return cast(V, Context.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
+            return cast(V, Context.Schema().load(data=main, many=False, partial=False, unknown="EXCLUDE"))
         elif type is FoundationContext:
             context_parameter_name = f"/orbit-foundation/{env_name}/context"
             main = ssm.get_parameter(name=context_parameter_name)
-            return cast(V, FoundationContext.Schema().load(data=main, many=False, partial=False, unknown="RAISE"))
+            return cast(V, FoundationContext.Schema().load(data=main, many=False, partial=False, unknown="EXCLUDE"))
         else:
             raise ValueError("Unknown 'context' Type")
 
@@ -580,4 +586,12 @@ class ContextSerDe(Generic[T, V]):
         context.cdk_toolkit.s3_bucket = (
             f"{top_level}-{context.name}-cdk-toolkit-{context.account_id}-{context.toolkit.deploy_id}"
         )
+
+        if isinstance(context, Context):
+            # Set the Helm repositories
+            _logger.debug(f"context.helm_repository: s3://{context.toolkit.s3_bucket}/helm/repositories/env")
+            context.helm_repository = f"s3://{context.toolkit.s3_bucket}/helm/repositories/env"
+
+            _logger.debug("context.toolkit: %s", context.toolkit)
+
         _logger.debug("Toolkit data fetched successfully.")

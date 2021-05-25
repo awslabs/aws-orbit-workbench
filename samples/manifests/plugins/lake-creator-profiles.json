@@ -31,5 +31,17 @@
 			"mem_guarantee": "40G",
 			"mem_limit": "40G"
 		}
-	}
+	},
+    {
+        "display_name": "CodeServer IDE",
+        "slug": "code-server",
+        "description": "A VSCode-based cloud IDE in your K8 team",
+        "kubespawner_override": {
+            "cpu_guarantee": 3,
+            "cpu_limit": 3,
+            "mem_guarantee": "4G",
+            "mem_limit": "4G",
+            "default_url": "/code-server"
+        }
+    }
 ]

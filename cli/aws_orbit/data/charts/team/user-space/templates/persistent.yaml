@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    efs-id: {{ .Values.efsid }}
+    {{- include "user-space.labels" . | nindent 4 }}
+  name: team-efs-{{ .Values.namespace }}-{{ .Values.user }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 5Gi
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: {{ .Values.efsid }}::{{ .Values.team_efsapid }}
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: efs-storage-class
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: team-efs
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "user-space.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: efs-storage-class
+  volumeName: team-efs-{{ .Values.namespace }}-{{ .Values.user }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    efs-id: {{ .Values.efsid }}
+    {{- include "user-space.labels" . | nindent 4 }}
+  name: user-efs-{{ .Values.namespace }}-{{ .Values.user }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 5Gi
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: {{ .Values.efsid }}::{{ .Values.user_efsapid }}
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: efs-storage-class
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: user-efs
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "user-space.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: efs-storage-class
+  volumeName: user-efs-{{ .Values.namespace }}-{{ .Values.user }}

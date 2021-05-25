@@ -1,0 +1,41 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: orbit-users
+  name: default-editor
+  namespace: ${team}
+rules:
+  - apiGroups:
+      - "*"
+    resources: ["*"]
+    verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: orbit-users
+  name: default-editor
+  namespace: ${team}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: default-editor
+subjects:
+  - kind: ServiceAccount
+    name: default-editor
+    namespace: ${team}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: default-editor-system-access-${team}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-editor-system-access
+subjects:
+- kind: ServiceAccount
+  name: default-editor
+  namespace: ${team}

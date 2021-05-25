@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import logging
+from typing import Optional, cast
 
 import aws_cdk.aws_kms as kms
 import aws_cdk.aws_s3 as s3
@@ -37,5 +38,8 @@ class S3Builder:
             removal_policy=core.RemovalPolicy.RETAIN,
             lifecycle_rules=[s3.LifecycleRule(expiration=core.Duration.days(scratch_retention_days))],
             encryption=s3.BucketEncryption.KMS,
-            encryption_key=kms_key,
+            encryption_key=cast(
+                Optional[kms.IKey],
+                kms_key,
+            ),
         )

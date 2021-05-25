@@ -14,8 +14,10 @@
 
 import logging
 import os
+import time
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+import aws_orbit
 from aws_orbit import utils
 from aws_orbit.plugins import hooks
 from aws_orbit.remote_files import helm
@@ -27,15 +29,20 @@ CHART_PATH = os.path.join(os.path.dirname(__file__))
 
 
 @hooks.deploy
-def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
+def deploy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
-    chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATH)
-    _logger.debug("package dir")
-    utils.print_dir(CHART_PATH)
+    chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATH, target_path=plugin_id)
     _logger.debug("copy chart dir")
     utils.print_dir(chart_path)
+    default_image = f"{context.images.jupyter_user.repository}:{context.images.jupyter_user.version}"
+
     vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
         region=context.region,
@@ -45,6 +52,10 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
         restart_policy=parameters["restartPolicy"] if "restartPolicy" in parameters else "Never",
         plugin_id=plugin_id,
         toolkit_s3_bucket=context.toolkit.s3_bucket,
+        image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
+        image=parameters["image"] if "image" in parameters else default_image,
+        uid=parameters["uid"] if "uid" in parameters else "1000",
+        gid=parameters["gid"] if "gid" in parameters else "100",
     )
 
     if "script" in parameters:
@@ -62,16 +73,32 @@ def deploy(plugin_id: str, context: "Context", team_context: "TeamContext", para
     _logger.debug(script_body)
     helm.add_repo(repo=repo, repo_location=repo_location)
     chart_name, chart_version, chart_package = helm.package_chart(repo=repo, chart_path=chart_path, values=vars)
-    helm.install_chart(
+
+    release_name = f"{team_context.name}-{plugin_id}"
+    if helm.is_exists_chart_release(release_name, team_context.name):
+        helm.uninstall_chart(release_name, team_context.name)
+        time.sleep(60)
+
+    helm.install_chart_no_upgrade(
         repo=repo,
         namespace=team_context.name,
-        name=f"{team_context.name}-{plugin_id}",
+        name=release_name,
         chart_name=chart_name,
         chart_version=chart_version,
     )
 
 
 @hooks.destroy
-def destroy(plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]) -> None:
-    _logger.debug("Delete Plugin %s of Team Env name: %s | Team name: %s", plugin_id, context.name, team_context.name)
-    helm.uninstall_chart(f"{team_context.name}-{plugin_id}")
+def destroy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
+    _logger.debug(
+        "Delete Plugin %s of Team Env name: %s | Team name: %s",
+        plugin_id,
+        context.name,
+        team_context.name,
+    )
+    helm.uninstall_chart(f"{team_context.name}-{plugin_id}", namespace=team_context.name)
