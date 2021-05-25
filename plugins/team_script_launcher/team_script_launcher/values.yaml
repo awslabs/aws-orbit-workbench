@@ -10,7 +10,8 @@ configMapName: ${plugin_id}-script
 scriptFile: ${plugin_id}-script.sh
 
 securityContext:
-  fsGroup: 100
+  runAsUser: ${uid}
+  runAsGroup: ${gid}
 
 image:
   repository: ${image}
