@@ -19,7 +19,7 @@
 set -ex
 
 src_vscode_data='/opt/orbit/data/vscode/extensions/'
-target_vscode_data='/home/jovyan/shared/drivers'
+target_vscode_data='/efs/drivers'
 
 if ! [ -d $target_vscode_data ]; then
   mkdir -p $target_vscode_data
