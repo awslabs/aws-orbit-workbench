@@ -8,8 +8,8 @@
     "tasks":  [
         {
             "notebookName": "run-user-regression-notebooks.ipynb",
-            "sourcePath": "shared/samples/notebooks/Z-Tests",
-            "targetPath": "shared/regression/notebooks/Z-Tests/",
+            "sourcePath": "/home/jovyan/shared/samples/notebooks/Z-Tests",
+            "targetPath": "/home/jovyan/shared/regression/notebooks/Z-Tests/",
             "params": {
             }
         }
