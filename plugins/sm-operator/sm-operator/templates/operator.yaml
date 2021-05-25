@@ -157,5 +157,5 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
-      serviceAccountName: {{ .Values.namespace }}
+      serviceAccountName: default-editor
       terminationGracePeriodSeconds: 10

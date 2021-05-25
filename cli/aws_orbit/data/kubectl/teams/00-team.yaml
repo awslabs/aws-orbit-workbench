@@ -57,54 +57,10 @@ kind: ServiceAccount
 metadata:
   labels:
     team: ${team}
-  name: ${team}
+  name: default-editor
   namespace: ${team}
   annotations:
     eks.amazonaws.com/role-arn: arn:aws:iam::${account_id}:role/orbit-${env_name}-${team}-role
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  labels:
-    app: orbit-jupyterhub
-  name: jupyterhub
-  namespace: ${team}
-rules:
-  - apiGroups:
-      - ""
-    resources:
-      - pods
-      - persistentvolumeclaims
-    verbs:
-      - get
-      - watch
-      - list
-      - create
-      - delete
-  - apiGroups:
-      - ""
-    resources:
-      - events
-    verbs:
-      - get
-      - watch
-      - list
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  labels:
-    app: orbit-jupyterhub
-  name: jupyterhub
-  namespace: ${team}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: jupyterhub
-subjects:
-  - kind: ServiceAccount
-    name: ${team}
-    namespace: ${team}
 ---
 apiVersion: vpcresources.k8s.aws/v1beta1
 kind: SecurityGroupPolicy
