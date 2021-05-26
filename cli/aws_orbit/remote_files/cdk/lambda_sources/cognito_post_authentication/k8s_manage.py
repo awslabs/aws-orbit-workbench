@@ -72,7 +72,7 @@ def create_user_efs_endpoint(user: str, team_name: str) -> Dict[str, Any]:
                 "Path": f"/efs/private/{user}",
                 "CreationInfo": {"OwnerUid": 1000, "OwnerGid": 100, "Permissions": "770"},
             },
-            Tags={"TeamSpace": team_name, "Env": os.environ.get("ORBIT_ENV")},
+            Tags=[{"Key": "TeamSpace", "Value": team_name}, {"Key": "Env", "Value": os.environ.get("ORBIT_ENV")}],
         ),
     )
 
