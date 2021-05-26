@@ -432,9 +432,12 @@ class Env(Stack):
             memory_size=128,
         ).add_permission(
             id="cognito_post_auth_resource_policy",
-            principal=iam.ServicePrincipal("cognito-idp.amazonaws.com"),
+            principal=cast(iam.IPrincipal, iam.ServicePrincipal("cognito-idp.amazonaws.com")),
             action="lambda:InvokeFunction",
-            source_arn=f"arn:aws:cognito-idp:{self.context.region}:{self.context.account_id}:userpool/{self.user_pool.user_pool_id}"
+            source_arn=(
+                f"arn:aws:cognito-idp:{self.context.region}:{self.context.account_id}:"
+                "userpool/{self.user_pool.user_pool_id}"
+            ),
         )
 
         lambda_python.PythonFunction(
