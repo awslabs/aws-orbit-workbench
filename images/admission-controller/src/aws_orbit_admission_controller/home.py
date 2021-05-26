@@ -14,11 +14,17 @@
 
 
 from typing import Any, Dict, Optional, cast
-from flask import render_template
+from flask import Flask, render_template,request
 import logging
+import json
 
-def login(logger: logging.Logger, request: Dict[str, Any]) -> Any:
+def login(logger: logging.Logger, app: Flask) -> Any:
+    logger.debug("cookies: %s", json.dumps(request.cookies))
     return render_template('index.html', title='login')
 
-def logout(logger: logging.Logger, request: Dict[str, Any]) -> Any:
+def logout(logger: logging.Logger, app: Flask) -> Any:
+    logger.debug("cookies: %s", json.dumps(request.cookies))
+    logger.debug("headers: %s", json.dumps(dict(request.headers)))
+    logger.debug("authorization: %s", json.dumps(request.authorization))
+
     return render_template('index.html', title='logout')

@@ -7,5 +7,7 @@ ADD src /var/admission-controller/
 RUN cd /var/admission-controller/ && \
     pip3 install -e .
 
+RUN pip3 install Flask-Cognito
+
 WORKDIR /var/admission-controller/
 CMD ["bash"]
