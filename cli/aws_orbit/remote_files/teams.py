@@ -173,6 +173,10 @@ def destroy_team(context: "Context", team_context: "TeamContext") -> None:
     if cfn.does_stack_exist(stack_name=context.toolkit.stack_name):
         if cfn.does_stack_exist(stack_name=team_context.stack_name):
             args: List[str] = [context.name, team_context.name]
+
+            fs_id = context.shared_efs_fs_id
+            _delete_efs_endpoints(filesystem_id=fs_id, team_name=team_context.name)
+
             cdk.destroy(
                 context=context,
                 stack_name=team_context.stack_name,
@@ -200,3 +204,27 @@ def destroy_all(context: "Context") -> None:
         destroy_team(context=context, team_context=team_context)
     context.teams = []
     ContextSerDe.dump_context_to_ssm(context=context)
+
+
+def _delete_efs_endpoints(filesystem_id: str, team_name: str) -> None:
+    efs = boto3.client("efs")
+
+    access_points = efs.describe_access_points(FileSystemId=filesystem_id)
+
+    for ap in access_points.get("AccessPoints"):
+        tags = ap.get("Tags")
+        for tag in tags:
+            if tag.get("Key") == "TeamSpace":
+                if team_name == tag.get("Value"):
+                    access_point_id = ap.get("AccessPointId")
+                    _logger.info(f"Deleting EFS endpoint: {access_point_id}")
+
+                    try:
+                        efs.delete_access_point(AccessPointId=access_point_id)
+                        _logger.info("Access point deleted")
+                    except efs.exceptions.AccessPointNotFound:
+                        _logger.error("Access point not found")
+                    except efs.exceptions.InternalServerError as err:
+                        _logger.error(err)
+                    except efs.exceptions.BadRequest as err:
+                        _logger.error(err)
