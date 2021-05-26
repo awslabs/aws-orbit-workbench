@@ -18,15 +18,16 @@ import os
 import subprocess
 import time
 from copy import deepcopy
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 from kubernetes import config as k8_config
 from kubernetes.client import CoreV1Api, V1ConfigMap
 from kubernetes.client.exceptions import ApiException
 
-ORBIT_API_VERSION = "v1"
-ORBIT_API_GROUP = "orbit.aws"
-ORBIT_SYSTEM_NAMESPACE = "orbit-system"
+ORBIT_API_VERSION = os.environ.get("ORBIT_API_VERSION", "v1")
+ORBIT_API_GROUP = os.environ.get("ORBIT_API_GROUP", "orbit.aws")
+ORBIT_SYSTEM_NAMESPACE = os.environ.get("ORBIT_SYSTEM_NAMESPCE", "orbit-system")
+ORBIT_STATE_PATH = os.environ.get("ORBIT_STATE_PATH", "/state")
 
 DEBUG_LOGGING_FORMAT = "[%(asctime)s][%(filename)-13s:%(lineno)3d][%(levelname)s] %(message)s"
 
@@ -82,23 +83,18 @@ def initialize_admission_controller_state() -> V1ConfigMap:
 
 
 def get_module_state(module: str) -> Dict[str, Any]:
-    config_map = get_admission_controller_state()
-    config_map_data = config_map.data if config_map.data is not None else {}
-    data = {k: json.loads(v) for k, v in config_map_data.items()} if config_map is not None else {}
-
-    return data.get(module, {})
+    module_path = os.path.join(ORBIT_STATE_PATH, module)
+    if os.path.exists(module_path):
+        with open(module_path, "r") as module_file:
+            return cast(Dict[str, Any], json.load(module_file))
+    else:
+        return {}
 
 
 def put_module_state(module: str, state: Dict[str, Any]) -> None:
-    try:
-        body = {"data": {module: json.dumps({k: v for k, v in state.items()})}}
-        logger.debug("Patching admission-controller-state in Namespace %s with %s", ORBIT_SYSTEM_NAMESPACE, body)
-        CoreV1Api().patch_namespaced_config_map(
-            name="admission-controller-state", namespace=ORBIT_SYSTEM_NAMESPACE, body=body
-        )
-    except Exception:
-        logger.exception("Error patching admission-controller-state ConfigMap")
-        raise
+    module_path = os.path.join(ORBIT_STATE_PATH, module)
+    with open(module_path, "w") as module_file:
+        json.dump(state, module_file)
 
 
 def maintain_module_state(module: str, state: Dict[str, Any], sleep_time: int = 1) -> None:

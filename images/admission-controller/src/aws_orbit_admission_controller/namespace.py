@@ -38,13 +38,13 @@ def process_removed_event(namespace: Dict[str, Any]) -> None:
     logger.info("processing removed namespace %s", namespace)
     space = labels.get("orbit/space", None)
 
-    if space == 'team':
+    if space == "team":
         logger.info("delete all namespaces that belong to the team %s", namespace_name)
         run_command(f"kubectl delete profile -l orbit/team={namespace_name}")
         time.sleep(60)
         run_command(f"kubectl delete namespace -l orbit/team={namespace_name}")
         logger.info("all namespaces that belong to the team %s are deleted", namespace_name)
-    elif space == 'user':
+    elif space == "user":
         env = labels.get("orbit/env", None)
         team = labels.get("orbit/team", None)
         user = labels.get("orbit/user", None)
@@ -68,6 +68,7 @@ def process_removed_event(namespace: Dict[str, Any]) -> None:
         helm_release = f"{namespace_name}-orbit-team"
         logger.debug("Adding Helm Repository: %s at %s", team, helm_repo_url)
         uninstall_chart(helm_release, team)
+
 
 def process_added_event(namespace: Dict[str, Any]) -> None:
     logger.debug("loading kubeconfig")
@@ -114,8 +115,10 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
 
     logger.info("Helm release %s installed at %s", helm_release, namespace_name)
 
-def install_helm_chart(helm_release: str, namespace: str, team: str, user: str, user_email: str,
-                       user_efsapid: str) -> None:
+
+def install_helm_chart(
+    helm_release: str, namespace: str, team: str, user: str, user_email: str, user_efsapid: str
+) -> None:
     cmd = (
         f"/usr/local/bin/helm upgrade --install --devel --debug --namespace {team} "
         f"{helm_release} {team}/user-space "
@@ -129,9 +132,7 @@ def install_helm_chart(helm_release: str, namespace: str, team: str, user: str, 
 
 
 def uninstall_chart(helm_release: str, namespace: str) -> None:
-    cmd = (
-        f"/usr/local/bin/helm uninstall --debug --namespace {namespace} {helm_release}"
-    )
+    cmd = f"/usr/local/bin/helm uninstall --debug --namespace {namespace} {helm_release}"
     logger.debug("running uninstall cmd: %s", cmd)
     output = run_command(cmd)
     logger.debug(output)
