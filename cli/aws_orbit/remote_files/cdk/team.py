@@ -144,7 +144,10 @@ class Team(Stack):
         )
 
         self.efs_ap: efs.AccessPoint = EfsBuilder.build_file_system_access_point(
-            scope=self, team_name=team_name, shared_fs=self.shared_fs
+            scope=self, team_name=team_name, shared_fs=self.shared_fs, path="shared", ap_name=f"{team_name}-shared"
+        )
+        self.efs_ap_team_private: efs.AccessPoint = EfsBuilder.build_file_system_access_point(
+            scope=self, team_name=team_name, shared_fs=self.shared_fs, path="team", ap_name=f"{team_name}-private"
         )
 
         team_ssm_parameter_name: str = f"/orbit/{context.name}/teams/{self.team_name}/team"
@@ -155,6 +158,7 @@ class Team(Stack):
                 {
                     "EfsId": self.shared_fs.file_system_id,
                     "EfsApId": self.efs_ap.access_point_id,
+                    "EfsApIdPrivate": self.efs_ap_team_private,
                     "EksPodRoleArn": self.role_eks_pod.role_arn,
                     "ScratchBucket": self.scratch_bucket.bucket_name,
                     "TeamKmsKeyArn": self.team_kms_key.key_arn,

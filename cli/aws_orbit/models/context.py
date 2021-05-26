@@ -172,6 +172,7 @@ class TeamContext:
         values = ssm.get_parameter(name=self.team_ssm_parameter_name)
         self.efs_id = values["EfsId"]
         self.efs_ap_id = values["EfsApId"]
+        self.efs_private_ap_id = values["EfsApIdPrivate"]
         self.eks_pod_role_arn = values["EksPodRoleArn"]
         self.scratch_bucket = values["ScratchBucket"]
         self.team_kms_key_arn = values["TeamKmsKeyArn"]
