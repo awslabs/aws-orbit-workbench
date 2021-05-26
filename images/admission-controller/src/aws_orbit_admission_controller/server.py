@@ -25,6 +25,7 @@ from aws_orbit_admission_controller.home import login,logout
 
 app = Flask(__name__)
 app.logger.info("environ: %s", os.environ)
+app.config["APPLICATION_ROOT"] = os.environ["APPLICATION_ROOT"]
 
 
 @app.route("/pod", methods=["POST"])
@@ -45,10 +46,14 @@ def hello() -> Any:
     return f"Hello! random number gen: {r}"
 
 
+@app.route("/")
+def hello2() -> Any:
+    return "Hello Root"
+
+
 @app.route("/login")
 def login_request() -> Any:
     return login(logger=app.logger, request=request.json)
-
 
 @app.route("/logout")
 def logout_request() -> Any:

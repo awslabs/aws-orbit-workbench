@@ -178,6 +178,8 @@ spec:
       app: landing-page-service
   template:
     metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
       labels:
         app: landing-page-service
       name: landing-page-service
@@ -235,3 +237,55 @@ data:
   ADMISSION_CONTROLLER_DEBUG: "1"
   IN_CLUSTER_DEPLOYMENT: "1"
   NAMESPACE_WATCHER_WORKERS: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: landing-page
+  name: landing-page-service
+  namespace: orbit-system
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 80
+      name: ui
+  selector:
+    app: landing-page-service
+  type: ClusterIP
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: orbit-landing-page
+  namespace: kubeflow
+  labels:
+    app.kubernetes.io/component: orbit
+    app.kubernetes.io/name: orbit-landing-page
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - kubeflow-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /orbit/login/
+    rewrite:
+      uri: /login
+    route:
+    - destination:
+        host: landing-page-service.orbit-system.svc.cluster.local
+        port:
+          number: 80
+  - match:
+    - uri:
+        prefix: /orbit/logout/
+    rewrite:
+      uri: /logout
+    route:
+    - destination:
+        host: landing-page-service.orbit-system.svc.cluster.local
+        port:
+          number: 80
