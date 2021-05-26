@@ -158,7 +158,7 @@ class Team(Stack):
                 {
                     "EfsId": self.shared_fs.file_system_id,
                     "EfsApId": self.efs_ap.access_point_id,
-                    "EfsApIdPrivate": self.efs_ap_team_private,
+                    "EfsApIdPrivate": self.efs_ap_team_private.access_point_id,
                     "EksPodRoleArn": self.role_eks_pod.role_arn,
                     "ScratchBucket": self.scratch_bucket.bucket_name,
                     "TeamKmsKeyArn": self.team_kms_key.key_arn,
