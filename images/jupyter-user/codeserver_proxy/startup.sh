@@ -4,13 +4,13 @@
 port=$1
 
 # VSCode Extensions for extra_user_apps/codeserver 
-if [ -d "/home/jovyan/.local/share/code-server/CachedExtensionVSIXs" ] && ! [ -d "/home/jovyan/private/CachedExtensionVSIXs" ]; then
-  #ln -s /home/jovyan/.local/share/code-server/CachedExtensionVSIXs /home/jovyan/private/CachedExtensionVSIXs
-  cp /home/jovyan/.local/share/code-server/CachedExtensionVSIXs /home/jovyan/private/ -r
+if [ -d "/opt/orbit/apps/codeserver/extensions" ] && ! [ -d "/home/jovyan/private/code-server/extensions" ]; then
+    mkdir -p /home/jovyan/private/code-server/extensions && \
+    cp -r /opt/orbit/apps/codeserver/extensions /home/jovyan/private/code-server
 fi
-if [ -d "/home/jovyan/.local/share/code-server/extensions" ] && ! [ -d "/home/jovyan/private/extensions" ]; then
-  #ln -s /home/jovyan/.local/share/code-server/extensions /home/jovyan/private/extensions
-  cp /home/jovyan/.local/share/code-server/extensions /home/jovyan/private/ -r
+if [ -d "/opt/orbit/apps/codeserver/CachedExtensionVSIXs" ] && ! [ -d "/home/jovyan/private/code-server/CachedExtensionVSIXs" ]; then
+    mkdir -p /home/jovyan/private/code-server/CachedExtensionVSIXs && \
+    cp -r /opt/orbit/apps/codeserver/CachedExtensionVSIXs /home/jovyan/private/code-server
 fi
 
 # Populate an aws/credentials file base on the attached role

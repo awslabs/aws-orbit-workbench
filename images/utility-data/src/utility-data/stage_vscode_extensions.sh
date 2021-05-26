@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #!/usr/bin/env bash
 #
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -19,7 +18,7 @@
 set -ex
 
 src_vscode_data='/opt/orbit/data/vscode/extensions/'
-target_vscode_data='/home/jovyan/shared/drivers'
+target_vscode_data='/efs'
 
 if ! [ -d $target_vscode_data ]; then
   mkdir -p $target_vscode_data

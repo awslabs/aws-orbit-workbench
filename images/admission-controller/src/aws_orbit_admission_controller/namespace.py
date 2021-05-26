@@ -19,6 +19,7 @@ from typing import Any, Dict, Optional, cast
 
 from aws_orbit_admission_controller import load_config, logger, run_command
 from kubernetes.client import CoreV1Api, V1ConfigMap
+from kubernetes.client import exceptions as k8s_exceptions
 from kubernetes.watch import Watch
 from urllib3.exceptions import ReadTimeoutError
 
@@ -171,6 +172,13 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
         except ReadTimeoutError:
             logger.warning("There was a timeout error accessing the Kubernetes API. Retrying request.", exc_info=True)
             time.sleep(1)
+        except k8s_exceptions.ApiException as ae:
+            if ae.reason.startswith("Expired: too old resource version"):
+                logger.warning(ae.reason)
+                state["lastResourceVersion"] = 0
+            else:
+                logger.exception("Unknown ApiException in NamespaceWatcher. Failing")
+                raise
         except Exception:
             logger.exception("Unknown error in NamespaceWatcher. Failing")
             raise

@@ -49,14 +49,13 @@ class EfsBuilder:
 
     @staticmethod
     def build_file_system_access_point(
-        scope: core.Construct, team_name: str, shared_fs: efs.FileSystem
+        scope: core.Construct, team_name: str, shared_fs: efs.FileSystem, path: str, ap_name: str
     ) -> efs.AccessPoint:
-        ap_name: str = f"{team_name}"
         return efs.AccessPoint(
             scope=scope,
             id=ap_name,
             file_system=cast(efs.IFileSystem, shared_fs),
-            path=f"/{team_name}/shared",
+            path=f"/{team_name}/{path}",
             posix_user=efs.PosixUser(gid="100", uid="1000"),
             create_acl=efs.Acl(owner_gid="100", owner_uid="1000", permissions="770"),
         )
