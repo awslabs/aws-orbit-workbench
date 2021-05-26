@@ -26,9 +26,9 @@
     Parameters:
         script: |
             echo "Copy samples to efs from orbit-regression image"
-            /opt/orbit/scripts/stage_efs_data.sh
+            /opt/orbit/scripts/stage_all_data.sh "${env_name}"
         restartPolicy: Never
-        image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/regression-data:latest
+        image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data:latest
         uid: 0
         gid: 0
 -   PluginId: redshift

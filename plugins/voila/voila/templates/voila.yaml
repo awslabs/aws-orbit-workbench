@@ -76,11 +76,10 @@ spec:
         args:
           - -c
           - >-
-             ln -s /efs/shared /home/jovyan/shared &&
-             cd /efs/shared &&
+             cd /home/jovyan/shared/voila &&
              voila --no-browser --port 4100 --base_url=/services/voila-server/ --debug
         volumeMounts:
-          - mountPath: /efs
+          - mountPath: /home/jovyan/shared
             name: efs-volume
       volumes:
         - name: efs-volume

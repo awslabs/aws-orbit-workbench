@@ -154,6 +154,7 @@ class TeamContext:
     container_defaults: Dict[str, Any] = field(default_factory=get_container_defaults)
     efs_id: Optional[str] = None
     efs_ap_id: Optional[str] = None
+    efs_private_ap_id: Optional[str] = None
     eks_pod_role_arn: Optional[str] = None
     jupyter_url: Optional[str] = None
     ecs_cluster_name: Optional[str] = None
@@ -172,6 +173,7 @@ class TeamContext:
         values = ssm.get_parameter(name=self.team_ssm_parameter_name)
         self.efs_id = values["EfsId"]
         self.efs_ap_id = values["EfsApId"]
+        self.efs_private_ap_id = values["EfsApIdPrivate"]
         self.eks_pod_role_arn = values["EksPodRoleArn"]
         self.scratch_bucket = values["ScratchBucket"]
         self.team_kms_key_arn = values["TeamKmsKeyArn"]
