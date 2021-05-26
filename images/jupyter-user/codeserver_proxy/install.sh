@@ -17,13 +17,22 @@
 set -ex
 
 echo `pwd`
-curl -fsSL https://code-server.dev/install.sh | sh
+curl -fsSL https://code-server.dev/install.sh -o install.sh
+chmod +x install.sh
+./install.sh --method standalone --prefix /opt/orbit/apps/codeserver
+rm -f install.sh
+export PATH="/opt/orbit/apps/codeserver/bin:$PATH"
+
 code-server --install-extension ms-python.python --force
 code-server --install-extension ms-toolsai.jupyter --force
 code-server --install-extension mtxr.sqltools --force
 code-server --install-extension rogalmic.bash-debug --force
 code-server --install-extension AmazonWebServices.aws-toolkit-vscode --force
 code-server --install-extension ms-kubernetes-tools.vscode-kubernetes-tools --force
+
+mv ~/.local/share/code-server/extensions /opt/orbit/apps/codeserver/
+mv ~/.local/share/code-server/CachedExtensionVSIXs /opt/orbit/apps/codeserver/
+rm -rf ~/.local/share/code-server
 
 pip install .
 
