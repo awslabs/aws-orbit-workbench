@@ -177,7 +177,7 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
                 logger.warning(ae.reason)
                 state["lastResourceVersion"] = 0
             else:
-                logger.exception("Unknown error in NamespaceWatcher. Failing")
+                logger.exception("Unknown ApiException in NamespaceWatcher. Failing")
                 raise
         except Exception:
             logger.exception("Unknown error in NamespaceWatcher. Failing")
