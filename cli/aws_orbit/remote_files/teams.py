@@ -174,7 +174,7 @@ def destroy_team(context: "Context", team_context: "TeamContext") -> None:
         if cfn.does_stack_exist(stack_name=team_context.stack_name):
             args: List[str] = [context.name, team_context.name]
 
-            fs_id = context.shared_efs_fs_id
+            fs_id = cast(str, context.shared_efs_fs_id)
             _delete_efs_endpoints(filesystem_id=fs_id, team_name=team_context.name)
 
             cdk.destroy(
