@@ -60,7 +60,7 @@ def create_kubeconfig() -> None:
         raise Exception("Could not configure kubernetes python client")
 
 
-def create_user_efs_endpoint(user: str) -> Dict[str, Any]:
+def create_user_efs_endpoint(user: str, team_name: str) -> Dict[str, Any]:
     efs = boto3.client("efs")
 
     return cast(
@@ -72,6 +72,10 @@ def create_user_efs_endpoint(user: str) -> Dict[str, Any]:
                 "Path": f"/efs/private/{user}",
                 "CreationInfo": {"OwnerUid": 1000, "OwnerGid": 100, "Permissions": "770"},
             },
+            Tags={
+                "TeamSpace": team_name,
+                "Env": os.environ.get("ORBIT_ENV")
+            }
         ),
     )
 
@@ -86,7 +90,7 @@ def create_user_namespace(
     for team, user_ns in expected_user_namespaces.items():
         if user_ns not in namespaces:
             logger.info(f"Creating EFS endpoint for {user_ns}...")
-            resp = create_user_efs_endpoint(user=user_name)
+            resp = create_user_efs_endpoint(user=user_name, team_name=team)
             access_point_id = resp.get("AccessPointId")
 
             logger.info(f"User namespace {user_ns} doesnt exist. Creating...")
