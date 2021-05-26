@@ -123,6 +123,7 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
             team=team_context.name,
             efsid=context.shared_efs_fs_id,
             efsapid=team_context.efs_ap_id,
+            efsprivateapid=team_context.efs_private_ap_id,
             account_id=context.account_id,
             env_name=context.name,
             team_kms_key_arn=team_context.team_kms_key_arn,
