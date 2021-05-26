@@ -436,7 +436,7 @@ class Env(Stack):
             action="lambda:InvokeFunction",
             source_arn=(
                 f"arn:aws:cognito-idp:{self.context.region}:{self.context.account_id}:"
-                "userpool/{self.user_pool.user_pool_id}"
+                f"userpool/{self.user_pool.user_pool_id}"
             ),
         )
 
