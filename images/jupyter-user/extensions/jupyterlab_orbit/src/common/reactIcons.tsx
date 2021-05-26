@@ -245,6 +245,8 @@ const sparkIcon = () => {
     <svg
       xmlns="http://www.w3.org/2000/svg"
       xmlnsXlink="http://www.w3.org/1999/xlink"
+      width={44}
+      height={51}
       viewBox="0 0 86 46"
       fill="#fff"
       fillRule="evenodd"
