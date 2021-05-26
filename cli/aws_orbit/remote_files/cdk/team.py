@@ -144,10 +144,10 @@ class Team(Stack):
         )
 
         self.efs_ap: efs.AccessPoint = EfsBuilder.build_file_system_access_point(
-            scope=self, team_name=team_name, shared_fs=self.shared_fs, path='shared', ap_name= f'{team_name}-shared'
+            scope=self, team_name=team_name, shared_fs=self.shared_fs, path="shared", ap_name=f"{team_name}-shared"
         )
         self.efs_ap_team_private: efs.AccessPoint = EfsBuilder.build_file_system_access_point(
-            scope=self, team_name=team_name, shared_fs=self.shared_fs, path='team', ap_name= f'{team_name}-private'
+            scope=self, team_name=team_name, shared_fs=self.shared_fs, path="team", ap_name=f"{team_name}-private"
         )
 
         team_ssm_parameter_name: str = f"/orbit/{context.name}/teams/{self.team_name}/team"
