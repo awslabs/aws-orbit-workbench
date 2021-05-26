@@ -55,15 +55,25 @@ data:
   IN_CLUSTER_DEPLOYMENT: "1"
   NAMESPACE_WATCHER_WORKERS: "1"
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: admission-controller-state
+  namespace: orbit-system
+data: {}
+---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   labels:
     app: admission-controller
   namespace: orbit-system
   name: admission-controller-pod-settings-mutator
 spec:
+  podManagementPolicy: OrderedReady
   replicas: 1
+  revisionHistoryLimit: 10
+  serviceName: admission-controller-pod-settings-mutator
   selector:
     matchLabels:
       app: admission-controller-pod-settings-mutator
@@ -98,6 +108,8 @@ spec:
             - readOnly: true
               mountPath: /certs
               name: admission-controller-certs
+            - mountPath: /state
+              name: admission-controller-state
           readinessProbe:
             httpGet:
               path: /health
@@ -123,16 +135,22 @@ spec:
         - name: admission-controller-certs
           secret:
             secretName: admission-controller-pod-settings-mutator-certs
+        - name: admission-controller-state
+          configMap:
+            name: admission-controller-state
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   labels:
     app: admission-controller
   namespace: orbit-system
   name: admission-controller-namespace-watcher
 spec:
+  podManagementPolicy: OrderedReady
   replicas: 1
+  revisionHistoryLimit: 10
+  serviceName: ""
   selector:
     matchLabels:
       app: admission-controller-namespace-watcher
@@ -156,6 +174,9 @@ spec:
             - namespaces
           args:
             - "--workers=$(NAMESPACE_WATCHER_WORKERS)"
+          volumeMounts:
+            - mountPath: /state
+              name: admission-controller-state
           resources:
             limits:
               cpu: 2
@@ -163,3 +184,7 @@ spec:
             requests:
               cpu: 1
               memory: 1G
+      volumes:
+        - name: admission-controller-state
+          configMap:
+            name: admission-controller-state
