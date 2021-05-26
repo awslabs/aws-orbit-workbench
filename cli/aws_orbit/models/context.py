@@ -154,6 +154,7 @@ class TeamContext:
     container_defaults: Dict[str, Any] = field(default_factory=get_container_defaults)
     efs_id: Optional[str] = None
     efs_ap_id: Optional[str] = None
+    efs_private_ap_id: Optional[str] = None
     eks_pod_role_arn: Optional[str] = None
     jupyter_url: Optional[str] = None
     ecs_cluster_name: Optional[str] = None
