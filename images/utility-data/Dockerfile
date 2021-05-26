@@ -42,8 +42,10 @@ RUN wget https://github.com/mnielsen/neural-networks-and-deep-learning/raw/maste
  -P /opt/orbit/data/sagemaker -q
 
 # Sample Manifests
-RUN mkdir -p /opt/orbit/samples
-COPY samples /opt/orbit/samples
+RUN mkdir -p /opt/orbit/samples/manifests
+RUN mkdir -p /opt/orbit/samples/notebooks
+COPY samples/manifests /opt/orbit/samples/manifests
+COPY samples/notebooks /opt/orbit/samples/notebooks
 
 RUN chmod -R a+xr /opt/orbit/
 
