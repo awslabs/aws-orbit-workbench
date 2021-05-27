@@ -7,6 +7,8 @@ import testsSvg from '../../style/icons/tests.svg';
 import orbitSvg from '../../style/icons/orbit.svg';
 import fargateSvg from '../../style/icons/fargate.svg';
 import ec2Svg from '../../style/icons/ec2.svg';
+import jupyterSvg from '../../style/icons/jupyterlogo.svg';
+import sparkSvg from '../../style/icons/apachesparklogo.svg';
 import { LabIcon } from '@jupyterlab/ui-components';
 
 export const teamIcon = new LabIcon({
@@ -52,4 +54,14 @@ export const fargateIcon = new LabIcon({
 export const ec2Icon = new LabIcon({
   name: 'ec2Icon',
   svgstr: ec2Svg
+});
+
+export const jupyterIcon = new LabIcon({
+  name: 'jupyterIcon',
+  svgstr: jupyterSvg
+});
+
+export const sparkIcon = new LabIcon({
+  name: 'sparkIcon',
+  svgstr: sparkSvg
 });
