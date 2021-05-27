@@ -19,6 +19,7 @@ from concurrent.futures import Future
 from typing import Any, List, Optional, Tuple, cast
 
 from aws_orbit import bundle, docker, plugins, remote, sh
+from aws_orbit.models import manifest
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, TeamContext
 from aws_orbit.models.manifest import ImageManifest, ImagesManifest, Manifest, ManifestSerDe
@@ -97,7 +98,7 @@ def _deploy_image_remotely(context: "Context", name: str, bundle_path: str, buil
     _logger.debug("%s Docker Image deployed into ECR", name)
 
 
-def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[str], Optional[str], List[str]]]) -> None:
+def _deploy_images_batch(manifest: Manifest, context: "Context", images: List[Tuple[str, Optional[str], Optional[str], List[str]]]) -> None:
     _logger.debug("images:\n%s", images)
 
     new_images_manifest = {name: getattr(context.images, name) for name in context.images.names}
@@ -116,7 +117,7 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
             _logger.debug("path: %s", path)
 
             image_attr_name = name.replace("-", "_")
-            image_def: ImageManifest = getattr(context.images, image_attr_name)
+            image_def: ImageManifest = getattr(manifest.images, image_attr_name)
             tag = image_def.version
             if image_def.get_source(account_id=context.account_id, region=context.region) == "code":
                 dirs: List[Tuple[str, str]] = [(path, cast(str, dir))]
@@ -149,26 +150,31 @@ def _deploy_images_batch(context: "Context", images: List[Tuple[str, Optional[st
         ContextSerDe.dump_context_to_ssm(context=context)
 
 
-def deploy_images_remotely(context: "Context", skip_images: bool = True) -> None:
+def deploy_images_remotely(manifest: Manifest, context: "Context", skip_images: bool = True) -> None:
     # Required images we always build/replicate
-    images: List[Tuple[str, Optional[str], Optional[str], List[str]]] = [
-        ("image-replicator", "image-replicator", None, []),
-        ("k8s-utilities", "k8s-utilities", None, []),
-        ("admission-controller", "admission-controller", None, []),
-    ]
+    images: List[Tuple[str, Optional[str], Optional[str], List[str]]] = []
+
+    # This isn't obvious to read, but when skipping image builds, we intentionally remove these images if the source
+    # is code. Otherwise, we build/deploy them
+    if not (manifest.images.image_replicator.get_source(context.account_id, context.region) == "code" and skip_images):
+        images.append(("image-replicator", "image-replicator", None, []))
+    if not (manifest.images.k8s_utilities.get_source(context.account_id, context.region) == "code" and skip_images):
+        images.append(("k8s-utilities", "k8s-utilities", None, []))
+    if not (manifest.images.admission_controller.get_source(context.account_id, context.region) == "code" and skip_images):
+        images.append(("admission-controller", "admission-controller", None, []))
 
     # Secondary images we can optionally skip
     if not skip_images:
-        images += []
-        if context.images.landing_page.get_source(context.account_id, context.region) != "ecr-public":
+        # When not skipping images, include these secondaries if their source isn't the default ecr-public
+        if manifest.images.landing_page.get_source(context.account_id, context.region) != "ecr-public":
             images.append(("landing-page", "landing-page", "build.sh", []))
-        if context.images.jupyter_hub.get_source(context.account_id, context.region) != "ecr-public":
+        if manifest.images.jupyter_hub.get_source(context.account_id, context.region) != "ecr-public":
             images.append(("jupyter-hub", "jupyter-hub", None, []))
-        if context.images.jupyter_user.get_source(context.account_id, context.region) != "ecr-public":
+        if manifest.images.jupyter_user.get_source(context.account_id, context.region) != "ecr-public":
             images.append(("jupyter-user", "jupyter-user", "build.sh", []))
 
     _logger.debug("Building/repclicating Container Images")
-    _deploy_images_batch(context=context, images=images)
+    _deploy_images_batch(manifest=manifest, context=context, images=images)
 
 
 def deploy_foundation(args: Tuple[str, ...]) -> None:
@@ -194,6 +200,7 @@ def deploy_env(args: Tuple[str, ...]) -> None:
     else:
         raise ValueError("Unexpected number of values in args")
 
+    manifest: Manifest = ManifestSerDe.load_manifest_from_ssm(env_name=env_name, type=Manifest)
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("Context loaded.")
     changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=env_name)
@@ -209,7 +216,7 @@ def deploy_env(args: Tuple[str, ...]) -> None:
     )
 
     _logger.debug("Env Stack deployed")
-    deploy_images_remotely(context=context, skip_images=skip_images_remote_flag == "skip-images")
+    deploy_images_remotely(manifest=manifest, context=context, skip_images=skip_images_remote_flag == "skip-images")
     _logger.debug("Docker Images deployed")
     eksctl.deploy_env(
         context=context,
