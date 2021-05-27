@@ -716,7 +716,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
         volume_mounts=volume_mounts,
         labels=labels,
         logger=_logger,
-        run_as_uid=1000 if grant_sudo else 0,
+        run_as_uid=1000,
         run_as_gid=100,
     )
 
