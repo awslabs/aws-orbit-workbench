@@ -50,9 +50,7 @@ class StorageRouteHandler(APIHandler):
             data.append(storage)
         data = sorted(
             data,
-            key=lambda i: (
-                i["creationTimestamp"] if "creationTimestamp" in i else i["name"]
-            ),
+            key=lambda i: (i["creationTimestamp"] if "creationTimestamp" in i else i["name"]),
         )
 
         return json.dumps(data)
@@ -88,9 +86,7 @@ class StorageRouteHandler(APIHandler):
                 ) as outfile:
                     json.dump(data, outfile, indent=4)
         else:
-            path = (
-                f"{Path(__file__).parent.parent.parent}/test/mockup/storage-{type}.json"
-            )
+            path = f"{Path(__file__).parent.parent.parent}/test/mockup/storage-{type}.json"
             self.log.info("Path: %s", path)
             with open(path) as f:
                 if type == "teampvc":

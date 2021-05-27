@@ -84,9 +84,7 @@ class ContainersRouteHandler(APIHandler):
             if "app" in c["metadata"]["labels"]:
                 container["pod_app"] = c["metadata"]["labels"]["app"]
                 if "emr-spark" == c["metadata"]["labels"]["app"]:
-                    container["job_name"] = c["metadata"]["labels"][
-                        "emr-containers.amazonaws.com/job.id"
-                    ]
+                    container["job_name"] = c["metadata"]["labels"]["emr-containers.amazonaws.com/job.id"]
                 else:
                     container["job_name"] = c["metadata"]["labels"]["job-name"]
 
@@ -99,9 +97,7 @@ class ContainersRouteHandler(APIHandler):
                 if constainer_phase_status in ["succeeded", "failed"]:
                     if container["pod_app"] == "emr-spark":
                         container_status = [
-                            cs
-                            for cs in c["status"]["containerStatuses"]
-                            if "spark-kubernetes-driver" == cs["name"]
+                            cs for cs in c["status"]["containerStatuses"] if "spark-kubernetes-driver" == cs["name"]
                         ][0]
                     else:
                         container_status = c["status"]["containerStatuses"][0]
@@ -123,9 +119,7 @@ class ContainersRouteHandler(APIHandler):
                     )
                     container["job_state"] = constainer_phase_status
                 elif constainer_phase_status == "running":
-                    started_at = datetime.strptime(
-                        c["status"]["startTime"], response_datetime_format
-                    )
+                    started_at = datetime.strptime(c["status"]["startTime"], response_datetime_format)
                     duration = datetime.utcnow() - started_at
                     container["duration"] = str(duration).split(".")[0]
                     container["completionTime"] = ""
@@ -140,20 +134,14 @@ class ContainersRouteHandler(APIHandler):
                 container["job_state"] = "unknown"
 
             if container["pod_app"] == "emr-spark":
-                container_task = [
-                    ct
-                    for ct in c["spec"]["containers"]
-                    if "spark-kubernetes-driver" == ct["name"]
-                ][0]
+                container_task = [ct for ct in c["spec"]["containers"] if "spark-kubernetes-driver" == ct["name"]][0]
                 container["hint"] = json.dumps(container_task, indent=4)
                 container["tasks"] = container_task["args"]
                 container["notebook"] = container_task["args"][-2].split("/")[-1]
                 container["container_name"] = "spark-kubernetes-driver"
             else:
                 envs = c["spec"]["containers"][0]["env"]
-                tasks = json.loads(
-                    [e["value"] for e in envs if e["name"] == "tasks"][0]
-                )
+                tasks = json.loads([e["value"] for e in envs if e["name"] == "tasks"][0])
                 container["hint"] = json.dumps(tasks, indent=4)
                 container["tasks"] = tasks["tasks"]
                 container["notebook"] = (
@@ -169,9 +157,7 @@ class ContainersRouteHandler(APIHandler):
                     else "unknown"
                 )
                 container["job_type"] = (
-                    c["metadata"]["labels"]["app"]
-                    if "app" in c["metadata"]["labels"]
-                    else "unknown"
+                    c["metadata"]["labels"]["app"] if "app" in c["metadata"]["labels"] else "unknown"
                 )
             if container["job_state"] == "running":
                 container["rank"] = 1
