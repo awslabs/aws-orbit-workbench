@@ -20,18 +20,13 @@ from typing import Any, Dict, List, Optional, cast
 
 import jsonpatch
 import jsonpath_ng
-from aws_orbit_admission_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, load_config
+from aws_orbit_admission_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, load_config,get_client
 from flask import jsonify
 from kubernetes import dynamic
 from kubernetes.client import api_client
 from kubernetes.dynamic import exceptions as k8s_exceptions
 
 ORBIT_SYSTEM_POD_SETTINGS = None
-
-
-def get_client() -> dynamic.DynamicClient:
-    load_config()
-    return dynamic.DynamicClient(client=api_client.ApiClient())
 
 
 def get_pod_settings(client: dynamic.DynamicClient) -> List[Dict[str, Any]]:

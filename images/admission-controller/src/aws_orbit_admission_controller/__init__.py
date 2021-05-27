@@ -23,7 +23,8 @@ from typing import Any, Dict
 from kubernetes import config as k8_config
 from kubernetes.client import CoreV1Api, V1ConfigMap
 from kubernetes.client.exceptions import ApiException
-
+from kubernetes.client import api_client
+from kubernetes import dynamic
 ORBIT_API_VERSION = "v1"
 ORBIT_API_GROUP = "orbit.aws"
 ORBIT_SYSTEM_NAMESPACE = "orbit-system"
@@ -131,5 +132,9 @@ def run_command(cmd: str) -> str:
         raise Exception(exc.output)
     return output
 
+
+def get_client() -> dynamic.DynamicClient:
+    load_config()
+    return dynamic.DynamicClient(client=api_client.ApiClient())
 
 logger = _get_logger()
