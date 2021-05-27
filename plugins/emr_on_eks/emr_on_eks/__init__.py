@@ -41,7 +41,7 @@ def deploy(
     sh.run(f"echo 'Team name: {team_context.name} | Plugin ID: {plugin_id}'")
     cluster_name = f"orbit-{context.name}"
     virtual_cluster_name = f"orbit-{context.name}-{team_context.name}"
-    delete_virtual_cluster(virtual_cluster_name)
+    delete_virtual_cluster(cluster_name, virtual_cluster_name)
 
     sh.run(
         f"eksctl create iamidentitymapping --cluster {cluster_name} "
@@ -98,9 +98,9 @@ def destroy(
 ) -> None:
     _logger.debug("Running emr_on_eks destroy!")
     sh.run(f"echo 'Team name: {team_context.name} | Plugin ID: {plugin_id}'")
-
+    cluster_name = f"orbit-{context.name}"
     virtual_cluster_name = f"orbit-{context.name}-{team_context.name}"
-    delete_virtual_cluster(virtual_cluster_name)
+    delete_virtual_cluster(cluster_name, virtual_cluster_name)
 
     cdk_destroy(
         stack_name=f"orbit-{context.name}-{team_context.name}-emr-on-eks",
@@ -111,20 +111,20 @@ def destroy(
     )
 
 
-def delete_virtual_cluster(virtual_cluster_name):
+def delete_virtual_cluster(eks_cluster_name: str, virtual_cluster_name: str) -> None:
     emr = boto3.client("emr-containers")
-    paginator = emr.get_paginator('list_virtual_clusters')
+    paginator = emr.get_paginator("list_virtual_clusters")
     response_iterator = paginator.paginate(
-        containerProviderId=f"orbit-dev-env",
-        containerProviderType='EKS',
+        containerProviderId=eks_cluster_name,
+        containerProviderType="EKS",
         states=[
-            'RUNNING',
+            "RUNNING",
         ],
         PaginationConfig={
             # can't expect to have so many virtual clusters and teams concurrently on the same env
-            'MaxItems': 10000,
-            'PageSize': 400
-        }
+            "MaxItems": 10000,
+            "PageSize": 400,
+        },
     )
     if "virtualClusters" in response_iterator:
         for p in response_iterator:
