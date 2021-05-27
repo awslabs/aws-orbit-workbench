@@ -67,7 +67,7 @@ spec:
           medium: Memory
       - name: efs-volume
         persistentVolumeClaim:
-          claimName: jupyterhub
+          claimName: team-efs
       containers:
         - name: ray-head
           image: {{ .Values.images.ray }}
