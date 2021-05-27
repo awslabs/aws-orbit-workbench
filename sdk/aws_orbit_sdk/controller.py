@@ -503,6 +503,7 @@ def delete_job(job_name: str, grace_period_seconds: int = 30):
     props = get_properties()
     global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
     env_name = props["AWS_ORBIT_ENV"]
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
     load_kube_config()
     api_instance = BatchV1Api()
     try:
