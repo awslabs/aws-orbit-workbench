@@ -19,7 +19,6 @@ from concurrent.futures import Future
 from typing import Any, List, Optional, Tuple, cast
 
 from aws_orbit import bundle, docker, plugins, remote, sh
-from aws_orbit.models import manifest
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, TeamContext
 from aws_orbit.models.manifest import ImageManifest, ImagesManifest, Manifest, ManifestSerDe
@@ -98,7 +97,9 @@ def _deploy_image_remotely(context: "Context", name: str, bundle_path: str, buil
     _logger.debug("%s Docker Image deployed into ECR", name)
 
 
-def _deploy_images_batch(manifest: Manifest, context: "Context", images: List[Tuple[str, Optional[str], Optional[str], List[str]]]) -> None:
+def _deploy_images_batch(
+    manifest: Manifest, context: "Context", images: List[Tuple[str, Optional[str], Optional[str], List[str]]]
+) -> None:
     _logger.debug("images:\n%s", images)
 
     new_images_manifest = {name: getattr(context.images, name) for name in context.images.names}
@@ -160,7 +161,9 @@ def deploy_images_remotely(manifest: Manifest, context: "Context", skip_images: 
         images.append(("image-replicator", "image-replicator", None, []))
     if not (manifest.images.k8s_utilities.get_source(context.account_id, context.region) == "code" and skip_images):
         images.append(("k8s-utilities", "k8s-utilities", None, []))
-    if not (manifest.images.admission_controller.get_source(context.account_id, context.region) == "code" and skip_images):
+    if not (
+        manifest.images.admission_controller.get_source(context.account_id, context.region) == "code" and skip_images
+    ):
         images.append(("admission-controller", "admission-controller", None, []))
 
     # Secondary images we can optionally skip
@@ -200,11 +203,15 @@ def deploy_env(args: Tuple[str, ...]) -> None:
     else:
         raise ValueError("Unexpected number of values in args")
 
-    manifest: Manifest = ManifestSerDe.load_manifest_from_ssm(env_name=env_name, type=Manifest)
+    manifest: Optional[Manifest] = ManifestSerDe.load_manifest_from_ssm(env_name=env_name, type=Manifest)
+    _logger.debug("Manifest loaded.")
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("Context loaded.")
     changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=env_name)
     _logger.debug("Changeset loaded.")
+
+    if manifest is None:
+        raise Exception("Unable to load Manifest")
 
     docker.login(context=context)
     _logger.debug("DockerHub and ECR Logged in")
