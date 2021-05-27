@@ -41,6 +41,8 @@ def deploy(
     sh.run(f"echo 'Team name: {team_context.name} | Plugin ID: {plugin_id}'")
     cluster_name = f"orbit-{context.name}"
     virtual_cluster_name = f"orbit-{context.name}-{team_context.name}"
+    delete_virtual_cluster(virtual_cluster_name)
+
     sh.run(
         f"eksctl create iamidentitymapping --cluster {cluster_name} "
         + f'--namespace {team_context.name} --service-name "emr-containers"'
@@ -98,21 +100,7 @@ def destroy(
     sh.run(f"echo 'Team name: {team_context.name} | Plugin ID: {plugin_id}'")
 
     virtual_cluster_name = f"orbit-{context.name}-{team_context.name}"
-    emr = boto3.client("emr-containers")
-    response = emr.list_virtual_clusters(
-        containerProviderId=f"orbit-{context.name}",
-        containerProviderType="EKS",
-        maxResults=500,
-    )
-    if "virtualClusters" in response:
-        for c in response["virtualClusters"]:
-            if c["name"] == virtual_cluster_name:
-                try:
-                    delete_response = emr.delete_virtual_cluster(id=c["id"])
-                    _logger.debug("delete_virtual_cluster:", delete_response)
-                except Exception as e:
-                    _logger.warning(e)
-                    pass
+    delete_virtual_cluster(virtual_cluster_name)
 
     cdk_destroy(
         stack_name=f"orbit-{context.name}-{team_context.name}-emr-on-eks",
@@ -121,3 +109,30 @@ def destroy(
         team_context=team_context,
         parameters=parameters,
     )
+
+
+def delete_virtual_cluster(virtual_cluster_name):
+    emr = boto3.client("emr-containers")
+    paginator = emr.get_paginator('list_virtual_clusters')
+    response_iterator = paginator.paginate(
+        containerProviderId=f"orbit-dev-env",
+        containerProviderType='EKS',
+        states=[
+            'RUNNING',
+        ],
+        PaginationConfig={
+            # can't expect to have so many virtual clusters and teams concurrently on the same env
+            'MaxItems': 10000,
+            'PageSize': 400
+        }
+    )
+    if "virtualClusters" in response_iterator:
+        for p in response_iterator:
+            for c in p["virtualClusters"]:
+                if c["name"] == virtual_cluster_name:
+                    try:
+                        delete_response = emr.delete_virtual_cluster(id=c["id"])
+                        _logger.debug("delete_virtual_cluster:", delete_response)
+                    except Exception as e:
+                        _logger.error(e)
+                        pass
