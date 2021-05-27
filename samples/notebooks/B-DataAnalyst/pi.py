@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import time
 import os
 import sys
+import time
 from operator import add
 from random import random
 

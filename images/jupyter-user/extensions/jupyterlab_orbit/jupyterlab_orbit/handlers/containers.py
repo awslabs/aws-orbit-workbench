@@ -28,7 +28,6 @@ CRONJOBS: List[Dict[str, str]] = []
 
 
 class ContainersRouteHandler(APIHandler):
-
     @staticmethod
     def _dump_job(clist, type) -> str:
         data: List[Dict[str, str]] = []
@@ -41,14 +40,11 @@ class ContainersRouteHandler(APIHandler):
                 container["time"] = c["spec"]["schedule"]
                 container["job_state"] = "active"
 
-
-
             envs = job_template["spec"]["containers"][0]["env"]
 
             tasks = json.loads([e["value"] for e in envs if e["name"] == "tasks"][0])
             container["hint"] = json.dumps(tasks, indent=4)
             container["tasks"] = tasks["tasks"]
-
 
             if "labels" in c["metadata"]:
                 container["node_type"] = (
@@ -56,7 +52,6 @@ class ContainersRouteHandler(APIHandler):
                     if "orbit/node-type" in c["metadata"]["labels"]
                     else "unknown"
                 )
-
 
             container["notebook"] = (
                 tasks["tasks"][0]["notebookName"]
@@ -89,7 +84,9 @@ class ContainersRouteHandler(APIHandler):
             if "app" in c["metadata"]["labels"]:
                 container["pod_app"] = c["metadata"]["labels"]["app"]
                 if "emr-spark" == c["metadata"]["labels"]["app"]:
-                    container["job_name"] = c["metadata"]["labels"]["emr-containers.amazonaws.com/job.id"]
+                    container["job_name"] = c["metadata"]["labels"][
+                        "emr-containers.amazonaws.com/job.id"
+                    ]
                 else:
                     container["job_name"] = c["metadata"]["labels"]["job-name"]
 
@@ -99,21 +96,36 @@ class ContainersRouteHandler(APIHandler):
             if "status" in c:
                 # Succeeded / Completed
                 constainer_phase_status = (c["status"]["phase"]).lower()
-                if constainer_phase_status in ["succeeded","failed"]:
+                if constainer_phase_status in ["succeeded", "failed"]:
                     if container["pod_app"] == "emr-spark":
-                        container_status = [cs for cs in c["status"]["containerStatuses"]
-                                             if "spark-kubernetes-driver" == cs["name"]][0]
+                        container_status = [
+                            cs
+                            for cs in c["status"]["containerStatuses"]
+                            if "spark-kubernetes-driver" == cs["name"]
+                        ][0]
                     else:
                         container_status = c["status"]["containerStatuses"][0]
 
-                    completion_dt = datetime.strptime(container_status["state"]["terminated"]["finishedAt"], response_datetime_format)
-                    start_dt = datetime.strptime(container_status["state"]["terminated"]["startedAt"], response_datetime_format)
+                    completion_dt = datetime.strptime(
+                        container_status["state"]["terminated"]["finishedAt"],
+                        response_datetime_format,
+                    )
+                    start_dt = datetime.strptime(
+                        container_status["state"]["terminated"]["startedAt"],
+                        response_datetime_format,
+                    )
                     duration = completion_dt - start_dt
                     container["duration"] = str(duration)
-                    container["completionTime"] = container_status["state"]["terminated"]["finishedAt"] if constainer_phase_status == "succeeded" else ""
+                    container["completionTime"] = (
+                        container_status["state"]["terminated"]["finishedAt"]
+                        if constainer_phase_status == "succeeded"
+                        else ""
+                    )
                     container["job_state"] = constainer_phase_status
                 elif constainer_phase_status == "running":
-                    started_at = datetime.strptime(c["status"]["startTime"], response_datetime_format)
+                    started_at = datetime.strptime(
+                        c["status"]["startTime"], response_datetime_format
+                    )
                     duration = datetime.utcnow() - started_at
                     container["duration"] = str(duration).split(".")[0]
                     container["completionTime"] = ""
@@ -128,15 +140,20 @@ class ContainersRouteHandler(APIHandler):
                 container["job_state"] = "unknown"
 
             if container["pod_app"] == "emr-spark":
-                container_task = [ct for ct in c["spec"]["containers"]
-                                    if "spark-kubernetes-driver" == ct["name"]][0]
+                container_task = [
+                    ct
+                    for ct in c["spec"]["containers"]
+                    if "spark-kubernetes-driver" == ct["name"]
+                ][0]
                 container["hint"] = json.dumps(container_task, indent=4)
                 container["tasks"] = container_task["args"]
                 container["notebook"] = container_task["args"][-2].split("/")[-1]
                 container["container_name"] = "spark-kubernetes-driver"
             else:
                 envs = c["spec"]["containers"][0]["env"]
-                tasks = json.loads([e["value"] for e in envs if e["name"] == "tasks"][0])
+                tasks = json.loads(
+                    [e["value"] for e in envs if e["name"] == "tasks"][0]
+                )
                 container["hint"] = json.dumps(tasks, indent=4)
                 container["tasks"] = tasks["tasks"]
                 container["notebook"] = (
@@ -145,8 +162,6 @@ class ContainersRouteHandler(APIHandler):
                     else f'{tasks["tasks"][0]["moduleName"]}.{tasks["tasks"][0]["functionName"]}'
                 )
                 container["container_name"] = ""
-
-
             if "labels" in c["metadata"]:
                 container["node_type"] = (
                     c["metadata"]["labels"]["orbit/node-type"]
@@ -154,16 +169,16 @@ class ContainersRouteHandler(APIHandler):
                     else "unknown"
                 )
                 container["job_type"] = (
-                    c["metadata"]["labels"]["app"] if "app" in c["metadata"]["labels"] else "unknown"
+                    c["metadata"]["labels"]["app"]
+                    if "app" in c["metadata"]["labels"]
+                    else "unknown"
                 )
-
             if container["job_state"] == "running":
                 container["rank"] = 1
             else:
                 container["rank"] = 2
             container["info"] = c
             data.append(container)
-
         data = sorted(
             data,
             key=lambda i: (
@@ -171,7 +186,6 @@ class ContainersRouteHandler(APIHandler):
                 i["creationTimestamp"] if "creationTimestamp" in i else i["name"],
             ),
         )
-
         return json.dumps(data)
 
     @web.authenticated
@@ -218,7 +232,6 @@ class ContainersRouteHandler(APIHandler):
                 else:
                     raise Exception("Unknown type: %s", type)
 
-
     @staticmethod
     def _delete(job_name, data):
         for c in data:
@@ -251,4 +264,3 @@ class ContainersRouteHandler(APIHandler):
             self.finish(self._dump_job(data, type))
         else:
             raise Exception("Unknown job_type: %s", job_type)
-
