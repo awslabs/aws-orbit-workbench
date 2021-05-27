@@ -29,7 +29,7 @@ spec:
                 matchExpressions:
                   - key: k8s.amazonaws.com/accelerator
                     operator: DoesNotExist
-      serviceAccountName: {{ .Values.team }}
+      serviceAccountName: default-editor
       containers:
       - name: run-efs-init
         securityContext:

@@ -18,11 +18,17 @@ spec:
         operator: Exists
   volumeMounts:
     - mountPath: /home/jovyan/shared
-      name: efs-volume
+      name: efs-volume-shared
+    - mountPath: /home/jovyan
+      name: user-efs
   volumes:
-    - name: efs-volume
+    - name: efs-volume-shared
       persistentVolumeClaim:
         claimName: team-efs
+    - name: user-efs
+      persistentVolumeClaim:
+        claimName: user-efs
+
   labels:
     orbit/node-type: ec2
     orbit/attach-security-group: "yes"
@@ -50,9 +56,6 @@ spec:
   annotations:
     AWS_ORBIT_TEAM_SPACE: {{ .Values.team }}
     AWS_ORBIT_ENV: {{ .Values.env }}
-  securityContext:
-    runAsUser: 0  # The notebook must run as root, the start up script will switch to jovyan
-    fsGroup: 100
 ---
 # This is the lowest commond properties which every orbit-based container requires.
 apiVersion: orbit.aws/v1
@@ -78,6 +81,9 @@ spec:
         operator: NotIn
         values:
           - "orbit-runner"
+  securityContext:
+    runAsUser: 0  # The notebook must run as root, the start up script will switch to jovyan
+    fsGroup: 100
 ---
 # This configures the image policy to force PULL when using development env.
 {{ if .Values.DEVELOPMENT }}

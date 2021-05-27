@@ -205,6 +205,7 @@ def apply_settings_to_container(
     # Drop any previous AWS_ORBIT_USER_SPACE or AWS_ORBIT_IMAGE env variables
     ps_spec["env"] = [e for e in ps_spec.get("env", []) if e["name"] not in ["AWS_ORBIT_USER_SPACE", "AWS_ORBIT_IMAGE"]]
     # Append new ones
+
     ps_spec["env"].extend(
         [
             {"name": "AWS_ORBIT_USER_SPACE", "value": namespace["metadata"].get("name", "")},
@@ -218,7 +219,7 @@ def apply_settings_to_container(
         # Append new ones
         ps_spec["env"].extend(
             [
-                {"name": "USERNAME", "value": ns_labels.get("orbit/user", "")},
+                {"name": "USERNAME", "value": ns_labels.get("orbit/user", ns_labels.get("orbit/team", None))},
                 {"name": "USEREMAIL", "value": ns_annotations.get("owner", "")},
             ]
         )
@@ -309,8 +310,12 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
         logger.info("No orbit/team label found on namespace: %s", request["namespace"])
         return get_response(uid=request["uid"])
 
+    # team_pod_settings = filter_pod_settings(
+    #     logger=logger, pod_settings=ORBIT_SYSTEM_POD_SETTINGS, namespace=team_namespace, pod=pod
+    # )
+    # Temporarily retrieve all pod_settings on each request until caching is fixed
     team_pod_settings = filter_pod_settings(
-        logger=logger, pod_settings=ORBIT_SYSTEM_POD_SETTINGS, namespace=team_namespace, pod=pod
+        logger=logger, pod_settings=get_pod_settings(client=client), namespace=team_namespace, pod=pod
     )
     logger.debug("filtered podsettings: %s", team_pod_settings)
 

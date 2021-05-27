@@ -4,6 +4,8 @@ metadata:
   name: ${team}
   labels:
     orbit/space: team
+    orbit/team: ${team}
+    orbit/env: ${env_name}
 ---
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
@@ -57,54 +59,10 @@ kind: ServiceAccount
 metadata:
   labels:
     team: ${team}
-  name: ${team}
+  name: default-editor
   namespace: ${team}
   annotations:
     eks.amazonaws.com/role-arn: arn:aws:iam::${account_id}:role/orbit-${env_name}-${team}-role
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  labels:
-    app: orbit-jupyterhub
-  name: jupyterhub
-  namespace: ${team}
-rules:
-  - apiGroups:
-      - ""
-    resources:
-      - pods
-      - persistentvolumeclaims
-    verbs:
-      - get
-      - watch
-      - list
-      - create
-      - delete
-  - apiGroups:
-      - ""
-    resources:
-      - events
-    verbs:
-      - get
-      - watch
-      - list
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  labels:
-    app: orbit-jupyterhub
-  name: jupyterhub
-  namespace: ${team}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: jupyterhub
-subjects:
-  - kind: ServiceAccount
-    name: ${team}
-    namespace: ${team}
 ---
 apiVersion: vpcresources.k8s.aws/v1beta1
 kind: SecurityGroupPolicy
@@ -145,3 +103,37 @@ data:
     ${team_context}
   env: |
     ${env_context}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    app: user-efs
+    efs-id: ${efsid}
+  name: team-efs-private-${team}
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 5Gi
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: ${efsid}::${efsprivateapid}
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: efs-storage-class
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: user-efs
+  namespace: ${team}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: efs-storage-class
+  volumeName: team-efs-private-${team}
+---

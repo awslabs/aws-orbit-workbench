@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #!/usr/bin/env bash
 #
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
@@ -19,7 +18,7 @@
 set -ex
 
 src_samples_data='/opt/orbit/samples/'
-target_samples_data='/home/jovyan/shared/samples'
+target_samples_data='/efs'
 
 echo "Staging samples data on filsystem"
 if ! [ -d $target_samples_data ]; then

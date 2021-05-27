@@ -503,6 +503,7 @@ def delete_job(job_name: str, grace_period_seconds: int = 30):
     props = get_properties()
     global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
     env_name = props["AWS_ORBIT_ENV"]
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
     load_kube_config()
     api_instance = BatchV1Api()
     try:
@@ -640,6 +641,8 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
         volume_mounts=volume_mounts,
         labels=labels,
         logger=_logger,
+        run_as_uid=1000,
+        run_as_gid=100,
     )
 
     if "kubespawner_override" in profile:

@@ -23,3 +23,4 @@ grant_sudo: ${grant_sudo}
 sts_ep: ${sts_ep}
 fsGroup: 100
 team_role_arn: ${team_role_arn}
+K8Admin: ${K8Admin}
