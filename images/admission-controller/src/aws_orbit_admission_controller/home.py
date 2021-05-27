@@ -30,20 +30,19 @@ import os
 def login(logger: logging.Logger, app: Flask) -> Any:
     logger.debug("cookies: %s", json.dumps(request.cookies))
     email, username = _get_user_info_from_jwt(logger)
-    logger.debug("username: %s, email: email", username, email)
+    logger.debug("username: %s, email: %s", username, email)
 
     ready = _is_profile_ready_for_user(logger, username, email)
     logger.debug("user space is READY? %s", ready)
-
-    return render_template('index.html', title='login')
+    title = f'Welcome to Orbit Workbench'
+    return render_template('index.html', title='login', username=username)
 
 
 def logout(logger: logging.Logger, app: Flask) -> Any:
-
     return render_template('index.html', title='logout')
 
 
-def _is_profile_ready_for_user(logger: logging.Logger, username: str, email:str):
+def _is_profile_ready_for_user(logger: logging.Logger, username: str, email: str):
     profiles = _get_kf_profiles(get_client())
     for p in profiles:
         logger.debug('profile %s', json.dumps(p))
@@ -56,10 +55,15 @@ def _is_profile_ready_for_user(logger: logging.Logger, username: str, email:str)
 
 
 def _get_kf_profiles(client: dynamic.DynamicClient) -> List[Dict[str, Any]]:
-    api = client.resources.get(api_version='v1', group="kubeflow.org", kind="Profiles")
-    profiles = api.get()
-    return cast(List[Dict[str, Any]], profiles.to_dict().get("items", []))
+    try:
+        api = client.resources.get(api_version='v1', group="kubeflow.org", kind="Profile")
+        profiles = api.get()
+        return cast(List[Dict[str, Any]], profiles.to_dict().get("items", []))
+    except dynamic.exceptions.ResourceNotFoundError:
+        return []
 
+
+# https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html
 def _get_user_info_from_jwt(logger):
     logger.debug("headers: %s", json.dumps(dict(request.headers)))
     encoded_jwt = request.headers['x-amzn-oidc-data']

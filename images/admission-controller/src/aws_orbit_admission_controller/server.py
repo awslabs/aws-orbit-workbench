@@ -26,7 +26,7 @@ from aws_orbit_admission_controller.home import login,logout
 # from flask_cognito import cognito_auth_required, current_user, current_cognito_jwt
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static')
 app.logger.info("environ: %s", os.environ)
 
 # if "COGNITO_USERPOOL_ID" in os.environ:

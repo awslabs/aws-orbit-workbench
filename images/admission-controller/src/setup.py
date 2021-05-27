@@ -33,7 +33,8 @@ setup(
         "jsonpatch~=1.32",
         "flask~=1.1.2",
         "gunicorn~=20.1.0",
-        "jsonpath-ng~=1.5.0"
+        "jsonpath-ng~=1.5.0",
+        "cryptography~=3.4.7"
     ],
     entry_points={"console_scripts": ["admission-controller = aws_orbit_admission_controller.__main__:main"]},
     include_package_data=True,
