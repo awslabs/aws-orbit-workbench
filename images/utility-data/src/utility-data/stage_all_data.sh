@@ -21,7 +21,7 @@ env=$1
 
 python3 /opt/orbit/scripts/stage_regression_data.py $env
 bash /opt/orbit/scripts/stage_samples_data.sh
-bash /opt/orbit/scripts/stage_vscode_extensions.sh
+#bash /opt/orbit/scripts/stage_vscode_extensions.sh
 
 
 
