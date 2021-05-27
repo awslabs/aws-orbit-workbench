@@ -223,7 +223,7 @@ def apply_settings_to_container(
         # Append new ones
         ps_spec["env"].extend(
             [
-                {"name": "USERNAME", "value": ns_labels.get("orbit/user", "")},
+                {"name": "USERNAME", "value": ns_labels.get("orbit/user", ns_labels.get("orbit/team", ""))},
                 {"name": "USEREMAIL", "value": ns_annotations.get("owner", "")},
             ]
         )

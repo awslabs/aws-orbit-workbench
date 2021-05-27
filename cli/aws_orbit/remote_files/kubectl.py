@@ -407,8 +407,9 @@ def deploy_env(context: "Context") -> None:
         # Enable ENIs
         sh.run(f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} ENABLE_POD_ENI=true")
 
-        # Restart orbit-system deployments to force reload of caches
+        # Restart orbit-system deployments and statefulsets to force reload of caches etc
         sh.run(f"kubectl rollout restart deployments -n orbit-system --context {k8s_context}")
+        sh.run(f"kubectl rollout restart statefulsets -n orbit-system --context {k8s_context}")
 
 
 def deploy_team(context: "Context", team_context: "TeamContext") -> None:

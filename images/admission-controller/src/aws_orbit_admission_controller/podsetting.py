@@ -1,0 +1,101 @@
+#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License").
+#    You may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
+import time
+from multiprocessing import Queue
+from typing import Any, Dict, Optional, cast
+
+from aws_orbit_admission_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, load_config, logger
+from kubernetes import dynamic
+from kubernetes.client import api_client
+from kubernetes.dynamic import exceptions as k8s_exceptions
+from urllib3.exceptions import ReadTimeoutError
+
+
+def get_client() -> dynamic.DynamicClient:
+    load_config()
+    return dynamic.DynamicClient(client=api_client.ApiClient())
+
+
+def process_added_event(podsetting: Dict[str, Any]) -> None:
+    logger.debug("loading kubeconfig")
+    load_config()
+    logger.debug("ADDED: %s", podsetting)
+
+
+def process_modified_event(podsetting: Dict[str, Any]) -> None:
+    logger.debug("loading kubeconfig")
+    load_config()
+    logger.debug("MODIFIED: %s", podsetting)
+
+
+def process_deleted_event(podsetting: Dict[str, Any]) -> None:
+    logger.debug("loading kubeconfig")
+    load_config()
+    logger.debug("DELETED: %s", podsetting)
+
+
+def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
+    while True:
+        try:
+            client = get_client()
+            api = client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="PodSetting")
+
+            logger.info("Monitoring PodSettings")
+
+            kwargs = {"resource_version": state.get("lastResourceVersion", 0)}
+            for event in api.watch(**kwargs):
+                podsetting = event["object"]
+                state["lastResourceVersion"] = podsetting.metadata.resource_version
+                queue_event = {"type": event["type"], "raw_object": event["raw_object"]}
+                logger.debug("Queueing PodSetting event for processing: %s", queue_event)
+                queue.put(queue_event)
+        except ReadTimeoutError:
+            logger.warning("There was a timeout error accessing the Kubernetes API. Retrying request.", exc_info=True)
+            time.sleep(1)
+        except k8s_exceptions.ApiException as ae:
+            if ae.reason.startswith("Expired: too old resource version"):
+                logger.warning(ae.reason)
+                state["lastResourceVersion"] = 0
+            else:
+                logger.exception("Unknown ApiException in PodSettingWatcher. Failing")
+                raise
+        except Exception:
+            logger.exception("Unknown error in PodSettingWatcher. Failing")
+            raise
+        else:
+            logger.warning(
+                "Watch died gracefully, starting back up with last_resource_version: %s", state["lastResourceVersion"]
+            )
+
+
+def process_podsettings(queue: Queue, state: Dict[str, Any], replicator_id: int) -> int:  # type: ignore
+    logger.info("Started PodSetting Processor Id: %s", replicator_id)
+    podsetting_event: Optional[Dict[str, Any]] = None
+
+    while True:
+        try:
+            podsetting_event = cast(Dict[str, Any], queue.get(block=True, timeout=None))
+
+            if podsetting_event["type"] == "ADDED":
+                process_added_event(podsetting=podsetting_event["raw_object"])
+            elif podsetting_event["type"] == "DELETED":
+                process_deleted_event(podsetting=podsetting_event["raw_object"])
+            else:
+                logger.debug("Skipping PodSetting event: %s", podsetting_event)
+        except Exception:
+            logger.exception("Failed to process PodSetting event: %s", podsetting_event)
+        finally:
+            podsetting_event = None
+            time.sleep(1)

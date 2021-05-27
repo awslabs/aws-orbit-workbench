@@ -92,9 +92,15 @@ def get_module_state(module: str) -> Dict[str, Any]:
 
 
 def put_module_state(module: str, state: Dict[str, Any]) -> None:
-    module_path = os.path.join(ORBIT_STATE_PATH, module)
-    with open(module_path, "w") as module_file:
-        json.dump(state, module_file)
+    try:
+        body = {"data": {module: json.dumps({k: v for k, v in state.items()})}}
+        logger.debug("Patching admission-controller-state in Namespace %s with %s", ORBIT_SYSTEM_NAMESPACE, body)
+        CoreV1Api().patch_namespaced_config_map(
+            name="admission-controller-state", namespace=ORBIT_SYSTEM_NAMESPACE, body=body
+        )
+    except Exception:
+        logger.exception("Error patching admission-controller-state ConfigMap")
+        raise
 
 
 def maintain_module_state(module: str, state: Dict[str, Any], sleep_time: int = 1) -> None:

@@ -36,7 +36,7 @@ def health() -> Any:
     return ("", http.HTTPStatus.NO_CONTENT)
 
 
-@app.route("/hello")
+@app.route("/hello", methods=["GET", "POST"])
 def hello() -> Any:
     r = random.randint(0, 1000)
     return f"Hello! random number gen: {r}"

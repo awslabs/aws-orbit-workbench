@@ -1,12 +1,33 @@
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: admission-controller-config
+  namespace: orbit-system
+data:
+  FLASK_DEBUG: "1"
+  FLASK_ENV: development
+  GUNICORN_WORKERS: "1"
+  ADMISSION_CONTROLLER_DEBUG: "1"
+  IN_CLUSTER_DEPLOYMENT: "1"
+  NAMESPACE_WATCHER_WORKERS: "1"
+  POD_SETTINGS_WATCHER_WORKERS: "1"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: admission-controller-state
+  namespace: orbit-system
+data: {}
+---
 kind: Service
 apiVersion: v1
 metadata:
-  name: admission-controller-pod-settings-mutator
+  name: podsettings-applicator
   namespace: orbit-system
 spec:
   selector:
-    app: admission-controller-pod-settings-mutator
+    app: podsettings-applicator
   ports:
   - name: https
     protocol: TCP
@@ -16,9 +37,9 @@ spec:
 kind: MutatingWebhookConfiguration
 apiVersion: admissionregistration.k8s.io/v1beta1
 metadata:
-  name: orbit-admission-controller-pod-settings-mutator
+  name: orbit-podsettings-applicator
 webhooks:
-  - name: admission-controller-pod-settings-mutator.orbit-system.svc
+  - name: podsettings-applicator.orbit-system.svc
     sideEffects: None
     reinvocationPolicy: IfNeeded
     failurePolicy: Fail
@@ -39,28 +60,8 @@ webhooks:
       caBundle: ""
       service:
         namespace: orbit-system
-        name: admission-controller-pod-settings-mutator
+        name: podsettings-applicator
         path: /pod
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: admission-controller-config
-  namespace: orbit-system
-data:
-  FLASK_DEBUG: "1"
-  FLASK_ENV: development
-  GUNICORN_WORKERS: "1"
-  ADMISSION_CONTROLLER_DEBUG: "1"
-  IN_CLUSTER_DEPLOYMENT: "1"
-  NAMESPACE_WATCHER_WORKERS: "1"
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: admission-controller-state
-  namespace: orbit-system
-data: {}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -68,20 +69,22 @@ metadata:
   labels:
     app: admission-controller
   namespace: orbit-system
-  name: admission-controller-pod-settings-mutator
+  name: podsettings-applicator
 spec:
   podManagementPolicy: OrderedReady
   replicas: 1
   revisionHistoryLimit: 10
-  serviceName: admission-controller-pod-settings-mutator
+  serviceName: podsettings-applicator
   selector:
     matchLabels:
-      app: admission-controller-pod-settings-mutator
+      app: podsettings-applicator
   template:
     metadata:
       labels:
-        app: admission-controller-pod-settings-mutator
-      name: admission-controller-pod-settings-mutator
+        app: podsettings-applicator
+      name: podsettings-applicator
+      annotations:
+        sidecar.istio.io/inject: "false"
     spec:
       serviceAccountName: orbit-${env_name}-admin
       containers:
@@ -110,6 +113,7 @@ spec:
               name: admission-controller-certs
             - mountPath: /state
               name: admission-controller-state
+              readOnly: false
           readinessProbe:
             httpGet:
               path: /health
@@ -129,12 +133,12 @@ spec:
               cpu: 2
               memory: 2G
             requests:
-              cpu: 1
-              memory: 1G
+              cpu: 100m
+              memory: 100M
       volumes:
         - name: admission-controller-certs
           secret:
-            secretName: admission-controller-pod-settings-mutator-certs
+            secretName: podsettings-applicator-certs
         - name: admission-controller-state
           configMap:
             name: admission-controller-state
@@ -145,7 +149,7 @@ metadata:
   labels:
     app: admission-controller
   namespace: orbit-system
-  name: admission-controller-namespace-watcher
+  name: namespace-watcher
 spec:
   podManagementPolicy: OrderedReady
   replicas: 1
@@ -153,16 +157,18 @@ spec:
   serviceName: ""
   selector:
     matchLabels:
-      app: admission-controller-namespace-watcher
+      app: namespace-watcher
   template:
     metadata:
       labels:
-        app: admission-controller-namespace-watcher
-      name: admission-controller-namespace-watcher
+        app: namespace-watcher
+      name: namespace-watcher
+      annotations:
+        sidecar.istio.io/inject: "false"
     spec:
       serviceAccountName: orbit-${env_name}-admin
       containers:
-        - name: namesapce-watcher
+        - name: watcher
           image: ${admission_controller_image}
           imagePullPolicy: ${image_pull_policy}
           envFrom:
@@ -177,13 +183,67 @@ spec:
           volumeMounts:
             - mountPath: /state
               name: admission-controller-state
+              readOnly: false
           resources:
             limits:
               cpu: 2
               memory: 2G
             requests:
-              cpu: 1
-              memory: 1G
+              cpu: 100m
+              memory: 100M
+      volumes:
+        - name: admission-controller-state
+          configMap:
+            name: admission-controller-state
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: admission-controller
+  namespace: orbit-system
+  name: podsettings-watcher
+spec:
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  revisionHistoryLimit: 10
+  serviceName: ""
+  selector:
+    matchLabels:
+      app: podsettings-watcher
+  template:
+    metadata:
+      labels:
+        app: podsettings-watcher
+      name: podsettings-watcher
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: orbit-${env_name}-admin
+      containers:
+        - name: watcher
+          image: ${admission_controller_image}
+          imagePullPolicy: ${image_pull_policy}
+          envFrom:
+            - configMapRef:
+                name: admission-controller-config
+          command:
+            - admission-controller
+            - watch
+            - podsettings
+          args:
+            - "--workers=$(POD_SETTINGS_WATCHER_WORKERS)"
+          volumeMounts:
+            - mountPath: /state
+              name: admission-controller-state
+              readOnly: false
+          resources:
+            limits:
+              cpu: 2
+              memory: 2G
+            requests:
+              cpu: 100m
+              memory: 100M
       volumes:
         - name: admission-controller-state
           configMap:
