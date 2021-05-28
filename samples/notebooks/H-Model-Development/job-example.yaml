@@ -20,17 +20,17 @@ spec:
       volumes:
         - name: efs-volume
           persistentVolumeClaim:
-            claimName: jupyterhub
+            claimName: team-efs
       containers:
         - name: ray
-          image: rayproject/ray:nightly
+          image: rayproject/ray:1.3.0
           volumeMounts:
-          - mountPath: /efs
+          - mountPath: /efs/shared
             name: efs-volume
           imagePullPolicy: IfNotPresent
           command: [ "/bin/bash", "-c", "--" ]
           args:
-            - "python /home/jovyan/shared/samples/notebooks/H-Model-Development/job_example.py"
+            - "python /efs/shared/samples/notebooks/H-Model-Development/job_example.py"
           resources:
             requests:
               cpu: 100m
