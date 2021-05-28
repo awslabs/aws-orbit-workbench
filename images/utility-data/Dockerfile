@@ -4,8 +4,8 @@ RUN pip install boto3
 
 RUN mkdir -p /opt/orbit/scripts
 
-COPY images/utility-data/src/utility-data/*.sh /opt/orbit/scripts
-COPY images/utility-data/src/utility-data/*.py /opt/orbit/scripts
+COPY images/utility-data/src/utility-data/*.sh /opt/orbit/scripts/
+COPY images/utility-data/src/utility-data/*.py /opt/orbit/scripts/
 
 RUN mkdir -p /opt/orbit/data
 RUN mkdir -p /opt/orbit/data/vscode
