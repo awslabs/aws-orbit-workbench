@@ -274,7 +274,7 @@ def deploy_env(
         else:
             RuntimeError("Cognito Users URL not found.")
         if context.landing_page_url:
-            msg_ctx.tip(f"Access Orbit Workbench: {stylize(context.landing_page_url, underline=True)}")
+            msg_ctx.tip(f"Access Orbit Workbench: {stylize(f'{context.landing_page_url}/orbit/login', underline=True)}")
         else:
             RuntimeError("Landing Page URL not found.")
         msg_ctx.progress(100)
@@ -349,7 +349,7 @@ def deploy_teams(
         else:
             RuntimeError("Cognito Users URL not found.")
         if context.landing_page_url:
-            msg_ctx.tip(f"Access Orbit Workbench: {stylize(context.landing_page_url, underline=True)}")
+            msg_ctx.tip(f"Access Orbit Workbench: {stylize(f'{context.landing_page_url}/orbit/login', underline=True)}")
         else:
             RuntimeError("Landing Page URL not found.")
         msg_ctx.progress(100)
