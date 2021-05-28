@@ -46,7 +46,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: default-editor
-  namespace: ${team}
+  namespace: {{ .Values.namespace }}
 
 ---
 {{ end }}

@@ -49,7 +49,7 @@ def wait_for_nodes(expected):
             break
 
 def main():
-    wait_for_nodes(3)
+    wait_for_nodes(2)
 
     # Check that objects can be transferred from each node to each other node.
     for i in range(10):
