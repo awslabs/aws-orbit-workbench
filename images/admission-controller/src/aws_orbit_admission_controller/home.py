@@ -25,6 +25,7 @@ import jwt
 import requests
 import base64
 import os
+from urllib.parse import urlparse, urlencode
 
 
 def is_ready(logger: logging.Logger, app: Flask) -> Any:
@@ -43,15 +44,32 @@ def login(logger: logging.Logger, app: Flask) -> Any:
 
     ready = _is_profile_ready_for_user(logger, username, email)
     logger.debug("user space is READY? %s", ready)
-    return render_template('index.html', title='login', username=username)
+
+    base_url = request.base_url
+    hostname = urlparse(base_url).hostname
+    client_id = os.environ['COGNITO_APP_CLIENT_ID']
+    logger.debug('clientid=%s', client_id)
+    cognito_domain = os.environ['COGNITO_DOMAIN']
+    logout_uri = f"https://{hostname}/orbit/logout"
+    params = {'logout_uri': logout_uri, 'client_id': client_id}
+    param_str = urlencode(params)
+    logout_redirect_url = f"https://{os.environ['COGNITO_DOMAIN']}/logout?{param_str}"
+
+
+    logger.debug("logout url: %s", logout_redirect_url)
+    return render_template('index.html', title='login',
+                           username=username, hostname=hostname,
+                           logout_uri=logout_uri, client_id=client_id,
+                           cognito_domain=cognito_domain)
+
+
+def _get_logout_redirect_url(logger: logging.Logger):
+
+    return logout_redirect_url
 
 
 def logout(logger: logging.Logger, app: Flask) -> Any:
-    return render_template('index.html', title='logout')
-
-
-def signed_out(logger: logging.Logger, app: Flask) -> Any:
-    return render_template('signedout.html', title='Orbit Session ended')
+    return render_template('logout.html', title='Orbit Session ended')
 
 
 def _is_profile_ready_for_user(logger: logging.Logger, username: str, email: str):

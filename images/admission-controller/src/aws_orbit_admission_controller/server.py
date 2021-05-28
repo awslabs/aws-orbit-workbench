@@ -21,7 +21,7 @@ from aws_orbit_admission_controller.pod import process_request as process_pod_re
 from flask import Flask, request, make_response
 from flask import render_template
 
-from aws_orbit_admission_controller.home import login, logout, is_ready,signed_out
+from aws_orbit_admission_controller.home import login, logout, is_ready
 
 # from flask_cognito import cognito_auth_required, current_user, current_cognito_jwt
 
@@ -54,19 +54,14 @@ def login_request() -> Any:
     return login(logger=app.logger, app=app)
 
 
-@app.route("/logout")
-def logout_request() -> Any:
-    return logout(logger=app.logger, app=app)
-
-
 @app.route("/isready")
 def isready() -> Any:
     return is_ready(logger=app.logger, app=app)
 
 
-@app.route("/signedout")
-def signedout() -> Any:
-    response = make_response(signed_out(logger=app.logger, app=app))
+@app.route("/logout")
+def logout_request() -> Any:
+    response = make_response(logout(logger=app.logger, app=app))
 
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"

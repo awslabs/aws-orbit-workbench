@@ -2,11 +2,7 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-    <!--    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"-->
-    <!--			  integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="-->
-    <!--			  crossorigin="anonymous">-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-
     <title>Orbit Workbench</title>
     <link href="/orbit/static/App.css" rel="stylesheet">
 
@@ -19,7 +15,8 @@
     jQuery(document).ready(function ($) {
         var isready = false;
         var poll_timer;
-
+        const redirect_url = '{{ logout_redirect_url }}';
+        console.log('go to ' + redirect_url);
         function set_timer() {
             $.ajax({
                 url: "/orbit/isready",
@@ -53,10 +50,13 @@
 
     function logout() {
         console.log('logout!!!');
-        location.href = "https://orbit-495869084367-public2.auth.us-west-2.amazoncognito.com/logout?\n" +
-            "client_id=4fnvank0kcgh4fc089n8ecijts&logout_uri=https://b665cb9a-istiosystem-istio-2af2-1924196.us-west-2.elb.amazonaws.com/orbit/signedout"
-            // + "&redirect_uri=https://b665cb9a-istiosystem-istio-2af2-1924196.us-west-2.elb.amazonaws.com/oauth2/idpresponse"
-            // + "&response_type=code&state=STATE&scope=openid+profile+aws.cognito.signin.user.admin"
+        const hostname = '{{hostname}}';
+        const logout_uri = '{{logout_uri}}';
+        const client_id = '{{client_id}}';
+        const cognito_domain = '{{cognito_domain}}';
+        const url = 'https://' + cognito_domain + '/logout?' + 'client_id=' + client_id + '&logout_uri=' + logout_uri
+        console.log('redirect url: ' + url);
+        location.href = url
     }
 </script>
 <div data-role="page">

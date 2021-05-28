@@ -277,7 +277,7 @@ spec:
     - uri:
         prefix: /orbit/
     rewrite:
-      uri: /login
+      uri: /
     route:
     - destination:
         host: landing-page-service.orbit-system.svc.cluster.local
