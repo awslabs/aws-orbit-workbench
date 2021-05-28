@@ -2,18 +2,74 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
+<!--    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"-->
+<!--			  integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="-->
+<!--			  crossorigin="anonymous">-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
     <title>Orbit Workbench</title>
-    <link rel="stylesheet" href="/static/index.css">
+    <link rel="stylesheet" href="/orbit/static/App.css">
+
+    <link href="/orbit/static/node_modules/three-dots/dist/three-dots.min.css" type="text/css" rel="stylesheet">
+
 </head>
 <body>
-    <div> <img src="/static/images/orbit1.png" alt="Orbit Workbench" width="20%" height="30%">  </div>
-    <div>
-    <p>Welcome {{ username }}!</p>
-    <p>&nbsp;</p><p>&nbsp;</p>
-    <p>Please wait a moment until your space is created.&nbsp;</p>
-    <p>&nbsp;</p>
-    <p>&nbsp;</p>
+    <script>
+        jQuery(document).ready(function($){
+            var isready = false;
+            var poll_timer;
+            function set_timer() {
+                $.ajax({
+                    url: "/orbit/isready",
+                    type: "GET",
+                    success: function (data) {
+                        console.log("polling");
+                        console.log(data);
+                        const waitDiv = document.getElementById("wait-first-time");
+                        const applications = document.getElementById("applications");
+                        if (data.isReady) {
+                            console.log('ready!!!');
+                            $("#wait-first-time").hide();
+                            $("#applications").show();
+                            clearTimeout(poll_timer)
+                        } else {
+                            $("#wait-first-time").show();
+                            $("#applications").hide();
+                        }
+                    },
+                    dataType: "json",
+                    complete: poll_timer,
+                    timeout: 2000
+                })
+            }
+            poll_timer = setTimeout(function() {set_timer()}, 10000);
+            (set_timer());
+        });
+    </script>
+    <div id="app-container" class="app-container">
+        <object id="orbit-logo" type="image/svg+xml" data="/orbit/static/images/orbit.svg" class="orbit-logo" width="20%" height="40%"></object>
+        <div id="orbit-content">
+            &nbsp;&nbsp;
+            <h2>Welcome {{ username }}!</h2>
+            &nbsp;&nbsp;
+        </div>
+        <div id="wait-first-time" class="my-dot-bricks" style="display:none;">
+            <h4>Please wait a moment until your user space is created.&nbsp;</h4>
+            <div id="stage" class="stage">
+                <div id="dots" class="dot-bricks"/>
+            </div>
+        </div>
     </div>
+    <div id="applications" class="applications">
+            <p>
+                <div id="app-header">
+                    <h4>Select your application:</h4>
+                </div>
+                <a href="/" target="_blank" rel="noopener noreferrer" id="kubeflow-icon">
+                    <object id="kubeflow3" type="image/svg+xml" data="/orbit/static/images/Kubeflow-Logo-RGB.jpg" width="100" height="100"></object>
+                </a>
+            </p>
+        </div>
 </body>
 </html>
 

@@ -9,5 +9,9 @@ RUN cd /var/admission-controller/ && \
 
 RUN pip uninstall jwt==1.0.0 && pip uninstall PyJWT && pip install PyJWT~=2.1.0
 
+RUN cd /var/admission-controller/src/aws_orbit_admission_controller && \
+    npm install three-dots --save
+
 WORKDIR /var/admission-controller/
+
 CMD ["bash"]

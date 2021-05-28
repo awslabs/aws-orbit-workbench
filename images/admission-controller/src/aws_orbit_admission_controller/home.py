@@ -14,7 +14,7 @@
 
 
 from typing import Any, Dict, Optional, cast,List
-from flask import Flask, render_template,request
+from flask import Flask, render_template,request,jsonify
 from kubernetes.client import CoreV1Api, V1ConfigMap
 from kubernetes.dynamic import exceptions as k8s_exceptions
 from aws_orbit_admission_controller import get_client
@@ -25,6 +25,15 @@ import jwt
 import requests
 import base64
 import os
+
+
+def is_ready(logger: logging.Logger, app: Flask) -> Any:
+    logger.debug("cookies: %s", json.dumps(request.cookies))
+    email, username = _get_user_info_from_jwt(logger)
+
+    ready = _is_profile_ready_for_user(logger, username, email)
+    logger.debug("username: %s, email: %s", username, email)
+    return jsonify({"isReady": ready})
 
 
 def login(logger: logging.Logger, app: Flask) -> Any:
