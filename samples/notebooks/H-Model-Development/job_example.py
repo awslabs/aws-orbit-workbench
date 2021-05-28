@@ -1,7 +1,8 @@
-from collections import Counter
 import os
 import sys
 import time
+from collections import Counter
+
 import ray
 
 """ This script is meant to be run from a pod in the same Kubernetes namespace
@@ -48,7 +49,7 @@ def wait_for_nodes(expected):
             break
 
 def main():
-    wait_for_nodes(3)
+    wait_for_nodes(2)
 
     # Check that objects can be transferred from each node to each other node.
     for i in range(10):

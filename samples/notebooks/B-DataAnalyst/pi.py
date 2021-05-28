@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 import os
 import sys
+import time
 from operator import add
 from random import random
 
@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     spark.stop()
 
-    with open("/home/jovyan/shared/jobs/output.txt", "w") as text_file:
+    with open("/efs/shared/jobs/output.txt", "w") as text_file:
         text_file.write("Pi is roughly %f" % (4.0 * count / n))
         text_file.write("\n\n env: \n")
         for k, v in os.environ.items():

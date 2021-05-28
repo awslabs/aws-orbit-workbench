@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: sagemaker-k8s-operator-leader-election-role
-  namespace: {{ .Release.Namespace | default "sagemaker-k8s-operator-system" | quote }}
+  namespace: {{ .Values.namespace }}
   labels:
     {{- include "sm_operator.labels" . | nindent 4 }}
     {{- with .Values.workerLabels }}
@@ -31,10 +31,207 @@ rules:
   - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: sagemaker-k8s-operator-manager-role
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "sm_operator.labels" . | nindent 4 }}
+    {{- with .Values.workerLabels }}
+    {{- toYaml . | nindent 4  }}
+    {{- end  }}
+rules:
+- apiGroups:
+  - sagemaker.aws.amazon.com
+  resources:
+  - batchtransformjobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - sagemaker.aws.amazon.com
+  resources:
+  - batchtransformjobs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sagemaker.aws.amazon.com
+  resources:
+  - endpointconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - sagemaker.aws.amazon.com
+  resources:
+  - endpointconfigs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sagemaker.aws.amazon.com
+  resources:
+  - hostingautoscalingpolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - sagemaker.aws.amazon.com
+  resources:
+  - hostingautoscalingpolicies/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sagemaker.aws.amazon.com
+  resources:
+  - hostingdeployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - sagemaker.aws.amazon.com
+  resources:
+  - hostingdeployments/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sagemaker.aws.amazon.com
+  resources:
+  - hyperparametertuningjobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - sagemaker.aws.amazon.com
+  resources:
+  - hyperparametertuningjobs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sagemaker.aws.amazon.com
+  resources:
+  - models
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - sagemaker.aws.amazon.com
+  resources:
+  - models/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sagemaker.aws.amazon.com
+  resources:
+  - processingjobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - sagemaker.aws.amazon.com
+  resources:
+  - processingjobs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - sagemaker.aws.amazon.com
+  resources:
+  - trainingjobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - sagemaker.aws.amazon.com
+  resources:
+  - trainingjobs/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: sagemaker-k8s-operator-proxy-role
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "sm_operator.labels" . | nindent 4 }}
+    {{- with .Values.workerLabels }}
+    {{- toYaml . | nindent 4  }}
+    {{- end  }}
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: sagemaker-k8s-operator-leader-election-rolebinding
-  namespace: {{ .Release.Namespace | default "sagemaker-k8s-operator-system" | quote }}
+  namespace: {{ .Values.namespace }}
   labels:
     {{- include "sm_operator.labels" . | nindent 4 }}
     {{- with .Values.workerLabels }}
@@ -46,31 +243,14 @@ roleRef:
   name: sagemaker-k8s-operator-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: {{ .Values.namespace }}
+  name: {{ .Values.serviceAccountName }}
   namespace: {{ .Values.namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
-  name: sagemaker-k8s-operator-manager-rolebinding-{{ .Values.namespace }}
-  labels:
-  {{- include "sm_operator.labels" . | nindent 4 }}
-  {{- with .Values.workerLabels }}
-  {{- toYaml . | nindent 4  }}
-  {{- end  }}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: sagemaker-k8s-operator-manager-role
-subjects:
-- kind: ServiceAccount
-  name: {{ .Values.namespace }}
+  name: sagemaker-k8s-operator-manager-rolebinding
   namespace: {{ .Values.namespace }}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: sagemaker-k8s-operator-proxy-rolebinding-{{ .Values.namespace }}
   labels:
     {{- include "sm_operator.labels" . | nindent 4 }}
     {{- with .Values.workerLabels }}
@@ -78,11 +258,30 @@ metadata:
     {{- end  }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
+  kind: Role
+  name: sagemaker-k8s-operator-manager-role
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.serviceAccountName }}
+  namespace: {{ .Values.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: sagemaker-k8s-operator-proxy-rolebinding
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "sm_operator.labels" . | nindent 4 }}
+    {{- with .Values.workerLabels }}
+    {{- toYaml . | nindent 4  }}
+    {{- end  }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
   name: sagemaker-k8s-operator-proxy-role
 subjects:
 - kind: ServiceAccount
-  name: {{ .Values.namespace }}
+  name: {{ .Values.serviceAccountName }}
   namespace: {{ .Values.namespace }}
 ---
 apiVersion: v1
@@ -99,7 +298,7 @@ metadata:
     {{- toYaml . | nindent 4  }}
     {{- end  }}
   name: sagemaker-k8s-operator-controller-manager-metrics-service
-  namespace: {{ .Release.Namespace | default "sagemaker-k8s-operator-system" | quote }}
+  namespace: {{ .Values.namespace }}
 spec:
   ports:
   - name: https
@@ -118,7 +317,7 @@ metadata:
     {{- toYaml . | nindent 4  }}
     {{- end  }}
   name: sagemaker-k8s-operator-controller-manager
-  namespace: {{ .Release.Namespace | default "sagemaker-k8s-operator-system" | quote }}
+  namespace: {{ .Values.namespace }}
 spec:
   replicas: 1
   selector:
@@ -131,17 +330,8 @@ spec:
     spec:
       containers:
       - args:
-        - --secure-listen-address=0.0.0.0:8443
-        - --upstream=http://127.0.0.1:8080/
-        - --logtostderr=true
-        - --v=10
-        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.4.0
-        name: kube-rbac-proxy
-        ports:
-        - containerPort: 8443
-          name: https
-      - args:
         - --metrics-addr=127.0.0.1:8080
+        - --namespace={{ .Values.namespace }}
         command:
         - /manager
         env:
@@ -157,5 +347,15 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
-      serviceAccountName: default-editor
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=10
+        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.4.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+      serviceAccountName: {{ .Values.serviceAccountName }}
       terminationGracePeriodSeconds: 10

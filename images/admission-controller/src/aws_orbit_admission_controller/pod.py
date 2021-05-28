@@ -210,6 +210,7 @@ def apply_settings_to_container(
     # Drop any previous AWS_ORBIT_USER_SPACE or AWS_ORBIT_IMAGE env variables
     ps_spec["env"] = [e for e in ps_spec.get("env", []) if e["name"] not in ["AWS_ORBIT_USER_SPACE", "AWS_ORBIT_IMAGE"]]
     # Append new ones
+
     ps_spec["env"].extend(
         [
             {"name": "AWS_ORBIT_USER_SPACE", "value": namespace["metadata"].get("name", "")},
@@ -223,7 +224,7 @@ def apply_settings_to_container(
         # Append new ones
         ps_spec["env"].extend(
             [
-                {"name": "USERNAME", "value": ns_labels.get("orbit/user", ns_labels.get("orbit/team", ""))},
+                {"name": "USERNAME", "value": ns_labels.get("orbit/user", ns_labels.get("orbit/team", None))},
                 {"name": "USEREMAIL", "value": ns_annotations.get("owner", "")},
             ]
         )

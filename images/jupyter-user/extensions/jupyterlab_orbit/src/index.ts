@@ -12,7 +12,6 @@ import { activateCompute } from './compute';
 import { activateStorage } from './storage';
 import { activateContainers } from './containers';
 import { activateTeam } from './team';
-import { activateK8Dashboard } from './k8Dashboard';
 // import { activateTests } from './tests';
 
 const extension: JupyterFrontEndPlugin<void> = {
@@ -38,7 +37,6 @@ const extension: JupyterFrontEndPlugin<void> = {
     activateContainers(app, palette, launcher, orbitMenu, 903);
     activateCompute(app, palette, launcher, orbitMenu, 904);
     activateStorage(app, palette, launcher, orbitMenu, 905);
-    activateK8Dashboard(app, palette, launcher, orbitMenu, 906);
     // activateTests(app, palette, launcher, orbitMenu, 906);
   }
 };
