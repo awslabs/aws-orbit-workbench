@@ -12,7 +12,12 @@ import { LabIcon } from '@jupyterlab/ui-components';
 import { Menu } from '@lumino/widgets';
 
 import { containersIcon } from './common/icons';
-import { Ec2Icon, FargateIcon } from './common/reactIcons';
+import {
+  Ec2Icon,
+  FargateIcon,
+  JupyterIcon,
+  SparkIcon
+} from './common/reactIcons';
 import { ORBIT_COLOR, RUNNING_CLASS, SECTION_CLASS } from './common/styles';
 import { CentralWidgetHeader } from './common/headers/centralWidgetHeader';
 import { LeftWidgetHeader } from './common/headers/leftWidgetHeader';
@@ -43,6 +48,9 @@ export interface IItem {
   time: string;
   node_type: string;
   job_state: string;
+  job_name: string;
+  pod_app: string;
+  container_name: string;
 }
 
 export interface IUseItemsReturn {
@@ -50,8 +58,8 @@ export interface IUseItemsReturn {
   closeAllCallback: (name: string) => void;
   refreshCallback: () => void;
   setData: Dispatch<SetStateAction<any[]>>;
-  connect: (container: string) => Promise<void>;
-  logs: (container: string) => Promise<void>;
+  connect: (podName: string, containerName: string) => Promise<void>;
+  logs: (podName: string, containerName: string) => Promise<void>;
 }
 
 export const openItemCallback = (name: string) => {
@@ -74,6 +82,8 @@ export const getStateIcon = (
       color = 'red';
       icon = <CloseOutlined style={{ color: color }} />;
       break;
+    case 'pending':
+    case 'submitted':
     case 'running':
       title = 'Running...';
       color = ORBIT_COLOR;
@@ -124,6 +134,33 @@ export const getNodeType = (
   return { title, color, icon };
 };
 
+export const getAppType = (
+  appType: string
+): {
+  title: string;
+  color: string;
+  icon: JSX.Element;
+} => {
+  let title = 'Unknown State';
+  let color = 'gray';
+  let icon: JSX.Element = <QuestionOutlined style={{ color: color }} />;
+  switch (appType) {
+    case 'orbit-runner':
+      title = 'Jupyter';
+      color = 'blue';
+      icon = <JupyterIcon />;
+      break;
+    case 'emr-spark':
+      title = 'Spark';
+      color = 'orange';
+      icon = <SparkIcon />;
+      break;
+    default:
+      console.error(`app_type: ${appType}`);
+  }
+  return { title, color, icon };
+};
+
 export const deleteItem = async (
   name: string,
   type: string
@@ -155,16 +192,31 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
     });
   };
 
-  const connect = async (container: string): Promise<void> => {
+  const connect = async (
+    podName: string,
+    containerName: string
+  ): Promise<void> => {
     const session = await app.serviceManager.terminals.startNew();
     const terminal = await app.commands.execute('terminal:create-new', {
       name: session.name
     });
     // await delay(20000);
-    const command =
-      'kubectl -n $AWS_ORBIT_TEAM_SPACE exec --stdin --tty `kubectl get pods -n $AWS_ORBIT_TEAM_SPACE -l job-name=' +
-      container +
-      ' -o=name` -- /bin/bash \n';
+
+    let command;
+    if (typeof containerName === 'undefined' || containerName === null) {
+      command =
+        'kubectl -n $AWS_ORBIT_TEAM_SPACE exec --stdin --tty ' +
+        podName +
+        ' -- /bin/bash \n';
+    } else {
+      command =
+        'kubectl -n $AWS_ORBIT_TEAM_SPACE exec --stdin --tty ' +
+        podName +
+        ' --container ' +
+        containerName +
+        ' -- /bin/bash \n';
+    }
+
     terminal.content.session.send({
       type: 'stdin',
       content: [command]
@@ -173,16 +225,27 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
     console.log('terminal', terminal);
   };
 
-  const logs = async (container: string): Promise<void> => {
+  const logs = async (
+    podName: string,
+    containerName: string
+  ): Promise<void> => {
     const session = await app.serviceManager.terminals.startNew();
     const terminal = await app.commands.execute('terminal:create-new', {
       name: session.name
     });
 
-    const command =
-      'kubectl logs -n $AWS_ORBIT_TEAM_SPACE --tail=-1 -f `kubectl get pods -n $AWS_ORBIT_TEAM_SPACE -l job-name=' +
-      container +
-      ' -o=name` \n';
+    let command;
+    if (typeof containerName === 'undefined' || containerName === null) {
+      command =
+        'kubectl logs -n $AWS_ORBIT_TEAM_SPACE --tail=-1 -f ' + podName + ' \n';
+    } else {
+      command =
+        'kubectl logs -n $AWS_ORBIT_TEAM_SPACE --tail=-1 -f ' +
+        podName +
+        ' -c ' +
+        containerName +
+        ' \n';
+    }
 
     terminal.content.session.send({
       type: 'stdin',

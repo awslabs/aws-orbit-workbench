@@ -74,7 +74,7 @@ def deploy(
     helm.add_repo(repo=repo, repo_location=repo_location)
     chart_name, chart_version, chart_package = helm.package_chart(repo=repo, chart_path=chart_path, values=vars)
 
-    release_name = f"{team_context.name}-{plugin_id}"
+    release_name = f"{team_context.name}-{plugin_id}".replace("_", "-")
     if helm.is_exists_chart_release(release_name, team_context.name):
         helm.uninstall_chart(release_name, team_context.name)
         time.sleep(60)
