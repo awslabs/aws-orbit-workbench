@@ -13,19 +13,18 @@
 #    limitations under the License.
 
 
-from typing import Any, Dict, Optional, cast,List
-from flask import Flask, render_template,request,jsonify
-from kubernetes.client import CoreV1Api, V1ConfigMap
-from kubernetes.dynamic import exceptions as k8s_exceptions
-from aws_orbit_admission_controller import get_client
-from kubernetes import dynamic
-import logging
+import base64
 import json
+import logging
+import os
+from typing import Any, Dict, cast, List
+from urllib.parse import urlparse, urlencode
+
 import jwt
 import requests
-import base64
-import os
-from urllib.parse import urlparse, urlencode
+from aws_orbit_admission_controller import get_client
+from flask import Flask, render_template, request, jsonify
+from kubernetes import dynamic
 
 
 def is_ready(logger: logging.Logger, app: Flask) -> Any:
@@ -55,7 +54,6 @@ def login(logger: logging.Logger, app: Flask) -> Any:
     param_str = urlencode(params)
     logout_redirect_url = f"https://{os.environ['COGNITO_DOMAIN']}/logout?{param_str}"
 
-
     logger.debug("logout url: %s", logout_redirect_url)
     return render_template('index.html', title='login',
                            username=username, hostname=hostname,
@@ -64,7 +62,6 @@ def login(logger: logging.Logger, app: Flask) -> Any:
 
 
 def _get_logout_redirect_url(logger: logging.Logger):
-
     return logout_redirect_url
 
 

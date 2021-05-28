@@ -17,6 +17,7 @@
         var poll_timer;
         const redirect_url = '{{ logout_redirect_url }}';
         console.log('go to ' + redirect_url);
+
         function set_timer() {
             $.ajax({
                 url: "/orbit/isready",
@@ -61,8 +62,8 @@
 </script>
 <div data-role="page">
     <div>
-        <div id="logout-toolbar" class="logout-toolbar">
-            <a href="javascript: logout()" > Logout </a>
+        <div class="logout-toolbar" id="logout-toolbar">
+            <a href="javascript: logout()"> Logout </a>
         </div>
     </div>
     <div class="app-container" id="app-container">
