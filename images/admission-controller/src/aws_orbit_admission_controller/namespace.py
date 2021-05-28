@@ -13,10 +13,10 @@
 #    limitations under the License.
 
 import json
-import time
 from multiprocessing import Queue
 from typing import Any, Dict, Optional, cast
 
+import time
 from aws_orbit_admission_controller import load_config, logger, run_command
 from kubernetes.client import CoreV1Api, V1ConfigMap
 from kubernetes.client import exceptions as k8s_exceptions
@@ -69,6 +69,7 @@ def process_removed_event(namespace: Dict[str, Any]) -> None:
         logger.debug("Adding Helm Repository: %s at %s", team, helm_repo_url)
         uninstall_chart(helm_release, team)
 
+
 def process_added_event(namespace: Dict[str, Any]) -> None:
     logger.debug("loading kubeconfig")
     load_config()
@@ -113,6 +114,7 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
     install_helm_chart(helm_release, namespace_name, team, user, user_email, user_efsapid)
 
     logger.info("Helm release %s installed at %s", helm_release, namespace_name)
+
 
 def install_helm_chart(helm_release: str, namespace: str, team: str, user: str, user_email: str,
                        user_efsapid: str) -> None:

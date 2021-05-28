@@ -7,5 +7,8 @@ ADD src /var/admission-controller/
 RUN cd /var/admission-controller/ && \
     pip3 install -e .
 
+RUN pip uninstall jwt==1.0.0 && pip uninstall PyJWT && pip install PyJWT~=2.1.0
+
 WORKDIR /var/admission-controller/
+
 CMD ["bash"]

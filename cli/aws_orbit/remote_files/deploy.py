@@ -264,7 +264,9 @@ def _update_userpool_client(context: Context) -> None:
         CallbackURLs=[
             f"{context.landing_page_url}/oauth2/idpresponse",
         ],
-        LogoutURLs=[],
+        LogoutURLs=[
+            f"{context.landing_page_url}/orbit/logout",
+        ],
         ExplicitAuthFlows=["ALLOW_CUSTOM_AUTH", "ALLOW_USER_SRP_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"],
         SupportedIdentityProviders=["COGNITO"],
         AllowedOAuthFlows=["code"],

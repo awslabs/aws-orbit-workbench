@@ -163,3 +163,123 @@ spec:
             requests:
               cpu: 1
               memory: 1G
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: landing-page
+  namespace: orbit-system
+  name: landing-page-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: landing-page-service
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        app: landing-page-service
+      name: landing-page-service
+    spec:
+      serviceAccountName: orbit-${env_name}-admin
+      containers:
+        - name: webhook
+          image: ${admission_controller_image}
+          imagePullPolicy: ${image_pull_policy}
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: landing-page-config
+          command:
+            - gunicorn
+          args:
+            - "--bind=0.0.0.0:80"
+            - "--workers=$(GUNICORN_WORKERS)"
+            - "--reload"
+            - "aws_orbit_admission_controller.server:app"
+          readinessProbe:
+            httpGet:
+              path: /health
+              scheme: HTTP
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              scheme: HTTP
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            limits:
+              cpu: 2
+              memory: 2G
+            requests:
+              cpu: 1
+              memory: 1G
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: landing-page-config
+  namespace: orbit-system
+data:
+  FLASK_DEBUG: "1"
+  FLASK_ENV: development
+  GUNICORN_WORKERS: "1"
+  ADMISSION_CONTROLLER_DEBUG: "1"
+  IN_CLUSTER_DEPLOYMENT: "1"
+  NAMESPACE_WATCHER_WORKERS: "1"
+  COGNITO_USERPOOL_ID: ${cognitoUserPoolID}
+  COGNITO_APP_CLIENT_ID: ${cognitoAppClientId}
+  COGNITO_DOMAIN: ${cognitoUserPoolDomain}
+  SSL_CERT: ${certArn}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: landing-page
+  name: landing-page-service
+  namespace: orbit-system
+spec:
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 80
+      name: ui
+  selector:
+    app: landing-page-service
+  type: ClusterIP
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: orbit-landing-page
+  namespace: kubeflow
+  labels:
+    app.kubernetes.io/component: orbit
+    app.kubernetes.io/name: orbit-landing-page
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - kubeflow-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /orbit/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: landing-page-service.orbit-system.svc.cluster.local
+        port:
+          number: 80
