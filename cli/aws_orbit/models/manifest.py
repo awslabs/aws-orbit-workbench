@@ -136,9 +136,11 @@ class K8sUtilitiesImageManifest(ImageManifest):
     repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s-utilities"
     version: Optional[str] = "1.0.0"
 
+
 @dataclass(base_schema=BaseSchema, frozen=True)
 class UtilityDataImageManifest(ImageManifest):
     repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data"
+
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class FoundationImagesManifest:
@@ -173,7 +175,7 @@ class ImagesManifest:
             "admission_controller",
             "image_replicator",
             "k8s_utilities",
-            "utility_data"
+            "utility_data",
         ],
     )
 
