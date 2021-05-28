@@ -81,7 +81,8 @@ ADD VERSION /opt/orbit/VERSION
 RUN chown jovyan /opt/orbit/VERSION
 RUN conda run pip install --upgrade \
     aws-orbit==$(cat /opt/orbit/VERSION) \
-    aws-orbit-sdk==$(cat /opt/orbit/VERSION)
+    aws-orbit-sdk==$(cat /opt/orbit/VERSION) \
+    jupyterlab-orbit==$(cat /opt/orbit/VERSION)
 RUN rm /etc/pip.conf
 
 # add the boostrap script and change permission to jovyan
@@ -115,7 +116,8 @@ RUN jupyter serverextension enable --py jupyterlab --sys-prefix && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
 
-ADD extensions/jupyterlab_orbit/ /etc/extensions/jupyterlab_orbit/
+# ST - Removing extension source
+#ADD extensions/jupyterlab_orbit/ /etc/extensions/jupyterlab_orbit/
 
 RUN mkdir -p /opt/orbit/databrew
 COPY aws-glue-databrew-jupyter-extension.tar.gz /opt/orbit/databrew/aws-glue-databrew-jupyter-extension.tar.gz
@@ -146,8 +148,9 @@ RUN chown -R jovyan /opt/orbit/codeserver_proxy
 
 WORKDIR /home/${NB_USER}
 
-RUN conda run pip install /etc/extensions/jupyterlab_orbit/
+# ST - Removing extension installation from source
+#RUN conda run pip install /etc/extensions/jupyterlab_orbit/
 
-RUN jupyter labextension build /etc/extensions/jupyterlab_orbit
+#RUN jupyter labextension build /etc/extensions/jupyterlab_orbit
 
 USER $NB_UID

@@ -27,7 +27,8 @@ mkdir -p ${ARCHIVE_DIR}
 
 cp -r ${DIR}/python-utils ${ARCHIVE_DIR}/
 cp -r ${DIR}/transformations ${ARCHIVE_DIR}/
-cp -r ${DIR}/extensions ${ARCHIVE_DIR}/
+# ST - Removing extension source
+#cp -r ${DIR}/extensions ${ARCHIVE_DIR}/
 cp -r ${DIR}/codeserver_proxy ${ARCHIVE_DIR}/
 cp ${DIR}/jupyter_server_config.py ${ARCHIVE_DIR}/
 cp ${DIR}/requirements.txt ${ARCHIVE_DIR}/
@@ -40,7 +41,6 @@ touch ${ARCHIVE_DIR}/pip.conf
 
 cd ${DIR}
 tar czvf aws-orbit_jupyter-user.tar.gz ./aws-orbit_jupyter-user
-
 
 # Cloning forked jupyterlab databrew extension
 git clone https://github.com/stthoom/aws-glue-databrew-jupyter-extension.git
