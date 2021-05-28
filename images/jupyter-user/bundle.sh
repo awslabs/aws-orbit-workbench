@@ -34,6 +34,7 @@ cp ${DIR}/requirements.txt ${ARCHIVE_DIR}/
 cp ${DIR}/bundle.sh ${ARCHIVE_DIR}/
 cp ${DIR}/Dockerfile ${ARCHIVE_DIR}/
 cp ${DIR}/VERSION ${ARCHIVE_DIR}/
+cp ${DIR}/bashrc ${ARCHIVE_DIR}/
 
 touch ${ARCHIVE_DIR}/pip.conf
 
