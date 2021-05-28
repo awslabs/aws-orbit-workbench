@@ -45,6 +45,7 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
 
 
 def validate_email(email: str) -> None:
+    # "It has exactly one @ sign, and at least one . in the part after the @"
     email_regex = re.compile("[^@]+@[^@]+\.[^@]+")
 
     if not email_regex.fullmatch(email):
