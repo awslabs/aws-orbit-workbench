@@ -49,6 +49,8 @@ MANIFEST_PROPERTY_MAP_TYPE = Dict[str, Union[str, Dict[str, Any]]]
 __CURRENT_TEAM_MANIFEST__: MANIFEST_TEAM_TYPE = None
 __CURRENT_ENV_MANIFEST__: MANIFEST_TEAM_TYPE = None
 
+APP_LABEL_SELECTOR: [str] = ["orbit-runner", "emr-spark"]
+
 
 def read_team_manifest_ssm(env_name: str, team_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
     parameter_name: str = f"/orbit/{env_name}/teams/{team_name}/manifest"
@@ -351,6 +353,44 @@ def list_running_jobs(namespace: str):
     return res["items"]
 
 
+def list_team_running_pods():
+    props = get_properties()
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    return list_running_pods(team_name)
+
+
+def list_my_running_pods():
+    props = get_properties()
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
+    return list_running_pods(namespace)
+
+
+def list_running_pods(namespace: str):
+    load_kube_config()
+    api_instance = CoreV1Api()
+
+    app_list = ",".join(APP_LABEL_SELECTOR)
+    label_selector = f"app in ({app_list})"
+    _logger.debug("using job selector %s", label_selector)
+    try:
+        api_response = api_instance.list_namespaced_pod(
+            namespace=namespace,
+            _preload_content=False,
+            label_selector=label_selector,
+            watch=False,
+        )
+        res = json.loads(api_response.data)
+    except ApiException as e:
+        _logger.info("Exception when calling CoreV1Api->list_namespaced_job: %s\n" % e)
+        raise e
+
+    if "items" not in res:
+        return []
+
+    return res["items"]
+
+
 def list_current_pods(label_selector: str = None):
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
@@ -499,10 +539,28 @@ def get_nodegroups(cluster_name: str):
     return nodegroups_with_lt
 
 
+def delete_pod(pod_name: str, grace_period_seconds: int = 30):
+    props = get_properties()
+    global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    load_kube_config()
+    api_instance = CoreV1Api()
+    try:
+        api_instance.delete_namespaced_pod(
+            name=pod_name,
+            namespace=os.environ.get("AWS_ORBIT_USER_SPACE", team_name),
+            _preload_content=False,
+            grace_period_seconds=grace_period_seconds,
+            orphan_dependents=False,
+        )
+    except ApiException as e:
+        _logger.info("Exception when calling CoreV1Api->delete_namespaced_pod: %s\n" % e)
+        raise e
+
+
 def delete_job(job_name: str, grace_period_seconds: int = 30):
     props = get_properties()
     global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
-    env_name = props["AWS_ORBIT_ENV"]
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     load_kube_config()
     api_instance = BatchV1Api()
@@ -515,7 +573,7 @@ def delete_job(job_name: str, grace_period_seconds: int = 30):
             orphan_dependents=False,
         )
     except ApiException as e:
-        _logger.info("Exception when calling BatchV1Api->list_namespaced_job: %s\n" % e)
+        _logger.info("Exception when calling BatchV1Api->delete_namespaced_job: %s\n" % e)
         raise e
 
 
@@ -534,6 +592,23 @@ def delete_cronjob(job_name: str, grace_period_seconds: int = 30):
         )
     except ApiException as e:
         _logger.info("Exception when calling BatchV1Api->delete_namespaced_cron_job: %s\n" % e)
+        raise e
+
+
+def delete_all_my_pods():
+    props = get_properties()
+    team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
+    load_kube_config()
+    api_instance = CoreV1Api()
+    app_list = ",".join(APP_LABEL_SELECTOR)
+    label_selector = f"app in ({app_list})"
+    try:
+        api_instance.delete_collection_namespaced_pod(
+            namespace=namespace, _preload_content=False, orphan_dependents=False, label_selector=label_selector
+        )
+    except ApiException as e:
+        _logger.info("Exception when calling CoreV1Api->delete_collection_namespaced_pod: %s\n" % e)
         raise e
 
 
