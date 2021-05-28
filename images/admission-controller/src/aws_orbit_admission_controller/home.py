@@ -43,12 +43,15 @@ def login(logger: logging.Logger, app: Flask) -> Any:
 
     ready = _is_profile_ready_for_user(logger, username, email)
     logger.debug("user space is READY? %s", ready)
-    title = f'Welcome to Orbit Workbench'
     return render_template('index.html', title='login', username=username)
 
 
 def logout(logger: logging.Logger, app: Flask) -> Any:
     return render_template('index.html', title='logout')
+
+
+def signed_out(logger: logging.Logger, app: Flask) -> Any:
+    return render_template('signedout.html', title='Orbit Session ended')
 
 
 def _is_profile_ready_for_user(logger: logging.Logger, username: str, email: str):

@@ -2,74 +2,97 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-<!--    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"-->
-<!--			  integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="-->
-<!--			  crossorigin="anonymous">-->
+    <!--    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"-->
+    <!--			  integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="-->
+    <!--			  crossorigin="anonymous">-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
     <title>Orbit Workbench</title>
-    <link rel="stylesheet" href="/orbit/static/App.css">
+    <link href="/orbit/static/App.css" rel="stylesheet">
 
-    <link href="/orbit/static/node_modules/three-dots/dist/three-dots.min.css" type="text/css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/three-dots/0.2.0/three-dots.min.css" rel="stylesheet"
+          type="text/css">
 
 </head>
 <body>
-    <script>
-        jQuery(document).ready(function($){
-            var isready = false;
-            var poll_timer;
-            function set_timer() {
-                $.ajax({
-                    url: "/orbit/isready",
-                    type: "GET",
-                    success: function (data) {
-                        console.log("polling");
-                        console.log(data);
-                        const waitDiv = document.getElementById("wait-first-time");
-                        const applications = document.getElementById("applications");
-                        if (data.isReady) {
-                            console.log('ready!!!');
-                            $("#wait-first-time").hide();
-                            $("#applications").show();
-                            clearTimeout(poll_timer)
-                        } else {
-                            $("#wait-first-time").show();
-                            $("#applications").hide();
-                        }
-                    },
-                    dataType: "json",
-                    complete: poll_timer,
-                    timeout: 2000
-                })
-            }
-            poll_timer = setTimeout(function() {set_timer()}, 10000);
-            (set_timer());
-        });
-    </script>
-    <div id="app-container" class="app-container">
-        <object id="orbit-logo" type="image/svg+xml" data="/orbit/static/images/orbit.svg" class="orbit-logo" width="20%" height="40%"></object>
+<script>
+    jQuery(document).ready(function ($) {
+        var isready = false;
+        var poll_timer;
+
+        function set_timer() {
+            $.ajax({
+                url: "/orbit/isready",
+                type: "GET",
+                success: function (data) {
+                    console.log("polling");
+                    console.log(data);
+                    const waitDiv = document.getElementById("wait-first-time");
+                    const applications = document.getElementById("applications");
+                    if (data.isReady) {
+                        console.log('ready!!!');
+                        $("#wait-first-time").hide();
+                        $("#applications").show();
+                        clearTimeout(poll_timer)
+                    } else {
+                        $("#wait-first-time").show();
+                        $("#applications").hide();
+                    }
+                },
+                dataType: "json",
+                complete: poll_timer,
+                timeout: 2000
+            })
+        }
+
+        poll_timer = setTimeout(function () {
+            set_timer()
+        }, 10000);
+        (set_timer());
+    });
+
+    function logout() {
+        console.log('logout!!!');
+        location.href = "https://orbit-495869084367-public2.auth.us-west-2.amazoncognito.com/logout?\n" +
+            "client_id=4fnvank0kcgh4fc089n8ecijts&logout_uri=https://b665cb9a-istiosystem-istio-2af2-1924196.us-west-2.elb.amazonaws.com/orbit/signedout"
+            // + "&redirect_uri=https://b665cb9a-istiosystem-istio-2af2-1924196.us-west-2.elb.amazonaws.com/oauth2/idpresponse"
+            // + "&response_type=code&state=STATE&scope=openid+profile+aws.cognito.signin.user.admin"
+    }
+</script>
+<div data-role="page">
+    <div>
+        <div id="logout-toolbar" class="logout-toolbar">
+            <a href="javascript: logout()" > Logout </a>
+        </div>
+    </div>
+    <div class="app-container" id="app-container">
+        <object class="orbit-logo" data="/orbit/static/images/orbit.svg" height="40%" id="orbit-logo"
+                type="image/svg+xml"
+                width="20%"></object>
         <div id="orbit-content">
             &nbsp;&nbsp;
             <h2>Welcome {{ username }}!</h2>
             &nbsp;&nbsp;
         </div>
-        <div id="wait-first-time" class="my-dot-bricks" style="display:none;">
+        <div class="my-dot-bricks" id="wait-first-time" style="display:none;">
             <h4>Please wait a moment until your user space is created.&nbsp;</h4>
-            <div id="stage" class="stage">
-                <div id="dots" class="dot-bricks"/>
+            <div class="stage" id="stage">
+                <div class="dot-bricks" id="dots"/>
             </div>
         </div>
     </div>
-    <div id="applications" class="applications">
-            <p>
-                <div id="app-header">
-                    <h4>Select your application:</h4>
-                </div>
-                <a href="/" target="_blank" rel="noopener noreferrer" id="kubeflow-icon">
-                    <object id="kubeflow3" type="image/svg+xml" data="/orbit/static/images/Kubeflow-Logo-RGB.jpg" width="100" height="100"></object>
-                </a>
-            </p>
+    <div class="applications" id="applications">
+        <p>
+        <div id="app-header">
+            <h4>Select your application:</h4>
         </div>
+        <a href="/" id="kubeflow-icon" rel="noopener noreferrer" target="_blank">
+            <object data="/orbit/static/images/Kubeflow-Logo-RGB.jpg" height="100" id="kubeflow3" type="image/svg+xml"
+                    width="100"></object>
+        </a>
+        </p>
+    </div>
+</div>
 </body>
 </html>
 

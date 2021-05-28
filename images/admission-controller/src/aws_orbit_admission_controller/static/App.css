@@ -70,3 +70,12 @@
       margin: 0 -5%;
       overflow: hidden;
 }
+
+.logout-toolbar {
+    float: right;
+}
+
+.goodbye {
+  position: relative;
+  display: block;
+}

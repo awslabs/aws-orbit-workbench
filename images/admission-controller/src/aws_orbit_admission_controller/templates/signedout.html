@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <!--    <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"-->
+    <!--			  integrity="sha256-u7e5khyithlIdTpu22PHhENmPcRdFiHRjhAuHcs05RI="-->
+    <!--			  crossorigin="anonymous">-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <title>Orbit Workbench</title>
+    <link href="/orbit/static/App.css" rel="stylesheet">
+
+    <meta http-equiv="Refresh" content="10; URL=/orbit/login">
+
+</head>
+<body>
+<div data-role="page">
+    <div class="app-container" id="app-container">
+        <object class="orbit-logo" data="/orbit/static/images/orbit.svg" height="40%" id="orbit-logo"
+                type="image/svg+xml"
+                width="20%"></object>
+        <div id="orbit-content">
+            &nbsp;&nbsp;
+            <h2>Goodbye {{ username }}!</h2>
+            &nbsp;&nbsp;
+        </div>
+        <div class="goodbye" id="goodbye" style="display:block;">
+            <h4>Your session has ended. Thanks for using Orbit Workbench! &nbsp;</h4>
+            <h4>you will be redirected momentarily to a new login </h4>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+
