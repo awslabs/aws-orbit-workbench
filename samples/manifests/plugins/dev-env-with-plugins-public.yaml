@@ -24,6 +24,10 @@ Images:
     AdmissionController:
 #        Version: !ENV ${VERSION::latest}
         Path: ../../../images/admission-controller
+    UtilityData:
+        # Repository: !ENV ${UTILITY_DATA_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data}
+        # Version: !ENV ${VERSION::latest}
+        Path: ../../../images/utility-data
 Networking:
     VpcId: !SSM ${/orbit-foundation/public2/resources::VpcId}
     PublicSubnets: !SSM ${/orbit-foundation/public2/resources::PublicSubnets}
