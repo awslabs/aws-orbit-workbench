@@ -68,6 +68,12 @@ def _admission_controller(context: "Context", output_path: str) -> None:
                 k8s_utilities_image=f"{context.images.k8s_utilities.repository}:"
                 f"{context.images.k8s_utilities.version}",
                 image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
+                certArn=context.networking.frontend.ssl_cert_arn,
+                cognitoAppClientId=context.user_pool_client_id,
+                cognitoUserPoolID=context.user_pool_id,
+                account_id=context.account_id,
+                region=context.region,
+                cognitoUserPoolDomain=context.cognito_external_provider_domain,
             ),
         )
         with open(output, "w") as file:
@@ -296,9 +302,9 @@ def fetch_kubectl_data(context: "Context", k8s_context: str) -> None:
     #         team.jupyter_url = url
 
     # landing_page_url: str = k8s.get_service_hostname(name="landing-page", k8s_context=k8s_context, namespace="env")
-    landing_page_url: str = k8s.get_ingress_dns(name="istio-ingress", k8s_context=k8s_context, namespace="istio-system")
+    ingress_url: str = k8s.get_ingress_dns(name="istio-ingress", k8s_context=k8s_context, namespace="istio-system")
 
-    context.landing_page_url = f"https://{landing_page_url}"
+    context.landing_page_url = f"https://{ingress_url}"
     if context.cognito_external_provider:
         context.cognito_external_provider_redirect = context.landing_page_url
 

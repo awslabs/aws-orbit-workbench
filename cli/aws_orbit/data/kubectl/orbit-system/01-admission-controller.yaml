@@ -237,10 +237,10 @@ data:
   ADMISSION_CONTROLLER_DEBUG: "1"
   IN_CLUSTER_DEPLOYMENT: "1"
   NAMESPACE_WATCHER_WORKERS: "1"
-  COGNITO_USERPOOL_ID: us-west-2_kbLAjBfVO
-  COGNITO_APP_CLIENT_ID: 4fnvank0kcgh4fc089n8ecijts
-  COGNITO_JWT_HEADER_NAME: ''
-  COGNITO_JWT_HEADER_PREFIX: Bearer
+  COGNITO_USERPOOL_ID: ${cognitoUserPoolID}
+  COGNITO_APP_CLIENT_ID: ${cognitoAppClientId}
+  COGNITO_DOMAIN: ${cognitoUserPoolDomain}
+  SSL_CERT: ${certArn}
 ---
 apiVersion: v1
 kind: Service
@@ -275,19 +275,9 @@ spec:
   http:
   - match:
     - uri:
-        prefix: /orbit/login/
+        prefix: /orbit/
     rewrite:
       uri: /login
-    route:
-    - destination:
-        host: landing-page-service.orbit-system.svc.cluster.local
-        port:
-          number: 80
-  - match:
-    - uri:
-        prefix: /orbit/logout/
-    rewrite:
-      uri: /logout
     route:
     - destination:
         host: landing-page-service.orbit-system.svc.cluster.local
