@@ -509,3 +509,5 @@ def destroy_team(context: "Context", team_context: "TeamContext") -> None:
             f"kubectl delete -f {output_path} --grace-period=0 --force "
             f"--ignore-not-found --wait --context {k8s_context}"
         )
+        # Destory all related user spaces
+        sh.run(f"kubectl delete namespaces -l orbit/team={team_context.name} --context {k8s_context}")
