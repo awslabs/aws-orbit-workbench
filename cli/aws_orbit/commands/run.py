@@ -25,7 +25,6 @@ _logger: logging.Logger = logging.getLogger(__name__)
 def _set_environ(env: str, team: str, user: str) -> None:
     os.environ["AWS_ORBIT_ENV"] = env
     os.environ["AWS_ORBIT_TEAM_SPACE"] = team
-    os.environ["JUPYTERHUB_USER"] = user
     os.environ["USERNAME"] = user
     os.environ["AWS_ORBIT_S3_BUCKET"] = "Unknown"
 

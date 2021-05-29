@@ -106,18 +106,8 @@ class CodeBuildImageManifest(ImageManifest):
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
-class JupyterHubImageManifest(ImageManifest):
-    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-hub"
-
-
-@dataclass(base_schema=BaseSchema, frozen=True)
 class JupyterUserImageManifest(ImageManifest):
     repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user"
-
-
-@dataclass(base_schema=BaseSchema, frozen=True)
-class LandingPageImageManifest(ImageManifest):
-    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/landing-page"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -158,9 +148,7 @@ class FoundationImagesManifest:
 class ImagesManifest:
     Schema: ClassVar[Type[Schema]] = Schema
     code_build: ImageManifest = CodeBuildImageManifest()
-    jupyter_hub: ImageManifest = JupyterHubImageManifest()
     jupyter_user: ImageManifest = JupyterUserImageManifest()
-    landing_page: ImageManifest = LandingPageImageManifest()
     admission_controller: ImageManifest = AdmissionControllerImageManifest()
     image_replicator: ImageManifest = ImageReplicatorImageManifest()
     k8s_utilities: ImageManifest = K8sUtilitiesImageManifest()
@@ -169,9 +157,7 @@ class ImagesManifest:
         metadata=dict(load_only=True),
         default_factory=lambda: [
             "code_build",
-            "jupyter_hub",
             "jupyter_user",
-            "landing_page",
             "admission_controller",
             "image_replicator",
             "k8s_utilities",

@@ -169,10 +169,6 @@ def deploy_images_remotely(manifest: Manifest, context: "Context", skip_images: 
     # Secondary images we can optionally skip
     if not skip_images:
         # When not skipping images, include these secondaries if their source isn't the default ecr-public
-        if manifest.images.landing_page.get_source(context.account_id, context.region) != "ecr-public":
-            images.append(("landing-page", "landing-page", "build.sh", []))
-        if manifest.images.jupyter_hub.get_source(context.account_id, context.region) != "ecr-public":
-            images.append(("jupyter-hub", "jupyter-hub", None, []))
         if manifest.images.jupyter_user.get_source(context.account_id, context.region) != "ecr-public":
             images.append(("jupyter-user", "jupyter-user", "build.sh", []))
 
