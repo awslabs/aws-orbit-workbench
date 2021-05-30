@@ -48,7 +48,7 @@ def deploy(
         region=context.region,
         account_id=context.account_id,
         env_name=context.name,
-        tag=context.images.jupyter_hub.version,
+        tag=parameters["tag"] if "tag" in parameters else context.images.jupyter_user.version,
         restart_policy=parameters["restartPolicy"] if "restartPolicy" in parameters else "Never",
         plugin_id=plugin_id,
         toolkit_s3_bucket=context.toolkit.s3_bucket,

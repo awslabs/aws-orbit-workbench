@@ -1,8 +1,0 @@
-# Ignore everything
-*
-
-# But not these files...
-!utils/setup.py
-!utils/requirements.txt
-!utils/orbit.svg
-!utils/jupyterhub_utils

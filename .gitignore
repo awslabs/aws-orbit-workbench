@@ -386,5 +386,7 @@ images/jupyter-user/notes.txt
 images/jupyter-user-spark/notes.txt
 images/jupyter-user/.workspace/shared/samples
 /images/jupyter-user/*.mine
+**/*.mine.yaml
 /samples/notebooks/M-Admin/querybook_image/querybook.zip
 /.mine/
+/samples/manifests/plugins/dev-env-with-plugins-public.mine.yaml

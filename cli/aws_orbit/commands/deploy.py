@@ -59,7 +59,6 @@ def _get_images_dirs(context: "Context", manifest_filename: str, skip_images: bo
     else:
         refdir: str = os.path.dirname(os.path.abspath(manifest_filename))
         _logger.debug("refdir: %s", refdir)
-        _logger.debug(context.images.jupyter_hub.get_source(account_id=context.account_id, region=context.region))
         dirs = [
             (os.path.join(refdir, getattr(context.images, name).path), name.replace("_", "-"))
             for name in context.images.names
@@ -214,7 +213,7 @@ def deploy_env(
         msg_ctx.progress(3)
 
         context: "Context" = ContextSerDe.load_context_from_manifest(manifest=manifest)
-        image_manifests = {"code_build": manifest.images.code_build, "landing_page": manifest.images.landing_page}
+        image_manifests = {"code_build": manifest.images.code_build}
 
         for name in context.images.names:
             # We don't allow these images to be managed with an input Manifest

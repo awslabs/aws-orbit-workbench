@@ -1,6 +1,0 @@
-# Ignore everything
-*
-
-# But not these files...
-!build
-!docker-entrypoint.sh
