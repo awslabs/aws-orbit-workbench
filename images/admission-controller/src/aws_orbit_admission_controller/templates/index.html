@@ -15,8 +15,14 @@
     jQuery(document).ready(function ($) {
         var isready = false;
         var poll_timer;
+        const env_name = '{{env_name}}'
         const redirect_url = '{{ logout_redirect_url }}';
         console.log('go to ' + redirect_url);
+        const teams = {{ teams | tojson }};
+        const waitDiv = document.getElementById("wait-first-time");
+        const groups = document.getElementById("groups");
+        console.log('teams: ' + teams);
+        console.log('teams len: ' + teams.length);
 
         function set_timer() {
             $.ajax({
@@ -25,16 +31,14 @@
                 success: function (data) {
                     console.log("polling");
                     console.log(data);
-                    const waitDiv = document.getElementById("wait-first-time");
-                    const applications = document.getElementById("applications");
                     if (data.isReady) {
                         console.log('ready!!!');
                         $("#wait-first-time").hide();
-                        $("#applications").show();
+                        $("#groups").show();
                         clearTimeout(poll_timer)
                     } else {
                         $("#wait-first-time").show();
-                        $("#applications").hide();
+                        $("#groups").hide();
                     }
                 },
                 dataType: "json",
@@ -43,10 +47,21 @@
             })
         }
 
-        poll_timer = setTimeout(function () {
-            set_timer()
-        }, 10000);
-        (set_timer());
+        if (teams.length > 0) {
+            const teamList = teams.map(
+                (team) => [team.replace(env_name + '-', '')]
+            )
+            groups.appendChild(createTeamTable(teamList))
+            $("#groups").show();
+            poll_timer = setTimeout(function () {
+                set_timer()
+            }, 10000);
+            (set_timer());
+        } else {
+            console.log('member of no groups');
+
+            $("#nogroups").show();
+        }
     });
 
     function logout() {
@@ -59,6 +74,41 @@
         console.log('redirect url: ' + url);
         location.href = url
     }
+
+    function createTeamTable(teamInfoList) {
+        const username = '{{ username }}'
+        var table = document.createElement('table');
+        table.setAttribute("id", 'team_table');
+        table.setAttribute("class", 'team_table');
+        var tableBody = document.createElement('tbody');
+        teamInfoList.forEach(function (rowData) {
+            var teamInfo = document.createElement('tr');
+            var teamCell = document.createElement('td');
+            var teamName = rowData[0]
+            var teamNameElement = document.createElement('h5')
+            teamNameElement.appendChild(document.createTextNode(teamName))
+            teamCell.appendChild(teamNameElement);
+            teamInfo.appendChild(teamCell);
+
+            var kfCell = document.createElement('td');
+            var kfApp = document.createElement('a');
+            teamInfo.appendChild(kfCell);
+            kfCell.appendChild(kfApp);
+            kfApp.setAttribute('href', "/?ns=" + teamName + '-' + username);
+            kfApp.setAttribute('id', "kubeflow-icon");
+            kfApp.setAttribute('rel', "noopener noreferrer");
+            kfApp.setAttribute('target', "_blank")
+            kfApp.innerHTML = '<object data="/orbit/static/images/Kubeflow-Logo-RGB.jpg" height="30" id="kubeflow3" type="image/svg+xml"\n' +
+                '                    width="30"></object>';
+            // kfApp.appendChild(kfApp)
+
+            tableBody.appendChild(teamInfo);
+        });
+
+        table.appendChild(tableBody);
+        return table;
+    }
+
 </script>
 <div data-role="page">
     <div>
@@ -67,13 +117,19 @@
         </div>
     </div>
     <div class="app-container" id="app-container">
-        <object class="orbit-logo" data="/orbit/static/images/orbit.svg" height="40%" id="orbit-logo"
+        <object class="orbit-logo" data="/orbit/static/images/orbit.svg" id="orbit-logo"
                 type="image/svg+xml"
-                width="20%"></object>
-        <div id="orbit-content">
-            &nbsp;&nbsp;
+                ></object>
+        <div class="orbit-content" id="orbit-content">&nbsp;&nbsp;
             <h2>Welcome {{ username }}!</h2>
-            &nbsp;&nbsp;
+            <div class="nogroups" id="nogroups" style="display:none;">
+                <h4>The user '{{ username }}' is not a member of any team space.</h4>
+                &nbsp &nbsp
+                <h4>Please consult with your Team Administrator.</h4>
+            </div>
+            <div class="groups" id="groups" style="display:none;">
+                <h4>Select application from these team spaces:</h4>
+            </div>
         </div>
         <div class="my-dot-bricks" id="wait-first-time" style="display:none;">
             <h4>Please wait a moment until your user space is created.&nbsp;</h4>
@@ -81,17 +137,6 @@
                 <div class="dot-bricks" id="dots"/>
             </div>
         </div>
-    </div>
-    <div class="applications" id="applications">
-        <p>
-        <div id="app-header">
-            <h4>Select your application:</h4>
-        </div>
-        <a href="/" id="kubeflow-icon" rel="noopener noreferrer" target="_blank">
-            <object data="/orbit/static/images/Kubeflow-Logo-RGB.jpg" height="100" id="kubeflow3" type="image/svg+xml"
-                    width="100"></object>
-        </a>
-        </p>
     </div>
 </div>
 </body>

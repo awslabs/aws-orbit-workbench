@@ -60,29 +60,13 @@ def isready() -> Any:
 @app.route("/logout")
 def logout_request() -> Any:
     response = make_response(logout(logger=app.logger, app=app))
-
+    # This will terminate the current session for the user.
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
     response.set_cookie('AWSELBAuthSessionCookie-0', path='/', expires=0)
 
     return response
 
-
-# Cookie
-# awsCookie = new
-# Cookie("AWSELBAuthSessionCookie-0", "deleted");
-# awsCookie.setMaxAge(-1);
-# awsCookie.setPath("/");
-# response.addCookie(awsCookie);
-# Properties
-# appProperties = new
-# Properties();
-# applicationPropertyConfigurer.loadProperties(appProperties);
-# response.sendRedirect(appProperties.getProperty("logout.url"));
-# response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0");
-# response.setHeader("Pragma", "no-cache");
-# response.setDateHeader("Expires", -1);
-# request.getSession().invalidate();
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True, use_reloader=True)  # pragma: no cover
