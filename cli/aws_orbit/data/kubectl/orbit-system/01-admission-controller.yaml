@@ -240,7 +240,8 @@ data:
   COGNITO_USERPOOL_ID: ${cognitoUserPoolID}
   COGNITO_APP_CLIENT_ID: ${cognitoAppClientId}
   COGNITO_DOMAIN: ${cognitoUserPoolDomain}
-  SSL_CERT: ${certArn}
+  SSL_CERT: ${certArn},
+  ENV_NAME: ${env_name}
 ---
 apiVersion: v1
 kind: Service
