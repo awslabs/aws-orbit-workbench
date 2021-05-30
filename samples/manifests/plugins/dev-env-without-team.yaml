@@ -9,14 +9,8 @@ SharedEfsFsId: !SSM ${/orbit-foundation/dev-env/resources::SharedEfsFsId}
 SharedEfsSgId: !SSM ${/orbit-foundation/dev-env/resources::SharedEfsSgId}
 InstallSsmAgent: true
 Images:
-    JupyterHub:
-        Repository: !ENV ${JUPYTER_HUB_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-hub}
-        Version: !ENV ${VERSION::latest}
     JupyterUser:
         Repository: !ENV ${JUPYTER_USER_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user}
-        Version: !ENV ${VERSION::latest}
-    LandingPage:
-        Repository: !ENV ${LANDING_PAGE_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/landing-page}
         Version: !ENV ${VERSION::latest}
     AdmissionController:
         Repository: !ENV ${ADMISSION_CONTROLLER_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/admission-controller}
