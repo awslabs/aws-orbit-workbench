@@ -164,7 +164,8 @@ def deploy_team(context: "Context", manifest: Manifest, team_manifest: TeamManif
     _logger.debug(
         f"team_context.helm_repository: s3://{context.toolkit.s3_bucket}/helm/repositories/teams/{team_context.name}"
     )
-    team_context.helm_repository = f"s3://{context.toolkit.s3_bucket}/helm/repositories/teams/{team_context.name}"
+    team_context.team_helm_repository = f"s3://{context.toolkit.s3_bucket}/helm/repositories/teams/{team_context.name}"
+    team_context.user_helm_repository = f"s3://{context.toolkit.s3_bucket}/helm/repositories/user/{team_context.name}"
     ContextSerDe.dump_context_to_ssm(context=context)
 
 

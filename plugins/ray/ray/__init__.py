@@ -55,7 +55,7 @@ def deploy(
         image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
     )
 
-    repo_location = helm.init_team_repo(context=context, team_context=team_context)
+    repo_location = team_context.team_helm_repository
     repo = team_context.name
     helm.add_repo(repo=repo, repo_location=repo_location)
     chart_name, chart_version, chart_package = helm.package_chart(repo=repo, chart_path=chart_path, values=vars)

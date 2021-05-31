@@ -52,6 +52,8 @@
 -   PluginId: fast_fs_lustre
     Module: lustre
     Path: ../plugins/lustre/
+    Parameters:
+        storage: 1200Gi
 -   PluginId: ray
     Module: ray
     Path: ../plugins/ray/
@@ -61,3 +63,9 @@
 -   PluginId: sm-operator
     Module: sm-operator
     Path: ../plugins/sm-operator/
+-   PluginId: team-voila
+    Module: voila
+    Path: ../plugins/voila/
+    Parameters:
+        restartPolicy: Always
+        path: "/home/jovyan/shared/voila"

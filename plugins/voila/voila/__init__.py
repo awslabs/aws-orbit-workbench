@@ -43,7 +43,8 @@ def deploy(
         region=context.region,
         account_id=context.account_id,
         env_name=context.name,
-        restart_policy=parameters["restartPolicy"] if "restartPolicy" in parameters else "Never",
+        restart_policy=parameters["restartPolicy"] if "restartPolicy" in parameters else "Always",
+        path=parameters["path"] if "path" in parameters else "/home/jovyan/shared/voila",
         plugin_id=plugin_id,
         toolkit_s3_bucket=context.toolkit.s3_bucket,
         image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
@@ -51,7 +52,7 @@ def deploy(
         sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
     )
 
-    repo_location = helm.init_team_repo(context=context, team_context=team_context)
+    repo_location = team_context.team_helm_repository
     repo = team_context.name
     helm.add_repo(repo=repo, repo_location=repo_location)
     chart_name, chart_version, chart_package = helm.package_chart(repo=repo, chart_path=chart_path, values=vars)

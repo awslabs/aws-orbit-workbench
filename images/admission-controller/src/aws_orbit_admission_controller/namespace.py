@@ -64,10 +64,24 @@ def process_removed_event(namespace: Dict[str, Any]) -> None:
             return
 
         team_context = get_team_context(team)
-        helm_repo_url = team_context["HelmRepository"]
-        helm_release = f"{namespace_name}-orbit-team"
-        logger.debug("Adding Helm Repository: %s at %s", team, helm_repo_url)
-        uninstall_chart(helm_release, team)
+        logger.info('team context keys: %s', team_context.keys())
+        helm_repo_url = team_context["UserHelmRepository"]
+        repo = f'{team}--userspace'
+        # add the team repo
+        run_command(f"helm repo add {repo} {helm_repo_url}")
+        run_command(f"helm search repo --devel {repo} -o json > /tmp/charts.json")
+        with open('/tmp/charts.json', 'r') as f:
+            charts = json.load(f)
+        run_command(f"helm ls repo -n {team} -o json > /tmp/releases.json")
+        with open('/tmp/charts.json', 'r') as f:
+            releaseList = json.load(f)
+            releases = {r['name']: r['chart'] for r in releaseList}
+            logger.info('current installed releases: %s', releases)
+        for chart in charts:
+            chart_name = chart['name'].split('/')[1]
+            helm_release = f"{namespace_name}-{chart_name}"
+            if helm_release in releases:
+                uninstall_chart(helm_release, team)
 
 
 def process_added_event(namespace: Dict[str, Any]) -> None:
@@ -105,22 +119,30 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
         return
 
     team_context = get_team_context(team)
-    helm_repo_url = team_context["HelmRepository"]
+    logger.info('team context keys: %s', team_context.keys())
+    helm_repo_url = team_context["UserHelmRepository"]
     logger.debug("Adding Helm Repository: %s at %s", team, helm_repo_url)
-    helm_release = f"{namespace_name}-orbit-team"
+    repo = f'{team}--userspace'
     # add the team repo
-    run_command(f"helm repo add {team} {helm_repo_url}")
-    # install the helm package for this user space
-    install_helm_chart(helm_release, namespace_name, team, user, user_email, user_efsapid)
+    run_command(f"helm repo add {repo} {helm_repo_url}")
 
-    logger.info("Helm release %s installed at %s", helm_release, namespace_name)
+    run_command(f"helm search repo --devel {repo} -o json > /tmp/charts.json")
+    with open('/tmp/charts.json', 'r') as f:
+        charts = json.load(f)
+    for chart in charts:
+        chart_name = chart['name'].split('/')[1]
+        helm_release = f"{namespace_name}-{chart_name}"
+
+        # install the helm package for this user space
+        install_helm_chart(helm_release, namespace_name, team, user, user_email, user_efsapid, repo, chart_name)
+        logger.info("Helm release %s installed at %s", helm_release, namespace_name)
 
 
 def install_helm_chart(helm_release: str, namespace: str, team: str, user: str, user_email: str,
-                       user_efsapid: str) -> None:
+                       user_efsapid: str, repo: str, package: str) -> None:
     cmd = (
         f"/usr/local/bin/helm upgrade --install --devel --debug --namespace {team} "
-        f"{helm_release} {team}/user-space "
+        f"{helm_release} {repo}/{package} "
         f"--set user={user},user_email={user_email},namespace={namespace},user_efsapid={user_efsapid}"
     )
 

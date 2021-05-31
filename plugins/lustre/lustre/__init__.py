@@ -25,8 +25,8 @@ from aws_orbit.services.ec2 import IpPermission, UserIdGroupPair
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
 _logger: logging.Logger = logging.getLogger("aws_orbit")
-CHARTS_PATH = os.path.join(os.path.dirname(__file__), "charts")
-
+TEAM_CHARTS_PATH = os.path.join(os.path.dirname(__file__), "charts","team")
+USER_CHARTS_PATH = os.path.join(os.path.dirname(__file__), "charts","user")
 
 @hooks.deploy
 def deploy(
@@ -62,6 +62,7 @@ def deploy(
         subnet=context.networking.data.nodes_subnets[0],
         s3importpath=f"s3://{team_context.scratch_bucket}/{team_context.name}/lustre",
         s3exportpath=f"s3://{team_context.scratch_bucket}/{team_context.name}/lustre",
+        storage = parameters['storage'] if 'storage' in parameters else '1200Gi'
     )
 
     ec2.authorize_security_group_ingress(
@@ -81,13 +82,13 @@ def deploy(
         ],
     )
 
-    chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHARTS_PATH, target_path=plugin_id)
+    chart_path = helm.create_team_charts_copy(team_context=team_context, path=TEAM_CHARTS_PATH, target_path=plugin_id)
     _logger.debug("package dir")
-    utils.print_dir(CHARTS_PATH)
+    utils.print_dir(TEAM_CHARTS_PATH)
     _logger.debug("copy chart dir")
     utils.print_dir(chart_path)
 
-    repo_location = helm.init_team_repo(context=context, team_context=team_context)
+    repo_location = team_context.team_helm_repository
     repo = team_context.name
     helm.add_repo(repo=repo, repo_location=repo_location)
     chart_name, chart_version, chart_package = helm.package_chart(
@@ -101,8 +102,12 @@ def deploy(
         chart_version=chart_version,
     )
 
+    # install this package at the user helm repository such that its installed on every user space
+    chart_path = helm.create_team_charts_copy(team_context=team_context, path=USER_CHARTS_PATH, target_path=plugin_id)
+    user_location = team_context.user_helm_repository
+    user_repo = team_context.name + "--user"
     chart_name, chart_version, chart_package = helm.package_chart(
-        repo=repo, chart_path=os.path.join(chart_path, "fsx_filesystem"), values=vars
+        repo=user_repo, chart_path=os.path.join(chart_path, "fsx_filesystem"), values=vars
     )
     _logger.info(f"Lustre Helm Chart {chart_name}@{chart_version} installed for {team_context.name} at {chart_package}")
 
@@ -120,4 +125,6 @@ def destroy(
         context.name,
         team_context.name,
     )
-    helm.uninstall_chart(f"{team_context.name}-{plugin_id}", namespace=team_context.name)
+    release_name = f"{team_context.name}-{plugin_id}"
+
+    helm.uninstall_chart(release_name, namespace=team_context.name)
