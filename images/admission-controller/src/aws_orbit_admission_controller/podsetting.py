@@ -16,7 +16,7 @@ import time
 from multiprocessing import Queue
 from typing import Any, Dict, Optional, cast
 
-from aws_orbit_admission_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, load_config, logger
+from aws_orbit_admission_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, load_config, logger, dump_resource
 from kubernetes import dynamic
 from kubernetes.client import api_client
 from kubernetes.dynamic import exceptions as k8s_exceptions
@@ -31,19 +31,19 @@ def get_client() -> dynamic.DynamicClient:
 def process_added_event(podsetting: Dict[str, Any]) -> None:
     logger.debug("loading kubeconfig")
     load_config()
-    logger.debug("ADDED: %s", podsetting)
+    logger.debug("ADDED: %s", dump_resource(podsetting))
 
 
 def process_modified_event(podsetting: Dict[str, Any]) -> None:
     logger.debug("loading kubeconfig")
     load_config()
-    logger.debug("MODIFIED: %s", podsetting)
+    logger.debug("MODIFIED: %s", dump_resource(podsetting))
 
 
 def process_deleted_event(podsetting: Dict[str, Any]) -> None:
     logger.debug("loading kubeconfig")
     load_config()
-    logger.debug("DELETED: %s", podsetting)
+    logger.debug("DELETED: %s", dump_resource(podsetting))
 
 
 def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
@@ -59,7 +59,7 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
                 podsetting = event["object"]
                 state["lastResourceVersion"] = podsetting.metadata.resource_version
                 queue_event = {"type": event["type"], "raw_object": event["raw_object"]}
-                logger.debug("Queueing PodSetting event for processing: %s", queue_event)
+                logger.debug("Queueing PodSetting event for processing type: %s podsetting: %s", event["type"], dump_resource(event["raw_object"]))
                 queue.put(queue_event)
         except ReadTimeoutError:
             logger.warning("There was a timeout error accessing the Kubernetes API. Retrying request.", exc_info=True)
@@ -90,12 +90,14 @@ def process_podsettings(queue: Queue, state: Dict[str, Any], replicator_id: int)
 
             if podsetting_event["type"] == "ADDED":
                 process_added_event(podsetting=podsetting_event["raw_object"])
+            elif podsetting_event["type"] == "MODIFIED":
+                process_modified_event(podsetting=podsetting_event["raw_object"])
             elif podsetting_event["type"] == "DELETED":
                 process_deleted_event(podsetting=podsetting_event["raw_object"])
             else:
-                logger.debug("Skipping PodSetting event: %s", podsetting_event)
+                logger.debug("Skipping PodSetting event: %s", dump_resource(podsetting_event))
         except Exception:
-            logger.exception("Failed to process PodSetting event: %s", podsetting_event)
+            logger.exception("Failed to process PodSetting event: %s", dump_resource(podsetting_event))
         finally:
             podsetting_event = None
             time.sleep(1)

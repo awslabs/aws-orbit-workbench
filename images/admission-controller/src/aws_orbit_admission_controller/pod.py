@@ -14,24 +14,33 @@
 
 import base64
 import copy
+from copy import deepcopy
 import logging
 import re
 from typing import Any, Dict, List, Optional, cast
 
 import jsonpatch
 import jsonpath_ng
-from aws_orbit_admission_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, get_client, dump_resource
+from aws_orbit_admission_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, get_client, dump_resource, get_module_state
 from flask import jsonify
 from kubernetes import dynamic
 from kubernetes.dynamic import exceptions as k8s_exceptions
 
-ORBIT_SYSTEM_POD_SETTINGS = None
+ORBIT_POD_SETTINGS_CACHE = None
+ORBIT_POD_SETTINGS_STATE = None
 
 
 def get_pod_settings(client: dynamic.DynamicClient) -> List[Dict[str, Any]]:
-    api = client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="PodSetting")
-    pod_settings = api.get()
-    return cast(List[Dict[str, Any]], pod_settings.to_dict().get("items", []))
+    global ORBIT_POD_SETTINGS_CACHE
+    global ORBIT_POD_SETTINGS_STATE
+
+    state_copy = deepcopy(get_module_state(module="podsettingsWatcher"))
+    if state_copy != ORBIT_POD_SETTINGS_STATE:
+        api = client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="PodSetting")
+        pod_settings = api.get()
+        ORBIT_POD_SETTINGS_CACHE = pod_settings.to_dict().get("items", [])
+    ORBIT_POD_SETTINGS_STATE = state_copy
+    return cast(List[Dict[str, Any]], ORBIT_POD_SETTINGS_CACHE)
 
 
 def get_namespace(client: dynamic.DynamicClient, name: str) -> Optional[Dict[str, Any]]:
@@ -291,11 +300,7 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     logger.info("request: %s", request)
 
     client = get_client()
-    global ORBIT_SYSTEM_POD_SETTINGS
-    ORBIT_SYSTEM_POD_SETTINGS = (
-        get_pod_settings(client=client) if ORBIT_SYSTEM_POD_SETTINGS is None else ORBIT_SYSTEM_POD_SETTINGS
-    )
-    logger.debug("podsettings: %s", dump_resource(ORBIT_SYSTEM_POD_SETTINGS))
+    logger.debug("podsettings: %s", dump_resource(get_pod_settings(client=client)))
 
     namespace = get_namespace(client=client, name=request["namespace"])
     if namespace is None:
