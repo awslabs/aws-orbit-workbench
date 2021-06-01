@@ -72,11 +72,12 @@ def process_removed_event(namespace: Dict[str, Any]) -> None:
         run_command(f"helm search repo --devel {repo} -o json > /tmp/charts.json")
         with open('/tmp/charts.json', 'r') as f:
             charts = json.load(f)
-        run_command(f"helm ls repo -n {team} -o json > /tmp/releases.json")
-        with open('/tmp/charts.json', 'r') as f:
+        run_command(f"helm list -n {team} -o json > /tmp/releases.json")
+        with open('/tmp/releases.json', 'r') as f:
             releaseList = json.load(f)
-            releases = {r['name']: r['chart'] for r in releaseList}
+            releases = [r['name'] for r in releaseList]
             logger.info('current installed releases: %s', releases)
+
         for chart in charts:
             chart_name = chart['name'].split('/')[1]
             helm_release = f"{namespace_name}-{chart_name}"
@@ -129,13 +130,22 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
     run_command(f"helm search repo --devel {repo} -o json > /tmp/charts.json")
     with open('/tmp/charts.json', 'r') as f:
         charts = json.load(f)
+
+    run_command(f"helm list -n {team} -o json > /tmp/releases.json")
+    with open('/tmp/releases.json', 'r') as f:
+        releaseList = json.load(f)
+        releases = [r['name'] for r in releaseList]
+        logger.info('current installed releases: %s', releases)
+
     for chart in charts:
         chart_name = chart['name'].split('/')[1]
         helm_release = f"{namespace_name}-{chart_name}"
-
-        # install the helm package for this user space
-        install_helm_chart(helm_release, namespace_name, team, user, user_email, user_efsapid, repo, chart_name)
-        logger.info("Helm release %s installed at %s", helm_release, namespace_name)
+        # do not install again the chart if its already installed as some charts are not upgradable.
+        # namespaces might
+        if helm_release not in releaseList:
+            # install the helm package for this user space
+            install_helm_chart(helm_release, namespace_name, team, user, user_email, user_efsapid, repo, chart_name)
+            logger.info("Helm release %s installed at %s", helm_release, namespace_name)
 
 
 def install_helm_chart(helm_release: str, namespace: str, team: str, user: str, user_email: str,

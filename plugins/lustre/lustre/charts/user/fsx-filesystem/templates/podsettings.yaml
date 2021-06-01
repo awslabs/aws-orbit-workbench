@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Values.team }}
   labels:
     orbit/space: team
-    {{- include "team-space.labels" . | nindent 4 }}
+    {{- include "fsx-filesystem.labels" . | nindent 4 }}
 spec:
   desc:  Mount FsX Lustre folder {{.Values.folder}}
   containerSelector:
