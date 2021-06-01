@@ -18,8 +18,6 @@ jobs:
         python-version: [3.7]
     defaults:
       run:
-        # TODO - Changing extension path
-        #working-directory: images/jupyter-user/extensions/jupyterlab_orbit
         working-directory: jupyterlab_orbit
     steps:
     - name: Checkout

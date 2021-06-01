@@ -148,9 +148,4 @@ RUN chown -R jovyan /opt/orbit/codeserver_proxy
 
 WORKDIR /home/${NB_USER}
 
-# ST - Removing extension installation from source
-#RUN conda run pip install /etc/extensions/jupyterlab_orbit/
-
-#RUN jupyter labextension build /etc/extensions/jupyterlab_orbit
-
 USER $NB_UID

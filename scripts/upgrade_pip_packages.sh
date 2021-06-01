@@ -6,14 +6,6 @@ set -e
 
 ROOT_PATH=`pwd`
 
-
-# TODO ST changing extension folder path
-#paths=(
-#    "${ROOT_PATH}/cli"
-#    "${ROOT_PATH}/images/jupyter-user/extensions/jupyterlab_orbit"
-#    "${ROOT_PATH}/sdk"
-#)
-
 # Paths where pip-compile generates requirements files #
 paths=(
     "${ROOT_PATH}/cli"

@@ -27,8 +27,6 @@ mkdir -p ${ARCHIVE_DIR}
 
 cp -r ${DIR}/python-utils ${ARCHIVE_DIR}/
 cp -r ${DIR}/transformations ${ARCHIVE_DIR}/
-# ST - Removing extension source
-#cp -r ${DIR}/extensions ${ARCHIVE_DIR}/
 cp -r ${DIR}/codeserver_proxy ${ARCHIVE_DIR}/
 cp ${DIR}/jupyter_server_config.py ${ARCHIVE_DIR}/
 cp ${DIR}/requirements.txt ${ARCHIVE_DIR}/
