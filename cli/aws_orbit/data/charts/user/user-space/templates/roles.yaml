@@ -1,0 +1,54 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    {{- include "user-space.labels" . | nindent 4 }}
+  name: user-space-{{ .Values.user }}
+  namespace: {{ .Values.team }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: default-editor
+subjects:
+  - kind: ServiceAccount
+    name: default-editor
+    namespace: {{ .Values.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: default-editor-system-access-{{ .Values.team }}-{{ .Values.user }}
+  labels:
+    {{- include "user-space.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-editor-system-access
+subjects:
+- kind: ServiceAccount
+  name: default-editor
+  namespace: {{ .Values.namespace }}
+- kind: ServiceAccount
+  name: default-viewer
+  namespace: {{ .Values.namespace }}
+
+{{ if .Values.K8Admin }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Values.team }}-{{ .Values.user }}-team-sa-admin-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: default-editor
+  namespace: {{ .Values.namespace }}
+
+---
+{{ end }}
+
+

@@ -41,19 +41,26 @@ def deploy(
     chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATH, target_path=plugin_id)
     _logger.debug("copy chart dir")
     utils.print_dir(chart_path)
-    default_image = f"{context.images.jupyter_user.repository}:{context.images.jupyter_user.version}"
+    if "image" not in parameters:
+        image = f"{context.images.jupyter_user.repository}:{context.images.jupyter_user.version}"
+    elif "aws-orbit-workbench/utility-data" in parameters["image"]:
+        image = f"{context.images.utility_data.repository}:{context.images.utility_data.version}"
+    else:
+        image = parameters["image"]
+
+    _logger.debug(f"For plugin {plugin_id} using image: {image}")
 
     vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
         region=context.region,
         account_id=context.account_id,
         env_name=context.name,
-        tag=context.images.jupyter_hub.version,
+        tag=parameters["tag"] if "tag" in parameters else context.images.jupyter_user.version,
         restart_policy=parameters["restartPolicy"] if "restartPolicy" in parameters else "Never",
         plugin_id=plugin_id,
         toolkit_s3_bucket=context.toolkit.s3_bucket,
         image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
-        image=parameters["image"] if "image" in parameters else default_image,
+        image=image,
         uid=parameters["uid"] if "uid" in parameters else "1000",
         gid=parameters["gid"] if "gid" in parameters else "100",
     )
@@ -68,7 +75,10 @@ def deploy(
     with open(script_file, "w") as file:
         file.write(script_body)
 
-    repo_location = helm.init_team_repo(context=context, team_context=team_context)
+    if not team_context.team_helm_repository:
+        raise Exception("Missing team helm repository")
+
+    repo_location = team_context.team_helm_repository
     repo = team_context.name
     _logger.debug(script_body)
     helm.add_repo(repo=repo, repo_location=repo_location)

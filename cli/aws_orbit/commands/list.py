@@ -80,7 +80,7 @@ def list_env(env: str, variable: str) -> None:
                 print(context.toolkit.s3_bucket)
             elif variable == "all":
                 env_info[env_name] = {
-                    "LandingPage": context.landing_page_url,
+                    "LandingPage": f"{context.landing_page_url}/orbit/login",
                     "Teams": teams_list,
                     "ToolkitBucket": context.toolkit.s3_bucket,
                 }

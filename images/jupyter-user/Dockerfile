@@ -52,9 +52,8 @@ RUN chmod -R 755 /opt/transformations/
 
 # add the boostrap script and change permission to jovyan
 RUN mkdir -p /opt/orbit
-ADD bootstrap.sh /opt/orbit/bootstrap.sh
+ADD bashrc /opt/orbit/bashrc
 RUN chown -R jovyan /opt/orbit
-RUN chmod a+xr /opt/orbit/bootstrap.sh
 
 ######################################
 # Jupyter Environment configuration
@@ -84,12 +83,6 @@ RUN conda run pip install --upgrade \
     aws-orbit-sdk==$(cat /opt/orbit/VERSION) \
     jupyterlab-orbit==$(cat /opt/orbit/VERSION)
 RUN rm /etc/pip.conf
-
-# add the boostrap script and change permission to jovyan
-RUN mkdir -p /opt/orbit
-ADD bootstrap.sh /opt/orbit/bootstrap.sh
-RUN chown -R jovyan /opt/orbit
-RUN chmod a+xr /opt/orbit/bootstrap.sh
 
 # add bundle with docker image sources
 COPY aws-orbit_jupyter-user.tar.gz /opt/orbit/aws-orbit_jupyter-user.tar.gz

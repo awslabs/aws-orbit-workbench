@@ -57,7 +57,7 @@ def deploy(
     _logger.debug("copy chart dir")
     utils.print_dir(chart_path)
 
-    repo_location = helm.init_team_repo(context=context, team_context=team_context)
+    repo_location = team_context.team_helm_repository
     repo = team_context.name
     helm.add_repo(repo=repo, repo_location=repo_location)
     chart_name, chart_version, chart_package = helm.package_chart(repo=repo, chart_path=chart_path, values=vars)
@@ -90,4 +90,18 @@ def destroy(
         context.name,
         team_context.name,
     )
+    # Must delete all resources before deleting the SM operator per documentation
+    # https://docs.aws.amazon.com/sagemaker/latest/dg/amazon-sagemaker-operators-for-kubernetes.html
+    try:
+        sh.run(f"kubectl delete --all -n {team_context.name} hyperparametertuningjob.sagemaker.aws.amazon.com")
+        sh.run(f"kubectl delete --all -n {team_context.name} trainingjobs.sagemaker.aws.amazon.com")
+        sh.run(f"kubectl delete --all -n {team_context.name} batchtransformjob.sagemaker.aws.amazon.com")
+        sh.run(f"kubectl delete --all -n {team_context.name} hostingdeployment.sagemaker.aws.amazon.com")
+    except Exception as e:
+        _logger.error(
+            f"Deleting all sagemaker resources for team {team_context.name} failed",
+            str(e),
+        )
+        # if we failed, we should stop here before deleting operator so we don't get hunged in delete.
+        raise e
     helm.uninstall_chart_in_namespace(f"{team_context.name}-{plugin_id}", team_context.name)

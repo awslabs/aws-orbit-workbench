@@ -1,0 +1,164 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/orbit/static/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Orbit Workbench Home Page"
+    />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <title>Orbit Workbench</title>
+    <link href="/orbit/static/App.css" rel="stylesheet">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/three-dots/0.2.0/three-dots.min.css" rel="stylesheet"
+          type="text/css">
+</head>
+<body>
+<noscript>You need to enable JavaScript to run this app.</noscript>
+<script>
+    var time_waiting = 0
+    jQuery(document).ready(function ($) {
+        var isready = false;
+        var poll_timer;
+        const env_name = '{{env_name}}'
+        const redirect_url = '{{ logout_redirect_url }}';
+        console.log('go to ' + redirect_url);
+        const teams = {{ teams | tojson }};
+        const waitDiv = document.getElementById("wait-first-time");
+        const groups = document.getElementById("groups");
+        console.log('teams: ' + teams);
+        console.log('teams len: ' + teams.length);
+
+        function set_timer() {
+            $.ajax({
+                url: "/orbit/isready",
+                type: "GET",
+                success: function (data) {
+                    console.log("polling");
+                    console.log(data);
+                    if (data.isReady) {
+                        console.log('ready!!!');
+                        $("#wait-first-time").hide();
+                        $("#groups").show();
+                        clearTimeout(poll_timer)
+                    } else {
+                        $("#wait-first-time").show();
+                        $("#groups").hide();
+                        if (time_waiting > 120000) {
+                            alert("Timeout while waiting for namespace creation. Something went wrong!! " +
+                                  "Consult the Orbit namespace watcher logs.")
+                        } else {
+                            poll_timer = setTimeout(function () {
+                                set_timer()
+                            }, 10000);
+                            time_waiting = time_waiting + 10000
+                        }
+
+
+
+                    }
+                },
+                dataType: "json",
+                complete: poll_timer,
+                timeout: 2000
+            })
+        }
+
+        if (teams.length > 0) {
+            const teamList = teams.map(
+                (team) => [team.replace(env_name + '-', '')]
+            )
+            groups.appendChild(createTeamTable(teamList))
+            poll_timer = setTimeout(function () {
+                set_timer()
+            }, 10000);
+            (set_timer());
+        } else {
+            console.log('member of no groups');
+
+            $("#nogroups").show();
+        }
+    });
+
+    function logout() {
+        console.log('logout!!!');
+        const hostname = '{{hostname}}';
+        const logout_uri = '{{logout_uri}}';
+        const client_id = '{{client_id}}';
+        const cognito_domain = '{{cognito_domain}}';
+        const url = 'https://' + cognito_domain + '/logout?' + 'client_id=' + client_id + '&logout_uri=' + logout_uri
+        console.log('redirect url: ' + url);
+        location.href = url
+    }
+
+    function createTeamTable(teamInfoList) {
+        const username = '{{ username }}'
+        var table = document.createElement('table');
+        table.setAttribute("id", 'team_table');
+        table.setAttribute("class", 'team_table');
+        var tableBody = document.createElement('tbody');
+        teamInfoList.forEach(function (rowData) {
+            var teamInfo = document.createElement('tr');
+            var teamCell = document.createElement('td');
+            var teamName = rowData[0]
+            var teamNameElement = document.createElement('h5')
+            teamNameElement.appendChild(document.createTextNode(teamName))
+            teamCell.appendChild(teamNameElement);
+            teamInfo.appendChild(teamCell);
+
+            var kfCell = document.createElement('td');
+            var kfApp = document.createElement('a');
+            teamInfo.appendChild(kfCell);
+            kfCell.appendChild(kfApp);
+            kfApp.setAttribute('href', "/?ns=" + teamName + '-' + username);
+            kfApp.setAttribute('id', "kubeflow-icon");
+            kfApp.setAttribute('rel', "noopener noreferrer");
+            kfApp.setAttribute('target', "_blank")
+            kfApp.innerHTML = '<object data="/orbit/static/images/Kubeflow-Logo-RGB.jpg" height="30" id="kubeflow3" type="image/svg+xml"\n' +
+                '                    width="30"></object>';
+            // kfApp.appendChild(kfApp)
+
+            tableBody.appendChild(teamInfo);
+        });
+
+        table.appendChild(tableBody);
+        return table;
+    }
+
+</script>
+<div data-role="page">
+    <div>
+        <div class="logout-toolbar" id="logout-toolbar">
+            <a href="javascript: logout()"> Logout </a>
+        </div>
+    </div>
+    <div class="app-container" id="app-container">
+        <object class="orbit-logo" data="/orbit/static/images/orbit.svg" id="orbit-logo"
+                type="image/svg+xml"
+                ></object>
+        <div class="orbit-content" id="orbit-content">&nbsp;&nbsp;
+            <h2>Welcome {{ username }}!</h2>
+            <div class="nogroups" id="nogroups" style="display:none;">
+                <h4>The user '{{ username }}' is not a member of any team space.</h4>
+                &nbsp &nbsp
+                <h4>Please consult with your Team Administrator.</h4>
+            </div>
+            <div class="groups" id="groups" style="display:none;">
+                <h4>Select application from these team spaces:</h4>
+            </div>
+        </div>
+        <div class="my-dot-bricks" id="wait-first-time" style="display:none;">
+            <h4>Please wait a moment until your user space is created.&nbsp;</h4>
+            <div class="stage" id="stage">
+                <div class="dot-bricks" id="dots"/>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+

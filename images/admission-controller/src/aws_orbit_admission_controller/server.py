@@ -17,8 +17,12 @@ import os
 import random
 from typing import Any
 
+from aws_orbit_admission_controller.home import login, logout, is_ready
 from aws_orbit_admission_controller.pod import process_request as process_pod_request
-from flask import Flask, request
+from flask import Flask, request, make_response
+
+# from flask_cognito import cognito_auth_required, current_user, current_cognito_jwt
+
 
 app = Flask(__name__)
 app.logger.info("environ: %s", os.environ)
@@ -40,6 +44,28 @@ def health() -> Any:
 def hello() -> Any:
     r = random.randint(0, 1000)
     return f"Hello! random number gen: {r}"
+
+
+@app.route("/login")
+# @cognito_auth_required
+def login_request() -> Any:
+    return login(logger=app.logger, app=app)
+
+
+@app.route("/isready")
+def isready() -> Any:
+    return is_ready(logger=app.logger, app=app)
+
+
+@app.route("/logout")
+def logout_request() -> Any:
+    response = make_response(logout(logger=app.logger, app=app))
+    # This will terminate the current session for the user.
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.set_cookie('AWSELBAuthSessionCookie-0', path='/', expires=0)
+
+    return response
 
 
 if __name__ == "__main__":

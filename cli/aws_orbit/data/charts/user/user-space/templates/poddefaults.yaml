@@ -1,0 +1,10 @@
+apiVersion: kubeflow.org/v1alpha1
+kind: PodDefault
+metadata:
+  name: vscode
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    matchLabels:
+      orbit/vscode: ''
+  desc: Start VSCode

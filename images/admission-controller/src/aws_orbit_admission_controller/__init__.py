@@ -16,12 +16,14 @@ import json
 import logging
 import os
 import subprocess
-import time
 from copy import deepcopy
 from typing import Any, Dict
 
+import time
 from kubernetes import config as k8_config
+from kubernetes import dynamic
 from kubernetes.client import CoreV1Api, V1ConfigMap
+from kubernetes.client import api_client
 from kubernetes.client.exceptions import ApiException
 
 ORBIT_API_VERSION = "v1"
@@ -130,6 +132,11 @@ def run_command(cmd: str) -> str:
         logger.debug("Command failed with exit code {}, stderr: {}".format(exc.returncode, exc.output))
         raise Exception(exc.output)
     return output
+
+
+def get_client() -> dynamic.DynamicClient:
+    load_config()
+    return dynamic.DynamicClient(client=api_client.ApiClient())
 
 
 logger = _get_logger()

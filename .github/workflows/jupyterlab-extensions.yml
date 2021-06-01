@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - main
-      - kubeflow_shared_main
   pull_request:
     branches:
       - main
-      - kubeflow_shared_main
 
 jobs:
   JupyterLabExtension:

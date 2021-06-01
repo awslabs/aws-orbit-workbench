@@ -21,8 +21,9 @@ src_samples_data='/opt/orbit/samples/'
 target_samples_data='/efs'
 
 echo "Staging samples data on filsystem"
-if ! [ -d $target_samples_data ]; then
-  mkdir -p $target_samples_data
-fi
-cp -R $src_samples_data $target_samples_data
+#if ! [ -d $target_samples_data ]; then
+#  mkdir -p $target_samples_data
+#fi
+rm -rf /efs/samples
+cp -R -v $src_samples_data $target_samples_data
 
