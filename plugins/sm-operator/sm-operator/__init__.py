@@ -57,7 +57,7 @@ def deploy(
     _logger.debug("copy chart dir")
     utils.print_dir(chart_path)
 
-    repo_location = helm.init_team_repo(context=context, team_context=team_context)
+    repo_location = team_context.team_helm_repository
     repo = team_context.name
     helm.add_repo(repo=repo, repo_location=repo_location)
     chart_name, chart_version, chart_package = helm.package_chart(repo=repo, chart_path=chart_path, values=vars)

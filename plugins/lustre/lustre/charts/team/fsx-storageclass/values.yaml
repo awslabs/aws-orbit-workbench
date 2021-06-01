@@ -6,8 +6,12 @@ namespace: ${team}
 nameOverride: ${plugin_id}
 fullnameOverride: ""
 serviceAccountName: default-editor
+subnet: ${subnet}
+sg: ${sg}
+s3importpath: ${s3importpath}
+s3exportpath: ${s3exportpath}
+deploymentType: ${deploymentType}
 storageClassName: fsx-lustre-${team}-${plugin_id}
-
-## Change this to modify the storage file system and create new file systems
-fs_name: lustre-${team}-fs
-storage: 1200Gi
+storage: ${storage}
+folder: ${folder}
+fs_name: lustre-${team}-fs-${plugin_id}

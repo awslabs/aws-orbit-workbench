@@ -3,9 +3,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: {{ .Values.fs_name }}
   labels:
-    {{- include "fsx_filesystem.labels" . | nindent 4 }}
+    {{- include "fsx-storageclass.labels" . | nindent 4 }}
   namespace: {{ .Values.namespace }}
-
 spec:
   accessModes:
     - ReadWriteMany

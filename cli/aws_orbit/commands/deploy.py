@@ -34,6 +34,8 @@ from aws_orbit.models.manifest import (
     NetworkingManifest,
 )
 from aws_orbit.services import cfn, codebuild
+from aws_orbit.services import cognito as orbit_cognito
+from aws_orbit.services import ssm
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -291,6 +293,11 @@ def deploy_teams(
         msg_ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
         msg_ctx.progress(3)
 
+        context_parameter_name: str = f"/orbit/{manifest.name}/context"
+        if not ssm.does_parameter_exist(name=context_parameter_name):
+            msg_ctx.error(f"Orbit Environment {manifest.name} cannot be found in the current account and region.")
+            return
+
         context: "Context" = ContextSerDe.load_context_from_manifest(manifest=manifest)
         msg_ctx.info("Current Context loaded")
         msg_ctx.info(f"Teams: {','.join([t.name for t in context.teams])}")
@@ -339,18 +346,18 @@ def deploy_teams(
         msg_ctx.progress(98)
 
         if cfn.does_stack_exist(stack_name=context.env_stack_name):
-            context = ContextSerDe.load_context_from_manifest(manifest=manifest)
+            context = ContextSerDe.load_context_from_ssm(env_name=manifest.name, type=Context)
             msg_ctx.info(f"Context updated: {filename}")
         msg_ctx.progress(99)
 
-        if context.cognito_users_url:
-            msg_ctx.tip(f"Add users: {stylize(context.cognito_users_url, underline=True)}")
-        else:
-            RuntimeError("Cognito Users URL not found.")
+        if context.user_pool_id:
+            cognito_users_url = orbit_cognito.get_users_url(user_pool_id=context.user_pool_id, region=context.region)
+            msg_ctx.tip(f"Add users: {stylize(cognito_users_url, underline=True)}")
+
         if context.landing_page_url:
             msg_ctx.tip(f"Access Orbit Workbench: {stylize(f'{context.landing_page_url}/orbit/login', underline=True)}")
         else:
-            RuntimeError("Landing Page URL not found.")
+            raise RuntimeError("Landing Page URL not found.")
         msg_ctx.progress(100)
 
 

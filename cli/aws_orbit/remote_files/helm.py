@@ -75,8 +75,21 @@ def init_env_repo(context: Context) -> str:
     return cast(str, repo_location)
 
 
-def init_team_repo(context: Context, team_context: TeamContext) -> str:
-    repo_location = team_context.helm_repository
+def init_user_repo(context: Context, team_context: TeamContext) -> str:
+    repo_location = f"s3://{context.toolkit.s3_bucket}/helm/repositories/user/{team_context.name}"
+
+    if not s3.object_exists(
+        bucket=cast(str, context.toolkit.s3_bucket), key=f"helm/repositories/users/{team_context.name}/index.yaml"
+    ):
+        _logger.debug("Initializing Team Helm Respository at %s", repo_location)
+        sh.run(f"helm s3 init {repo_location}")
+    else:
+        _logger.debug("Skipping initialization of existing Team Helm Repository at %s", repo_location)
+
+    return repo_location
+
+
+def _init_team_repo(context: Context, team_context: TeamContext) -> str:
     repo_location = f"s3://{context.toolkit.s3_bucket}/helm/repositories/teams/{team_context.name}"
     if not s3.object_exists(
         bucket=cast(str, context.toolkit.s3_bucket), key=f"helm/repositories/teams/{team_context.name}/index.yaml"
@@ -212,14 +225,20 @@ def deploy_team(context: Context, team_context: TeamContext) -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(stack_name=eks_stack_name):
-        repo_location = init_team_repo(context=context, team_context=team_context)
-        repo = team_context.name
-        add_repo(repo=repo, repo_location=repo_location)
+        team_repo_location = _init_team_repo(context=context, team_context=team_context)
+        team_repo = team_context.name
+        add_repo(repo=team_repo, repo_location=team_repo_location)
         kubectl.write_kubeconfig(context=context)
 
         team_charts_path = create_team_charts_copy(team_context=team_context, path=os.path.join(CHARTS_PATH, "team"))
-        package_team_space_pkg(context, repo, team_charts_path, team_context)
-        package_user_space_pkg(context, repo, team_charts_path, team_context)
+        package_team_space_pkg(context, team_repo, team_charts_path, team_context)
+
+        # this would be the location of all user-space packages that should be installed on a new user namespace
+        user_repo_location = init_user_repo(context=context, team_context=team_context)
+        user_repo = team_context.name + "--users"
+        add_repo(repo=user_repo, repo_location=user_repo_location)
+        user_charts_path = create_team_charts_copy(team_context=team_context, path=os.path.join(CHARTS_PATH, "user"))
+        package_user_space_pkg(context, user_repo, user_charts_path, team_context)
 
 
 def package_team_space_pkg(context: Context, repo: str, team_charts_path: str, team_context: TeamContext) -> None:
@@ -283,8 +302,14 @@ def destroy_team(context: Context, team_context: TeamContext) -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(stack_name=eks_stack_name):
-        repo_location = init_team_repo(context=context, team_context=team_context)
+        repo_location = _init_team_repo(context=context, team_context=team_context)
         repo = team_context.name
         add_repo(repo=repo, repo_location=repo_location)
         kubectl.write_kubeconfig(context=context)
         uninstall_all_charts(namespace=team_context.name)
+        if team_context.team_helm_repository:
+            # delete helm charts for team repo
+            sh.run(f"aws s3 rm --recursive {team_context.team_helm_repository}")
+        if team_context.user_helm_repository:
+            # delete heml charts for user repo
+            sh.run(f"aws s3 rm --recursive {team_context.user_helm_repository}")
