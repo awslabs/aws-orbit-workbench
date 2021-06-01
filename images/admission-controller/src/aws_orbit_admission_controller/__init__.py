@@ -15,9 +15,10 @@
 import json
 import logging
 import os
+import re
 import subprocess
 from copy import deepcopy
-from typing import Any, Dict
+from typing import Any, Dict, List, Union
 
 import time
 from kubernetes import config as k8_config
@@ -42,6 +43,29 @@ def _get_logger() -> logging.Logger:
     if debug:
         logging.getLogger("kubernetes").setLevel(logging.ERROR)
     return logger
+
+
+def dump_resource(resource: Union[Dict[str, Any], List[Dict[str, Any]]]) -> str:
+
+    def strip_resource(resource: Dict[str, Any]) -> Dict[str, Any]:
+        stripped_resource = {
+            "metadata": {
+                "name": resource.get("metadata", {}).get("name", None),
+                "namespace": resource.get("metadata", {}).get("namespace", None),
+                "labels": resource.get("metadata", {}).get("labels", None),
+                "annotations": resource.get("metadata", {}).get("annotations", None),
+            },
+        }
+        if "spec" in resource:
+            strip_resource["spec"] = resource["spec"]
+        return stripped_resource
+
+    if isinstance(resource, dict):
+        return json.dumps(strip_resource(resource))
+    elif isinstance(resource, list):
+        return json.dumps([strip_resource(r) for r in resource])
+    else:
+        raise ValueError("Invalid resource type: %s", type(resource))
 
 
 def get_admission_controller_state() -> V1ConfigMap:

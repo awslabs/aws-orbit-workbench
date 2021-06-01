@@ -17,7 +17,7 @@ from multiprocessing import Queue
 from typing import Any, Dict, Optional, cast
 
 import time
-from aws_orbit_admission_controller import load_config, logger, run_command
+from aws_orbit_admission_controller import load_config, logger, run_command, dump_resource
 from kubernetes.client import CoreV1Api, V1ConfigMap
 from kubernetes.client import exceptions as k8s_exceptions
 from kubernetes.watch import Watch
@@ -35,7 +35,7 @@ def process_removed_event(namespace: Dict[str, Any]) -> None:
     labels = namespace["metadata"].get("labels", {})
     annotations = namespace["metadata"].get("annotations", {})
 
-    logger.info("processing removed namespace %s", namespace)
+    logger.info("processing removed namespace %s", dump_resource(namespace))
     space = labels.get("orbit/space", None)
 
     if space == 'team':
@@ -78,7 +78,7 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
     annotations = namespace["metadata"].get("annotations", {})
 
     logger.info("processing namespace")
-    logger.debug("namespace: %s", namespace)
+    logger.debug("namespace: %s", dump_resource(namespace))
 
     if not should_install_team_package(namespace):
         return
@@ -169,7 +169,7 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
                 namespace = event["object"]
                 state["lastResourceVersion"] = namespace.metadata.resource_version
                 queue_event = {"type": event["type"], "raw_object": event["raw_object"]}
-                logger.debug("Queueing Namespace event for processing: %s", queue_event)
+                logger.debug("Queueing Namespace event for processing, type: %s raw_object: %s", event["type"], dump_resource(event["raw_object"]))
                 queue.put(queue_event)
         except ReadTimeoutError:
             logger.warning("There was a timeout error accessing the Kubernetes API. Retrying request.", exc_info=True)
@@ -203,7 +203,7 @@ def process_namespaces(queue: Queue, state: Dict[str, Any], replicator_id: int) 
             elif namespace_event["type"] == "DELETED":
                 process_removed_event(namespace=namespace_event["raw_object"])
             else:
-                logger.debug("Skipping Namespace event: %s", namespace_event)
+                logger.debug("Skipping Namespace event, type: %s raw_objet: %s", namespace_event["type"], dump_resource(namespace_event["raw_object"]))
         except Exception:
             logger.exception("Failed to process Namespace event: %s", namespace_event)
         finally:
