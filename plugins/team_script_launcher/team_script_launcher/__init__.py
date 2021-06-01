@@ -41,12 +41,12 @@ def deploy(
     chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATH, target_path=plugin_id)
     _logger.debug("copy chart dir")
     utils.print_dir(chart_path)
-    if 'image' not in parameters:
+    if "image" not in parameters:
         image = f"{context.images.jupyter_user.repository}:{context.images.jupyter_user.version}"
-    elif 'aws-orbit-workbench/utility-data' in parameters['image']:
+    elif "aws-orbit-workbench/utility-data" in parameters["image"]:
         image = f"{context.images.utility_data.repository}:{context.images.utility_data.version}"
     else:
-        image = parameters['image']
+        image = parameters["image"]
 
     _logger.debug(f"For plugin {plugin_id} using image: {image}")
 
@@ -74,6 +74,9 @@ def deploy(
     script_body = utils.resolve_parameters(script_body, vars)
     with open(script_file, "w") as file:
         file.write(script_body)
+
+    if not team_context.team_helm_repository:
+        raise Exception("Missing team helm repository")
 
     repo_location = team_context.team_helm_repository
     repo = team_context.name

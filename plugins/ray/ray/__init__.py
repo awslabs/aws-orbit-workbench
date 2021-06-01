@@ -55,6 +55,9 @@ def deploy(
         image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
     )
 
+    if not team_context.team_helm_repository:
+        raise Exception("Missing team helm repository")
+
     repo_location = team_context.team_helm_repository
     repo = team_context.name
     helm.add_repo(repo=repo, repo_location=repo_location)

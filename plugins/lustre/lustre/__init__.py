@@ -16,7 +16,7 @@ import logging
 import os
 from typing import TYPE_CHECKING, Any, Dict, Optional, cast
 
-from aws_orbit import sh, utils
+from aws_orbit import utils
 from aws_orbit.plugins import hooks
 from aws_orbit.remote_files import helm
 from aws_orbit.services import ec2
@@ -85,7 +85,11 @@ def deploy(
         _logger.debug("copy chart dir")
         utils.print_dir(chart_path)
 
+        if not team_context.team_helm_repository:
+            raise Exception("Missing team helm repository")
+
         repo_location = team_context.team_helm_repository
+
         repo = team_context.name
         helm.add_repo(repo=repo, repo_location=repo_location)
         chart_name, chart_version, chart_package = helm.package_chart(
@@ -101,7 +105,10 @@ def deploy(
 
     # install this package at the user helm repository such that its installed on every user space
     chart_path = helm.create_team_charts_copy(team_context=team_context, path=USER_CHARTS_PATH, target_path=plugin_id)
+    if not team_context.user_helm_repository:
+        raise Exception("Missing user helm repository")
     user_location = team_context.user_helm_repository
+
     user_repo = team_context.name + "--user"
     helm.add_repo(repo=user_repo, repo_location=user_location)
     chart_name, chart_version, chart_package = helm.package_chart(
