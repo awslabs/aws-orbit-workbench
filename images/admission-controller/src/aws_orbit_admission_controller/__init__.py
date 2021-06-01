@@ -57,8 +57,10 @@ def dump_resource(resource: Union[Dict[str, Any], List[Dict[str, Any]]]) -> str:
                 "annotations": resource.get("metadata", {}).get("annotations", None),
             },
         }
+        if "kubectl.kubernetes.io/last-applied-configuration" in stripped_resource["metadata"]["annotations"]:
+            del stripped_resource["metadata"]["annotations"]["kubectl.kubernetes.io/last-applied-configuration"]
         if "spec" in resource:
-            strip_resource["spec"] = resource["spec"]
+            stripped_resource["spec"] = resource["spec"]
         return stripped_resource
 
     if isinstance(resource, dict):
