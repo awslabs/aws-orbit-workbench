@@ -1,6 +1,6 @@
 apiVersion: v2
-name: fsx_filesystem
-description: Helm Chart for the aws-orbit-workbench fsx_filesystem plugin
+name: fsx-filesystem
+description: Helm Chart for the aws-orbit-workbench fsx-filesystem plugin
 
 # A chart can be either an 'application' or a 'library' chart.
 #

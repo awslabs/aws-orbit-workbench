@@ -20,6 +20,7 @@
 <body>
 <noscript>You need to enable JavaScript to run this app.</noscript>
 <script>
+    var time_waiting = 0
     jQuery(document).ready(function ($) {
         var isready = false;
         var poll_timer;
@@ -47,6 +48,18 @@
                     } else {
                         $("#wait-first-time").show();
                         $("#groups").hide();
+                        if (time_waiting > 120000) {
+                            alert("Timeout while waiting for namespace creation. Something went wrong!! " +
+                                  "Consult the Orbit namespace watcher logs.")
+                        } else {
+                            poll_timer = setTimeout(function () {
+                                set_timer()
+                            }, 10000);
+                            time_waiting = time_waiting + 10000
+                        }
+
+
+
                     }
                 },
                 dataType: "json",
@@ -60,7 +73,6 @@
                 (team) => [team.replace(env_name + '-', '')]
             )
             groups.appendChild(createTeamTable(teamList))
-            $("#groups").show();
             poll_timer = setTimeout(function () {
                 set_timer()
             }, 10000);

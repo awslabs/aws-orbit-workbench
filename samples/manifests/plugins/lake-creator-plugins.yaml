@@ -27,9 +27,6 @@
     Path: ../plugins/custom_cfn/
     Parameters:
         CfnTemplatePath: "./bundle/plugins/demo-lake-creator-cfn-template.yaml"
--   PluginId: fast_fs_lustre
-    Module: lustre
-    Path: ../plugins/lustre/
 -   PluginId: overprovisioning1
     Module: overprovisioning
     Path: ../plugins/overprovisioning/

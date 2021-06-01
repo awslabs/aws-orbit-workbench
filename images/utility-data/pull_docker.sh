@@ -15,15 +15,17 @@
 #   limitations under the License.
 #
 
+#!/usr/bin/env bash
 set -ex
 
-src_samples_data='/opt/orbit/samples/'
-target_samples_data='/efs'
+LOCAL_NAME=aws-orbit-utility-data
+AWS_REPO_NAME=aws-orbit-utility-data
 
-echo "Staging samples data on filsystem"
-#if ! [ -d $target_samples_data ]; then
-#  mkdir -p $target_samples_data
-#fi
-rm -rf /efs/samples
-cp -R -v $src_samples_data $target_samples_data
+REGION=$(aws configure get region)
+ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+ECR_ADDRESS="${ACCOUNT_ID}".dkr.ecr."${REGION}".amazonaws.com
+REPO_ADDRESS="${ECR_ADDRESS}"/"${AWS_REPO_NAME}"
 
+aws ecr get-login-password --region "${REGION}" | docker login --username AWS --password-stdin "${ECR_ADDRESS}"
+docker pull "${REPO_ADDRESS}"
+docker tag "${REPO_ADDRESS}" "${LOCAL_NAME}"
