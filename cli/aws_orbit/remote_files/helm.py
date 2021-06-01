@@ -74,6 +74,7 @@ def init_env_repo(context: Context) -> str:
 
     return cast(str, repo_location)
 
+
 def init_user_repo(context: Context, team_context: TeamContext) -> str:
     repo_location = f"s3://{context.toolkit.s3_bucket}/helm/repositories/user/{team_context.name}"
 
@@ -86,6 +87,7 @@ def init_user_repo(context: Context, team_context: TeamContext) -> str:
         _logger.debug("Skipping initialization of existing Team Helm Repository at %s", repo_location)
 
     return repo_location
+
 
 def _init_team_repo(context: Context, team_context: TeamContext) -> str:
     repo_location = f"s3://{context.toolkit.s3_bucket}/helm/repositories/teams/{team_context.name}"
@@ -233,7 +235,7 @@ def deploy_team(context: Context, team_context: TeamContext) -> None:
 
         # this would be the location of all user-space packages that should be installed on a new user namespace
         user_repo_location = init_user_repo(context=context, team_context=team_context)
-        user_repo = team_context.name + '--users'
+        user_repo = team_context.name + "--users"
         add_repo(repo=user_repo, repo_location=user_repo_location)
         user_charts_path = create_team_charts_copy(team_context=team_context, path=os.path.join(CHARTS_PATH, "user"))
         package_user_space_pkg(context, user_repo, user_charts_path, team_context)

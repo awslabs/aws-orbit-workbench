@@ -1,6 +1,6 @@
 apiVersion: v2
-name: fsx_storageclass
-description: Helm Chart for the aws-orbit-workbench fsx_storageclass plugin
+name: fsx-storageclass
+description: Helm Chart for the aws-orbit-workbench fsx-storageclass plugin
 
 # A chart can be either an 'application' or a 'library' chart.
 #

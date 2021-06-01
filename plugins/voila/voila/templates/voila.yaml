@@ -77,6 +77,7 @@ spec:
         args:
           - -c
           - >-
+             mkdir -p /home/jovyan/shared/voila &&
              cd /home/jovyan/shared/voila &&
              voila --no-browser --port 4100 --base_url=/services/voila-server/ --debug
         volumeMounts:

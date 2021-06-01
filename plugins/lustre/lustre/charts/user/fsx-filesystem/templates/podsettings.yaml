@@ -1,0 +1,24 @@
+# This is the lowest commond properties which every orbit-based container requires.
+apiVersion: orbit.aws/v1
+kind: PodSetting
+metadata:
+  name: {{.Values.fs_name}}
+  namespace: {{ .Values.team }}
+  labels:
+    orbit/space: team
+    {{- include "team-space.labels" . | nindent 4 }}
+spec:
+  desc:  Mount FsX Lustre folder {{.Values.folder}}
+  containerSelector:
+    jsonpath: "metadata.labels.app"
+  podSelector:
+    matchExpressions:
+      - key: notebook-name
+        operator: Exists
+  volumeMounts:
+    - mountPath: /home/jovyan/{{.Values.folder}}
+      name: efs-volume-shared
+  volumes:
+    - name: user-fsx
+      persistentVolumeClaim:
+        claimName: {{.Values.fs_name}}

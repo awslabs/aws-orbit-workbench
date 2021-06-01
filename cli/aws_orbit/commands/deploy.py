@@ -34,8 +34,9 @@ from aws_orbit.models.manifest import (
     NetworkingManifest,
 )
 from aws_orbit.services import cfn, codebuild
-from aws_orbit.services import ssm
 from aws_orbit.services import cognito as orbit_cognito
+from aws_orbit.services import ssm
+
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
@@ -345,14 +346,12 @@ def deploy_teams(
         msg_ctx.progress(98)
 
         if cfn.does_stack_exist(stack_name=context.env_stack_name):
-            context: "Context" = ContextSerDe.load_context_from_ssm(env_name=manifest.name, type=Context)
+            context = ContextSerDe.load_context_from_ssm(env_name=manifest.name, type=Context)
             msg_ctx.info(f"Context updated: {filename}")
         msg_ctx.progress(99)
 
-        cognito_users_url = orbit_cognito.get_users_url(
-            user_pool_id=context.user_pool_id, region=context.region
-        )
-        if cognito_users_url:
+        if context.user_pool_id:
+            cognito_users_url = orbit_cognito.get_users_url(user_pool_id=context.user_pool_id, region=context.region)
             msg_ctx.tip(f"Add users: {stylize(cognito_users_url, underline=True)}")
 
         if context.landing_page_url:

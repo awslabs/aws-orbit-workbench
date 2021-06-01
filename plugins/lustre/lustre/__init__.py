@@ -25,8 +25,9 @@ from aws_orbit.services.ec2 import IpPermission, UserIdGroupPair
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
 _logger: logging.Logger = logging.getLogger("aws_orbit")
-TEAM_CHARTS_PATH = os.path.join(os.path.dirname(__file__), "charts","team")
-USER_CHARTS_PATH = os.path.join(os.path.dirname(__file__), "charts","user")
+TEAM_CHARTS_PATH = os.path.join(os.path.dirname(__file__), "charts", "team")
+USER_CHARTS_PATH = os.path.join(os.path.dirname(__file__), "charts", "user")
+
 
 @hooks.deploy
 def deploy(
@@ -40,16 +41,6 @@ def deploy(
     _logger.debug("plugin_id: %s", plugin_id)
     release_name = f"{team_context.name}-{plugin_id}"
     _logger.info("Checking Chart %s is installed...", release_name)
-    if helm.is_exists_chart_release(release_name, team_context.name):
-        _logger.info("Chart %s already installed, skipping installation", release_name)
-        return
-    try:
-        sh.run(f"kubectl delete sc fsx-lustre-{team_context.name}-fast-fs-lustre")
-    except Exception as e:
-        _logger.error(
-            f"Deleting prior sc 'fsx-lustre-{team_context.name}-fast-fs-lustre' failed with:%s",
-            str(e),
-        )
 
     vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
@@ -62,52 +53,59 @@ def deploy(
         subnet=context.networking.data.nodes_subnets[0],
         s3importpath=f"s3://{team_context.scratch_bucket}/{team_context.name}/lustre",
         s3exportpath=f"s3://{team_context.scratch_bucket}/{team_context.name}/lustre",
-        storage = parameters['storage'] if 'storage' in parameters else '1200Gi'
+        storage=parameters["storage"] if "storage" in parameters else "1200Gi",
+        folder=parameters["folder"] if "folder" in parameters else "data",
     )
 
-    ec2.authorize_security_group_ingress(
-        group_id=cast(str, team_context.team_security_group_id),
-        ip_permissions=[
-            IpPermission(
-                from_port=988,
-                to_port=988,
-                ip_protocol="tcp",
-                user_id_group_pairs=[
-                    UserIdGroupPair(
-                        description="All from Cluster",
-                        group_id=cast(str, context.cluster_sg_id),
-                    )
-                ],
-            )
-        ],
-    )
+    if not helm.is_exists_chart_release(release_name, team_context.name):
+        _logger.info("Chart %s already installed, skipping installation", release_name)
 
-    chart_path = helm.create_team_charts_copy(team_context=team_context, path=TEAM_CHARTS_PATH, target_path=plugin_id)
-    _logger.debug("package dir")
-    utils.print_dir(TEAM_CHARTS_PATH)
-    _logger.debug("copy chart dir")
-    utils.print_dir(chart_path)
+        ec2.authorize_security_group_ingress(
+            group_id=cast(str, team_context.team_security_group_id),
+            ip_permissions=[
+                IpPermission(
+                    from_port=988,
+                    to_port=988,
+                    ip_protocol="tcp",
+                    user_id_group_pairs=[
+                        UserIdGroupPair(
+                            description="All from Cluster",
+                            group_id=cast(str, context.cluster_sg_id),
+                        )
+                    ],
+                )
+            ],
+        )
 
-    repo_location = team_context.team_helm_repository
-    repo = team_context.name
-    helm.add_repo(repo=repo, repo_location=repo_location)
-    chart_name, chart_version, chart_package = helm.package_chart(
-        repo=repo, chart_path=os.path.join(chart_path, "fsx_storageclass"), values=vars
-    )
-    helm.install_chart_no_upgrade(
-        repo=repo,
-        namespace=team_context.name,
-        name=release_name,
-        chart_name=chart_name,
-        chart_version=chart_version,
-    )
+        chart_path = helm.create_team_charts_copy(
+            team_context=team_context, path=TEAM_CHARTS_PATH, target_path=plugin_id
+        )
+        _logger.debug("package dir")
+        utils.print_dir(TEAM_CHARTS_PATH)
+        _logger.debug("copy chart dir")
+        utils.print_dir(chart_path)
+
+        repo_location = team_context.team_helm_repository
+        repo = team_context.name
+        helm.add_repo(repo=repo, repo_location=repo_location)
+        chart_name, chart_version, chart_package = helm.package_chart(
+            repo=repo, chart_path=os.path.join(chart_path, "fsx-storageclass"), values=vars
+        )
+        helm.install_chart_no_upgrade(
+            repo=repo,
+            namespace=team_context.name,
+            name=release_name,
+            chart_name=chart_name,
+            chart_version=chart_version,
+        )
 
     # install this package at the user helm repository such that its installed on every user space
     chart_path = helm.create_team_charts_copy(team_context=team_context, path=USER_CHARTS_PATH, target_path=plugin_id)
     user_location = team_context.user_helm_repository
     user_repo = team_context.name + "--user"
+    helm.add_repo(repo=user_repo, repo_location=user_location)
     chart_name, chart_version, chart_package = helm.package_chart(
-        repo=user_repo, chart_path=os.path.join(chart_path, "fsx_filesystem"), values=vars
+        repo=user_repo, chart_path=os.path.join(chart_path, "fsx-filesystem"), values=vars
     )
     _logger.info(f"Lustre Helm Chart {chart_name}@{chart_version} installed for {team_context.name} at {chart_package}")
 
@@ -126,5 +124,7 @@ def destroy(
         team_context.name,
     )
     release_name = f"{team_context.name}-{plugin_id}"
-
-    helm.uninstall_chart(release_name, namespace=team_context.name)
+    try:
+        helm.uninstall_chart(release_name, namespace=team_context.name)
+    except Exception as e:
+        _logger.error(str(e))

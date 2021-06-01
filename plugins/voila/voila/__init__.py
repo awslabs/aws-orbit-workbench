@@ -53,16 +53,17 @@ def deploy(
     )
 
     repo_location = team_context.team_helm_repository
-    repo = team_context.name
-    helm.add_repo(repo=repo, repo_location=repo_location)
-    chart_name, chart_version, chart_package = helm.package_chart(repo=repo, chart_path=chart_path, values=vars)
-    helm.install_chart(
-        repo=repo,
-        namespace=team_context.name,
-        name=f"{team_context.name}-{plugin_id}",
-        chart_name=chart_name,
-        chart_version=chart_version,
-    )
+    if repo_location:
+        repo = team_context.name
+        helm.add_repo(repo=repo, repo_location=repo_location)
+        chart_name, chart_version, chart_package = helm.package_chart(repo=repo, chart_path=chart_path, values=vars)
+        helm.install_chart(
+            repo=repo,
+            namespace=team_context.name,
+            name=f"{team_context.name}-{plugin_id}",
+            chart_name=chart_name,
+            chart_version=chart_version,
+        )
 
 
 @hooks.destroy
