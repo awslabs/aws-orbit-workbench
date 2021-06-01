@@ -17,14 +17,19 @@ import base64
 import json
 import logging
 import os
-from typing import Any, Dict, cast, List
+from typing import Any, Dict, cast, List, Union, Optional
 from urllib.parse import urlparse, urlencode
 
 import jwt
 import requests
+import time
 from aws_orbit_admission_controller import get_client
 from flask import Flask, render_template, request, jsonify
+from jose import jwk, jwt
+from jose.utils import base64url_decode
 from kubernetes import dynamic
+
+_cognito_keys: Optional[List[Dict[str, str]]] = None
 
 
 def is_ready(logger: logging.Logger, app: Flask) -> Any:
@@ -41,9 +46,22 @@ def login(logger: logging.Logger, app: Flask) -> Any:
     email, username = _get_user_info_from_jwt(logger)
     logger.debug("username: %s, email: %s", username, email)
 
+    groups = _get_user_groups_from_jwt(logger)
+
     ready = _is_profile_ready_for_user(logger, username, email)
     logger.debug("user space is READY? %s", ready)
 
+    client_id, cognito_domain, hostname, logout_uri = get_logout_url(logger)
+    env_name = os.environ['ENV_NAME']
+    return render_template('index.html', title='login',
+                           username=username, hostname=hostname,
+                           logout_uri=logout_uri, client_id=client_id,
+                           cognito_domain=cognito_domain,
+                           teams=groups,
+                           env_name=env_name)
+
+
+def get_logout_url(logger):
     base_url = request.base_url
     hostname = urlparse(base_url).hostname
     client_id = os.environ['COGNITO_APP_CLIENT_ID']
@@ -53,16 +71,8 @@ def login(logger: logging.Logger, app: Flask) -> Any:
     params = {'logout_uri': logout_uri, 'client_id': client_id}
     param_str = urlencode(params)
     logout_redirect_url = f"https://{os.environ['COGNITO_DOMAIN']}/logout?{param_str}"
-
     logger.debug("logout url: %s", logout_redirect_url)
-    return render_template('index.html', title='login',
-                           username=username, hostname=hostname,
-                           logout_uri=logout_uri, client_id=client_id,
-                           cognito_domain=cognito_domain)
-
-
-def _get_logout_redirect_url(logger: logging.Logger):
-    return logout_redirect_url
+    return client_id, cognito_domain, hostname, logout_uri
 
 
 def logout(logger: logging.Logger, app: Flask) -> Any:
@@ -94,6 +104,7 @@ def _get_kf_profiles(client: dynamic.DynamicClient) -> List[Dict[str, Any]]:
 def _get_user_info_from_jwt(logger):
     logger.debug("headers: %s", json.dumps(dict(request.headers)))
     encoded_jwt = request.headers['x-amzn-oidc-data']
+    logger.debug("encoded_jwt 'x-amzn-oidc-data':\n %s", encoded_jwt)
     jwt_headers = encoded_jwt.split('.')[0]
     decoded_jwt_headers = base64.b64decode(jwt_headers)
     decoded_jwt_headers = decoded_jwt_headers.decode("utf-8")
@@ -110,3 +121,56 @@ def _get_user_info_from_jwt(logger):
     username = payload['username']
     email = payload['email']
     return email, username
+
+
+def _get_user_groups_from_jwt(logger):
+    logger.debug("headers: %s", json.dumps(dict(request.headers)))
+    encoded_jwt = request.headers['X-Amzn-Oidc-Accesstoken']
+    logger.debug("encoded_jwt 'X-Amzn-Oidc-Accesstoken':\n %s", encoded_jwt)
+    claims = get_claims(logger, encoded_jwt)
+    groups = claims['cognito:groups'] if 'cognito:groups' in claims else []
+    return groups
+
+
+def _get_keys(logger) -> List[Dict[str, str]]:
+    global _cognito_keys
+    region = os.environ['AWS_REGION']
+    user_pool_id = os.environ['COGNITO_USERPOOL_ID']
+    if _cognito_keys is None:
+        logger.debug("Fetching keys...")
+        url: str = f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}/.well-known/jwks.json"
+        _cognito_keys = cast(List[Dict[str, str]], requests.get(url).json()["keys"])
+    return _cognito_keys
+
+
+def get_claims(logger, token: str) -> Dict[str, Union[str, int]]:
+    client_id = os.environ['COGNITO_APP_CLIENT_ID']
+    # get the kid from the headers prior to verification
+    headers: Dict[str, str] = cast(Dict[str, str], jwt.get_unverified_headers(token=token))
+    kid: str = headers["kid"]
+    # search for the kid in the downloaded public keys
+    for key in _get_keys(logger):
+        if kid == key["kid"]:
+            # construct the public key
+            public_key = jwk.construct(key_data=key)
+            break
+    else:
+        raise ValueError("Public key not found in JWK.")
+    # get the last two sections of the token,
+    # message and signature (encoded in base64)
+    message, encoded_signature = token.rsplit(".", 1)
+    # decode the signature
+    decoded_signature: bytes = base64url_decode(encoded_signature.encode("utf-8"))
+    # verify the signature
+    if public_key.verify(msg=message.encode("utf8"), sig=decoded_signature) is False:
+        raise RuntimeError("Signature verification failed.")
+    logger.debug("Signature validaded.")
+    # since we passed the verification, we can now safely use the unverified claims
+    claims: Dict[str, Union[str, int]] = cast(Dict[str, Union[str, int]], jwt.get_unverified_claims(token))
+    # additionally we can verify the token expiration
+    if time.time() > int(claims["exp"]):
+        raise ValueError("Token expired.")
+    logger.debug("Token not expired.")
+    logger.debug("claims: %s", claims)
+
+    return claims

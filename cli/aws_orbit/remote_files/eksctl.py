@@ -469,6 +469,8 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
             )
             subnets_ids = [s.subnet_id for s in subnets]
 
+            sh.run(f"aws eks wait cluster-active --name orbit-{context.name} --debug")
+
             eks.create_fargate_profile(
                 profile_name=f"orbit-{context.name}-{team_context.name}",
                 cluster_name=f"orbit-{context.name}",

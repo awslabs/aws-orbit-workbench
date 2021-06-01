@@ -21,6 +21,7 @@ import aws_orbit
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
 from aws_orbit.exceptions import FailedShellCommand
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
+from aws_orbit.remote_files import kubeflow
 from aws_orbit.remote_files.utils import get_k8s_context
 from aws_orbit.services import cfn, elb
 from aws_orbit.utils import resolve_parameters
@@ -295,13 +296,6 @@ def _update_elbs(context: "Context") -> None:
 def fetch_kubectl_data(context: "Context", k8s_context: str) -> None:
     _logger.debug("Fetching Kubectl data...")
 
-    # if include_teams:
-    #     for team in context.teams:
-    #         _logger.debug("Fetching team %s URL parameter", team.name)
-    #         url = k8s.get_service_hostname(name="jupyterhub-public", k8s_context=k8s_context, namespace=team.name)
-    #         team.jupyter_url = url
-
-    # landing_page_url: str = k8s.get_service_hostname(name="landing-page", k8s_context=k8s_context, namespace="env")
     ingress_url: str = k8s.get_ingress_dns(name="istio-ingress", k8s_context=k8s_context, namespace="istio-system")
 
     context.landing_page_url = f"https://{ingress_url}"
@@ -401,6 +395,8 @@ def deploy_env(context: "Context") -> None:
         output_path = _generate_kube_system_manifest(context=context)
         sh.run(f"kubectl delete jobs -l app=cert-manager -n orbit-system --context {k8s_context} --wait")
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
+
+        kubeflow.deploy_kubeflow(context=context)
 
         # orbit-system
         output_path = _generate_orbit_system_manifest(context=context)

@@ -7,20 +7,12 @@ UserPoolId: !SSM ${/orbit/dev-env/demo::UserPoolId}
 SharedEfsFsId: !SSM ${/orbit/dev-env/demo::EFSFilesystemID}
 SharedEfsSgId: !SSM ${/orbit/dev-env/demo::SharedEFSSecurityGroup}
 Images:
-    JupyterHub:
-        Repository: aws-orbit-jupyter-hub
-        Source: dockerhub
-        Version: latest
     JupyterUser:
         Repository: aws-orbit-jupyter-user
         Source: dockerhub
         Version: latest
     JupyterUserSpark:
         Repository: aws-orbit-jupyter-user-spark
-        Source: dockerhub
-        Version: latest
-    PandingPage:
-        Repository: aws-orbit-landing-page
         Source: dockerhub
         Version: latest
 Networking:

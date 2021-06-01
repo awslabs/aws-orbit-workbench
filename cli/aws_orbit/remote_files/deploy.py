@@ -22,7 +22,7 @@ from aws_orbit import bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, TeamContext
 from aws_orbit.models.manifest import ImageManifest, ImagesManifest, Manifest, ManifestSerDe
-from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, kubeflow, teams, utils
+from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, teams, utils
 from aws_orbit.services import codebuild, ecr
 from aws_orbit.utils import boto3_client
 
@@ -169,10 +169,6 @@ def deploy_images_remotely(manifest: Manifest, context: "Context", skip_images: 
     # Secondary images we can optionally skip
     if not skip_images:
         # When not skipping images, include these secondaries if their source isn't the default ecr-public
-        if manifest.images.landing_page.get_source(context.account_id, context.region) != "ecr-public":
-            images.append(("landing-page", "landing-page", "build.sh", []))
-        if manifest.images.jupyter_hub.get_source(context.account_id, context.region) != "ecr-public":
-            images.append(("jupyter-hub", "jupyter-hub", None, []))
         if manifest.images.jupyter_user.get_source(context.account_id, context.region) != "ecr-public":
             images.append(("jupyter-user", "jupyter-user", "build.sh", []))
 
@@ -232,8 +228,6 @@ def deploy_env(args: Tuple[str, ...]) -> None:
     _logger.debug("EKS Environment Stack deployed")
     kubectl.deploy_env(context=context)
     _logger.debug("Kubernetes Environment components deployed")
-
-    kubeflow.deploy_kubeflow(context=context)
 
     helm.deploy_env(context=context)
     _logger.debug("Helm Charts installed")

@@ -24,6 +24,7 @@
     display: block;
     margin-left: auto;
     margin-right: auto;
+    margin-top: auto;
     width: 100%;
     height: 100%;
     text-align: center;
@@ -31,11 +32,12 @@
 }
 
 .orbit-logo {
-    margin-left: auto;
-    margin-right: auto;
+    /*margin-left: 400px;*/
+    /*margin-right: 200px;*/
+    margin: auto;
     display: block;
     width: 20%;
-    height: 30%;
+    height: 20%;
 }
 
 .welcome {
@@ -49,6 +51,57 @@
     align-content: center;
     align-items: center;
     align-self: center;
+}
+
+.orbit-content {
+    margin: auto;
+}
+
+.groups {
+    /*border: 3px solid green;*/
+    padding: 30px;
+    width: 30%;
+    /*margin: auto;*/
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    align-content: center;
+    align-items: center;
+    align-self: center;
+
+}
+
+td {
+    text-align: left;
+    padding: 10px;
+
+}
+
+tr {
+    text-align: left;
+    padding: 10px;
+    border-bottom: 1px solid;
+}
+
+.team_table {
+    border-collapse: collapse;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: large;
+    color: black;
+    table-layout: fixed;
+    border: 1px solid;
+}
+
+.nogroups {
+    /*text-align: center;*/
+    border: 3px solid red;
+    /*align-content: center;*/
+    /*align-items: center;*/
+    /*align-self: center;*/
+    padding: 10px;
+    width: 30%;
+    margin: auto;
 }
 
 .my-dot-bricks {
