@@ -22,6 +22,7 @@ team_role_arn: ${team_role_arn}
 jupyter_team_image: ${jupyter_team_image}
 account_id: ${account_id}
 s3_toolkit_bucket: ${s3_toolkit_bucket}
+utility_data_image: ${utility_data_image}
 
 # use to decide if we are in release or dev mode
 DEVELOPMENT: ${DEVELOPMENT}

@@ -34,7 +34,7 @@ spec:
       - name: run-efs-init
         securityContext:
           runAsUser: 0
-        image: {{ .Values.jupyter_team_image }}
+        image: {{ .Values.utility_data_image }}
         command: ["/bin/bash"]
         resources:
           limits:
@@ -46,6 +46,7 @@ spec:
         args:
           - -c
           - >-
+            cp -R -v /opt/orbit/data/vscode/drivers/ /efs &&
             sudo chmod 777 /efs &&
             ls -ld /efs
         volumeMounts:
