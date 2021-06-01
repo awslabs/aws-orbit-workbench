@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <title>Orbit Workbench</title>
+    <link href="/orbit/static/App.css" rel="stylesheet">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/three-dots/0.2.0/three-dots.min.css" rel="stylesheet"
+          type="text/css">
+
+</head>
+<body>
+<script>
+    jQuery(document).ready(function ($) {
+        var isready = false;
+        var poll_timer;
+        const redirect_url = '{{ logout_redirect_url }}';
+        console.log('go to ' + redirect_url);
+
+        function set_timer() {
+            $.ajax({
+                url: "/orbit/isready",
+                type: "GET",
+                success: function (data) {
+                    console.log("polling");
+                    console.log(data);
+                    const waitDiv = document.getElementById("wait-first-time");
+                    const applications = document.getElementById("applications");
+                    if (data.isReady) {
+                        console.log('ready!!!');
+                        $("#wait-first-time").hide();
+                        $("#applications").show();
+                        clearTimeout(poll_timer)
+                    } else {
+                        $("#wait-first-time").show();
+                        $("#applications").hide();
+                    }
+                },
+                dataType: "json",
+                complete: poll_timer,
+                timeout: 2000
+            })
+        }
+
+        poll_timer = setTimeout(function () {
+            set_timer()
+        }, 10000);
+        (set_timer());
+    });
+
+    function logout() {
+        console.log('logout!!!');
+        const hostname = '{{hostname}}';
+        const logout_uri = '{{logout_uri}}';
+        const client_id = '{{client_id}}';
+        const cognito_domain = '{{cognito_domain}}';
+        const url = 'https://' + cognito_domain + '/logout?' + 'client_id=' + client_id + '&logout_uri=' + logout_uri
+        console.log('redirect url: ' + url);
+        location.href = url
+    }
+</script>
+<div data-role="page">
+    <div>
+        <div class="logout-toolbar" id="logout-toolbar">
+            <a href="javascript: logout()"> Logout </a>
+        </div>
+    </div>
+    <div class="app-container" id="app-container">
+        <object class="orbit-logo" data="/orbit/static/images/orbit.svg" height="40%" id="orbit-logo"
+                type="image/svg+xml"
+                width="20%"></object>
+        <div id="orbit-content">
+            &nbsp;&nbsp;
+            <h2>Welcome {{ username }}!</h2>
+            &nbsp;&nbsp;
+        </div>
+        <div class="my-dot-bricks" id="wait-first-time" style="display:none;">
+            <h4>Please wait a moment until your user space is created.&nbsp;</h4>
+            <div class="stage" id="stage">
+                <div class="dot-bricks" id="dots"/>
+            </div>
+        </div>
+    </div>
+    <div class="applications" id="applications">
+        <p>
+        <div id="app-header">
+            <h4>Select your application:</h4>
+        </div>
+        <a href="/" id="kubeflow-icon" rel="noopener noreferrer" target="_blank">
+            <object data="/orbit/static/images/Kubeflow-Logo-RGB.jpg" height="100" id="kubeflow3" type="image/svg+xml"
+                    width="100"></object>
+        </a>
+        </p>
+    </div>
+</div>
+</body>
+</html>
+

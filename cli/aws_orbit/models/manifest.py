@@ -138,6 +138,11 @@ class K8sUtilitiesImageManifest(ImageManifest):
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
+class UtilityDataImageManifest(ImageManifest):
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data"
+
+
+@dataclass(base_schema=BaseSchema, frozen=True)
 class FoundationImagesManifest:
     Schema: ClassVar[Type[Schema]] = Schema
     code_build: CodeBuildImageManifest = CodeBuildImageManifest()
@@ -159,6 +164,7 @@ class ImagesManifest:
     admission_controller: ImageManifest = AdmissionControllerImageManifest()
     image_replicator: ImageManifest = ImageReplicatorImageManifest()
     k8s_utilities: ImageManifest = K8sUtilitiesImageManifest()
+    utility_data: ImageManifest = UtilityDataImageManifest()
     names: List[str] = field(
         metadata=dict(load_only=True),
         default_factory=lambda: [
@@ -169,6 +175,7 @@ class ImagesManifest:
             "admission_controller",
             "image_replicator",
             "k8s_utilities",
+            "utility_data",
         ],
     )
 

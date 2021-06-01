@@ -15,13 +15,16 @@
 import json
 import logging
 import os
+import re
 import subprocess
-import time
 from copy import deepcopy
-from typing import Any, Dict, cast
+from typing import Any, Dict, List, Union, cast
 
+import time
 from kubernetes import config as k8_config
+from kubernetes import dynamic
 from kubernetes.client import CoreV1Api, V1ConfigMap
+from kubernetes.client import api_client
 from kubernetes.client.exceptions import ApiException
 
 ORBIT_API_VERSION = os.environ.get("ORBIT_API_VERSION", "v1")
@@ -41,6 +44,29 @@ def _get_logger() -> logging.Logger:
     if debug:
         logging.getLogger("kubernetes").setLevel(logging.ERROR)
     return logger
+
+
+def dump_resource(resource: Union[Dict[str, Any], List[Dict[str, Any]]]) -> str:
+
+    def strip_resource(resource: Dict[str, Any]) -> Dict[str, Any]:
+        stripped_resource = {
+            "metadata": {
+                "name": resource.get("metadata", {}).get("name", None),
+                "namespace": resource.get("metadata", {}).get("namespace", None),
+                "labels": resource.get("metadata", {}).get("labels", None),
+                "annotations": resource.get("metadata", {}).get("annotations", None),
+            },
+        }
+        if "spec" in resource:
+            strip_resource["spec"] = resource["spec"]
+        return stripped_resource
+
+    if isinstance(resource, dict):
+        return json.dumps(strip_resource(resource))
+    elif isinstance(resource, list):
+        return json.dumps([strip_resource(r) for r in resource])
+    else:
+        raise ValueError("Invalid resource type: %s", type(resource))
 
 
 def get_admission_controller_state() -> V1ConfigMap:
@@ -132,6 +158,11 @@ def run_command(cmd: str) -> str:
         logger.debug("Command failed with exit code {}, stderr: {}".format(exc.returncode, exc.output))
         raise Exception(exc.output)
     return output
+
+
+def get_client() -> dynamic.DynamicClient:
+    load_config()
+    return dynamic.DynamicClient(client=api_client.ApiClient())
 
 
 logger = _get_logger()
