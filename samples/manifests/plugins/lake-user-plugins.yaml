@@ -53,6 +53,7 @@
     Path: ../plugins/lustre/
     Parameters:
         storage: 1200Gi
+        folder: data
 -   PluginId: ray
     Module: ray
     Path: ../plugins/ray/
