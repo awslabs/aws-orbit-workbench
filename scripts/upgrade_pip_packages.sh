@@ -9,7 +9,7 @@ ROOT_PATH=`pwd`
 # Paths where pip-compile generates requirements files #
 paths=(
     "${ROOT_PATH}/cli"
-    "${ROOT_PATH}/images/jupyter-user/extensions/jupyterlab_orbit"
+    "${ROOT_PATH}/jupyterlab_orbit"
     "${ROOT_PATH}/sdk"
 )
 

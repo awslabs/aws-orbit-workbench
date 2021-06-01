@@ -16,7 +16,7 @@ jobs:
         python-version: [3.7]
     defaults:
       run:
-        working-directory: images/jupyter-user/extensions/jupyterlab_orbit
+        working-directory: jupyterlab_orbit
     steps:
     - name: Checkout
       uses: actions/checkout@v2

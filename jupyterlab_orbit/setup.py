@@ -52,22 +52,25 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name=name,
     version=version,
+
+    author="AWS Professional Services",
+    author_email="aws-proserve-opensource@amazon.com",
     url="https://github.com/awslabs/aws-orbit-workbench",
-    author="",
-    description="A JupyterLab extension.",
+    project_urls={"Org Site": "https://aws.amazon.com/professional-services/"},
+    description="AWS Orbit Workbench JupyterLab extension.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     cmdclass=cmdclass,
     packages=setuptools.find_packages(),
-    install_requires=[
-        "jupyterlab>=3.0.0rc13,==3.*",
-    ],
     zip_safe=False,
     include_package_data=True,
     python_requires=">=3.7",
     license="Apache License 2.0",
     platforms="Linux, Mac OS X, Windows",
     keywords=["Jupyter", "JupyterLab", "JupyterLab3"],
+    install_requires=[
+        "jupyterlab>=3.0.0rc13,==3.*",
+    ],
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
