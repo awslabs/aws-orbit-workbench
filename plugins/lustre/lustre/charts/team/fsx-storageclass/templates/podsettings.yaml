@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Values.team }}
   labels:
     orbit/space: team
-    {{- include "fsx-filesystem.labels" . | nindent 4 }}
+    {{- include "fsx-storageclass.labels" . | nindent 4 }}
 spec:
   desc:  Mount FsX Lustre folder {{.Values.folder}}
   containerSelector:
@@ -17,7 +17,7 @@ spec:
         operator: Exists
   volumeMounts:
     - mountPath: /home/jovyan/{{.Values.folder}}
-      name: efs-volume-shared
+      name: user-fsx
   volumes:
     - name: user-fsx
       persistentVolumeClaim:

@@ -12,3 +12,6 @@ s3importpath: ${s3importpath}
 s3exportpath: ${s3exportpath}
 deploymentType: ${deploymentType}
 storageClassName: fsx-lustre-${team}-${plugin_id}
+storage: ${storage}
+folder: ${folder}
+fs_name: lustre-${team}-fs-${plugin_id}
