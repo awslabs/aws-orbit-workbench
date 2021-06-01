@@ -15,6 +15,7 @@
 import concurrent.futures
 import logging
 import pprint
+import re
 import time
 from typing import Any, Dict, List, Optional, cast
 
@@ -168,3 +169,41 @@ def delete_cert_from_iam(context: "FoundationContext") -> None:
             pass
         else:
             raise ex
+
+
+def delete_kubeflow_roles(env_stack_name: str, region: str) -> None:
+    iam_client = boto3_client("iam")
+
+    roles = iam_client.list_roles()
+
+    regex_comp = re.compile(rf"kf-.*-{region}-{env_stack_name}")
+
+    for role in roles.get("Roles"):
+        role_name = role.get("RoleName")
+
+        if regex_comp.fullmatch(role_name):
+            _logger.info(f"Removing role {role_name} - checking for attached policies")
+            role_policies = iam_client.list_role_policies(RoleName=role_name).get("PolicyNames")
+
+            for policy in role_policies:
+                try:
+                    iam_client.delete_role_policy(RoleName=role_name, PolicyName=policy)
+                    _logger.info(f"Removed policy {policy}")
+                except iam_client.exceptions.NoSuchEntityException:
+                    _logger.error("No such policy")
+                except iam_client.exceptions.UnmodifiableEntityException:
+                    _logger.error("Policy is unmodifiable")
+                except iam_client.exceptions.ServiceFailureException as err:
+                    _logger.error(f"Service error: {err}")
+
+            try:
+                iam_client.delete_role(RoleName=role_name)
+                _logger.info(f"Removed role {role_name}")
+            except iam_client.exceptions.NoSuchEntityException:
+                _logger.error("No such role")
+            except iam_client.exceptions.UnmodifiableEntityException:
+                _logger.error("Role is unmodifiable")
+            except iam_client.exceptions.ConcurrentModificationException:
+                _logger.error("Error. There were concurrent operations in modifying this role")
+            except iam_client.exceptions.ServiceFailureException as err:
+                _logger.error(f"Service error: {err}")
