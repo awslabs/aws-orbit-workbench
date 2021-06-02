@@ -16,14 +16,13 @@ import json
 import logging
 import os
 import subprocess
+import time
 from copy import deepcopy
 from typing import Any, Dict
 
-import time
 from kubernetes import config as k8_config
 from kubernetes import dynamic
-from kubernetes.client import CoreV1Api, V1ConfigMap
-from kubernetes.client import api_client
+from kubernetes.client import CoreV1Api, V1ConfigMap, api_client
 from kubernetes.client.exceptions import ApiException
 
 ORBIT_API_VERSION = "v1"
