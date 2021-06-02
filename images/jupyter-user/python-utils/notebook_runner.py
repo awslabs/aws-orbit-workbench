@@ -37,15 +37,15 @@ NoDatesSafeLoader.yaml_implicit_resolvers = {
 
 def read_yaml_file(path):
     with open(path, "r") as f:
-        return yaml.load(f, Loader=NoDatesSafeLoader)
+        return yaml.safe_load(f)
 
 
 def run():
 
     default_output_directory = os.environ.get("output", "private/outputs")
 
-    notebooks = yaml.load(os.environ["tasks"], Loader=NoDatesSafeLoader)
-    compute = yaml.load(os.environ["compute"], Loader=NoDatesSafeLoader)
+    notebooks = yaml.safe_load(os.environ["tasks"])
+    compute = yaml.safe_load(os.environ["compute"])
 
     notebooksToRun = prepareAndValidateNotebooks(default_output_directory, notebooks)
     errors = []

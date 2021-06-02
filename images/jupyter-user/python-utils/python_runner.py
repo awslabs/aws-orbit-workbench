@@ -34,8 +34,8 @@ NoDatesSafeLoader.yaml_implicit_resolvers = {
 
 
 def run():
-    tasks = yaml.load(os.environ["tasks"], Loader=NoDatesSafeLoader)
-    compute = yaml.load(os.environ["compute"], Loader=NoDatesSafeLoader)
+    tasks = yaml.safe_load(os.environ["tasks"])
+    compute = yaml.safe_load(os.environ["compute"])
 
     errors = []
     try:
