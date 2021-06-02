@@ -260,6 +260,8 @@ def package_team_space_pkg(context: Context, repo: str, team_charts_path: str, t
             "jupyter_team_image": team_context.final_image_address,
             "s3_toolkit_bucket": context.toolkit.s3_bucket,
             "account_id": context.account_id,
+            "utility_data_image": context.images.utility_data.repository,
+            "utility_tag": context.images.utility_data.version,
         },
     )
     install_chart(
