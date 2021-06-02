@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" focusable="false"
+     width="1em" height="1em"
+     style="-ms-transform: rotate(360deg); -webkit-transform: rotate(360deg); transform: rotate(360deg);"
+     preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+    <path fill="none" stroke="#626262" stroke-width="2"
+          d="M2 5.077S3.667 2 12 2s10 3.077 10 3.077v13.846S20.333 22 12 22S2 18.923 2 18.923V5.077zM2 13s3.333 3 10 3s10-3 10-3M2 7s3.333 3 10 3s10-3 10-3"/>
+</svg>
