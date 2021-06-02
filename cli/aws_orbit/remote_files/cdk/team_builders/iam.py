@@ -38,7 +38,7 @@ class IamBuilder:
         policy_names: List[str],
         scratch_bucket: s3.IBucket,
         team_kms_key: kms.Key,
-        session_timeout: core.Duration
+        session_timeout: core.Duration,
     ) -> iam.Role:
         env_name = context.name
         partition = core.Aws.PARTITION

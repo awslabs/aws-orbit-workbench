@@ -26,7 +26,7 @@ import aws_cdk.aws_kms as kms
 import aws_cdk.aws_s3 as s3
 import aws_cdk.aws_ssm as ssm
 import aws_cdk.core as core
-from aws_cdk.core import App, Construct, Environment, IConstruct, Stack, Tags, Duration
+from aws_cdk.core import App, Construct, Duration, Environment, IConstruct, Stack, Tags
 
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
@@ -123,7 +123,7 @@ class Team(Stack):
             policy_names=self.policies,
             scratch_bucket=cast(s3.IBucket, self.scratch_bucket),
             team_kms_key=self.team_kms_key,
-            session_timeout=Duration.hours(12)
+            session_timeout=Duration.hours(12),
         )
         shared_fs_name: str = f"orbit-{context.name}-{self.team_name}-shared-fs"
         if context.shared_efs_fs_id is None:
