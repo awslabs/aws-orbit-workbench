@@ -21,16 +21,10 @@ from typing import Any, Dict, List, Optional, cast
 
 import jsonpatch
 import jsonpath_ng
-from orbit_controller import (
-    ORBIT_API_GROUP,
-    ORBIT_API_VERSION,
-    dump_resource,
-    dynamic_client,
-    get_module_state,
-)
 from flask import jsonify
 from kubernetes import dynamic
 from kubernetes.dynamic import exceptions as k8s_exceptions
+from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, dump_resource, dynamic_client, get_module_state
 
 ORBIT_POD_SETTINGS_CACHE = None
 ORBIT_POD_SETTINGS_STATE = None
@@ -277,12 +271,13 @@ def apply_settings_to_container(
 
     # Extend podsetting ENV
     if "notebookApp" in ps_spec:
-        ps_spec["env"].append({
-            "name": "NB_PREFIX",
-            "value": f"/notebook/{pod.get('metadata', {}).get('namespace')}"
-            f"/{pod.get('metadata', {}).get('labels', {}).get('notebook-name')}/{ps_spec['notebookApp']})",
-        })
-
+        ps_spec["env"].append(
+            {
+                "name": "NB_PREFIX",
+                "value": f"/notebook/{pod.get('metadata', {}).get('namespace')}"
+                f"/{pod.get('metadata', {}).get('labels', {}).get('notebook-name')}/{ps_spec['notebookApp']})",
+            }
+        )
 
     if ps_spec.get("injectUserContext", False):
         # Drop any previous USERNAME or USEREMAIL env variables

@@ -16,9 +16,9 @@ import time
 from multiprocessing import Queue
 from typing import Any, Dict, List, Optional, cast
 
-from orbit_controller import dump_resource, dynamic_client, load_config, logger
 from kubernetes import dynamic
 from kubernetes.dynamic import exceptions as k8s_exceptions
+from orbit_controller import dump_resource, dynamic_client, load_config, logger
 from urllib3.exceptions import ReadTimeoutError
 
 KUBEFLOW_API_GROUP = "kubeflow.org"

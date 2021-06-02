@@ -16,15 +16,8 @@ import time
 from multiprocessing import Queue
 from typing import Any, Dict, Optional, cast
 
-from orbit_controller import (
-    ORBIT_API_GROUP,
-    ORBIT_API_VERSION,
-    dump_resource,
-    dynamic_client,
-    logger,
-    poddefault,
-)
 from kubernetes.dynamic import exceptions as k8s_exceptions
+from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, dump_resource, dynamic_client, logger, poddefault
 from urllib3.exceptions import ReadTimeoutError
 
 
