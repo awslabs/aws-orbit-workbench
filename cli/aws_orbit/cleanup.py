@@ -185,16 +185,19 @@ def delete_kubeflow_roles(env_stack_name: str, region: str) -> None:
             _logger.info(f"Removing role {role_name} - checking for attached policies")
             role_policies = iam_client.list_role_policies(RoleName=role_name).get("PolicyNames")
 
+            policy_name_regex = re.compile(r"kf-.*")
+
             for policy in role_policies:
-                try:
-                    iam_client.delete_role_policy(RoleName=role_name, PolicyName=policy)
-                    _logger.info(f"Removed policy {policy}")
-                except iam_client.exceptions.NoSuchEntityException:
-                    _logger.error("No such policy")
-                except iam_client.exceptions.UnmodifiableEntityException:
-                    _logger.error("Policy is unmodifiable")
-                except iam_client.exceptions.ServiceFailureException as err:
-                    _logger.error(f"Service error: {err}")
+                if policy_name_regex.fullmatch(policy):
+                    try:
+                        iam_client.delete_role_policy(RoleName=role_name, PolicyName=policy)
+                        _logger.info(f"Removed policy {policy}")
+                    except iam_client.exceptions.NoSuchEntityException:
+                        _logger.error("No such policy")
+                    except iam_client.exceptions.UnmodifiableEntityException:
+                        _logger.error("Policy is unmodifiable")
+                    except iam_client.exceptions.ServiceFailureException as err:
+                        _logger.error(f"Service error: {err}")
 
             try:
                 iam_client.delete_role(RoleName=role_name)
