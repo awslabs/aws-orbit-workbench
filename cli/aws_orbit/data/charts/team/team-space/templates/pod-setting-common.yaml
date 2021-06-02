@@ -117,6 +117,7 @@ metadata:
     {{- include "team-space.labels" . | nindent 4 }}
 spec:
   desc:  Start VSCode application
+  notebookApp: code-server
   containerSelector:
     jsonpath: "metadata.name"
   podSelector:

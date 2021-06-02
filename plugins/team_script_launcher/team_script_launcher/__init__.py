@@ -25,7 +25,7 @@ from aws_orbit.remote_files import helm
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
 _logger: logging.Logger = logging.getLogger("aws_orbit")
-CHART_PATH = os.path.join(os.path.dirname(__file__),'charts')
+CHART_PATH = os.path.join(os.path.dirname(__file__), "charts")
 
 
 @hooks.deploy
@@ -82,7 +82,9 @@ def deploy(
     repo = team_context.name
     _logger.debug(script_body)
     helm.add_repo(repo=repo, repo_location=repo_location)
-    chart_name, chart_version, chart_package = helm.package_chart(repo=repo, chart_path=os.path.join(chart_path, "team-script-launcher"), values=vars)
+    chart_name, chart_version, chart_package = helm.package_chart(
+        repo=repo, chart_path=os.path.join(chart_path, "team-script-launcher"), values=vars
+    )
 
     release_name = f"{team_context.name}-{plugin_id}".replace("_", "-")
     if helm.is_exists_chart_release(release_name, team_context.name):
