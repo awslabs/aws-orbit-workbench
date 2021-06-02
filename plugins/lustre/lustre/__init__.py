@@ -12,8 +12,11 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import json
 import logging
 import os
+import subprocess
+import time
 from typing import TYPE_CHECKING, Any, Dict, Optional, cast
 
 from aws_orbit import utils
@@ -29,6 +32,16 @@ TEAM_CHARTS_PATH = os.path.join(os.path.dirname(__file__), "charts", "team")
 USER_CHARTS_PATH = os.path.join(os.path.dirname(__file__), "charts", "user")
 
 
+def run_command(cmd: str) -> str:
+    """ Module to run shell commands. """
+    try:
+        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True, timeout=29, universal_newlines=True)
+    except subprocess.CalledProcessError as exc:
+        _logger.debug("Command failed with exit code {}, stderr: {}".format(exc.returncode, exc.output))
+        raise Exception(exc.output)
+    return output
+
+
 @hooks.deploy
 def deploy(
     plugin_id: str,
@@ -41,6 +54,8 @@ def deploy(
     _logger.debug("plugin_id: %s", plugin_id)
     release_name = f"{team_context.name}-{plugin_id}"
     _logger.info("Checking Chart %s is installed...", release_name)
+
+    fs_name = f"lustre-{team_context.name}-fs-{plugin_id}"
 
     vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
@@ -55,6 +70,8 @@ def deploy(
         s3exportpath=f"s3://{team_context.scratch_bucket}/{team_context.name}/lustre",
         storage=parameters["storage"] if "storage" in parameters else "1200Gi",
         folder=parameters["folder"] if "folder" in parameters else "data",
+        k8s_utilities_image=f"{context.images.k8s_utilities.repository}:{context.images.k8s_utilities.version}",
+        fs_name=fs_name,
     )
 
     if not helm.is_exists_chart_release(release_name, team_context.name):
@@ -103,18 +120,49 @@ def deploy(
             chart_version=chart_version,
         )
 
+    get_user_pv(fs_name, plugin_id, team_context, vars)
+
     # install this package at the user helm repository such that its installed on every user space
     chart_path = helm.create_team_charts_copy(team_context=team_context, path=USER_CHARTS_PATH, target_path=plugin_id)
+
     if not team_context.user_helm_repository:
         raise Exception("Missing user helm repository")
     user_location = team_context.user_helm_repository
 
     user_repo = team_context.name + "--user"
     helm.add_repo(repo=user_repo, repo_location=user_location)
+
     chart_name, chart_version, chart_package = helm.package_chart(
         repo=user_repo, chart_path=os.path.join(chart_path, "fsx-filesystem"), values=vars
     )
     _logger.info(f"Lustre Helm Chart {chart_name}@{chart_version} installed for {team_context.name} at {chart_package}")
+
+
+def get_user_pv(fs_name: str, plugin_id: str, team_context: "TeamContext", vars: Dict[str, Optional[str]]) -> None:
+    for i in range(0, 15):
+        run_command(f"kubectl get pvc -n {team_context.name} {fs_name} -o json > /tmp/pvc.json")
+        with open("/tmp/pvc.json", "r") as f:
+            pvc = json.load(f)
+        if "spec" in pvc and "volumeName" in pvc["spec"] and pvc["spec"]["volumeName"]:
+            volumeName = pvc["spec"]["volumeName"]
+            run_command(f"kubectl get pv {volumeName} -o json > /tmp/pv.json")
+            with open("/tmp/pv.json", "r") as f:
+                team_pv = json.load(f)
+                _logger.debug("team pv: %s", json.dumps(team_pv, sort_keys=True, indent=4))
+            if "spec" in team_pv:
+                vars["dnsname"] = team_pv["spec"]["csi"]["volumeAttributes"]["dnsname"]
+                vars["mountname"] = team_pv["spec"]["csi"]["volumeAttributes"]["mountname"]
+                vars["csiProvisionerIdentity"] = team_pv["spec"]["csi"]["volumeAttributes"][
+                    "storage.kubernetes.io/csiProvisionerIdentity"
+                ]
+                vars["volumeHandle"] = team_pv["spec"]["csi"]["volumeHandle"]
+                _logger.info(f"FSX Volume is {volumeName}")
+                break
+
+        _logger.info("FSX Volume not ready. Waiting a min")
+        time.sleep(60)
+    else:
+        raise Exception(f"FSX Volume is not ready for plugin {plugin_id}")
 
 
 @hooks.destroy

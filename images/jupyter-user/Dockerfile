@@ -136,7 +136,6 @@ WORKDIR /opt/orbit/codeserver_proxy
 RUN /opt/orbit/codeserver_proxy/install.sh
 RUN chown -R jovyan /opt/orbit/codeserver_proxy
 
-
 WORKDIR /home/${NB_USER}
 
 RUN conda run pip install /etc/extensions/jupyterlab_orbit/

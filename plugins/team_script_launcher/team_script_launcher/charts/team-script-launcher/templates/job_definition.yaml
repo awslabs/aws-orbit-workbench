@@ -4,9 +4,9 @@ metadata:
   name: {{ .Values.nameOverride }}
   namespace: {{ .Values.namespace }}
   labels:
-    app: orbit-team_script_launcher
+    app: orbit-team-script-launcher
     job-name: {{ .Values.nameOverride }}
-    {{- include "team_script_launcher.labels" . | nindent 4 }}
+    {{- include "team-script-launcher.labels" . | nindent 4 }}
 
 spec:
   backoffLimit: 1

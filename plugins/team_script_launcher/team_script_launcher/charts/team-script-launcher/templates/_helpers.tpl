@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "team_script_launcher.name" -}}
+{{- define "team-script-launcher.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "team_script_launcher.fullname" -}}
+{{- define "team-script-launcher.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,17 +26,17 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "team_script_launcher.chart" -}}
+{{- define "team-script-launcher.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "team_script_launcher.labels" -}}
-helm.sh/chart: {{ include "team_script_launcher.chart" . }}
-app: orbit-{{ include "team_script_launcher.name" . }}
-{{ include "team_script_launcher.selectorLabels" . }}
+{{- define "team-script-launcher.labels" -}}
+helm.sh/chart: {{ include "team-script-launcher.chart" . }}
+app: orbit-{{ include "team-script-launcher.name" . }}
+{{ include "team-script-launcher.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -46,17 +46,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "team_script_launcher.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "team_script_launcher.name" . }}
+{{- define "team-script-launcher.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "team-script-launcher.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "team_script_launcher.serviceAccountName" -}}
+{{- define "team-script-launcher.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "team_script_launcher.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "team-script-launcher.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}

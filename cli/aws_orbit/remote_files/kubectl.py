@@ -15,7 +15,7 @@
 import logging
 import os
 import shutil
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import aws_orbit
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
@@ -248,7 +248,7 @@ def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -
     return output_path
 
 
-def _generate_env_manifest(context: "Context", clean_up: bool = True) -> str:
+def _generate_env_manifest(context: "Context", clean_up: bool = True) -> Tuple[str, str]:
     filename = "00-commons.yaml"
     output_path = os.path.join(".orbit.out", context.name, "kubectl", "env")
     os.makedirs(output_path, exist_ok=True)
@@ -259,7 +259,29 @@ def _generate_env_manifest(context: "Context", clean_up: bool = True) -> str:
     output = os.path.join(output_path, filename)
     shutil.copyfile(src=input, dst=output)
 
-    return output_path
+    # kubeflow jupyter launcher configmap
+    input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-launcher.yaml")
+    output = os.path.join(output_path, "kf-jupyter-launcher.yaml")
+
+    with open(input, "r") as file:
+        content = file.read()
+
+    content = utils.resolve_parameters(
+        content,
+        dict(
+            orbit_jupyter_user_image=f"{context.images.jupyter_user.repository}:{context.images.jupyter_user.version}"
+        ),
+    )
+    with open(output, "w") as file:
+        file.write(content)
+
+    input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-patch.yaml")
+    output = os.path.join(output_path, "kf-jupyter-patch.yaml")
+
+    with open(input, "r") as file:
+        patch = file.read()
+
+    return (output_path, patch)
 
 
 def _prepare_team_context_path(context: "Context") -> str:
@@ -403,9 +425,12 @@ def deploy_env(context: "Context") -> None:
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
         # env
-        output_path = _generate_env_manifest(context=context)
+        (output_path, patch) = _generate_env_manifest(context=context)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
-
+        # Patch Kubeflow
+        _logger.debug("Orbit applying KubeFlow patch")
+        sh.run(f'kubectl patch deployment jupyter-web-app-deployment --patch "{patch}" -n kubeflow')
+        sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
         # Enable ENIs
         sh.run(f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} ENABLE_POD_ENI=true")
 
@@ -420,27 +445,11 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
         k8s_context = get_k8s_context(context=context)
         _logger.debug("kubectl context: %s", k8s_context)
         output_path = _generate_team_context(context=context, team_context=team_context)
-
-        # kubeflow jupyter launcher configmap
-        input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-launcher.yaml")
-        output = os.path.join(output_path, "kf-jupyter-launcher.yaml")
-
-        with open(input, "r") as file:
-            content = file.read()
-        content = utils.resolve_parameters(content, dict(orbit_jupyter_user_image=team_context.base_image_address))
-        with open(output, "w") as file:
-            file.write(content)
-
-        input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-patch.yaml")
-        output = os.path.join(output_path, "kf-jupyter-patch.yaml")
-
-        with open(input, "r") as file:
-            patch = file.read()
-
-        # output_path = _generate_orbit_system_manifest(context=context, clean_up=False)
+        (output_path, patch) = _generate_env_manifest(context=context, clean_up=False)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
-        # Patch
+        # Patch Kubeflow
+        _logger.debug("Orbit applying KubeFlow patch")
         sh.run(f'kubectl patch deployment jupyter-web-app-deployment --patch "{patch}" -n kubeflow')
         sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
 
