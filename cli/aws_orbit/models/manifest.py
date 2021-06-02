@@ -130,6 +130,7 @@ class K8sUtilitiesImageManifest(ImageManifest):
 @dataclass(base_schema=BaseSchema, frozen=True)
 class UtilityDataImageManifest(ImageManifest):
     repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data"
+    version: Optional[str] = "1.0.0"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
