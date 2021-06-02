@@ -19,7 +19,7 @@ from multiprocessing.managers import SyncManager
 from typing import Optional, cast
 
 import click
-from aws_orbit_admission_controller import (
+from orbit_controller import (
     get_module_state,
     load_config,
     logger,
@@ -43,12 +43,12 @@ def watch() -> None:
 @watch.command(name="namespaces")
 @click.option("--workers", type=int, required=False, default=None, show_default=True)
 def watch_namespaces(workers: Optional[int] = None) -> None:
-    workers = workers if workers else int(os.environ.get("NAMESPACE_WATCHER_WORKERS", "2"))
+    workers = workers if workers else int(os.environ.get("USERSPACE_CHART_MANAGER_WORKERS", "2"))
 
     logger.info("workers: %s", workers)
 
     load_config()
-    last_state = get_module_state(module="namespaceWatcher")
+    last_state = get_module_state(module="userspaceChartManager")
 
     with Manager() as manager:
         sync_manager = cast(SyncManager, manager)
@@ -62,7 +62,7 @@ def watch_namespaces(workers: Optional[int] = None) -> None:
         logger.info("Starting Namespace State Updater Process")
         state_updater = Process(
             target=maintain_module_state,
-            kwargs={"module": "namespaceWatcher", "state": module_state},
+            kwargs={"module": "userspaceChartManager", "state": module_state},
         )
         state_updater.start()
 

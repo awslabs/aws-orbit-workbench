@@ -34,7 +34,7 @@ DEBUG_LOGGING_FORMAT = "[%(asctime)s][%(filename)-13s:%(lineno)3d][%(levelname)s
 
 
 def _get_logger() -> logging.Logger:
-    debug = os.environ.get("ADMISSION_CONTROLLER_DEBUG", "False").lower() in [
+    debug = os.environ.get("ORBIT_CONTROLLER_DEBUG", "False").lower() in [
         "true",
         "yes",
         "1",
@@ -74,33 +74,33 @@ def dump_resource(resource: Union[Optional[Dict[str, Any]], List[Dict[str, Any]]
         raise ValueError("Invalid resource type: %s", type(resource))
 
 
-def get_admission_controller_state() -> V1ConfigMap:
+def get_orbit_controller_state() -> V1ConfigMap:
     try:
         config_map: V1ConfigMap = CoreV1Api().read_namespaced_config_map(
-            name="admission-controller-state", namespace=ORBIT_SYSTEM_NAMESPACE
+            name="orbit-controller-state", namespace=ORBIT_SYSTEM_NAMESPACE
         )
 
-        logger.debug("admission-controller-state: %s", config_map.to_dict())
+        logger.debug("orbit-controller-state: %s", config_map.to_dict())
         return config_map
     except ApiException as e:
         if e.status == 404:
             logger.info(
-                "The admission-controller-state ConfigMap was not found in the %s Namespace",
+                "The orbit-controller-state ConfigMap was not found in the %s Namespace",
                 ORBIT_SYSTEM_NAMESPACE,
             )
-            return initialize_admission_controller_state()
+            return initialize_orbit_controller_state()
         else:
-            logger.exception("Error fetching admission-controller-state ConfigMap")
+            logger.exception("Error fetching orbit-controller-state ConfigMap")
             raise e
     except Exception:
-        logger.exception("Error fetching admission-controller-state ConfigMap")
+        logger.exception("Error fetching orbit-controller-state ConfigMap")
         raise
 
 
-def initialize_admission_controller_state() -> V1ConfigMap:
+def initialize_orbit_controller_state() -> V1ConfigMap:
     try:
         logger.info(
-            "Initializing admission-controller-state ConfigMap in the %s Namesapce",
+            "Initializing orbit-controller-state ConfigMap in the %s Namesapce",
             ORBIT_SYSTEM_NAMESPACE,
         )
         return CoreV1Api().create_namespaced_config_map(
@@ -108,12 +108,12 @@ def initialize_admission_controller_state() -> V1ConfigMap:
             body={
                 "apiVersion": "v1",
                 "kind": "ConfigMap",
-                "metadata": {"name": "admission-controller-state"},
+                "metadata": {"name": "orbit-controller-state"},
                 "data": {},
             },
         )
     except Exception:
-        logger.exception("Error putting admission-controller-state ConfigMap")
+        logger.exception("Error putting orbit-controller-state ConfigMap")
         raise
 
 
@@ -130,17 +130,17 @@ def put_module_state(module: str, state: Dict[str, Any]) -> None:
     try:
         body = {"data": {module: json.dumps({k: v for k, v in state.items()})}}
         logger.debug(
-            "Patching admission-controller-state in Namespace %s with %s",
+            "Patching orbit-controller-state in Namespace %s with %s",
             ORBIT_SYSTEM_NAMESPACE,
             body,
         )
         CoreV1Api().patch_namespaced_config_map(
-            name="admission-controller-state",
+            name="orbit-controller-state",
             namespace=ORBIT_SYSTEM_NAMESPACE,
             body=body,
         )
     except Exception:
-        logger.exception("Error patching admission-controller-state ConfigMap")
+        logger.exception("Error patching orbit-controller-state ConfigMap")
         raise
 
 

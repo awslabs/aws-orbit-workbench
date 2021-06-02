@@ -16,7 +16,7 @@ import time
 from multiprocessing import Queue
 from typing import Any, Dict, Optional, cast
 
-from aws_orbit_admission_controller import (
+from orbit_controller import (
     ORBIT_API_GROUP,
     ORBIT_API_VERSION,
     dump_resource,

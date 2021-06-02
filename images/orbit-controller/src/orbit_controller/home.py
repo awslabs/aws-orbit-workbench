@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union, cast
 from urllib.parse import urlencode, urlparse
 
 import requests
-from aws_orbit_admission_controller import dynamic_client
+from orbit_controller import dynamic_client
 from flask import Flask, jsonify, render_template, request
 from jose import jwk, jwt
 from jose.utils import base64url_decode

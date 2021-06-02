@@ -17,8 +17,8 @@ import os
 import random
 from typing import Any
 
-from aws_orbit_admission_controller.home import is_ready, login, logout
-from aws_orbit_admission_controller.pod import process_request as process_pod_request
+from orbit_controller.home import is_ready, login, logout
+from orbit_controller.pod import process_request as process_pod_request
 from flask import Flask, make_response, request
 
 # from flask_cognito import cognito_auth_required, current_user, current_cognito_jwt

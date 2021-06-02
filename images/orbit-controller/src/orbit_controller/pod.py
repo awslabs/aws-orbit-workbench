@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Optional, cast
 
 import jsonpatch
 import jsonpath_ng
-from aws_orbit_admission_controller import (
+from orbit_controller import (
     ORBIT_API_GROUP,
     ORBIT_API_VERSION,
     dump_resource,
@@ -239,33 +239,23 @@ def apply_settings_to_pod(
         # Extend pod volumes with pod_setting volumes
         pod_spec["volumes"].extend(ps_spec.get("volumes", []))
 
-    # Extend podsetting ENV
-    if "notebookApp" in ps_spec:
-        ps_spec["env"].append(
-            {
-                "name": "NB_PREFIX",
-                "value": f"/notebook/{pod_spec.get('metadata', {}).get('namespace')}"
-                f"/{pod_spec.get('metadata', {}).get('labels', {}).get('notebook-name')}/{ps_spec['notebookApp']})",
-            }
-        )
-
     for container in filter_pod_containers(
         containers=pod_spec.get("initContainers", []),
         pod=pod_spec,
         container_selector=ps_spec.get("containerSelector", {}),
     ):
-        apply_settings_to_container(namespace=namespace, pod_setting=pod_setting, container=container)
+        apply_settings_to_container(namespace=namespace, pod_setting=pod_setting, pod=pod, container=container)
     for container in filter_pod_containers(
         containers=pod_spec.get("containers", []),
         pod=pod,
         container_selector=ps_spec.get("containerSelector", {}),
     ):
-        apply_settings_to_container(namespace=namespace, pod_setting=pod_setting, container=container)
+        apply_settings_to_container(namespace=namespace, pod_setting=pod_setting, pod=pod, container=container)
     logger.debug("modified pod: %s", dump_resource(pod))
 
 
 def apply_settings_to_container(
-    namespace: Dict[str, Any], pod_setting: Dict[str, Any], container: Dict[str, Any]
+    namespace: Dict[str, Any], pod_setting: Dict[str, Any], pod: Dict[str, Any], container: Dict[str, Any]
 ) -> None:
     ns_labels = namespace["metadata"].get("labels", {})
     ns_annotations = namespace["metadata"].get("annotations", {})
@@ -273,8 +263,8 @@ def apply_settings_to_container(
 
     # Drop any previous AWS_ORBIT_USER_SPACE or AWS_ORBIT_IMAGE env variables
     ps_spec["env"] = [e for e in ps_spec.get("env", []) if e["name"] not in ["AWS_ORBIT_USER_SPACE", "AWS_ORBIT_IMAGE"]]
-    # Append new ones
 
+    # Append new ones
     ps_spec["env"].extend(
         [
             {
@@ -284,6 +274,15 @@ def apply_settings_to_container(
             {"name": "AWS_ORBIT_IMAGE", "value": container.get("image", "")},
         ]
     )
+
+    # Extend podsetting ENV
+    if "notebookApp" in ps_spec:
+        ps_spec["env"].append({
+            "name": "NB_PREFIX",
+            "value": f"/notebook/{pod.get('metadata', {}).get('namespace')}"
+            f"/{pod.get('metadata', {}).get('labels', {}).get('notebook-name')}/{ps_spec['notebookApp']})",
+        })
+
 
     if ps_spec.get("injectUserContext", False):
         # Drop any previous USERNAME or USEREMAIL env variables

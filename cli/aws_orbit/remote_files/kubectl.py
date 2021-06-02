@@ -51,8 +51,8 @@ def _orbit_system_commons(context: "Context", output_path: str) -> None:
         file.write(content)
 
 
-def _admission_controller(context: "Context", output_path: str) -> None:
-    filenames = ["01-admission-controller.yaml", "01-cert-manager.yaml"]
+def _orbit_controller(context: "Context", output_path: str) -> None:
+    filenames = ["01a-orbit-controller.yaml", "01b-cert-manager.yaml"]
 
     for filename in filenames:
         input = os.path.join(MODELS_PATH, "orbit-system", filename)
@@ -64,8 +64,8 @@ def _admission_controller(context: "Context", output_path: str) -> None:
             content,
             dict(
                 env_name=context.name,
-                admission_controller_image=f"{context.images.admission_controller.repository}:"
-                f"{context.images.admission_controller.version}",
+                orbit_controller_image=f"{context.images.orbit_controller.repository}:"
+                f"{context.images.orbit_controller.version}",
                 k8s_utilities_image=f"{context.images.k8s_utilities.repository}:"
                 f"{context.images.k8s_utilities.version}",
                 image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
@@ -229,7 +229,7 @@ def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -
     if clean_up:
         _cleanup_output(output_path=output_path)
     _orbit_system_commons(context=context, output_path=output_path)
-    _admission_controller(context=context, output_path=output_path)
+    _orbit_controller(context=context, output_path=output_path)
 
     if context.account_id is None:
         raise ValueError("context.account_id is None!")

@@ -111,8 +111,8 @@ class JupyterUserImageManifest(ImageManifest):
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
-class AdmissionControllerImageManifest(ImageManifest):
-    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/admission-controller"
+class OrbitControllerImageManifest(ImageManifest):
+    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/orbit-controller"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -150,7 +150,7 @@ class ImagesManifest:
     Schema: ClassVar[Type[Schema]] = Schema
     code_build: ImageManifest = CodeBuildImageManifest()
     jupyter_user: ImageManifest = JupyterUserImageManifest()
-    admission_controller: ImageManifest = AdmissionControllerImageManifest()
+    orbit_controller: ImageManifest = OrbitControllerImageManifest()
     image_replicator: ImageManifest = ImageReplicatorImageManifest()
     k8s_utilities: ImageManifest = K8sUtilitiesImageManifest()
     utility_data: ImageManifest = UtilityDataImageManifest()
@@ -159,7 +159,7 @@ class ImagesManifest:
         default_factory=lambda: [
             "code_build",
             "jupyter_user",
-            "admission_controller",
+            "orbit_controller",
             "image_replicator",
             "k8s_utilities",
             "utility_data",

@@ -17,7 +17,7 @@ import time
 from multiprocessing import Queue
 from typing import Any, Dict, Optional, cast
 
-from aws_orbit_admission_controller import dump_resource, load_config, logger, run_command
+from orbit_controller import dump_resource, load_config, logger, run_command
 from kubernetes.client import CoreV1Api, V1ConfigMap
 from kubernetes.client import exceptions as k8s_exceptions
 from kubernetes.watch import Watch
@@ -236,10 +236,10 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
                 logger.warning(ae.reason)
                 state["lastResourceVersion"] = 0
             else:
-                logger.exception("Unknown ApiException in NamespaceWatcher. Failing")
+                logger.exception("Unknown ApiException in UserspaceChartManager. Failing")
                 raise
         except Exception:
-            logger.exception("Unknown error in NamespaceWatcher. Failing")
+            logger.exception("Unknown error in UserspaceChartManager. Failing")
             raise
         else:
             logger.warning(

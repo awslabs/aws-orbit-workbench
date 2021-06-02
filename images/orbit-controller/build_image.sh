@@ -18,11 +18,11 @@
 # THIS SCRIPT IS ONLY NECESSARY WHILE WE DON'T HAVE A BETTER MECHANISM TO ADDRESS THAT (i.e. PLUGINS)
 
 set -ex
-export ECR_ADDRESS=$ACCOUNT.dkr.ecr.$REGION.amazonaws.com/orbit-$ORBIT_ENV_NAME/admission-controller
+export ECR_ADDRESS=$ACCOUNT.dkr.ecr.$REGION.amazonaws.com/orbit-$ORBIT_ENV_NAME/orbit-controller
 aws ecr get-login-password --region "${REGION}" | docker login --username AWS --password-stdin "${ECR_ADDRESS}"
 
-docker build --tag admission-controller:$VERSION --tag admission-controller:latest .
-docker tag admission-controller:$VERSION $ECR_ADDRESS:$VERSION
-docker tag admission-controller:latest $ECR_ADDRESS:latest
-docker push $ACCOUNT.dkr.ecr.$REGION.amazonaws.com/orbit-$ORBIT_ENV_NAME/admission-controller:$VERSION
-docker push $ACCOUNT.dkr.ecr.$REGION.amazonaws.com/orbit-$ORBIT_ENV_NAME/admission-controller:latest
+docker build --tag orbit-controller:$VERSION --tag orbit-controller:latest .
+docker tag orbit-controller:$VERSION $ECR_ADDRESS:$VERSION
+docker tag orbit-controller:latest $ECR_ADDRESS:latest
+docker push $ACCOUNT.dkr.ecr.$REGION.amazonaws.com/orbit-$ORBIT_ENV_NAME/orbit-controller:$VERSION
+docker push $ACCOUNT.dkr.ecr.$REGION.amazonaws.com/orbit-$ORBIT_ENV_NAME/orbit-controller:latest
