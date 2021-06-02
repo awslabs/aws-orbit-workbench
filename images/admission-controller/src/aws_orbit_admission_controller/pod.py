@@ -239,6 +239,16 @@ def apply_settings_to_pod(
         # Extend pod volumes with pod_setting volumes
         pod_spec["volumes"].extend(ps_spec.get("volumes", []))
 
+    # Extend podsetting ENV
+    if "notebookApp" in ps_spec:
+        ps_spec["env"].append(
+            {
+                "name": "NB_PREFIX",
+                "value": f"/notebook/{pod_spec.get('metadata', {}).get('namespace')}"
+                f"/{pod_spec.get('metadata', {}).get('labels', {}).get('notebook-name')}/{ps_spec['notebookApp']})",
+            }
+        )
+
     for container in filter_pod_containers(
         containers=pod_spec.get("initContainers", []),
         pod=pod_spec,
