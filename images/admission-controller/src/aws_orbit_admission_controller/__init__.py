@@ -15,16 +15,14 @@
 import json
 import logging
 import os
-import re
 import subprocess
-from copy import deepcopy
-from typing import Any, Dict, List, Union, cast
-
 import time
+from copy import deepcopy
+from typing import Any, Dict, List, Optional, Union, cast
+
 from kubernetes import config as k8_config
 from kubernetes import dynamic
-from kubernetes.client import CoreV1Api, V1ConfigMap
-from kubernetes.client import api_client
+from kubernetes.client import CoreV1Api, V1ConfigMap, api_client
 from kubernetes.client.exceptions import ApiException
 
 ORBIT_API_VERSION = os.environ.get("ORBIT_API_VERSION", "v1")
@@ -36,7 +34,11 @@ DEBUG_LOGGING_FORMAT = "[%(asctime)s][%(filename)-13s:%(lineno)3d][%(levelname)s
 
 
 def _get_logger() -> logging.Logger:
-    debug = os.environ.get("ADMISSION_CONTROLLER_DEBUG", "False").lower() in ["true", "yes", "1"]
+    debug = os.environ.get("ADMISSION_CONTROLLER_DEBUG", "False").lower() in [
+        "true",
+        "yes",
+        "1",
+    ]
     level = logging.DEBUG if debug else logging.INFO
     logging.basicConfig(level=level, format=DEBUG_LOGGING_FORMAT)
     logger: logging.Logger = logging.getLogger(__name__)
@@ -46,8 +48,7 @@ def _get_logger() -> logging.Logger:
     return logger
 
 
-def dump_resource(resource: Union[Dict[str, Any], List[Dict[str, Any]]]) -> str:
-
+def dump_resource(resource: Union[Optional[Dict[str, Any]], List[Dict[str, Any]]]) -> str:
     def strip_resource(resource: Dict[str, Any]) -> Dict[str, Any]:
         stripped_resource = {
             "metadata": {
@@ -67,6 +68,8 @@ def dump_resource(resource: Union[Dict[str, Any], List[Dict[str, Any]]]) -> str:
         return json.dumps(strip_resource(resource))
     elif isinstance(resource, list):
         return json.dumps([strip_resource(r) for r in resource])
+    elif resource is None:
+        return str(resource)
     else:
         raise ValueError("Invalid resource type: %s", type(resource))
 
@@ -82,7 +85,8 @@ def get_admission_controller_state() -> V1ConfigMap:
     except ApiException as e:
         if e.status == 404:
             logger.info(
-                "The admission-controller-state ConfigMap was not found in the %s Namespace", ORBIT_SYSTEM_NAMESPACE
+                "The admission-controller-state ConfigMap was not found in the %s Namespace",
+                ORBIT_SYSTEM_NAMESPACE,
             )
             return initialize_admission_controller_state()
         else:
@@ -95,7 +99,10 @@ def get_admission_controller_state() -> V1ConfigMap:
 
 def initialize_admission_controller_state() -> V1ConfigMap:
     try:
-        logger.info("Initializing admission-controller-state ConfigMap in the %s Namesapce", ORBIT_SYSTEM_NAMESPACE)
+        logger.info(
+            "Initializing admission-controller-state ConfigMap in the %s Namesapce",
+            ORBIT_SYSTEM_NAMESPACE,
+        )
         return CoreV1Api().create_namespaced_config_map(
             namespace=ORBIT_SYSTEM_NAMESPACE,
             body={
@@ -122,9 +129,15 @@ def get_module_state(module: str) -> Dict[str, Any]:
 def put_module_state(module: str, state: Dict[str, Any]) -> None:
     try:
         body = {"data": {module: json.dumps({k: v for k, v in state.items()})}}
-        logger.debug("Patching admission-controller-state in Namespace %s with %s", ORBIT_SYSTEM_NAMESPACE, body)
+        logger.debug(
+            "Patching admission-controller-state in Namespace %s with %s",
+            ORBIT_SYSTEM_NAMESPACE,
+            body,
+        )
         CoreV1Api().patch_namespaced_config_map(
-            name="admission-controller-state", namespace=ORBIT_SYSTEM_NAMESPACE, body=body
+            name="admission-controller-state",
+            namespace=ORBIT_SYSTEM_NAMESPACE,
+            body=body,
         )
     except Exception:
         logger.exception("Error patching admission-controller-state ConfigMap")
@@ -155,14 +168,20 @@ def load_config(in_cluster: bool = True) -> None:
 def run_command(cmd: str) -> str:
     """ Module to run shell commands. """
     try:
-        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True, timeout=29, universal_newlines=True)
+        output = subprocess.check_output(
+            cmd,
+            stderr=subprocess.STDOUT,
+            shell=True,
+            timeout=29,
+            universal_newlines=True,
+        )
     except subprocess.CalledProcessError as exc:
         logger.debug("Command failed with exit code {}, stderr: {}".format(exc.returncode, exc.output))
         raise Exception(exc.output)
     return output
 
 
-def get_client() -> dynamic.DynamicClient:
+def dynamic_client() -> dynamic.DynamicClient:
     load_config()
     return dynamic.DynamicClient(client=api_client.ApiClient())
 

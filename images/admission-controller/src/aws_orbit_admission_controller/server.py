@@ -17,9 +17,9 @@ import os
 import random
 from typing import Any
 
-from aws_orbit_admission_controller.home import login, logout, is_ready
+from aws_orbit_admission_controller.home import is_ready, login, logout
 from aws_orbit_admission_controller.pod import process_request as process_pod_request
-from flask import Flask, request, make_response
+from flask import Flask, make_response, request
 
 # from flask_cognito import cognito_auth_required, current_user, current_cognito_jwt
 
@@ -63,7 +63,7 @@ def logout_request() -> Any:
     # This will terminate the current session for the user.
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
-    response.set_cookie('AWSELBAuthSessionCookie-0', path='/', expires=0)
+    response.set_cookie("AWSELBAuthSessionCookie-0", path="/", expires=0)
 
     return response
 

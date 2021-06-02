@@ -68,7 +68,7 @@ def _admission_controller(context: "Context", output_path: str) -> None:
                 f"{context.images.admission_controller.version}",
                 k8s_utilities_image=f"{context.images.k8s_utilities.repository}:"
                 f"{context.images.k8s_utilities.version}",
-                image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
+                image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
                 certArn=context.networking.frontend.ssl_cert_arn,
                 cognitoAppClientId=context.user_pool_client_id,
                 cognitoUserPoolID=context.user_pool_id,
@@ -213,7 +213,7 @@ def _generate_kube_system_manifest(context: "Context", clean_up: bool = True) ->
                 env_name=context.name,
                 cluster_name=f"orbit-{context.name}",
                 sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
-                image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
+                image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
                 use_static_instance_list=str(not context.networking.data.internet_accessible).lower(),
             ),
         )

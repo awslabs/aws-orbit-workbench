@@ -16,53 +16,78 @@ import time
 from multiprocessing import Queue
 from typing import Any, Dict, Optional, cast
 
-from aws_orbit_admission_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, load_config, logger, dump_resource
-from kubernetes import dynamic
-from kubernetes.client import api_client
+from aws_orbit_admission_controller import (
+    ORBIT_API_GROUP,
+    ORBIT_API_VERSION,
+    dump_resource,
+    dynamic_client,
+    logger,
+    poddefault,
+)
 from kubernetes.dynamic import exceptions as k8s_exceptions
 from urllib3.exceptions import ReadTimeoutError
 
 
-def get_client() -> dynamic.DynamicClient:
-    load_config()
-    return dynamic.DynamicClient(client=api_client.ApiClient())
-
-
 def process_added_event(podsetting: Dict[str, Any]) -> None:
-    logger.debug("loading kubeconfig")
-    load_config()
-    logger.debug("ADDED: %s", dump_resource(podsetting))
+    name = podsetting["metadata"]["name"]
+    namespace = podsetting["metadata"]["namespace"]
+    desc = podsetting["spec"].get("desc", "")
+    client = dynamic_client()
+
+    poddefault.create_poddefault(
+        namespace=namespace,
+        poddefault=poddefault.construct(name=name, desc=desc, labels={"orbit/space": "team"}),
+        client=client,
+    )
+    logger.debug("ADDED poddefault for podsetting: %s", dump_resource(podsetting))
 
 
 def process_modified_event(podsetting: Dict[str, Any]) -> None:
-    logger.debug("loading kubeconfig")
-    load_config()
-    logger.debug("MODIFIED: %s", dump_resource(podsetting))
+    name = podsetting["metadata"]["name"]
+    namespace = podsetting["metadata"]["namespace"]
+    desc = podsetting["spec"].get("desc", "")
+    client = dynamic_client()
+
+    poddefault.modify_poddefault(namespace=namespace, name=name, desc=desc, client=client)
+    logger.debug("MODIFIED poddefault for podsetting: %s", dump_resource(podsetting))
 
 
 def process_deleted_event(podsetting: Dict[str, Any]) -> None:
-    logger.debug("loading kubeconfig")
-    load_config()
-    logger.debug("DELETED: %s", dump_resource(podsetting))
+    name = podsetting["metadata"]["name"]
+    namespace = podsetting["metadata"]["namespace"]
+    client = dynamic_client()
+
+    poddefault.delete_poddefault(namespace=namespace, name=name, client=client)
+    logger.debug("DELETED poddefault for podsetting: %s", dump_resource(podsetting))
 
 
 def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
     while True:
         try:
-            client = get_client()
+            client = dynamic_client()
             api = client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="PodSetting")
 
             logger.info("Monitoring PodSettings")
 
-            kwargs = {"resource_version": state.get("lastResourceVersion", 0)}
+            kwargs = {
+                "resource_version": state.get("lastResourceVersion", 0),
+                "label_selector": "orbit/space=team,!orbit/disable-watcher",
+            }
             for event in api.watch(**kwargs):
                 podsetting = event["object"]
                 state["lastResourceVersion"] = podsetting.metadata.resource_version
                 queue_event = {"type": event["type"], "raw_object": event["raw_object"]}
-                logger.debug("Queueing PodSetting event for processing type: %s podsetting: %s", event["type"], dump_resource(event["raw_object"]))
+                logger.debug(
+                    "Queueing PodSetting event for processing type: %s podsetting: %s",
+                    event["type"],
+                    dump_resource(event["raw_object"]),
+                )
                 queue.put(queue_event)
         except ReadTimeoutError:
-            logger.warning("There was a timeout error accessing the Kubernetes API. Retrying request.", exc_info=True)
+            logger.warning(
+                "There was a timeout error accessing the Kubernetes API. Retrying request.",
+                exc_info=True,
+            )
             time.sleep(1)
         except k8s_exceptions.ApiException as ae:
             if ae.reason.startswith("Expired: too old resource version"):
@@ -76,7 +101,8 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
             raise
         else:
             logger.warning(
-                "Watch died gracefully, starting back up with last_resource_version: %s", state["lastResourceVersion"]
+                "Watch died gracefully, starting back up with last_resource_version: %s",
+                state["lastResourceVersion"],
             )
 
 
@@ -97,7 +123,10 @@ def process_podsettings(queue: Queue, state: Dict[str, Any], replicator_id: int)
             else:
                 logger.debug("Skipping PodSetting event: %s", dump_resource(podsetting_event))
         except Exception:
-            logger.exception("Failed to process PodSetting event: %s", dump_resource(podsetting_event))
+            logger.exception(
+                "Failed to process PodSetting event: %s",
+                dump_resource(podsetting_event),
+            )
         finally:
             podsetting_event = None
             time.sleep(1)

@@ -13,11 +13,11 @@
 #    limitations under the License.
 
 import json
+import time
 from multiprocessing import Queue
 from typing import Any, Dict, Optional, cast
 
-import time
-from aws_orbit_admission_controller import load_config, logger, run_command, dump_resource
+from aws_orbit_admission_controller import dump_resource, load_config, logger, run_command
 from kubernetes.client import CoreV1Api, V1ConfigMap
 from kubernetes.client import exceptions as k8s_exceptions
 from kubernetes.watch import Watch
@@ -64,22 +64,22 @@ def process_removed_event(namespace: Dict[str, Any]) -> None:
             return
 
         team_context = get_team_context(team)
-        logger.info('team context keys: %s', team_context.keys())
+        logger.info("team context keys: %s", team_context.keys())
         helm_repo_url = team_context["UserHelmRepository"]
-        repo = f'{team}--userspace'
+        repo = f"{team}--userspace"
         # add the team repo
         run_command(f"helm repo add {repo} {helm_repo_url}")
         run_command(f"helm search repo --devel {repo} -o json > /tmp/charts.json")
-        with open('/tmp/charts.json', 'r') as f:
+        with open("/tmp/charts.json", "r") as f:
             charts = json.load(f)
         run_command(f"helm list -n {team} -o json > /tmp/releases.json")
-        with open('/tmp/releases.json', 'r') as f:
+        with open("/tmp/releases.json", "r") as f:
             releaseList = json.load(f)
-            releases = [r['name'] for r in releaseList]
-            logger.info('current installed releases: %s', releases)
+            releases = [r["name"] for r in releaseList]
+            logger.info("current installed releases: %s", releases)
 
         for chart in charts:
-            chart_name = chart['name'].split('/')[1]
+            chart_name = chart["name"].split("/")[1]
             helm_release = f"{namespace_name}-{chart_name}"
             if helm_release in releases:
                 uninstall_chart(helm_release, team)
@@ -120,36 +120,53 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
         return
 
     team_context = get_team_context(team)
-    logger.info('team context keys: %s', team_context.keys())
+    logger.info("team context keys: %s", team_context.keys())
     helm_repo_url = team_context["UserHelmRepository"]
     logger.debug("Adding Helm Repository: %s at %s", team, helm_repo_url)
-    repo = f'{team}--userspace'
+    repo = f"{team}--userspace"
     # add the team repo
     run_command(f"helm repo add {repo} {helm_repo_url}")
 
     run_command(f"helm search repo --devel {repo} -o json > /tmp/charts.json")
-    with open('/tmp/charts.json', 'r') as f:
+    with open("/tmp/charts.json", "r") as f:
         charts = json.load(f)
 
     run_command(f"helm list -n {team} -o json > /tmp/releases.json")
-    with open('/tmp/releases.json', 'r') as f:
+    with open("/tmp/releases.json", "r") as f:
         releaseList = json.load(f)
-        releases = [r['name'] for r in releaseList]
-        logger.info('current installed releases: %s', releases)
+        releases = [r["name"] for r in releaseList]
+        logger.info("current installed releases: %s", releases)
 
     for chart in charts:
-        chart_name = chart['name'].split('/')[1]
+        chart_name = chart["name"].split("/")[1]
         helm_release = f"{namespace_name}-{chart_name}"
         # do not install again the chart if its already installed as some charts are not upgradable.
         # namespaces might
         if helm_release not in releaseList:
             # install the helm package for this user space
-            install_helm_chart(helm_release, namespace_name, team, user, user_email, user_efsapid, repo, chart_name)
+            install_helm_chart(
+                helm_release,
+                namespace_name,
+                team,
+                user,
+                user_email,
+                user_efsapid,
+                repo,
+                chart_name,
+            )
             logger.info("Helm release %s installed at %s", helm_release, namespace_name)
 
 
-def install_helm_chart(helm_release: str, namespace: str, team: str, user: str, user_email: str,
-                       user_efsapid: str, repo: str, package: str) -> None:
+def install_helm_chart(
+    helm_release: str,
+    namespace: str,
+    team: str,
+    user: str,
+    user_email: str,
+    user_efsapid: str,
+    repo: str,
+    package: str,
+) -> None:
     cmd = (
         f"/usr/local/bin/helm upgrade --install --devel --debug --namespace {team} "
         f"{helm_release} {repo}/{package} "
@@ -194,15 +211,25 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
             logger.info("Monitoring Namespaces")
             watcher = Watch()
 
-            kwargs = {"label_selector": "orbit/space", "resource_version": state.get("lastResourceVersion", 0)}
+            kwargs = {
+                "label_selector": "orbit/space",
+                "resource_version": state.get("lastResourceVersion", 0),
+            }
             for event in watcher.stream(client.list_namespace, **kwargs):
                 namespace = event["object"]
                 state["lastResourceVersion"] = namespace.metadata.resource_version
                 queue_event = {"type": event["type"], "raw_object": event["raw_object"]}
-                logger.debug("Queueing Namespace event for processing, type: %s raw_object: %s", event["type"], dump_resource(event["raw_object"]))
+                logger.debug(
+                    "Queueing Namespace event for processing, type: %s raw_object: %s",
+                    event["type"],
+                    dump_resource(event["raw_object"]),
+                )
                 queue.put(queue_event)
         except ReadTimeoutError:
-            logger.warning("There was a timeout error accessing the Kubernetes API. Retrying request.", exc_info=True)
+            logger.warning(
+                "There was a timeout error accessing the Kubernetes API. Retrying request.",
+                exc_info=True,
+            )
             time.sleep(1)
         except k8s_exceptions.ApiException as ae:
             if ae.reason.startswith("Expired: too old resource version"):
@@ -216,7 +243,8 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
             raise
         else:
             logger.warning(
-                "Watch died gracefully, starting back up with last_resource_version: %s", state["lastResourceVersion"]
+                "Watch died gracefully, starting back up with last_resource_version: %s",
+                state["lastResourceVersion"],
             )
 
 
@@ -233,7 +261,11 @@ def process_namespaces(queue: Queue, state: Dict[str, Any], replicator_id: int) 
             elif namespace_event["type"] == "DELETED":
                 process_removed_event(namespace=namespace_event["raw_object"])
             else:
-                logger.debug("Skipping Namespace event, type: %s raw_objet: %s", namespace_event["type"], dump_resource(namespace_event["raw_object"]))
+                logger.debug(
+                    "Skipping Namespace event, type: %s raw_objet: %s",
+                    namespace_event["type"],
+                    dump_resource(namespace_event["raw_object"]),
+                )
         except Exception:
             logger.exception("Failed to process Namespace event: %s", namespace_event)
         finally:

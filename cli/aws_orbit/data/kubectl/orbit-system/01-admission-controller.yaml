@@ -11,6 +11,7 @@ data:
   ADMISSION_CONTROLLER_DEBUG: "1"
   IN_CLUSTER_DEPLOYMENT: "1"
   NAMESPACE_WATCHER_WORKERS: "1"
+  POD_DEFAULTS_WATCHER_WORKERS: "1"
   POD_SETTINGS_WATCHER_WORKERS: "1"
 ---
 apiVersion: v1
@@ -23,11 +24,11 @@ data: {}
 kind: Service
 apiVersion: v1
 metadata:
-  name: podsettings-applicator
+  name: podsettings-pod-modifier
   namespace: orbit-system
 spec:
   selector:
-    app: podsettings-applicator
+    app: podsettings-pod-modifier
   ports:
   - name: https
     protocol: TCP
@@ -37,9 +38,9 @@ spec:
 kind: MutatingWebhookConfiguration
 apiVersion: admissionregistration.k8s.io/v1beta1
 metadata:
-  name: orbit-podsettings-applicator
+  name: orbit-podsettings-pod-modifier
 webhooks:
-  - name: podsettings-applicator.orbit-system.svc
+  - name: podsettings-pod-modifier.orbit-system.svc
     sideEffects: None
     reinvocationPolicy: IfNeeded
     failurePolicy: Fail
@@ -60,7 +61,7 @@ webhooks:
       caBundle: ""
       service:
         namespace: orbit-system
-        name: podsettings-applicator
+        name: podsettings-pod-modifier
         path: /pod
 ---
 apiVersion: apps/v1
@@ -69,20 +70,20 @@ metadata:
   labels:
     app: admission-controller
   namespace: orbit-system
-  name: podsettings-applicator
+  name: podsettings-pod-modifier
 spec:
   podManagementPolicy: OrderedReady
   replicas: 1
   revisionHistoryLimit: 10
-  serviceName: podsettings-applicator
+  serviceName: podsettings-pod-modifier
   selector:
     matchLabels:
-      app: podsettings-applicator
+      app: podsettings-pod-modifier
   template:
     metadata:
       labels:
-        app: podsettings-applicator
-      name: podsettings-applicator
+        app: podsettings-pod-modifier
+      name: podsettings-pod-modifier
       annotations:
         sidecar.istio.io/inject: "false"
     spec:
@@ -138,7 +139,7 @@ spec:
       volumes:
         - name: admission-controller-certs
           secret:
-            secretName: podsettings-applicator-certs
+            secretName: podsettings-pod-modifier-certs
         - name: admission-controller-state
           configMap:
             name: admission-controller-state
@@ -233,6 +234,59 @@ spec:
             - podsettings
           args:
             - "--workers=$(POD_SETTINGS_WATCHER_WORKERS)"
+          volumeMounts:
+            - mountPath: /state
+              name: admission-controller-state
+              readOnly: false
+          resources:
+            limits:
+              cpu: 2
+              memory: 2G
+            requests:
+              cpu: 100m
+              memory: 100M
+      volumes:
+        - name: admission-controller-state
+          configMap:
+            name: admission-controller-state
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: admission-controller
+  namespace: orbit-system
+  name: poddefaults-watcher
+spec:
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  revisionHistoryLimit: 10
+  serviceName: ""
+  selector:
+    matchLabels:
+      app: poddefaults-watcher
+  template:
+    metadata:
+      labels:
+        app: poddefaults-watcher
+      name: poddefaults-watcher
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: orbit-${env_name}-admin
+      containers:
+        - name: watcher
+          image: ${admission_controller_image}
+          imagePullPolicy: ${image_pull_policy}
+          envFrom:
+            - configMapRef:
+                name: admission-controller-config
+          command:
+            - admission-controller
+            - watch
+            - poddefaults
+          args:
+            - "--workers=$(POD_DEFAULTS_WATCHER_WORKERS)"
           volumeMounts:
             - mountPath: /state
               name: admission-controller-state
