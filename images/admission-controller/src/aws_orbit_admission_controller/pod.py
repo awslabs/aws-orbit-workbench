@@ -44,7 +44,7 @@ def get_namespace(client: dynamic.DynamicClient, name: str) -> Optional[Dict[str
 
 
 def filter_pod_settings(
-        logger: logging.Logger, pod_settings: List[Dict[str, Any]], namespace: str, pod: Dict[str, Any]
+    logger: logging.Logger, pod_settings: List[Dict[str, Any]], namespace: str, pod: Dict[str, Any]
 ) -> List[Dict[str, Any]]:
     filtered_pod_settings: List[Dict[str, Any]] = []
 
@@ -122,7 +122,7 @@ def filter_pod_settings(
 
 
 def filter_pod_containers(
-        containers: List[Dict[str, Any]], pod: Dict[str, Any], container_selector: Dict[str, str]
+    containers: List[Dict[str, Any]], pod: Dict[str, Any], container_selector: Dict[str, str]
 ) -> List[Dict[str, Any]]:
     filtered_containers = []
 
@@ -145,7 +145,7 @@ def filter_pod_containers(
 
 
 def apply_settings_to_pod(
-        namespace: Dict[str, Any], pod_setting: Dict[str, Any], pod: Dict[str, Any], logger: logging.Logger
+    namespace: Dict[str, Any], pod_setting: Dict[str, Any], pod: Dict[str, Any], logger: logging.Logger
 ) -> None:
     ps_spec = pod_setting["spec"]
     pod_spec = pod["spec"]
@@ -181,21 +181,31 @@ def apply_settings_to_pod(
         # Extend pod volumes with pod_setting volumes
         pod_spec["volumes"].extend(ps_spec.get("volumes", []))
 
+    # Extend podsetting ENV
+    if "notebookApp" in ps_spec:
+        ps_spec["env"].append(
+            {
+                "name": "NB_PREFIX",
+                "value": f"/notebook/{pod_spec.get('metadata', {}).get('namespace')}"
+                f"/{pod_spec.get('metadata', {}).get('labels', {}).get('notebook-name')}/{ps_spec['notebookApp']})",
+            }
+        )
+
     for container in filter_pod_containers(
-            containers=pod_spec.get("initContainers", []),
-            pod=pod_spec,
-            container_selector=ps_spec.get("containerSelector", {}),
+        containers=pod_spec.get("initContainers", []),
+        pod=pod_spec,
+        container_selector=ps_spec.get("containerSelector", {}),
     ):
         apply_settings_to_container(namespace=namespace, pod_setting=pod_setting, container=container)
     for container in filter_pod_containers(
-            containers=pod_spec.get("containers", []), pod=pod, container_selector=ps_spec.get("containerSelector", {})
+        containers=pod_spec.get("containers", []), pod=pod, container_selector=ps_spec.get("containerSelector", {})
     ):
         apply_settings_to_container(namespace=namespace, pod_setting=pod_setting, container=container)
     logger.debug("modified pod: %s", pod)
 
 
 def apply_settings_to_container(
-        namespace: Dict[str, Any], pod_setting: Dict[str, Any], container: Dict[str, Any]
+    namespace: Dict[str, Any], pod_setting: Dict[str, Any], container: Dict[str, Any]
 ) -> None:
     ns_labels = namespace["metadata"].get("labels", {})
     ns_annotations = namespace["metadata"].get("annotations", {})
