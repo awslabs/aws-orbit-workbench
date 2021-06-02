@@ -69,7 +69,7 @@ spec:
         command: ["/bin/bash"]
         resources:
           limits:
-            cpu: 4
+            cpu: "4"
             memory: 4Gi
           requests:
             cpu: "200m"
@@ -77,9 +77,9 @@ spec:
         args:
           - -c
           - >-
-             mkdir -p /home/jovyan/shared/voila &&
-             cd /home/jovyan/shared/voila &&
-             voila --no-browser --port 4100 --base_url=/services/voila-server/ --debug
+             mkdir -p {{.Values.path}} &&
+             cd {{.Values.path}} &&
+             voila --no-browser --port 4100 --base_url=/voila/ {{.Values.options}}
         volumeMounts:
           - mountPath: /home/jovyan/shared
             name: efs-volume

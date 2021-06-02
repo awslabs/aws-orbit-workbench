@@ -6,5 +6,7 @@ else
   echo "must be inside images/jupyter-user directory"
 fi
 
-cd ../../jupyterlab_orbit
-jlpm run build --no-minimize --dev-build --source-map=True
+#cd ../../jupyterlab_orbit
+#jlpm run build --no-minimize --dev-build --source-map=True
+
+pip install --upgrade --no-cache-dir -e ../../jupyterlab_orbit

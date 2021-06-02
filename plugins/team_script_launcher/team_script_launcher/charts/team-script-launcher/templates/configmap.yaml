@@ -4,7 +4,7 @@ kind: ConfigMap
 metadata:
   name: {{ .Values.configMapName }}
   labels:
-    {{- include "team_script_launcher.labels" . | nindent 4 }}
+    {{- include "team-script-launcher.labels" . | nindent 4 }}
   namespace: {{ .Values.namespace }}
 data:
   {{ .Values.scriptFile }}: |

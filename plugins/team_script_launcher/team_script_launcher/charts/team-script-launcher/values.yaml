@@ -31,7 +31,7 @@ restartPolicy: ${restart_policy}
 podLabels:
   orbit/node-type: ec2
   orbit/attach-security-group: "yes"
-  app: "orbit/team_script_launcher"
+  app: "orbit/team-script-launcher"
 
 jobResoures:
   limits:
