@@ -15,13 +15,13 @@
 from setuptools import find_packages, setup
 
 setup(
-    name="aws-orbit-workbench-admission-controller",
+    name="orbit-controller",
     version="0.1.0",
     author="AWS Professional Services",
     author_email="aws-proserve-opensource@amazon.com",
     url="https://github.com/awslabs/aws-orbit-workbench",
     project_urls={"Org Site": "https://aws.amazon.com/professional-services/"},
-    packages=find_packages(include=["aws_orbit_admission_controller", "aws_orbit_admission_controller.*"]),
+    packages=find_packages(include=["orbit_controller", "orbit_controller.*"]),
     python_requires=">=3.7, <3.9",
     install_requires=[
         "boto3~=1.12",
@@ -37,6 +37,6 @@ setup(
         "cryptography~=3.4.7",
         "python-jose~=3.2.0",
     ],
-    entry_points={"console_scripts": ["admission-controller = aws_orbit_admission_controller.__main__:main"]},
+    entry_points={"console_scripts": ["orbit-controller = orbit_controller.__main__:main"]},
     include_package_data=True,
 )

@@ -161,10 +161,8 @@ def deploy_images_remotely(manifest: Manifest, context: "Context", skip_images: 
         images.append(("image-replicator", "image-replicator", None, []))
     if not (manifest.images.k8s_utilities.get_source(context.account_id, context.region) == "code" and skip_images):
         images.append(("k8s-utilities", "k8s-utilities", None, []))
-    if not (
-        manifest.images.admission_controller.get_source(context.account_id, context.region) == "code" and skip_images
-    ):
-        images.append(("admission-controller", "admission-controller", None, []))
+    if not (manifest.images.orbit_controller.get_source(context.account_id, context.region) == "code" and skip_images):
+        images.append(("orbit-controller", "orbit-controller", None, []))
 
     # Secondary images we can optionally skip
     if not skip_images:
