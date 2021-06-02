@@ -12,3 +12,29 @@ spec:
   resources:
     requests:
       storage: {{ .Values.storage }}
+  volumeName: {{.Values.fs_name}}-{{.Values.user}}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{.Values.fs_name}}-{{.Values.user}}
+  labels:
+    {{- include "fsx-filesystem.labels" . | nindent 4 }}
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: {{.Values.storage }}
+  csi:
+    driver: fsx.csi.aws.com
+    fsType: ext4
+    volumeAttributes:
+      dnsname: {{ .Values.csi.dnsname }}
+      mountname: {{ .Values.csi.mountname }}
+      storage.kubernetes.io/csiProvisionerIdentity: {{ .Values.csi.csiProvisionerIdentity }}
+    volumeHandle: {{ .Values.volumeHandle }}
+  mountOptions:
+  - flock
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: {{.Values.storageClassName}}
+  volumeMode: Filesystem

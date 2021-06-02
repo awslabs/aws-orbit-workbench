@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -12,3 +13,24 @@ spec:
   resources:
     requests:
       storage: {{ .Values.storage }}
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: chmod-fsx-pod
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "fsx-storageclass.labels" . | nindent 4 }}
+spec:
+  containers:
+  - name: ownership-change
+    image: {{.Values.image_repository}}
+    command: ["sh", "-c", "chown -hR +999:+65534 /data"]
+    volumeMounts:
+    - name: persistent-storage
+      mountPath: /data
+  volumes:
+  - name: persistent-storage
+    persistentVolumeClaim:
+      claimName: {{ .Values.fs_name }}

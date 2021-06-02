@@ -45,6 +45,7 @@ def deploy(
         env_name=context.name,
         restart_policy=parameters["restartPolicy"] if "restartPolicy" in parameters else "Always",
         path=parameters["path"] if "path" in parameters else "/home/jovyan/shared/voila",
+        options=parameters["options"] if "options" in parameters else "",
         plugin_id=plugin_id,
         toolkit_s3_bucket=context.toolkit.s3_bucket,
         image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",

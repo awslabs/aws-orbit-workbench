@@ -1,3 +1,8 @@
+-   PluginId: custom_cfn
+    Module: custom_cfn
+    Path: ../plugins/custom_cfn/
+    Parameters:
+        CfnTemplatePath: "./bundle/plugins/demo-lake-user-cfn-template.yaml"
 -   PluginId: code_commit
     Module: code_commit
     Path: ../plugins/code_commit/
@@ -40,11 +45,7 @@
         use_fips_ssl: "true"
         node_type: "DC2.large"
         number_of_nodes: "2"
--   PluginId: custom_cfn
-    Module: custom_cfn
-    Path: ../plugins/custom_cfn/
-    Parameters:
-        CfnTemplatePath: "./bundle/plugins/demo-lake-user-cfn-template.yaml"
+
 -   PluginId: enable_emr_on_eks
     Module: emr_on_eks
     Path: ../plugins/emr_on_eks/
@@ -53,7 +54,7 @@
     Path: ../plugins/lustre/
     Parameters:
         storage: 1200Gi
-        folder: data
+        folder: /fsx/data
 -   PluginId: ray
     Module: ray
     Path: ../plugins/ray/
@@ -69,3 +70,4 @@
     Parameters:
         restartPolicy: Always
         path: "/home/jovyan/shared/notebooks/V-Voila"
+        options: "--debug"
