@@ -80,6 +80,8 @@ spec:
                   type: string
                 injectUserContext:
                   type: boolean
+                notebookApp:
+                  type: string
                 containerSelector:
                   type: object
                   properties:
