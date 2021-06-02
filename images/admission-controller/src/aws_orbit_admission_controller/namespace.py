@@ -13,10 +13,10 @@
 #    limitations under the License.
 
 import json
+import time
 from multiprocessing import Queue
 from typing import Any, Dict, Optional, cast
 
-import time
 from aws_orbit_admission_controller import load_config, logger, run_command
 from kubernetes.client import CoreV1Api, V1ConfigMap
 from kubernetes.client import exceptions as k8s_exceptions
@@ -38,13 +38,13 @@ def process_removed_event(namespace: Dict[str, Any]) -> None:
     logger.info("processing removed namespace %s", namespace)
     space = labels.get("orbit/space", None)
 
-    if space == 'team':
+    if space == "team":
         logger.info("delete all namespaces that belong to the team %s", namespace_name)
         run_command(f"kubectl delete profile -l orbit/team={namespace_name}")
         time.sleep(60)
         run_command(f"kubectl delete namespace -l orbit/team={namespace_name}")
         logger.info("all namespaces that belong to the team %s are deleted", namespace_name)
-    elif space == 'user':
+    elif space == "user":
         env = labels.get("orbit/env", None)
         team = labels.get("orbit/team", None)
         user = labels.get("orbit/user", None)
@@ -64,22 +64,22 @@ def process_removed_event(namespace: Dict[str, Any]) -> None:
             return
 
         team_context = get_team_context(team)
-        logger.info('team context keys: %s', team_context.keys())
+        logger.info("team context keys: %s", team_context.keys())
         helm_repo_url = team_context["UserHelmRepository"]
-        repo = f'{team}--userspace'
+        repo = f"{team}--userspace"
         # add the team repo
         run_command(f"helm repo add {repo} {helm_repo_url}")
         run_command(f"helm search repo --devel {repo} -o json > /tmp/charts.json")
-        with open('/tmp/charts.json', 'r') as f:
+        with open("/tmp/charts.json", "r") as f:
             charts = json.load(f)
         run_command(f"helm list -n {team} -o json > /tmp/releases.json")
-        with open('/tmp/releases.json', 'r') as f:
+        with open("/tmp/releases.json", "r") as f:
             releaseList = json.load(f)
-            releases = [r['name'] for r in releaseList]
-            logger.info('current installed releases: %s', releases)
+            releases = [r["name"] for r in releaseList]
+            logger.info("current installed releases: %s", releases)
 
         for chart in charts:
-            chart_name = chart['name'].split('/')[1]
+            chart_name = chart["name"].split("/")[1]
             helm_release = f"{namespace_name}-{chart_name}"
             if helm_release in releases:
                 uninstall_chart(helm_release, team)
@@ -120,25 +120,25 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
         return
 
     team_context = get_team_context(team)
-    logger.info('team context keys: %s', team_context.keys())
+    logger.info("team context keys: %s", team_context.keys())
     helm_repo_url = team_context["UserHelmRepository"]
     logger.debug("Adding Helm Repository: %s at %s", team, helm_repo_url)
-    repo = f'{team}--userspace'
+    repo = f"{team}--userspace"
     # add the team repo
     run_command(f"helm repo add {repo} {helm_repo_url}")
 
     run_command(f"helm search repo --devel {repo} -o json > /tmp/charts.json")
-    with open('/tmp/charts.json', 'r') as f:
+    with open("/tmp/charts.json", "r") as f:
         charts = json.load(f)
 
     run_command(f"helm list -n {team} -o json > /tmp/releases.json")
-    with open('/tmp/releases.json', 'r') as f:
+    with open("/tmp/releases.json", "r") as f:
         releaseList = json.load(f)
-        releases = [r['name'] for r in releaseList]
-        logger.info('current installed releases: %s', releases)
+        releases = [r["name"] for r in releaseList]
+        logger.info("current installed releases: %s", releases)
 
     for chart in charts:
-        chart_name = chart['name'].split('/')[1]
+        chart_name = chart["name"].split("/")[1]
         helm_release = f"{namespace_name}-{chart_name}"
         # do not install again the chart if its already installed as some charts are not upgradable.
         # namespaces might
@@ -148,8 +148,9 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
             logger.info("Helm release %s installed at %s", helm_release, namespace_name)
 
 
-def install_helm_chart(helm_release: str, namespace: str, team: str, user: str, user_email: str,
-                       user_efsapid: str, repo: str, package: str) -> None:
+def install_helm_chart(
+    helm_release: str, namespace: str, team: str, user: str, user_email: str, user_efsapid: str, repo: str, package: str
+) -> None:
     cmd = (
         f"/usr/local/bin/helm upgrade --install --devel --debug --namespace {team} "
         f"{helm_release} {repo}/{package} "
@@ -163,9 +164,7 @@ def install_helm_chart(helm_release: str, namespace: str, team: str, user: str, 
 
 
 def uninstall_chart(helm_release: str, namespace: str) -> None:
-    cmd = (
-        f"/usr/local/bin/helm uninstall --debug --namespace {namespace} {helm_release}"
-    )
+    cmd = f"/usr/local/bin/helm uninstall --debug --namespace {namespace} {helm_release}"
     logger.debug("running uninstall cmd: %s", cmd)
     output = run_command(cmd)
     logger.debug(output)

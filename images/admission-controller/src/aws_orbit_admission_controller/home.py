@@ -17,14 +17,14 @@ import base64
 import json
 import logging
 import os
-from typing import Any, Dict, cast, List, Union, Optional
-from urllib.parse import urlparse, urlencode
+import time
+from typing import Any, Dict, List, Optional, Union, cast
+from urllib.parse import urlencode, urlparse
 
 import jwt
 import requests
-import time
 from aws_orbit_admission_controller import get_client
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, jsonify, render_template, request
 from jose import jwk, jwt
 from jose.utils import base64url_decode
 from kubernetes import dynamic
@@ -52,23 +52,28 @@ def login(logger: logging.Logger, app: Flask) -> Any:
     logger.debug("user space is READY? %s", ready)
 
     client_id, cognito_domain, hostname, logout_uri = get_logout_url(logger)
-    env_name = os.environ['ENV_NAME']
-    return render_template('index.html', title='login',
-                           username=username, hostname=hostname,
-                           logout_uri=logout_uri, client_id=client_id,
-                           cognito_domain=cognito_domain,
-                           teams=groups,
-                           env_name=env_name)
+    env_name = os.environ["ENV_NAME"]
+    return render_template(
+        "index.html",
+        title="login",
+        username=username,
+        hostname=hostname,
+        logout_uri=logout_uri,
+        client_id=client_id,
+        cognito_domain=cognito_domain,
+        teams=groups,
+        env_name=env_name,
+    )
 
 
 def get_logout_url(logger):
     base_url = request.base_url
     hostname = urlparse(base_url).hostname
-    client_id = os.environ['COGNITO_APP_CLIENT_ID']
-    logger.debug('clientid=%s', client_id)
-    cognito_domain = os.environ['COGNITO_DOMAIN']
+    client_id = os.environ["COGNITO_APP_CLIENT_ID"]
+    logger.debug("clientid=%s", client_id)
+    cognito_domain = os.environ["COGNITO_DOMAIN"]
     logout_uri = f"https://{hostname}/orbit/logout"
-    params = {'logout_uri': logout_uri, 'client_id': client_id}
+    params = {"logout_uri": logout_uri, "client_id": client_id}
     param_str = urlencode(params)
     logout_redirect_url = f"https://{os.environ['COGNITO_DOMAIN']}/logout?{param_str}"
     logger.debug("logout url: %s", logout_redirect_url)
@@ -76,16 +81,16 @@ def get_logout_url(logger):
 
 
 def logout(logger: logging.Logger, app: Flask) -> Any:
-    return render_template('logout.html', title='Orbit Session ended')
+    return render_template("logout.html", title="Orbit Session ended")
 
 
 def _is_profile_ready_for_user(logger: logging.Logger, username: str, email: str):
     profiles = _get_kf_profiles(get_client())
     for p in profiles:
-        logger.debug('profile %s', json.dumps(p))
+        logger.debug("profile %s", json.dumps(p))
         owner = p["spec"].get("owner", {})
-        logger.debug('owner %s', json.dumps(owner))
-        user_email = owner.get('name', None)
+        logger.debug("owner %s", json.dumps(owner))
+        user_email = owner.get("name", None)
         if user_email and user_email == email:
             return True
     return False
@@ -93,7 +98,7 @@ def _is_profile_ready_for_user(logger: logging.Logger, username: str, email: str
 
 def _get_kf_profiles(client: dynamic.DynamicClient) -> List[Dict[str, Any]]:
     try:
-        api = client.resources.get(api_version='v1', group="kubeflow.org", kind="Profile")
+        api = client.resources.get(api_version="v1", group="kubeflow.org", kind="Profile")
         profiles = api.get()
         return cast(List[Dict[str, Any]], profiles.to_dict().get("items", []))
     except dynamic.exceptions.ResourceNotFoundError:
@@ -103,39 +108,39 @@ def _get_kf_profiles(client: dynamic.DynamicClient) -> List[Dict[str, Any]]:
 # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html
 def _get_user_info_from_jwt(logger):
     logger.debug("headers: %s", json.dumps(dict(request.headers)))
-    encoded_jwt = request.headers['x-amzn-oidc-data']
+    encoded_jwt = request.headers["x-amzn-oidc-data"]
     logger.debug("encoded_jwt 'x-amzn-oidc-data':\n %s", encoded_jwt)
-    jwt_headers = encoded_jwt.split('.')[0]
+    jwt_headers = encoded_jwt.split(".")[0]
     decoded_jwt_headers = base64.b64decode(jwt_headers)
     decoded_jwt_headers = decoded_jwt_headers.decode("utf-8")
     decoded_json = json.loads(decoded_jwt_headers)
-    kid = decoded_json['kid']
-    region = os.environ['AWS_REGION']
+    kid = decoded_json["kid"]
+    region = os.environ["AWS_REGION"]
     # Step 2: Get the public key from regional endpoint
-    url = 'https://public-keys.auth.elb.' + region + '.amazonaws.com/' + kid
+    url = "https://public-keys.auth.elb." + region + ".amazonaws.com/" + kid
     req = requests.get(url)
     pub_key = req.text
     # Step 3: Get the payload
-    payload = jwt.decode(encoded_jwt, pub_key, algorithms=['ES256'])
+    payload = jwt.decode(encoded_jwt, pub_key, algorithms=["ES256"])
     logger.debug("payload:\n %s", payload)
-    username = payload['username']
-    email = payload['email']
+    username = payload["username"]
+    email = payload["email"]
     return email, username
 
 
 def _get_user_groups_from_jwt(logger):
     logger.debug("headers: %s", json.dumps(dict(request.headers)))
-    encoded_jwt = request.headers['X-Amzn-Oidc-Accesstoken']
+    encoded_jwt = request.headers["X-Amzn-Oidc-Accesstoken"]
     logger.debug("encoded_jwt 'X-Amzn-Oidc-Accesstoken':\n %s", encoded_jwt)
     claims = get_claims(logger, encoded_jwt)
-    groups = claims['cognito:groups'] if 'cognito:groups' in claims else []
+    groups = claims["cognito:groups"] if "cognito:groups" in claims else []
     return groups
 
 
 def _get_keys(logger) -> List[Dict[str, str]]:
     global _cognito_keys
-    region = os.environ['AWS_REGION']
-    user_pool_id = os.environ['COGNITO_USERPOOL_ID']
+    region = os.environ["AWS_REGION"]
+    user_pool_id = os.environ["COGNITO_USERPOOL_ID"]
     if _cognito_keys is None:
         logger.debug("Fetching keys...")
         url: str = f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}/.well-known/jwks.json"
@@ -144,7 +149,7 @@ def _get_keys(logger) -> List[Dict[str, str]]:
 
 
 def get_claims(logger, token: str) -> Dict[str, Union[str, int]]:
-    client_id = os.environ['COGNITO_APP_CLIENT_ID']
+    client_id = os.environ["COGNITO_APP_CLIENT_ID"]
     # get the kid from the headers prior to verification
     headers: Dict[str, str] = cast(Dict[str, str], jwt.get_unverified_headers(token=token))
     kid: str = headers["kid"]
