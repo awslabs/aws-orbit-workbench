@@ -213,7 +213,7 @@ typing-extensions==3.7.4.3
     #   black
     #   importlib-metadata
     #   mypy
-urllib3==1.26.4
+urllib3==1.26.5
     # via
     #   botocore
     #   kubernetes

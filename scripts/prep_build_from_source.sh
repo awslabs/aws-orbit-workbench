@@ -7,6 +7,7 @@ source $( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/vars
 CLI=0
 SDK=0
 PLUGINS=0
+LAB=0
 
 for ARG in "$@"
 do
@@ -23,10 +24,15 @@ do
         PLUGINS=1
         shift # Remove --sdk from processing
         ;;
+        --lab)
+        LAB=1
+        shift # Remove --lab from processing
+        ;;
         --all)
         CLI=1
         SDK=1
         PLUGINS=1
+        LAB=1
         shift # Remove --sdk from processing
         ;;
     esac
@@ -46,6 +52,12 @@ if [ $SDK -eq 1 ]; then
     ${DIR}/update_repo.sh sdk ${DOMAIN}-sdk \
         && echo "Updated SDK codeartifact repository" \
         || (echo "ERROR: Failed to update SDK codeartifact repository"; exit 1)
+fi
+
+if [ $LAB -eq 1 ]; then
+    ${DIR}/update_repo.sh jupyterlab_orbit jupyterlab-orbit \
+        && echo "Updated Jupyterlab-orbit codeartifact repository" \
+        || (echo "ERROR: Failed to update Jupyterlab-orbit codeartifact repository"; exit 1)
 fi
 
 if [ $PLUGINS -eq 1 ]; then

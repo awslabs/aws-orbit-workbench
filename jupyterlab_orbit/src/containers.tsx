@@ -203,7 +203,11 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
     // await delay(20000);
 
     let command;
-    if (typeof containerName === 'undefined' || containerName === null || containerName.length === 0) {
+    if (
+      typeof containerName === 'undefined' ||
+      containerName === null ||
+      containerName.length === 0
+    ) {
       command =
         'kubectl -n $AWS_ORBIT_TEAM_SPACE exec --stdin --tty ' +
         podName +
@@ -235,7 +239,11 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
     });
 
     let command;
-    if (typeof containerName === 'undefined' || containerName === null || containerName.length === 0) {
+    if (
+      typeof containerName === 'undefined' ||
+      containerName === null ||
+      containerName.length === 0
+    ) {
       command =
         'kubectl logs -n $AWS_ORBIT_TEAM_SPACE --tail=-1 -f ' + podName + ' \n';
     } else {
