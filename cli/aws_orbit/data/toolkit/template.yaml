@@ -72,6 +72,7 @@ Resources:
               - iam:UploadServerCertificate
               - iam:DeleteServerCertificate
               - iam:ListRoles
+              - iam:ListRolePolicies
               - iam:ListRoleTags
               - iam:GetOpenIDConnectProvider
               - cognito-idp:AdminListGroupsForUser
