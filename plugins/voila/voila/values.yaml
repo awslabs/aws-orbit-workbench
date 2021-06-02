@@ -8,6 +8,8 @@ fullnameOverride: ""
 serviceAccountName: default-editor
 
 urlSelector: ".*ns=-${team}.*"
+path: ${path}
+options: ${options}
 
 securityContext:
   fsGroup: 100

@@ -18,16 +18,15 @@ import json
 import logging
 import os
 import time
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 from urllib.parse import urlencode, urlparse
 
-import jwt
 import requests
-from aws_orbit_admission_controller import get_client
 from flask import Flask, jsonify, render_template, request
 from jose import jwk, jwt
 from jose.utils import base64url_decode
 from kubernetes import dynamic
+from orbit_controller import dynamic_client
 
 _cognito_keys: Optional[List[Dict[str, str]]] = None
 
@@ -66,7 +65,7 @@ def login(logger: logging.Logger, app: Flask) -> Any:
     )
 
 
-def get_logout_url(logger):
+def get_logout_url(logger: logging.Logger) -> Tuple[str, str, str, str]:
     base_url = request.base_url
     hostname = urlparse(base_url).hostname
     client_id = os.environ["COGNITO_APP_CLIENT_ID"]
@@ -77,15 +76,15 @@ def get_logout_url(logger):
     param_str = urlencode(params)
     logout_redirect_url = f"https://{os.environ['COGNITO_DOMAIN']}/logout?{param_str}"
     logger.debug("logout url: %s", logout_redirect_url)
-    return client_id, cognito_domain, hostname, logout_uri
+    return client_id, cognito_domain, str(hostname), logout_uri
 
 
 def logout(logger: logging.Logger, app: Flask) -> Any:
     return render_template("logout.html", title="Orbit Session ended")
 
 
-def _is_profile_ready_for_user(logger: logging.Logger, username: str, email: str):
-    profiles = _get_kf_profiles(get_client())
+def _is_profile_ready_for_user(logger: logging.Logger, username: str, email: str) -> bool:
+    profiles = _get_kf_profiles(dynamic_client())
     for p in profiles:
         logger.debug("profile %s", json.dumps(p))
         owner = p["spec"].get("owner", {})
@@ -106,13 +105,13 @@ def _get_kf_profiles(client: dynamic.DynamicClient) -> List[Dict[str, Any]]:
 
 
 # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html
-def _get_user_info_from_jwt(logger):
+def _get_user_info_from_jwt(logger: logging.Logger) -> Tuple[str, str]:
     logger.debug("headers: %s", json.dumps(dict(request.headers)))
     encoded_jwt = request.headers["x-amzn-oidc-data"]
     logger.debug("encoded_jwt 'x-amzn-oidc-data':\n %s", encoded_jwt)
     jwt_headers = encoded_jwt.split(".")[0]
-    decoded_jwt_headers = base64.b64decode(jwt_headers)
-    decoded_jwt_headers = decoded_jwt_headers.decode("utf-8")
+    decoded_jwt_headers_bytes = base64.b64decode(jwt_headers)
+    decoded_jwt_headers = decoded_jwt_headers_bytes.decode("utf-8")
     decoded_json = json.loads(decoded_jwt_headers)
     kid = decoded_json["kid"]
     region = os.environ["AWS_REGION"]
@@ -128,16 +127,16 @@ def _get_user_info_from_jwt(logger):
     return email, username
 
 
-def _get_user_groups_from_jwt(logger):
+def _get_user_groups_from_jwt(logger: logging.Logger) -> List[str]:
     logger.debug("headers: %s", json.dumps(dict(request.headers)))
     encoded_jwt = request.headers["X-Amzn-Oidc-Accesstoken"]
     logger.debug("encoded_jwt 'X-Amzn-Oidc-Accesstoken':\n %s", encoded_jwt)
     claims = get_claims(logger, encoded_jwt)
-    groups = claims["cognito:groups"] if "cognito:groups" in claims else []
-    return groups
+    groups: Union[List[Any], str, int] = claims["cognito:groups"] if "cognito:groups" in claims else []
+    return cast(List[str], groups)
 
 
-def _get_keys(logger) -> List[Dict[str, str]]:
+def _get_keys(logger: logging.Logger) -> List[Dict[str, str]]:
     global _cognito_keys
     region = os.environ["AWS_REGION"]
     user_pool_id = os.environ["COGNITO_USERPOOL_ID"]
@@ -148,8 +147,8 @@ def _get_keys(logger) -> List[Dict[str, str]]:
     return _cognito_keys
 
 
-def get_claims(logger, token: str) -> Dict[str, Union[str, int]]:
-    client_id = os.environ["COGNITO_APP_CLIENT_ID"]
+def get_claims(logger: logging.Logger, token: str) -> Dict[str, Union[str, int]]:
+    # client_id = os.environ["COGNITO_APP_CLIENT_ID"]
     # get the kid from the headers prior to verification
     headers: Dict[str, str] = cast(Dict[str, str], jwt.get_unverified_headers(token=token))
     kid: str = headers["kid"]
@@ -171,11 +170,11 @@ def get_claims(logger, token: str) -> Dict[str, Union[str, int]]:
         raise RuntimeError("Signature verification failed.")
     logger.debug("Signature validaded.")
     # since we passed the verification, we can now safely use the unverified claims
-    claims: Dict[str, Union[str, int]] = cast(Dict[str, Union[str, int]], jwt.get_unverified_claims(token))
+    claims = jwt.get_unverified_claims(token)
     # additionally we can verify the token expiration
     if time.time() > int(claims["exp"]):
         raise ValueError("Token expired.")
     logger.debug("Token not expired.")
     logger.debug("claims: %s", claims)
 
-    return claims
+    return cast(Dict[str, Union[str, int]], claims)

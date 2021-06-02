@@ -15,7 +15,7 @@
 import logging
 import os
 import shutil
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import aws_orbit
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
@@ -51,8 +51,8 @@ def _orbit_system_commons(context: "Context", output_path: str) -> None:
         file.write(content)
 
 
-def _admission_controller(context: "Context", output_path: str) -> None:
-    filenames = ["01-admission-controller.yaml", "01-cert-manager.yaml"]
+def _orbit_controller(context: "Context", output_path: str) -> None:
+    filenames = ["01a-orbit-controller.yaml", "01b-cert-manager.yaml"]
 
     for filename in filenames:
         input = os.path.join(MODELS_PATH, "orbit-system", filename)
@@ -64,11 +64,11 @@ def _admission_controller(context: "Context", output_path: str) -> None:
             content,
             dict(
                 env_name=context.name,
-                admission_controller_image=f"{context.images.admission_controller.repository}:"
-                f"{context.images.admission_controller.version}",
+                orbit_controller_image=f"{context.images.orbit_controller.repository}:"
+                f"{context.images.orbit_controller.version}",
                 k8s_utilities_image=f"{context.images.k8s_utilities.repository}:"
                 f"{context.images.k8s_utilities.version}",
-                image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
+                image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
                 certArn=context.networking.frontend.ssl_cert_arn,
                 cognitoAppClientId=context.user_pool_client_id,
                 cognitoUserPoolID=context.user_pool_id,
@@ -213,7 +213,7 @@ def _generate_kube_system_manifest(context: "Context", clean_up: bool = True) ->
                 env_name=context.name,
                 cluster_name=f"orbit-{context.name}",
                 sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
-                image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "InNotPresent",
+                image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
                 use_static_instance_list=str(not context.networking.data.internet_accessible).lower(),
             ),
         )
@@ -229,7 +229,7 @@ def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -
     if clean_up:
         _cleanup_output(output_path=output_path)
     _orbit_system_commons(context=context, output_path=output_path)
-    _admission_controller(context=context, output_path=output_path)
+    _orbit_controller(context=context, output_path=output_path)
 
     if context.account_id is None:
         raise ValueError("context.account_id is None!")
@@ -248,7 +248,7 @@ def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -
     return output_path
 
 
-def _generate_env_manifest(context: "Context", clean_up: bool = True) -> str:
+def _generate_env_manifest(context: "Context", clean_up: bool = True) -> Tuple[str, str]:
     filename = "00-commons.yaml"
     output_path = os.path.join(".orbit.out", context.name, "kubectl", "env")
     os.makedirs(output_path, exist_ok=True)
@@ -259,7 +259,29 @@ def _generate_env_manifest(context: "Context", clean_up: bool = True) -> str:
     output = os.path.join(output_path, filename)
     shutil.copyfile(src=input, dst=output)
 
-    return output_path
+    # kubeflow jupyter launcher configmap
+    input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-launcher.yaml")
+    output = os.path.join(output_path, "kf-jupyter-launcher.yaml")
+
+    with open(input, "r") as file:
+        content = file.read()
+
+    content = utils.resolve_parameters(
+        content,
+        dict(
+            orbit_jupyter_user_image=f"{context.images.jupyter_user.repository}:{context.images.jupyter_user.version}"
+        ),
+    )
+    with open(output, "w") as file:
+        file.write(content)
+
+    input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-patch.yaml")
+    output = os.path.join(output_path, "kf-jupyter-patch.yaml")
+
+    with open(input, "r") as file:
+        patch = file.read()
+
+    return (output_path, patch)
 
 
 def _prepare_team_context_path(context: "Context") -> str:
@@ -403,14 +425,18 @@ def deploy_env(context: "Context") -> None:
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
         # env
-        output_path = _generate_env_manifest(context=context)
+        (output_path, patch) = _generate_env_manifest(context=context)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
-
+        # Patch Kubeflow
+        _logger.debug("Orbit applying KubeFlow patch")
+        sh.run(f'kubectl patch deployment jupyter-web-app-deployment --patch "{patch}" -n kubeflow')
+        sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
         # Enable ENIs
         sh.run(f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} ENABLE_POD_ENI=true")
 
-        # Restart orbit-system deployments to force reload of caches
+        # Restart orbit-system deployments and statefulsets to force reload of caches etc
         sh.run(f"kubectl rollout restart deployments -n orbit-system --context {k8s_context}")
+        sh.run(f"kubectl rollout restart statefulsets -n orbit-system --context {k8s_context}")
 
 
 def deploy_team(context: "Context", team_context: "TeamContext") -> None:
@@ -420,27 +446,11 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
         k8s_context = get_k8s_context(context=context)
         _logger.debug("kubectl context: %s", k8s_context)
         output_path = _generate_team_context(context=context, team_context=team_context)
-
-        # kubeflow jupyter launcher configmap
-        input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-launcher.yaml")
-        output = os.path.join(output_path, "kf-jupyter-launcher.yaml")
-
-        with open(input, "r") as file:
-            content = file.read()
-        content = utils.resolve_parameters(content, dict(orbit_jupyter_user_image=team_context.base_image_address))
-        with open(output, "w") as file:
-            file.write(content)
-
-        input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-patch.yaml")
-        output = os.path.join(output_path, "kf-jupyter-patch.yaml")
-
-        with open(input, "r") as file:
-            patch = file.read()
-
-        # output_path = _generate_orbit_system_manifest(context=context, clean_up=False)
+        (output_path, patch) = _generate_env_manifest(context=context, clean_up=False)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
-        # Patch
+        # Patch Kubeflow
+        _logger.debug("Orbit applying KubeFlow patch")
         sh.run(f'kubectl patch deployment jupyter-web-app-deployment --patch "{patch}" -n kubeflow')
         sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
 

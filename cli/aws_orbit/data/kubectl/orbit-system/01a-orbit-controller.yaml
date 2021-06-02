@@ -1,12 +1,34 @@
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orbit-controller-config
+  namespace: orbit-system
+data:
+  FLASK_DEBUG: "1"
+  FLASK_ENV: development
+  GUNICORN_WORKERS: "1"
+  ORBIT_CONTROLLER_DEBUG: "1"
+  IN_CLUSTER_DEPLOYMENT: "1"
+  USERSPACE_CHART_MANAGER_WORKERS: "1"
+  POD_DEFAULTS_WATCHER_WORKERS: "1"
+  POD_SETTINGS_WATCHER_WORKERS: "1"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orbit-controller-state
+  namespace: orbit-system
+data: {}
+---
 kind: Service
 apiVersion: v1
 metadata:
-  name: admission-controller-pod-settings-mutator
+  name: podsettings-pod-modifier
   namespace: orbit-system
 spec:
   selector:
-    app: admission-controller-pod-settings-mutator
+    app: podsettings-pod-modifier
   ports:
   - name: https
     protocol: TCP
@@ -16,9 +38,9 @@ spec:
 kind: MutatingWebhookConfiguration
 apiVersion: admissionregistration.k8s.io/v1beta1
 metadata:
-  name: orbit-admission-controller-pod-settings-mutator
+  name: orbit-podsettings-pod-modifier
 webhooks:
-  - name: admission-controller-pod-settings-mutator.orbit-system.svc
+  - name: podsettings-pod-modifier.orbit-system.svc
     sideEffects: None
     reinvocationPolicy: IfNeeded
     failurePolicy: Fail
@@ -39,44 +61,36 @@ webhooks:
       caBundle: ""
       service:
         namespace: orbit-system
-        name: admission-controller-pod-settings-mutator
+        name: podsettings-pod-modifier
         path: /pod
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: admission-controller-config
-  namespace: orbit-system
-data:
-  FLASK_DEBUG: "1"
-  FLASK_ENV: development
-  GUNICORN_WORKERS: "1"
-  ADMISSION_CONTROLLER_DEBUG: "1"
-  IN_CLUSTER_DEPLOYMENT: "1"
-  NAMESPACE_WATCHER_WORKERS: "1"
----
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   labels:
-    app: admission-controller
+    app: orbit-controller
   namespace: orbit-system
-  name: admission-controller-pod-settings-mutator
+  name: podsettings-pod-modifier
 spec:
+  podManagementPolicy: OrderedReady
   replicas: 1
+  revisionHistoryLimit: 10
+  serviceName: podsettings-pod-modifier
   selector:
     matchLabels:
-      app: admission-controller-pod-settings-mutator
+      app: podsettings-pod-modifier
   template:
     metadata:
       labels:
-        app: admission-controller-pod-settings-mutator
-      name: admission-controller-pod-settings-mutator
+        app: podsettings-pod-modifier
+      name: podsettings-pod-modifier
+      annotations:
+        sidecar.istio.io/inject: "false"
     spec:
       serviceAccountName: orbit-${env_name}-admin
       containers:
         - name: webhook
-          image: ${admission_controller_image}
+          image: ${orbit_controller_image}
           imagePullPolicy: ${image_pull_policy}
           ports:
             - containerPort: 443
@@ -84,7 +98,7 @@ spec:
               protocol: TCP
           envFrom:
             - configMapRef:
-                name: admission-controller-config
+                name: orbit-controller-config
           command:
             - gunicorn
           args:
@@ -93,11 +107,14 @@ spec:
             - "--keyfile=/certs/tls.key"
             - "--workers=$(GUNICORN_WORKERS)"
             - "--reload"
-            - "aws_orbit_admission_controller.server:app"
+            - "orbit_controller.server:app"
           volumeMounts:
             - readOnly: true
               mountPath: /certs
-              name: admission-controller-certs
+              name: orbit-controller-certs
+            - mountPath: /state
+              name: orbit-controller-state
+              readOnly: false
           readinessProbe:
             httpGet:
               path: /health
@@ -117,53 +134,145 @@ spec:
               cpu: 2
               memory: 2G
             requests:
-              cpu: 1
-              memory: 1G
+              cpu: 100m
+              memory: 100M
       volumes:
-        - name: admission-controller-certs
+        - name: orbit-controller-certs
           secret:
-            secretName: admission-controller-pod-settings-mutator-certs
+            secretName: podsettings-pod-modifier-certs
+        - name: orbit-controller-state
+          configMap:
+            name: orbit-controller-state
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   labels:
-    app: admission-controller
+    app: orbit-controller
   namespace: orbit-system
-  name: admission-controller-namespace-watcher
+  name: userspace-chart-manager
 spec:
+  podManagementPolicy: OrderedReady
   replicas: 1
+  revisionHistoryLimit: 10
+  serviceName: ""
   selector:
     matchLabels:
-      app: admission-controller-namespace-watcher
+      app: userspace-chart-manager
   template:
     metadata:
       labels:
-        app: admission-controller-namespace-watcher
-      name: admission-controller-namespace-watcher
+        app: userspace-chart-manager
+      name: userspace-chart-manager
+      annotations:
+        sidecar.istio.io/inject: "false"
     spec:
       serviceAccountName: orbit-${env_name}-admin
       containers:
-        - name: namesapce-watcher
-          image: ${admission_controller_image}
+        - name: watcher
+          image: ${orbit_controller_image}
           imagePullPolicy: ${image_pull_policy}
           envFrom:
             - configMapRef:
-                name: admission-controller-config
+                name: orbit-controller-config
           command:
-            - admission-controller
+            - orbit-controller
             - watch
             - namespaces
           args:
-            - "--workers=$(NAMESPACE_WATCHER_WORKERS)"
+            - "--workers=$(USERSPACE_CHART_MANAGER_WORKERS)"
+          volumeMounts:
+            - mountPath: /state
+              name: orbit-controller-state
+              readOnly: false
           resources:
             limits:
               cpu: 2
               memory: 2G
             requests:
-              cpu: 1
-              memory: 1G
+              cpu: 100m
+              memory: 100M
+      volumes:
+        - name: orbit-controller-state
+          configMap:
+            name: orbit-controller-state
 ---
+# apiVersion: apps/v1
+# kind: StatefulSet
+# metadata:
+#   labels:
+#     app: orbit-controller
+#   namespace: orbit-system
+#   name: podsettings-poddefaults-manager
+# spec:
+#   podManagementPolicy: OrderedReady
+#   replicas: 1
+#   revisionHistoryLimit: 10
+#   serviceName: ""
+#   selector:
+#     matchLabels:
+#       app: podsettings-poddefaults-manager
+#   template:
+#     metadata:
+#       labels:
+#         app: podsettings-poddefaults-manager
+#       name: podsettings-poddefaults-manager
+#       annotations:
+#         sidecar.istio.io/inject: "false"
+#     spec:
+#       serviceAccountName: orbit-${env_name}-admin
+#       containers:
+#         - name: podsettings-watcher
+#           image: ${orbit_controller_image}
+#           imagePullPolicy: ${image_pull_policy}
+#           envFrom:
+#             - configMapRef:
+#                 name: orbit-controller-config
+#           command:
+#             - orbit-controller
+#             - watch
+#             - podsettings
+#           args:
+#             - "--workers=$(POD_SETTINGS_WATCHER_WORKERS)"
+#           volumeMounts:
+#             - mountPath: /state
+#               name: orbit-controller-state
+#               readOnly: false
+#           resources:
+#             limits:
+#               cpu: 2
+#               memory: 2G
+#             requests:
+#               cpu: 100m
+#               memory: 100M
+#         - name: poddefaults-watcher
+#           image: ${orbit_controller_image}
+#           imagePullPolicy: ${image_pull_policy}
+#           envFrom:
+#             - configMapRef:
+#                 name: orbit-controller-config
+#           command:
+#             - orbit-controller
+#             - watch
+#             - poddefaults
+#           args:
+#             - "--workers=$(POD_DEFAULTS_WATCHER_WORKERS)"
+#           volumeMounts:
+#             - mountPath: /state
+#               name: orbit-controller-state
+#               readOnly: false
+#           resources:
+#             limits:
+#               cpu: 2
+#               memory: 2G
+#             requests:
+#               cpu: 100m
+#               memory: 100M
+#       volumes:
+#         - name: orbit-controller-state
+#           configMap:
+#             name: orbit-controller-state
+# ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -187,7 +296,7 @@ spec:
       serviceAccountName: orbit-${env_name}-admin
       containers:
         - name: webhook
-          image: ${admission_controller_image}
+          image: ${orbit_controller_image}
           imagePullPolicy: ${image_pull_policy}
           ports:
             - containerPort: 80
@@ -202,7 +311,7 @@ spec:
             - "--bind=0.0.0.0:80"
             - "--workers=$(GUNICORN_WORKERS)"
             - "--reload"
-            - "aws_orbit_admission_controller.server:app"
+            - "orbit_controller.server:app"
           readinessProbe:
             httpGet:
               path: /health
@@ -222,8 +331,8 @@ spec:
               cpu: 2
               memory: 2G
             requests:
-              cpu: 1
-              memory: 1G
+              cpu: 100m
+              memory: 100M
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -234,9 +343,9 @@ data:
   FLASK_DEBUG: "1"
   FLASK_ENV: development
   GUNICORN_WORKERS: "1"
-  ADMISSION_CONTROLLER_DEBUG: "1"
+  ORBIT_CONTROLLER_DEBUG: "1"
   IN_CLUSTER_DEPLOYMENT: "1"
-  NAMESPACE_WATCHER_WORKERS: "1"
+  USERSPACE_CHART_MANAGER_WORKERS: "1"
   COGNITO_USERPOOL_ID: ${cognitoUserPoolID}
   COGNITO_APP_CLIENT_ID: ${cognitoAppClientId}
   COGNITO_DOMAIN: ${cognitoUserPoolDomain}

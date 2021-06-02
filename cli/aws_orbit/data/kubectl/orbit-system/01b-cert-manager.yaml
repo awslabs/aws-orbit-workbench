@@ -70,11 +70,11 @@ spec:
           command: ["/cert-manager-scripts/generate_certificate.sh"]
           args:
             - "--service"
-            - "admission-controller-pod-settings-mutator"
+            - "podsettings-pod-modifier"
             - "--webhook"
-            - "orbit-admission-controller-pod-settings-mutator"
+            - "orbit-podsettings-pod-modifier"
             - "--secret"
-            - "admission-controller-pod-settings-mutator-certs"
+            - "podsettings-pod-modifier-certs"
             - "--namespace"
             - "orbit-system"
             - "--force"
