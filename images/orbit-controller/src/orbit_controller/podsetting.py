@@ -35,7 +35,7 @@ def process_added_event(podsetting: Dict[str, Any]) -> None:
         )
         logger.debug("ADDED poddefault for podsetting: %s", dump_resource(podsetting))
     except Exception:
-        logger.exception("ERROR ADDING poddefault for podsetting: %s", dump_resource(podsetting))
+        logger.exception("IGNORING ERROR ADDING poddefault for podsetting: %s", dump_resource(podsetting))
 
 
 def process_modified_event(podsetting: Dict[str, Any]) -> None:
@@ -48,7 +48,7 @@ def process_modified_event(podsetting: Dict[str, Any]) -> None:
         poddefault.modify_poddefault(namespace=namespace, name=name, desc=desc, client=client)
         logger.debug("MODIFIED poddefault for podsetting: %s", dump_resource(podsetting))
     except Exception:
-        logger.exception("ERROR MODIFIYING poddefault for podsetting: %s", dump_resource(podsetting))
+        logger.exception("IGNORING ERROR MODIFIYING poddefault for podsetting: %s", dump_resource(podsetting))
 
 
 def process_deleted_event(podsetting: Dict[str, Any]) -> None:
@@ -60,7 +60,7 @@ def process_deleted_event(podsetting: Dict[str, Any]) -> None:
         poddefault.delete_poddefault(namespace=namespace, name=name, client=client)
         logger.debug("DELETED poddefault for podsetting: %s", dump_resource(podsetting))
     except Exception:
-        logger.exception("ERROR DELETING poddefault for podsetting: %s", dump_resource(podsetting))
+        logger.exception("IGNORING ERROR DELETING poddefault for podsetting: %s", dump_resource(podsetting))
 
 
 def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
