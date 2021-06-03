@@ -159,15 +159,15 @@ def _check_teams(manifest: "Manifest", context: "Context", msg_ctx: "MessagesCon
 def _check_team_plugins(
     team_manifest: "TeamManifest", context: "Context", msg_ctx: "MessagesContext"
 ) -> Optional[PluginChangeset]:
-    new_names: List[str] = sorted([p.plugin_id for p in team_manifest.plugins])
+    new_names: List[str] = [p.plugin_id for p in team_manifest.plugins]
     old_team: Optional["TeamContext"] = context.get_team_by_name(name=team_manifest.name)
     if old_team:
-        old_names: List[str] = sorted([p.plugin_id for p in old_team.plugins])
+        old_names: List[str] = [p.plugin_id for p in old_team.plugins]
     else:
         old_names = []
     _logger.debug("Inpecting Plugins Change for team %s: %s -> %s", team_manifest.name, old_names, new_names)
 
-    if old_names != new_names:
+    if sorted(old_names) != sorted(new_names):
         msg_ctx.info(f"Plugin change detected for Team {team_manifest.name}: {old_names} -> {new_names}")
         return PluginChangeset(
             team_name=team_manifest.name,

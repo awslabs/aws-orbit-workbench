@@ -65,7 +65,7 @@ def filter_pod_settings(
             label_value = labels.get(key, None)
             if label_value != value:
                 logger.debug(
-                    "Failed Label value check, label %s with value %s does not equal %s",
+                    "NoHit: Label value check, label %s with value %s does not equal %s",
                     key,
                     label_value,
                     value,
@@ -81,20 +81,20 @@ def filter_pod_settings(
 
             if operator == "Exists" and pod_label_value is None:
                 logger.debug(
-                    "Failed Exists check, label %s does not exist",
+                    "NoHit: Exists check, label %s does not exist",
                     match_expression["key"],
                 )
                 return False
             if operator == "NotExists" and pod_label_value is not None:
                 logger.debug(
-                    "Failed NotExists check, label %s does exist with value %s",
+                    "NoHit: NotExists check, label %s does exist with value %s",
                     match_expression["key"],
                     pod_label_value,
                 )
                 return False
             if operator == "In" and pod_label_value not in values:
                 logger.debug(
-                    "Failed In check, label %s has value %s which is not in %s",
+                    "NoHit: In check, label %s has value %s which is not in %s",
                     match_expression["key"],
                     pod_label_value,
                     values,
@@ -102,7 +102,7 @@ def filter_pod_settings(
                 return False
             if operator == "NotIn" and pod_label_value in values:
                 logger.debug(
-                    "Failed NotIn check, label %s has value %s which is in %s",
+                    "NoHit: NotIn check, label %s has value %s which is in %s",
                     match_expression["key"],
                     pod_label_value,
                     values,
@@ -113,7 +113,7 @@ def filter_pod_settings(
     for pod_setting in pod_settings:
         if pod_setting["metadata"]["namespace"] != namespace:
             logger.debug(
-                "Failed PodSetting namespace check. Namespace: %s PodSetting: %s",
+                "NoHit: PodSetting namespace check. Namespace: %s PodSetting: %s",
                 namespace,
                 dump_resource(pod_setting),
             )
@@ -124,31 +124,31 @@ def filter_pod_settings(
         selector_expressions = pod_setting["spec"]["podSelector"].get("matchExpressions", [])
 
         if pod_labels == {}:
-            logger.debug("Pod contains no labels to match against: %s", dump_resource(pod))
+            logger.debug("NoHit: Pod contains no labels to match against: %s", dump_resource(pod))
             continue
         elif selector_labels == {} and selector_expressions == []:
             logger.debug(
-                "PodSetting contains no podSelectors to match against: %s",
+                "NoHit: PodSetting contains no podSelectors to match against: %s",
                 dump_resource(pod_setting),
             )
             continue
         elif not labels_match(pod_labels, selector_labels):
             logger.debug(
-                "Pod labels and PodSetting matchLabels do not match. Pod: %s PodSetting: %s",
+                "NoHit: Pod labels and PodSetting matchLabels do not match. Pod: %s PodSetting: %s",
                 dump_resource(pod),
                 dump_resource(pod_setting),
             )
             continue
         elif not expressions_match(pod_labels, selector_expressions):
             logger.debug(
-                "Pod labels and PodSetting matchExpressions do not match. Pod: %s PodSetting: %s",
+                "NoHit: Pod labels and PodSetting matchExpressions do not match. Pod: %s PodSetting: %s",
                 dump_resource(pod),
                 dump_resource(pod_setting),
             )
             continue
         else:
             logger.debug(
-                "Pod labels and PodSetting podSelectors match. Pod: %s PodSetting: %s",
+                "Hit: Pod labels and PodSetting podSelectors match. Pod: %s PodSetting: %s",
                 dump_resource(pod),
                 dump_resource(pod_setting),
             )
