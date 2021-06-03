@@ -167,6 +167,16 @@ def install_helm_chart(
     repo: str,
     package: str,
 ) -> None:
+    # try to uninstall first
+    try:
+        cmd = f"helm uninstall --debug {helm_release} -n {team}"
+        logger.debug("running cmd: %s", cmd)
+        output = run_command(cmd)
+        logger.debug(output)
+        logger.info("finished cmd: %s", cmd)
+    except Exception as e:
+        logger.debug("helm uninstall did not find the release")
+
     cmd = (
         f"/usr/local/bin/helm upgrade --install --devel --debug --namespace {team} "
         f"{helm_release} {repo}/{package} "
