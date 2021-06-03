@@ -113,4 +113,5 @@ def destroy(
         context.name,
         team_context.name,
     )
-    helm.uninstall_chart(f"{team_context.name}-{plugin_id}", namespace=team_context.name)
+    release_name = f"{team_context.name}-{plugin_id}".replace("_", "-")
+    helm.uninstall_chart(release_name, namespace=team_context.name)
