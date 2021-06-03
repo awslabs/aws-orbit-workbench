@@ -75,6 +75,7 @@ Resources:
               - iam:ListRolePolicies
               - iam:ListRoleTags
               - iam:GetOpenIDConnectProvider
+              - iam:UpdateRole
               - cognito-idp:AdminListGroupsForUser
               - cognito-idp:CreateUserPool
               - cognito-idp:DeleteUserPool
