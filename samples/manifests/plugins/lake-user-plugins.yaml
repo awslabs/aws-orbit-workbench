@@ -25,33 +25,7 @@
             done
             echo "DONE LOOP"
         restartPolicy: Never
--   PluginId: copy-regression-data
-    Module: team_script_launcher
-    Path: ../plugins/team_script_launcher/
-    Parameters:
-        script: |
-            echo "Copy data to s3 from orbit-regression image ";
-            i=0;o='orbit';
-            while [ $i -lt 1 ];
-            do
-                p="$(aws ssm get-parameter --name '/orbit/${env_name}/demo'| jq -r '.Parameter.Value | fromjson | .LakeBucket' | sed 's/arn:aws:s3::://g')";
-                if [[ "$p" =~ .*"$o".* ]];
-                then
-                    echo 'Found bucket '$p;
-                    aws s3 cp /opt/orbit/data/cms s3://$p/landing/data/cms/ --recursive;
-                    aws s3 cp /opt/orbit/data/sagemaker s3://$p/landing/data/sagemaker/ --recursive;
-                    aws s3 cp /opt/orbit/cms/schema s3://$p/landing/cms/schema/ --recursive;
-                    exit 0;
-                else
-                    echo 'No Lake Bucket Found in SSM...sleeping';
-                    sleep 60;
-                fi
-            done
-        restartPolicy: Never
-        image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data:latest
-        uid: 0
-        gid: 0
--   PluginId: copy-sample-data
+-   PluginId: copy-sample-code
     Module: team_script_launcher
     Path: ../plugins/team_script_launcher/
     Parameters:
