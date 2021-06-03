@@ -120,9 +120,9 @@ data:
           # Determines what the UI will show and send to the backend
           vendors:
             - limitsKey: "nvidia.com/gpu"
-              uiName: "NVIDIA"
-            - limitsKey: "amd.com/gpu"
-              uiName: "AMD"
+              uiName: "NVIDIA GPU"
+            - limitsKey: "k8s.amazonaws.com/vgpu"
+              uiName: "AWS vGPU"
           # Values: "" or a `limits-key` from the vendors list
           vendor: ""
         readOnly: false

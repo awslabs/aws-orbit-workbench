@@ -63,7 +63,8 @@ def delete_poddefault(namespace: str, name: str, client: dynamic.DynamicClient) 
 
 
 def process_added_event(poddefault: Dict[str, Any]) -> None:
-    client = dynamic_client()
+    # client = dynamic_client()
+    pass
 
 
 def process_modified_event(poddefault: Dict[str, Any]) -> None:

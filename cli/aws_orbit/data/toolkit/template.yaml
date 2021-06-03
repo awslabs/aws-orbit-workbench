@@ -61,6 +61,8 @@ Resources:
               - elasticfilesystem:CreateAccessPoint
               - elasticfilesystem:DescribeAccessPoints
               - elasticfilesystem:DeleteAccessPoint
+              - iam:DeleteRole
+              - iam:DeleteRolePolicy
               - iam:ListAttachedRolePolicies
               - iam:GetPolicy
               - iam:ListPolicyVersions
@@ -69,8 +71,11 @@ Resources:
               - iam:GetServerCertificate
               - iam:UploadServerCertificate
               - iam:DeleteServerCertificate
+              - iam:ListRoles
+              - iam:ListRolePolicies
               - iam:ListRoleTags
               - iam:GetOpenIDConnectProvider
+              - iam:UpdateRole
               - cognito-idp:AdminListGroupsForUser
               - cognito-idp:CreateUserPool
               - cognito-idp:DeleteUserPool

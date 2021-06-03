@@ -446,6 +446,9 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
         k8s_context = get_k8s_context(context=context)
         _logger.debug("kubectl context: %s", k8s_context)
         output_path = _generate_team_context(context=context, team_context=team_context)
+
+        sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
+
         (output_path, patch) = _generate_env_manifest(context=context, clean_up=False)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
