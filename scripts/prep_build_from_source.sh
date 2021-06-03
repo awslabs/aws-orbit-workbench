@@ -55,7 +55,7 @@ if [ $SDK -eq 1 ]; then
 fi
 
 if [ $LAB -eq 1 ]; then
-    ${DIR}/update_repo.sh jupyterlab_orbit jupyterlab-orbit \
+    ${DIR}/update_repo.sh jupyterlab_orbit ${DOMAIN}-jupyterlab-orbit \
         && echo "Updated Jupyterlab-orbit codeartifact repository" \
         || (echo "ERROR: Failed to update Jupyterlab-orbit codeartifact repository"; exit 1)
 fi

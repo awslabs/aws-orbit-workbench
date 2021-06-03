@@ -6,6 +6,10 @@
 #
 anyio==2.2.0
     # via jupyter-server
+appnope==0.1.2
+    # via
+    #   ipykernel
+    #   ipython
 argon2-cffi==20.1.0
     # via
     #   jupyter-server
@@ -96,7 +100,7 @@ jupyterlab-pygments==0.1.2
 jupyterlab-server==2.5.0
     # via jupyterlab
 jupyterlab==3.0.14
-    # via jupyterlab_orbit (setup.py)
+    # via aws-orbit-jupyterlab-orbit (setup.py)
 markupsafe==1.1.1
     # via jinja2
 mistune==0.8.4

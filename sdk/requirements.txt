@@ -4,6 +4,8 @@
 #
 #    pip-compile
 #
+appnope==0.1.2
+    # via ipython
 backcall==0.2.0
     # via ipython
 boto3==1.17.57
