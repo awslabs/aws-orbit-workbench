@@ -174,7 +174,7 @@ def install_helm_chart(
         output = run_command(cmd)
         logger.debug(output)
         logger.info("finished cmd: %s", cmd)
-    except Exception as e:
+    except Exception:
         logger.debug("helm uninstall did not find the release")
 
     cmd = (
