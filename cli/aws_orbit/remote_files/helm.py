@@ -66,6 +66,8 @@ def add_repo(repo: str, repo_location: str) -> None:
 
 def init_env_repo(context: Context) -> str:
     repo_location = context.helm_repository
+    sh.run(f"aws s3 rm --recursive {repo_location}")
+
     if not s3.object_exists(bucket=cast(str, context.toolkit.s3_bucket), key="helm/repositories/env/index.yaml"):
         _logger.debug("Initializing Env Helm Respository at %s", repo_location)
         sh.run(f"helm s3 init {repo_location}")
@@ -77,6 +79,7 @@ def init_env_repo(context: Context) -> str:
 
 def init_user_repo(context: Context, team_context: TeamContext) -> str:
     repo_location = f"s3://{context.toolkit.s3_bucket}/helm/repositories/user/{team_context.name}"
+    sh.run(f"aws s3 rm --recursive {repo_location}")
 
     if not s3.object_exists(
         bucket=cast(str, context.toolkit.s3_bucket), key=f"helm/repositories/users/{team_context.name}/index.yaml"
@@ -91,6 +94,8 @@ def init_user_repo(context: Context, team_context: TeamContext) -> str:
 
 def _init_team_repo(context: Context, team_context: TeamContext) -> str:
     repo_location = f"s3://{context.toolkit.s3_bucket}/helm/repositories/teams/{team_context.name}"
+    sh.run(f"aws s3 rm --recursive {repo_location}")
+
     if not s3.object_exists(
         bucket=cast(str, context.toolkit.s3_bucket), key=f"helm/repositories/teams/{team_context.name}/index.yaml"
     ):
@@ -297,8 +302,8 @@ def package_user_space_pkg(context: Context, repo: str, team_charts_path: str, t
 def destroy_env(context: Context) -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
-    if cfn.does_stack_exist(stack_name=eks_stack_name):
-        repo_location = init_env_repo(context=context)
+    if cfn.does_stack_exist(stack_name=eks_stack_name) and context.helm_repository:
+        repo_location = context.helm_repository
         repo = context.name
         add_repo(repo=repo, repo_location=repo_location)
         kubectl.write_kubeconfig(context=context)
@@ -308,8 +313,8 @@ def destroy_env(context: Context) -> None:
 def destroy_team(context: Context, team_context: TeamContext) -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
-    if cfn.does_stack_exist(stack_name=eks_stack_name):
-        repo_location = _init_team_repo(context=context, team_context=team_context)
+    if cfn.does_stack_exist(stack_name=eks_stack_name) and team_context.team_helm_repository:
+        repo_location = team_context.team_helm_repository
         repo = team_context.name
         add_repo(repo=repo, repo_location=repo_location)
         kubectl.write_kubeconfig(context=context)
