@@ -47,7 +47,7 @@ spec:
           - -c
           - >-
             cp -R -v /opt/orbit/data/vscode/drivers/ /efs &&
-            sudo chmod 777 /efs &&
+            chmod 777 /efs &&
             ls -ld /efs
         volumeMounts:
           - mountPath: /efs

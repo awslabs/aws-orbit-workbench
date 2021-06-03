@@ -14,8 +14,8 @@ Images:
     JupyterUser:
         Repository: !ENV ${JUPYTER_USER_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user}
         Version: !ENV ${VERSION::latest}
-    AdmissionController:
-        Repository: !ENV ${ADMISSION_CONTROLLER_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/admission-controller}
+    OrbitController:
+        Repository: !ENV ${ORBIT_CONTROLLER_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/-controller}
         Version: !ENV ${VERSION::latest}
     UtilityData:
         Repository: !ENV ${UTILITY_DATA_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data}

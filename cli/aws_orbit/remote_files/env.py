@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, List, Optional
 
 import boto3
 
-from aws_orbit import ORBIT_CLI_ROOT, cdk, docker
+from aws_orbit import ORBIT_CLI_ROOT, cdk, cleanup, docker
 from aws_orbit.services import cfn, ecr, iam, ssm
 
 if TYPE_CHECKING:
@@ -93,4 +93,5 @@ def destroy(context: "Context") -> None:
             app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "env.py"),
             args=args,
         )
+        cleanup.delete_kubeflow_roles(context.env_stack_name, context.region)
         ssm.cleanup_context(env_name=context.name)

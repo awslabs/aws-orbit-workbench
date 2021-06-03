@@ -37,7 +37,7 @@ NoDatesSafeLoader.yaml_implicit_resolvers = {
 
 def read_yaml_file(path):
     with open(path, "r") as f:
-        return yaml.load(f, Loader=NoDatesSafeLoader)
+        return yaml.safe_load(f)
 
 
 def writeOrbitYaml():
@@ -80,7 +80,7 @@ def run_tasks() -> int:
     logger.debug(env_params)
 
     writeOrbitYaml()
-    compute = yaml.load(os.environ["compute"], Loader=NoDatesSafeLoader)
+    compute = yaml.safe_load(os.environ["compute"])
     task_type = os.environ["task_type"]
     try:
         if task_type == "jupyter":
