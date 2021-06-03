@@ -42,19 +42,24 @@ The plugin configurations are located in a yaml configuration file that is refer
 
 ----
 ### <a name="rs_plugin">Amazon Redshift </a>
+This plugin configures redshift cluster creation, accessiblity and termination capabilities using Orbit SDK [helper methods](https://github.com/awslabs/aws-orbit-workbench/blob/main/sdk/aws_orbit_sdk/database.py). Before deleting teamspaces, recommended approach is to do gracefull terminate of all teamspace specific redshift clusters. While destroying teamspace, left over redshift clusters are terminated forcibly by design.
 ```
 - PluginId: 
   Module: 
   Path: ../plugins/redshift/
   Parameters:
-    - parameter 1: <value>
-    - parameter 2: <value>
-    ...
-    - parameter N: <value>
-  
+    enable_user_activity_logging: "true"
+    require_ssl: "true"
+    use_fips_ssl: "true"
+    node_type: "DC2.large"
+    number_of_nodes: "2"
 ```
 #### Parameters 
-TBD
+- *enable_user_activity_logging* - Enable [database audit logging](https://docs.aws.amazon.com/redshift/latest/mgmt/db-auditing.html)
+- *require_ssl* - Enable SSL security. [Configuring security options for connections.](https://docs.aws.amazon.com/redshift/latest/mgmt/connecting-ssl-support.html)
+- *use_fips_ssl* - Enable FIPS-compliant SSL mode only if your system is required to be FIPS-compliant.
+- *node_type* - Default value for the required cluster node type. [Supported types.](https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-clusters.html#working-with-clusters-overview)
+- *number_of_nodes* - Default value for the required number of nodes in the cluster.
 
 References:
 - [Amazon Redshift](https://docs.aws.amazon.com/redshift/index.html)
