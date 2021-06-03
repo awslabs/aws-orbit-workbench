@@ -11,6 +11,7 @@ paths=(
     "${ROOT_PATH}/cli"
     "${ROOT_PATH}/jupyterlab_orbit"
     "${ROOT_PATH}/sdk"
+    "${ROOT_PATH}/images/orbit-controller/src"
 )
 
 for module in `ls ${ROOT_PATH}/plugins`; do
@@ -21,7 +22,7 @@ UPGRADE=""
 SED=${SED:-sed}
 CLEAN="no"
 
-while [ $# -gt 0 ] 
+while [ $# -gt 0 ]
 do
     case $1 in
         --gsed)
@@ -35,6 +36,7 @@ do
         --path)
         paths=("${ROOT_PATH}/${2}")
         shift # Remove --path from processing
+        shift # Remove $2 from processing
         ;;
         --clean)
         CLEAN="yes"
