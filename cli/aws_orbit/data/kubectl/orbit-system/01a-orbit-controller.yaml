@@ -269,10 +269,10 @@ spec:
       #       requests:
       #         cpu: 100m
       #         memory: 100M
-      # volumes:
-      #   - name: orbit-controller-state
-      #     configMap:
-      #       name: orbit-controller-state
+      volumes:
+        - name: orbit-controller-state
+          configMap:
+            name: orbit-controller-state
 ---
 apiVersion: apps/v1
 kind: Deployment

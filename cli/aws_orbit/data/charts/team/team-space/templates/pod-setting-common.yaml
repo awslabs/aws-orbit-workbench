@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Values.team }}
   labels:
     orbit/space: team
-    orbit/disable-watcher: yes
+    orbit/disable-watcher: "yes"
     {{- include "team-space.labels" . | nindent 4 }}
 spec:
   desc:  Orbit common pod settings for jupyter-base notebooks
@@ -66,7 +66,7 @@ metadata:
   namespace: {{ .Values.team }}
   labels:
     orbit/space: team
-    orbit/disable-watcher: yes
+    orbit/disable-watcher: "yes"
     {{- include "team-space.labels" . | nindent 4 }}
 spec:
   desc:  Orbit interactive notebook settings for jupyter-base notebooks
@@ -96,7 +96,7 @@ metadata:
   namespace: {{ .Values.team }}
   labels:
     orbit/space: team
-    orbit/disable-watcher: yes
+    orbit/disable-watcher: "yes"
     {{- include "team-space.labels" . | nindent 4 }}
 spec:
   desc:  Orbit common pod settings for jupyter-base notebooks
@@ -117,7 +117,7 @@ metadata:
   namespace: {{ .Values.team }}
   labels:
     orbit/space: team
-    orbit/disable-watcher: yes
+    orbit/disable-watcher: "yes"
     {{- include "team-space.labels" . | nindent 4 }}
 spec:
   desc:  Start VSCode application
