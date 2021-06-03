@@ -27,12 +27,15 @@ def process_added_event(podsetting: Dict[str, Any]) -> None:
     desc = podsetting["spec"].get("desc", "")
     client = dynamic_client()
 
-    poddefault.create_poddefault(
-        namespace=namespace,
-        poddefault=poddefault.construct(name=name, desc=desc, labels={"orbit/space": "team"}),
-        client=client,
-    )
-    logger.debug("ADDED poddefault for podsetting: %s", dump_resource(podsetting))
+    try:
+        poddefault.create_poddefault(
+            namespace=namespace,
+            poddefault=poddefault.construct(name=name, desc=desc, labels={"orbit/space": "team"}),
+            client=client,
+        )
+        logger.debug("ADDED poddefault for podsetting: %s", dump_resource(podsetting))
+    except Exception:
+        logger.exception("ERROR ADDING poddefault for podsetting: %s", dump_resource(podsetting))
 
 
 def process_modified_event(podsetting: Dict[str, Any]) -> None:
@@ -41,8 +44,11 @@ def process_modified_event(podsetting: Dict[str, Any]) -> None:
     desc = podsetting["spec"].get("desc", "")
     client = dynamic_client()
 
-    poddefault.modify_poddefault(namespace=namespace, name=name, desc=desc, client=client)
-    logger.debug("MODIFIED poddefault for podsetting: %s", dump_resource(podsetting))
+    try:
+        poddefault.modify_poddefault(namespace=namespace, name=name, desc=desc, client=client)
+        logger.debug("MODIFIED poddefault for podsetting: %s", dump_resource(podsetting))
+    except Exception:
+        logger.exception("ERROR MODIFIYING poddefault for podsetting: %s", dump_resource(podsetting))
 
 
 def process_deleted_event(podsetting: Dict[str, Any]) -> None:
@@ -50,8 +56,11 @@ def process_deleted_event(podsetting: Dict[str, Any]) -> None:
     namespace = podsetting["metadata"]["namespace"]
     client = dynamic_client()
 
-    poddefault.delete_poddefault(namespace=namespace, name=name, client=client)
-    logger.debug("DELETED poddefault for podsetting: %s", dump_resource(podsetting))
+    try:
+        poddefault.delete_poddefault(namespace=namespace, name=name, client=client)
+        logger.debug("DELETED poddefault for podsetting: %s", dump_resource(podsetting))
+    except Exception:
+        logger.exception("ERROR DELETING poddefault for podsetting: %s", dump_resource(podsetting))
 
 
 def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
