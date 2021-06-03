@@ -44,4 +44,5 @@ aws-cdk.aws-stepfunctions-tasks~=1.100.0
 -e ../plugins/lustre
 -e ../plugins/ray/
 -e ../plugins/sm-operator/
-
+-e ../plugins/voila/
+-e ../jupyterlab_orbit/
