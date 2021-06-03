@@ -130,11 +130,15 @@ def package_chart(repo: str, chart_path: str, values: Optional[Dict[str, Any]]) 
 def install_chart(repo: str, namespace: str, name: str, chart_name: str, chart_version: str) -> None:
     chart_version = aws_orbit.__version__.replace(".dev", "-")
     _logger.debug("Installing %s, version %s as %s from %s", chart_name, chart_version, name, repo)
+    try:
+        sh.run(f"helm uninstall --debug {name} -n {namespace}")
+    except exceptions.FailedShellCommand as e:
+        _logger.debug("helm uninstall did not find the release")
+
     sh.run(
         f"helm upgrade --install --debug --namespace {namespace} --version "
         f"{chart_version} {name} {repo}/{chart_name}"
     )
-
 
 def install_chart_no_upgrade(repo: str, namespace: str, name: str, chart_name: str, chart_version: str) -> None:
     chart_version = aws_orbit.__version__.replace(".dev", "-")
