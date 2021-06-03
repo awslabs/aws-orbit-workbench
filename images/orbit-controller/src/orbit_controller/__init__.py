@@ -61,7 +61,7 @@ def dump_resource(resource: Union[Optional[Dict[str, Any]], List[Dict[str, Any]]
 
         try:
             del stripped_resource["metadata"]["annotations"]["kubectl.kubernetes.io/last-applied-configuration"]
-        except:
+        except Exception:
             pass
 
         if "spec" in resource:
