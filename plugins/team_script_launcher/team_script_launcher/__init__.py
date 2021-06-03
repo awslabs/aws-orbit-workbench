@@ -69,7 +69,7 @@ def deploy(
         script_body = parameters["script"]
     else:
         raise Exception(f"Plugin {plugin_id} must define parameter 'script'")
-    script_file = os.path.join(chart_path, "script.txt")
+    script_file = os.path.join(chart_path, "team-script-launcher", "script.txt")
 
     script_body = utils.resolve_parameters(script_body, vars)
     with open(script_file, "w") as file:
