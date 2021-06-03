@@ -13,8 +13,8 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 name = "jupyterlab_orbit"
 
 # Get our version
-with open(os.path.join(HERE, "package.json")) as f:
-    version = json.load(f)["version"]
+with open(os.path.join(HERE, "VERSION")) as version_file:
+    version = version_file.read().strip()
 
 lab_path = os.path.join(HERE, name, "labextension")
 

@@ -51,8 +51,8 @@ def _orbit_system_commons(context: "Context", output_path: str) -> None:
         file.write(content)
 
 
-def _admission_controller(context: "Context", output_path: str) -> None:
-    filenames = ["01-admission-controller.yaml", "01-cert-manager.yaml"]
+def _orbit_controller(context: "Context", output_path: str) -> None:
+    filenames = ["01a-orbit-controller.yaml", "01b-cert-manager.yaml"]
 
     for filename in filenames:
         input = os.path.join(MODELS_PATH, "orbit-system", filename)
@@ -64,8 +64,8 @@ def _admission_controller(context: "Context", output_path: str) -> None:
             content,
             dict(
                 env_name=context.name,
-                admission_controller_image=f"{context.images.admission_controller.repository}:"
-                f"{context.images.admission_controller.version}",
+                orbit_controller_image=f"{context.images.orbit_controller.repository}:"
+                f"{context.images.orbit_controller.version}",
                 k8s_utilities_image=f"{context.images.k8s_utilities.repository}:"
                 f"{context.images.k8s_utilities.version}",
                 image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
@@ -229,7 +229,7 @@ def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -
     if clean_up:
         _cleanup_output(output_path=output_path)
     _orbit_system_commons(context=context, output_path=output_path)
-    _admission_controller(context=context, output_path=output_path)
+    _orbit_controller(context=context, output_path=output_path)
 
     if context.account_id is None:
         raise ValueError("context.account_id is None!")
@@ -434,8 +434,9 @@ def deploy_env(context: "Context") -> None:
         # Enable ENIs
         sh.run(f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} ENABLE_POD_ENI=true")
 
-        # Restart orbit-system deployments to force reload of caches
+        # Restart orbit-system deployments and statefulsets to force reload of caches etc
         sh.run(f"kubectl rollout restart deployments -n orbit-system --context {k8s_context}")
+        sh.run(f"kubectl rollout restart statefulsets -n orbit-system --context {k8s_context}")
 
 
 def deploy_team(context: "Context", team_context: "TeamContext") -> None:
@@ -445,7 +446,9 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
         k8s_context = get_k8s_context(context=context)
         _logger.debug("kubectl context: %s", k8s_context)
         output_path = _generate_team_context(context=context, team_context=team_context)
+
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
+
         (output_path, patch) = _generate_env_manifest(context=context, clean_up=False)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
