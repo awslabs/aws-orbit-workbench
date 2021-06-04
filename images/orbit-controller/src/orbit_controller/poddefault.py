@@ -33,7 +33,10 @@ def _get_team_namespaces(client: dynamic.DynamicClient, team: str) -> List[Dict[
 
 
 def construct(
-    name: str, desc: str, labels: Optional[Dict[str, str]] = None, annnotations: Optional[Dict[str, str]] = None
+    name: str,
+    desc: str,
+    labels: Optional[Dict[str, str]] = None,
+    annnotations: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     return {
         "apiVersion": f"{KUBEFLOW_API_GROUP}/{KUBEFLOW_API_VERSION}",
@@ -91,7 +94,10 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
 
             logger.info("Monitoring PodDefaults")
 
-            kwargs = {"resource_version": state.get("lastResourceVersion", 0), "label_selector": "orbit/space=team"}
+            kwargs = {
+                "resource_version": state.get("lastResourceVersion", 0),
+                "label_selector": "orbit/space=team",
+            }
             for event in api.watch(**kwargs):
                 poddefault = event["object"]
                 state["lastResourceVersion"] = poddefault.metadata.resource_version

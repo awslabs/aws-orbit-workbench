@@ -30,12 +30,18 @@ ORBIT_POD_SETTINGS_CACHE = None
 ORBIT_POD_SETTINGS_STATE = None
 
 
-def get_pod_settings(client: dynamic.DynamicClient) -> List[Dict[str, Any]]:
+def get_podsettings(logger: logging.Logger, client: dynamic.DynamicClient) -> List[Dict[str, Any]]:
     global ORBIT_POD_SETTINGS_CACHE
     global ORBIT_POD_SETTINGS_STATE
 
     state_copy = deepcopy(get_module_state(module="podsettingsWatcher"))
+    logger.debug(
+        "podsettingsWatcher States Previous: %s Current: %s",
+        state_copy,
+        ORBIT_POD_SETTINGS_STATE,
+    )
     if state_copy != ORBIT_POD_SETTINGS_STATE:
+        logger.debug("Updating podsettings cache")
         api = client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="PodSetting")
         pod_settings = api.get()
         ORBIT_POD_SETTINGS_CACHE = pod_settings.to_dict().get("items", [])
@@ -52,13 +58,13 @@ def get_namespace(client: dynamic.DynamicClient, name: str) -> Optional[Dict[str
         return None
 
 
-def filter_pod_settings(
+def filter_podsettings(
     logger: logging.Logger,
-    pod_settings: List[Dict[str, Any]],
+    podsettings: List[Dict[str, Any]],
     namespace: str,
     pod: Dict[str, Any],
 ) -> List[Dict[str, Any]]:
-    filtered_pod_settings: List[Dict[str, Any]] = []
+    filtered_podsettings: List[Dict[str, Any]] = []
 
     def labels_match(labels: Dict[str, str], selector_labels: Dict[str, str]) -> bool:
         for key, value in selector_labels.items():
@@ -110,18 +116,18 @@ def filter_pod_settings(
                 return False
         return True
 
-    for pod_setting in pod_settings:
-        if pod_setting["metadata"]["namespace"] != namespace:
+    for podsetting in podsettings:
+        if podsetting["metadata"]["namespace"] != namespace:
             logger.debug(
                 "NoHit: PodSetting namespace check. Namespace: %s PodSetting: %s",
                 namespace,
-                dump_resource(pod_setting),
+                dump_resource(podsetting),
             )
             continue
 
         pod_labels = pod["metadata"].get("labels", {})
-        selector_labels = pod_setting["spec"]["podSelector"].get("matchLabels", {})
-        selector_expressions = pod_setting["spec"]["podSelector"].get("matchExpressions", [])
+        selector_labels = podsetting["spec"]["podSelector"].get("matchLabels", {})
+        selector_expressions = podsetting["spec"]["podSelector"].get("matchExpressions", [])
 
         if pod_labels == {}:
             logger.debug("NoHit: Pod contains no labels to match against: %s", dump_resource(pod))
@@ -129,31 +135,31 @@ def filter_pod_settings(
         elif selector_labels == {} and selector_expressions == []:
             logger.debug(
                 "NoHit: PodSetting contains no podSelectors to match against: %s",
-                dump_resource(pod_setting),
+                dump_resource(podsetting),
             )
             continue
         elif not labels_match(pod_labels, selector_labels):
             logger.debug(
                 "NoHit: Pod labels and PodSetting matchLabels do not match. Pod: %s PodSetting: %s",
                 dump_resource(pod),
-                dump_resource(pod_setting),
+                dump_resource(podsetting),
             )
             continue
         elif not expressions_match(pod_labels, selector_expressions):
             logger.debug(
                 "NoHit: Pod labels and PodSetting matchExpressions do not match. Pod: %s PodSetting: %s",
                 dump_resource(pod),
-                dump_resource(pod_setting),
+                dump_resource(podsetting),
             )
             continue
         else:
             logger.debug(
                 "Hit: Pod labels and PodSetting podSelectors match. Pod: %s PodSetting: %s",
                 dump_resource(pod),
-                dump_resource(pod_setting),
+                dump_resource(podsetting),
             )
-            filtered_pod_settings.append(pod_setting)
-    return filtered_pod_settings
+            filtered_podsettings.append(podsetting)
+    return filtered_podsettings
 
 
 def filter_pod_containers(
@@ -183,11 +189,11 @@ def filter_pod_containers(
 
 def apply_settings_to_pod(
     namespace: Dict[str, Any],
-    pod_setting: Dict[str, Any],
+    podsetting: Dict[str, Any],
     pod: Dict[str, Any],
     logger: logging.Logger,
 ) -> None:
-    ps_spec = pod_setting["spec"]
+    ps_spec = podsetting["spec"]
     pod_spec = pod["spec"]
 
     # Merge
@@ -238,22 +244,25 @@ def apply_settings_to_pod(
         pod=pod_spec,
         container_selector=ps_spec.get("containerSelector", {}),
     ):
-        apply_settings_to_container(namespace=namespace, pod_setting=pod_setting, pod=pod, container=container)
+        apply_settings_to_container(namespace=namespace, podsetting=podsetting, pod=pod, container=container)
     for container in filter_pod_containers(
         containers=pod_spec.get("containers", []),
         pod=pod,
         container_selector=ps_spec.get("containerSelector", {}),
     ):
-        apply_settings_to_container(namespace=namespace, pod_setting=pod_setting, pod=pod, container=container)
+        apply_settings_to_container(namespace=namespace, podsetting=podsetting, pod=pod, container=container)
     logger.debug("modified pod: %s", dump_resource(pod))
 
 
 def apply_settings_to_container(
-    namespace: Dict[str, Any], pod_setting: Dict[str, Any], pod: Dict[str, Any], container: Dict[str, Any]
+    namespace: Dict[str, Any],
+    podsetting: Dict[str, Any],
+    pod: Dict[str, Any],
+    container: Dict[str, Any],
 ) -> None:
     ns_labels = namespace["metadata"].get("labels", {})
     ns_annotations = namespace["metadata"].get("annotations", {})
-    ps_spec = pod_setting["spec"]
+    ps_spec = podsetting["spec"]
 
     # Drop any previous AWS_ORBIT_USER_SPACE or AWS_ORBIT_IMAGE env variables
     ps_spec["env"] = [e for e in ps_spec.get("env", []) if e["name"] not in ["AWS_ORBIT_USER_SPACE", "AWS_ORBIT_IMAGE"]]
@@ -369,7 +378,8 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     logger.info("request: %s", request)
 
     client = dynamic_client()
-    logger.debug("podsettings: %s", dump_resource(get_pod_settings(client=client)))
+    podsettings = get_podsettings(logger=logger, client=client)
+    logger.debug("podsettings: %s", dump_resource(podsettings))
 
     namespace = get_namespace(client=client, name=request["namespace"])
     if namespace is None:
@@ -387,20 +397,20 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     #     logger=logger, pod_settings=ORBIT_SYSTEM_POD_SETTINGS, namespace=team_namespace, pod=pod
     # )
     # Temporarily retrieve all pod_settings on each request until caching is fixed
-    team_pod_settings = filter_pod_settings(
+    team_podsettings = filter_podsettings(
         logger=logger,
-        pod_settings=get_pod_settings(client=client),
+        podsettings=podsettings,
         namespace=team_namespace,
         pod=pod,
     )
-    logger.debug("filtered podsettings: %s", dump_resource(team_pod_settings))
+    logger.debug("filtered podsettings: %s", dump_resource(team_podsettings))
 
     try:
-        for pod_setting in team_pod_settings:
+        for pod_setting in team_podsettings:
             logger.debug("applying podsetting: %s", dump_resource(pod_setting))
             apply_settings_to_pod(
                 namespace=namespace,
-                pod_setting=pod_setting,
+                podsetting=pod_setting,
                 pod=modified_pod,
                 logger=logger,
             )
