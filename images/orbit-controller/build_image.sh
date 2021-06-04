@@ -18,7 +18,7 @@
 # THIS SCRIPT IS ONLY NECESSARY WHILE WE DON'T HAVE A BETTER MECHANISM TO ADDRESS THAT (i.e. PLUGINS)
 
 set -ex
-export ECR_ADDRESS=$ACCOUNT.dkr.ecr.$REGION.amazonaws.com/orbit-$ORBIT_ENV_NAME/orbit-controller
+export ECR_ADDRESS=$ACCOUNT.dkr.ecr.$REGION.amazonaws.com/orbit-$ORBIT_ENV_NAME/aws-orbit-orbit-controller
 aws ecr get-login-password --region "${REGION}" | docker login --username AWS --password-stdin "${ECR_ADDRESS}"
 
 docker build --tag orbit-controller:$VERSION --tag orbit-controller:latest .

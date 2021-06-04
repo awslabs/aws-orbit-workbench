@@ -18,7 +18,7 @@ import os
 import subprocess
 import time
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union
 
 from kubernetes import config as k8_config
 from kubernetes import dynamic
@@ -133,17 +133,17 @@ def initialize_orbit_controller_state() -> V1ConfigMap:
 
 
 def get_module_state(module: str) -> Dict[str, Any]:
-    module_path = os.path.join(ORBIT_STATE_PATH, module)
-    if os.path.exists(module_path):
-        with open(module_path, "r") as module_file:
-            return cast(Dict[str, Any], json.load(module_file))
-    else:
-        return {}
-    # config_map = get_orbit_controller_state()
-    # config_map_data = config_map.data if config_map.data is not None else {}
-    # data = {k: json.loads(v) for k, v in config_map_data.items()} if config_map is not None else {}
+    # module_path = os.path.join(ORBIT_STATE_PATH, module)
+    # if os.path.exists(module_path):
+    #     with open(module_path, "r") as module_file:
+    #         return cast(Dict[str, Any], json.load(module_file))
+    # else:
+    #     return {}
+    config_map = get_orbit_controller_state()
+    config_map_data = config_map.data if config_map.data is not None else {}
+    data = {k: json.loads(v) for k, v in config_map_data.items()} if config_map is not None else {}
 
-    # return data.get(module, {})
+    return data.get(module, {})
 
 
 def put_module_state(module: str, state: Dict[str, Any]) -> None:

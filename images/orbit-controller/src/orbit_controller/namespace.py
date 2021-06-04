@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import json
+import os
 import time
 from multiprocessing import Queue
 from typing import Any, Dict, Optional, cast
@@ -22,6 +23,13 @@ from kubernetes.client import exceptions as k8s_exceptions
 from kubernetes.watch import Watch
 from orbit_controller import dump_resource, load_config, logger, run_command
 from urllib3.exceptions import ReadTimeoutError
+
+
+def _verbosity() -> int:
+    try:
+        return int(os.environ.get("ORBIT_CONTROLLER_LOG_VERBOSITY", "0"))
+    except Exception:
+        return 0
 
 
 def should_install_team_package(labels: Dict[str, str]) -> bool:
@@ -226,8 +234,11 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
                 "resource_version": state.get("lastResourceVersion", 0),
             }
             for event in watcher.stream(client.list_namespace, **kwargs):
-                namespace = event["object"]
-                state["lastResourceVersion"] = namespace.metadata.resource_version
+                if _verbosity() > 2:
+                    logger.debug("event object: %s", event)
+                namespace = event["raw_object"]
+                state["lastResourceVersion"] = namespace.get("metadata", {}).get("resourceVersion", 0)
+                logger.debug("watcher state: %s", state)
                 queue_event = {"type": event["type"], "raw_object": event["raw_object"]}
                 logger.debug(
                     "Queueing Namespace event for processing, type: %s raw_object: %s",
