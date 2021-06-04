@@ -111,8 +111,11 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
                 "label_selector": "orbit/space=team,!orbit/disable-watcher",
             }
             for event in api.watch(**kwargs):
-                podsetting = event["object"]
-                state["lastResourceVersion"] = podsetting.metadata.resource_version
+                if _verbosity() > 2:
+                    logger.debug("event object: %s", event)
+                podsetting = event["raw_object"]
+                state["lastResourceVersion"] = podsetting.get("metadata", {}).get("resourceVersion", 0)
+                logger.debug("watcher state: %s", state)
                 queue_event = {"type": event["type"], "raw_object": event["raw_object"]}
                 logger.debug(
                     "Queueing PodSetting event for processing type: %s podsetting: %s",

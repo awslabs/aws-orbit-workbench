@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import os
 import time
 from multiprocessing import Queue
 from typing import Any, Dict, List, Optional, cast
@@ -23,6 +24,13 @@ from urllib3.exceptions import ReadTimeoutError
 
 KUBEFLOW_API_GROUP = "kubeflow.org"
 KUBEFLOW_API_VERSION = "v1alpha1"
+
+
+def _verbosity() -> int:
+    try:
+        return int(os.environ.get("ORBIT_CONTROLLER_LOG_VERBOSITY", "0"))
+    except Exception:
+        return 0
 
 
 def _get_team_namespaces(client: dynamic.DynamicClient, team: str) -> List[Dict[str, Any]]:
@@ -99,8 +107,11 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
                 "label_selector": "orbit/space=team",
             }
             for event in api.watch(**kwargs):
-                poddefault = event["object"]
-                state["lastResourceVersion"] = poddefault.metadata.resource_version
+                if _verbosity() > 2:
+                    logger.debug("event object: %s", event)
+                poddefault = event["raw_object"]
+                state["lastResourceVersion"] = poddefault.get("metadata", {}).get("resourceVersion", 0)
+                logger.debug("watcher state: %s", state)
                 queue_event = {"type": event["type"], "raw_object": event["raw_object"]}
                 logger.debug(
                     "Queueing PodDefault event for processing type: %s poddefault: %s",
