@@ -369,7 +369,7 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     logger.info("request: %s", request)
 
     client = dynamic_client()
-        logger.debug("podsettings: %s", dump_resource(get_pod_settings(client=client)))
+    logger.debug("podsettings: %s", dump_resource(get_pod_settings(client=client)))
 
     namespace = get_namespace(client=client, name=request["namespace"])
     if namespace is None:
