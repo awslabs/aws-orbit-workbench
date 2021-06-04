@@ -60,7 +60,7 @@
     Module: ray
     Path: ../plugins/ray/
     Parameters:
-        workers: 2
+        workers: 3
         release_tag: 1.3.0
 -   PluginId: sm-operator
     Module: sm-operator
