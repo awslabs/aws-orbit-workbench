@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: copy-vscode-ext-{{ .Values.namespace }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: orbit-copy-vscode-ext
+    {{- include "user-space.labels" . | nindent 4 }}
+    orbit/team: {{ .Values.team }}
+spec:
+  backoffLimit: 1
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app: orbit-copy-vscode-ext
+        volume: {{ .Values.efsid }}
+        job-name: copy-vscode-ext-{{ .Values.namespace }}
+        {{- include "user-space.labels" . | nindent 8 }}      
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: k8s.amazonaws.com/accelerator
+                operator: DoesNotExist
+            weight: 100
+      serviceAccountName: default-editor
+      securityContext:
+        fsGroup: 100
+      containers:
+      - name: service
+        securityContext:
+          runAsUser: 1000
+        image: {{ .Values.jupyter_user_image }}
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/bash"]
+        args:
+          - -c
+          - >-
+             if ! [ -d "/home/jovyan/private/code-server" ]; then 
+                 mkdir -p /home/jovyan/private/code-server; 
+             fi
+             cp -r /opt/orbit/apps/codeserver/extensions /home/jovyan/private/code-server;
+             cp -r /opt/orbit/apps/codeserver/CachedExtensionVSIXs /home/jovyan/private/code-server;
+        volumeMounts:
+          - mountPath: /home/jovyan
+            name: efs-volume
+      volumes:
+        - name: efs-volume
+          persistentVolumeClaim:
+            claimName: team-efs
+      restartPolicy: Never

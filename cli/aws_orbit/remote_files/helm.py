@@ -295,6 +295,7 @@ def package_user_space_pkg(context: Context, repo: str, team_charts_path: str, t
             "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
             "team_role_arn": team_context.eks_pod_role_arn,
             "K8Admin": team_context.k8_admin,
+            "jupyter_user_image": team_context.final_image_address,
         },
     )
 
