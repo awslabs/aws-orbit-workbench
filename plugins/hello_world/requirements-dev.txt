@@ -255,7 +255,7 @@ typing-extensions==3.7.4.3
     #   typing-inspect
 typing-inspect==0.6.0
     # via marshmallow-dataclass
-urllib3==1.26.4
+urllib3==1.26.5
     # via
     #   botocore
     #   kubernetes
