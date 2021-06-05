@@ -117,7 +117,7 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
                 logger.debug("watcher state: %s", state)
                 queue_event = {"type": event["type"], "raw_object": event["raw_object"]}
 
-                labels = queue_event.get("metadata", {}).get("labels", {})
+                labels = event["raw_object"].get("metadata", {}).get("labels", {})
                 if labels.get("orbit/space") == "team" and "orbit/disable-watcher" not in labels:
                     logger.debug(
                         "Queueing PodSetting event for processing type: %s podsetting: %s",
