@@ -15,6 +15,7 @@
 import base64
 import copy
 import logging
+import os
 import re
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, cast
@@ -28,6 +29,13 @@ from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, dump_resource, 
 
 ORBIT_POD_SETTINGS_CACHE = None
 ORBIT_POD_SETTINGS_STATE = None
+
+
+def _verbosity() -> int:
+    try:
+        return int(os.environ.get("ORBIT_CONTROLLER_LOG_VERBOSITY", "0"))
+    except Exception:
+        return 0
 
 
 def get_podsettings(logger: logging.Logger, client: dynamic.DynamicClient) -> List[Dict[str, Any]]:
@@ -375,7 +383,8 @@ def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     pod = request["object"]
     modified_pod = copy.deepcopy(pod)
 
-    logger.info("request: %s", request)
+    if _verbosity() > 2:
+        logger.info("request: %s", request)
 
     client = dynamic_client()
     podsettings = get_podsettings(logger=logger, client=client)
