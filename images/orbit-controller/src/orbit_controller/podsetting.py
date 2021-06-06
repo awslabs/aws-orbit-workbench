@@ -108,7 +108,6 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
 
             kwargs = {
                 "resource_version": state.get("lastResourceVersion", 0),
-                "label_selector": "orbit/space=team,!orbit/disable-watcher",
             }
             for event in api.watch(**kwargs):
                 if _verbosity() > 2:
@@ -117,12 +116,15 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
                 state["lastResourceVersion"] = podsetting.get("metadata", {}).get("resourceVersion", 0)
                 logger.debug("watcher state: %s", state)
                 queue_event = {"type": event["type"], "raw_object": event["raw_object"]}
-                logger.debug(
-                    "Queueing PodSetting event for processing type: %s podsetting: %s",
-                    event["type"],
-                    dump_resource(event["raw_object"]),
-                )
-                queue.put(queue_event)
+
+                labels = event["raw_object"].get("metadata", {}).get("labels", {})
+                if labels.get("orbit/space") == "team" and "orbit/disable-watcher" not in labels:
+                    logger.debug(
+                        "Queueing PodSetting event for processing type: %s podsetting: %s",
+                        event["type"],
+                        dump_resource(event["raw_object"]),
+                    )
+                    queue.put(queue_event)
         except ReadTimeoutError:
             logger.warning(
                 "There was a timeout error accessing the Kubernetes API. Retrying request.",

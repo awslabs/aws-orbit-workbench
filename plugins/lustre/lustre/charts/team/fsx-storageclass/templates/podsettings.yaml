@@ -6,6 +6,7 @@ metadata:
   namespace: {{ .Values.team }}
   labels:
     orbit/space: team
+    orbit/disable-watcher: "yes"
     {{- include "fsx-storageclass.labels" . | nindent 4 }}
 spec:
   desc:  Mount FsX Lustre folder {{.Values.folder}}
