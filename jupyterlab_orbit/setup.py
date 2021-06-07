@@ -50,7 +50,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name=name,
+    name=f"aws-orbit-{name}".replace("_", "-"),
     version=version,
 
     author="AWS Professional Services",

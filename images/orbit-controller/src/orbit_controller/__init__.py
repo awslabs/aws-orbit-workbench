@@ -18,7 +18,7 @@ import os
 import subprocess
 import time
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union
 
 from kubernetes import config as k8_config
 from kubernetes import dynamic
@@ -50,22 +50,33 @@ def _get_logger() -> logging.Logger:
 
 def dump_resource(resource: Union[Optional[Dict[str, Any]], List[Dict[str, Any]]]) -> str:
     def strip_resource(resource: Dict[str, Any]) -> Dict[str, Any]:
+        verbosity = 0
+        try:
+            verbosity = int(os.environ.get("ORBIT_CONTROLLER_LOG_VERBOSITY", "0"))
+        except Exception:
+            pass
+
+        if verbosity > 2:
+            return resource
+
         stripped_resource = {
             "metadata": {
                 "name": resource.get("metadata", {}).get("name", None),
                 "namespace": resource.get("metadata", {}).get("namespace", None),
-                "labels": resource.get("metadata", {}).get("labels", None),
-                "annotations": resource.get("metadata", {}).get("annotations", None),
             },
         }
 
-        try:
-            del stripped_resource["metadata"]["annotations"]["kubectl.kubernetes.io/last-applied-configuration"]
-        except Exception:
-            pass
+        if verbosity > 1:
+            stripped_resource["metadata"]["labels"] = resource.get("metadata", {}).get("labels", None)
+            stripped_resource["metadata"]["annotations"] = resource.get("metadata", {}).get("annotations", None)
+            try:
+                del stripped_resource["metadata"]["annotations"]["kubectl.kubernetes.io/last-applied-configuration"]
+            except Exception:
+                pass
 
-        if "spec" in resource:
-            stripped_resource["spec"] = resource["spec"]
+            if "spec" in resource:
+                stripped_resource["spec"] = resource["spec"]
+
         return stripped_resource
 
     if isinstance(resource, dict):
@@ -122,12 +133,17 @@ def initialize_orbit_controller_state() -> V1ConfigMap:
 
 
 def get_module_state(module: str) -> Dict[str, Any]:
-    module_path = os.path.join(ORBIT_STATE_PATH, module)
-    if os.path.exists(module_path):
-        with open(module_path, "r") as module_file:
-            return cast(Dict[str, Any], json.load(module_file))
-    else:
-        return {}
+    # module_path = os.path.join(ORBIT_STATE_PATH, module)
+    # if os.path.exists(module_path):
+    #     with open(module_path, "r") as module_file:
+    #         return cast(Dict[str, Any], json.load(module_file))
+    # else:
+    #     return {}
+    config_map = get_orbit_controller_state()
+    config_map_data = config_map.data if config_map.data is not None else {}
+    data = {k: json.loads(v) for k, v in config_map_data.items()} if config_map is not None else {}
+
+    return data.get(module, {})
 
 
 def put_module_state(module: str, state: Dict[str, Any]) -> None:

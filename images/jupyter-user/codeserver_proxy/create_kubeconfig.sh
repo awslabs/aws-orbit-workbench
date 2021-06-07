@@ -40,7 +40,7 @@ contexts:
 - name: ${cluster_name}-context
   context:
     cluster: ${cluster_name}-cluster
-    namespace: ${team_name}
+    namespace: ${team_name}-${USERNAME}
     user: ${team_name}
 current-context:  ${cluster_name}-context
 users:

@@ -81,7 +81,7 @@ RUN chown jovyan /opt/orbit/VERSION
 RUN conda run pip install --upgrade \
     aws-orbit==$(cat /opt/orbit/VERSION) \
     aws-orbit-sdk==$(cat /opt/orbit/VERSION) \
-    jupyterlab-orbit==$(cat /opt/orbit/VERSION)
+    aws-orbit-jupyterlab-orbit==$(cat /opt/orbit/VERSION)
 RUN rm /etc/pip.conf
 
 # add bundle with docker image sources

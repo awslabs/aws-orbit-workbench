@@ -409,8 +409,6 @@ certifi==2020.12.5
     # via
     #   kubernetes
     #   requests
-cffi==1.14.5
-    # via cryptography
 cfn-flip==1.2.3
     # via aws-orbit
 chardet==4.0.0
@@ -472,8 +470,6 @@ constructs==3.3.75
     #   aws-cdk.aws-stepfunctions
     #   aws-cdk.core
     #   aws-cdk.custom-resources
-cryptography==3.4.7
-    # via secretstorage
 decorator==5.0.7
     # via jsonpath-ng
 docutils==0.17.1
@@ -491,10 +487,6 @@ importlib-metadata==4.0.1
     #   twine
 isort==5.6.4
     # via -r requirements-dev.in
-jeepney==0.6.0
-    # via
-    #   keyring
-    #   secretstorage
 jmespath==0.10.0
     # via
     #   boto3
@@ -648,8 +640,6 @@ pyasn1==0.4.8
     #   rsa
 pycodestyle==2.6.0
     # via flake8
-pycparser==2.20
-    # via cffi
 pyflakes==2.2.0
     # via flake8
 pygments==2.8.1
@@ -691,8 +681,6 @@ rsa==4.7.2
     # via google-auth
 s3transfer==0.4.2
     # via boto3
-secretstorage==3.3.1
-    # via keyring
 six==1.15.0
     # via
     #   bleach
@@ -728,7 +716,7 @@ typing-extensions==3.7.4.3
     #   typing-inspect
 typing-inspect==0.6.0
     # via marshmallow-dataclass
-urllib3==1.26.4
+urllib3==1.26.5
     # via
     #   botocore
     #   kubernetes

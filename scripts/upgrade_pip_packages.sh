@@ -4,6 +4,10 @@ set -e
 
 # Run from the root directory #
 
+# Attempting removal of pip.conf to clear cached credentials and code-commit index
+echo
+rm ~/.config/pip/pip.conf && echo "Removed pip.conf" || echo "Skipped pip.conf removal"
+
 ROOT_PATH=`pwd`
 
 # Paths where pip-compile generates requirements files #

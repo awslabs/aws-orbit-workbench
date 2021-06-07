@@ -9,6 +9,7 @@ data:
   FLASK_ENV: development
   GUNICORN_WORKERS: "1"
   ORBIT_CONTROLLER_DEBUG: "1"
+  ORBIT_CONTROLLER_LOG_VERBOSITY: "0"
   IN_CLUSTER_DEPLOYMENT: "1"
   USERSPACE_CHART_MANAGER_WORKERS: "1"
   POD_DEFAULTS_WATCHER_WORKERS: "1"
@@ -197,82 +198,82 @@ spec:
           configMap:
             name: orbit-controller-state
 ---
-# apiVersion: apps/v1
-# kind: StatefulSet
-# metadata:
-#   labels:
-#     app: orbit-controller
-#   namespace: orbit-system
-#   name: podsettings-poddefaults-manager
-# spec:
-#   podManagementPolicy: OrderedReady
-#   replicas: 1
-#   revisionHistoryLimit: 10
-#   serviceName: ""
-#   selector:
-#     matchLabels:
-#       app: podsettings-poddefaults-manager
-#   template:
-#     metadata:
-#       labels:
-#         app: podsettings-poddefaults-manager
-#       name: podsettings-poddefaults-manager
-#       annotations:
-#         sidecar.istio.io/inject: "false"
-#     spec:
-#       serviceAccountName: orbit-${env_name}-admin
-#       containers:
-#         - name: podsettings-watcher
-#           image: ${orbit_controller_image}
-#           imagePullPolicy: ${image_pull_policy}
-#           envFrom:
-#             - configMapRef:
-#                 name: orbit-controller-config
-#           command:
-#             - orbit-controller
-#             - watch
-#             - podsettings
-#           args:
-#             - "--workers=$(POD_SETTINGS_WATCHER_WORKERS)"
-#           volumeMounts:
-#             - mountPath: /state
-#               name: orbit-controller-state
-#               readOnly: false
-#           resources:
-#             limits:
-#               cpu: 2
-#               memory: 2G
-#             requests:
-#               cpu: 100m
-#               memory: 100M
-#         - name: poddefaults-watcher
-#           image: ${orbit_controller_image}
-#           imagePullPolicy: ${image_pull_policy}
-#           envFrom:
-#             - configMapRef:
-#                 name: orbit-controller-config
-#           command:
-#             - orbit-controller
-#             - watch
-#             - poddefaults
-#           args:
-#             - "--workers=$(POD_DEFAULTS_WATCHER_WORKERS)"
-#           volumeMounts:
-#             - mountPath: /state
-#               name: orbit-controller-state
-#               readOnly: false
-#           resources:
-#             limits:
-#               cpu: 2
-#               memory: 2G
-#             requests:
-#               cpu: 100m
-#               memory: 100M
-#       volumes:
-#         - name: orbit-controller-state
-#           configMap:
-#             name: orbit-controller-state
-# ---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: orbit-controller
+  namespace: orbit-system
+  name: podsettings-poddefaults-manager
+spec:
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  revisionHistoryLimit: 10
+  serviceName: ""
+  selector:
+    matchLabels:
+      app: podsettings-poddefaults-manager
+  template:
+    metadata:
+      labels:
+        app: podsettings-poddefaults-manager
+      name: podsettings-poddefaults-manager
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: orbit-${env_name}-admin
+      containers:
+        - name: podsettings-watcher
+          image: ${orbit_controller_image}
+          imagePullPolicy: ${image_pull_policy}
+          envFrom:
+            - configMapRef:
+                name: orbit-controller-config
+          command:
+            - orbit-controller
+            - watch
+            - podsettings
+          args:
+            - "--workers=$(POD_SETTINGS_WATCHER_WORKERS)"
+          volumeMounts:
+            - mountPath: /state
+              name: orbit-controller-state
+              readOnly: false
+          resources:
+            limits:
+              cpu: 2
+              memory: 2G
+            requests:
+              cpu: 100m
+              memory: 100M
+      #   - name: poddefaults-watcher
+      #     image: ${orbit_controller_image}
+      #     imagePullPolicy: ${image_pull_policy}
+      #     envFrom:
+      #       - configMapRef:
+      #           name: orbit-controller-config
+      #     command:
+      #       - orbit-controller
+      #       - watch
+      #       - poddefaults
+      #     args:
+      #       - "--workers=$(POD_DEFAULTS_WATCHER_WORKERS)"
+      #     volumeMounts:
+      #       - mountPath: /state
+      #         name: orbit-controller-state
+      #         readOnly: false
+      #     resources:
+      #       limits:
+      #         cpu: 2
+      #         memory: 2G
+      #       requests:
+      #         cpu: 100m
+      #         memory: 100M
+      volumes:
+        - name: orbit-controller-state
+          configMap:
+            name: orbit-controller-state
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:

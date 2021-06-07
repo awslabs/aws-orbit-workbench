@@ -69,7 +69,7 @@ def create_user_efs_endpoint(user: str, team_name: str) -> Dict[str, Any]:
             FileSystemId=EFS_FS_ID,
             PosixUser={"Uid": 1000, "Gid": 100},
             RootDirectory={
-                "Path": f"/efs/private/{user}",
+                "Path": f"/{team_name}/private/{user}",
                 "CreationInfo": {"OwnerUid": 1000, "OwnerGid": 100, "Permissions": "770"},
             },
             Tags=[{"Key": "TeamSpace", "Value": team_name}, {"Key": "Env", "Value": os.environ.get("ORBIT_ENV")}],

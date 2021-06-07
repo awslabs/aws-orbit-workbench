@@ -15,7 +15,7 @@
 import logging
 from typing import Tuple
 
-from aws_orbit import plugins
+from aws_orbit import plugins, sh
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
 from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, kubeflow, teams
 from aws_orbit.services import ecr, ssm
@@ -47,6 +47,9 @@ def destroy_teams(args: Tuple[str, ...]) -> None:
 
     plugins.PLUGINS_REGISTRIES.load_plugins(context=context, plugin_changesets=[], teams_changeset=None)
     kubectl.write_kubeconfig(context=context)
+    for team_context in context.teams:
+        _logger.debug("Destory all user namespaces for %s", team_context.name)
+        sh.run(f"kubectl delete namespaces -l orbit/team={team_context.name},orbit/space=user --wait=true")
     _logger.debug("Plugins loaded")
     for team_context in context.teams:
         plugins.PLUGINS_REGISTRIES.destroy_team_plugins(context=context, team_context=team_context)
