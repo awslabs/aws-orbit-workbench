@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  Orbit Workbench Lake Admin demo stack
+Parameters:
+  envname:
+    Type: String
+    Default: dev-env
+    Description: Orbit Environemnt Name
+  envdeployid:
+    Type: String
+    Description: Orbit Deployment ID
+  envcognitouserpoolid:
+    Type: String
+    Description: Orbit Cognito Userpool ID
+  CfnTemplatePath:
+    Type: String
+    Description: Orbit Lake Admin CloudFormation template path
+Resources:
+
+  LakeAdminAdditionalPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action: 'glue:*'
+            Effect: Allow
+            Resource: '*'
+          - Action: 'ec2:*'
+            Effect: Allow
+            Resource: '*'
+          - Action: 'ssm:*' # give lake-admin ability to change other teams (e.g., add profiles)
+            Effect: Allow
+            Resource:
+              - !Join
+                - ''
+                - - 'arn:aws:ssm:'
+                  - !Ref "AWS::Region"
+                  - ':'
+                  - !Ref 'AWS::AccountId'
+                  - ':parameter/orbit*'
+        Version: 2012-10-17
+      Description: ''
+      ManagedPolicyName: !Join
+        - ''
+        - - 'orbit-'
+          - !Ref envname
+          - '-demo-lake-admin-add-policy'
+      Path: /
+
+  LakeAdminGroup:
+    Type: 'AWS::Cognito::UserPoolGroup'
+    Properties:
+      UserPoolId: !Ref envcognitouserpoolid
+      Description: lake-admin users group.
+      GroupName: !Join
+        - ''
+        - - !Ref envname
+          - '-lake-admin'
+
+Outputs:
+  LakeAdminAdditionalPolicy:
+    Description: The Lake Admin Additional Policy
+    Value:
+      Ref: LakeAdminAdditionalPolicy
+  LakeAdminGroupName:
+    Description: The Lake Admin Group Name
+    Value:
+      Ref: LakeAdminGroup
