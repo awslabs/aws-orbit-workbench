@@ -100,6 +100,34 @@ Resources:
                     - LakeBucket
                     - Arn
                   - '/*'
+              - !GetAtt
+                - SecuredLakeBucket
+                - Arn
+              - !Join
+                - ''
+                - - !GetAtt
+                    - SecuredLakeBucket
+                    - Arn
+                  - '/*'
+          - Action:
+              - lakeformation:DeregisterResource
+              - lakeformation:RegisterResource
+              - lakeformation:AddLFTagsToResource
+              - lakeformation:DeleteLFTagsToResource
+              - lakeformation:RevokeDataLakePrivileges
+            Effect: Allow
+            Resource: '*'
+          - Action:
+              - iam:GetRole
+              - iam:GetRolePolicy
+              - iam:PutRolePolicy
+            Effect: Allow
+            Resource:
+              - !Join
+                - ''
+                - - 'arn:aws:iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':role/aws-service-role/lakeformation.amazonaws.com/AWSServiceRoleForLakeFormationDataAccess'
           - Action: 'glue:*'
             Effect: Allow
             Resource: '*'

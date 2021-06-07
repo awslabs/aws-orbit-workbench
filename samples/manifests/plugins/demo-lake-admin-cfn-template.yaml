@@ -22,6 +22,14 @@ Resources:
     Properties:
       PolicyDocument:
         Statement:
+          - Action:
+              - lakeformation:PutDataLakeSettings
+              - lakeformation:GetDataLakeSettings
+              - lakeformation:CreateLFTag
+              - lakeformation:DeleteLFTag
+              - lakeformation:UpdateLFTag
+            Effect: Allow
+            Resource: '*'
           - Action: 'glue:*'
             Effect: Allow
             Resource: '*'

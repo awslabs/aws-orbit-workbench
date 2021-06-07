@@ -16,10 +16,3 @@
             done
             echo "DONE LOOP"
         restartPolicy: Never
--   PluginId: overprovisioning1
-    Module: overprovisioning
-    Path: ../plugins/overprovisioning/
-    Parameters:
-        replicas: 3
-        cpu: 2
-        memory: 4G
