@@ -126,13 +126,15 @@ def delete_virtual_cluster(eks_cluster_name: str, virtual_cluster_name: str) -> 
             "PageSize": 400,
         },
     )
+    _logger.debug("finding emr virtual clusters...")
     if "virtualClusters" in response_iterator:
         for p in response_iterator:
             for c in p["virtualClusters"]:
+                _logger.debug("Emr virtual cluster found: %s", c["name"])
                 if c["name"] == virtual_cluster_name:
                     try:
                         delete_response = emr.delete_virtual_cluster(id=c["id"])
                         _logger.debug("delete_virtual_cluster:", delete_response)
-                    except Exception as e:
-                        _logger.error(e)
+                    except Exception:
+                        _logger.exception("error deleting virtual cluster")
                         pass

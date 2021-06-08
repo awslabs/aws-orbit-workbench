@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import os
 import time
 from multiprocessing import Queue
 from typing import Any, Dict, Optional, cast
@@ -19,6 +20,13 @@ from typing import Any, Dict, Optional, cast
 from kubernetes.dynamic import exceptions as k8s_exceptions
 from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, dump_resource, dynamic_client, logger, poddefault
 from urllib3.exceptions import ReadTimeoutError
+
+
+def _verbosity() -> int:
+    try:
+        return int(os.environ.get("ORBIT_CONTROLLER_LOG_VERBOSITY", "0"))
+    except Exception:
+        return 0
 
 
 def process_added_event(podsetting: Dict[str, Any]) -> None:
@@ -35,7 +43,16 @@ def process_added_event(podsetting: Dict[str, Any]) -> None:
         )
         logger.debug("ADDED poddefault for podsetting: %s", dump_resource(podsetting))
     except Exception:
-        logger.exception("IGNORING ERROR ADDING poddefault for podsetting: %s", dump_resource(podsetting))
+        if _verbosity() > 0:
+            logger.exception(
+                "IGNORING ERROR ADDING poddefault for podsetting: %s",
+                dump_resource(podsetting),
+            )
+        else:
+            logger.error(
+                "IGNORING ERROR ADDING poddefault for podsetting: %s",
+                dump_resource(podsetting),
+            )
 
 
 def process_modified_event(podsetting: Dict[str, Any]) -> None:
@@ -48,7 +65,16 @@ def process_modified_event(podsetting: Dict[str, Any]) -> None:
         poddefault.modify_poddefault(namespace=namespace, name=name, desc=desc, client=client)
         logger.debug("MODIFIED poddefault for podsetting: %s", dump_resource(podsetting))
     except Exception:
-        logger.exception("IGNORING ERROR MODIFIYING poddefault for podsetting: %s", dump_resource(podsetting))
+        if _verbosity() > 0:
+            logger.exception(
+                "IGNORING ERROR MODIFIYING poddefault for podsetting: %s",
+                dump_resource(podsetting),
+            )
+        else:
+            logger.error(
+                "IGNORING ERROR MODIFIYING poddefault for podsetting: %s",
+                dump_resource(podsetting),
+            )
 
 
 def process_deleted_event(podsetting: Dict[str, Any]) -> None:
@@ -60,7 +86,16 @@ def process_deleted_event(podsetting: Dict[str, Any]) -> None:
         poddefault.delete_poddefault(namespace=namespace, name=name, client=client)
         logger.debug("DELETED poddefault for podsetting: %s", dump_resource(podsetting))
     except Exception:
-        logger.exception("IGNORING ERROR DELETING poddefault for podsetting: %s", dump_resource(podsetting))
+        if _verbosity() > 0:
+            logger.exception(
+                "IGNORING ERROR DELETING poddefault for podsetting: %s",
+                dump_resource(podsetting),
+            )
+        else:
+            logger.error(
+                "IGNORING ERROR DELETING poddefault for podsetting: %s",
+                dump_resource(podsetting),
+            )
 
 
 def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
@@ -73,18 +108,23 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
 
             kwargs = {
                 "resource_version": state.get("lastResourceVersion", 0),
-                "label_selector": "orbit/space=team,!orbit/disable-watcher",
             }
             for event in api.watch(**kwargs):
-                podsetting = event["object"]
-                state["lastResourceVersion"] = podsetting.metadata.resource_version
+                if _verbosity() > 2:
+                    logger.debug("event object: %s", event)
+                podsetting = event["raw_object"]
+                state["lastResourceVersion"] = podsetting.get("metadata", {}).get("resourceVersion", 0)
+                logger.debug("watcher state: %s", state)
                 queue_event = {"type": event["type"], "raw_object": event["raw_object"]}
-                logger.debug(
-                    "Queueing PodSetting event for processing type: %s podsetting: %s",
-                    event["type"],
-                    dump_resource(event["raw_object"]),
-                )
-                queue.put(queue_event)
+
+                labels = event["raw_object"].get("metadata", {}).get("labels", {})
+                if labels.get("orbit/space") == "team" and "orbit/disable-watcher" not in labels:
+                    logger.debug(
+                        "Queueing PodSetting event for processing type: %s podsetting: %s",
+                        event["type"],
+                        dump_resource(event["raw_object"]),
+                    )
+                    queue.put(queue_event)
         except ReadTimeoutError:
             logger.warning(
                 "There was a timeout error accessing the Kubernetes API. Retrying request.",

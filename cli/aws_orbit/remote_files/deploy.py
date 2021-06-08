@@ -298,6 +298,8 @@ def deploy_teams(args: Tuple[str, ...]) -> None:
             team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_name)
             if team_context is None:
                 raise RuntimeError(f"TeamContext {team_name} not found!")
+            _logger.debug("Destory all user namespaces for %s", team_context.name)
+            sh.run(f"kubectl delete namespaces -l orbit/team={team_context.name},orbit/space=user --wait=true")
             _logger.debug("Destroying team %s", team_name)
             plugins.PLUGINS_REGISTRIES.destroy_team_plugins(context=context, team_context=team_context)
             _logger.debug("Team Plugins destroyed")

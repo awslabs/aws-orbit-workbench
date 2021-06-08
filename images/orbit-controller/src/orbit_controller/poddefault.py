@@ -12,6 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import os
 import time
 from multiprocessing import Queue
 from typing import Any, Dict, List, Optional, cast
@@ -25,6 +26,13 @@ KUBEFLOW_API_GROUP = "kubeflow.org"
 KUBEFLOW_API_VERSION = "v1alpha1"
 
 
+def _verbosity() -> int:
+    try:
+        return int(os.environ.get("ORBIT_CONTROLLER_LOG_VERBOSITY", "0"))
+    except Exception:
+        return 0
+
+
 def _get_team_namespaces(client: dynamic.DynamicClient, team: str) -> List[Dict[str, Any]]:
     api = client.resources.get(api_version="v1", kind="Namespace")
 
@@ -33,7 +41,10 @@ def _get_team_namespaces(client: dynamic.DynamicClient, team: str) -> List[Dict[
 
 
 def construct(
-    name: str, desc: str, labels: Optional[Dict[str, str]] = None, annnotations: Optional[Dict[str, str]] = None
+    name: str,
+    desc: str,
+    labels: Optional[Dict[str, str]] = None,
+    annnotations: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     return {
         "apiVersion": f"{KUBEFLOW_API_GROUP}/{KUBEFLOW_API_VERSION}",
@@ -91,10 +102,16 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
 
             logger.info("Monitoring PodDefaults")
 
-            kwargs = {"resource_version": state.get("lastResourceVersion", 0), "label_selector": "orbit/space=team"}
+            kwargs = {
+                "resource_version": state.get("lastResourceVersion", 0),
+                "label_selector": "orbit/space=team",
+            }
             for event in api.watch(**kwargs):
-                poddefault = event["object"]
-                state["lastResourceVersion"] = poddefault.metadata.resource_version
+                if _verbosity() > 2:
+                    logger.debug("event object: %s", event)
+                poddefault = event["raw_object"]
+                state["lastResourceVersion"] = poddefault.get("metadata", {}).get("resourceVersion", 0)
+                logger.debug("watcher state: %s", state)
                 queue_event = {"type": event["type"], "raw_object": event["raw_object"]}
                 logger.debug(
                     "Queueing PodDefault event for processing type: %s poddefault: %s",
