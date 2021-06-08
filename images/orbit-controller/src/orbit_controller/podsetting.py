@@ -32,13 +32,24 @@ def _verbosity() -> int:
 def process_added_event(podsetting: Dict[str, Any]) -> None:
     name = podsetting["metadata"]["name"]
     namespace = podsetting["metadata"]["namespace"]
+    owner_uid = podsetting["metadata"]["uid"]
     desc = podsetting["spec"].get("desc", "")
     client = dynamic_client()
 
     try:
         poddefault.create_poddefault(
             namespace=namespace,
-            poddefault=poddefault.construct(name=name, desc=desc, labels={"orbit/space": "team"}),
+            poddefault=poddefault.construct(
+                name=name,
+                desc=desc,
+                owner_reference={
+                    "apiVersion": f"{ORBIT_API_GROUP}/{ORBIT_API_VERSION}",
+                    "kind": "PodSetting",
+                    "name": name,
+                    "uid": owner_uid,
+                },
+                labels={"orbit/space": "team", "orbit/team": name},
+            ),
             client=client,
         )
         logger.debug("ADDED poddefault for podsetting: %s", dump_resource(podsetting))
@@ -160,8 +171,8 @@ def process_podsettings(queue: Queue, state: Dict[str, Any], replicator_id: int)
                 process_added_event(podsetting=podsetting_event["raw_object"])
             elif podsetting_event["type"] == "MODIFIED":
                 process_modified_event(podsetting=podsetting_event["raw_object"])
-            elif podsetting_event["type"] == "DELETED":
-                process_deleted_event(podsetting=podsetting_event["raw_object"])
+            # elif podsetting_event["type"] == "DELETED":
+            #     process_deleted_event(podsetting=podsetting_event["raw_object"])
             else:
                 logger.debug("Skipping PodSetting event: %s", dump_resource(podsetting_event))
         except Exception:

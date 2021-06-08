@@ -375,7 +375,7 @@ def get_response(uid: str, patch: Optional[Dict[str, Any]] = None) -> str:
     return cast(str, jsonify({"response": response}))
 
 
-def process_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
+def process_podsetting_request(logger: logging.Logger, request: Dict[str, Any]) -> Any:
     if request.get("dryRun", False):
         logger.info("Dry run - Skip Pod Mutation")
         return get_response(uid=request["uid"])

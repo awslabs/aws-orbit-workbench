@@ -21,7 +21,7 @@ from typing import Any, Dict, Optional, cast
 from kubernetes.client import CoreV1Api, V1ConfigMap
 from kubernetes.client import exceptions as k8s_exceptions
 from kubernetes.watch import Watch
-from orbit_controller import dump_resource, load_config, logger, run_command
+from orbit_controller import dump_resource, dynamic_client, load_config, logger, poddefault, run_command
 from urllib3.exceptions import ReadTimeoutError
 
 
@@ -163,6 +163,13 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
                 chart_name,
             )
             logger.info("Helm release %s installed at %s", helm_release, namespace_name)
+
+    logger.info("Copying PodDefaults from Team")
+    client = dynamic_client()
+    poddefaults = poddefault.get_team_poddefaults(client=client, team=team)
+    poddefault.copy_poddefaults_to_user_namespaces(
+        client=client, poddefaults=poddefaults, user_namespaces=[namespace_name]
+    )
 
 
 def install_helm_chart(

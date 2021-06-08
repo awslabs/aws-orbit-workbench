@@ -6,6 +6,7 @@ source $( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/vars
 
 MODULE=$1
 PACKAGE=$2
+IGNORE_TWINE_ERROR=${3:-1}
 
 cd ${DIR}/../$MODULE \
     && echo "Changed directory to ${PWD}" \
@@ -35,4 +36,4 @@ echo "Sleeping briefly"
 sleep 3
 twine upload --repository codeartifact dist/* \
     && echo "Twine upload successful" \
-    || (echo "ERROR: Twine upload failed, this may be an eventual consistency issue (Try it again)"; exit 1)
+    || (echo "ERROR: Twine upload failed, this may be an eventual consistency issue (Try it again)"; exit ${IGNORE_TWINE_ERROR})

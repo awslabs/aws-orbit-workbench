@@ -63,7 +63,7 @@ webhooks:
       service:
         namespace: orbit-system
         name: podsettings-pod-modifier
-        path: /pod
+        path: /pod-podsetting
 ---
 apiVersion: apps/v1
 kind: StatefulSet
