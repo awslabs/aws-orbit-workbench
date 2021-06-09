@@ -115,8 +115,18 @@ Resources:
               - lakeformation:AddLFTagsToResource
               - lakeformation:DeleteLFTagsToResource
               - lakeformation:RevokeDataLakePrivileges
+              - lakeformation:GrantPermissions
+              - lakeformation:RevokePermissions
             Effect: Allow
-            Resource: '*'
+            Resource:
+              - !Join
+                - ''
+                - - 'arn:aws:lakeformation:'
+                  - !Ref "AWS::Region"
+                  - ':'
+                  - !Ref 'AWS::AccountId'
+                  - ':catalog:'
+                  - !Ref 'AWS::AccountId'
           - Action:
               - iam:GetRole
               - iam:GetRolePolicy

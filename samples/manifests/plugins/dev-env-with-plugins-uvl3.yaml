@@ -78,7 +78,7 @@ Teams:
     - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-demo-lake-creator-add-policy
     GrantSudo: true
     Fargate: false
-    K8Admin: true
+    K8Admin: false
     JupyterhubInboundRanges:
     - 0.0.0.0/0
     Plugins: !include lake-creator-plugins.yaml
