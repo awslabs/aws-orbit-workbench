@@ -510,7 +510,7 @@ boto3==1.17.87
     #   aws-orbit
     #   aws-orbit-sdk
     #   aws-sam-translator
-botocore==1.20.87
+botocore==1.20.88
     # via
     #   aws-orbit
     #   boto3
