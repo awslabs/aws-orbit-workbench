@@ -303,8 +303,6 @@ def destroy_env(context: Context) -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(stack_name=eks_stack_name) and context.helm_repository:
-        repo_location = context.helm_repository
-        repo = context.name
         kubectl.write_kubeconfig(context=context)
         uninstall_chart(name="image-replicator", namespace="orbit-system")
 
@@ -313,8 +311,6 @@ def destroy_team(context: Context, team_context: TeamContext) -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
     _logger.debug("EKSCTL stack name: %s", eks_stack_name)
     if cfn.does_stack_exist(stack_name=eks_stack_name) and team_context.team_helm_repository:
-        repo_location = team_context.team_helm_repository
-        repo = team_context.name
         kubectl.write_kubeconfig(context=context)
         uninstall_all_charts(namespace=team_context.name)
         if team_context.team_helm_repository:
