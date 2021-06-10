@@ -20,7 +20,7 @@ sts_ep: ${sts_ep}
 fsGroup: 100
 team_role_arn: ${team_role_arn}
 jupyter_team_image: ${jupyter_team_image}
-account_id: ${account_id}
+account_id: "${account_id}"
 s3_toolkit_bucket: ${s3_toolkit_bucket}
 utility_data_image: ${utility_data_image}
 utility_tag: ${utility_tag}
