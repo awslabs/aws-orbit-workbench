@@ -36,6 +36,7 @@ Common labels
 {{- define "team-script-launcher.labels" -}}
 helm.sh/chart: {{ include "team-script-launcher.chart" . }}
 app: orbit-{{ include "team-script-launcher.name" . }}
+orbit/team: {{ .Values.team }}
 {{ include "team-script-launcher.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
