@@ -36,7 +36,7 @@ ManagedNodegroups:
     InstanceType: m5.2xlarge
     LocalStorageSize: 128
     NodesNumDesired: 4
-    NodesNumMax: 4
+    NodesNumMax: 8
     NodesNumMin: 1
     Labels:
         instance-type: m5.2xlarge
