@@ -308,12 +308,6 @@ def deploy_teams(
         _logger.debug(f"Changeset:\n{dump_changeset_to_str(changeset=changeset)}")
         msg_ctx.progress(5)
 
-        plugins.PLUGINS_REGISTRIES.load_plugins(
-            context=context,
-            msg_ctx=msg_ctx,
-            plugin_changesets=changeset.plugin_changesets,
-            teams_changeset=changeset.teams_changeset,
-        )
         msg_ctx.progress(7)
         _logger.debug("Preparing bundle directory")
         dirs: List[Tuple[str, str]] = []
@@ -377,12 +371,6 @@ def _deploy_image(
             msg_ctx.error("Please, deploy your environment before deploy any additional docker image")
             return
 
-        plugins.PLUGINS_REGISTRIES.load_plugins(
-            context=context,
-            msg_ctx=msg_ctx,
-            plugin_changesets=[],
-            teams_changeset=None,
-        )
         msg_ctx.progress(3)
 
         bundle_path = bundle.generate_bundle(command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)])

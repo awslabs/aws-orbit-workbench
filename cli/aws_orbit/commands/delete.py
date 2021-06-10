@@ -32,12 +32,6 @@ def delete_image(env: str, name: str, debug: bool) -> None:
             msg_ctx.error("Please, deploy your environment before deploy/destroy any docker image")
             return
 
-        plugins.PLUGINS_REGISTRIES.load_plugins(
-            context=context,
-            msg_ctx=msg_ctx,
-            plugin_changesets=[],
-            teams_changeset=None,
-        )
         msg_ctx.progress(3)
 
         bundle_path = bundle.generate_bundle(command_name=f"delete_image-{name}", context=context, dirs=[])

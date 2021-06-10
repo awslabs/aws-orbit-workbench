@@ -59,12 +59,6 @@ def destroy_teams(env: str, debug: bool) -> None:
         msg_ctx.info(f"Teams: {','.join([t.name for t in context.teams])}")
         msg_ctx.progress(2)
 
-        plugins.PLUGINS_REGISTRIES.load_plugins(
-            context=context,
-            msg_ctx=msg_ctx,
-            plugin_changesets=[],
-            teams_changeset=None,
-        )
         msg_ctx.progress(4)
 
         if any(cfn.does_stack_exist(stack_name=t.stack_name) for t in context.teams):
