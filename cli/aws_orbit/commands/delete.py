@@ -14,7 +14,7 @@
 
 import logging
 
-from aws_orbit import bundle, plugins, remote
+from aws_orbit import bundle, remote
 from aws_orbit.messages import MessagesContext
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.services import cfn, codebuild, ssm
@@ -32,12 +32,6 @@ def delete_image(env: str, name: str, debug: bool) -> None:
             msg_ctx.error("Please, deploy your environment before deploy/destroy any docker image")
             return
 
-        plugins.PLUGINS_REGISTRIES.load_plugins(
-            context=context,
-            msg_ctx=msg_ctx,
-            plugin_changesets=[],
-            teams_changeset=None,
-        )
         msg_ctx.progress(3)
 
         bundle_path = bundle.generate_bundle(command_name=f"delete_image-{name}", context=context, dirs=[])

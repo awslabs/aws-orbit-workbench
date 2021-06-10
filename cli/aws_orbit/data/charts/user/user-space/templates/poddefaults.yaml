@@ -3,6 +3,8 @@ kind: PodDefault
 metadata:
   name: vscode
   namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "user-space.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:

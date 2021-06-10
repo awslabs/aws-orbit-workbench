@@ -3,6 +3,7 @@
 # Declare variables to be passed into your templates.
 
 namespace: ${team}
+team: ${team}
 nameOverride: ${plugin_id}
 fullnameOverride: ""
 serviceAccountName: default-editor
