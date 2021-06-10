@@ -24,7 +24,13 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
     user_pool_id = cast(str, event.get("userPoolId"))
 
     user_groups_info = cognito_client.admin_list_groups_for_user(Username=user_name, UserPoolId=user_pool_id)
-    user_groups = [group.get("GroupName").split(f"{orbit_env}-")[1] for group in user_groups_info.get("Groups")]
+    # user_groups = [group.get("GroupName").split(f"{orbit_env}-")[1] for group in user_groups_info.get("Groups")]
+
+    user_groups = []
+    for group in user_groups_info.get("Groups"):
+        if (f"{orbit_env}-") in (group.get("GroupName")):
+            g = group.get("GroupName").split(f"{orbit_env}-")[1]
+            user_groups.append(g)
 
     logger.info("Authenticated successfully:")
     logger.info(f"userName: {user_name}, userPoolId: {user_pool_id}, userGroups: {user_groups}")

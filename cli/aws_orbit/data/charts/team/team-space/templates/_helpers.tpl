@@ -36,6 +36,8 @@ Common labels
 {{- define "team-space.labels" -}}
 helm.sh/chart: {{ include "team-space.chart" . }}
 app: orbit-{{ include "team-space.name" . }}
+orbit/env: {{ .Values.env }}
+orbit/team: {{ .Values.team }}
 {{ include "team-space.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}

@@ -36,6 +36,7 @@ Common labels
 {{- define "ray.labels" -}}
 helm.sh/chart: {{ include "ray.chart" . }}
 app: orbit-{{ include "ray.name" . }}
+orbit/team: {{ .Values.team }}
 {{ include "ray.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}

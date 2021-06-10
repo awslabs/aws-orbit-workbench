@@ -49,6 +49,8 @@ def destroy_teams(args: Tuple[str, ...]) -> None:
     kubectl.write_kubeconfig(context=context)
     for team_context in context.teams:
         _logger.debug("Destory all user namespaces for %s", team_context.name)
+        # Force delete any Pods belonging to the Team in an attempt to eliminate Termination hangs
+        sh.run(f"kubectl delete pods -l orbit/team={team_context.name} --force")
         sh.run(f"kubectl delete namespaces -l orbit/team={team_context.name},orbit/space=user --wait=true")
     _logger.debug("Plugins loaded")
     for team_context in context.teams:
