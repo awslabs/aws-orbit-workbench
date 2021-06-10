@@ -147,6 +147,7 @@ def delete_user_namespace(
             logger.info(f"User {user_name} is not expected to be part of the {user_ns} namespace. Removing...")
 
             try:
+                api.delete_collection_namespaced_pod(namespace=user_ns, grace_period_seconds=0)
                 api.delete_namespace(name=user_ns)
                 logger.info(f"Removed namespace {user_ns}")
             except ApiException:
