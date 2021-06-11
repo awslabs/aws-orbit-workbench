@@ -65,10 +65,10 @@ def destroy_teams(args: Tuple[str, ...]) -> None:
             _logger.debug("Force deleting %s for Team %s", resource, team_context.name)
             try:
                 sh.run(
-                    f"for ns in $(kubectl get namespaces --output=jsonpath={{.items..metadata.name}} "
+                    f"bash -c 'for ns in $(kubectl get namespaces --output=jsonpath={{.items..metadata.name}} "
                     f"-l orbit/team={team_context.name}); "
-                    f"do kubectl delete {resource} -n $ns -all --force; "
-                    f"done"
+                    f"do kubectl delete {resource} -n $ns --all --force; "
+                    f"done'"
                 )
             except FailedShellCommand:
                 _logger.debug("Ignoring failed deletion of: %s", resource)
