@@ -28,7 +28,14 @@ app = Flask(__name__)
 app.logger.info("environ: %s", os.environ)
 
 
-@app.route("/pod-podsetting", methods=["POST"])
+@app.route("/pod-pod-setting", methods=["POST"])
+def pod() -> Any:
+    # See here for AdmissionReview request/response
+    # https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#request
+    return process_podsetting_request(logger=app.logger, request=request.json["request"])
+
+
+@app.route("/pod-image-replication", methods=["POST"])
 def pod() -> Any:
     # See here for AdmissionReview request/response
     # https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#request

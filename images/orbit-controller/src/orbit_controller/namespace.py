@@ -21,7 +21,7 @@ from typing import Any, Dict, Optional, cast
 from kubernetes.client import CoreV1Api, V1ConfigMap
 from kubernetes.client import exceptions as k8s_exceptions
 from kubernetes.watch import Watch
-from orbit_controller import dump_resource, dynamic_client, load_config, logger, poddefault, run_command
+from orbit_controller import dump_resource, dynamic_client, load_config, logger, pod_default, run_command
 from urllib3.exceptions import ReadTimeoutError
 
 
@@ -166,9 +166,9 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
 
     logger.info("Copying PodDefaults from Team")
     client = dynamic_client()
-    poddefaults = poddefault.get_team_poddefaults(client=client, team=team)
-    poddefault.copy_poddefaults_to_user_namespaces(
-        client=client, poddefaults=poddefaults, user_namespaces=[namespace_name]
+    pod_defaults = pod_default.get_team_pod_defaults(client=client, team=team)
+    pod_default.copy_pod_defaults_to_user_namespaces(
+        client=client, pod_defaults=pod_defaults, user_namespaces=[namespace_name]
     )
 
 

@@ -54,6 +54,43 @@ rules:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  name: imagereplicationtask.orbit.aws
+spec:
+  group: orbit.aws
+  scope: Namespaced
+  names:
+    plural: imagereplicationtasks
+    singular: imagereplicationtask
+    kind: ImageReplicationTask
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+              - images
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                    - source
+                    - destination
+                    properties:
+                      source:
+                        type: string
+                      destination:
+                        type: string
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
   name: podsettings.orbit.aws
 spec:
   group: orbit.aws
