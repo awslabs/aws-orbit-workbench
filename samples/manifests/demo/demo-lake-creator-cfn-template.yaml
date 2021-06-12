@@ -128,7 +128,6 @@ Resources:
                   - ':catalog:'
                   - !Ref 'AWS::AccountId'
           - Action:
-              - iam:GetRole
               - iam:GetRolePolicy
               - iam:PutRolePolicy
             Effect: Allow
@@ -138,6 +137,13 @@ Resources:
                 - - 'arn:aws:iam::'
                   - !Ref 'AWS::AccountId'
                   - ':role/aws-service-role/lakeformation.amazonaws.com/AWSServiceRoleForLakeFormationDataAccess'
+          - Action:
+              - 'iam:GetRole'
+              - 'iam:CreateServiceLinkedRole'
+              - 'iam:DeleteServiceLinkedRole'
+              - 'iam:AttachRolePolicy'
+            Effect: Allow
+            Resource: '*'
           - Action: 'glue:*'
             Effect: Allow
             Resource: '*'
