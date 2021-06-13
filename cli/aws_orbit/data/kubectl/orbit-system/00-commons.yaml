@@ -2,6 +2,9 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: orbit-system
+  labels:
+    orbit/space: env
+    orbit/env: ${env_name}
 ---
 apiVersion: v1
 kind: ServiceAccount

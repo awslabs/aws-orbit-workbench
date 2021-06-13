@@ -51,6 +51,27 @@ def _orbit_system_commons(context: "Context", output_path: str) -> None:
         file.write(content)
 
 
+def _kubeflow_namespaces(context: "Context", output_path: str) -> None:
+    filenames = ["kubeflow_namespace.yaml"]
+
+    for filename in filenames:
+        input = os.path.join(MODELS_PATH, "kubeflow", filename)
+        output = os.path.join(output_path, filename)
+
+        with open(input, "r") as file:
+            content: str = file.read()
+        content = resolve_parameters(
+            content,
+            dict(
+                env_name=context.name,
+                account_id=context.account_id,
+                region=context.region,
+            ),
+        )
+        with open(output, "w") as file:
+            file.write(content)
+
+
 def _orbit_controller(context: "Context", output_path: str) -> None:
     filenames = ["01a-orbit-controller.yaml", "01b-cert-manager.yaml"]
 
@@ -230,7 +251,7 @@ def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -
         _cleanup_output(output_path=output_path)
     _orbit_system_commons(context=context, output_path=output_path)
     _orbit_controller(context=context, output_path=output_path)
-
+    _kubeflow_namespaces(context=context, output_path=output_path)
     if context.account_id is None:
         raise ValueError("context.account_id is None!")
     if context.user_pool_id is None:
@@ -259,17 +280,23 @@ def _generate_env_manifest(context: "Context", clean_up: bool = True) -> Tuple[s
     output = os.path.join(output_path, filename)
     shutil.copyfile(src=input, dst=output)
 
-    # kubeflow jupyter launcher configmap
-    input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-launcher.yaml")
-    output = os.path.join(output_path, "kf-jupyter-launcher.yaml")
-
     with open(input, "r") as file:
         content = file.read()
 
     content = utils.resolve_parameters(
         content,
         dict(
-            orbit_jupyter_user_image=f"{context.images.jupyter_user.repository}:{context.images.jupyter_user.version}"
+            env_name=context.name,
+            orbit_controller_image=f"{context.images.orbit_controller.repository}:"
+            f"{context.images.orbit_controller.version}",
+            k8s_utilities_image=f"{context.images.k8s_utilities.repository}:" f"{context.images.k8s_utilities.version}",
+            image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
+            certArn=context.networking.frontend.ssl_cert_arn,
+            cognitoAppClientId=context.user_pool_client_id,
+            cognitoUserPoolID=context.user_pool_id,
+            account_id=context.account_id,
+            region=context.region,
+            cognitoUserPoolDomain=context.cognito_external_provider_domain,
         ),
     )
     with open(output, "w") as file:
@@ -418,11 +445,11 @@ def deploy_env(context: "Context") -> None:
         sh.run(f"kubectl delete jobs -l app=cert-manager -n orbit-system --context {k8s_context} --wait")
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
-        kubeflow.deploy_kubeflow(context=context)
-
         # orbit-system
         output_path = _generate_orbit_system_manifest(context=context)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
+
+        kubeflow.deploy_kubeflow(context=context)
 
         # env
         (output_path, patch) = _generate_env_manifest(context=context)
