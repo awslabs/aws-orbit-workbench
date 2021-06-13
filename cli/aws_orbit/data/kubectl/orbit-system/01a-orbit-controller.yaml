@@ -53,6 +53,7 @@ webhooks:
           values:
             - team
             - user
+            - kubeflow
     rules:
       - operations: ["CREATE", "UPDATE"]
         apiGroups: [""]

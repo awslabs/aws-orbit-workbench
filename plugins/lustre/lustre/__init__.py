@@ -161,6 +161,7 @@ def get_user_pv(fs_name: str, plugin_id: str, team_context: "TeamContext", vars:
 
         _logger.info("FSX Volume not ready. Waiting a min")
         time.sleep(60)
+        kubectl.write_kubeconfig(context=context)
     else:
         raise Exception(f"FSX Volume is not ready for plugin {plugin_id}")
 
