@@ -51,7 +51,12 @@ def _orbit_system_commons(context: "Context", output_path: str) -> None:
         file.write(content)
 
 
-def _kubeflow_namespaces(context: "Context", output_path: str) -> None:
+def _kubeflow_namespaces(context: "Context", clean_up: bool = True) -> str:
+    output_path = os.path.join(".orbit.out", context.name, "kubectl", "orbit-system")
+    os.makedirs(output_path, exist_ok=True)
+    if clean_up:
+        _cleanup_output(output_path=output_path)
+
     filenames = ["kubeflow_namespace.yaml"]
 
     for filename in filenames:
@@ -70,6 +75,8 @@ def _kubeflow_namespaces(context: "Context", output_path: str) -> None:
         )
         with open(output, "w") as file:
             file.write(content)
+
+    return output_path
 
 
 def _orbit_controller(context: "Context", output_path: str) -> None:
@@ -251,7 +258,6 @@ def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -
         _cleanup_output(output_path=output_path)
     _orbit_system_commons(context=context, output_path=output_path)
     _orbit_controller(context=context, output_path=output_path)
-    _kubeflow_namespaces(context=context, output_path=output_path)
     if context.account_id is None:
         raise ValueError("context.account_id is None!")
     if context.user_pool_id is None:
@@ -447,6 +453,10 @@ def deploy_env(context: "Context") -> None:
 
         # orbit-system
         output_path = _generate_orbit_system_manifest(context=context)
+        sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
+
+        # kubeflow-namespaces
+        output_path = _kubeflow_namespaces(context=context)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
         kubeflow.deploy_kubeflow(context=context)

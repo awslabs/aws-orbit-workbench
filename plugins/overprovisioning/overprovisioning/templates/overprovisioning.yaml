@@ -11,6 +11,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.nameOverride }}
+  labels:
     {{- include "overprovisioning.labels" . | nindent 4 }}
   namespace: {{ .Values.namespace }}
 spec:
