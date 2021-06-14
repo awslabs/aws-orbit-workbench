@@ -13,24 +13,60 @@ spec:
   resources:
     requests:
       storage: {{ .Values.storage }}
-
 ---
-apiVersion: v1
-kind: Pod
+apiVersion: batch/v1
+kind: Job
 metadata:
-  name: chmod-fsx-pod
+  name: chmod-fsx-job-{{ .Values.namespace }}
   namespace: {{ .Values.namespace }}
   labels:
+    app: orbit-chmod-fsx-job
+    job-name: chmod-fsx-job-{{ .Values.namespace }}
     {{- include "fsx-storageclass.labels" . | nindent 4 }}
 spec:
-  containers:
-  - name: ownership-change
-    image: {{.Values.image_repository}}
-    command: ["sh", "-c", "chown -hR +999:+65534 /data"]
-    volumeMounts:
-    - name: persistent-storage
-      mountPath: /data
-  volumes:
-  - name: persistent-storage
-    persistentVolumeClaim:
-      claimName: {{ .Values.fs_name }}
+  template:
+    metadata:
+      labels:
+        app: orbit-chmod-fsx-job
+        job-name: chmod-fsx-job-{{ .Values.namespace }}
+        {{- include "fsx-storageclass.labels" . | nindent 4 }}
+    spec:
+      nodeSelector:
+        orbit/usage: teams
+        orbit/node-type: ec2
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: k8s.amazonaws.com/accelerator
+                    operator: DoesNotExist
+      serviceAccountName: default-editor
+      containers:
+      - name: ownership-change
+        securityContext:
+          runAsUser: 0
+        image: {{.Values.image_repository}}
+        command: ["/bin/bash"]
+        resources:
+          limits:
+            cpu: "100m"
+            memory: "256Mi"
+          requests:
+            cpu: "10m"
+            memory: "20Mi"        
+        args:
+          - -c
+          - >-  
+            echo 'Starting CHMOD' &&       
+            chown -hR +999:+65534 /data  &&
+            echo 'Ending CHMOD'
+        volumeMounts:
+        - name: persistent-storage
+          mountPath: /data
+      volumes:
+      - name: persistent-storage
+        persistentVolumeClaim:
+          claimName: {{ .Values.fs_name }}
+      restartPolicy: Never
