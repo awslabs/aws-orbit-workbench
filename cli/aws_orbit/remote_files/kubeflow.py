@@ -14,6 +14,7 @@
 
 import logging
 import os
+import time
 from typing import Any, Dict
 
 from aws_orbit import ORBIT_CLI_ROOT, sh, utils
@@ -122,6 +123,8 @@ def deploy_kubeflow(context: Context) -> None:
         _logger.debug(f"kubeflow config dir: {output_path}")
         utils.print_dir(output_path)
         sh.run("./apply_kf.sh", cwd=output_path)
+        time.sleep(120)
+        sh.run("kubectl delete ds -n kubeflow nvidia-device-plugin-daemonset")
 
 
 def destroy_kubeflow(context: Context) -> None:

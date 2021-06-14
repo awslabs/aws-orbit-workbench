@@ -27,12 +27,12 @@ def get_ingress_dns(name: str, k8s_context: str, namespace: str = "default") -> 
     config.load_kube_config(context=k8s_context)
 
     network = NetworkingV1beta1Api()
-    timeout = 15 * 60
+    timeout = 30 * 60
     wait = 30
     while True:
         try:
             resp: NetworkingV1beta1IngressList = network.list_namespaced_ingress(namespace=namespace)
-            print(resp)
+            _logger.debug(resp)
             for i in resp.items:
                 item: Dict[str, Any] = i.to_dict()
                 if item["metadata"]["name"] == name:
@@ -42,17 +42,17 @@ def get_ingress_dns(name: str, k8s_context: str, namespace: str = "default") -> 
                                 if "hostname" in item["status"]["load_balancer"]["ingress"][0]:
                                     return str(item["status"]["load_balancer"]["ingress"][0]["hostname"])
                                 else:
-                                    print("hostname is not defined ")
+                                    _logger.debug("hostname is not defined ")
                             else:
-                                print("ingress[] is empty")
+                                _logger.debug("ingress[] is empty")
                         else:
-                            print("ingress not in load_balancer")
+                            _logger.debug("ingress not in load_balancer")
                     else:
-                        print("no load_balancer in status")
+                        _logger.debug("no load_balancer in status")
             else:
                 raise Exception(f"Cannot find Ingress {name}.{namespace}")
         except Exception:
-            print(f"Cannot find Ingress {name}.{namespace}")
+            _logger.debug(f"Cannot find Ingress {name}.{namespace}")
 
         time.sleep(wait)
         timeout = timeout - wait
@@ -64,4 +64,4 @@ def get_ingress_dns(name: str, k8s_context: str, namespace: str = "default") -> 
 if __name__ == "__main__":
     k8s_context = config.load_kube_config()
     r = get_ingress_dns(name="istio-ingress", k8s_context=k8s_context, namespace="istio-system")
-    print(r)
+    _logger.debug(r)

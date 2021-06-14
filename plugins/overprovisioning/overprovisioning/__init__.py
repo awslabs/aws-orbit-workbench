@@ -58,9 +58,7 @@ def deploy(
         toolkit_s3_bucket=context.toolkit.s3_bucket,
     )
 
-    repo_location = team_context.team_helm_repository
     repo = team_context.name
-    helm.add_repo(repo=repo, repo_location=repo_location)
     chart_name, chart_version, chart_package = helm.package_chart(repo=repo, chart_path=chart_path, values=vars)
     helm.install_chart(
         repo=repo,
