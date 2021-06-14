@@ -34,7 +34,6 @@ spec:
     orbit/node-type: ec2
     orbit/attach-security-group: "yes"
     orbit/team: {{ .Values.team }}
-{{/*    orbit/notebook: yes*/}}
   env:
     - name: AWS_DEFAULT_REGION
       value: "{{ .Values.region }}"
