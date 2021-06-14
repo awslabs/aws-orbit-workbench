@@ -86,7 +86,6 @@ def destroy(context: "Context") -> None:
         docker.login(context=context)
         _logger.debug("DockerHub and ECR Logged in")
         ecr.cleanup_remaining_repos(env_name=context.name)
-        cleanup.delete_target_group(env_name=context.name)
         args = [context.name]
         cdk.destroy(
             context=context,
