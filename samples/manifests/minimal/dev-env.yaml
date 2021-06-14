@@ -36,7 +36,7 @@ ManagedNodegroups:
     InstanceType: m5.2xlarge
     LocalStorageSize: 128
     NodesNumDesired: 4
-    NodesNumMax: 4
+    NodesNumMax: 8
     NodesNumMin: 1
     Labels:
         instance-type: m5.2xlarge
@@ -47,10 +47,16 @@ ManagedNodegroups:
     NodesNumMax: 4
     NodesNumMin: 0
 Teams:
--   Name: lake-creator
+-   Name: lake-admin
     GrantSudo: true
     Fargate: false
     K8Admin: true
+    JupyterhubInboundRanges:
+    - 0.0.0.0/0
+-   Name: lake-creator
+    GrantSudo: true
+    Fargate: false
+    K8Admin: false
     JupyterhubInboundRanges:
     - 0.0.0.0/0
 -   Name: lake-user

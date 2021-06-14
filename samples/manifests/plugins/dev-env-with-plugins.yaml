@@ -36,7 +36,7 @@ ManagedNodegroups:
     InstanceType: m5.2xlarge
     LocalStorageSize: 128
     NodesNumDesired: 4
-    NodesNumMax: 4
+    NodesNumMax: 8
     NodesNumMin: 1
     Labels:
         instance-type: m5.2xlarge
@@ -47,12 +47,22 @@ ManagedNodegroups:
     NodesNumMax: 4
     NodesNumMin: 0
 Teams:
+-   Name: lake-admin
+    Policies:
+    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-demo-lake-admin-add-policy
+    GrantSudo: true
+    Fargate: false
+    K8Admin: true
+    JupyterhubInboundRanges:
+    - 0.0.0.0/0
+    Plugins: !include lake-admin-plugins.yaml
+    EfsLifeCycle: AFTER_7_DAYS
 -   Name: lake-creator
     Policies:
     - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-demo-lake-creator-add-policy
     GrantSudo: true
     Fargate: false
-    K8Admin: true
+    K8Admin: false
     JupyterhubInboundRanges:
     - 0.0.0.0/0
     Plugins: !include lake-creator-plugins.yaml

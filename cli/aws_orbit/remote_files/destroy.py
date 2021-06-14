@@ -16,6 +16,7 @@ import logging
 from typing import Tuple
 
 from aws_orbit import plugins, sh
+from aws_orbit.exceptions import FailedShellCommand
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
 from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, kubeflow, teams
 from aws_orbit.services import ecr, ssm
@@ -49,7 +50,34 @@ def destroy_teams(args: Tuple[str, ...]) -> None:
     kubectl.write_kubeconfig(context=context)
     for team_context in context.teams:
         _logger.debug("Destory all user namespaces for %s", team_context.name)
-        sh.run(f"kubectl delete namespaces -l orbit/team={team_context.name},orbit/space=user --wait=true")
+        # Force delete any Pods belonging to the Team in an attempt to eliminate Termination hangs
+        for resource in [
+            "hyperparametertuningjob.sagemaker.aws.amazon.com",
+            "trainingjobs.sagemaker.aws.amazon.com",
+            "batchtransformjob.sagemaker.aws.amazon.com",
+            "hostingdeployment.sagemaker.aws.amazon.com",
+            "jobs",
+            "notebooks",
+            "deployments",
+            "statefulsets",
+            "pods",
+        ]:
+            _logger.debug("Force deleting %s for Team %s", resource, team_context.name)
+            try:
+                sh.run(
+                    f"bash -c 'for ns in $(kubectl get namespaces --output=jsonpath={{.items..metadata.name}} "
+                    f"-l orbit/team={team_context.name}); "
+                    f"do kubectl delete {resource} -n $ns --all --force; sleep 120"
+                    f"done'"
+                )
+            except FailedShellCommand:
+                _logger.debug("Ignoring failed deletion of: %s", resource)
+
+        try:
+            sh.run(f"kubectl delete namespaces -l orbit/team={team_context.name},orbit/space=user --wait=true")
+        except FailedShellCommand:
+            _logger.debug("Ignoring failed deletion of namepace: %s", team_context.name)
+
     _logger.debug("Plugins loaded")
     for team_context in context.teams:
         plugins.PLUGINS_REGISTRIES.destroy_team_plugins(context=context, team_context=team_context)

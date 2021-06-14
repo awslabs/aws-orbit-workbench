@@ -12,11 +12,6 @@ spec:
   - kustomizeConfig:
       repoRef:
         name: manifests
-        path: namespaces/base
-    name: namespaces
-  - kustomizeConfig:
-      repoRef:
-        name: manifests
         path: stacks/aws/application/istio-stack
     name: istio-stack
   - kustomizeConfig:

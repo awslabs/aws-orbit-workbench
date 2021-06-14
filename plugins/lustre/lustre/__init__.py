@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, cast
 
 from aws_orbit import utils
 from aws_orbit.plugins import hooks
-from aws_orbit.remote_files import helm
+from aws_orbit.remote_files import helm, kubectl
 from aws_orbit.services import ec2
 from aws_orbit.services.ec2 import IpPermission, UserIdGroupPair
 
@@ -120,7 +120,7 @@ def deploy(
             chart_version=chart_version,
         )
 
-    get_user_pv(fs_name, plugin_id, team_context, vars)
+    get_user_pv(fs_name, plugin_id, context, team_context, vars)
 
     # install this package at the user helm repository such that its installed on every user space
     chart_path = helm.create_team_charts_copy(team_context=team_context, path=USER_CHARTS_PATH, target_path=plugin_id)
@@ -138,7 +138,9 @@ def deploy(
     _logger.info(f"Lustre Helm Chart {chart_name}@{chart_version} installed for {team_context.name} at {chart_package}")
 
 
-def get_user_pv(fs_name: str, plugin_id: str, team_context: "TeamContext", vars: Dict[str, Optional[str]]) -> None:
+def get_user_pv(
+    fs_name: str, plugin_id: str, context: "Context", team_context: "TeamContext", vars: Dict[str, Optional[str]]
+) -> None:
     for i in range(0, 15):
         run_command(f"kubectl get pvc -n {team_context.name} {fs_name} -o json > /tmp/pvc.json")
         with open("/tmp/pvc.json", "r") as f:
@@ -161,6 +163,7 @@ def get_user_pv(fs_name: str, plugin_id: str, team_context: "TeamContext", vars:
 
         _logger.info("FSX Volume not ready. Waiting a min")
         time.sleep(60)
+        kubectl.write_kubeconfig(context=context)
     else:
         raise Exception(f"FSX Volume is not ready for plugin {plugin_id}")
 
