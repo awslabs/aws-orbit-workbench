@@ -52,22 +52,22 @@ def destroy_teams(args: Tuple[str, ...]) -> None:
         _logger.debug("Destory all user namespaces for %s", team_context.name)
         # Force delete any Pods belonging to the Team in an attempt to eliminate Termination hangs
         for resource in [
+            "hyperparametertuningjob.sagemaker.aws.amazon.com",
+            "trainingjobs.sagemaker.aws.amazon.com",
+            "batchtransformjob.sagemaker.aws.amazon.com",
+            "hostingdeployment.sagemaker.aws.amazon.com",
             "jobs",
             "notebooks",
             "deployments",
             "statefulsets",
             "pods",
-            "hyperparametertuningjob.sagemaker.aws.amazon.com",
-            "trainingjobs.sagemaker.aws.amazon.com",
-            "batchtransformjob.sagemaker.aws.amazon.com",
-            "hostingdeployment.sagemaker.aws.amazon.com",
         ]:
             _logger.debug("Force deleting %s for Team %s", resource, team_context.name)
             try:
                 sh.run(
                     f"bash -c 'for ns in $(kubectl get namespaces --output=jsonpath={{.items..metadata.name}} "
                     f"-l orbit/team={team_context.name}); "
-                    f"do kubectl delete {resource} -n $ns --all --force; "
+                    f"do kubectl delete {resource} -n $ns --all --force; sleep 120"
                     f"done'"
                 )
             except FailedShellCommand:

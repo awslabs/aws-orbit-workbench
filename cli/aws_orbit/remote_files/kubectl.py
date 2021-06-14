@@ -308,6 +308,21 @@ def _generate_env_manifest(context: "Context", clean_up: bool = True) -> Tuple[s
     with open(output, "w") as file:
         file.write(content)
 
+    # kubeflow jupyter launcher configmap
+    input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-launcher.yaml")
+    output = os.path.join(output_path, "kf-jupyter-launcher.yaml")
+    with open(input, "r") as file:
+        content = file.read()
+
+    content = utils.resolve_parameters(
+        content,
+        dict(
+            orbit_jupyter_user_image=f"{context.images.jupyter_user.repository}:{context.images.jupyter_user.version}"
+        ),
+    )
+    with open(output, "w") as file:
+        file.write(content)
+
     input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-patch.yaml")
     output = os.path.join(output_path, "kf-jupyter-patch.yaml")
 
