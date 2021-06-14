@@ -485,6 +485,9 @@ def deploy_env(context: "Context") -> None:
         sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
         # Enable ENIs
         sh.run(f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} ENABLE_POD_ENI=true")
+        sh.run(
+            f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} DISABLE_TCP_EARLY_DEMUX=true"
+        )
 
         # Restart orbit-system deployments and statefulsets to force reload of caches etc
         sh.run(f"kubectl rollout restart deployments -n orbit-system --context {k8s_context}")
