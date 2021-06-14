@@ -60,7 +60,7 @@ def destroy_teams(args: Tuple[str, ...]) -> None:
             "notebooks",
             "deployments",
             "statefulsets",
-            "pods"
+            "pods",
         ]:
             _logger.debug("Force deleting %s for Team %s", resource, team_context.name)
             try:
