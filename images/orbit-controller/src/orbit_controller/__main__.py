@@ -25,8 +25,8 @@ from orbit_controller import (
     logger,
     maintain_module_state,
     namespace,
-    poddefault,
-    podsetting,
+    pod_default,
+    pod_setting,
 )
 
 
@@ -84,7 +84,7 @@ def watch_namespaces(workers: Optional[int] = None) -> None:
 
 @watch.command(name="podsettings")
 @click.option("--workers", type=int, required=False, default=None, show_default=True)
-def watch_podsettings(workers: Optional[int] = None) -> None:
+def watch_pod_settings(workers: Optional[int] = None) -> None:
     workers = workers if workers else int(os.environ.get("POD_SETTINGS_WATCHER_WORKERS", "2"))
 
     logger.info("workers: %s", workers)
@@ -98,7 +98,7 @@ def watch_podsettings(workers: Optional[int] = None) -> None:
         module_state = sync_manager.dict(**last_state)
 
         logger.info("Starting PodSettings Monitoring Process")
-        monitor = Process(target=podsetting.watch, kwargs={"queue": work_queue, "state": module_state})
+        monitor = Process(target=pod_setting.watch, kwargs={"queue": work_queue, "state": module_state})
         monitor.start()
 
         logger.info("Starting PodSettings State Updater Process")
@@ -108,25 +108,25 @@ def watch_podsettings(workers: Optional[int] = None) -> None:
         )
         state_updater.start()
 
-        podsettings_processors = []
+        pod_settings_processors = []
         for i in range(workers):
             logger.info("Starting PodSettings Worker Process")
-            podsettings_processor = Process(
-                target=podsetting.process_podsettings,
+            pod_settings_processor = Process(
+                target=pod_setting.process_pod_settings,
                 kwargs={"queue": work_queue, "state": module_state, "replicator_id": i},
             )
-            podsettings_processors.append(podsettings_processor)
-            podsettings_processor.start()
+            pod_settings_processors.append(pod_settings_processor)
+            pod_settings_processor.start()
 
         monitor.join()
-        for podsettings_processor in podsettings_processors:
+        for pod_settings_processor in pod_settings_processors:
             podsettings_processor.terminate()
         state_updater.terminate()
 
 
 @watch.command(name="poddefaults")
 @click.option("--workers", type=int, required=False, default=None, show_default=True)
-def watch_poddefaults(workers: Optional[int] = None) -> None:
+def watch_pod_defaults(workers: Optional[int] = None) -> None:
     workers = workers if workers else int(os.environ.get("POD_DEFAULTS_WATCHER_WORKERS", "2"))
 
     logger.info("workers: %s", workers)
@@ -140,7 +140,7 @@ def watch_poddefaults(workers: Optional[int] = None) -> None:
         module_state = sync_manager.dict(**last_state)
 
         logger.info("Starting PodDefaults Monitoring Process")
-        monitor = Process(target=poddefault.watch, kwargs={"queue": work_queue, "state": module_state})
+        monitor = Process(target=pod_default.watch, kwargs={"queue": work_queue, "state": module_state})
         monitor.start()
 
         logger.info("Starting PodDefaults State Updater Process")
@@ -150,19 +150,19 @@ def watch_poddefaults(workers: Optional[int] = None) -> None:
         )
         state_updater.start()
 
-        poddefaults_processors = []
+        pod_defaults_processors = []
         for i in range(workers):
             logger.info("Starting PodDefaults Worker Process")
-            poddefaults_processor = Process(
-                target=poddefault.process_poddefaults,
+            pod_defaults_processor = Process(
+                target=pod_default.process_pod_defaults,
                 kwargs={"queue": work_queue, "state": module_state, "replicator_id": i},
             )
-            poddefaults_processors.append(poddefaults_processor)
-            poddefaults_processor.start()
+            pod_defaults_processors.append(pod_defaults_processor)
+            pod_defaults_processor.start()
 
         monitor.join()
-        for poddefaults_processor in poddefaults_processors:
-            poddefaults_processor.terminate()
+        for pod_defaults_processor in pod_defaults_processors:
+            pod_defaults_processor.terminate()
         state_updater.terminate()
 
 
