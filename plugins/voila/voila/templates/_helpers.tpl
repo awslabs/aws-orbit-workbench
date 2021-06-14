@@ -36,6 +36,7 @@ Common labels
 {{- define "voila.labels" -}}
 helm.sh/chart: {{ include "voila.chart" . }}
 app: orbit-{{ include "voila.name" . }}
+orbit/team: {{ .Values.team }}
 {{ include "voila.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}

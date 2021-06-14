@@ -36,6 +36,7 @@ Common labels
 {{- define "fsx-filesystem.labels" -}}
 helm.sh/chart: {{ include "fsx-filesystem.chart" . }}
 app: orbit-{{ include "fsx-filesystem.name" . }}
+orbit/team: {{ .Values.team }}
 {{ include "fsx-filesystem.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}

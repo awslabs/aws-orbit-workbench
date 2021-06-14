@@ -46,6 +46,7 @@ Common labels
 orbit/team: {{ .Values.team}}
 helm.sh/chart: {{ include "sm_operator.chart" . }}
 app: orbit-{{ include "sm_operator.name" . }}
+orbit/team: {{ .Values.team }}
 {{ include "sm_operator.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}

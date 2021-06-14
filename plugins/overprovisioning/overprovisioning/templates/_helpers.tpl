@@ -36,6 +36,7 @@ Common labels
 {{- define "overprovisioning.labels" -}}
 helm.sh/chart: {{ include "overprovisioning.chart" . }}
 app: orbit-{{ include "overprovisioning.name" . }}
+orbit/team: {{ .Values.team }}
 {{ include "overprovisioning.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}

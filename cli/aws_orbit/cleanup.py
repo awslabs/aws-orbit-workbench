@@ -171,7 +171,7 @@ def delete_cert_from_iam(context: "FoundationContext") -> None:
             raise ex
 
 
-def delete_kubeflow_roles(env_stack_name: str, region: str) -> None:
+def delete_kubeflow_roles(env_stack_name: str, region: str, account_id: str) -> None:
     iam_client = boto3_client("iam")
 
     roles = iam_client.list_roles()
@@ -185,10 +185,11 @@ def delete_kubeflow_roles(env_stack_name: str, region: str) -> None:
             _logger.info(f"Removing role {role_name} - checking for attached policies")
             role_policies = iam_client.list_role_policies(RoleName=role_name).get("PolicyNames")
 
-            for policy in role_policies:
+            for policy_name in role_policies:
                 try:
-                    iam_client.detach_role_policy(RoleName=role_name, PolicyName=policy)
-                    _logger.info(f"Detached policy {policy}")
+                    policy_arn = f"arn:aws:iam::{account_id}:policy/{policy_name}"
+                    iam_client.detach_role_policy(RoleName=role_name, PolicyArn=policy_arn)
+                    _logger.info(f"Detached policy {policy_name}")
                 except iam_client.exceptions.NoSuchEntityException:
                     _logger.error("No such policy")
                 except iam_client.exceptions.UnmodifiableEntityException:

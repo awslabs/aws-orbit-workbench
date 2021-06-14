@@ -36,6 +36,7 @@ Common labels
 {{- define "fsx-storageclass.labels" -}}
 helm.sh/chart: {{ include "fsx-storageclass.chart" . }}
 app: orbit-{{ include "fsx-storageclass.name" . }}
+orbit/team: {{ .Values.team }}
 {{ include "fsx-storageclass.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}

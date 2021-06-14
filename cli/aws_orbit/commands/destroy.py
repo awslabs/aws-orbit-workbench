@@ -17,7 +17,7 @@ from typing import cast
 
 import botocore.exceptions
 
-from aws_orbit import bundle, plugins, remote, utils
+from aws_orbit import bundle, remote, utils
 from aws_orbit.messages import MessagesContext
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
 from aws_orbit.services import cfn, codebuild, ecr, elb, s3, ssm
@@ -59,12 +59,6 @@ def destroy_teams(env: str, debug: bool) -> None:
         msg_ctx.info(f"Teams: {','.join([t.name for t in context.teams])}")
         msg_ctx.progress(2)
 
-        plugins.PLUGINS_REGISTRIES.load_plugins(
-            context=context,
-            msg_ctx=msg_ctx,
-            plugin_changesets=[],
-            teams_changeset=None,
-        )
         msg_ctx.progress(4)
 
         if any(cfn.does_stack_exist(stack_name=t.stack_name) for t in context.teams):

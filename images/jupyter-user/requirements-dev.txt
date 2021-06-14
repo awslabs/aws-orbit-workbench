@@ -4,6 +4,7 @@ flake8~=3.8.4
 mypy~=0.812
 cookiecutter~=1.7.2
 tornado==6.1
+types-PyYAML~=0.1.6
 -r "requirements.txt"
 -e ../../sdk
 -e ../../cli
