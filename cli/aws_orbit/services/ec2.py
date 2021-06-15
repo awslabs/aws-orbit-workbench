@@ -86,6 +86,8 @@ def revoke_security_group_ingress(group_id: str, ip_permissions: List[IpPermissi
             raise
         else:
             _logger.debug("Ingress not previously authorized")
+    except botocore.exceptions.ParamValidationError as err:
+        _logger.error(f"Error revoking ingress, parameter validations failed: {err}")
 
 
 def revoke_security_group_egress(group_id: str, ip_permissions: List[IpPermission]) -> None:
