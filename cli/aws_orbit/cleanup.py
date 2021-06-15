@@ -208,3 +208,43 @@ def delete_kubeflow_roles(env_stack_name: str, region: str, account_id: str) -> 
                 _logger.error("Error. There were concurrent operations in modifying this role")
             except iam_client.exceptions.ServiceFailureException as err:
                 _logger.error(f"Service error: {err}")
+
+
+# Removes ELB since the listener is attached to the target group
+# and the target group can't be removed with a listener attached
+def delete_target_group(env_stack_name: str) -> None:
+    elb_client = boto3_client("elbv2")
+
+    target_groups = elb_client.describe_target_groups()
+
+    for target_group in target_groups.get("TargetGroups"):
+        target_group_arn = target_group.get("TargetGroupArn")
+
+        target_group_tags = elb_client.describe_tags(ResourceArns=[target_group_arn])
+
+        for tag in target_group_tags.get("TagDescriptions", [{}])[0].get("Tags", []):
+            if tag.get("Key") == "ingress.k8s.aws/cluster":
+                if tag.get("Value") == env_stack_name:
+                    elbs = target_group.get("LoadBalancerArns")
+
+                    for _elb in elbs:
+                        try:
+                            _logger.info(f"Removing ELB: {_elb}")
+                            elb_client.delete_load_balancer(LoadBalancerArn=_elb)
+                            time.sleep(10)
+                        except elb_client.exceptions.LoadBalancerNotFoundException as err:
+                            _logger.warning(f"ELB not found: {err}")
+                        except elb_client.exceptions.OperationNotPermittedException as err:
+                            _logger.error(err)
+                        except elb_client.exceptions.ResourceInUseException as err:
+                            _logger.error(f"Resource in use: {err}")
+
+                    target_group_name = target_group.get("Name")
+                    try:
+                        _logger.info(f"Removing target group: {target_group_name}")
+                        elb_client.delete_target_group(TargetGroupArn=target_group_arn)
+                        _logger.info("Target group deleted")
+                    except elb_client.exceptions.ResourceInUseException as err:
+                        _logger.error(f"Target in use: {err}")
+
+    _logger.info("Target group removed")
