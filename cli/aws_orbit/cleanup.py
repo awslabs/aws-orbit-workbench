@@ -227,10 +227,10 @@ def delete_target_group(env_stack_name: str) -> None:
                 if tag.get("Value") == env_stack_name:
                     elbs = target_group.get("LoadBalancerArns")
 
-                    for elb in elbs:
+                    for _elb in elbs:
                         try:
-                            _logger.info(f"Removing ELB: {elb}")
-                            elb_client.delete_load_balancer(LoadBalancerArn=elb)
+                            _logger.info(f"Removing ELB: {_elb}")
+                            elb_client.delete_load_balancer(LoadBalancerArn=_elb)
                             time.sleep(10)
                         except elb_client.exceptions.LoadBalancerNotFoundException as err:
                             _logger.warning(f"ELB not found: {err}")
