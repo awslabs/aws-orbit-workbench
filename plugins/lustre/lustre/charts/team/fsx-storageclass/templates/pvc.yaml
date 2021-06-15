@@ -20,16 +20,14 @@ metadata:
   name: chmod-fsx-job-{{ .Values.namespace }}
   namespace: {{ .Values.namespace }}
   labels:
-    app: orbit-chmod-fsx-job
     job-name: chmod-fsx-job-{{ .Values.namespace }}
     {{- include "fsx-storageclass.labels" . | nindent 4 }}
 spec:
   template:
     metadata:
       labels:
-        app: orbit-chmod-fsx-job
         job-name: chmod-fsx-job-{{ .Values.namespace }}
-        {{- include "fsx-storageclass.labels" . | nindent 4 }}
+        {{- include "fsx-storageclass.labels" . | nindent 8 }}
     spec:
       nodeSelector:
         orbit/usage: teams
