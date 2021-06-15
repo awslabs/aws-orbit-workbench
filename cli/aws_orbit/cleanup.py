@@ -222,7 +222,7 @@ def delete_target_group(env_stack_name: str) -> None:
 
         target_group_tags = elb_client.describe_tags(ResourceArns=[target_group_arn])
 
-        for tag in target_group_tags.get("TagDescriptions")[0].get("Tags"):
+        for tag in target_group_tags.get("TagDescriptions", [{}])[0].get("Tags", []):
             if tag.get("Key") == "ingress.k8s.aws/cluster":
                 if tag.get("Value") == env_stack_name:
                     elbs = target_group.get("LoadBalancerArns")
