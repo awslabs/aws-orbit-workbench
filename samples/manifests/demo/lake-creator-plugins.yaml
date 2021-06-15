@@ -67,9 +67,3 @@
         number_of_nodes: "2"
 -   PluginId: fast_fs_lustre
     Module: lustre
--   PluginId: overprovisioning1
-    Module: overprovisioning
-    Parameters:
-        replicas: 3
-        cpu: 2
-        memory: 4G
