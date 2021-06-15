@@ -27,7 +27,7 @@ spec:
     metadata:
       labels:
         job-name: chmod-fsx-job-{{ .Values.namespace }}
-        {{- include "fsx-storageclass.labels" . | nindent 4 }}
+        {{- include "fsx-storageclass.labels" . | nindent 8 }}
     spec:
       nodeSelector:
         orbit/usage: teams
