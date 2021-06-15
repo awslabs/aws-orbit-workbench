@@ -243,7 +243,7 @@ def delete_target_group(env_stack_name: str) -> None:
                     try:
                         _logger.info(f"Removing target group: {target_group_name}")
                         elb_client.delete_target_group(TargetGroupArn=target_group_arn)
-                        _logger.info(f"Target group deleted")
+                        _logger.info("Target group deleted")
                     except elb_client.exceptions.ResourceInUseException as err:
                         _logger.error(f"Target in use: {err}")
 
