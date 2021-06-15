@@ -212,7 +212,7 @@ def delete_kubeflow_roles(env_stack_name: str, region: str, account_id: str) -> 
 
 # Removes ELB since the listener is attached to the target group
 # and the target group can't be removed with a listener attached
-def delete_target_group(env_name: str) -> None:
+def delete_target_group(env_stack_name: str) -> None:
     elb_client = boto3_client("elbv2")
 
     target_groups = elb_client.describe_target_groups()
@@ -224,7 +224,7 @@ def delete_target_group(env_name: str) -> None:
 
         for tag in target_group_tags.get("TagDescriptions")[0].get("Tags"):
             if tag.get("Key") == "ingress.k8s.aws/cluster":
-                if tag.get("Value") == env_name:
+                if tag.get("Value") == env_stack_name:
                     elbs = target_group.get("LoadBalancerArns")
 
                     for elb in elbs:
@@ -247,4 +247,4 @@ def delete_target_group(env_name: str) -> None:
                     except elb_client.exceptions.ResourceInUseException as err:
                         _logger.error(f"Target in use: {err}")
 
-    _logger.info("Finished removing target group")
+    _logger.info("Target group removed")

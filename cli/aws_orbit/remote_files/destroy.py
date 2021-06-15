@@ -101,7 +101,7 @@ def destroy_env(args: Tuple[str, ...]) -> None:
     _logger.debug("context.name %s", context.name)
 
     # Helps save time on target group issues with vpc
-    cleanup.delete_target_group(env_name=context.name)
+    cleanup.delete_target_group(env_stack_name=context.env_stack_name}")
 
     helm.destroy_env(context=context)
     _logger.debug("Helm Charts uninstalled")
