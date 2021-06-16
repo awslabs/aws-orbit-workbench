@@ -138,6 +138,20 @@ WORKDIR /opt/orbit/codeserver_proxy
 RUN /opt/orbit/codeserver_proxy/install.sh
 RUN chown -R jovyan /opt/orbit/codeserver_proxy
 
+# ######################################
+# Install SM-LOGS 
+# REF: https://docs.aws.amazon.com/sagemaker/latest/dg/amazon-sagemaker-operators-for-kubernetes.html
+# ######################################
+
+RUN mkdir /opt/orbit/sm-logs && \
+    cd /opt/orbit/sm-logs
+RUN curl -k -sS -O https://s3.us-west-2.amazonaws.com/amazon-sagemaker-operator-for-k8s-us-west-2/kubectl-smlogs-plugin/v1/linux.amd64.tar.gz && \
+    tar xvzf linux.amd64.tar.gz && \
+    sudo mv ./kubectl-smlogs.linux.amd64/kubectl-smlogs /usr/local/bin && \
+    sudo chmod 755 /usr/local/bin/kubectl-smlogs
+RUN cd /opt/orbit && \
+    rm -rf /opt/orbit/sm-logs
+
 WORKDIR /home/${NB_USER}
 
 USER $NB_UID

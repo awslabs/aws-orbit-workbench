@@ -11,7 +11,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.nameOverride }}
-  namespace: kube-system
+  labels:
+    {{- include "overprovisioning.labels" . | nindent 4 }}
+  namespace: {{ .Values.namespace }}
 spec:
   replicas: {{ .Values.replicas }}
   selector:

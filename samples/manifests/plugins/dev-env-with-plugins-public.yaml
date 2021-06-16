@@ -29,6 +29,16 @@ ManagedNodegroups:
     Labels:
         instance-type: m5.2xlarge
 Teams:
+-   Name: lake-admin
+    Policies:
+    - !ENV orbit-${ORBIT_ENV_NAME::public2}-demo-lake-admin-add-policy
+    GrantSudo: true
+    Fargate: false
+    K8Admin: true
+    JupyterhubInboundRanges:
+    - 0.0.0.0/0
+    Plugins: !include lake-admin-plugins.yaml
+    EfsLifeCycle: AFTER_7_DAYS
 -   Name: lake-creator
     Policies:
     - !ENV orbit-${ORBIT_ENV_NAME::public2}-demo-lake-creator-add-policy

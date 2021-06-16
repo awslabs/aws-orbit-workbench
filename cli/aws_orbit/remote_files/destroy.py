@@ -15,7 +15,7 @@
 import logging
 from typing import Tuple
 
-from aws_orbit import plugins, sh
+from aws_orbit import cleanup, plugins, sh
 from aws_orbit.exceptions import FailedShellCommand
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
 from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, kubeflow, teams
@@ -52,23 +52,23 @@ def destroy_teams(args: Tuple[str, ...]) -> None:
         _logger.debug("Destory all user namespaces for %s", team_context.name)
         # Force delete any Pods belonging to the Team in an attempt to eliminate Termination hangs
         for resource in [
+            "hyperparametertuningjob.sagemaker.aws.amazon.com",
+            "trainingjobs.sagemaker.aws.amazon.com",
+            "batchtransformjob.sagemaker.aws.amazon.com",
+            "hostingdeployment.sagemaker.aws.amazon.com",
             "jobs",
             "notebooks",
             "deployments",
             "statefulsets",
             "pods",
-            "hyperparametertuningjob.sagemaker.aws.amazon.com",
-            "trainingjobs.sagemaker.aws.amazon.com",
-            "batchtransformjob.sagemaker.aws.amazon.com",
-            "hostingdeployment.sagemaker.aws.amazon.com",
         ]:
             _logger.debug("Force deleting %s for Team %s", resource, team_context.name)
             try:
                 sh.run(
-                    f"for ns in $(kubectl get namespaces --output=jsonpath={{.items..metadata.name}} "
+                    f"bash -c 'for ns in $(kubectl get namespaces --output=jsonpath={{.items..metadata.name}} "
                     f"-l orbit/team={team_context.name}); "
-                    f"do kubectl delete {resource} -n $ns -all --force; "
-                    f"done"
+                    f"do kubectl delete {resource} -n $ns --all --force; sleep 120"
+                    f"done'"
                 )
             except FailedShellCommand:
                 _logger.debug("Ignoring failed deletion of: %s", resource)
@@ -99,6 +99,9 @@ def destroy_env(args: Tuple[str, ...]) -> None:
     env_name: str = args[0]
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("context.name %s", context.name)
+
+    # Helps save time on target group issues with vpc
+    cleanup.delete_target_group(env_stack_name=context.env_stack_name)
 
     helm.destroy_env(context=context)
     _logger.debug("Helm Charts uninstalled")

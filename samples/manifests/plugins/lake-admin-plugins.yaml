@@ -1,0 +1,37 @@
+-   PluginId: custom_cfn
+    Module: custom_cfn
+    Path: ../plugins/custom_cfn/
+    Parameters:
+        CfnTemplatePath: "./bundle/plugins/demo-lake-admin-cfn-template.yaml"
+-   PluginId: clean_regression_files
+    Module: team_script_launcher
+    Path: ../plugins/team_script_launcher/
+    Parameters:
+        script: |
+            i=0
+            while [ $i -lt 1 ];
+            do
+              find /home/jovyan/shared/regression -mtime +5 -type f -exec rm {} \;
+              sleep 60
+            done
+            echo "DONE LOOP"
+        restartPolicy: Never
+-   PluginId: copy-sample-code
+    Module: team_script_launcher
+    Path: ../plugins/team_script_launcher/
+    Parameters:
+        script: |
+            echo "Copy samples to efs from image ";
+            rm -rf /efs/samples;
+            cp -R -v /opt/orbit/samples/ /efs;
+        restartPolicy: Never
+        image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data:latest
+        uid: 0
+        gid: 0
+-   PluginId: overprovisioning1
+    Module: overprovisioning
+    Path: ../plugins/overprovisioning/
+    Parameters:
+        replicas: 3
+        cpu: 2
+        memory: 4G

@@ -47,10 +47,16 @@ ManagedNodegroups:
     NodesNumMax: 4
     NodesNumMin: 0
 Teams:
--   Name: lake-creator
+-   Name: lake-admin
     GrantSudo: true
     Fargate: false
     K8Admin: true
+    JupyterhubInboundRanges:
+    - 0.0.0.0/0
+-   Name: lake-creator
+    GrantSudo: true
+    Fargate: false
+    K8Admin: false
     JupyterhubInboundRanges:
     - 0.0.0.0/0
 -   Name: lake-user

@@ -93,5 +93,5 @@ def destroy(context: "Context") -> None:
             app_filename=os.path.join(ORBIT_CLI_ROOT, "remote_files", "cdk", "env.py"),
             args=args,
         )
-        cleanup.delete_kubeflow_roles(context.env_stack_name, context.region)
+        cleanup.delete_kubeflow_roles(context.env_stack_name, context.region, context.account_id)
         ssm.cleanup_context(env_name=context.name)
