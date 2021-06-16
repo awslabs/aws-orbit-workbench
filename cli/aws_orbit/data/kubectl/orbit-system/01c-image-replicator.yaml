@@ -1,0 +1,223 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: pod-image-updater
+  namespace: orbit-system
+spec:
+  selector:
+    app: pod-image-updater
+  ports:
+  - name: https
+    protocol: TCP
+    port: 443
+    targetPort: 443
+---
+kind: MutatingWebhookConfiguration
+apiVersion: admissionregistration.k8s.io/v1beta1
+metadata:
+  name: orbit-pod-image-updater
+webhooks:
+  - name: pod-image-updater.orbit-system.svc
+    sideEffects: None
+    reinvocationPolicy: IfNeeded
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    namespaceSelector:
+      matchExpressions:
+        - key: orbit/space
+          operator: In
+          values:
+            - team
+            - user
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+    clientConfig:
+      caBundle: ""
+      service:
+        namespace: orbit-system
+        name: pod-image-updater
+        path: /pod-image-replication
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: orbit-controller
+  namespace: orbit-system
+  name: pod-image-updater
+spec:
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  revisionHistoryLimit: 10
+  serviceName: pod-image-updater
+  selector:
+    matchLabels:
+      app: pod-image-updater
+  template:
+    metadata:
+      labels:
+        app: pod-image-updater
+      name: pod-image-updater
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: orbit-${env_name}-admin
+      containers:
+        - name: webhook
+          image: ${orbit_controller_image}
+          imagePullPolicy: ${image_pull_policy}
+          ports:
+            - containerPort: 443
+              name: https
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: orbit-controller-config
+          command:
+            - gunicorn
+          args:
+            - "--bind=0.0.0.0:443"
+            - "--certfile=/certs/tls.crt"
+            - "--keyfile=/certs/tls.key"
+            - "--workers=$(GUNICORN_WORKERS)"
+            - "--reload"
+            - "orbit_controller.server:app"
+          volumeMounts:
+            - readOnly: true
+              mountPath: /certs
+              name: orbit-controller-certs
+            - mountPath: /state
+              name: orbit-controller-state
+              readOnly: false
+          readinessProbe:
+            httpGet:
+              path: /health
+              scheme: HTTPS
+              port: 443
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              scheme: HTTPS
+              port: 443
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            limits:
+              cpu: 2
+              memory: 2G
+            requests:
+              cpu: 100m
+              memory: 100M
+      volumes:
+        - name: orbit-controller-certs
+          secret:
+            secretName: pod-image-updater-certs
+        - name: orbit-controller-state
+          configMap:
+            name: orbit-controller-state
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: orbit-controller
+  namespace: orbit-system
+  name: pod-image-replicator
+spec:
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  revisionHistoryLimit: 10
+  serviceName: ""
+  selector:
+    matchLabels:
+      app: pod-image-replicator
+  template:
+    metadata:
+      labels:
+        app: pod-image-replicator
+      name: pod-image-replicator
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: orbit-${env_name}-admin
+      containers:
+        - name: watcher
+          image: ${orbit_controller_image}
+          imagePullPolicy: ${image_pull_policy}
+          envFrom:
+            - configMapRef:
+                name: orbit-controller-config
+          command:
+            - orbit-controller
+            - watch
+            - imagereplications
+          args:
+            - "--workers=$(IMAGE_REPLICATIONS_WATCHER_WORKERS)"
+          volumeMounts:
+            - mountPath: /state
+              name: orbit-controller-state
+              readOnly: false
+          resources:
+            limits:
+              cpu: 2
+              memory: 2G
+            requests:
+              cpu: 100m
+              memory: 100M
+      volumes:
+        - name: orbit-controller-state
+          configMap:
+            name: orbit-controller-state
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cert-manager-setup-pod-image-replication
+  namespace: orbit-system
+  labels:
+    app: cert-manager
+spec:
+  template:
+    metadata:
+      labels:
+        orbit/node-type: ec2
+    spec:
+      serviceAccountName: cert-manager-service-account
+      containers:
+        - name: metadata-cert-setup
+          image: ${k8s_utilities_image}
+          imagePullPolicy: IfNotPresent
+          command: ["/cert-manager-scripts/generate_certificate.sh"]
+          args:
+            - "--service"
+            - "pod-image-updater"
+            - "--webhook"
+            - "orbit-pod-image-updater"
+            - "--secret"
+            - "pod-image-updater-certs"
+            - "--namespace"
+            - "orbit-system"
+            - "--force"
+            - "yes"
+          volumeMounts:
+            - name: cert-manager-scripts
+              mountPath: /cert-manager-scripts
+          resources:
+            limits:
+              cpu: 500m
+              memory: 300Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+      restartPolicy: Never
+      volumes:
+        - name: cert-manager-scripts
+          configMap:
+            name: cert-manager-scripts
+            defaultMode: 0744
+  backoffLimit: 1

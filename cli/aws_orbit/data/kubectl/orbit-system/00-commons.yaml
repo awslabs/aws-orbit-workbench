@@ -54,14 +54,14 @@ rules:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: imagereplicationtask.orbit.aws
+  name: imagereplication.orbit.aws
 spec:
   group: orbit.aws
   scope: Namespaced
   names:
-    plural: imagereplicationtasks
-    singular: imagereplicationtask
-    kind: ImageReplicationTask
+    plural: imagereplications
+    singular: imagereplication
+    kind: ImageReplication
   versions:
     - name: v1
       served: true

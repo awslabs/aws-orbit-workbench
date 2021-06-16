@@ -14,6 +14,13 @@ data:
   USERSPACE_CHART_MANAGER_WORKERS: "1"
   POD_DEFAULTS_WATCHER_WORKERS: "1"
   POD_SETTINGS_WATCHER_WORKERS: "1"
+  IMAGE_REPLICATIONS_REPO_HOST: ${account_id}.dkr.ecr.${region}.amazonaws.com
+  IMAGE_REPLICATIONS_REPO_PREFIX: orbit-${env_name}
+  IMAGE_REPLICATIONS_CODEBUILD_PROJECT: orbit-${env_name}
+  IMAGE_REPLICATIONS_CODEBUILD_TIMEOUT: "30"
+  IMAGE_REPLICATIONS_REPLICATE_EXTERNAL_REPOS: "no"
+  IMAGE_REPLICATIONS_WATCHER_WORKERS: "v1"
+  AWS_STS_REGIONAL_ENDPOINTS: ${sts_ep}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -246,29 +253,29 @@ spec:
             requests:
               cpu: 100m
               memory: 100M
-      #   - name: poddefaults-watcher
-      #     image: ${orbit_controller_image}
-      #     imagePullPolicy: ${image_pull_policy}
-      #     envFrom:
-      #       - configMapRef:
-      #           name: orbit-controller-config
-      #     command:
-      #       - orbit-controller
-      #       - watch
-      #       - poddefaults
-      #     args:
-      #       - "--workers=$(POD_DEFAULTS_WATCHER_WORKERS)"
-      #     volumeMounts:
-      #       - mountPath: /state
-      #         name: orbit-controller-state
-      #         readOnly: false
-      #     resources:
-      #       limits:
-      #         cpu: 2
-      #         memory: 2G
-      #       requests:
-      #         cpu: 100m
-      #         memory: 100M
+        - name: poddefaults-watcher
+          image: ${orbit_controller_image}
+          imagePullPolicy: ${image_pull_policy}
+          envFrom:
+            - configMapRef:
+                name: orbit-controller-config
+          command:
+            - orbit-controller
+            - watch
+            - poddefaults
+          args:
+            - "--workers=$(POD_DEFAULTS_WATCHER_WORKERS)"
+          volumeMounts:
+            - mountPath: /state
+              name: orbit-controller-state
+              readOnly: false
+          resources:
+            limits:
+              cpu: 2
+              memory: 2G
+            requests:
+              cpu: 100m
+              memory: 100M
       volumes:
         - name: orbit-controller-state
           configMap:
