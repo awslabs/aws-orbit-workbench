@@ -67,7 +67,7 @@ def destroy_teams(args: Tuple[str, ...]) -> None:
                 sh.run(
                     f"bash -c 'for ns in $(kubectl get namespaces --output=jsonpath={{.items..metadata.name}} "
                     f"-l orbit/team={team_context.name}); "
-                    f"do kubectl delete {resource} -n $ns --all --force; sleep 120"
+                    f"do kubectl delete {resource} -n $ns --all --force; sleep 60; "
                     f"done'"
                 )
             except FailedShellCommand:
