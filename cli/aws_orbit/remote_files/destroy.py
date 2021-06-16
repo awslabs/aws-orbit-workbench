@@ -15,7 +15,7 @@
 import logging
 from typing import Tuple
 
-from aws_orbit import plugins, sh
+from aws_orbit import cleanup, plugins, sh
 from aws_orbit.exceptions import FailedShellCommand
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
 from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, kubeflow, teams
@@ -99,6 +99,9 @@ def destroy_env(args: Tuple[str, ...]) -> None:
     env_name: str = args[0]
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("context.name %s", context.name)
+
+    # Helps save time on target group issues with vpc
+    cleanup.delete_target_group(env_stack_name=context.env_stack_name)
 
     helm.destroy_env(context=context)
     _logger.debug("Helm Charts uninstalled")
