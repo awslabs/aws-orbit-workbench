@@ -22,13 +22,6 @@ webhooks:
     reinvocationPolicy: IfNeeded
     failurePolicy: Fail
     matchPolicy: Equivalent
-    namespaceSelector:
-      matchExpressions:
-        - key: orbit/space
-          operator: In
-          values:
-            - team
-            - user
     rules:
       - operations: ["CREATE", "UPDATE"]
         apiGroups: [""]

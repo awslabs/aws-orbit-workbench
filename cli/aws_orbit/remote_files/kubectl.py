@@ -97,12 +97,33 @@ def _orbit_controller(context: "Context", output_path: str) -> None:
                 k8s_utilities_image=f"{context.images.k8s_utilities.repository}:"
                 f"{context.images.k8s_utilities.version}",
                 image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
-                certArn=context.networking.frontend.ssl_cert_arn,
-                cognitoAppClientId=context.user_pool_client_id,
-                cognitoUserPoolID=context.user_pool_id,
                 account_id=context.account_id,
                 region=context.region,
-                cognitoUserPoolDomain=context.cognito_external_provider_domain,
+                sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
+            ),
+        )
+        with open(output, "w") as file:
+            file.write(content)
+
+
+def _orbit_image_replicator(context: "Context", output_path: str) -> None:
+    filenames = ["01c-image-replicator.yaml"]
+
+    for filename in filenames:
+        input = os.path.join(MODELS_PATH, "orbit-system", filename)
+        output = os.path.join(output_path, filename)
+
+        with open(input, "r") as file:
+            content: str = file.read()
+        content = resolve_parameters(
+            content,
+            dict(
+                env_name=context.name,
+                orbit_controller_image=f"{context.images.orbit_controller.repository}:"
+                f"{context.images.orbit_controller.version}",
+                k8s_utilities_image=f"{context.images.k8s_utilities.repository}:"
+                f"{context.images.k8s_utilities.version}",
+                image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
             ),
         )
         with open(output, "w") as file:
@@ -266,6 +287,9 @@ def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -
         raise ValueError("context.user_pool_client_id is None!")
     if context.identity_pool_id is None:
         raise ValueError("context.identity_pool_id is None!")
+
+    if context.install_image_replicator or not context.networking.data.internet_accessible:
+        _orbit_image_replicator(output_path=output_path, context=context)
 
     if context.install_ssm_agent:
         _ssm_agent_installer(output_path=output_path, context=context)

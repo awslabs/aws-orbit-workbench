@@ -208,27 +208,27 @@ def deploy_env(context: Context) -> None:
         add_repo(repo=repo, repo_location=repo_location)
         kubectl.write_kubeconfig(context=context)
 
-        if context.install_image_replicator or not context.networking.data.internet_accessible:
-            chart_name, chart_version, chart_package = package_chart(
-                repo=repo,
-                chart_path=os.path.join(CHARTS_PATH, "env", "image-replicator"),
-                values={
-                    "region": context.region,
-                    "account_id": context.account_id,
-                    "env_name": context.name,
-                    "repository": context.images.image_replicator.repository,
-                    "tag": context.images.image_replicator.version,
-                    "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
-                    "image_pull_policy": "Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
-                },
-            )
-            install_chart(
-                repo=repo,
-                namespace="orbit-system",
-                name="image-replicator",
-                chart_name=chart_name,
-                chart_version=chart_version,
-            )
+        # if context.install_image_replicator or not context.networking.data.internet_accessible:
+        #     chart_name, chart_version, chart_package = package_chart(
+        #         repo=repo,
+        #         chart_path=os.path.join(CHARTS_PATH, "env", "image-replicator"),
+        #         values={
+        #             "region": context.region,
+        #             "account_id": context.account_id,
+        #             "env_name": context.name,
+        #             "repository": context.images.image_replicator.repository,
+        #             "tag": context.images.image_replicator.version,
+        #             "sts_ep": "legacy" if context.networking.data.internet_accessible else "regional",
+        #             "image_pull_policy": "Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
+        #         },
+        #     )
+        #     install_chart(
+        #         repo=repo,
+        #         namespace="orbit-system",
+        #         name="image-replicator",
+        #         chart_name=chart_name,
+        #         chart_version=chart_version,
+        #     )
 
 
 def deploy_team(context: Context, team_context: TeamContext) -> None:
