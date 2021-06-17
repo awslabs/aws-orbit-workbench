@@ -57,6 +57,7 @@ Teams:
     - 0.0.0.0/0
     Plugins: !include lake-admin-plugins.yaml
     EfsLifeCycle: AFTER_7_DAYS
+    AuthenticationGroup: lake-admin
 -   Name: lake-creator
     Policies:
     - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-demo-lake-creator-add-policy
@@ -67,6 +68,7 @@ Teams:
     - 0.0.0.0/0
     Plugins: !include lake-creator-plugins.yaml
     EfsLifeCycle: AFTER_7_DAYS
+    AuthenticationGroup: lake-creator
 -   Name: lake-user
     Policies:
     - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-demo-lake-user-add-policy
@@ -76,3 +78,4 @@ Teams:
     Profiles: !include lake-user-profiles.json
     Plugins: !include lake-user-plugins.yaml
     EfsLifeCycle: AFTER_7_DAYS
+    AuthenticationGroup: lake-user
