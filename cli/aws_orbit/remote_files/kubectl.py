@@ -292,7 +292,7 @@ def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -
         _logger.debug("Deploying Pod Image Modifier and Image Replicator")
         _orbit_image_replicator(output_path=output_path, context=context)
     else:
-        _logger("Skipping deployment of Pod Image Modifier and Image Replicator")
+        _logger.debug("Skipping deployment of Pod Image Modifier and Image Replicator")
 
     if context.install_ssm_agent:
         _logger.debug("Deploying SSM Agent Installer")
@@ -522,6 +522,27 @@ def deploy_env(context: "Context") -> None:
         # Restart orbit-system deployments and statefulsets to force reload of caches etc
         sh.run(f"kubectl rollout restart deployments -n orbit-system --context {k8s_context}")
         sh.run(f"kubectl rollout restart statefulsets -n orbit-system --context {k8s_context}")
+
+        # Confirm orbit-system Service Endpoints
+        def confirm_endpoints(name: str, namespace: str) -> None:
+            subsets = k8s.get_service_endpoints(name=name, namespace=namespace, k8s_context=k8s_context)
+            if subsets:
+                for subset in subsets:
+                    for address in subset.get("addresses", []):
+                        _logger.debug(
+                            "Service: %s Namespace: %s Hostname: %s IP: %s",
+                            name,
+                            namespace,
+                            address.get("hostname"),
+                            address.get("ip"),
+                        )
+            else:
+                raise Exception("No Endpoints found for Service: %s Namespace: %s", name, namespace)
+
+        confirm_endpoints(name="podsettings-pod-modifier", namespace="orbit-system")
+        confirm_endpoints(name="landing-page-service", namespace="orbit-system")
+        if context.install_image_replicator or not context.networking.data.internet_accessible:
+            confirm_endpoints(name="pod-image-updater", namespace="orbit-system")
 
 
 def deploy_team(context: "Context", team_context: "TeamContext") -> None:
