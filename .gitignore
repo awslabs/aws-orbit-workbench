@@ -11,3 +11,4 @@ old_wiki_backup/
 .idea/**/dictionaries
 .idea/**/shelf
 .DS_Store
+.idea

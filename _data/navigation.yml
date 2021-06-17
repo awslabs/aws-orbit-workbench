@@ -42,6 +42,8 @@ docs:
         url: 404
       - title: Working remotely with local workspace
         url: working-remotely-with-local-workspace
+      - title: Reusable Conda environments
+        url: reusable-conda-environemnts
   - group: Plugins
     sub:
       - title: Built-in Plugin Directory
