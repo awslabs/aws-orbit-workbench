@@ -443,6 +443,7 @@ def process_image_replication_request(logger: logging.Logger, request: Dict[str,
         logger.info("request: %s", request)
 
     pod_spec = modified_pod.get("spec", {})
+    pod_annotations = modified_pod["metadata"].get("annotations", {})
     replications = {}
 
     for container in pod_spec.get("initContainers", []) + pod_spec.get("containers", []):
@@ -451,10 +452,12 @@ def process_image_replication_request(logger: logging.Logger, request: Dict[str,
         if image != desired_image:
             container["image"] = desired_image
             replications[desired_image] = image
+            pod_annotations[f"original-container-image/{container['name']}"] = image
 
     if replications != {}:
         client = dynamic_client()
         create_image_replication(namespace="orbit-system", images=replications, client=client)
+        modified_pod["metadata"]["annotations"] = pod_annotations
 
     patch = jsonpatch.JsonPatch.from_diff(pod, modified_pod)
     logger.info("patch: %s", str(patch).encode())

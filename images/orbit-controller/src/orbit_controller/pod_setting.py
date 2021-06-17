@@ -48,7 +48,7 @@ def process_added_event(pod_setting: Dict[str, Any]) -> None:
                     "name": name,
                     "uid": owner_uid,
                 },
-                labels={"orbit/space": "team", "orbit/team": name},
+                labels={"orbit/space": "team", "orbit/team": namespace},
             ),
             client=client,
         )

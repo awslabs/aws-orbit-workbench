@@ -62,7 +62,7 @@ def construct(
             "name": name,
             "labels": labels,
             "annotations": annnotations,
-            "owner_references": [owner_reference],
+            "ownerReferences": [owner_reference],
         },
         "spec": {"selector": {"matchLabels": {f"orbit/{name}": ""}}, "desc": desc},
     }
@@ -97,14 +97,12 @@ def copy_pod_defaults_to_user_namespaces(
                 "name": pod_default["metadata"]["name"],
                 "desc": pod_default["spec"]["desc"],
                 "labels": {"orbit/space": "user", "orbit/team": pod_default["metadata"]["labels"].get("team", None)},
-                "owner_references": [
-                    {
-                        "apiVersion": f"{KUBEFLOW_API_GROUP}/{KUBEFLOW_API_VERSION}",
-                        "kind": "PodDefault",
-                        "name": pod_default["metadata"]["name"],
-                        "uid": pod_default["metadata"]["uid"],
-                    }
-                ],
+                "owner_reference": {
+                    "apiVersion": f"{KUBEFLOW_API_GROUP}/{KUBEFLOW_API_VERSION}",
+                    "kind": "PodDefault",
+                    "name": pod_default["metadata"]["name"],
+                    "uid": pod_default["metadata"]["uid"],
+                },
             }
             create_pod_default(namespace=namespace, pod_default=construct(**kwargs), client=client)
 
@@ -190,6 +188,9 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
             else:
                 logger.exception("Unknown ApiException in PodDefaultWatcher. Failing")
                 raise
+        except k8s_exceptions.ResourceNotFoundError as re:
+            logger.warning("ResourceNotFound: %s", re)
+            time.sleep(30)
         except Exception:
             logger.exception("Unknown error in PodDefaultWatcher. Failing")
             raise

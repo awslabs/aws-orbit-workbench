@@ -117,13 +117,15 @@ def get_desired_image(config: Dict[str, Any], image: str) -> str:
         return image
     elif external_ecr_match.match(image):
         if config["replicate_external_repos"]:
-            return external_ecr_match.sub(f"{config['repo_host']}/{config['repo_prefix']}/", image)
+            return external_ecr_match.sub(
+                f"{config['repo_host']}/{config['repo_prefix']}/", image.replace("@sha256", "")
+            )
         else:
             return image
     elif public_ecr_match.match(image):
-        return public_ecr_match.sub(f"{config['repo_host']}/{config['repo_prefix']}/", image)
+        return public_ecr_match.sub(f"{config['repo_host']}/{config['repo_prefix']}/", image.replace("@sha256", ""))
     else:
-        return f"{config['repo_host']}/{config['repo_prefix']}/{image}"
+        return f"{config['repo_host']}/{config['repo_prefix']}/{image.replace('@sha256', '')}"
 
 
 def get_replication_status(
@@ -322,6 +324,7 @@ def process_image_replications(
                         dest,
                     )
                     statuses[dest] = f"Failed:{attempt}"
+                    queue.put(replication_task)
 
         except Exception as e:
             with lock:

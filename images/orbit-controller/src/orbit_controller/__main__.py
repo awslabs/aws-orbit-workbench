@@ -211,7 +211,7 @@ def watch_image_replications(workers: Optional[int] = None) -> None:
         state_updater.start()
 
         image_replications_processors = []
-        for i in range(config["workers="]):
+        for i in range(config["workers"]):
             logger.info("Starting ImageReplications Worker Process")
             image_replications_processor = Process(
                 target=image_replication.process_image_replications,

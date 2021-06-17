@@ -289,10 +289,16 @@ def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -
         raise ValueError("context.identity_pool_id is None!")
 
     if context.install_image_replicator or not context.networking.data.internet_accessible:
+        _logger.debug("Deploying Pod Image Modifier and Image Replicator")
         _orbit_image_replicator(output_path=output_path, context=context)
+    else:
+        _logger("Skipping deployment of Pod Image Modifier and Image Replicator")
 
     if context.install_ssm_agent:
+        _logger.debug("Deploying SSM Agent Installer")
         _ssm_agent_installer(output_path=output_path, context=context)
+    else:
+        _logger.debug("Skipping deployment of SSM Agent Installer")
 
     _sm_operator_installer(output_path=output_path, context=context)
 
