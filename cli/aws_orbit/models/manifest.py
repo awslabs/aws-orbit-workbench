@@ -60,6 +60,7 @@ class TeamManifest:
     plugins: List[PluginManifest] = field(default_factory=list)
     profiles: List[Dict[str, Union[str, Dict[str, Any]]]] = field(default_factory=list)
     efs_life_cycle: Optional[str] = None
+    authentication_group : Optional[str] = None
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)

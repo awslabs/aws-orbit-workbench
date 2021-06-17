@@ -142,6 +142,7 @@ class TeamContext:
     plugins: List[PluginManifest]
     profiles: List[Dict[str, Union[str, Dict[str, Any]]]]
     efs_life_cycle: Optional[str]
+    authentication_group: Optional[str]
 
     # Context
     base_image_address: str
