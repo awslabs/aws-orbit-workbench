@@ -1,42 +1,11 @@
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: orbit-controller-config
-  namespace: orbit-system
-data:
-  FLASK_DEBUG: "1"
-  FLASK_ENV: development
-  GUNICORN_WORKERS: "1"
-  ORBIT_CONTROLLER_DEBUG: "1"
-  ORBIT_CONTROLLER_LOG_VERBOSITY: "0"
-  IN_CLUSTER_DEPLOYMENT: "1"
-  USERSPACE_CHART_MANAGER_WORKERS: "1"
-  POD_DEFAULTS_WATCHER_WORKERS: "1"
-  POD_SETTINGS_WATCHER_WORKERS: "1"
-  IMAGE_REPLICATIONS_REPO_HOST: ${account_id}.dkr.ecr.${region}.amazonaws.com
-  IMAGE_REPLICATIONS_REPO_PREFIX: orbit-${env_name}
-  IMAGE_REPLICATIONS_CODEBUILD_PROJECT: orbit-${env_name}
-  IMAGE_REPLICATIONS_CODEBUILD_TIMEOUT: "30"
-  IMAGE_REPLICATIONS_REPLICATE_EXTERNAL_REPOS: "no"
-  IMAGE_REPLICATIONS_WATCHER_WORKERS: "4"
-  AWS_STS_REGIONAL_ENDPOINTS: ${sts_ep}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: orbit-controller-state
-  namespace: orbit-system
-data: {}
----
 kind: Service
 apiVersion: v1
 metadata:
-  name: podsettings-pod-modifier
+  name: pod-image-updater
   namespace: orbit-system
 spec:
   selector:
-    app: podsettings-pod-modifier
+    app: pod-image-updater
   ports:
   - name: https
     protocol: TCP
@@ -46,9 +15,9 @@ spec:
 kind: MutatingWebhookConfiguration
 apiVersion: admissionregistration.k8s.io/v1beta1
 metadata:
-  name: orbit-podsettings-pod-modifier
+  name: orbit-pod-image-updater
 webhooks:
-  - name: podsettings-pod-modifier.orbit-system.svc
+  - name: pod-image-updater.orbit-system.svc
     sideEffects: None
     reinvocationPolicy: IfNeeded
     failurePolicy: Fail
@@ -56,11 +25,9 @@ webhooks:
     namespaceSelector:
       matchExpressions:
         - key: orbit/space
-          operator: In
+          operator: NotIn
           values:
-            - team
-            - user
-            - kubeflow
+            - env
     rules:
       - operations: ["CREATE", "UPDATE"]
         apiGroups: [""]
@@ -70,8 +37,8 @@ webhooks:
       caBundle: ""
       service:
         namespace: orbit-system
-        name: podsettings-pod-modifier
-        path: /pod-pod-setting
+        name: pod-image-updater
+        path: /pod-image-replication
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -79,20 +46,20 @@ metadata:
   labels:
     app: orbit-controller
   namespace: orbit-system
-  name: podsettings-pod-modifier
+  name: pod-image-updater
 spec:
   podManagementPolicy: OrderedReady
   replicas: 1
   revisionHistoryLimit: 10
-  serviceName: podsettings-pod-modifier
+  serviceName: pod-image-updater
   selector:
     matchLabels:
-      app: podsettings-pod-modifier
+      app: pod-image-updater
   template:
     metadata:
       labels:
-        app: podsettings-pod-modifier
-      name: podsettings-pod-modifier
+        app: pod-image-updater
+      name: pod-image-updater
       annotations:
         sidecar.istio.io/inject: "false"
     spec:
@@ -145,13 +112,10 @@ spec:
             requests:
               cpu: 100m
               memory: 100M
-      nodeSelector:
-        orbit/usage: reserved
-        orbit/node-group: env
       volumes:
         - name: orbit-controller-certs
           secret:
-            secretName: podsettings-pod-modifier-certs
+            secretName: pod-image-updater-certs
         - name: orbit-controller-state
           configMap:
             name: orbit-controller-state
@@ -162,7 +126,7 @@ metadata:
   labels:
     app: orbit-controller
   namespace: orbit-system
-  name: userspace-chart-manager
+  name: pod-image-replicator
 spec:
   podManagementPolicy: OrderedReady
   replicas: 1
@@ -170,19 +134,16 @@ spec:
   serviceName: ""
   selector:
     matchLabels:
-      app: userspace-chart-manager
+      app: pod-image-replicator
   template:
     metadata:
       labels:
-        app: userspace-chart-manager
-      name: userspace-chart-manager
+        app: pod-image-replicator
+      name: pod-image-replicator
       annotations:
         sidecar.istio.io/inject: "false"
     spec:
       serviceAccountName: orbit-${env_name}-admin
-      nodeSelector:
-        orbit/usage: reserved
-        orbit/node-group: env
       containers:
         - name: watcher
           image: ${orbit_controller_image}
@@ -193,9 +154,9 @@ spec:
           command:
             - orbit-controller
             - watch
-            - namespaces
+            - imagereplications
           args:
-            - "--workers=$(USERSPACE_CHART_MANAGER_WORKERS)"
+            - "--workers=$(IMAGE_REPLICATIONS_WATCHER_WORKERS)"
           volumeMounts:
             - mountPath: /state
               name: orbit-controller-state
@@ -212,81 +173,50 @@ spec:
           configMap:
             name: orbit-controller-state
 ---
-apiVersion: apps/v1
-kind: StatefulSet
+apiVersion: batch/v1
+kind: Job
 metadata:
-  labels:
-    app: orbit-controller
+  name: cert-manager-setup-pod-image-replication
   namespace: orbit-system
-  name: podsettings-poddefaults-manager
+  labels:
+    app: cert-manager
 spec:
-  podManagementPolicy: OrderedReady
-  replicas: 1
-  revisionHistoryLimit: 10
-  serviceName: ""
-  selector:
-    matchLabels:
-      app: podsettings-poddefaults-manager
   template:
     metadata:
       labels:
-        app: podsettings-poddefaults-manager
-      name: podsettings-poddefaults-manager
-      annotations:
-        sidecar.istio.io/inject: "false"
+        orbit/node-type: ec2
     spec:
-      serviceAccountName: orbit-${env_name}-admin
-      nodeSelector:
-        orbit/usage: reserved
-        orbit/node-group: env
+      serviceAccountName: cert-manager-service-account
       containers:
-        - name: podsettings-watcher
-          image: ${orbit_controller_image}
-          imagePullPolicy: ${image_pull_policy}
-          envFrom:
-            - configMapRef:
-                name: orbit-controller-config
-          command:
-            - orbit-controller
-            - watch
-            - podsettings
+        - name: metadata-cert-setup
+          image: ${k8s_utilities_image}
+          imagePullPolicy: IfNotPresent
+          command: ["/cert-manager-scripts/generate_certificate.sh"]
           args:
-            - "--workers=$(POD_SETTINGS_WATCHER_WORKERS)"
+            - "--service"
+            - "pod-image-updater"
+            - "--webhook"
+            - "orbit-pod-image-updater"
+            - "--secret"
+            - "pod-image-updater-certs"
+            - "--namespace"
+            - "orbit-system"
+            - "--force"
+            - "yes"
           volumeMounts:
-            - mountPath: /state
-              name: orbit-controller-state
-              readOnly: false
+            - name: cert-manager-scripts
+              mountPath: /cert-manager-scripts
           resources:
             limits:
-              cpu: 2
-              memory: 2G
+              cpu: 500m
+              memory: 300Mi
             requests:
               cpu: 100m
-              memory: 100M
-        - name: poddefaults-watcher
-          image: ${orbit_controller_image}
-          imagePullPolicy: ${image_pull_policy}
-          envFrom:
-            - configMapRef:
-                name: orbit-controller-config
-          command:
-            - orbit-controller
-            - watch
-            - poddefaults
-          args:
-            - "--workers=$(POD_DEFAULTS_WATCHER_WORKERS)"
-          volumeMounts:
-            - mountPath: /state
-              name: orbit-controller-state
-              readOnly: false
-          resources:
-            limits:
-              cpu: 2
-              memory: 2G
-            requests:
-              cpu: 100m
-              memory: 100M
+              memory: 100Mi
+      restartPolicy: Never
       volumes:
-        - name: orbit-controller-state
+        - name: cert-manager-scripts
           configMap:
-            name: orbit-controller-state
+            name: cert-manager-scripts
+            defaultMode: 0744
+  backoffLimit: 1

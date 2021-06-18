@@ -52,7 +52,7 @@ subjects:
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: cert-manager-setup-pod
+  name: cert-manager-setup-pod-pod-setting
   namespace: orbit-system
   labels:
     app: cert-manager
