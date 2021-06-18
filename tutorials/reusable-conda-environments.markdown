@@ -12,6 +12,12 @@ Orbit JupyterLab notebook users install python packages to container runtime pyt
 
 By creating conda environment inside FSX folder path, new notebooks can re-use the installed python modules inside FSX folder. Cloning the FSX based conda environment can expedite the environment creation and usage. 
 
+
+## Prerequisite
+
+To make use of FSX filesystem based conda environment, teamspace needs Orbit [Lustre Plugin](#lustre_plugin) installed. 
+
+
 ## Check availability of .bashrc file in home directory 
 ```
 cd ~ 
