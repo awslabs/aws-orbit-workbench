@@ -49,7 +49,11 @@ spec:
              echo "ENDING copy of logs to /home/jovyan/private/code-server"
 
              echo "Adding bashrc file to home directory"
+
              cp /opt/orbit/bashrc /home/jovyan/.bashrc
+
+             echo "Finshed copying bashrc file to home directory"
+
         volumeMounts:
           - mountPath: /home/jovyan
             name: efs-volume
