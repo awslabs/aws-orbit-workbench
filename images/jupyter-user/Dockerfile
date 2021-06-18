@@ -51,14 +51,14 @@ ADD transformations/ /opt/transformations/
 RUN chmod -R 755 /opt/transformations/
 
 # add the boostrap script and change permission to jovyan
-#RUN mkdir -p /opt/orbit
-#ADD bashrc /opt/orbit/bashrc
-#RUN chown -R jovyan /opt/orbit
+RUN mkdir -p /opt/orbit
+ADD bashrc /opt/orbit/bashrc
+RUN chown -R jovyan /opt/orbit
 
 # Add JL startup hook script
-RUN mkdir -p /usr/local/bin/start-notebook.d
-ADD conda_bashrc.sh /usr/local/bin/start-notebook.d/conda_bashrc.sh
-RUN chmod -R 755 /usr/local/bin/start-notebook.d/
+#RUN mkdir -p /usr/local/bin/start-notebook.d
+#ADD conda_bashrc.sh /usr/local/bin/start-notebook.d/conda_bashrc.sh
+#RUN chmod -R 755 /usr/local/bin/start-notebook.d/
 
 ######################################
 # Jupyter Environment configuration
