@@ -1,12 +1,12 @@
-Name: !ENV ${ORBIT_ENV_NAME::dev-env-isolated}
+Name: !ENV ${ORBIT_ENV_NAME::dev-env-iso}
 CodeartifactDomain: !ENV ${CODEARTIFACT_DOMAIN::}
 CodeartifactRepository: !ENV ${CODEARTIFACT_REPOSITORY::}
 EksSystemMastersRoles:
 -   !ENV ${ORBIT_ADMIN_ROLE::Admin}
-ScratchBucketArn: !SSM ${/orbit-foundation/dev-env-isolated/resources::ScratchBucketArn}
-UserPoolId: !SSM ${/orbit-foundation/dev-env-isolated/resources::UserPoolId}
-SharedEfsFsId: !SSM ${/orbit-foundation/dev-env-isolated/resources::SharedEfsFsId}
-SharedEfsSgId: !SSM ${/orbit-foundation/dev-env-isolated/resources::SharedEfsSgId}
+ScratchBucketArn: !SSM ${/orbit-foundation/dev-env-iso/resources::ScratchBucketArn}
+UserPoolId: !SSM ${/orbit-foundation/dev-env-iso/resources::UserPoolId}
+SharedEfsFsId: !SSM ${/orbit-foundation/dev-env-iso/resources::SharedEfsFsId}
+SharedEfsSgId: !SSM ${/orbit-foundation/dev-env-iso/resources::SharedEfsSgId}
 InstallSsmAgent: true
 CognitoExternalProvider: !ENV ${COGNITO_EXTERNAL_PROVIDER::}
 CognitoExternalProviderLabel: !ENV ${COGNITO_EXTERNAL_PROVIDER_LABEL::}
@@ -21,16 +21,16 @@ Images:
         Repository: !ENV ${UTILITY_DATA_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data}
         Version: !ENV ${VERSION::latest}
 Networking:
-    VpcId: !SSM ${/orbit-foundation/dev-env-isolated/resources::VpcId}
-    PublicSubnets: !SSM ${/orbit-foundation/dev-env-isolated/resources::PublicSubnets}
-    PrivateSubnets: !SSM ${/orbit-foundation/dev-env-isolated/resources::PrivateSubnets}
-    IsolatedSubnets: !SSM ${/orbit-foundation/dev-env-isolated/resources::IsolatedSubnets}
+    VpcId: !SSM ${/orbit-foundation/dev-env-iso/resources::VpcId}
+    PublicSubnets: !SSM ${/orbit-foundation/dev-env-iso/resources::PublicSubnets}
+    PrivateSubnets: !SSM ${/orbit-foundation/dev-env-iso/resources::PrivateSubnets}
+    IsolatedSubnets: !SSM ${/orbit-foundation/dev-env-iso/resources::IsolatedSubnets}
     Data:
         InternetAccessible: !ENV ${INTERNET_ACCESSIBLE::false}
-        NodesSubnets: !SSM ${/orbit-foundation/dev-env-isolated/resources::NodesSubnets}
+        NodesSubnets: !SSM ${/orbit-foundation/dev-env-iso/resources::NodesSubnets}
     Frontend:
-        LoadBalancersSubnets: !SSM ${/orbit-foundation/dev-env-isolated/resources::LoadBalancersSubnets}
-        SslCertArn: !SSM ${/orbit-foundation/dev-env-isolated/resources::SslCertArn}
+        LoadBalancersSubnets: !SSM ${/orbit-foundation/dev-env-iso/resources::LoadBalancersSubnets}
+        SslCertArn: !SSM ${/orbit-foundation/dev-env-iso/resources::SslCertArn}
 ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge
