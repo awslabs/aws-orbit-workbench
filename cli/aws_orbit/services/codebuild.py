@@ -265,7 +265,7 @@ def generate_spec(
     if plugins and isinstance(context, Context):
         for team_context in context.teams:
             for plugin in team_context.plugins:
-                if plugin.path is not None and plugin.module is not None:
+                if plugin.module is not None:
                     plugin_module_name = (plugin.module).replace("_", "-")
                     install.append(f"pip install --upgrade aws-orbit-{plugin_module_name}=={__version__}")
 
