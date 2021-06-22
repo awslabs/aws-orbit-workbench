@@ -261,6 +261,7 @@ GEM
 
 PLATFORMS
   universal-darwin-20
+  x86_64-darwin-19
 
 DEPENDENCIES
   github-pages (~> 214)
@@ -272,4 +273,4 @@ DEPENDENCIES
   wdm (~> 0.1.1)
 
 BUNDLED WITH
-   2.2.16
+   2.2.20

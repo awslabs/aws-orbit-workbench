@@ -23,42 +23,42 @@ for production accounts, where more AWS Well-Architected controls should be depl
    source .venv/bin/activate
    ```
 
-2. Orbit CLI tool should be installed  
+2. Orbit CLI tool should be installed
    ```
    $ pip install aws-orbit
-   ```   
+   ```
 
-3. Access to an AWS account with an IAM role that has at least the permissions to deploy the foundation and cdk tool kit resources.   
+3. Access to an AWS account with an IAM role that has at least the permissions to deploy the foundation and cdk tool kit resources.
 
 4. Download the demo directory from the orbit source bundle, which contains sample manifest files used in this walk through.
    ```
    $ curl -L -o orbit.zip https://github.com/awslabs/aws-orbit-workbench/archive/main.zip
    $ unzip orbit.zip
    $ cd aws-orbit*/samples/manifests/demo
-   ```   
+   ```
 5. Create a CodeArtifact Domain and Repository using the below helper script
    ```
    /scripts/init_codeartifact.sh
    ```
 
-**IMPORTANT: If you want to allow access to internet from your environment, and do not have security concern with this , you should deploy the foundation using step B, otherwise use step A which will deploy isolated subnets and a set of VPC endpoints to allow secured access to AWS services (There are limitations on where these can be deployed base on supported regions for the VPC endpoints).**
+**IMPORTANT: If you want to allow access to internet from your environment, and do not have security concern with this, you should deploy the foundation using step B, otherwise use step A which will deploy isolated subnets and a set of VPC endpoints to allow secured access to AWS services (There are limitations on where these can be deployed base on supported regions for the VPC endpoints).**
 
 A) Deploying Foundation without internet access
    ```
    $ orbit deploy foundation -n dev-env --no-internet-accessibility
-   ```       
+   ```
 
    --------  OR --------
 
 B) Deploying Foundation with internet access
    ```
    $ orbit deploy foundation -n dev-env --internet-accessibility
-   ```     
+   ```
 
-> Note: Feel free to use `--debug` for orbit commands during deployment.   
+> Note: Feel free to use `--debug` for orbit commands during deployment.
 
 ### Deploying new environment
-#### Prerequisites   
+#### Prerequisites
 > Note: If the orbit foundation is not deployed, we should make sure that the below resources exist as a part of our environment
 1. VPC with public as well as private\isolated subnets (interface endpoints in case of isolated subnets).
 2. An S3 bucket for scratch data used by the various teams
@@ -71,10 +71,10 @@ B) Deploying Foundation with internet access
 
 After defining a deployment manifest (see [Example Manifest that works with foundation only](https://raw.githubusercontent.com/awslabs/aws-orbit-workbench/main/samples/manifests/demo/manifest.yaml)), run the following command:
 This command deploys your environment that includes the EKS cluster and all other shared resources required for
-your teams to operate.  
+your teams to operate.
    ```
    $ orbit deploy env -f manifest.yaml
-   ```    
+   ```
 
 It can take about 1 hour to deploy your environment which can vary base on your node pools definitions.
 
@@ -92,21 +92,21 @@ At any time, you can update your environment manifest and add new teams, or remo
 The following command will create the new teams:
    ```
    $ orbit deploy teams -f manifest.yaml
-   ```   
+   ```
 
 It can take about 10-30 min to deploy your team which can vary base on your team configurations.
 
 
-#### Destroying your team(s)   
+#### Destroying your team(s)
 ```
 $ orbit destroy teams -e dev-env
 ```
 
-#### Destroying a environment   
+#### Destroying a environment
 ```
 $ orbit destroy env -e dev-env
 ```
-#### Destroying a foundation   
+#### Destroying a foundation
 ```
 $ orbit destroy foundation --name dev-env
 ```
