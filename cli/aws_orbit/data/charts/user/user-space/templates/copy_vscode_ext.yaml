@@ -50,7 +50,7 @@ spec:
 
              echo "STARTING bashrc file copy to home directory"
 
-             cp /opt/orbit/bashrc /home/jovyan/.bashrc
+             cp /opt/orbit/bashrc /home/jovyan/.bashrc;
 
              echo "ENDING copy of  bashrc file to home directory"
 
