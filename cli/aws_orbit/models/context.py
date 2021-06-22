@@ -142,7 +142,6 @@ class TeamContext:
     plugins: List[PluginManifest]
     profiles: List[Dict[str, Union[str, Dict[str, Any]]]]
     efs_life_cycle: Optional[str]
-    authentication_group: Optional[str] = None
 
     # Context
     base_image_address: str
@@ -169,6 +168,9 @@ class TeamContext:
     k8_admin: bool = False
     team_helm_repository: Optional[str] = None
     user_helm_repository: Optional[str] = None
+
+    # Manifest default
+    authentication_group: Optional[str] = None
 
     def fetch_team_data(self) -> None:
         _logger.debug("Fetching Team %s data...", self.name)
