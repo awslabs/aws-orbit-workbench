@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="4d80edc0-ea25-4324-97ca-007856d4ebf0" name="Default Changelist" comment="Updated description">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="4d80edc0-ea25-4324-97ca-007856d4ebf0" name="Default Changelist" comment="Updated description" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -73,6 +71,7 @@
       <workItem from="1620404359334" duration="4211000" />
       <workItem from="1620663273501" duration="23000" />
       <workItem from="1624368223572" duration="101000" />
+      <workItem from="1624368363468" duration="228000" />
     </task>
     <task id="LOCAL-00001" summary="Update to site description">
       <created>1619703622627</created>
