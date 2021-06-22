@@ -37,3 +37,38 @@ $ pip install aws-orbit-custom-cfn
 ```
 $ pip install aws-orbit-hello-world
 ```
+
+#### Installing Hello World plugin
+
+```
+$ pip install aws-orbit-emr-on-eks
+```
+
+#### Installing Hello World plugin
+
+```
+$ pip install aws-orbit-lustre
+```
+
+#### Installing Hello World plugin
+
+```
+$ pip install aws-orbit-overprovisioning
+```
+
+#### Installing Hello World plugin
+
+```
+$ pip install aws-orbit-ray
+```
+
+#### Installing Hello World plugin
+
+```
+aws-orbit-sm-operator
+```
+#### Installing Hello World plugin
+
+```
+aws-orbit-voila
+```

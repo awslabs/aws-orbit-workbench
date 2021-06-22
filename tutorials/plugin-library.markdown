@@ -3,8 +3,8 @@
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
 layout: documentation
-title: Plugin Installation
-permalink: plugin-installation
+title: Plugin Library
+permalink: plugin-library
 ---
 ##  Orbit Plugin Definiton and Configuration
 Orbit plugins are individual python modules published PyPi.  We are continually adding plugin capabilites to the platform.  This is the current list of published plugins:
@@ -42,19 +42,24 @@ The plugin configurations are located in a yaml configuration file that is refer
 
 ----
 ### <a name="rs_plugin">Amazon Redshift </a>
+This plugin configures redshift cluster creation, accessiblity and termination capabilities using Orbit SDK [helper methods](https://github.com/awslabs/aws-orbit-workbench/blob/main/sdk/aws_orbit_sdk/database.py). Before deleting teamspaces, recommended approach is to do gracefull terminate of all teamspace specific redshift clusters. While destroying teamspace, left over redshift clusters are terminated forcibly by design.
 ```
 - PluginId: 
   Module: 
   Path: ../plugins/redshift/
   Parameters:
-    - parameter 1: <value>
-    - parameter 2: <value>
-    ...
-    - parameter N: <value>
-  
+    enable_user_activity_logging: "true"
+    require_ssl: "true"
+    use_fips_ssl: "true"
+    node_type: "DC2.large"
+    number_of_nodes: "2"
 ```
 #### Parameters 
-TBD
+- *enable_user_activity_logging* - Enable [database audit logging](https://docs.aws.amazon.com/redshift/latest/mgmt/db-auditing.html)
+- *require_ssl* - Enable SSL security. [Configuring security options for connections.](https://docs.aws.amazon.com/redshift/latest/mgmt/connecting-ssl-support.html)
+- *use_fips_ssl* - Enable FIPS-compliant SSL mode only if your system is required to be FIPS-compliant.
+- *node_type* - Default value for the required cluster node type. [Supported types.](https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-clusters.html#working-with-clusters-overview)
+- *number_of_nodes* - Default value for the required number of nodes in the cluster.
 
 References:
 - [Amazon Redshift](https://docs.aws.amazon.com/redshift/index.html)
@@ -114,7 +119,8 @@ This plugin enables Amazon FSx for Lustre file system availabilty to the Orbit p
   Path: ../plugins/lustre/
 ```
 #### Parameters 
-*None*
+-*storage* define the site of the file system, e.g. 1200Gi 
+-*folder* define a mount path for the file system, e.g., /fsx/data1
 
 References: 
 - [Amazon Amazon FSx for Lustre](https://docs.aws.amazon.com/fsx/latest/LustreGuide/what-is.html)
@@ -172,25 +178,32 @@ References:
   
 ```
 #### Parameters 
--*script*
+-*script* - Required. The bash script to run after the team has been created. A Pod will be created to run this script. 
+The pod can run a single time script , or even a script that run forever as a Daemon as shown in the example.
+-*restartPolicy*- Optional. Default is 'Never'. The restart policy of the pod.
+-*image* - Optional. The image address for the pod. Default is the base notebook image.   
+-*uid* - Optional. The user id for the pod security context.
+-*gid* - Optional. The group id for the pod security context.
 
--*restartPolicy*
 
 ----
 ### <a name="op_plugin">Overprovisioning Plugin</a>
+This plugin preserve idle capacity on the EKS cluster to allow quick startup time of containers even 
+when the cluster has reached its capacity and need to scale up.  Administrator can define how much capacity 
+in terms of cpu and memory to preserve for the next containers.  When cluster has utilized all space other than this 
+reserve space, it will initiate scale up, but the containers that fits this preserve space can still start immediately. 
 ```
 - PluginId: 
   Module:
   Path: ../plugins/overprovisioning/ 
-    Parameters:
-    - parameter 1: <value>
-    - parameter 2: <value>
-    ...
-    - parameter N: <value>
+  Parameters:
+    replicas: 3
+    cpu: 2
+    memory: 4Gi
   
 ```
 #### Parameters 
-TBD
-
-
+- *replicas* - number of containers to allocate for the reserve space
+- *cpu* - number of cpu for each allocated containers. e.g., '2'
+- *memory* - Memory capacity for each container. e.g., '4Gi'
 
