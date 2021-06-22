@@ -197,6 +197,17 @@ def delete_kubeflow_roles(env_stack_name: str, region: str, account_id: str) -> 
                 except iam_client.exceptions.ServiceFailureException as err:
                     _logger.error(f"Service error: {err}")
 
+                try:
+                    policy_arn = f"arn:aws:iam::{account_id}:policy/{policy_name}"
+                    iam_client.delete_role_policy(RoleName=role_name, PolicyName=policy_name)
+                    _logger.info(f"Deleted in-policy {policy_name}")
+                except iam_client.exceptions.NoSuchEntityException:
+                    _logger.error("No such policy")
+                except iam_client.exceptions.UnmodifiableEntityException:
+                    _logger.error("Policy is unmodifiable")
+                except iam_client.exceptions.ServiceFailureException as err:
+                    _logger.error(f"Service error: {err}")
+
             try:
                 iam_client.delete_role(RoleName=role_name)
                 _logger.info(f"Removed role {role_name}")

@@ -19,7 +19,7 @@ from typing import Any
 
 from flask import Flask, make_response, request
 from orbit_controller.home import is_ready, login, logout
-from orbit_controller.pod import process_request as process_pod_request
+from orbit_controller.pod import process_image_replication_request, process_pod_setting_request
 
 # from flask_cognito import cognito_auth_required, current_user, current_cognito_jwt
 
@@ -28,11 +28,18 @@ app = Flask(__name__)
 app.logger.info("environ: %s", os.environ)
 
 
-@app.route("/pod", methods=["POST"])
-def pod() -> Any:
+@app.route("/pod-pod-setting", methods=["POST"])
+def pod_pod_setting() -> Any:
     # See here for AdmissionReview request/response
     # https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#request
-    return process_pod_request(logger=app.logger, request=request.json["request"])
+    return process_pod_setting_request(logger=app.logger, request=request.json["request"])
+
+
+@app.route("/pod-image-replication", methods=["POST"])
+def pod_image_replication() -> Any:
+    # See here for AdmissionReview request/response
+    # https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#request
+    return process_image_replication_request(logger=app.logger, request=request.json["request"])
 
 
 @app.route("/health", methods=["GET"])

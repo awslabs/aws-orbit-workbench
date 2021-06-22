@@ -85,32 +85,45 @@ def create_user_namespace(
     namespaces: List[str],
 ) -> None:
     for team, user_ns in expected_user_namespaces.items():
+        try:
+            team_namespace = api.read_namespace(name=team).to_dict()
+            team_uid = team_namespace.get("metadata", {}).get("uid", None)
+            logger.info(f"Retrieved Team Namespace uid: {team_uid}")
+        except Exception:
+            logger.exception("Error retrieving Team Namespace")
+            team_uid = None
         if user_ns not in namespaces:
             logger.info(f"Creating EFS endpoint for {user_ns}...")
             resp = create_user_efs_endpoint(user=user_name, team_name=team)
             access_point_id = resp.get("AccessPointId")
 
             logger.info(f"User namespace {user_ns} doesnt exist. Creating...")
-            name = user_ns
-            annotations = {"owner": user_email}
-            labels = {
-                "orbit/efs-access-point-id": access_point_id,
-                "orbit/efs-id": EFS_FS_ID,
-                "orbit/env": os.environ.get("ORBIT_ENV"),
-                "orbit/space": "user",
-                "orbit/team": team,
-                "orbit/user": user_name,
-                # "istio-injection": "enabled",
+            kwargs = {
+                "name": user_ns,
+                "annotations": {"owner": user_email},
+                "labels": {
+                    "orbit/efs-access-point-id": access_point_id,
+                    "orbit/efs-id": EFS_FS_ID,
+                    "orbit/env": os.environ.get("ORBIT_ENV"),
+                    "orbit/space": "user",
+                    "orbit/team": team,
+                    "orbit/user": user_name,
+                    # "istio-injection": "enabled",
+                },
             }
+            if team_uid:
+                kwargs["owner_references"] = [
+                    client.V1OwnerReference(api_version="v1", kind="Namespace", name=team, uid=team_uid)
+                ]
 
             body = client.V1Namespace()
-            body.metadata = client.V1ObjectMeta(name=name, annotations=annotations, labels=labels)
+            body.metadata = client.V1ObjectMeta(**kwargs)
 
             try:
                 api.create_namespace(body=body)
-                logger.info(f"Created namespace {name}")
+                logger.info(f"Created namespace {user_ns}")
             except ApiException:
-                logger.error(f"Exception when trying to create user namespace {name}")
+                logger.error(f"Exception when trying to create user namespace {user_ns}")
 
 
 def delete_user_efs_endpoint(user_name: str, user_namespace: str, api: client.CoreV1Api) -> None:

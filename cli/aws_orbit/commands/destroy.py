@@ -77,7 +77,7 @@ def destroy_teams(env: str, debug: bool) -> None:
                 bundle_path=bundle_path,
                 buildspec=buildspec,
                 codebuild_log_callback=msg_ctx.progress_bar_callback,
-                timeout=45,
+                timeout=120,
             )
         msg_ctx.progress(95)
 

@@ -16,17 +16,18 @@ import logging
 import os
 from multiprocessing import Manager, Process
 from multiprocessing.managers import SyncManager
-from typing import Optional, cast
+from typing import Any, Dict, Optional, cast
 
 import click
 from orbit_controller import (
     get_module_state,
+    image_replication,
     load_config,
     logger,
     maintain_module_state,
     namespace,
-    poddefault,
-    podsetting,
+    pod_default,
+    pod_setting,
 )
 
 
@@ -84,7 +85,7 @@ def watch_namespaces(workers: Optional[int] = None) -> None:
 
 @watch.command(name="podsettings")
 @click.option("--workers", type=int, required=False, default=None, show_default=True)
-def watch_podsettings(workers: Optional[int] = None) -> None:
+def watch_pod_settings(workers: Optional[int] = None) -> None:
     workers = workers if workers else int(os.environ.get("POD_SETTINGS_WATCHER_WORKERS", "2"))
 
     logger.info("workers: %s", workers)
@@ -98,7 +99,7 @@ def watch_podsettings(workers: Optional[int] = None) -> None:
         module_state = sync_manager.dict(**last_state)
 
         logger.info("Starting PodSettings Monitoring Process")
-        monitor = Process(target=podsetting.watch, kwargs={"queue": work_queue, "state": module_state})
+        monitor = Process(target=pod_setting.watch, kwargs={"queue": work_queue, "state": module_state})
         monitor.start()
 
         logger.info("Starting PodSettings State Updater Process")
@@ -108,25 +109,25 @@ def watch_podsettings(workers: Optional[int] = None) -> None:
         )
         state_updater.start()
 
-        podsettings_processors = []
+        pod_settings_processors = []
         for i in range(workers):
             logger.info("Starting PodSettings Worker Process")
-            podsettings_processor = Process(
-                target=podsetting.process_podsettings,
+            pod_settings_processor = Process(
+                target=pod_setting.process_pod_settings,
                 kwargs={"queue": work_queue, "state": module_state, "replicator_id": i},
             )
-            podsettings_processors.append(podsettings_processor)
-            podsettings_processor.start()
+            pod_settings_processors.append(pod_settings_processor)
+            pod_settings_processor.start()
 
         monitor.join()
-        for podsettings_processor in podsettings_processors:
-            podsettings_processor.terminate()
+        for pod_settings_processor in pod_settings_processors:
+            pod_settings_processor.terminate()
         state_updater.terminate()
 
 
 @watch.command(name="poddefaults")
 @click.option("--workers", type=int, required=False, default=None, show_default=True)
-def watch_poddefaults(workers: Optional[int] = None) -> None:
+def watch_pod_defaults(workers: Optional[int] = None) -> None:
     workers = workers if workers else int(os.environ.get("POD_DEFAULTS_WATCHER_WORKERS", "2"))
 
     logger.info("workers: %s", workers)
@@ -140,7 +141,7 @@ def watch_poddefaults(workers: Optional[int] = None) -> None:
         module_state = sync_manager.dict(**last_state)
 
         logger.info("Starting PodDefaults Monitoring Process")
-        monitor = Process(target=poddefault.watch, kwargs={"queue": work_queue, "state": module_state})
+        monitor = Process(target=pod_default.watch, kwargs={"queue": work_queue, "state": module_state})
         monitor.start()
 
         logger.info("Starting PodDefaults State Updater Process")
@@ -150,19 +151,85 @@ def watch_poddefaults(workers: Optional[int] = None) -> None:
         )
         state_updater.start()
 
-        poddefaults_processors = []
+        pod_defaults_processors = []
         for i in range(workers):
             logger.info("Starting PodDefaults Worker Process")
-            poddefaults_processor = Process(
-                target=poddefault.process_poddefaults,
+            pod_defaults_processor = Process(
+                target=pod_default.process_pod_defaults,
                 kwargs={"queue": work_queue, "state": module_state, "replicator_id": i},
             )
-            poddefaults_processors.append(poddefaults_processor)
-            poddefaults_processor.start()
+            pod_defaults_processors.append(pod_defaults_processor)
+            pod_defaults_processor.start()
 
         monitor.join()
-        for poddefaults_processor in poddefaults_processors:
-            poddefaults_processor.terminate()
+        for pod_defaults_processor in pod_defaults_processors:
+            pod_defaults_processor.terminate()
+        state_updater.terminate()
+
+
+@watch.command(name="imagereplications")
+@click.option("--workers", type=int, required=False, default=None, show_default=True)
+def watch_image_replications(workers: Optional[int] = None) -> None:
+    load_config()
+    last_state = get_module_state(module="imagereplicationsWatcher")
+
+    config = image_replication.get_config(workers)
+    logger.info("config: %s", config)
+
+    if any([v is None for v in config.values()]):
+        exception = click.ClickException(
+            "All of repo_host, repo_prefix, codebuild_project, codebuild_timeout, " "and workers are required."
+        )
+        logger.error(exception)
+        raise exception
+
+    with Manager() as manager:
+        sync_manager = cast(SyncManager, manager)
+        lock = sync_manager.Lock()
+        work_queue = sync_manager.Queue()
+        module_state = sync_manager.dict(**last_state)
+        replication_statuses: Dict[str, Any] = sync_manager.dict()
+
+        logger.info("Starting ImageReplications Monitoring Process")
+        monitor = Process(
+            target=image_replication.watch,
+            kwargs={
+                "lock": lock,
+                "queue": work_queue,
+                "state": module_state,
+                "statuses": replication_statuses,
+                "config": config,
+            },
+        )
+        monitor.start()
+
+        logger.info("Starting ImageReplications State Updater Process")
+        state_updater = Process(
+            target=maintain_module_state,
+            kwargs={"module": "imagereplicationsWatcher", "state": module_state},
+        )
+        state_updater.start()
+
+        image_replications_processors = []
+        for i in range(config["workers"]):
+            logger.info("Starting ImageReplications Worker Process")
+            image_replications_processor = Process(
+                target=image_replication.process_image_replications,
+                kwargs={
+                    "lock": lock,
+                    "queue": work_queue,
+                    "state": module_state,
+                    "statuses": replication_statuses,
+                    "config": config,
+                    "replicator_id": i,
+                },
+            )
+            image_replications_processors.append(image_replications_processor)
+            image_replications_processor.start()
+
+        monitor.join()
+        for image_replications_processor in image_replications_processors:
+            image_replications_processor.terminate()
         state_updater.terminate()
 
 
