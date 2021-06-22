@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Any, Dict, cast
+from typing import Any, Dict, List, cast
 
 from kubernetes import config
 from kubernetes.client import CoreV1Api, NetworkingV1beta1Api, NetworkingV1beta1IngressList, V1Service
@@ -21,6 +21,23 @@ def get_service_hostname(name: str, k8s_context: str, namespace: str = "default"
                         break
         time.sleep(10)
     return str(status["load_balancer"]["ingress"][0]["hostname"])
+
+
+def get_service_endpoints(name: str, k8s_context: str, namespace: str = "orbit-system") -> List[Dict[str, Any]]:
+    _logger.debug("Retrieving Endpoints for Service %s in Namespace %s", name, namespace)
+    config.load_kube_config(context=k8s_context)
+    v1 = CoreV1Api()
+    for _ in range(10):
+        resp = v1.read_namespaced_endpoints(name=name, namespace=namespace)
+        endpoints = resp.to_dict()
+        subsets = endpoints.get("subsets")
+        if subsets and len(subsets) > 0:
+            return cast(List[Dict[str, Any]], endpoints["subsets"])
+        else:
+            _logger.debug("No Endpoints found for Service %s in Namespace %s, sleeping for 1 minute", name, namespace)
+            time.sleep(60)
+    else:
+        return []
 
 
 def get_ingress_dns(name: str, k8s_context: str, namespace: str = "default") -> str:

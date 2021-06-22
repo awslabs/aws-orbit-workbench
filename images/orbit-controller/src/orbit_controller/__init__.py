@@ -44,6 +44,9 @@ def _get_logger() -> logging.Logger:
     logger: logging.Logger = logging.getLogger(__name__)
     logger.setLevel(level)
     if debug:
+        logging.getLogger("boto3").setLevel(logging.ERROR)
+        logging.getLogger("botocore").setLevel(logging.ERROR)
+        logging.getLogger("urllib3").setLevel(logging.ERROR)
         logging.getLogger("kubernetes").setLevel(logging.ERROR)
     return logger
 

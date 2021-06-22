@@ -97,12 +97,33 @@ def _orbit_controller(context: "Context", output_path: str) -> None:
                 k8s_utilities_image=f"{context.images.k8s_utilities.repository}:"
                 f"{context.images.k8s_utilities.version}",
                 image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
-                certArn=context.networking.frontend.ssl_cert_arn,
-                cognitoAppClientId=context.user_pool_client_id,
-                cognitoUserPoolID=context.user_pool_id,
                 account_id=context.account_id,
                 region=context.region,
-                cognitoUserPoolDomain=context.cognito_external_provider_domain,
+                sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
+            ),
+        )
+        with open(output, "w") as file:
+            file.write(content)
+
+
+def _orbit_image_replicator(context: "Context", output_path: str) -> None:
+    filenames = ["01c-image-replicator.yaml"]
+
+    for filename in filenames:
+        input = os.path.join(MODELS_PATH, "orbit-system", filename)
+        output = os.path.join(output_path, filename)
+
+        with open(input, "r") as file:
+            content: str = file.read()
+        content = resolve_parameters(
+            content,
+            dict(
+                env_name=context.name,
+                orbit_controller_image=f"{context.images.orbit_controller.repository}:"
+                f"{context.images.orbit_controller.version}",
+                k8s_utilities_image=f"{context.images.k8s_utilities.repository}:"
+                f"{context.images.k8s_utilities.version}",
+                image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
             ),
         )
         with open(output, "w") as file:
@@ -267,8 +288,17 @@ def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -
     if context.identity_pool_id is None:
         raise ValueError("context.identity_pool_id is None!")
 
+    if context.install_image_replicator or not context.networking.data.internet_accessible:
+        _logger.debug("Deploying Pod Image Modifier and Image Replicator")
+        _orbit_image_replicator(output_path=output_path, context=context)
+    else:
+        _logger.debug("Skipping deployment of Pod Image Modifier and Image Replicator")
+
     if context.install_ssm_agent:
+        _logger.debug("Deploying SSM Agent Installer")
         _ssm_agent_installer(output_path=output_path, context=context)
+    else:
+        _logger.debug("Skipping deployment of SSM Agent Installer")
 
     _sm_operator_installer(output_path=output_path, context=context)
 
@@ -492,6 +522,27 @@ def deploy_env(context: "Context") -> None:
         # Restart orbit-system deployments and statefulsets to force reload of caches etc
         sh.run(f"kubectl rollout restart deployments -n orbit-system --context {k8s_context}")
         sh.run(f"kubectl rollout restart statefulsets -n orbit-system --context {k8s_context}")
+
+        # Confirm orbit-system Service Endpoints
+        def confirm_endpoints(name: str, namespace: str) -> None:
+            subsets = k8s.get_service_endpoints(name=name, namespace=namespace, k8s_context=k8s_context)
+            if subsets:
+                for subset in subsets:
+                    for address in subset.get("addresses", []):
+                        _logger.debug(
+                            "Service: %s Namespace: %s Hostname: %s IP: %s",
+                            name,
+                            namespace,
+                            address.get("hostname"),
+                            address.get("ip"),
+                        )
+            else:
+                raise Exception("No Endpoints found for Service: %s Namespace: %s", name, namespace)
+
+        confirm_endpoints(name="podsettings-pod-modifier", namespace="orbit-system")
+        confirm_endpoints(name="landing-page-service", namespace="orbit-system")
+        if context.install_image_replicator or not context.networking.data.internet_accessible:
+            confirm_endpoints(name="pod-image-updater", namespace="orbit-system")
 
 
 def deploy_team(context: "Context", team_context: "TeamContext") -> None:

@@ -116,12 +116,6 @@ class OrbitControllerImageManifest(ImageManifest):
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
-class ImageReplicatorImageManifest(ImageManifest):
-    repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/image-replicator"
-    version: Optional[str] = "1.0.0"
-
-
-@dataclass(base_schema=BaseSchema, frozen=True)
 class K8sUtilitiesImageManifest(ImageManifest):
     repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s-utilities"
     version: Optional[str] = "1.0.0"
@@ -151,7 +145,6 @@ class ImagesManifest:
     code_build: ImageManifest = CodeBuildImageManifest()
     jupyter_user: ImageManifest = JupyterUserImageManifest()
     orbit_controller: ImageManifest = OrbitControllerImageManifest()
-    image_replicator: ImageManifest = ImageReplicatorImageManifest()
     k8s_utilities: ImageManifest = K8sUtilitiesImageManifest()
     utility_data: ImageManifest = UtilityDataImageManifest()
     names: List[str] = field(
@@ -160,7 +153,6 @@ class ImagesManifest:
             "code_build",
             "jupyter_user",
             "orbit_controller",
-            "image_replicator",
             "k8s_utilities",
             "utility_data",
         ],

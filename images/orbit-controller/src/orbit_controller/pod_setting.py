@@ -18,7 +18,7 @@ from multiprocessing import Queue
 from typing import Any, Dict, Optional, cast
 
 from kubernetes.dynamic import exceptions as k8s_exceptions
-from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, dump_resource, dynamic_client, logger, poddefault
+from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, dump_resource, dynamic_client, logger, pod_default
 from urllib3.exceptions import ReadTimeoutError
 
 
@@ -29,72 +29,83 @@ def _verbosity() -> int:
         return 0
 
 
-def process_added_event(podsetting: Dict[str, Any]) -> None:
-    name = podsetting["metadata"]["name"]
-    namespace = podsetting["metadata"]["namespace"]
-    desc = podsetting["spec"].get("desc", "")
+def process_added_event(pod_setting: Dict[str, Any]) -> None:
+    name = pod_setting["metadata"]["name"]
+    namespace = pod_setting["metadata"]["namespace"]
+    owner_uid = pod_setting["metadata"]["uid"]
+    desc = pod_setting["spec"].get("desc", "")
     client = dynamic_client()
 
     try:
-        poddefault.create_poddefault(
+        pod_default.create_pod_default(
             namespace=namespace,
-            poddefault=poddefault.construct(name=name, desc=desc, labels={"orbit/space": "team"}),
+            pod_default=pod_default.construct(
+                name=name,
+                desc=desc,
+                owner_reference={
+                    "apiVersion": f"{ORBIT_API_GROUP}/{ORBIT_API_VERSION}",
+                    "kind": "PodSetting",
+                    "name": name,
+                    "uid": owner_uid,
+                },
+                labels={"orbit/space": "team", "orbit/team": namespace},
+            ),
             client=client,
         )
-        logger.debug("ADDED poddefault for podsetting: %s", dump_resource(podsetting))
+        logger.debug("ADDED pod_default for pod_setting: %s", dump_resource(pod_setting))
     except Exception:
         if _verbosity() > 0:
             logger.exception(
-                "IGNORING ERROR ADDING poddefault for podsetting: %s",
-                dump_resource(podsetting),
+                "IGNORING ERROR ADDING pod_default for pod_setting: %s",
+                dump_resource(pod_setting),
             )
         else:
             logger.error(
-                "IGNORING ERROR ADDING poddefault for podsetting: %s",
-                dump_resource(podsetting),
+                "IGNORING ERROR ADDING pod_default for pod_setting: %s",
+                dump_resource(pod_setting),
             )
 
 
-def process_modified_event(podsetting: Dict[str, Any]) -> None:
-    name = podsetting["metadata"]["name"]
-    namespace = podsetting["metadata"]["namespace"]
-    desc = podsetting["spec"].get("desc", "")
+def process_modified_event(pod_setting: Dict[str, Any]) -> None:
+    name = pod_setting["metadata"]["name"]
+    namespace = pod_setting["metadata"]["namespace"]
+    desc = pod_setting["spec"].get("desc", "")
     client = dynamic_client()
 
     try:
-        poddefault.modify_poddefault(namespace=namespace, name=name, desc=desc, client=client)
-        logger.debug("MODIFIED poddefault for podsetting: %s", dump_resource(podsetting))
+        pod_default.modify_pod_default(namespace=namespace, name=name, desc=desc, client=client)
+        logger.debug("MODIFIED pod_default for pod_setting: %s", dump_resource(pod_setting))
     except Exception:
         if _verbosity() > 0:
             logger.exception(
-                "IGNORING ERROR MODIFIYING poddefault for podsetting: %s",
-                dump_resource(podsetting),
+                "IGNORING ERROR MODIFIYING pod_default for pod_setting: %s",
+                dump_resource(pod_setting),
             )
         else:
             logger.error(
-                "IGNORING ERROR MODIFIYING poddefault for podsetting: %s",
-                dump_resource(podsetting),
+                "IGNORING ERROR MODIFIYING pod_default for pod_setting: %s",
+                dump_resource(pod_setting),
             )
 
 
-def process_deleted_event(podsetting: Dict[str, Any]) -> None:
-    name = podsetting["metadata"]["name"]
-    namespace = podsetting["metadata"]["namespace"]
+def process_deleted_event(pod_setting: Dict[str, Any]) -> None:
+    name = pod_setting["metadata"]["name"]
+    namespace = pod_setting["metadata"]["namespace"]
     client = dynamic_client()
 
     try:
-        poddefault.delete_poddefault(namespace=namespace, name=name, client=client)
-        logger.debug("DELETED poddefault for podsetting: %s", dump_resource(podsetting))
+        pod_default.delete_pod_default(namespace=namespace, name=name, client=client)
+        logger.debug("DELETED pod_default for pod_setting: %s", dump_resource(pod_setting))
     except Exception:
         if _verbosity() > 0:
             logger.exception(
-                "IGNORING ERROR DELETING poddefault for podsetting: %s",
-                dump_resource(podsetting),
+                "IGNORING ERROR DELETING pod_default for pod_setting: %s",
+                dump_resource(pod_setting),
             )
         else:
             logger.error(
-                "IGNORING ERROR DELETING poddefault for podsetting: %s",
-                dump_resource(podsetting),
+                "IGNORING ERROR DELETING pod_default for pod_setting: %s",
+                dump_resource(pod_setting),
             )
 
 
@@ -112,15 +123,15 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
             for event in api.watch(**kwargs):
                 if _verbosity() > 2:
                     logger.debug("event object: %s", event)
-                podsetting = event["raw_object"]
-                state["lastResourceVersion"] = podsetting.get("metadata", {}).get("resourceVersion", 0)
+                pod_setting = event["raw_object"]
+                state["lastResourceVersion"] = pod_setting.get("metadata", {}).get("resourceVersion", 0)
                 logger.debug("watcher state: %s", state)
                 queue_event = {"type": event["type"], "raw_object": event["raw_object"]}
 
                 labels = event["raw_object"].get("metadata", {}).get("labels", {})
                 if labels.get("orbit/space") == "team" and "orbit/disable-watcher" not in labels:
                     logger.debug(
-                        "Queueing PodSetting event for processing type: %s podsetting: %s",
+                        "Queueing PodSetting event for processing type: %s pod_setting: %s",
                         event["type"],
                         dump_resource(event["raw_object"]),
                     )
@@ -148,27 +159,27 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
             )
 
 
-def process_podsettings(queue: Queue, state: Dict[str, Any], replicator_id: int) -> int:  # type: ignore
+def process_pod_settings(queue: Queue, state: Dict[str, Any], replicator_id: int) -> int:  # type: ignore
     logger.info("Started PodSetting Processor Id: %s", replicator_id)
-    podsetting_event: Optional[Dict[str, Any]] = None
+    pod_setting_event: Optional[Dict[str, Any]] = None
 
     while True:
         try:
-            podsetting_event = cast(Dict[str, Any], queue.get(block=True, timeout=None))
+            pod_setting_event = cast(Dict[str, Any], queue.get(block=True, timeout=None))
 
-            if podsetting_event["type"] == "ADDED":
-                process_added_event(podsetting=podsetting_event["raw_object"])
-            elif podsetting_event["type"] == "MODIFIED":
-                process_modified_event(podsetting=podsetting_event["raw_object"])
-            elif podsetting_event["type"] == "DELETED":
-                process_deleted_event(podsetting=podsetting_event["raw_object"])
+            if pod_setting_event["type"] == "ADDED":
+                process_added_event(pod_setting=pod_setting_event["raw_object"])
+            elif pod_setting_event["type"] == "MODIFIED":
+                process_modified_event(pod_setting=pod_setting_event["raw_object"])
+            # elif pod_setting_event["type"] == "DELETED":
+            #     process_deleted_event(pod_setting=pod_setting_event["raw_object"])
             else:
-                logger.debug("Skipping PodSetting event: %s", dump_resource(podsetting_event))
+                logger.debug("Skipping PodSetting event: %s", dump_resource(pod_setting_event))
         except Exception:
             logger.exception(
                 "Failed to process PodSetting event: %s",
-                dump_resource(podsetting_event),
+                dump_resource(pod_setting_event),
             )
         finally:
-            podsetting_event = None
+            pod_setting_event = None
             time.sleep(1)
