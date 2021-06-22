@@ -47,7 +47,7 @@
     Module: lustre
     Parameters:
         storage: 1200Gi
-        folder: /fsx/data
+        folder: /fsx
 -   PluginId: ray
     Module: ray
     Parameters:
