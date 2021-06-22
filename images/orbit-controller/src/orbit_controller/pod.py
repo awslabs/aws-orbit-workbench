@@ -291,11 +291,13 @@ def apply_settings_to_container(
 
     # Extend pod_setting ENV
     if "notebookApp" in ps_spec:
+        # Drop any previous NB_PREFIX env variable
+        ps_spec["env"] = [e for e in ps_spec.get("env", []) if e["name"] not in ["NB_PREFIX"]]
         ps_spec["env"].append(
             {
                 "name": "NB_PREFIX",
                 "value": f"/notebook/{pod.get('metadata', {}).get('namespace')}"
-                f"/{pod.get('metadata', {}).get('labels', {}).get('notebook-name')}/{ps_spec['notebookApp']})",
+                f"/{pod.get('metadata', {}).get('labels', {}).get('notebook-name')}/{ps_spec['notebookApp']}",
             }
         )
 
