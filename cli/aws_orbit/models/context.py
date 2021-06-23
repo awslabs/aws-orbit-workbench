@@ -170,7 +170,7 @@ class TeamContext:
     user_helm_repository: Optional[str] = None
 
     # Manifest default
-    authentication_group: Optional[List[str]] = None
+    authentication_groups: Optional[List[str]] = None
 
     def fetch_team_data(self) -> None:
         _logger.debug("Fetching Team %s data...", self.name)
