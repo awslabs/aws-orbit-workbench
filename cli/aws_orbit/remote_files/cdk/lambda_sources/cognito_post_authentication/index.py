@@ -9,9 +9,9 @@ import boto3
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+orbit_env = os.environ.get("ORBIT_ENV")
 
 def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
-    orbit_env = os.environ.get("ORBIT_ENV")
 
     cognito_client = boto3.client("cognito-idp")
     lambda_client = boto3.client("lambda")
