@@ -15,6 +15,7 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
 
     cognito_client = boto3.client("cognito-idp")
     lambda_client = boto3.client("lambda")
+    ssm_client = boto3.client("ssm")
 
     user_name = cast(str, event.get("userName"))
     user_email = cast(str, event["request"]["userAttributes"].get("email", "invalid_email"))
@@ -26,10 +27,13 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
     user_groups_info = cognito_client.admin_list_groups_for_user(Username=user_name, UserPoolId=user_pool_id)
     # user_groups = [group.get("GroupName").split(f"{orbit_env}-")[1] for group in user_groups_info.get("Groups")]
 
+    team_info = get_auth_group_from_ssm()
+
     user_groups = []
     for group in user_groups_info.get("Groups"):
-        if (f"{orbit_env}-") in (group.get("GroupName")):
-            g = group.get("GroupName").split(f"{orbit_env}-")[1]
+        group_name = group.get("GroupName")
+        if group_name in team_info:
+            g = team_info[group_name]
             user_groups.append(g)
 
     logger.info("Authenticated successfully:")
@@ -57,3 +61,23 @@ def validate_email(email: str) -> None:
     if not email_regex.fullmatch(email):
         logger.error(f"{email} is not a valid email address")
         raise ValueError(f"{email} is not a valid email address")
+
+
+def get_auth_group_from_ssm() -> dict:
+    team_info = {}
+
+    team_manifest_pattern = re.compile(rf"/orbit/{orbit_env}/teams/.*/manifest")
+
+    paginator = ssm_client.get_paginator("describe_parameters")
+    page_iterator = paginator.paginate()
+
+    for page in page_iterator:
+        for path in page.get("Parameters"):
+            param = path.get("Name")
+
+            if team_manifest_pattern.fullmatch(param):
+                param_value = json.loads(ssm_client.get_parameter(Name=param).get("Parameter").get("Value"))
+                team = param_value.get("AuthenticationGroup")
+                team_info[f"{orbit_env}-{team}"] = team
+
+    return(team_info)
