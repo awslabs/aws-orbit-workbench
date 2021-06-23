@@ -32,9 +32,11 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
     user_groups = []
     for group in user_groups_info.get("Groups"):
         group_name = group.get("GroupName")
-        if group_name in team_info:
-            g = team_info[group_name]
-            user_groups.append(g)
+        for team_name in team_info:
+            if team_name in group_name:
+                g = team_name
+                user_groups.append(g)
+                break
 
     logger.info("Authenticated successfully:")
     logger.info(f"userName: {user_name}, userPoolId: {user_pool_id}, userGroups: {user_groups}")
@@ -77,7 +79,8 @@ def get_auth_group_from_ssm() -> dict:
 
             if team_manifest_pattern.fullmatch(param):
                 param_value = json.loads(ssm_client.get_parameter(Name=param).get("Parameter").get("Value"))
-                team = param_value.get("AuthenticationGroup")
-                team_info[f"{orbit_env}-{team}"] = team
+                team = param.split("/")[-2]
+                auth_group_val = param_value.get("AuthenticationGroups")
+                team_info[team] = auth_group_val
 
     return(team_info)
