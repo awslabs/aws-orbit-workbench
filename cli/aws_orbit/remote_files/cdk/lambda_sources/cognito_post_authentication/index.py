@@ -15,7 +15,6 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
 
     cognito_client = boto3.client("cognito-idp")
     lambda_client = boto3.client("lambda")
-    ssm_client = boto3.client("ssm")
 
     user_name = cast(str, event.get("userName"))
     user_email = cast(str, event["request"]["userAttributes"].get("email", "invalid_email"))
@@ -67,6 +66,8 @@ def validate_email(email: str) -> None:
 
 
 def get_auth_group_from_ssm() -> dict:
+    ssm_client = boto3.client("ssm")
+
     team_info = {}
 
     team_manifest_pattern = re.compile(rf"/orbit/{orbit_env}/teams/.*/manifest")
