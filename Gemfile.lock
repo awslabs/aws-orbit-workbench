@@ -257,10 +257,12 @@ GEM
       unf_ext
     unf_ext (0.0.7.7)
     unicode-display_width (1.7.0)
+    webrick (1.7.0)
     zeitwerk (2.4.2)
 
 PLATFORMS
   universal-darwin-20
+  x86_64-darwin-19
 
 DEPENDENCIES
   github-pages (~> 214)
@@ -270,6 +272,7 @@ DEPENDENCIES
   tzinfo (~> 1.2)
   tzinfo-data
   wdm (~> 0.1.1)
+  webrick (~> 1.7)
 
 BUNDLED WITH
-   2.2.16
+   2.2.20
