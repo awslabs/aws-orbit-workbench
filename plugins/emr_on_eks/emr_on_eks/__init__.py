@@ -112,7 +112,7 @@ def destroy(
     )
 
 
-def delete_virtual_cluster_jobs(virtual_cluster_id):
+def delete_virtual_cluster_jobs(virtual_cluster_id: str):
     emrc = boto3.client("emr-containers")
     if virtual_cluster_id:
         list_job_runs_response = emrc.list_job_runs(
