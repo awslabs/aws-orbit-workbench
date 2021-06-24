@@ -229,7 +229,7 @@ class IamBuilder:
                     ],
                     resources=[
                         f"arn:{partition}:ssm:{region}:{account}:parameter/orbit/{env_name}/teams/{team_name}/*",
-                        f"arn:{partition}:ssm:{region}:{account}:parameter/Orbit-Slack-Notifications"
+                        f"arn:{partition}:ssm:{region}:{account}:parameter/Orbit-Slack-Notifications",
                     ],
                 ),
                 iam.PolicyStatement(
