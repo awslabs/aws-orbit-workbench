@@ -32,11 +32,12 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
     user_groups = []
     for group in user_groups_info.get("Groups"):
         group_name = group.get("GroupName")
-        for team_name in team_info:
-            if team_name in group_name:
-                g = team_name
-                user_groups.append(g)
-                break
+        if (f"{orbit_env}-") in group_name:
+            group_name = group_name.split(f"{orbit_env}-")[1]
+            for team_name in team_info:
+                if group_name in team_info[team_name]:
+                    g = team_name
+                    user_groups.append(g)
 
     logger.info("Authenticated successfully:")
     logger.info(f"userName: {user_name}, userPoolId: {user_pool_id}, userGroups: {user_groups}")
