@@ -15,7 +15,8 @@ $menu-bg-color: #BBC0C1 !default;
 // Text
 $section-headings-color: #232F3E !default;
 $body-text-color: #757575 !default;
-$body-link-color:#00a1c9 !default;
+$body-link-color:#00A8E1 !default;
+$body-link-color-dark: #055D7B !default;
 $smile: #ff9900 !default;
 
 
@@ -168,9 +169,11 @@ a.box-link {
 .box {
   border: solid 1px $border-color;
   border-top-width: 0;
-  width: 220px;
+  max-width: 240px;
+  width: 90%;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 
@@ -180,6 +183,57 @@ a.box-link {
 
 .box h5 {
   margin-top: 1rem;
+}
+
+/* common */
+.ribbon {
+  width: 100px;
+  height: 100px;
+  overflow: hidden;
+  position: absolute;
+}
+.ribbon::before,
+.ribbon::after {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  display: block;
+  border: 5px solid $body-link-color-dark;
+}
+.ribbon span {
+  position: absolute;
+  display: block;
+  width: 260px;
+  padding: 8px 0;
+  background-color: $body-link-color;
+  box-shadow: 0 5px 10px rgba(0,0,0,.1);
+  color: #fff;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+/* top right*/
+.ribbon-top-right {
+  top: -10px;
+  right: -10px;
+}
+.ribbon-top-right::before,
+.ribbon-top-right::after {
+  border-top-color: transparent;
+  border-right-color: transparent;
+}
+.ribbon-top-right::before {
+  top: 0;
+  left: 0;
+}
+.ribbon-top-right::after {
+  bottom: 0;
+  right: 0;
+}
+.ribbon-top-right span {
+  left: -68px;
+  top: 20px;
+  transform: rotate(45deg);
 }
 
 .box-content {

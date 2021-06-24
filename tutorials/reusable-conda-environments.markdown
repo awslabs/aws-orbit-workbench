@@ -4,7 +4,7 @@
 
 layout: documentation
 title: Creating reusable Conda Environments using FSX file storage 
-permalink: reusing-conda-environments
+permalink: reusable-conda-environments
 ---
 
 ## Introduction 
