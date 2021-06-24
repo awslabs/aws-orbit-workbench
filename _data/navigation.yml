@@ -29,17 +29,17 @@ docs:
   - group: For Users
     sub:
       - title: Your Team Guideline
-        url: 404
+        url: your-team-guideline
       - title: Performing Data Analysis in your Notebooks
-        url: 404
+        url: data-analysis-notebook
       - title: Running and Scheduling Tasks as Containers
         url: running-and-scheduling-tasks-as-containers
       - title: Building your docker images
-        url: 404
+        url: building-docker-images
       - title: Connecting to Redshift
-        url: 404
+        url: connecting-to-redshift
       - title: Connecting EBS Volumes
-        url: 404
+        url: connecting-ebs-volumes
       - title: Working remotely with local workspace
         url: working-remotely-with-local-workspace
       - title: Reusable Conda environments
@@ -49,7 +49,7 @@ docs:
       - title: Built-in Plugin Directory
         url: built-in-plugin-directory
       - title: Plugins Development Guide
-        url: 404
+        url: plugin-development-guide
   - group: Integrations
     sub:
       - title: Okta Integration

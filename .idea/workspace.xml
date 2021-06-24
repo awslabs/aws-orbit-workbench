@@ -14,6 +14,9 @@
       </list>
     </option>
   </component>
+  <component name="Git.Merge.Settings">
+    <option name="BRANCH" value="upstream/gh-pages" />
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
@@ -67,6 +70,8 @@
       <workItem from="1620380188076" duration="5507000" />
       <workItem from="1620404359334" duration="4211000" />
       <workItem from="1620663273501" duration="23000" />
+      <workItem from="1624368223572" duration="101000" />
+      <workItem from="1624368363468" duration="5890000" />
     </task>
     <task id="LOCAL-00001" summary="Update to site description">
       <created>1619703622627</created>
