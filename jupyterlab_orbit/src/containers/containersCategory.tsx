@@ -24,8 +24,13 @@ const Item = (props: {
   item: IItem;
   openItemCallback: (name: string) => void;
   closeItemCallback: (name: string) => void;
-  connect: (podName: string, containerName: string) => Promise<void>;
-  logs: (podName: string, containerName: string) => Promise<void>;
+  connect: (
+    podName: string,
+    containerName: string,
+    type: string
+  ) => Promise<void>;
+  logs: (podName: string, containerName: string, type: string) => Promise<void>;
+  type: string;
 }) => {
   const { title, color, icon } = getStateIcon(props.item.job_state);
   return (
@@ -45,7 +50,11 @@ const Item = (props: {
           className={SHUTDOWN_BUTTON_CLASS}
           icon={bugIcon}
           onClick={() =>
-            props.connect(props.item.name, props.item.container_name)
+            props.connect(
+              props.item.name,
+              props.item.container_name,
+              props.type
+            )
           }
           tooltip={'Connect terminal!'}
           enabled={props.item.job_state === 'running'}
@@ -53,7 +62,9 @@ const Item = (props: {
         <ToolbarButtonComponent
           className={SHUTDOWN_BUTTON_CLASS}
           icon={searchIcon}
-          onClick={() => props.logs(props.item.name, props.item.container_name)}
+          onClick={() =>
+            props.logs(props.item.name, props.item.container_name, props.type)
+          }
           tooltip={'Tail logs!'}
           enabled={props.item.job_state === 'running'}
         />
@@ -71,8 +82,13 @@ const Item = (props: {
 const Items = (props: {
   data: IItem[];
   closeItemCallback: (name: string) => void;
-  connect: (podName: string, containerName: string) => Promise<void>;
-  logs: (podName: string, containerName: string) => Promise<void>;
+  connect: (
+    podName: string,
+    containerName: string,
+    type: string
+  ) => Promise<void>;
+  logs: (podName: string, containerName: string, type: string) => Promise<void>;
+  type: string;
 }) => (
   <>
     {' '}
@@ -83,6 +99,7 @@ const Items = (props: {
         closeItemCallback={props.closeItemCallback}
         connect={props.connect}
         logs={props.logs}
+        type={props.type}
       />
     ))}{' '}
   </>
@@ -114,6 +131,7 @@ export const ContainerCategoryLeftList = (props: {
       closeItemCallback={closeItemCallback}
       connect={connect}
       logs={logs}
+      type={props.type}
     />
   );
 
