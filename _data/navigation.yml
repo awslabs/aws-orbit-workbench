@@ -49,7 +49,7 @@ docs:
       - title: Built-in Plugin Directory
         url: built-in-plugin-directory
       - title: Plugins Development Guide
-        url: 404
+        url: plugin-development-guide
   - group: Integrations
     sub:
       - title: Okta Integration

@@ -1,19 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="4d80edc0-ea25-4324-97ca-007856d4ebf0" name="Default Changelist" comment="Updated description">
-      <change afterPath="$PROJECT_DIR$/tutorials/building-docker-images.markdown" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tutorials/connecting-ebs-volumes.markdown" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tutorials/connecting-to-redshift.markdown" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tutorials/data-analysis-notebook.markdown" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tutorials/your-team-guideline.markdown" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/404.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/404.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_data/navigation.yml" beforeDir="false" afterPath="$PROJECT_DIR$/_data/navigation.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/_layouts/home.html" beforeDir="false" afterPath="$PROJECT_DIR$/_layouts/home.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/css/style.scss" beforeDir="false" afterPath="$PROJECT_DIR$/assets/css/style.scss" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tutorials/reusable-conda-environments.markdown" beforeDir="false" afterPath="$PROJECT_DIR$/tutorials/reusable-conda-environments.markdown" afterDir="false" />
-    </list>
+    <list default="true" id="4d80edc0-ea25-4324-97ca-007856d4ebf0" name="Default Changelist" comment="Updated description" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -83,7 +71,7 @@
       <workItem from="1620404359334" duration="4211000" />
       <workItem from="1620663273501" duration="23000" />
       <workItem from="1624368223572" duration="101000" />
-      <workItem from="1624368363468" duration="5551000" />
+      <workItem from="1624368363468" duration="5890000" />
     </task>
     <task id="LOCAL-00001" summary="Update to site description">
       <created>1619703622627</created>
