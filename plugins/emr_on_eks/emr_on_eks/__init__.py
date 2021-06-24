@@ -14,6 +14,7 @@
 
 import logging
 import os
+import time
 from typing import TYPE_CHECKING, Any, Dict
 
 import boto3
@@ -111,6 +112,28 @@ def destroy(
     )
 
 
+def delete_virtual_cluster_jobs(virtual_cluster_id):
+    emrc = boto3.client("emr-containers")
+    if virtual_cluster_id:
+        list_job_runs_response = emrc.list_job_runs(
+            virtualClusterId=virtual_cluster_id,
+            states=["PENDING", "SUBMITTED", "RUNNING", "CANCEL_PENDING"],
+        )
+        if "jobRuns" in list_job_runs_response:
+            for jr in list_job_runs_response["jobRuns"]:
+                job_id, job_name = (jr["id"], jr["name"])
+                _logger.info(f"Deleting job {job_id}:{job_name}")
+                try:
+                    response = emrc.cancel_job_run(id=job_id, virtualClusterId=virtual_cluster_id)
+                    if 200 == response["ResponseMetadata"]["HTTPStatusCode"]:
+                        _logger.debug(f"Deleted job {job_id}:{job_name}")
+                except Exception as e:
+                    _logger.error(f"Failed to delete job {job_id}:{job_name}")
+                    _logger.error("Error  %s", e)
+        else:
+            _logger.info(f"No job runs in virtual cluster {virtual_cluster_id}")
+
+
 def delete_virtual_cluster(eks_cluster_name: str, virtual_cluster_name: str) -> None:
     emr = boto3.client("emr-containers")
     paginator = emr.get_paginator("list_virtual_clusters")
@@ -127,14 +150,19 @@ def delete_virtual_cluster(eks_cluster_name: str, virtual_cluster_name: str) -> 
         },
     )
     _logger.debug("finding emr virtual clusters...")
-    if "virtualClusters" in response_iterator:
-        for p in response_iterator:
-            for c in p["virtualClusters"]:
-                _logger.debug("Emr virtual cluster found: %s", c["name"])
-                if c["name"] == virtual_cluster_name:
+    for vcri in response_iterator:
+        if "virtualClusters" in vcri:
+            for vc in vcri["virtualClusters"]:
+                _logger.debug("Emr virtual cluster found: %s", vc["name"])
+                if vc["name"] == virtual_cluster_name:
                     try:
-                        delete_response = emr.delete_virtual_cluster(id=c["id"])
+                        # Delete all running/submitted jobs before deleting virtual cluster
+                        delete_virtual_cluster_jobs(vc["id"])
+                        time.sleep(120)
+                        delete_response = emr.delete_virtual_cluster(id=vc["id"])
                         _logger.debug("delete_virtual_cluster:", delete_response)
-                    except Exception:
+                    except Exception as e:
                         _logger.exception("error deleting virtual cluster")
-                        pass
+                        _logger.error("Error  %s", e)
+        else:
+            _logger.info(f"No EMR Virtual cluster in EKS cluster {eks_cluster_name}")
