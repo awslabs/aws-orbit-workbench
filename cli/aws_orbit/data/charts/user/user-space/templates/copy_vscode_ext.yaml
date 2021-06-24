@@ -47,6 +47,13 @@ spec:
              cp -r /opt/orbit/apps/codeserver/CachedExtensionVSIXs /home/jovyan/private/code-server; 
 
              echo "ENDING copy of logs to /home/jovyan/private/code-server"
+
+             echo "STARTING bashrc file copy to home directory"
+
+             cp /opt/orbit/bashrc /home/jovyan/.bashrc;
+
+             echo "ENDING copy of  bashrc file to home directory"
+
         volumeMounts:
           - mountPath: /home/jovyan
             name: efs-volume
