@@ -159,9 +159,12 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
             logger.info("Monitoring PodDefaults")
 
             kwargs = {
-                "resource_version": state.get("lastResourceVersion", 0),
                 "label_selector": "orbit/space=team",
             }
+            resource_version = state.get("lastResourceVersion", 0)
+            if resource_version != "-1":
+                kwargs["resource_version"] = resource_version
+
             for event in api.watch(**kwargs):
                 if _verbosity() > 2:
                     logger.debug("event object: %s", event)
@@ -184,7 +187,7 @@ def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore
         except k8s_exceptions.ApiException as ae:
             if ae.reason.startswith("Expired: too old resource version"):
                 logger.warning(ae.reason)
-                state["lastResourceVersion"] = 0
+                state["lastResourceVersion"] = "-1"
             else:
                 logger.exception("Unknown ApiException in PodDefaultWatcher. Failing")
                 raise

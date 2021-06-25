@@ -58,8 +58,12 @@ export interface IUseItemsReturn {
   closeAllCallback: (name: string) => void;
   refreshCallback: () => void;
   setData: Dispatch<SetStateAction<any[]>>;
-  connect: (podName: string, containerName: string) => Promise<void>;
-  logs: (podName: string, containerName: string) => Promise<void>;
+  connect: (
+    podName: string,
+    containerName: string,
+    type: string
+  ) => Promise<void>;
+  logs: (podName: string, containerName: string, type: string) => Promise<void>;
 }
 
 export const openItemCallback = (name: string) => {
@@ -194,27 +198,37 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
 
   const connect = async (
     podName: string,
-    containerName: string
+    containerName: string,
+    type: string
   ): Promise<void> => {
     const session = await app.serviceManager.terminals.startNew();
     const terminal = await app.commands.execute('terminal:create-new', {
       name: session.name
     });
-    // await delay(20000);
-
     let command;
+    let namespace;
+    if (type === 'user') {
+      namespace = '$AWS_ORBIT_USER_SPACE';
+    } else {
+      namespace = '$AWS_ORBIT_TEAM_SPACE';
+    }
+
     if (
       typeof containerName === 'undefined' ||
       containerName === null ||
       containerName.length === 0
     ) {
       command =
-        'kubectl -n $AWS_ORBIT_TEAM_SPACE exec --stdin --tty ' +
+        'kubectl -n ' +
+        namespace +
+        ' exec --stdin --tty ' +
         podName +
         ' -- /bin/bash \n';
     } else {
       command =
-        'kubectl -n $AWS_ORBIT_TEAM_SPACE exec --stdin --tty ' +
+        'kubectl -n ' +
+        namespace +
+        ' exec --stdin --tty ' +
         podName +
         ' --container ' +
         containerName +
@@ -231,24 +245,32 @@ const useItems = (type: string, app: JupyterFrontEnd): IUseItemsReturn => {
 
   const logs = async (
     podName: string,
-    containerName: string
+    containerName: string,
+    type: string
   ): Promise<void> => {
     const session = await app.serviceManager.terminals.startNew();
     const terminal = await app.commands.execute('terminal:create-new', {
       name: session.name
     });
-
     let command;
+    let namespace;
+    if (type === 'user') {
+      namespace = '$AWS_ORBIT_USER_SPACE';
+    } else {
+      namespace = '$AWS_ORBIT_TEAM_SPACE';
+    }
     if (
       typeof containerName === 'undefined' ||
       containerName === null ||
       containerName.length === 0
     ) {
       command =
-        'kubectl logs -n $AWS_ORBIT_TEAM_SPACE --tail=-1 -f ' + podName + ' \n';
+        'kubectl logs -n ' + namespace + ' --tail=-1 -f ' + podName + ' \n';
     } else {
       command =
-        'kubectl logs -n $AWS_ORBIT_TEAM_SPACE --tail=-1 -f ' +
+        'kubectl logs -n ' +
+        namespace +
+        ' --tail=-1 -f ' +
         podName +
         ' -c ' +
         containerName +

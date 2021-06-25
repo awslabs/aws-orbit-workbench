@@ -263,8 +263,8 @@ def _update_userpool_client(context: Context) -> None:
         AllowedOAuthScopes=["aws.cognito.signin.user.admin", "email", "openid", "profile"],
         AllowedOAuthFlowsUserPoolClient=True,
         PreventUserExistenceErrors="ENABLED",
-        TokenValidityUnits={"AccessToken": "minutes", "IdToken": "minutes", "RefreshToken": "minutes"},
-        RefreshTokenValidity=1440,
+        TokenValidityUnits={"AccessToken": "minutes", "IdToken": "minutes", "RefreshToken": "days"},
+        RefreshTokenValidity=90,
         AccessTokenValidity=60,
         IdTokenValidity=60,
     )
