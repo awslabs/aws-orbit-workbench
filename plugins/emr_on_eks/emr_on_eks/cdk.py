@@ -71,6 +71,13 @@ class Team(Stack):
                     iam.PolicyStatement(
                         effect=iam.Effect.ALLOW,
                         actions=[
+                            "logs:Describe*",
+                        ],
+                        resources=["arn:aws:logs:*:*:*"],
+                    ),
+                    iam.PolicyStatement(
+                        effect=iam.Effect.ALLOW,
+                        actions=[
                             "logs:*",
                         ],
                         resources=[
