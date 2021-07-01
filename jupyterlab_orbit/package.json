@@ -52,7 +52,7 @@
     "@jupyterlab/ui-components": "^3.0.4",
     "@langleyfoxall/react-dynamic-data-table": "^7.17.0",
     "antd": "^4.14.0",
-    "axios": "0.21.0",
+    "axios": "0.21.1",
     "react-json-view": "1.21.3",
     "react-table": "7.6.3",
     "uuid": "^8.3.2"
