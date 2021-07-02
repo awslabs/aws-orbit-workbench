@@ -62,12 +62,7 @@ gunicorn==20.1.0
 idna==2.10
     # via requests
 importlib-metadata==4.4.0
-    # via
-    #   build
-    #   flake8
-    #   keyring
-    #   pep517
-    #   twine
+    # via keyring
 isort==5.7.0
     # via -r requirements-dev.in
 itsdangerous==1.1.0
@@ -195,7 +190,6 @@ typed-ast==1.4.3
 typing-extensions==3.10.0.0
     # via
     #   black
-    #   importlib-metadata
     #   mypy
 urllib3==1.26.5
     # via
@@ -211,9 +205,7 @@ werkzeug==1.0.1
 wheel==0.36.2
     # via -r requirements-dev.in
 zipp==3.4.1
-    # via
-    #   importlib-metadata
-    #   pep517
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

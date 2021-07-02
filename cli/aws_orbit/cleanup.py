@@ -171,6 +171,25 @@ def delete_cert_from_iam(context: "FoundationContext") -> None:
             raise ex
 
 
+def delete_codeartifact(context: "FoundationContext") -> None:
+    ca_client = boto3_client("codeartifact")
+    if not context.is_codeartifact_external:
+        try:
+            ca_client.delete_repository(domain=context.codeartifact_domain, repository=context.codeartifact_repository)
+        except botocore.exceptions.ClientError as ex:
+            if ex.response["Error"]["Code"] == "ResourceNotFoundException":
+                pass
+            else:
+                raise ex
+        try:
+            ca_client.delete_domain(domain=context.codeartifact_domain)
+        except botocore.exceptions.ClientError as ex:
+            if ex.response["Error"]["Code"] == "ResourceNotFoundException":
+                pass
+            else:
+                raise ex
+
+
 def delete_kubeflow_roles(env_stack_name: str, region: str, account_id: str) -> None:
     iam_client = boto3_client("iam")
 

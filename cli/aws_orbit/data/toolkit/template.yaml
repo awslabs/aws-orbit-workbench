@@ -152,6 +152,17 @@ Resources:
               - arn:aws:ssm:${region}:${account_id}:parameter/orbit*
           - Effect: Allow
             Action:
+              - codeartifact:CreateRepository
+              - codeartifact:DeleteDomain
+              - codeartifact:Describe*
+              - codeartifact:Get*
+              - codeartifact:List*
+              - codeartifact:TagResource
+              - codeartifact:Associate*
+            Resource:
+              - arn:aws:codeartifact:${region}:${account_id}:domain/aws-orbit*
+          - Effect: Allow
+            Action:
               - ssm:PutParameter
               - ssm:AddTagsToResource
               - ssm:DeleteParameter
