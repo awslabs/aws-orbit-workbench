@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import re
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 import boto3
 
@@ -66,7 +66,7 @@ def validate_email(email: str) -> None:
         raise ValueError(f"{email} is not a valid email address")
 
 
-def get_auth_group_from_ssm() -> dict:
+def get_auth_group_from_ssm() -> Dict[str, List[str]]:
     ssm_client = boto3.client("ssm")
 
     team_info = {}
