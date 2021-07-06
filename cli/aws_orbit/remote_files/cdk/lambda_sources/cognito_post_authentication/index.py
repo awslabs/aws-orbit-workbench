@@ -11,6 +11,7 @@ logger.setLevel(logging.INFO)
 
 orbit_env = os.environ.get("ORBIT_ENV")
 
+
 def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
 
     cognito_client = boto3.client("cognito-idp")
@@ -85,4 +86,4 @@ def get_auth_group_from_ssm() -> dict:
                 auth_group_val = param_value.get("AuthenticationGroups")
                 team_info[team] = auth_group_val
 
-    return(team_info)
+    return team_info
