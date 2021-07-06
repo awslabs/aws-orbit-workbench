@@ -12,6 +12,7 @@
 -   PluginId: clean_regression_files
     Module: team_script_launcher
     Parameters:
+        scope: deploy
         script: |
             i=0
             while [ $i -lt 1 ];
@@ -24,6 +25,7 @@
 -   PluginId: copy-sample-code
     Module: team_script_launcher
     Parameters:
+        scope: deploy
         script: |
             echo "Copy samples to efs from image ";
             rm -rf /efs/samples;

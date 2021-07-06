@@ -15,10 +15,10 @@
 import logging
 import os
 import time
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 import aws_orbit
-from aws_orbit import utils
+from aws_orbit import utils, sh
 from aws_orbit.plugins import hooks
 from aws_orbit.remote_files import helm
 
@@ -27,17 +27,12 @@ if TYPE_CHECKING:
 _logger: logging.Logger = logging.getLogger("aws_orbit")
 CHART_PATH = os.path.join(os.path.dirname(__file__), "charts")
 
-
-@hooks.deploy
-def deploy(
-    plugin_id: str,
-    context: "Context",
-    team_context: "TeamContext",
-    parameters: Dict[str, Any],
-) -> None:
-    _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
-    plugin_id = plugin_id.replace("_", "-")
-    _logger.debug("plugin_id: %s", plugin_id)
+def helm_package(
+        plugin_id: str,
+        context: "Context",
+        team_context: "TeamContext",
+        parameters: Dict[str, Any]
+) -> Tuple[str, str, str]:
     chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATH, target_path=plugin_id)
     _logger.debug("copy chart dir")
     utils.print_dir(chart_path)
@@ -85,20 +80,37 @@ def deploy(
     chart_name, chart_version, chart_package = helm.package_chart(
         repo=repo, chart_path=os.path.join(chart_path, "team-script-launcher"), values=vars
     )
+    return (chart_name, chart_version, chart_package)
 
-    release_name = f"{team_context.name}-{plugin_id}".replace("_", "-")
-    if helm.is_exists_chart_release(release_name, team_context.name):
-        helm.uninstall_chart(release_name, team_context.name)
-        time.sleep(60)
 
-    helm.install_chart_no_upgrade(
-        repo=repo,
-        namespace=team_context.name,
-        name=release_name,
-        chart_name=chart_name,
-        chart_version=chart_version,
-    )
+@hooks.deploy
+def deploy(
+    plugin_id: str,
+    context: "Context",
+    team_context: "TeamContext",
+    parameters: Dict[str, Any],
+) -> None:
+    _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
+    plugin_id = plugin_id.replace("_", "-")
+    _logger.debug("plugin_id: %s", plugin_id)
+    if "scope" in parameters and parameters['scope'] == "deploy":
+        repo = team_context.name
+        chart_name, chart_version, chart_package = helm_package(plugin_id,context,team_context,parameters)
 
+        release_name = f"{team_context.name}-{plugin_id}".replace("_", "-")
+        if helm.is_exists_chart_release(release_name, team_context.name):
+            helm.uninstall_chart(release_name, team_context.name)
+            time.sleep(60)
+
+        helm.install_chart_no_upgrade(
+            repo=repo,
+            namespace=team_context.name,
+            name=release_name,
+            chart_name=chart_name,
+            chart_version=chart_version,
+        )
+    else:
+        _logger.debug("Skipping plugin deploy hook")
 
 @hooks.destroy
 def destroy(
@@ -114,4 +126,29 @@ def destroy(
         team_context.name,
     )
     release_name = f"{team_context.name}-{plugin_id}".replace("_", "-")
+
+    if "scope" in parameters and parameters['scope'] == "destroy":
+        # Create new chart, release and respective job
+        repo = team_context.name
+        chart_name, chart_version, chart_package = helm_package(plugin_id,context,team_context,parameters)
+
+        if helm.is_exists_chart_release(release_name, team_context.name):
+            helm.uninstall_chart(release_name, team_context.name)
+            time.sleep(60)
+
+        helm.install_chart_no_upgrade(
+            repo=repo,
+            namespace=team_context.name,
+            name=release_name,
+            chart_name=chart_name,
+            chart_version=chart_version,
+        )
+        # wait for job completion
+        sh.run(f"eksctl wait --for=condition=complete --timeout=120s job/{plugin_id}")
+
+        # destroy
+        helm.uninstall_chart(release_name, namespace=team_context.name)
+        return
+
+    # For Deploy Scope
     helm.uninstall_chart(release_name, namespace=team_context.name)
