@@ -93,7 +93,7 @@ def deploy(
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
-    if "scope" in parameters and parameters['scope'] == "deploy":
+    if "scope" in parameters and parameters.get('scope','deploy') == "deploy":
         repo = team_context.name
         chart_name, chart_version, chart_package = helm_package(plugin_id,context,team_context,parameters)
 
