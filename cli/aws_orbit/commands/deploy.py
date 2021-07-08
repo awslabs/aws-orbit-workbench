@@ -14,20 +14,17 @@
 
 import logging
 import os
-import random
-import string
 from typing import List, Optional, Tuple, cast
 
 import click
 
-from aws_orbit import bundle, dockerhub, remote, toolkit
+from aws_orbit import bundle, remote, toolkit
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.changeset import Changeset, dump_changeset_to_str, extract_changeset
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
 from aws_orbit.models.manifest import (
     DataNetworkingManifest,
     FoundationManifest,
-    ImageManifest,
     ImagesManifest,
     Manifest,
     ManifestSerDe,
@@ -38,21 +35,6 @@ from aws_orbit.services import cognito as orbit_cognito
 from aws_orbit.services import ssm
 
 _logger: logging.Logger = logging.getLogger(__name__)
-
-
-def _request_dockerhub_credential(msg_ctx: MessagesContext) -> Tuple[str, str]:
-    if msg_ctx.pbar is not None:
-        msg_ctx.pbar.clear()
-    msg_ctx.info("When Container Images are from Dockerhub, " "a Dockerhub login is required.")
-    username = cast(
-        str,
-        click.prompt("Please enter the DockerHub username", type=str, hide_input=False),
-    )
-    password = cast(
-        str,
-        click.prompt("Please enter the DockerHub password", type=str, hide_input=True),
-    )
-    return username, password
 
 
 def _get_images_dirs(context: "Context", manifest_filename: str, skip_images: bool) -> List[Tuple[str, str]]:
@@ -80,38 +62,8 @@ def _get_config_dirs(context: "Context", manifest_filename: str) -> List[Tuple[s
 
 def _deploy_toolkit(
     context: "Context",
-    username: Optional[str],
-    password: Optional[str],
-    msg_ctx: MessagesContext,
     top_level: str = "orbit",
 ) -> None:
-    credential_received: bool = username is not None and password is not None
-    stack_exist: bool = cfn.does_stack_exist(stack_name=context.toolkit.stack_name)
-    credential_exist: bool = dockerhub.does_credential_exist(context=context) if stack_exist else False
-    image_manifests = [cast(ImageManifest, getattr(context.images, i)) for i in context.images.names]
-    credential_required: bool = any(
-        [im.get_source(account_id=context.account_id, region=context.region) == "dockerhub" for im in image_manifests]
-    )
-
-    if stack_exist:
-        if credential_required and not credential_exist and not credential_received:
-            username, password = _request_dockerhub_credential(msg_ctx=msg_ctx)
-            dockerhub.store_credential(context=context, username=username, password=password)
-            credential_exist = True
-        elif credential_received:
-            dockerhub.store_credential(
-                context=context,
-                username=cast(str, username),
-                password=cast(str, password),
-            )
-            credential_exist = True
-    else:
-        context.toolkit.deploy_id = "".join(random.choice(string.ascii_lowercase) for i in range(6))
-        if credential_required and not credential_received:
-            username, password = _request_dockerhub_credential(msg_ctx=msg_ctx)
-            credential_exist = False
-
-    msg_ctx.progress(6)
     _logger.debug("context.toolkit.deploy_id: %s", context.toolkit.deploy_id)
     template_filename: str = toolkit.synth(context=context, top_level=top_level)
     cfn.deploy_template(
@@ -120,38 +72,28 @@ def _deploy_toolkit(
     ContextSerDe.fetch_toolkit_data(context=context)
     ContextSerDe.dump_context_to_ssm(context=context)
 
-    if credential_exist is False:
-        dockerhub.store_credential(
-            context=context,
-            username=cast(str, username),
-            password=cast(str, password),
-        )
-
 
 def deploy_toolkit(
     filename: str,
     debug: bool,
 ) -> None:
-        with MessagesContext("Deploying", debug=debug) as msg_ctx:
-            msg_ctx.progress(2)
+    with MessagesContext("Deploying", debug=debug) as msg_ctx:
+        msg_ctx.progress(10)
 
-            manifest: "Manifest" = ManifestSerDe.load_manifest_from_file(filename=filename, type=Manifest)
-            msg_ctx.info(f"Manifest loaded: {filename}")
-            msg_ctx.progress(3)
+        manifest: "Manifest" = ManifestSerDe.load_manifest_from_file(filename=filename, type=Manifest)
+        msg_ctx.info(f"Manifest loaded: {filename}")
+        msg_ctx.progress(25)
 
-            context: "Context" = ContextSerDe.load_context_from_manifest(manifest=manifest)
+        context: "Context" = ContextSerDe.load_context_from_manifest(manifest=manifest)
 
-            msg_ctx.info("Current Context loaded")
-            msg_ctx.progress(4)
+        msg_ctx.info("Current Context loaded")
+        msg_ctx.progress(45)
 
-            _deploy_toolkit(
-                context=context,
-                username=None,
-                password=None,
-                msg_ctx=msg_ctx,
-            )
-            msg_ctx.info("Toolkit deployed")
-            msg_ctx.progress(10)
+        _deploy_toolkit(
+            context=context,
+        )
+        msg_ctx.info("Toolkit deployed")
+        msg_ctx.progress(100)
 
 
 def deploy_foundation(
@@ -161,8 +103,6 @@ def deploy_foundation(
     internet_accessibility: bool = True,
     codeartifact_domain: Optional[str] = None,
     codeartifact_repository: Optional[str] = None,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
 ) -> None:
     with MessagesContext("Deploying", debug=debug) as msg_ctx:
         msg_ctx.progress(2)
@@ -198,9 +138,6 @@ def deploy_foundation(
 
         _deploy_toolkit(
             context=cast(Context, context),
-            username=username,
-            password=password,
-            msg_ctx=msg_ctx,
             top_level="orbit-foundation",
         )
         msg_ctx.info("Toolkit deployed")
@@ -230,8 +167,6 @@ def deploy_env(
     filename: str,
     skip_images: bool,
     debug: bool,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
 ) -> None:
     with MessagesContext("Deploying", debug=debug) as msg_ctx:
         msg_ctx.progress(2)
@@ -260,9 +195,6 @@ def deploy_env(
 
         _deploy_toolkit(
             context=context,
-            username=username,
-            password=password,
-            msg_ctx=msg_ctx,
         )
         msg_ctx.info("Toolkit deployed")
         msg_ctx.progress(10)

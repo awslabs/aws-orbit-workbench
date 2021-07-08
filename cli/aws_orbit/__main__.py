@@ -118,20 +118,15 @@ def deploy_env(
     filename: str,
     skip_images: bool,
     debug: bool,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
 ) -> None:
     """Deploy a Orbit Workbench environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
-    _logger.debug("username: %s", username)
     _logger.debug("skip_images: %s", skip_images)
     deploy_commands.deploy_toolkit(
         filename=filename,
-        username=username,
-        password=password,
         skip_images=skip_images,
         debug=debug,
     )
@@ -183,7 +178,7 @@ def deploy_credentials(
     _logger.debug("filename: %s", filename)
     _logger.debug("username: %s", username)
     _logger.debug("registry: %s", registry)
-    deploy_commands.deploy_registry_credentials(
+    deploy_commands.deploy_credentials(
         filename=filename,
         username=username,
         password=password,
@@ -229,18 +224,6 @@ def deploy_teams(
     required=True,
 )
 @click.option(
-    "--username",
-    "-u",
-    type=str,
-    help="Dockerhub username (Required only for the first deploy).",
-)
-@click.option(
-    "--password",
-    "-p",
-    type=str,
-    help="Dockerhub password (Required only for the first deploy).",
-)
-@click.option(
     "--skip-images/--build-images",
     default=True,
     help="Skip Docker images updates (Usually for development purpose).",
@@ -256,20 +239,15 @@ def deploy_env(
     filename: str,
     skip_images: bool,
     debug: bool,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
 ) -> None:
     """Deploy a Orbit Workbench environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
-    _logger.debug("username: %s", username)
     _logger.debug("skip_images: %s", skip_images)
     deploy_commands.deploy_env(
         filename=filename,
-        username=username,
-        password=password,
         skip_images=skip_images,
         debug=debug,
     )
@@ -287,18 +265,6 @@ def deploy_env(
     "-n",
     type=str,
     help="The Name of the Orbit Foundation deployment",
-)
-@click.option(
-    "--username",
-    "-u",
-    type=str,
-    help="Dockerhub username (Required only for the first deploy).",
-)
-@click.option(
-    "--password",
-    "-p",
-    type=str,
-    help="Dockerhub password (Required only for the first deploy).",
 )
 @click.option(
     "--codeartifact-domain",
@@ -328,8 +294,6 @@ def deploy_foundation(
     name: Optional[str] = None,
     debug: bool = False,
     internet_accessibility: bool = True,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
     codeartifact_domain: Optional[str] = None,
     codeartifact_repository: Optional[str] = None,
 ) -> None:
@@ -346,14 +310,11 @@ def deploy_foundation(
     _logger.debug("name: %s", name)
     _logger.debug("codeartifact_domain: %s", codeartifact_domain)
     _logger.debug("codeartifact_repository: %s", codeartifact_repository)
-    _logger.debug("username: %s", username)
     deploy_commands.deploy_foundation(
         filename=filename,
         name=name,
         codeartifact_domain=codeartifact_domain,
         codeartifact_repository=codeartifact_repository,
-        username=username,
-        password=password,
         debug=debug,
         internet_accessibility=internet_accessibility,
     )
