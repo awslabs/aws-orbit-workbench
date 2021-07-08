@@ -92,8 +92,7 @@ def _orbit_controller(context: "Context", output_path: str) -> None:
             content,
             dict(
                 env_name=context.name,
-                code_build_image=f"{context.images.code_build.repository}:"
-                f"{context.images.code_build.version}",
+                code_build_image=f"{context.images.code_build.repository}:" f"{context.images.code_build.version}",
                 orbit_controller_image=f"{context.images.orbit_controller.repository}:"
                 f"{context.images.orbit_controller.version}",
                 k8s_utilities_image=f"{context.images.k8s_utilities.repository}:"
@@ -474,8 +473,11 @@ def deploy_env(context: "Context") -> None:
         _logger.debug("k8s_context: %s", k8s_context)
 
         # orbit-system
-        output_path = _generate_orbit_system_manifest(context=context)
-        sh.run(f"kubectl delete jobs -l app=cert-manager -n orbit-system --context {k8s_context} --ignore-not-found=true --wait")
+        output_path: Optional[str] = _generate_orbit_system_manifest(context=context)
+        sh.run(
+            f"kubectl delete jobs -l app=cert-manager -n orbit-system --context {k8s_context} "
+            "--ignore-not-found=true --wait"
+        )
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
         output_path = _generate_orbit_image_replicator_manifest(context=context, clean_up=True)
@@ -501,6 +503,7 @@ def deploy_env(context: "Context") -> None:
                         )
             else:
                 raise Exception("No Endpoints found for Service: %s Namespace: %s", name, namespace)
+
         confirm_endpoints(name="podsettings-pod-modifier", namespace="orbit-system")
         if context.install_image_replicator or not context.networking.data.internet_accessible:
             confirm_endpoints(name="pod-image-updater", namespace="orbit-system")

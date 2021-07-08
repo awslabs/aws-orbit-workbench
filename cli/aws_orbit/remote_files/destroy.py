@@ -19,7 +19,7 @@ from aws_orbit import cleanup, plugins, sh
 from aws_orbit.exceptions import FailedShellCommand
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
 from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, kubeflow, teams
-from aws_orbit.services import ecr, ssm
+from aws_orbit.services import ecr, secretsmanager, ssm
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -129,3 +129,22 @@ def destroy_foundation(args: Tuple[str, ...]) -> None:
     _logger.debug("Demo Stack destroyed")
     cdk_toolkit.destroy(context=context)
     _logger.debug("CDK Toolkit Stack destroyed")
+
+
+def destroy_credentials(args: Tuple[str, ...]) -> None:
+    _logger.debug("args: %s", args)
+    if len(args) != 2:
+        raise ValueError("Unexpected number of values in args")
+    env_name: str = args[0]
+    registry: str = args[1]
+    _logger.debug("Context loaded.")
+
+    secret_id = f"orbit-{env_name}-docker-credentials"
+    credentials = secretsmanager.get_secret_value(secret_id=secret_id)
+
+    if registry in credentials:
+        del credentials[registry]
+        secretsmanager.put_secret_value(secret_id=secret_id, secret=credentials)
+        _logger.debug("Registry Credentials destroyed")
+    else:
+        _logger.debug("Registry Credentials not found, ignoring")

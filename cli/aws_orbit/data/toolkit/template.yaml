@@ -427,15 +427,6 @@ Resources:
               - kms:ScheduleKeyDeletion
               - kms:CancelKeyDeletion
             Resource: '*'
-DockerCredentialsSecret:
-  Type: AWS::SecretsManager::Secret
-  Properties:
-    Description: Stores Docker Registry credentials for the environment
-    Name: orbit-{top_level}-${env_name}-docker-credentials
-    SecretString: "{}"
-    Tags:
-      - Key: Env
-        Value: ${top_level}-${env_name}
 
 Outputs:
   DeployId:

@@ -114,7 +114,7 @@ def deploy() -> None:
     help="Enable detailed logging.",
     show_default=True,
 )
-def deploy_env(
+def deploy_toolkit(
     filename: str,
     skip_images: bool,
     debug: bool,
@@ -127,7 +127,6 @@ def deploy_env(
     _logger.debug("skip_images: %s", skip_images)
     deploy_commands.deploy_toolkit(
         filename=filename,
-        skip_images=skip_images,
         debug=debug,
     )
 
@@ -139,26 +138,14 @@ def deploy_env(
     type=str,
     help="The target Orbit Workbench manifest file (yaml).",
 )
-@click.option(
-    "--username",
-    "-u",
-    type=str,
-    help="Image Registry username",
-    required=True
-)
+@click.option("--username", "-u", type=str, help="Image Registry username", required=True)
 @click.option(
     "--password",
     "-p",
     type=str,
     help="Image Registry password",
 )
-@click.option(
-    "--registry",
-    "-r",
-    type=str,
-    help="Image Registry name/URL",
-    default="docker.io"
-)
+@click.option("--registry", "-r", type=str, help="Image Registry name/URL", default="docker.io")
 @click.option(
     "--debug/--no-debug",
     default=False,
@@ -372,6 +359,24 @@ def destroy_foundation(name: str, debug: bool) -> None:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     _logger.debug("name: %s", name)
     destroy_commands.destroy_foundation(env=name, debug=debug)
+
+
+@destroy.command(name="credentials")
+@click.option("--env", "-e", type=str, required=True, help="Destroy Registry Credentials.")
+@click.option("--registry", "-r", type=str, required=True, help="Image Registry.")
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def destroy_credentials(env: str, registry: str, debug: bool) -> None:
+    """Destroy Image Registry Credentials previously stored"""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    _logger.debug("env: %s", env)
+    _logger.debug("registry: %s", registry)
+    destroy_commands.destroy_credentials(env=env, registry=registry, debug=debug)
 
 
 @click.group(name="build")
