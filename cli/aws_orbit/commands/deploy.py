@@ -15,6 +15,7 @@
 import json
 import logging
 import os
+import random
 from typing import List, Optional, Tuple, cast
 
 from aws_orbit import bundle, remote, toolkit
@@ -63,6 +64,9 @@ def _deploy_toolkit(
     context: "Context",
     top_level: str = "orbit",
 ) -> None:
+    stack_exist: bool = cfn.does_stack_exist(stack_name=context.toolkit.stack_name)
+    if not stack_exist:
+        context.toolkit.deploy_id = "".join(random.choice(string.ascii_lowercase) for i in range(6))
     _logger.debug("context.toolkit.deploy_id: %s", context.toolkit.deploy_id)
     template_filename: str = toolkit.synth(context=context, top_level=top_level)
     cfn.deploy_template(
