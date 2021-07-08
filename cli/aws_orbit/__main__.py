@@ -100,6 +100,98 @@ def deploy() -> None:
     pass
 
 
+@deploy.command(name="toolkit")
+@click.option(
+    "--filename",
+    "-f",
+    type=str,
+    help="The target Orbit Workbench manifest file (yaml).",
+    required=True,
+)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def deploy_env(
+    filename: str,
+    skip_images: bool,
+    debug: bool,
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+) -> None:
+    """Deploy a Orbit Workbench environment based on a manisfest file (yaml)."""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    filename = filename if filename[0] in (".", "/") else f"./{filename}"
+    _logger.debug("filename: %s", filename)
+    _logger.debug("username: %s", username)
+    _logger.debug("skip_images: %s", skip_images)
+    deploy_commands.deploy_toolkit(
+        filename=filename,
+        username=username,
+        password=password,
+        skip_images=skip_images,
+        debug=debug,
+    )
+
+
+@deploy.command(name="credentials")
+@click.option(
+    "--filename",
+    "-f",
+    type=str,
+    help="The target Orbit Workbench manifest file (yaml).",
+)
+@click.option(
+    "--username",
+    "-u",
+    type=str,
+    help="Image Registry username",
+    required=True
+)
+@click.option(
+    "--password",
+    "-p",
+    type=str,
+    help="Image Registry password",
+)
+@click.option(
+    "--registry",
+    "-r",
+    type=str,
+    help="Image Registry name/URL",
+    default="docker.io"
+)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def deploy_credentials(
+    filename: str,
+    username: str,
+    password: str,
+    registry: str,
+    debug: bool,
+) -> None:
+    """Deploy Image Registry credentials for use in building and pulling images"""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    _logger.debug("filename: %s", filename)
+    _logger.debug("username: %s", username)
+    _logger.debug("registry: %s", registry)
+    deploy_commands.deploy_registry_credentials(
+        filename=filename,
+        username=username,
+        password=password,
+        registry=registry,
+        debug=debug,
+    )
+
+
 @deploy.command(name="teams")
 @click.option(
     "--filename",

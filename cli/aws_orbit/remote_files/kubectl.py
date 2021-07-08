@@ -15,7 +15,7 @@
 import logging
 import os
 import shutil
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import aws_orbit
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
@@ -92,6 +92,8 @@ def _orbit_controller(context: "Context", output_path: str) -> None:
             content,
             dict(
                 env_name=context.name,
+                code_build_image=f"{context.images.code_build.repository}:"
+                f"{context.images.code_build.version}",
                 orbit_controller_image=f"{context.images.orbit_controller.repository}:"
                 f"{context.images.orbit_controller.version}",
                 k8s_utilities_image=f"{context.images.k8s_utilities.repository}:"
@@ -128,28 +130,6 @@ def _orbit_image_replicator(context: "Context", output_path: str) -> None:
         )
         with open(output, "w") as file:
             file.write(content)
-
-
-def _cluster_autoscaler(output_path: str, context: "Context") -> None:
-    filename = "02-cluster-autoscaler-autodiscover.yaml"
-    input = os.path.join(MODELS_PATH, "kube-system", filename)
-    output = os.path.join(output_path, filename)
-
-    with open(input, "r") as file:
-        content: str = file.read()
-    content = utils.resolve_parameters(
-        content,
-        dict(
-            account_id=context.account_id,
-            env_name=context.name,
-            cluster_name=f"orbit-{context.name}",
-            sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
-            image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
-            use_static_instance_list=str(not context.networking.data.internet_accessible).lower(),
-        ),
-    )
-    with open(output, "w") as file:
-        file.write(content)
 
 
 def _ssm_agent_installer(output_path: str, context: "Context") -> None:
@@ -241,8 +221,6 @@ def _generate_kube_system_manifest(context: "Context", clean_up: bool = True) ->
     if clean_up:
         _cleanup_output(output_path=output_path)
 
-    _cluster_autoscaler(output_path=output_path, context=context)
-
     filenames = [
         "00-observability.yaml",
         "01-aws-vgpu-daemonset.yaml",
@@ -288,12 +266,6 @@ def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -
     if context.identity_pool_id is None:
         raise ValueError("context.identity_pool_id is None!")
 
-    if context.install_image_replicator or not context.networking.data.internet_accessible:
-        _logger.debug("Deploying Pod Image Modifier and Image Replicator")
-        _orbit_image_replicator(output_path=output_path, context=context)
-    else:
-        _logger.debug("Skipping deployment of Pod Image Modifier and Image Replicator")
-
     if context.install_ssm_agent:
         _logger.debug("Deploying SSM Agent Installer")
         _ssm_agent_installer(output_path=output_path, context=context)
@@ -303,6 +275,21 @@ def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -
     _sm_operator_installer(output_path=output_path, context=context)
 
     return output_path
+
+
+def _generate_orbit_image_replicator_manifest(context: "Context", clean_up: bool = True) -> Optional[str]:
+    output_path = os.path.join(".orbit.out", context.name, "kubectl", "orbit-system")
+    os.makedirs(output_path, exist_ok=True)
+    if clean_up:
+        _cleanup_output(output_path=output_path)
+
+    if context.install_image_replicator or not context.networking.data.internet_accessible:
+        _logger.debug("Deploying Pod Image Modifier and Image Replicator")
+        _orbit_image_replicator(output_path=output_path, context=context)
+        return output_path
+    else:
+        _logger.debug("Skipping deployment of Pod Image Modifier and Image Replicator")
+        return None
 
 
 def _generate_env_manifest(context: "Context", clean_up: bool = True) -> Tuple[str, str]:
@@ -486,38 +473,14 @@ def deploy_env(context: "Context") -> None:
         k8s_context = get_k8s_context(context=context)
         _logger.debug("k8s_context: %s", k8s_context)
 
-        # kube-system kustomizations
-        output_paths = _generate_kube_system_kustomizations(context=context)
-        for output_path in output_paths:
-            sh.run(f"kubectl apply -k {output_path} --context {k8s_context} --wait")
-
-        # kube-system manifests
-        output_path = _generate_kube_system_manifest(context=context)
-        sh.run(f"kubectl delete jobs -l app=cert-manager -n orbit-system --context {k8s_context} --wait")
-        sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
-
         # orbit-system
         output_path = _generate_orbit_system_manifest(context=context)
+        sh.run(f"kubectl delete jobs -l app=cert-manager -n orbit-system --context {k8s_context} --ignore-not-found=true --wait")
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
-        # kubeflow-namespaces
-        output_path = _kubeflow_namespaces(context=context)
-        sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
-
-        kubeflow.deploy_kubeflow(context=context)
-
-        # env
-        (output_path, patch) = _generate_env_manifest(context=context)
-        sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
-        # Patch Kubeflow
-        _logger.debug("Orbit applying KubeFlow patch")
-        sh.run(f'kubectl patch deployment jupyter-web-app-deployment --patch "{patch}" -n kubeflow')
-        sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
-        # Enable ENIs
-        sh.run(f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} ENABLE_POD_ENI=true")
-        sh.run(
-            f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} DISABLE_TCP_EARLY_DEMUX=true"
-        )
+        output_path = _generate_orbit_image_replicator_manifest(context=context, clean_up=True)
+        if output_path is not None:
+            sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
         # Restart orbit-system deployments and statefulsets to force reload of caches etc
         sh.run(f"kubectl rollout restart deployments -n orbit-system --context {k8s_context}")
@@ -538,11 +501,42 @@ def deploy_env(context: "Context") -> None:
                         )
             else:
                 raise Exception("No Endpoints found for Service: %s Namespace: %s", name, namespace)
-
         confirm_endpoints(name="podsettings-pod-modifier", namespace="orbit-system")
-        confirm_endpoints(name="landing-page-service", namespace="orbit-system")
         if context.install_image_replicator or not context.networking.data.internet_accessible:
             confirm_endpoints(name="pod-image-updater", namespace="orbit-system")
+
+        # kube-system kustomizations
+        output_paths = _generate_kube_system_kustomizations(context=context)
+        for output_path in output_paths:
+            sh.run(f"kubectl apply -k {output_path} --context {k8s_context} --wait")
+
+        # kube-system manifests
+        output_path = _generate_kube_system_manifest(context=context)
+        sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
+
+        # Enable ENIs
+        sh.run(f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} ENABLE_POD_ENI=true")
+        sh.run(
+            f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} DISABLE_TCP_EARLY_DEMUX=true"
+        )
+
+        # kubeflow-namespaces
+        output_path = _kubeflow_namespaces(context=context)
+        sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
+
+        kubeflow.deploy_kubeflow(context=context)
+
+        # env
+        (output_path, patch) = _generate_env_manifest(context=context)
+        sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
+
+        # Patch Kubeflow
+        _logger.debug("Orbit applying KubeFlow patch")
+        sh.run(f'kubectl patch deployment jupyter-web-app-deployment --patch "{patch}" -n kubeflow')
+        sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
+
+        # Confirm env Service Endpoints
+        confirm_endpoints(name="landing-page-service", namespace="orbit-system")
 
 
 def deploy_team(context: "Context", team_context: "TeamContext") -> None:

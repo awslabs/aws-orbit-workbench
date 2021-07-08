@@ -61,4 +61,7 @@ RUN pip install aws_cdk.core~=$CDK_VERSION \
                 aws-cdk.aws-stepfunctions~=$CDK_VERSION \
                 aws-cdk.aws-stepfunctions-tasks~=$CDK_VERSION
 
+RUN mkdir -p /var/scripts/
+ADD retrieve_docker_creds.py /var/scripts/retrieve_docker_creds.py
+
 ENTRYPOINT ["bash"]

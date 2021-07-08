@@ -14,7 +14,16 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
+#
+#
+#   This script should be executed on a newly deployed, clean environment 
+#   with internet accessbility enabled.
 
-set -ex
-export AWS_CLUSTER_NAME=${cluster_name}
-kfctl delete -V -f kfctl_aws.yaml --force-deletion
+kubectl get pods -A -o yaml | \
+    grep "image:" | \
+    grep -v "f:image" | \
+    sed "s/^.*image: //g" | \
+    sort | uniq | \
+    grep -vE "k8s-utilities|orbit-controller" \
+  > image_inventory.txt
+

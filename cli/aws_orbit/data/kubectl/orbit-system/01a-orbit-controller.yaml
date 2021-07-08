@@ -5,6 +5,8 @@ metadata:
   name: orbit-controller-config
   namespace: orbit-system
 data:
+  AWS_ORBIT_ENV: ${env_name}
+  ORBIT_CODEBUILD_IMAGE: ${code_build_image}
   FLASK_DEBUG: "1"
   FLASK_ENV: development
   GUNICORN_WORKERS: "1"
@@ -19,7 +21,7 @@ data:
   IMAGE_REPLICATIONS_CODEBUILD_PROJECT: orbit-${env_name}
   IMAGE_REPLICATIONS_CODEBUILD_TIMEOUT: "30"
   IMAGE_REPLICATIONS_REPLICATE_EXTERNAL_REPOS: "no"
-  IMAGE_REPLICATIONS_WATCHER_WORKERS: "4"
+  IMAGE_REPLICATIONS_WATCHER_WORKERS: "10"
   AWS_STS_REGIONAL_ENDPOINTS: ${sts_ep}
 ---
 apiVersion: v1

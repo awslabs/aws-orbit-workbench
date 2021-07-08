@@ -78,6 +78,7 @@ def _replicate_image(config: Dict[str, Any], src: str, dest: str) -> str:
         buildspecOverride=buildspec,
         timeoutInMinutesOverride=config["codebuild_timeout"],
         privilegedModeOverride=True,
+        imageOverride=config["codebuild_image"]
     )["build"]["id"]
 
     logger.info("Started CodeBuild Id: %s", build_id)
@@ -102,6 +103,7 @@ def get_config(workers: Optional[int] = None) -> Dict[str, Any]:
         "repo_prefix": os.environ.get("IMAGE_REPLICATIONS_REPO_PREFIX", ""),
         "codebuild_project": os.environ.get("IMAGE_REPLICATIONS_CODEBUILD_PROJECT", ""),
         "codebuild_timeout": int(os.environ.get("IMAGE_REPLICATIONS_CODEBUILD_TIMEOUT", "30")),
+        "codebuild_image": os.environ.get("ORBIT_CODEBUILD_IMAGE", ""),
         "replicate_external_repos": os.environ.get("IMAGE_REPLICATIONS_REPLICATE_EXTERNAL_REPOS", "False").lower()
         in ["true", "yes", "1"],
         "workers": workers if workers else int(os.environ.get("IMAGE_REPLICATIONS_WATCHER_WORKERS", "2")),

@@ -78,7 +78,7 @@ def _get_config_dirs(context: "Context", manifest_filename: str) -> List[Tuple[s
     return dirs
 
 
-def deploy_toolkit(
+def _deploy_toolkit(
     context: "Context",
     username: Optional[str],
     password: Optional[str],
@@ -128,6 +128,32 @@ def deploy_toolkit(
         )
 
 
+def deploy_toolkit(
+    filename: str,
+    debug: bool,
+) -> None:
+        with MessagesContext("Deploying", debug=debug) as msg_ctx:
+            msg_ctx.progress(2)
+
+            manifest: "Manifest" = ManifestSerDe.load_manifest_from_file(filename=filename, type=Manifest)
+            msg_ctx.info(f"Manifest loaded: {filename}")
+            msg_ctx.progress(3)
+
+            context: "Context" = ContextSerDe.load_context_from_manifest(manifest=manifest)
+
+            msg_ctx.info("Current Context loaded")
+            msg_ctx.progress(4)
+
+            _deploy_toolkit(
+                context=context,
+                username=None,
+                password=None,
+                msg_ctx=msg_ctx,
+            )
+            msg_ctx.info("Toolkit deployed")
+            msg_ctx.progress(10)
+
+
 def deploy_foundation(
     filename: Optional[str] = None,
     name: Optional[str] = None,
@@ -170,7 +196,7 @@ def deploy_foundation(
         msg_ctx.info("Current Context loaded")
         msg_ctx.progress(4)
 
-        deploy_toolkit(
+        _deploy_toolkit(
             context=cast(Context, context),
             username=username,
             password=password,
@@ -232,7 +258,7 @@ def deploy_env(
         _logger.debug(f"Changeset:\n{dump_changeset_to_str(changeset=changeset)}")
         msg_ctx.progress(5)
 
-        deploy_toolkit(
+        _deploy_toolkit(
             context=context,
             username=username,
             password=password,

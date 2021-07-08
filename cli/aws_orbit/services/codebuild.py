@@ -261,6 +261,9 @@ def generate_spec(
     else:
         install.append(f"pip install aws-orbit~={__version__}")
 
+    # Login with any store Docker Registry credentials
+    install.append("/var/scripts/retrieve_docker_creds.py && echo 'Docker logins successfule' || echo 'Docker logins failes'")
+
     # Plugins
     if plugins and isinstance(context, Context):
         for team_context in context.teams:

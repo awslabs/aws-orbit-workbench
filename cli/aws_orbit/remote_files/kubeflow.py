@@ -147,5 +147,4 @@ def destroy_kubeflow(context: Context) -> None:
         output_path = os.path.abspath(output_path)
         _logger.debug(f"kubeflow config dir: {output_path}")
         utils.print_dir(output_path)
-        sh.run("./apply_kf.sh", cwd=output_path)
         sh.run("./delete_kf.sh", cwd=output_path)

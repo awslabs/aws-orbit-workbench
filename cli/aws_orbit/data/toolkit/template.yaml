@@ -219,6 +219,7 @@ Resources:
               - secretsmanager:*
             Resource:
               - arn:aws:secretsmanager:${region}:${account_id}:secret:${top_level}-redshift-master-${env_name}*
+              - arn:aws:secretsmanager:${region}:${account_id}:secret:${top_level}-${env_name}-*
           - Effect: Allow
             Action:
               - serverlessrepo:*
@@ -359,6 +360,12 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_LARGE
         Image: aws/codebuild/standard:4.0
+        EnvironmentVariables:
+        - Name: AWS_ACCOUNT_ID
+          Value:
+            Ref: AWS::AccountId
+        - Name: AWS_ORBIT_ENV
+          Value: ${env_name}
       Source:
         Type: NO_SOURCE
         BuildSpec:  |
@@ -420,6 +427,15 @@ Resources:
               - kms:ScheduleKeyDeletion
               - kms:CancelKeyDeletion
             Resource: '*'
+DockerCredentialsSecret:
+  Type: AWS::SecretsManager::Secret
+  Properties:
+    Description: Stores Docker Registry credentials for the environment
+    Name: orbit-{top_level}-${env_name}-docker-credentials
+    SecretString: "{}"
+    Tags:
+      - Key: Env
+        Value: ${top_level}-${env_name}
 
 Outputs:
   DeployId:
