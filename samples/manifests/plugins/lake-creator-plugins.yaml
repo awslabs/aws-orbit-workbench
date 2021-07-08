@@ -5,7 +5,7 @@
         script: |
             echo "Deleting cms_secured_db glue database"
             aws sts get-caller-identity
-            aws glue delete-database --name cms_secured_db1
+            aws glue delete-database --name cms_secured_db
         restartPolicy: Never
 -   PluginId: custom_cfn
     Module: custom_cfn
