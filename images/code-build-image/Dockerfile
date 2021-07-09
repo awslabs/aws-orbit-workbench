@@ -59,6 +59,7 @@ RUN pip install aws_cdk.core~=$CDK_VERSION \
                 aws-cdk.aws-sns~=$CDK_VERSION \
                 aws-cdk.aws-sns-subscriptions~=$CDK_VERSION \
                 aws-cdk.aws-stepfunctions~=$CDK_VERSION \
-                aws-cdk.aws-stepfunctions-tasks~=$CDK_VERSION
+                aws-cdk.aws-stepfunctions-tasks~=$CDK_VERSION \
+                aws-cdk.aws-codeartifact~=$CDK_VERSION
 
 ENTRYPOINT ["bash"]
