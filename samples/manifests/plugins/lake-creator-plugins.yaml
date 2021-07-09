@@ -6,6 +6,7 @@
             echo "Deleting cms_secured_db glue database"
             aws sts get-caller-identity
             aws glue delete-database --name cms_secured_db
+            echo "Deleted cms_secured_db glue database"
         restartPolicy: Never
 -   PluginId: custom_cfn
     Module: custom_cfn
@@ -14,7 +15,6 @@
 -   PluginId: clean_regression_files
     Module: team_script_launcher
     Parameters:
-        scope: deploy
         script: |
             i=0
             while [ $i -lt 1 ];
@@ -27,7 +27,6 @@
 -   PluginId: copy-regression-data
     Module: team_script_launcher
     Parameters:
-        scope: deploy
         script: |
             echo "Copy data to s3 from orbit-regression image ";
             i=0;o='orbit';
@@ -53,7 +52,6 @@
 -   PluginId: copy-sample-code
     Module: team_script_launcher
     Parameters:
-        scope: deploy
         script: |
             echo "Copy samples to efs from image ";
             rm -rf /efs/samples;
