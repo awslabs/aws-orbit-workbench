@@ -258,13 +258,13 @@ def apply_settings_to_pod(
         if "limits" in ps_spec["resources"]:
             pod_spec["resources"]["limits"] = {
                 **pod_spec["resources"].get("limits", {}),
-                **ps_spec["resources"].get("limits", {})
+                **ps_spec["resources"].get("limits", {}),
             }
 
         if "requests" in ps_spec["resources"]:
             pod_spec["resources"]["requests"] = {
                 **pod_spec["resources"].get("requests", {}),
-                **ps_spec["resources"].get("requests", {})
+                **ps_spec["resources"].get("requests", {}),
             }
 
     for container in filter_pod_containers(
