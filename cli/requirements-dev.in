@@ -32,6 +32,7 @@ aws-cdk.aws-sns~=1.100.0
 aws-cdk.aws-sns-subscriptions~=1.100.0
 aws-cdk.aws-stepfunctions~=1.100.0
 aws-cdk.aws-stepfunctions-tasks~=1.100.0
+aws-cdk.aws-codeartifact~=1.100.0
 -e .
 -e ../sdk
 -e ../plugins/hello_world
