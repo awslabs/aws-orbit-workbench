@@ -166,3 +166,4 @@ def delete_virtual_cluster(eks_cluster_name: str, virtual_cluster_name: str) -> 
                         _logger.error("Error  %s", e)
         else:
             _logger.info(f"No EMR Virtual cluster in EKS cluster {eks_cluster_name}")
+    _logger.debug("end of emr virtual clusters deletion")
