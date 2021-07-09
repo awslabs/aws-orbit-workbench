@@ -40,7 +40,7 @@ while [[ $# -gt 0 ]]; do
             OAUTH_TOKEN=$2
             shift
             ;;
-        --destroy_pipeline)
+        --destroy-pipeline)
             DESTROY_PIPELINE=$2
             shift
             ;;
@@ -49,7 +49,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "${ORBIT_VERSION}" ]]; then
-    echo "Please specify an Orbit version to install"
+    echo "Please specify an Orbit version"
     usage
 fi
 
