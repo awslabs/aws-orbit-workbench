@@ -169,6 +169,9 @@ class TeamContext:
     team_helm_repository: Optional[str] = None
     user_helm_repository: Optional[str] = None
 
+    # Manifest default
+    authentication_groups: Optional[List[str]] = None
+
     def fetch_team_data(self) -> None:
         _logger.debug("Fetching Team %s data...", self.name)
         values = ssm.get_parameter(name=self.team_ssm_parameter_name)

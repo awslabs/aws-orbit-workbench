@@ -4,7 +4,7 @@
 
 ### Issue Reference URL
 
-https://github.com/awslabs/aws-eks-data-maker/issues/<NUMBER>
+https://github.com/awslabs/aws-orbit-workbench/issues/<NUMBER>
 
 ----------
 ### Do not change content below. Mark applicable check boxes only.
