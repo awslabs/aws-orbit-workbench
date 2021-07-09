@@ -108,6 +108,7 @@ Resources:
               - emr-containers:ListVirtualClusters
               - emr-containers:DeleteVirtualCluster
               - emr-containers:ListJobRuns
+              - emr-containers:CancelJobRun
               - redshift:Describe*
               - s3:GetObject
             Resource: '*'
