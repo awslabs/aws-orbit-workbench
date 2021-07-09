@@ -8,9 +8,11 @@ permalink: usage-architecture
 ---
 
 ## Intro
-Upon deployment, AWS Orbit Workbench provides a universal Landing Page and Team dedicated Jupyter Hub and Juputer Notebook instances. The Team dedicated instances enable Team members to interact with other Team dedicated resources (e.g. Redshift, EMR) and provide custom integrations with other AWS services.
-
-The Team deidcated resources utilize IAM Roles, Security Groups, and KMS Keys to ensure that Team members are restricted to data intended for use by their Team. During deployment of AWS Orbit Workbench Administrators have the option of attaching additional IAM Managed Policies to the Team Role to enable broader access to data and services.
+AWS Orbit Workbench leverage Istio and Cognito to provide common authentication layer for all applications.
+After the user logs in,  the Orbit Home page will allow users to select which Team space they would like to enter.
+Each TeamSpace has a central dashboard (base on kubeflow) that provides access to all the applications.
+Jupyter is one of these applications. The Jupyter application is created for the specific user and run in a dedicated 
+container, which has an IAM role as well as attached security groups.
 
 ![Usage workflow image](https://raw.githubusercontent.com/wiki/awslabs/aws-orbit-workbench/orbit_notebook_usage.png)
 
