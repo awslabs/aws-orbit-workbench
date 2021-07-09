@@ -9,3 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - SSO property in the plugin manifest
 - Adding demo notebooks cron jobs cleaner job.
+
+### **Changed**
+
+- FIX: podsettings-pod-modifier wasn't applying resources to pods
