@@ -76,7 +76,7 @@ ASSUME_ROLE='{
   ]
 }'
 
-if ! aws iam list-roles | grep -i '"RoleName": "OrbitAdmin"' &> /dev/null; then
+if ! aws iam list-roles --no-cli-pager | grep -i "\"RoleName\": \"${ORBIT_ADMIN_ROLE}\"" &> /dev/null; then
     echo "Creating role ${ORBIT_ADMIN_ROLE}"
 
     CREATE_ROLE_RESP=`aws iam create-role --role-name "${ORBIT_ADMIN_ROLE}" --assume-role-policy-document "${ASSUME_ROLE}" --no-cli-pager`
@@ -96,7 +96,7 @@ if ! aws iam list-roles | grep -i '"RoleName": "OrbitAdmin"' &> /dev/null; then
         exit 1
     fi
 
-    echo "Administrative role OrbitAdmin has been created."
+    echo "Administrative role ${ORBIT_ADMIN_ROLE} has been created."
 fi
 
 echo "Downloading the cloudfromation template that deploys Orbit..."
