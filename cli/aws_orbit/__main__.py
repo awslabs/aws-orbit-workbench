@@ -116,7 +116,6 @@ def deploy() -> None:
 )
 def deploy_toolkit(
     filename: str,
-    skip_images: bool,
     debug: bool,
 ) -> None:
     """Deploy a Orbit Workbench environment based on a manisfest file (yaml)."""
@@ -124,7 +123,6 @@ def deploy_toolkit(
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
-    _logger.debug("skip_images: %s", skip_images)
     deploy_commands.deploy_toolkit(
         filename=filename,
         debug=debug,

@@ -194,7 +194,7 @@ def deploy_credentials(args: Tuple[str, ...]) -> None:
                 f"docker login --username '{username}' --password '{password}' {registry}", shell=True
             )
         except Exception as e:
-            _logger.error("Invalid Registroy Credentials")
+            _logger.error("Invalid Registry Credentials")
             _logger.exception(e)
             return
         else:

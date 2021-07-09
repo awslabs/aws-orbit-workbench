@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import random
+import string
 from typing import List, Optional, Tuple, cast
 
 from aws_orbit import bundle, remote, toolkit
@@ -128,6 +129,7 @@ def deploy_credentials(filename: str, username: str, password: str, registry: st
         )
         msg_ctx.progress(20)
 
+        msg_ctx.info("Starting Remote CodeBuild to deploy credentials")
         buildspec = codebuild.generate_spec(
             context=context,
             plugins=True,

@@ -27,7 +27,7 @@ def put_secret_value(secret_id: str, secret: Dict[str, Any]) -> None:
 
     try:
         _logger.debug("Creating Secret: %s", secret_id)
-        client.create_secret(SecretId=secret_id, SecretString="{}")
+        client.create_secret(Name=secret_id, SecretString="{}")
     except ClientError as e:
         if e.response["Error"]["Code"] == "ResourceExistsException":
             _logger.info("Secret %s exists, ignoring", secret_id)
@@ -36,6 +36,7 @@ def put_secret_value(secret_id: str, secret: Dict[str, Any]) -> None:
             raise e
 
     try:
+        _logger.debug("Putting Secret Value: %s", secret_id)
         client.put_secret_value(SecretId=secret_id, SecretString=json.dumps(secret))
     except ClientError as e:
         _logger.exception(e)

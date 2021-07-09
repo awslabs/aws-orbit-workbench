@@ -268,7 +268,7 @@ def generate_spec(
 
     # Login with any store Docker Registry credentials
     install.append(
-        "/var/scripts/retrieve_docker_creds.py && echo 'Docker logins successfule' || echo 'Docker logins failes'"
+        "/var/scripts/retrieve_docker_creds.py && echo 'Docker logins successful' || echo 'Docker logins failed'"
     )
 
     # Plugins

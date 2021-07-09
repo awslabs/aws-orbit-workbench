@@ -47,10 +47,12 @@ def _generate_buildspec(repo_host: str, repo_prefix: str, src: str, dest: str) -
                         "--host=tcp://0.0.0.0:2375 --storage-driver=overlay&"
                     ),
                     'timeout 15 sh -c "until docker info; do echo .; sleep 1; done"',
+                        # Login with any store Docker Registry credentials
                 ],
             },
             "pre_build": {
                 "commands": [
+                    "/var/scripts/retrieve_docker_creds.py && echo 'Docker logins successful' || echo 'Docker logins failed'",
                     f"aws ecr get-login-password | docker login --username AWS --password-stdin {repo_host}",
                     (
                         f"aws ecr create-repository --repository-name {repo} "
@@ -219,6 +221,25 @@ def watch(
     statuses: Dict[str, Any],
     config: Dict[str, str],
 ) -> int:
+    # Prime the work queue with the inventory of known images
+    try:
+        logger.info("Priming work queue from inventory of known images")
+        with open("/var/orbit-controller/image_inventory.txt", "r") as inventory:
+            for source_image in inventory:
+                source_image = source_image.strip()
+                desired_image = get_desired_image(config=config, image=source_image)
+                if source_image != desired_image:
+                    status = get_replication_status(
+                        lock=lock,
+                        queue=queue,
+                        statuses=statuses,
+                        image=source_image,
+                        desired_image=desired_image,
+                    )
+                    logger.info("Replication Status: %s %s", source_image, status)
+    except Exception as e:
+        logger.exception("Failed to prime work queue from inventory")
+
     while True:
         try:
             client = dynamic_client()
