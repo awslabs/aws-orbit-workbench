@@ -18,7 +18,7 @@ import time
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 import aws_orbit
-from aws_orbit import utils, sh
+from aws_orbit import sh, utils
 from aws_orbit.plugins import hooks
 from aws_orbit.remote_files import helm
 
@@ -27,11 +27,9 @@ if TYPE_CHECKING:
 _logger: logging.Logger = logging.getLogger("aws_orbit")
 CHART_PATH = os.path.join(os.path.dirname(__file__), "charts")
 
+
 def helm_package(
-        plugin_id: str,
-        context: "Context",
-        team_context: "TeamContext",
-        parameters: Dict[str, Any]
+    plugin_id: str, context: "Context", team_context: "TeamContext", parameters: Dict[str, Any]
 ) -> Tuple[str, str, str]:
     chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATH, target_path=plugin_id)
     _logger.debug("copy chart dir")
@@ -93,9 +91,9 @@ def deploy(
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
     plugin_id = plugin_id.replace("_", "-")
     _logger.debug("plugin_id: %s", plugin_id)
-    if "scope" in parameters and parameters.get('scope','deploy') == "deploy":
+    if parameters.get("scope", "deploy") == "deploy":
         repo = team_context.name
-        chart_name, chart_version, chart_package = helm_package(plugin_id,context,team_context,parameters)
+        chart_name, chart_version, chart_package = helm_package(plugin_id, context, team_context, parameters)
 
         release_name = f"{team_context.name}-{plugin_id}".replace("_", "-")
         if helm.is_exists_chart_release(release_name, team_context.name):
@@ -112,6 +110,7 @@ def deploy(
     else:
         _logger.debug("Skipping plugin deploy hook")
 
+
 @hooks.destroy
 def destroy(
     plugin_id: str,
@@ -127,10 +126,10 @@ def destroy(
     )
     release_name = f"{team_context.name}-{plugin_id}".replace("_", "-")
 
-    if "scope" in parameters and parameters['scope'] == "destroy":
+    if "scope" in parameters and parameters["scope"] == "destroy":
         # Create new chart, release and respective job
         repo = team_context.name
-        chart_name, chart_version, chart_package = helm_package(plugin_id,context,team_context,parameters)
+        chart_name, chart_version, chart_package = helm_package(plugin_id, context, team_context, parameters)
 
         if helm.is_exists_chart_release(release_name, team_context.name):
             helm.uninstall_chart(release_name, team_context.name)
