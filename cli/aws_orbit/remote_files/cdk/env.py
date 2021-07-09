@@ -30,8 +30,8 @@ from aws_cdk.core import App, Construct, Duration, Environment, IConstruct, Stac
 
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.cdk import _lambda_path
+from aws_orbit.remote_files.cdk.team_builders.codeartifact import DeployCodeArtifact
 from aws_orbit.services import cognito as orbit_cognito
-from aws_orbit.services.codeartifact import DeployCodeArtifact
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -59,10 +59,7 @@ class Env(Stack):
             raise ValueError("self.context.networking.availability_zones is None.")
         # Checks if CodeArtifact exists outside of the scope of Orbit, else creates it.
         if not self.context.codeartifact_domain and not self.context.codeartifact_repository:
-            DeployCodeArtifact(
-                self,
-                id='CodeArtifact-from-Env'
-            )
+            DeployCodeArtifact(self, id="CodeArtifact-from-Env")
 
         self.i_vpc = ec2.Vpc.from_vpc_attributes(
             scope=self,

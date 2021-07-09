@@ -152,8 +152,9 @@ Resources:
               - arn:aws:ssm:${region}:${account_id}:parameter/orbit*
           - Effect: Allow
             Action:
-              - codeartifact:CreateRepository
+              - codeartifact:Create*
               - codeartifact:DeleteDomain
+              - codeartifact:DeleteRepository
               - codeartifact:Describe*
               - codeartifact:Get*
               - codeartifact:List*
@@ -161,6 +162,7 @@ Resources:
               - codeartifact:Associate*
             Resource:
               - arn:aws:codeartifact:${region}:${account_id}:domain/aws-orbit*
+              - arn:aws:codeartifact:${region}:${account_id}:repository/aws-orbit*
           - Effect: Allow
             Action:
               - ssm:PutParameter

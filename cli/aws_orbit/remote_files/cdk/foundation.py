@@ -19,7 +19,6 @@ import shutil
 import sys
 from typing import Any, Dict, List, cast
 
-from aws_cdk import aws_codeartifact as codeartifact
 from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
@@ -30,9 +29,9 @@ from aws_cdk import core
 from aws_cdk.core import App, CfnOutput, Construct, Duration, Stack, Tags
 
 from aws_orbit.models.context import ContextSerDe, FoundationContext
+from aws_orbit.remote_files.cdk.team_builders.codeartifact import DeployCodeArtifact
 from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
 from aws_orbit.remote_files.cdk.team_builders.s3 import S3Builder
-from aws_orbit.services.codeartifact import DeployCodeArtifact
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -110,10 +109,7 @@ class FoundationStack(Stack):
 
         # Checks if CodeArtifact exists outside of the scope of Orbit, else creates it.
         if not self.context.codeartifact_domain and not self.context.codeartifact_repository:
-            DeployCodeArtifact(
-                self,
-                id='CodeArtifact-from-Fndn'
-            )
+            self.codeartifact = DeployCodeArtifact(self, id="CodeArtifact-from-Fndn")
 
         self._ssm_parameter = ssm.StringParameter(
             self,
@@ -136,8 +132,8 @@ class FoundationStack(Stack):
                     "SharedEfsSgId": self._vpc_security_group.security_group_id,
                     "UserPoolProviderName": self.user_pool.user_pool_provider_name,
                     "SslCertArn": self.ssl_cert_arn,
-                    "CodeartifactDomain": self.artifact_domain,
-                    "CodeartifactRepository": self.pypi_repo,
+                    "CodeartifactDomain": self.codeartifact.artifact_domain.domain_name,
+                    "CodeartifactRepository": self.codeartifact.pypi_repo.repository_name,
                     "IsCodeartifactExternal": True
                     if self.context.codeartifact_domain and self.context.codeartifact_repository
                     else False,
