@@ -8,3 +8,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### **Added**
 
 - SSO property in the plugin manifest
+- Adding demo notebooks cron jobs cleaner job.
