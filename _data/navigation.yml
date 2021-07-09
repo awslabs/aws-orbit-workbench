@@ -38,8 +38,6 @@ docs:
         url: building-docker-images
       - title: Connecting to Redshift
         url: connecting-to-redshift
-      - title: Connecting EBS Volumes
-        url: connecting-ebs-volumes
       - title: Working remotely with local workspace
         url: working-remotely-with-local-workspace
       - title: Reusable Conda environments
