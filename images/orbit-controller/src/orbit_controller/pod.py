@@ -250,6 +250,23 @@ def apply_settings_to_pod(
         # Extend pod volumes with pod_setting volumes
         pod_spec["volumes"].extend(ps_spec.get("volumes", []))
 
+    # Merge
+    if "resources" in ps_spec:
+        if "resources" not in pod_spec:
+            pod_spec["resources"] = {}
+
+        if "limits" in ps_spec["resources"]:
+            pod_spec["resources"]["limits"] = {
+                **pod_spec["resources"].get("limits", {}),
+                **ps_spec["resources"].get("limits", {}),
+            }
+
+        if "requests" in ps_spec["resources"]:
+            pod_spec["resources"]["requests"] = {
+                **pod_spec["resources"].get("requests", {}),
+                **ps_spec["resources"].get("requests", {}),
+            }
+
     for container in filter_pod_containers(
         containers=pod_spec.get("initContainers", []),
         pod=pod_spec,
