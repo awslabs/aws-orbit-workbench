@@ -1,0 +1,131 @@
+apiVersion: orbit.aws/v1
+kind: PodSetting
+metadata:
+  name: orbit-micro-example
+  namespace: {{ .Values.team }}
+  labels:
+    orbit/space: team
+    {{- include "team-space.labels" . | nindent 4 }}
+spec:
+  desc: MICRO example  2 CPU + 2G
+  containerSelector:
+    jsonpath: "metadata.labels.app"
+  podSelector:
+    matchExpressions:
+      - key: orbit/orbit-micro-example
+        operator: Exists
+      - key: app
+        operator: NotIn
+        values:
+          - "orbit-runner"
+  securityContext:
+    runAsUser: 1000
+  env:
+    - name: custom_name
+      value: custom_value
+  resources:
+    limits:
+      cpu: '2.0'
+      memory: 2Gi
+    requests:
+      cpu: '2.0'
+      memory: 2Gi
+---
+apiVersion: orbit.aws/v1
+kind: PodSetting
+metadata:
+  name: orbit-nano-example
+  namespace: {{ .Values.team }}
+  labels:
+    orbit/space: team
+    {{- include "team-space.labels" . | nindent 4 }}
+spec:
+  desc: NANO example  1 CPU + 1G
+  containerSelector:
+    jsonpath: "metadata.labels.app"
+  podSelector:
+    matchExpressions:
+      - key: orbit/orbit-nano-example
+        operator: Exists
+      - key: app
+        operator: NotIn
+        values:
+          - "orbit-runner"
+  securityContext:
+    runAsUser: 1000
+  env:
+    - name: custom_name
+      value: custom_value
+  resources:
+    limits:
+      cpu: '1.0'
+      memory: 1Gi
+    requests:
+      cpu: '1.0'
+      memory: 1Gi
+---
+apiVersion: orbit.aws/v1
+kind: PodSetting
+metadata:
+  name: orbit-custom-image-example
+  namespace: {{ .Values.team }}
+  labels:
+    orbit/space: team
+    {{- include "team-space.labels" . | nindent 4 }}
+spec:
+  desc: Custom Image example  1 CPU + 1G
+  containerSelector:
+    jsonpath: "metadata.labels.app"
+  podSelector:
+    matchExpressions:
+      - key: orbit/orbit-custom-image-example
+        operator: Exists
+      - key: app
+        operator: NotIn
+        values:
+          - "orbit-runner"
+  securityContext:
+    runAsUser: 1000
+  env:
+    - name: custom_name
+      value: custom_value
+  resources:
+    limits:
+      cpu: '1.0'
+      memory: 1Gi
+    requests:
+      cpu: '1.0'
+      memory: 1Gi
+---
+apiVersion: orbit.aws/v1
+kind: PodSetting
+metadata:
+  name: orbit-ml-example
+  namespace: {{ .Values.team }}
+  labels:
+    orbit/space: team
+    {{- include "team-space.labels" . | nindent 4 }}
+spec:
+  desc: Machine Learning Image - 8 CPU + 40G  
+  containerSelector:
+    jsonpath: "metadata.labels.app"
+  podSelector:
+    matchExpressions:
+      - key: orbit/orbit-ml-example
+        operator: Exists
+      - key: app
+        operator: NotIn
+        values:
+          - "orbit-runner"
+  securityContext:
+    runAsUser: 1000
+  env:
+    - name: custom_name
+      value: custom_value
+  resources:
+    limits:
+      cpu: '8.0'
+      memory: 40Gi
+    requests:
+      cpu: '8.0'
+      memory: 40Gi
