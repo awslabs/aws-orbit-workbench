@@ -1,20 +1,18 @@
----
 apiVersion: orbit.aws/v1
 kind: PodSetting
 metadata:
-  name: orbit-vscode
+  name: orbit-jupyterhub-dynamic
   namespace: {{ .Values.team }}
   labels:
     orbit/space: team
     {{- include "team-space.labels" . | nindent 4 }}
 spec:
-  desc:  VSCode Server
-  notebookApp: code-server
+  desc:  JupyterHub for ORBIT  4 CPU + 4G
   containerSelector:
     jsonpath: "metadata.labels.app"
   podSelector:
     matchExpressions:
-      - key: orbit/orbit-vscode
+      - key: orbit/orbit-jupyterhub-dynamic
         operator: Exists
       - key: app
         operator: NotIn
@@ -24,66 +22,11 @@ spec:
     runAsUser: 1000
   env:
     - name: default_url
-      value: /code-server
-    - name: mem_guarantee
-      value: 4G
----
-apiVersion: orbit.aws/v1
-kind: PodSetting
-metadata:
-  name: orbit-workstation
-  namespace: {{ .Values.team }}
-  labels:
-    orbit/space: team
-    {{- include "team-space.labels" . | nindent 4 }}
-spec:
-  desc:  Linux WorkStation
-  notebookApp: /desktop
-  containerSelector:
-    jsonpath: "metadata.labels.app"
-  podSelector:
-    matchExpressions:
-      - key: orbit/orbit-workstation
-        operator: Exists
-      - key: app
-        operator: NotIn
-        values:
-          - "orbit-runner"
-  securityContext:
-    runAsUser: 1000
-  env:
-    - name: default_url
-      value: /desktop
-    - name: mem_guarantee 
-      value: 4G
-    - name: mem_limit 
-      value: 4G
----
-apiVersion: orbit.aws/v1
-kind: PodSetting
-metadata:
-  name: orbit-jupyter-with-apps
-  namespace: {{ .Values.team }}
-  labels:
-    orbit/space: team
-    {{- include "team-space.labels" . | nindent 4 }}
-spec:
-  desc:  Jupyer with custom apps
-  containerSelector:
-    jsonpath: "metadata.labels.app"
-  podSelector:
-    matchExpressions:
-      - key: orbit/orbit-jupyter-with-apps
-        operator: Exists
-      - key: app
-        operator: NotIn
-        values:
-          - "orbit-runner"
-  securityContext:
-    runAsUser: 1000
-  env:
-    - name: mem_guarantee 
-      value: 4G
-    - name: cpu_guarantee
-      value: "2.0"
-
+      value: /lab
+  resources:
+    limits:
+      cpu: '4.0'
+      memory: 4Gi
+    requests:
+      cpu: '4.0'
+      memory: 4Gi
