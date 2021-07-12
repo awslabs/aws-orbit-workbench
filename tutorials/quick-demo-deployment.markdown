@@ -13,7 +13,7 @@ permalink: quick-demo-deployment
 You must have the AWS CLI installed on your system to run our deployment script. 
 
 - For more info, visit https://docs.aws.amazon.com/cli/latest/userguide/welcome-versions.html
-#
+
 ## Deploy
 
 Once you have installed the AWS CLI, and is in your environment PATH, the script will do some preliminary work before deploying Orbit
@@ -56,7 +56,7 @@ Note: if you don't specify the `--destroy-pipeline` arg for your itinial deploym
 It will take about 1.5-2h to fully deploy the demo. Continue below after the pipeline completes successfully.
 
 ## Post Deploy
-#
+
 ### Create a user login
 - Go to the Cognito console
   - Click on `Manage User Pools`
@@ -75,7 +75,7 @@ It will take about 1.5-2h to fully deploy the demo. Continue below after the pip
       - Add the user to `demo-env-lake-creator`. Click on `Add to group`
       - Add the user to `demo-env-lake-user`. Click on `Add to group`
 
-#
+
 ### Landing Page
 - Go to the Systems Manager console
   - Click on `Parameter Store` on the left-hand side menu
@@ -93,7 +93,7 @@ It will take about 1.5-2h to fully deploy the demo. Continue below after the pip
   - You will be prompted to change the password. Password requires, uppercase and lowercase letters, numbers, symbols, minimum 8 characters
 - Click on the icon to the right of Lake Creator (or any of the users)
   - You will be directed to the Kubeflow dashboard
-#
+
 ### Accessing Notebook Servers
 - Navigate to the left-side menu and click on `Notebook Servers` 
 - Click on `New Server` at the top right
@@ -102,7 +102,7 @@ It will take about 1.5-2h to fully deploy the demo. Continue below after the pip
   - Select `Launch` at the bottom
 
 ## Demo notebooks execution
-#
+
 - Navigate to demo notebook
   - Path: /shared/samples/notebooks/Z-Tests/demo-lake-creator-notebook.ipynb
 - Execute all the cells sequentially to trigger the lake-creator notebooks.
