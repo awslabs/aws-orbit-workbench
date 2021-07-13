@@ -28,6 +28,9 @@ echo $ca
 echo $token
 echo $namespace
 
+if ! [ -d "/home/jovyan/.kube" ]; then
+  mkdir /home/jovyan/.kube
+fi
 
 echo "
 apiVersion: v1
