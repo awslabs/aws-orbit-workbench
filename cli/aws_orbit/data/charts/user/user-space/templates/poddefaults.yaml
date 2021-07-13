@@ -1,12 +1,12 @@
 apiVersion: kubeflow.org/v1alpha1
 kind: PodDefault
 metadata:
-  name: vscode
+  name: orbit-example-poddfault
   namespace: {{ .Values.namespace }}
   labels:
     {{- include "user-space.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
-      orbit/vscode: ''
-  desc: Start VSCode
+      orbit/orbit-example-poddfault: ''
+  desc: Example PodDefault Jupyter Notebook

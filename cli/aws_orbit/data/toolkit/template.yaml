@@ -29,6 +29,30 @@ Resources:
               DaysAfterInitiation: 1
             NoncurrentVersionExpirationInDays: 1
             Prefix: cli/remote/
+  OrbitCodeArtifactPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - codeartifact:Create*
+              - codeartifact:DeleteDomain
+              - codeartifact:DeleteRepository
+              - codeartifact:Describe*
+              - codeartifact:Get*
+              - codeartifact:List*
+              - codeartifact:TagResource
+              - codeartifact:Associate*
+            Resource:
+              - arn:aws:codeartifact:${region}:${account_id}:domain/aws-orbit*
+              - arn:aws:codeartifact:${region}:${account_id}:repository/aws-orbit*
+          - Effect: Allow
+            Action:
+              - codeartifact:GetAuthorizationToken
+              - codeartifact:GetRepositoryEndpoint
+              - codeartifact:ReadFromRepository
+            Resource: '*'
   OrbitAdminPolicyOther:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -192,12 +216,6 @@ Resources:
               - arn:aws:lambda:${region}:${account_id}:layer:${top_level}-${env_name}-*
           - Effect: Allow
             Action:
-              - codeartifact:GetAuthorizationToken
-              - codeartifact:GetRepositoryEndpoint
-              - codeartifact:ReadFromRepository
-            Resource: '*'
-          - Effect: Allow
-            Action:
               - sts:GetServiceBearerToken
             Resource: '*'
             Condition:
@@ -325,6 +343,7 @@ Resources:
       ManagedPolicyArns:
         - Ref: OrbitAdminPolicyOther
         - Ref: OrbitAdminPolicyIAMS3
+        - Ref: OrbitCodeArtifactPolicy
       RoleName: ${top_level}-${env_name}-admin
       MaxSessionDuration: 10000
       AssumeRolePolicyDocument:

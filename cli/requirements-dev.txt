@@ -104,6 +104,8 @@ aws-cdk.aws-cloudwatch==1.100.0
     #   aws-cdk.aws-sqs
     #   aws-cdk.aws-stepfunctions
     #   aws-cdk.aws-stepfunctions-tasks
+aws-cdk.aws-codeartifact==1.100.0
+    # via -r requirements-dev.in
 aws-cdk.aws-codebuild==1.100.0
     # via
     #   aws-cdk.aws-events-targets
@@ -414,6 +416,7 @@ aws-cdk.core==1.100.0
     #   aws-cdk.aws-cloudformation
     #   aws-cdk.aws-cloudfront
     #   aws-cdk.aws-cloudwatch
+    #   aws-cdk.aws-codeartifact
     #   aws-cdk.aws-codebuild
     #   aws-cdk.aws-codecommit
     #   aws-cdk.aws-codeguruprofiler
@@ -622,13 +625,7 @@ idna==2.10
     #   anyio
     #   requests
 importlib-metadata==4.0.1
-    # via
-    #   build
-    #   flake8
-    #   jsonschema
-    #   keyring
-    #   pep517
-    #   twine
+    # via keyring
 ipykernel==5.5.5
     # via notebook
 ipython-genutils==0.2.0
@@ -669,6 +666,7 @@ jsii==1.29.0
     #   aws-cdk.aws-cloudformation
     #   aws-cdk.aws-cloudfront
     #   aws-cdk.aws-cloudwatch
+    #   aws-cdk.aws-codeartifact
     #   aws-cdk.aws-codebuild
     #   aws-cdk.aws-codecommit
     #   aws-cdk.aws-codeguruprofiler
@@ -864,6 +862,7 @@ publication==0.0.3
     #   aws-cdk.aws-cloudformation
     #   aws-cdk.aws-cloudfront
     #   aws-cdk.aws-cloudwatch
+    #   aws-cdk.aws-codeartifact
     #   aws-cdk.aws-codebuild
     #   aws-cdk.aws-codecommit
     #   aws-cdk.aws-codeguruprofiler
@@ -1075,9 +1074,7 @@ typeguard==2.12.0
     # via marshmallow-dataclass
 typing-extensions==3.7.4.3
     # via
-    #   anyio
     #   black
-    #   importlib-metadata
     #   jsii
     #   mypy
     #   typing-inspect
@@ -1099,9 +1096,7 @@ websocket-client==0.58.0
 wheel==0.36.2
     # via -r requirements-dev.in
 zipp==3.4.1
-    # via
-    #   importlib-metadata
-    #   pep517
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip
