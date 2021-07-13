@@ -265,6 +265,7 @@ class FoundationStack(Stack):
             ),
             user_pool_name=f"orbit-{self.env_name}-user-pool",
         )
+        pool.apply_removal_policy(policy=core.RemovalPolicy.DESTROY)
         pool.add_domain(
             id="orbit-user-pool-domain",
             cognito_domain=cognito.CognitoDomainOptions(
