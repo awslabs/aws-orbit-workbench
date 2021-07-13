@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: '2012-10-17'
 Description: |
   Orbit Workbench Toolkit Stack - ${top_level}-${env_name}
 Resources:
