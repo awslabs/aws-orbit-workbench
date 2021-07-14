@@ -10,5 +10,5 @@ setuptools.setup(
             "code-server = codeserver:setup_codeserver",
         ]
     },
-    install_requires=["jupyter-server-proxy~=3.0.2"],
+    install_requires=["jupyter-server-proxy>=3.0.2"],
 )

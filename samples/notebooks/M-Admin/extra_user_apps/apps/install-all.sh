@@ -15,7 +15,7 @@
 #   limitations under the License.
 #
 set -ex
-cd /home/jovyan/.orbit/
+cd /opt/orbit/extra_user_apps
 for app in $(ls -d ./apps/*/)
 do
     echo "Installing ${app} from ./${app}/install.sh"
@@ -24,6 +24,6 @@ do
     chmod u+x ./install.sh
     source ./install.sh
     echo "DONE" > done.txt
-    cd /home/jovyan/.orbit
+    cd /opt/orbit/extra_user_apps
 done
 

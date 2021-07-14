@@ -390,3 +390,8 @@ images/jupyter-user/.workspace/shared/samples
 /samples/notebooks/M-Admin/querybook_image/querybook.zip
 /.mine/
 /samples/manifests/plugins/dev-env-with-plugins-public.mine.yaml
+
+zzz*
+*.bak
+*.vsix
+
