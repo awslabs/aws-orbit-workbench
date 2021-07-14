@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import logging
+import multiprocessing
 import os
 from multiprocessing import Manager, Process
 from multiprocessing.managers import SyncManager
@@ -203,7 +204,7 @@ def watch_image_replications(workers: Optional[int] = None, watcher: Optional[bo
                     "statuses": replication_statuses,
                     "config": config,
                     "replicator_id": i,
-                    "timeout": None if watcher else 60
+                    "timeout": None if watcher else 60,
                 },
             )
             image_replications_processors.append(image_replications_processor)
@@ -244,8 +245,8 @@ def watch_image_replications(workers: Optional[int] = None, watcher: Optional[bo
                         desired_image = image_replication.get_desired_image(config=config, image=source_image)
                         if source_image != desired_image:
                             status = image_replication.get_replication_status(
-                                lock=lock,
-                                queue=work_queue,
+                                lock=cast(multiprocessing.synchronize.Lock, lock),
+                                queue=cast(multiprocessing.queues.Queue[Any], work_queue),
                                 statuses=replication_statuses,
                                 image=source_image,
                                 desired_image=desired_image,
@@ -254,7 +255,7 @@ def watch_image_replications(workers: Optional[int] = None, watcher: Optional[bo
 
                 for image_replications_processor in image_replications_processors:
                     image_replications_processor.join()
-            except Exception as e:
+            except Exception:
                 logger.exception("Failed to prime work queue from inventory")
 
 

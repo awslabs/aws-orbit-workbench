@@ -18,7 +18,6 @@ import re
 import time
 from multiprocessing import Queue, synchronize
 from queue import Empty
-
 from typing import Any, Dict, Optional, cast
 
 import boto3
@@ -53,7 +52,8 @@ def _generate_buildspec(repo_host: str, repo_prefix: str, src: str, dest: str) -
             },
             "pre_build": {
                 "commands": [
-                    "/var/scripts/retrieve_docker_creds.py && echo 'Docker logins successful' || echo 'Docker logins failed'",
+                    "/var/scripts/retrieve_docker_creds.py && echo 'Docker logins successful' "
+                    "|| echo 'Docker logins failed'",
                     f"aws ecr get-login-password | docker login --username AWS --password-stdin {repo_host}",
                     (
                         f"aws ecr create-repository --repository-name {repo} "
@@ -81,7 +81,7 @@ def _replicate_image(config: Dict[str, Any], src: str, dest: str) -> str:
         buildspecOverride=buildspec,
         timeoutInMinutesOverride=config["codebuild_timeout"],
         privilegedModeOverride=True,
-        imageOverride=config["codebuild_image"]
+        imageOverride=config["codebuild_image"],
     )["build"]["id"]
 
     logger.info("Started CodeBuild Id: %s", build_id)
@@ -286,7 +286,7 @@ def process_image_replications(
     statuses: Dict[str, Any],
     config: Dict[str, str],
     replicator_id: int,
-    timeout: Optional[int] = None
+    timeout: Optional[int] = None,
 ) -> int:
     logger.info("Started ImageReplication Processor Id: %s", replicator_id)
     replication_task: Optional[Dict[str, str]] = None
@@ -331,9 +331,9 @@ def process_image_replications(
                     )
                     statuses[dest] = f"Failed:{attempt}"
                     queue.put(replication_task)
-        except Empty as e:
+        except Empty:
             logger.debug("Queue Empty, processing Complete")
-            return
+            return 0
         except Exception as e:
             with lock:
                 status = statuses[dest]

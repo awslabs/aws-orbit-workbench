@@ -119,7 +119,7 @@ def process_added_event(pod_default: Dict[str, Any]) -> None:
     if not team:
         logger.error("Skipping ADD processing, unable to determine Team: %s", dump_resource(pod_default))
         return
-        
+
     user_namespaces = [item["metadata"]["name"] for item in _get_user_namespaces(client=client, team=team)]
     copy_pod_defaults_to_user_namespaces(pod_defaults=[pod_default], user_namespaces=user_namespaces, client=client)
 

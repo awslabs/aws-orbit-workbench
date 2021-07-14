@@ -511,7 +511,9 @@ def deploy_env(context: "Context") -> None:
         if context.install_image_replicator or not context.networking.data.internet_accessible:
             confirm_endpoints(name="pod-image-updater", namespace="orbit-system")
             for _ in range(20):
-                status = k8s.get_stateful_set_status(name="pod-image-replicator", namespace="orbit-system", k8s_context=k8s_context)
+                status = k8s.get_stateful_set_status(
+                    name="pod-image-replicator", namespace="orbit-system", k8s_context=k8s_context
+                )
                 ready_replicas = status.get("ready_replicas")
                 if ready_replicas and int(ready_replicas) > 0:
                     _logger.debug("Image Replicator ready")

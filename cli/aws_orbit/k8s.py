@@ -45,7 +45,12 @@ def get_service_addresses(name: str, k8s_context: str, namespace: str = "orbit-s
             if addresses and len(addresses) > 0:
                 return cast(List[Dict[str, Any]], addresses)
 
-        _logger.debug("No Addresses found for Service %s in Namespace %s, sleeping for 1 minute (attempt: %s)", name, namespace, attempt)
+        _logger.debug(
+            "No Addresses found for Service %s in Namespace %s, sleeping for 1 minute (attempt: %s)",
+            name,
+            namespace,
+            attempt,
+        )
     else:
         return []
 
@@ -80,7 +85,7 @@ def get_ingress_dns(name: str, k8s_context: str, namespace: str = "default") -> 
         except Exception:
             _logger.exception(f"Error finding Ingress {name}.{namespace}")
 
-        _logger.info(f"Waiting for for Ingress %s.%s, sleeping for 1 minute (attempt: %s)", name, namespace, attempt)
+        _logger.info("Waiting for for Ingress %s.%s, sleeping for 1 minute (attempt: %s)", name, namespace, attempt)
     else:
         raise Exception(f"Timeout while waiting for Ingress {name}.{namespace}")
 
@@ -91,7 +96,7 @@ def get_stateful_set_status(name: str, k8s_context: str, namespace: str = "orbit
     apps = AppsV1Api()
     resp = apps.read_namespaced_stateful_set_status(name=name, namespace=namespace)
     stateful_set = resp.to_dict()
-    return stateful_set.get("status")
+    return cast(Dict[str, Any], stateful_set.get("status"))
 
 
 if __name__ == "__main__":
