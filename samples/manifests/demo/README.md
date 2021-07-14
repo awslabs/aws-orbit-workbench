@@ -1,0 +1,1 @@
+## This directory tracks the contents of a sample manifest file, which declares few team spaces and plugins per team space for a demo deployment. Detailed explanation about the manifest file and plugin details could be found [here](https://awslabs.github.io/aws-orbit-workbench/orbit-manifest-guide)

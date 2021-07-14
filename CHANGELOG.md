@@ -17,4 +17,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### **Changed**
 
 - FIX: podsettings-pod-modifier wasn't applying resources to pods
+- FIX: Fixed the cleanup of cognito pools.
 - FEATURE: podsettings for teams implementation
