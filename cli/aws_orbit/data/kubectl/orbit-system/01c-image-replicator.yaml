@@ -144,6 +144,31 @@ spec:
         sidecar.istio.io/inject: "false"
     spec:
       serviceAccountName: orbit-${env_name}-admin
+      initContainers:
+        - name: inventory
+          image: ${orbit_controller_image}
+          imagePullPolicy: ${image_pull_policy}
+          envFrom:
+            - configMapRef:
+                name: orbit-controller-config
+          command:
+            - orbit-controller
+            - process
+            - imagereplications
+          args:
+            - "--inventory"
+            - "--workers=10"
+          volumeMounts:
+            - mountPath: /state
+              name: orbit-controller-state
+              readOnly: false
+          resources:
+            limits:
+              cpu: 2
+              memory: 2G
+            requests:
+              cpu: 100m
+              memory: 100M
       containers:
         - name: watcher
           image: ${orbit_controller_image}
@@ -153,9 +178,10 @@ spec:
                 name: orbit-controller-config
           command:
             - orbit-controller
-            - watch
+            - process
             - imagereplications
           args:
+            - "--watcher"
             - "--workers=$(IMAGE_REPLICATIONS_WATCHER_WORKERS)"
           volumeMounts:
             - mountPath: /state
@@ -220,24 +246,3 @@ spec:
             name: cert-manager-scripts
             defaultMode: 0744
   backoffLimit: 1
----
-apiVersion: orbit.aws/v1
-kind: PodSetting
-metadata:
-  name: sts-regional-endpoint-enabler
-  namespace: orbit-system
-  labels:
-    orbit/space: kubeflow
-    orbit/disable-watcher: "yes"
-spec:
-  desc: Enable AWS STS Regional API calls
-  injectUserContext: false
-  containerSelector:
-    regex: "*"
-  podSelector:
-    matchExpressions:
-      - key: not-a-real-label
-        operator: NotExists
-  env:
-    - name: AWS_STS_REGIONAL_ENDPOINTS
-      value: regional

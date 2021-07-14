@@ -17,6 +17,8 @@ import os
 import re
 import time
 from multiprocessing import Queue, synchronize
+from queue import Empty
+
 from typing import Any, Dict, Optional, cast
 
 import boto3
@@ -47,7 +49,6 @@ def _generate_buildspec(repo_host: str, repo_prefix: str, src: str, dest: str) -
                         "--host=tcp://0.0.0.0:2375 --storage-driver=overlay&"
                     ),
                     'timeout 15 sh -c "until docker info; do echo .; sleep 1; done"',
-                        # Login with any store Docker Registry credentials
                 ],
             },
             "pre_build": {
@@ -221,25 +222,6 @@ def watch(
     statuses: Dict[str, Any],
     config: Dict[str, str],
 ) -> int:
-    # Prime the work queue with the inventory of known images
-    try:
-        logger.info("Priming work queue from inventory of known images")
-        with open("/var/orbit-controller/image_inventory.txt", "r") as inventory:
-            for source_image in inventory:
-                source_image = source_image.strip()
-                desired_image = get_desired_image(config=config, image=source_image)
-                if source_image != desired_image:
-                    status = get_replication_status(
-                        lock=lock,
-                        queue=queue,
-                        statuses=statuses,
-                        image=source_image,
-                        desired_image=desired_image,
-                    )
-                    logger.info("Replication Status: %s %s", source_image, status)
-    except Exception as e:
-        logger.exception("Failed to prime work queue from inventory")
-
     while True:
         try:
             client = dynamic_client()
@@ -304,6 +286,7 @@ def process_image_replications(
     statuses: Dict[str, Any],
     config: Dict[str, str],
     replicator_id: int,
+    timeout: Optional[int] = None
 ) -> int:
     logger.info("Started ImageReplication Processor Id: %s", replicator_id)
     replication_task: Optional[Dict[str, str]] = None
@@ -313,7 +296,7 @@ def process_image_replications(
             queue_size = queue.qsize()
             logger.info(f"Queue Size: {queue_size}")
 
-            replication_task = cast(Dict[str, str], queue.get(block=True, timeout=None))
+            replication_task = cast(Dict[str, str], queue.get(block=True, timeout=timeout))
             src, dest = replication_task["src"], replication_task["dest"]
 
             with lock:
@@ -348,7 +331,9 @@ def process_image_replications(
                     )
                     statuses[dest] = f"Failed:{attempt}"
                     queue.put(replication_task)
-
+        except Empty as e:
+            logger.debug("Queue Empty, processing Complete")
+            return
         except Exception as e:
             with lock:
                 status = statuses[dest]

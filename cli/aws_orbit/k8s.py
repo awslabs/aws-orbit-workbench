@@ -3,7 +3,7 @@ import time
 from typing import Any, Dict, List, cast
 
 from kubernetes import config
-from kubernetes.client import CoreV1Api, NetworkingV1beta1Api, NetworkingV1beta1IngressList, V1Service
+from kubernetes.client import AppsV1Api, CoreV1Api, NetworkingV1beta1Api, NetworkingV1beta1IngressList, V1Service
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -23,19 +23,29 @@ def get_service_hostname(name: str, k8s_context: str, namespace: str = "default"
     return str(status["load_balancer"]["ingress"][0]["hostname"])
 
 
-def get_service_endpoints(name: str, k8s_context: str, namespace: str = "orbit-system") -> List[Dict[str, Any]]:
+def get_service_addresses(name: str, k8s_context: str, namespace: str = "orbit-system") -> List[Dict[str, Any]]:
     _logger.debug("Retrieving Endpoints for Service %s in Namespace %s", name, namespace)
     config.load_kube_config(context=k8s_context)
     v1 = CoreV1Api()
-    for _ in range(10):
+    result = []
+    for attempt in range(10):
+        time.sleep(60)
         resp = v1.read_namespaced_endpoints(name=name, namespace=namespace)
         endpoints = resp.to_dict()
         subsets = endpoints.get("subsets")
         if subsets and len(subsets) > 0:
-            return cast(List[Dict[str, Any]], endpoints["subsets"])
-        else:
-            _logger.debug("No Endpoints found for Service %s in Namespace %s, sleeping for 1 minute", name, namespace)
-            time.sleep(60)
+            _logger.debug("Endpoint Subsets: %s", subsets)
+
+            addresses = None
+            for subset in subsets:
+                addresses = subset.get("addresses")
+                if addresses and len(addresses) > 0:
+                    result.extend(addresses)
+
+            if addresses and len(addresses) > 0:
+                return cast(List[Dict[str, Any]], addresses)
+
+        _logger.debug("No Addresses found for Service %s in Namespace %s, sleeping for 1 minute (attempt: %s)", name, namespace, attempt)
     else:
         return []
 
@@ -44,9 +54,8 @@ def get_ingress_dns(name: str, k8s_context: str, namespace: str = "default") -> 
     config.load_kube_config(context=k8s_context)
 
     network = NetworkingV1beta1Api()
-    timeout = 30 * 60
-    wait = 30
-    while True:
+    for attempt in range(15):
+        time.sleep(60)
         try:
             resp: NetworkingV1beta1IngressList = network.list_namespaced_ingress(namespace=namespace)
             _logger.debug(resp)
@@ -67,15 +76,22 @@ def get_ingress_dns(name: str, k8s_context: str, namespace: str = "default") -> 
                     else:
                         _logger.debug("no load_balancer in status")
             else:
-                raise Exception(f"Cannot find Ingress {name}.{namespace}")
+                _logger.debug(f"Cannot find Ingress {name}.{namespace}")
         except Exception:
-            _logger.debug(f"Cannot find Ingress {name}.{namespace}")
+            _logger.exception(f"Error finding Ingress {name}.{namespace}")
 
-        time.sleep(wait)
-        timeout = timeout - wait
-        _logger.info(f"Waiting for for Ingress {name}.{namespace}")
-        if timeout < 0:
-            raise Exception(f"Timeout while waiting for Ingress {name}.{namespace}")
+        _logger.info(f"Waiting for for Ingress %s.%s, sleeping for 1 minute (attempt: %s)", name, namespace, attempt)
+    else:
+        raise Exception(f"Timeout while waiting for Ingress {name}.{namespace}")
+
+
+def get_stateful_set_status(name: str, k8s_context: str, namespace: str = "orbit-system") -> Dict[str, Any]:
+    _logger.debug("Retrieving Status for StatefulSet %s in Namespace %s", name, namespace)
+    config.load_kube_config(context=k8s_context)
+    apps = AppsV1Api()
+    resp = apps.read_namespaced_stateful_set_status(name=name, namespace=namespace)
+    stateful_set = resp.to_dict()
+    return stateful_set.get("status")
 
 
 if __name__ == "__main__":

@@ -15,6 +15,7 @@
 import logging
 import os
 import shutil
+import time
 from typing import Any, Dict, List, Optional, Tuple
 
 import aws_orbit
@@ -71,6 +72,8 @@ def _kubeflow_namespaces(context: "Context", clean_up: bool = True) -> str:
                 env_name=context.name,
                 account_id=context.account_id,
                 region=context.region,
+                sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
+                waf_enabled="true" if context.networking.data.internet_accessible else "false",
             ),
         )
         with open(output, "w") as file:
@@ -490,23 +493,34 @@ def deploy_env(context: "Context") -> None:
 
         # Confirm orbit-system Service Endpoints
         def confirm_endpoints(name: str, namespace: str) -> None:
-            subsets = k8s.get_service_endpoints(name=name, namespace=namespace, k8s_context=k8s_context)
-            if subsets:
-                for subset in subsets:
-                    for address in subset.get("addresses", []):
-                        _logger.debug(
-                            "Service: %s Namespace: %s Hostname: %s IP: %s",
-                            name,
-                            namespace,
-                            address.get("hostname"),
-                            address.get("ip"),
-                        )
+            addresses = k8s.get_service_addresses(name=name, namespace=namespace, k8s_context=k8s_context)
+            if addresses:
+                for address in addresses:
+                    _logger.debug(
+                        "Service: %s Namespace: %s Hostname: %s IP: %s",
+                        name,
+                        namespace,
+                        address.get("hostname"),
+                        address.get("ip"),
+                    )
             else:
                 raise Exception("No Endpoints found for Service: %s Namespace: %s", name, namespace)
 
         confirm_endpoints(name="podsettings-pod-modifier", namespace="orbit-system")
+
         if context.install_image_replicator or not context.networking.data.internet_accessible:
             confirm_endpoints(name="pod-image-updater", namespace="orbit-system")
+            for _ in range(20):
+                status = k8s.get_stateful_set_status(name="pod-image-replicator", namespace="orbit-system", k8s_context=k8s_context)
+                ready_replicas = status.get("ready_replicas")
+                if ready_replicas and int(ready_replicas) > 0:
+                    _logger.debug("Image Replicator ready")
+                    break
+                else:
+                    _logger.debug("Image Replicator not yet ready, sleeping for 1 minute")
+                    time.sleep(60)
+            else:
+                raise Exception("Timeout wating for Image Replicator to become ready")
 
         # kube-system kustomizations
         output_paths = _generate_kube_system_kustomizations(context=context)

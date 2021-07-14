@@ -298,6 +298,7 @@ Resources:
               - iam:GetOpenIDConnectProvider
               - iam:ListOpenIDConnectProviders
               - iam:UpdateOpenIDConnectProviderThumbprint
+              - iam:TagOpenIDConnectProvider
             Resource:
               - arn:aws:iam::${account_id}:oidc-provider/oidc.eks.${region}.amazonaws.com*
           - Effect: Allow

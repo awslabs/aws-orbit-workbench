@@ -36,12 +36,12 @@ def cli() -> None:
     pass
 
 
-@click.group(name="watch")
-def watch() -> None:
+@click.group(name="process")
+def process() -> None:
     pass
 
 
-@watch.command(name="namespaces")
+@process.command(name="namespaces")
 @click.option("--workers", type=int, required=False, default=None, show_default=True)
 def watch_namespaces(workers: Optional[int] = None) -> None:
     workers = workers if workers else int(os.environ.get("USERSPACE_CHART_MANAGER_WORKERS", "2"))
@@ -83,7 +83,7 @@ def watch_namespaces(workers: Optional[int] = None) -> None:
         state_updater.terminate()
 
 
-@watch.command(name="podsettings")
+@process.command(name="podsettings")
 @click.option("--workers", type=int, required=False, default=None, show_default=True)
 def watch_pod_settings(workers: Optional[int] = None) -> None:
     workers = workers if workers else int(os.environ.get("POD_SETTINGS_WATCHER_WORKERS", "2"))
@@ -125,7 +125,7 @@ def watch_pod_settings(workers: Optional[int] = None) -> None:
         state_updater.terminate()
 
 
-@watch.command(name="poddefaults")
+@process.command(name="poddefaults")
 @click.option("--workers", type=int, required=False, default=None, show_default=True)
 def watch_pod_defaults(workers: Optional[int] = None) -> None:
     workers = workers if workers else int(os.environ.get("POD_DEFAULTS_WATCHER_WORKERS", "2"))
@@ -167,9 +167,10 @@ def watch_pod_defaults(workers: Optional[int] = None) -> None:
         state_updater.terminate()
 
 
-@watch.command(name="imagereplications")
+@process.command(name="imagereplications")
 @click.option("--workers", type=int, required=False, default=None, show_default=True)
-def watch_image_replications(workers: Optional[int] = None) -> None:
+@click.option("--watcher/--inventory", type=bool, required=False, default=True, show_default=True)
+def watch_image_replications(workers: Optional[int] = None, watcher: Optional[bool] = True) -> None:
     load_config()
     last_state = get_module_state(module="imagereplicationsWatcher")
 
@@ -190,26 +191,6 @@ def watch_image_replications(workers: Optional[int] = None) -> None:
         module_state = sync_manager.dict(**last_state)
         replication_statuses: Dict[str, Any] = sync_manager.dict()
 
-        logger.info("Starting ImageReplications Monitoring Process")
-        monitor = Process(
-            target=image_replication.watch,
-            kwargs={
-                "lock": lock,
-                "queue": work_queue,
-                "state": module_state,
-                "statuses": replication_statuses,
-                "config": config,
-            },
-        )
-        monitor.start()
-
-        logger.info("Starting ImageReplications State Updater Process")
-        state_updater = Process(
-            target=maintain_module_state,
-            kwargs={"module": "imagereplicationsWatcher", "state": module_state},
-        )
-        state_updater.start()
-
         image_replications_processors = []
         for i in range(config["workers"]):
             logger.info("Starting ImageReplications Worker Process")
@@ -222,20 +203,64 @@ def watch_image_replications(workers: Optional[int] = None) -> None:
                     "statuses": replication_statuses,
                     "config": config,
                     "replicator_id": i,
+                    "timeout": None if watcher else 60
                 },
             )
             image_replications_processors.append(image_replications_processor)
             image_replications_processor.start()
 
-        monitor.join()
-        for image_replications_processor in image_replications_processors:
-            image_replications_processor.terminate()
-        state_updater.terminate()
+        if watcher:
+            logger.info("Starting ImageReplications Monitoring Process")
+            monitor = Process(
+                target=image_replication.watch,
+                kwargs={
+                    "lock": lock,
+                    "queue": work_queue,
+                    "state": module_state,
+                    "statuses": replication_statuses,
+                    "config": config,
+                },
+            )
+            monitor.start()
+
+            logger.info("Starting ImageReplications State Updater Process")
+            state_updater = Process(
+                target=maintain_module_state,
+                kwargs={"module": "imagereplicationsWatcher", "state": module_state},
+            )
+            state_updater.start()
+
+            monitor.join()
+            for image_replications_processor in image_replications_processors:
+                image_replications_processor.terminate()
+            state_updater.terminate()
+        else:
+            # Prime the work queue with the inventory of known images
+            try:
+                logger.info("Priming work queue from inventory of known images")
+                with open("/var/orbit-controller/image_inventory.txt", "r") as inventory:
+                    for source_image in inventory:
+                        source_image = source_image.strip()
+                        desired_image = image_replication.get_desired_image(config=config, image=source_image)
+                        if source_image != desired_image:
+                            status = image_replication.get_replication_status(
+                                lock=lock,
+                                queue=work_queue,
+                                statuses=replication_statuses,
+                                image=source_image,
+                                desired_image=desired_image,
+                            )
+                            logger.info("Replication Status: %s %s", source_image, status)
+
+                for image_replications_processor in image_replications_processors:
+                    image_replications_processor.join()
+            except Exception as e:
+                logger.exception("Failed to prime work queue from inventory")
 
 
 def main() -> int:
     logging.getLogger("click").setLevel(logging.INFO)
 
-    cli.add_command(watch)
+    cli.add_command(process)
     cli()
     return 0
