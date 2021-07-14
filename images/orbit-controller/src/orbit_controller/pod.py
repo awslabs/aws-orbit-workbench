@@ -250,6 +250,7 @@ def apply_settings_to_pod(
         # Extend pod volumes with pod_setting volumes
         pod_spec["volumes"].extend(ps_spec.get("volumes", []))
 
+    # Merge
     for container in filter_pod_containers(
         containers=pod_spec.get("initContainers", []),
         pod=pod_spec,
@@ -362,6 +363,22 @@ def apply_settings_to_container(
         ]
         # Extend container volumes with container volumes
         container["volumeMounts"].extend(ps_spec.get("volumeMounts", []))
+
+    if "resources" in ps_spec:
+        if "resources" not in container:
+            container["resources"] = {}
+
+        if "limits" in ps_spec["resources"]:
+            container["resources"]["limits"] = {
+                **container["resources"].get("limits", {}),
+                **ps_spec["resources"].get("limits", {}),
+            }
+
+        if "requests" in ps_spec["resources"]:
+            container["resources"]["requests"] = {
+                **container["resources"].get("requests", {}),
+                **ps_spec["resources"].get("requests", {}),
+            }
 
 
 def get_response(uid: str, patch: Optional[Dict[str, Any]] = None) -> str:

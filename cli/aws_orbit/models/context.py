@@ -210,6 +210,7 @@ class FoundationContext:
     toolkit: ToolkitManifest
     cdk_toolkit: CdkToolkitManifest
     networking: NetworkingContext = NetworkingContext()
+    is_codeartifact_external: Optional[bool] = None
     user_pool_id: Optional[str] = None
     scratch_bucket_arn: Optional[str] = None
     cognito_users_url: Optional[str] = None

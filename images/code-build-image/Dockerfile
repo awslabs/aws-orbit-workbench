@@ -66,7 +66,8 @@ RUN pip install boto3~=$BOTO_VERSION \
                 aws-cdk.aws-sns~=$CDK_VERSION \
                 aws-cdk.aws-sns-subscriptions~=$CDK_VERSION \
                 aws-cdk.aws-stepfunctions~=$CDK_VERSION \
-                aws-cdk.aws-stepfunctions-tasks~=$CDK_VERSION
+                aws-cdk.aws-stepfunctions-tasks~=$CDK_VERSION \
+                aws-cdk.aws-codeartifact~=$CDK_VERSION
 
 RUN mkdir -p /var/scripts/
 ADD retrieve_docker_creds.py /var/scripts/retrieve_docker_creds.py
