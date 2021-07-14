@@ -104,6 +104,8 @@ Teams:
 
 ```
 
+[Here](https://github.com/awslabs/aws-orbit-workbench/tree/main/samples/manifests/demo) is a pointer to the location of sample plugin definitions per teamspace from Orbit samples.   
+
 ### YAML Syntax Enhancements
 
 #### 1. System environment variables support
