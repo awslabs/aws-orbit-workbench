@@ -10,7 +10,6 @@ permalink: plugin-development-guide
 
 ## Plugin Development Guide
  
-
 Orbit Workbench allows extensibility by introducing pluggable CDK resources or executables wrapped under orbit plugins. Each plugin can be a independent python package, installable during run time context. The plugin execution can create CDK resources, return usable commands or python objects to cli, whose inclusion/exclusion depends on ```<team-name>-plugins.yaml``` files at the ```manifest.yaml``` file Plugins attribute level. The plugins are registered with orbit context/team context  by parsing the manifest files.  Adding or removing plugin definitions effectively adds or removes the plugin deployment from the deployed environment.
 
 
