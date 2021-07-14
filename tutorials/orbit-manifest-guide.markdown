@@ -106,6 +106,34 @@ Teams:
 
 [Here](https://github.com/awslabs/aws-orbit-workbench/tree/main/samples/manifests/demo) is a pointer to the location of sample plugin definitions per teamspace from Orbit samples.   
 
+## Properties     
+
+***   
+
+#### Networking   
+
+Orbit's deployment needs underlying networking resources support. Customer can deploy Orbit foundation which provides the required networking resources, but if the customer is planning on using existing networking resources, they should consider providing the `physical_id(s)` of their respective resources or the location of SSM parameter which has them.    
+
+***Required***: `Optional`    
+
+***   
+
+#### ManagedNodegroups   
+
+Once we have the necessary networking support, Orbit's platform needs compute capacity for running workloads. AWS Orbit leverages AWS Elastic Container Service for Kubernetes and `ManagedNodegroups` attribute helps customers declare a list of hybrid style of managed worker nodes based on their workloads.    
+
+***Required***: `Required`    
+
+***   
+
+#### Teams   
+
+`Teams` attribute correspond to an actual team in any Enterprise, where a customer can mention a list of their data teams who wants to leverage Orbit platform. For every team that is mentioned in the manifest file, there is a corresponding `Cognito UserGroup` created.   
+
+***Required***: `Required`    
+
+***   
+
 ### YAML Syntax Enhancements
 
 #### 1. System environment variables support
