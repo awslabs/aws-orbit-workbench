@@ -144,7 +144,7 @@ def destroy(
             chart_version=chart_version,
         )
         # wait for job completion
-        sh.run(f"kubectl wait --for=condition=complete --timeout=120s job/{plugin_id}")
+        sh.run(f"kubectl wait --for=condition=complete --timeout=120s job/{plugin_id} --namespace {team_context.name}")
 
         # destroy
         helm.uninstall_chart(release_name, namespace=team_context.name)
