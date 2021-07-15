@@ -32,9 +32,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: added new `iam:TagOpenIDConnectProvider` permission to admin role
 - FIX: istio-ingress wait/polling issuses
 - FEATURE: orbit-system is first namespace deployed to enable environment manipulation
+- FIX: SMLog support for users of Sagemaker Operators
 
 ### **Removed**
 
 - Docker credentials from `foundation` and `env` commands
 - S3 Docker credential store
 - Duplicate cluster-autoscaler manifest creation
+
+

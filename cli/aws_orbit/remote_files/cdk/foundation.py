@@ -108,8 +108,13 @@ class FoundationStack(Stack):
         self.user_pool: cognito.UserPool = self._create_user_pool()
 
         # Checks if CodeArtifact exists outside of the scope of Orbit, else creates it.
-        if not self.context.codeartifact_domain and not self.context.codeartifact_repository:
+        if self.context.codeartifact_domain and self.context.codeartifact_repository:
+            self.domain_name = self.context.codeartifact_domain
+            self.repository_name = self.context.codeartifact_repository
+        else:
             self.codeartifact = DeployCodeArtifact(self, id="CodeArtifact-from-Fndn")
+            self.domain_name = self.codeartifact.artifact_domain.domain_name
+            self.repository_name = self.codeartifact.pypi_repo.repository_name
 
         self._ssm_parameter = ssm.StringParameter(
             self,
@@ -132,8 +137,8 @@ class FoundationStack(Stack):
                     "SharedEfsSgId": self._vpc_security_group.security_group_id,
                     "UserPoolProviderName": self.user_pool.user_pool_provider_name,
                     "SslCertArn": self.ssl_cert_arn,
-                    "CodeartifactDomain": self.codeartifact.artifact_domain.domain_name,
-                    "CodeartifactRepository": self.codeartifact.pypi_repo.repository_name,
+                    "CodeartifactDomain": self.domain_name,
+                    "CodeartifactRepository": self.repository_name,
                     "IsCodeartifactExternal": True
                     if self.context.codeartifact_domain and self.context.codeartifact_repository
                     else False,
