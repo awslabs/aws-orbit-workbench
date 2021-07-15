@@ -198,3 +198,35 @@ def destroy_foundation(env: str, debug: bool) -> None:
         ssm.cleanup_env(env_name=context.name, top_level="orbit-foundation")
 
         msg_ctx.progress(100)
+
+
+def destroy_credentials(env: str, registry: str, debug: bool) -> None:
+    with MessagesContext("Destroying", debug=debug) as msg_ctx:
+        context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
+        msg_ctx.info("Context loaded")
+        msg_ctx.progress(2)
+
+        msg_ctx.progress(4)
+
+        if any(cfn.does_stack_exist(stack_name=t.stack_name) for t in context.teams):
+            bundle_path = bundle.generate_bundle(command_name="destroy", context=context)
+            msg_ctx.progress(5)
+
+            buildspec = codebuild.generate_spec(
+                context=context,
+                plugins=True,
+                cmds_build=[f"orbit remote --command destroy_credentials {env} {registry}"],
+                changeset=None,
+            )
+            remote.run(
+                command_name="destroy",
+                context=context,
+                bundle_path=bundle_path,
+                buildspec=buildspec,
+                codebuild_log_callback=msg_ctx.progress_bar_callback,
+                timeout=10,
+            )
+        msg_ctx.progress(95)
+
+        msg_ctx.info("Registry Credentials Destroyed")
+        msg_ctx.progress(100)

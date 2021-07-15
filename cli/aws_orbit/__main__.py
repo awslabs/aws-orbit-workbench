@@ -100,6 +100,78 @@ def deploy() -> None:
     pass
 
 
+@deploy.command(name="toolkit")
+@click.option(
+    "--filename",
+    "-f",
+    type=str,
+    help="The target Orbit Workbench manifest file (yaml).",
+    required=True,
+)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def deploy_toolkit(
+    filename: str,
+    debug: bool,
+) -> None:
+    """Deploy a Orbit Workbench environment based on a manisfest file (yaml)."""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    filename = filename if filename[0] in (".", "/") else f"./{filename}"
+    _logger.debug("filename: %s", filename)
+    deploy_commands.deploy_toolkit(
+        filename=filename,
+        debug=debug,
+    )
+
+
+@deploy.command(name="credentials")
+@click.option(
+    "--filename",
+    "-f",
+    type=str,
+    help="The target Orbit Workbench manifest file (yaml).",
+)
+@click.option("--username", "-u", type=str, help="Image Registry username", required=True)
+@click.option(
+    "--password",
+    "-p",
+    type=str,
+    help="Image Registry password",
+)
+@click.option("--registry", "-r", type=str, help="Image Registry name/URL", default="docker.io")
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def deploy_credentials(
+    filename: str,
+    username: str,
+    password: str,
+    registry: str,
+    debug: bool,
+) -> None:
+    """Deploy Image Registry credentials for use in building and pulling images"""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    _logger.debug("filename: %s", filename)
+    _logger.debug("username: %s", username)
+    _logger.debug("registry: %s", registry)
+    deploy_commands.deploy_credentials(
+        filename=filename,
+        username=username,
+        password=password,
+        registry=registry,
+        debug=debug,
+    )
+
+
 @deploy.command(name="teams")
 @click.option(
     "--filename",
@@ -137,18 +209,6 @@ def deploy_teams(
     required=True,
 )
 @click.option(
-    "--username",
-    "-u",
-    type=str,
-    help="Dockerhub username (Required only for the first deploy).",
-)
-@click.option(
-    "--password",
-    "-p",
-    type=str,
-    help="Dockerhub password (Required only for the first deploy).",
-)
-@click.option(
     "--skip-images/--build-images",
     default=True,
     help="Skip Docker images updates (Usually for development purpose).",
@@ -164,20 +224,15 @@ def deploy_env(
     filename: str,
     skip_images: bool,
     debug: bool,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
 ) -> None:
     """Deploy a Orbit Workbench environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
-    _logger.debug("username: %s", username)
     _logger.debug("skip_images: %s", skip_images)
     deploy_commands.deploy_env(
         filename=filename,
-        username=username,
-        password=password,
         skip_images=skip_images,
         debug=debug,
     )
@@ -195,18 +250,6 @@ def deploy_env(
     "-n",
     type=str,
     help="The Name of the Orbit Foundation deployment",
-)
-@click.option(
-    "--username",
-    "-u",
-    type=str,
-    help="Dockerhub username (Required only for the first deploy).",
-)
-@click.option(
-    "--password",
-    "-p",
-    type=str,
-    help="Dockerhub password (Required only for the first deploy).",
 )
 @click.option(
     "--codeartifact-domain",
@@ -236,8 +279,6 @@ def deploy_foundation(
     name: Optional[str] = None,
     debug: bool = False,
     internet_accessibility: bool = True,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
     codeartifact_domain: Optional[str] = None,
     codeartifact_repository: Optional[str] = None,
 ) -> None:
@@ -254,14 +295,11 @@ def deploy_foundation(
     _logger.debug("name: %s", name)
     _logger.debug("codeartifact_domain: %s", codeartifact_domain)
     _logger.debug("codeartifact_repository: %s", codeartifact_repository)
-    _logger.debug("username: %s", username)
     deploy_commands.deploy_foundation(
         filename=filename,
         name=name,
         codeartifact_domain=codeartifact_domain,
         codeartifact_repository=codeartifact_repository,
-        username=username,
-        password=password,
         debug=debug,
         internet_accessibility=internet_accessibility,
     )
@@ -319,6 +357,24 @@ def destroy_foundation(name: str, debug: bool) -> None:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     _logger.debug("name: %s", name)
     destroy_commands.destroy_foundation(env=name, debug=debug)
+
+
+@destroy.command(name="credentials")
+@click.option("--env", "-e", type=str, required=True, help="Destroy Registry Credentials.")
+@click.option("--registry", "-r", type=str, required=True, help="Image Registry.")
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def destroy_credentials(env: str, registry: str, debug: bool) -> None:
+    """Destroy Image Registry Credentials previously stored"""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    _logger.debug("env: %s", env)
+    _logger.debug("registry: %s", registry)
+    destroy_commands.destroy_credentials(env=env, registry=registry, debug=debug)
 
 
 @click.group(name="build")

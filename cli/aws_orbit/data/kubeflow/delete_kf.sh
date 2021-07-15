@@ -17,4 +17,4 @@
 
 set -ex
 export AWS_CLUSTER_NAME=${cluster_name}
-kfctl delete -V -f kfctl_aws.yaml
+kfctl delete -V -f kfctl_aws.yaml --force-deletion

@@ -14,7 +14,7 @@
 
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from aws_orbit.models.context import Context
 from aws_orbit.services import cloudwatch, codebuild, s3
@@ -62,6 +62,7 @@ def _execute_codebuild(
     command_name: str,
     buildspec: codebuild.SPEC_TYPE,
     timeout: int,
+    overrides: Optional[Dict[str, Any]] = None,
     codebuild_log_callback: Optional[Callable[[str], None]] = None,
 ) -> None:
     if context.toolkit.s3_bucket is None:
@@ -77,6 +78,7 @@ def _execute_codebuild(
         bundle_location=bundle_location,
         buildspec=buildspec,
         timeout=timeout,
+        overrides=overrides,
     )
     _wait_execution(
         build_id=build_id,
@@ -91,6 +93,7 @@ def run(
     bundle_path: str,
     buildspec: codebuild.SPEC_TYPE,
     timeout: int,
+    overrides: Optional[Dict[str, Any]] = None,
     codebuild_log_callback: Optional[Callable[[str], None]] = None,
 ) -> None:
     if context.toolkit.s3_bucket is None:
@@ -105,5 +108,6 @@ def run(
         buildspec=buildspec,
         codebuild_log_callback=codebuild_log_callback,
         timeout=timeout,
+        overrides=overrides,
     )
     s3.delete_objects(bucket=bucket, keys=[key])

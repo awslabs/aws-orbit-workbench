@@ -240,6 +240,7 @@ Resources:
               - secretsmanager:*
             Resource:
               - arn:aws:secretsmanager:${region}:${account_id}:secret:${top_level}-redshift-master-${env_name}*
+              - arn:aws:secretsmanager:${region}:${account_id}:secret:${top_level}-${env_name}-*
           - Effect: Allow
             Action:
               - serverlessrepo:*
@@ -318,6 +319,7 @@ Resources:
               - iam:GetOpenIDConnectProvider
               - iam:ListOpenIDConnectProviders
               - iam:UpdateOpenIDConnectProviderThumbprint
+              - iam:TagOpenIDConnectProvider
             Resource:
               - arn:aws:iam::${account_id}:oidc-provider/oidc.eks.${region}.amazonaws.com*
           - Effect: Allow
@@ -381,6 +383,12 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_LARGE
         Image: aws/codebuild/standard:4.0
+        EnvironmentVariables:
+        - Name: AWS_ACCOUNT_ID
+          Value:
+            Ref: AWS::AccountId
+        - Name: AWS_ORBIT_ENV
+          Value: ${env_name}
       Source:
         Type: NO_SOURCE
         BuildSpec:  |
