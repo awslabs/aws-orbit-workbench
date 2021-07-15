@@ -9,7 +9,7 @@
     Parameters:
         foo: boo
         xoo: 1234
--   PluginId: clean_regression_files
+-   PluginId: clean-regression-files
     Module: team_script_launcher
     Parameters:
         script: |

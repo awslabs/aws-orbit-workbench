@@ -1,4 +1,4 @@
--   PluginId: clean_lakeformation_glue_database
+-   PluginId: clean-lakeformation-glue-database
     Module: team_script_launcher
     Parameters:
         scope: destroy

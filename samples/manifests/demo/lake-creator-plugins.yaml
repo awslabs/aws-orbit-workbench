@@ -1,3 +1,13 @@
+-   PluginId: clean-lakeformation-glue-database
+    Module: team_script_launcher
+    Parameters:
+        scope: destroy
+        script: |
+            echo "Deleting cms_secured_db glue database"
+            aws sts get-caller-identity
+            aws glue delete-database --name cms_secured_db
+            echo "Deleted cms_secured_db glue database"
+        restartPolicy: Never
 -   PluginId: custom_cfn
     Module: custom_cfn
     Parameters:
