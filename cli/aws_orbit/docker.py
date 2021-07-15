@@ -16,7 +16,7 @@ import logging
 import os
 from typing import List, Optional, TypeVar
 
-from aws_orbit import dockerhub, exceptions, sh, utils
+from aws_orbit import exceptions, sh, utils
 from aws_orbit.models.context import Context, FoundationContext
 from aws_orbit.services import ecr
 
@@ -29,12 +29,6 @@ T = TypeVar("T")
 def login(context: T) -> None:
     if not (isinstance(context, Context) or isinstance(context, FoundationContext)):
         raise ValueError("Unknown 'context' Type")
-    username, password = dockerhub.get_credential(context=context)
-    if username and password:
-        sh.run(f"docker login --username {username} --password {password}", hide_cmd=True)
-        _logger.debug("DockerHub logged in.")
-    else:
-        _logger.debug("Dockerhub username or password not set.")
 
     username, password = ecr.get_credential()
     ecr_address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com"
@@ -59,7 +53,7 @@ def login_ecr_only(context: "Context", account_id: Optional[str] = None, region:
     _logger.debug("ECR logged in (%s / %s).", account_id, region)
 
 
-def dockerhub_pull(name: str, tag: str = "latest") -> None:
+def public_pull(name: str, tag: str = "latest") -> None:
     sh.run(f"docker pull {name}:{tag}")
 
 
@@ -198,9 +192,9 @@ def replicate_image(
     else:
         final_source_version = source_version
 
-    if final_source == "dockerhub":
-        dockerhub_pull(name=final_source_repository, tag=final_source_version)
-        _logger.debug("Pulled DockerHub Image")
+    if final_source == "public":
+        public_pull(name=final_source_repository, tag=final_source_version)
+        _logger.debug("Pulled Public Image")
     elif final_source in ["ecr", "ecr-internal", "ecr-public"]:
         ecr_pull(context=context, name=final_source_repository, tag=final_source_version)
         _logger.debug("Pulled ECR Image")
@@ -209,7 +203,7 @@ def replicate_image(
         _logger.debug("Pulled external ECR Image")
     else:
         e = ValueError(
-            f"Invalid Image Source: {final_source}. Valid values are: code, dockerhub, ecr, ecr-internal, ecr-public"
+            f"Invalid Image Source: {final_source}. Valid values are: code, public, ecr, ecr-internal, ecr-public"
         )
         _logger.error(e)
         raise e

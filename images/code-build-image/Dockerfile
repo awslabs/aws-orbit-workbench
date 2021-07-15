@@ -1,6 +1,7 @@
 FROM public.ecr.aws/v3o4w1g6/aws-orbit-workbench/python:3.8.7-slim-buster
 
 ARG CDK_VERSION=1.100.0
+ARG BOTO_VERSION=1.12.0
 
 RUN apt -y update && \
     # Install dependencies
@@ -40,7 +41,13 @@ RUN curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-hel
 
 RUN npm install -g aws-cdk@$CDK_VERSION yarn
 
-RUN pip install aws_cdk.core~=$CDK_VERSION \
+# This is a HACK to default pip to the deprecated legacy dependency resolver
+# until we decide how to lock dependencies
+RUN mkdir -p ~/.config/pip/
+ADD pip.conf ~/.config/pip/pip.conf
+
+RUN pip install boto3~=$BOTO_VERSION \
+                aws_cdk.core~=$CDK_VERSION \
                 aws-cdk.aws-codecommit~=$CDK_VERSION \
                 aws-cdk.aws-ec2~=$CDK_VERSION \
                 aws-cdk.aws-s3~=$CDK_VERSION \
@@ -61,5 +68,8 @@ RUN pip install aws_cdk.core~=$CDK_VERSION \
                 aws-cdk.aws-stepfunctions~=$CDK_VERSION \
                 aws-cdk.aws-stepfunctions-tasks~=$CDK_VERSION \
                 aws-cdk.aws-codeartifact~=$CDK_VERSION
+
+RUN mkdir -p /var/scripts/
+ADD retrieve_docker_creds.py /var/scripts/retrieve_docker_creds.py
 
 ENTRYPOINT ["bash"]

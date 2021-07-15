@@ -17,6 +17,7 @@ import os
 import re
 import time
 from multiprocessing import Queue, synchronize
+from queue import Empty
 from typing import Any, Dict, Optional, cast
 
 import boto3
@@ -51,6 +52,8 @@ def _generate_buildspec(repo_host: str, repo_prefix: str, src: str, dest: str) -
             },
             "pre_build": {
                 "commands": [
+                    "/var/scripts/retrieve_docker_creds.py && echo 'Docker logins successful' "
+                    "|| echo 'Docker logins failed'",
                     f"aws ecr get-login-password | docker login --username AWS --password-stdin {repo_host}",
                     (
                         f"aws ecr create-repository --repository-name {repo} "
@@ -78,6 +81,7 @@ def _replicate_image(config: Dict[str, Any], src: str, dest: str) -> str:
         buildspecOverride=buildspec,
         timeoutInMinutesOverride=config["codebuild_timeout"],
         privilegedModeOverride=True,
+        imageOverride=config["codebuild_image"],
     )["build"]["id"]
 
     logger.info("Started CodeBuild Id: %s", build_id)
@@ -102,6 +106,7 @@ def get_config(workers: Optional[int] = None) -> Dict[str, Any]:
         "repo_prefix": os.environ.get("IMAGE_REPLICATIONS_REPO_PREFIX", ""),
         "codebuild_project": os.environ.get("IMAGE_REPLICATIONS_CODEBUILD_PROJECT", ""),
         "codebuild_timeout": int(os.environ.get("IMAGE_REPLICATIONS_CODEBUILD_TIMEOUT", "30")),
+        "codebuild_image": os.environ.get("ORBIT_CODEBUILD_IMAGE", ""),
         "replicate_external_repos": os.environ.get("IMAGE_REPLICATIONS_REPLICATE_EXTERNAL_REPOS", "False").lower()
         in ["true", "yes", "1"],
         "workers": workers if workers else int(os.environ.get("IMAGE_REPLICATIONS_WATCHER_WORKERS", "2")),
@@ -281,6 +286,7 @@ def process_image_replications(
     statuses: Dict[str, Any],
     config: Dict[str, str],
     replicator_id: int,
+    timeout: Optional[int] = None,
 ) -> int:
     logger.info("Started ImageReplication Processor Id: %s", replicator_id)
     replication_task: Optional[Dict[str, str]] = None
@@ -290,7 +296,7 @@ def process_image_replications(
             queue_size = queue.qsize()
             logger.info(f"Queue Size: {queue_size}")
 
-            replication_task = cast(Dict[str, str], queue.get(block=True, timeout=None))
+            replication_task = cast(Dict[str, str], queue.get(block=True, timeout=timeout))
             src, dest = replication_task["src"], replication_task["dest"]
 
             with lock:
@@ -325,7 +331,9 @@ def process_image_replications(
                     )
                     statuses[dest] = f"Failed:{attempt}"
                     queue.put(replication_task)
-
+        except Empty:
+            logger.debug("Queue Empty, processing Complete")
+            return 0
         except Exception as e:
             with lock:
                 status = statuses[dest]

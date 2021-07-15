@@ -22,16 +22,16 @@ metadata:
 apiVersion: orbit.aws/v1
 kind: PodSetting
 metadata:
-  name: kubeflow-node-selector-settings
+  name: kubeflow-deployment-settings
   namespace: kubeflow
   labels:
     orbit/space: kubeflow
     orbit/disable-watcher: "yes"
 spec:
-  desc:  Node Selector for Kubeflow deployment pods
+  desc:  Node Selector and Environment variables for Kubeflow deployment pods
   injectUserContext: false
   containerSelector:
-    jsonpath: "*"
+    regex: "*"
   podSelector:
     matchExpressions:
       - key: not-a-real-label
@@ -41,3 +41,27 @@ spec:
   nodeSelector:
     orbit/usage: reserved
     orbit/node-group: env
+  env:
+    - name: AWS_STS_REGIONAL_ENDPOINTS
+      value: ${sts_ep}
+---
+apiVersion: orbit.aws/v1
+kind: PodSetting
+metadata:
+  name: alb-ingress-settings
+  namespace: kubeflow
+  labels:
+    orbit/space: kubeflow
+    orbit/disable-watcher: "yes"
+spec:
+  desc:  Arguments to the ALB Ingress Controller pod
+  injectUserContext: false
+  containerSelector:
+    regex: "alb-ingress-controller"
+  podSelector:
+    matchLabels:
+      app: aws-alb-ingress-controller
+  args:
+  - "--ingress-class=alb"
+  - "--cluster-name=$(CLUSTER_NAME)"
+  - "--feature-gates=waf=${waf_enabled}"

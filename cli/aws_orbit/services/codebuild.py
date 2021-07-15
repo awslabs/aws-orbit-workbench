@@ -123,6 +123,7 @@ def start(
     bundle_location: str,
     buildspec: Dict[str, Any],
     timeout: int,
+    overrides: Optional[Dict[str, Any]] = None,
 ) -> str:
     client = boto3_client("codebuild")
     repo: Optional[str] = None
@@ -155,6 +156,10 @@ def start(
         build_params["imageOverride"] = repo
     if credentials:
         build_params["imagePullCredentialsTypeOverride"] = credentials
+
+    if overrides:
+        build_params = {**build_params, **overrides}
+
     response: Dict[str, Any] = client.start_build(**build_params)
     return str(response["build"]["id"])
 
@@ -260,6 +265,11 @@ def generate_spec(
         install.append(f"pip install aws-orbit=={__version__}")
     else:
         install.append(f"pip install aws-orbit~={__version__}")
+
+    # Login with any store Docker Registry credentials
+    install.append(
+        "/var/scripts/retrieve_docker_creds.py && echo 'Docker logins successful' || echo 'Docker logins failed'"
+    )
 
     # Plugins
     if plugins and isinstance(context, Context):

@@ -103,7 +103,7 @@ class ManagedNodeGroupManifest:
 @dataclass(base_schema=BaseSchema, frozen=True)
 class CodeBuildImageManifest(ImageManifest):
     repository: Optional[str] = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base"
-    version: Optional[str] = "1.0.2"
+    version: Optional[str] = "1.1.0"
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)

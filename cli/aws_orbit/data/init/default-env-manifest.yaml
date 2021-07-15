@@ -9,11 +9,11 @@ SharedEfsSgId: !SSM ${/orbit/dev-env/demo::SharedEFSSecurityGroup}
 Images:
     JupyterUser:
         Repository: aws-orbit-jupyter-user
-        Source: dockerhub
+        Source: public
         Version: latest
     JupyterUserSpark:
         Repository: aws-orbit-jupyter-user-spark
-        Source: dockerhub
+        Source: public
         Version: latest
 Networking:
     VpcId: !SSM ${/orbit/dev-env/demo::VpcId}

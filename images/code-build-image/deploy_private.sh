@@ -18,15 +18,15 @@
 set -ex
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+ECR_ADDRESS="${ACCOUNT_ID}".dkr.ecr."${AWS_DEFAULT_REGION}".amazonaws.com
 REPOSITORY=aws-orbit-workbench/code-build-base
 VERSION=$(cat ${DIR}/VERSION)
 
 cd ${DIR}
 
 docker build --tag ${REPOSITORY}:${VERSION} .
-docker tag ${REPOSITORY}:${VERSION} public.ecr.aws/v3o4w1g6/${REPOSITORY}:${VERSION}
-docker push public.ecr.aws/v3o4w1g6/${REPOSITORY}:${VERSION}
+docker tag ${REPOSITORY}:${VERSION} ${ECR_ADDRESS}/${REPOSITORY}:${VERSION}
+docker push ${ECR_ADDRESS}/${REPOSITORY}:${VERSION}
 
-# Can't tag as latest until we eliminate or patch 0.15.0 because it uses latest
-# docker tag ${REPOSITORY}:${VERSION} public.ecr.aws/v3o4w1g6/${REPOSITORY}:latest
-# docker push public.ecr.aws/v3o4w1g6/${REPOSITORY}:latest
+
