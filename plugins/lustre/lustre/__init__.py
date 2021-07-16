@@ -175,6 +175,7 @@ def destroy(
     team_context: "TeamContext",
     parameters: Dict[str, Any],
 ) -> None:
+    plugin_id = plugin_id.replace("_", "-")
     _logger.debug(
         "Delete Plugin %s of Team Env name: %s | Team name: %s",
         plugin_id,
