@@ -42,6 +42,8 @@ idna==2.10
     # via
     #   anyio
     #   requests
+importlib-metadata==4.6.1
+    # via jsonschema
 ipykernel==5.5.3
     # via notebook
 ipython-genutils==0.2.0
@@ -207,6 +209,10 @@ traitlets==5.0.5
     #   nbconvert
     #   nbformat
     #   notebook
+typing-extensions==3.10.0.0
+    # via
+    #   anyio
+    #   importlib-metadata
 urllib3==1.26.5
     # via requests
 wcwidth==0.2.5
@@ -215,6 +221,8 @@ webencodings==0.5.1
     # via bleach
 wheel==0.36.2
     # via jupyter-packaging
+zipp==3.5.0
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
