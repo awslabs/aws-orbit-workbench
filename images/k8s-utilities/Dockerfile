@@ -4,8 +4,8 @@ FROM public.ecr.aws/v3o4w1g6/aws-orbit-workbench/python:3.8.7-slim-buster
 ARG KUBECTL_VERSION="v1.19.2"
 
 # Set by docker automatically
-ARG TARGETOS
-ARG TARGETARCH
+ARG TARGETOS="linux"
+ARG TARGETARCH="amd64"
 
 RUN apt -y update && \
     # ---- Install CLIs ----
