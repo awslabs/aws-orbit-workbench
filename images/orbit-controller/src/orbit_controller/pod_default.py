@@ -71,7 +71,7 @@ def construct(
 def create_pod_default(namespace: str, pod_default: Dict[str, Any], client: dynamic.DynamicClient) -> None:
     api = client.resources.get(api_version=KUBEFLOW_API_VERSION, group=KUBEFLOW_API_GROUP, kind="PodDefault")
     api.create(namespace=namespace, body=pod_default)
-    logger.debug("Created pod_default: %s", dump_resource(pod_default))
+    logger.debug("Created pod_default: %s in namespace: %s", dump_resource(pod_default), namespace)
 
 
 def modify_pod_default(namespace: str, name: str, desc: str, client: dynamic.DynamicClient) -> None:
