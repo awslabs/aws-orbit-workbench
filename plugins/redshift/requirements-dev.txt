@@ -481,7 +481,10 @@ google-auth==1.29.0
 idna==2.10
     # via requests
 importlib-metadata==4.0.1
-    # via keyring
+    # via
+    #   flake8
+    #   keyring
+    #   twine
 isort==5.6.4
     # via -r requirements-dev.in
 jmespath==0.10.0
@@ -707,6 +710,7 @@ typeguard==2.12.0
 typing-extensions==3.7.4.3
     # via
     #   black
+    #   importlib-metadata
     #   jsii
     #   mypy
     #   typing-inspect
