@@ -1,5 +1,4 @@
-#ARG BASE_IMAGE=${jupyter_user_base}
-ARG BASE_IMAGE="616260033377.dkr.ecr.us-west-2.amazonaws.com/orbit-env-r110e-dev/jupyter-user"
+ARG BASE_IMAGE=${jupyter_user_base}
 FROM "$BASE_IMAGE"
 
 ######################################
