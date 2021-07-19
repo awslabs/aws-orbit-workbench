@@ -46,4 +46,3 @@ aws-cdk.aws-codeartifact~=1.100.0
 -e ../plugins/ray/
 -e ../plugins/sm-operator/
 -e ../plugins/voila/
--e ../jupyterlab_orbit/

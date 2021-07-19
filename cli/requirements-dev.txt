@@ -12,8 +12,6 @@
     # via -r requirements-dev.in
 -e ../plugins/hello_world
     # via -r requirements-dev.in
--e ../jupyterlab_orbit
-    # via -r requirements-dev.in
 -e ../plugins/lustre
     # via -r requirements-dev.in
 -e ../plugins/overprovisioning
@@ -32,20 +30,10 @@
     # via -r requirements-dev.in
 -e .
     # via -r requirements-dev.in
-anyio==3.1.0
-    # via jupyter-server
 appdirs==1.4.4
     # via black
 appnope==0.1.2
-    # via
-    #   ipykernel
-    #   ipython
-argon2-cffi==20.1.0
-    # via
-    #   jupyter-server
-    #   notebook
-async-generator==1.10
-    # via nbclient
+    # via ipython
 attrs==20.3.0
     # via
     #   cattrs
@@ -496,40 +484,34 @@ aws-cdk.region-info==1.100.0
     #   aws-cdk.aws-iam
     #   aws-cdk.aws-route53-targets
     #   aws-cdk.core
-aws-sam-translator==1.35.0
+aws-sam-translator==1.37.0
     # via cfn-lint
-babel==2.9.1
-    # via jupyterlab-server
 backcall==0.2.0
     # via ipython
 black==20.8b1
     # via -r requirements-dev.in
-bleach==3.3.0
-    # via
-    #   nbconvert
-    #   readme-renderer
-boto3==1.17.87
+bleach==3.3.1
+    # via readme-renderer
+boto3==1.18.1
     # via
     #   aws-orbit
     #   aws-orbit-sdk
     #   aws-sam-translator
-botocore==1.20.88
+botocore==1.21.1
     # via
     #   aws-orbit
     #   boto3
     #   s3transfer
-build==0.3.1.post1
+build==0.5.1
     # via check-manifest
-cachetools==4.2.1
+cachetools==4.2.2
     # via google-auth
 cattrs==1.5.0
     # via jsii
-certifi==2020.12.5
+certifi==2021.5.30
     # via
     #   kubernetes
     #   requests
-cffi==1.14.5
-    # via argon2-cffi
 cfn-flip==1.2.3
     # via aws-orbit
 cfn-lint==0.44.7
@@ -546,7 +528,7 @@ click==7.1.2
     #   pip-tools
 colorama==0.4.4
     # via twine
-constructs==3.3.75
+constructs==3.3.97
     # via
     #   aws-cdk.assets
     #   aws-cdk.aws-apigateway
@@ -606,55 +588,39 @@ decorator==4.4.2
     #   ipython
     #   jsonpath-ng
     #   networkx
-defusedxml==0.7.1
-    # via nbconvert
 docutils==0.17.1
     # via
     #   pyroma
     #   readme-renderer
 ecdsa==0.14.1
     # via python-jose
-entrypoints==0.3
-    # via nbconvert
 flake8==3.8.4
     # via -r requirements-dev.in
-google-auth==1.29.0
+google-auth==1.33.0
     # via kubernetes
 idna==2.10
+    # via requests
+importlib-metadata==4.6.1
     # via
-    #   anyio
-    #   requests
-importlib-metadata==4.0.1
-    # via keyring
-ipykernel==5.5.5
-    # via notebook
+    #   build
+    #   flake8
+    #   jsonschema
+    #   keyring
+    #   pep517
+    #   twine
 ipython-genutils==0.2.0
-    # via
-    #   jupyter-server
-    #   nbformat
-    #   notebook
-    #   traitlets
+    # via traitlets
 ipython==7.19.0
-    # via
-    #   aws-orbit-sdk
-    #   ipykernel
-    #   jupyterlab
+    # via aws-orbit-sdk
 isort==5.7.0
     # via -r requirements-dev.in
 jedi==0.18.0
     # via ipython
-jinja2==3.0.1
-    # via
-    #   jupyter-server
-    #   jupyterlab
-    #   jupyterlab-server
-    #   nbconvert
-    #   notebook
 jmespath==0.10.0
     # via
     #   boto3
     #   botocore
-jsii==1.29.0
+jsii==1.31.0
     # via
     #   aws-cdk.assets
     #   aws-cdk.aws-apigateway
@@ -715,11 +681,9 @@ jsii==1.29.0
     #   aws-cdk.lambda-layer-kubectl
     #   aws-cdk.region-info
     #   constructs
-json5==0.9.5
-    # via jupyterlab-server
 jsonpatch==1.32
     # via cfn-lint
-jsonpath-ng==1.5.2
+jsonpath-ng==1.5.3
     # via aws-orbit
 jsonpointer==2.1
     # via jsonpatch
@@ -727,106 +691,51 @@ jsonschema==3.2.0
     # via
     #   aws-sam-translator
     #   cfn-lint
-    #   jupyterlab-server
-    #   nbformat
 junit-xml==1.9
     # via cfn-lint
-jupyter-client==6.2.0
-    # via
-    #   ipykernel
-    #   jupyter-server
-    #   nbclient
-    #   notebook
-jupyter-core==4.7.1
-    # via
-    #   jupyter-client
-    #   jupyter-server
-    #   jupyterlab
-    #   nbconvert
-    #   nbformat
-    #   notebook
 jupyter-packaging==0.7.12
     # via -r requirements-dev.in
-jupyter-server==1.8.0
-    # via
-    #   jupyterlab
-    #   jupyterlab-server
-    #   nbclassic
-jupyterlab-pygments==0.1.2
-    # via nbconvert
-jupyterlab-server==2.6.0
-    # via jupyterlab
-jupyterlab==3.0.16
-    # via aws-orbit-jupyterlab-orbit
 keyring==23.0.1
     # via twine
 kubernetes==12.0.1
     # via
     #   aws-orbit
     #   aws-orbit-sdk
-markupsafe==2.0.1
-    # via jinja2
 marshmallow-dataclass[enum,union]==8.3.2
     # via aws-orbit
 marshmallow-enum==1.5.1
     # via marshmallow-dataclass
-marshmallow==3.11.1
+marshmallow==3.12.2
     # via
     #   marshmallow-dataclass
     #   marshmallow-enum
 mccabe==0.6.1
     # via flake8
-mistune==0.8.4
-    # via nbconvert
 mypy-extensions==0.4.3
     # via
     #   black
     #   mypy
     #   typing-inspect
-mypy==0.812
+mypy==0.910
     # via -r requirements-dev.in
-nbclassic==0.3.1
-    # via jupyterlab
-nbclient==0.5.3
-    # via nbconvert
-nbconvert==6.0.7
-    # via
-    #   jupyter-server
-    #   notebook
-nbformat==5.1.3
-    # via
-    #   jupyter-server
-    #   nbclient
-    #   nbconvert
-    #   notebook
-nest-asyncio==1.5.1
-    # via
-    #   jupyter-client
-    #   nbclient
 networkx==2.5.1
     # via cfn-lint
-notebook==6.4.0
-    # via nbclassic
-numpy==1.20.2
+numpy==1.21.1
     # via pandas
-oauthlib==3.1.0
+oauthlib==3.1.1
     # via requests-oauthlib
-packaging==20.9
+packaging==21.0
     # via
     #   bleach
     #   build
     #   jupyter-packaging
-    #   jupyterlab
-    #   jupyterlab-server
 pandas==1.2.0
     # via aws-orbit-sdk
-pandocfilters==1.4.3
-    # via nbconvert
 parso==0.8.2
     # via jedi
-pathspec==0.8.1
+pathspec==0.9.0
     # via black
-pep517==0.10.0
+pep517==0.11.0
     # via build
 pexpect==4.8.0
     # via ipython
@@ -834,22 +743,16 @@ pickleshare==0.7.5
     # via ipython
 pip-tools==5.5.0
     # via -r requirements-dev.in
-pkginfo==1.7.0
+pkginfo==1.7.1
     # via twine
 ply==3.11
     # via jsonpath-ng
-prometheus-client==0.11.0
-    # via
-    #   jupyter-server
-    #   notebook
-prompt-toolkit==3.0.18
+prompt-toolkit==3.0.19
     # via ipython
 psycopg2-binary==2.8.6
     # via aws-orbit-sdk
 ptyprocess==0.7.0
-    # via
-    #   pexpect
-    #   terminado
+    # via pexpect
 publication==0.0.3
     # via
     #   aws-cdk.assets
@@ -920,17 +823,13 @@ pyasn1==0.4.8
     #   rsa
 pycodestyle==2.6.0
     # via flake8
-pycparser==2.20
-    # via cffi
 pydot==1.4.2
     # via -r requirements-dev.in
 pyflakes==2.2.0
     # via flake8
-pygments==2.8.1
+pygments==2.9.0
     # via
     #   ipython
-    #   jupyterlab-pygments
-    #   nbconvert
     #   pyroma
     #   readme-renderer
 pyparsing==2.4.7
@@ -939,13 +838,12 @@ pyparsing==2.4.7
     #   pydot
 pyroma==3.0.1
     # via -r requirements-dev.in
-pyrsistent==0.17.3
+pyrsistent==0.18.0
     # via jsonschema
-python-dateutil==2.8.1
+python-dateutil==2.8.2
     # via
     #   botocore
     #   jsii
-    #   jupyter-client
     #   kubernetes
     #   pandas
 python-jose==3.2.0
@@ -956,9 +854,7 @@ python-slugify==4.0.1
     #   aws-orbit
     #   aws-orbit-sdk
 pytz==2021.1
-    # via
-    #   babel
-    #   pandas
+    # via pandas
 pyyaml-include==1.2.post2
     # via aws-orbit
 pyyaml==5.4.1
@@ -969,14 +865,9 @@ pyyaml==5.4.1
     #   cfn-lint
     #   kubernetes
     #   pyyaml-include
-pyzmq==22.1.0
-    # via
-    #   jupyter-client
-    #   jupyter-server
-    #   notebook
 readme-renderer==29.0
     # via twine
-regex==2021.4.4
+regex==2021.7.6
     # via black
 requests-oauthlib==1.3.0
     # via kubernetes
@@ -985,26 +876,20 @@ requests-toolbelt==0.9.1
 requests==2.25.1
     # via
     #   aws-orbit-sdk
-    #   jupyterlab-server
     #   kubernetes
     #   requests-oauthlib
     #   requests-toolbelt
     #   twine
-rfc3986==1.4.0
+rfc3986==1.5.0
     # via twine
 rsa==4.7.2
     # via
     #   google-auth
     #   python-jose
-s3transfer==0.4.2
+s3transfer==0.5.0
     # via boto3
-send2trash==1.5.0
+six==1.16.0
     # via
-    #   jupyter-server
-    #   notebook
-six==1.15.0
-    # via
-    #   argon2-cffi
     #   aws-sam-translator
     #   bleach
     #   cfn-flip
@@ -1018,21 +903,12 @@ six==1.15.0
     #   python-dateutil
     #   python-jose
     #   readme-renderer
-    #   websocket-client
-sniffio==1.2.0
-    # via anyio
 sqlalchemy-redshift==0.7.9
     # via aws-orbit-sdk
 sqlalchemy==1.3.15
     # via
     #   aws-orbit-sdk
     #   sqlalchemy-redshift
-terminado==0.10.0
-    # via
-    #   jupyter-server
-    #   notebook
-testpath==0.5.0
-    # via nbconvert
 text-unidecode==1.3
     # via python-slugify
 toml==0.10.2
@@ -1040,47 +916,33 @@ toml==0.10.2
     #   black
     #   build
     #   check-manifest
-    #   pep517
-tornado==6.1
-    # via
-    #   ipykernel
-    #   jupyter-client
-    #   jupyter-server
-    #   jupyterlab
-    #   notebook
-    #   terminado
+    #   mypy
+tomli==1.0.4
+    # via pep517
 tqdm==4.56.2
     # via
     #   aws-orbit
     #   twine
 traitlets==5.0.5
-    # via
-    #   ipykernel
-    #   ipython
-    #   jupyter-client
-    #   jupyter-core
-    #   jupyter-server
-    #   nbclient
-    #   nbconvert
-    #   nbformat
-    #   notebook
+    # via ipython
 twine==3.3.0
     # via -r requirements-dev.in
 typed-ast==1.4.3
     # via
     #   black
     #   mypy
-typeguard==2.12.0
+typeguard==2.12.1
     # via marshmallow-dataclass
-typing-extensions==3.7.4.3
+typing-extensions==3.10.0.0
     # via
     #   black
+    #   importlib-metadata
     #   jsii
     #   mypy
     #   typing-inspect
-typing-inspect==0.6.0
+typing-inspect==0.7.1
     # via marshmallow-dataclass
-urllib3==1.26.5
+urllib3==1.26.6
     # via
     #   botocore
     #   kubernetes
@@ -1089,14 +951,14 @@ wcwidth==0.2.5
     # via prompt-toolkit
 webencodings==0.5.1
     # via bleach
-websocket-client==0.58.0
-    # via
-    #   jupyter-server
-    #   kubernetes
+websocket-client==1.1.0
+    # via kubernetes
 wheel==0.36.2
     # via -r requirements-dev.in
-zipp==3.4.1
-    # via importlib-metadata
+zipp==3.5.0
+    # via
+    #   importlib-metadata
+    #   pep517
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

@@ -40,7 +40,7 @@ setup(
     keywords=["aws", "cdk"],
     python_requires=">=3.7, <3.9",
     install_requires=[
-        "boto3~=1.12",
+        "boto3~=1.18.0",
         "botocore~=1.15",
         "PyYAML~=5.4",
         "click~=7.1.0",
