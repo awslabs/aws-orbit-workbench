@@ -1,13 +1,14 @@
-ARG BASE_IMAGE=${jupyter_user_base}
+#ARG BASE_IMAGE=${jupyter_user_base}
+ARG BASE_IMAGE="616260033377.dkr.ecr.us-west-2.amazonaws.com/orbit-env-r110e-dev/jupyter-user"
 FROM "$BASE_IMAGE"
 
 ######################################
 # Apache Spark ARGs
 ######################################
 
-ARG spark_version="3.0.2"
+ARG spark_version="3.0.3"
 ARG hadoop_version="3.2"
-ARG spark_checksum="0E35D769AF1D94484AFAB95E2759FBD34E692AA2A6DB2FEFB0EE654BE9DDA1F01C96412F03B5E6AE4BDBA69DC622DD12CAC95002BEAB24096FD315EEF2A5F245"
+ARG spark_checksum="22fc9a6042769d13c01f3b07f0dfae9d5d1e408244870833c5e703eb43669ce14c875f7cec47a07f1cf2ee3e65dfb1363977644bcd686481ccc0e0715d2760d5"
 ARG openjdk_version="11"
 
 ENV APACHE_SPARK_VERSION="${spark_version}" HADOOP_VERSION="${hadoop_version}"
