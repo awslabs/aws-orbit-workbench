@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: istio-ingress wait/polling issuses
 - FEATURE: orbit-system is first namespace deployed to enable environment manipulation
 - FIX: SMLog support for users of Sagemaker Operators
+- FIX: Added default values to pull kubectl in the k8s-utilities image
 
 ### **Removed**
 
