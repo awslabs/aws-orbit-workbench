@@ -17,6 +17,7 @@ import multiprocessing
 import os
 from multiprocessing import Manager, Process
 from multiprocessing.managers import SyncManager
+from multiprocessing.queues import Queue
 from typing import Any, Dict, Optional, cast
 
 import click
@@ -246,7 +247,7 @@ def watch_image_replications(workers: Optional[int] = None, watcher: Optional[bo
                         if source_image != desired_image:
                             status = image_replication.get_replication_status(
                                 lock=cast(multiprocessing.synchronize.Lock, lock),
-                                queue=cast(multiprocessing.queues.Queue[Any], work_queue),
+                                queue=cast(Queue, work_queue),  # type: ignore
                                 statuses=replication_statuses,
                                 image=source_image,
                                 desired_image=desired_image,
