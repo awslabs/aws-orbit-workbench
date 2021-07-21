@@ -190,3 +190,69 @@ plugins
                 )
    ```
    
+Steps for developing advanced plugins with Helm
+
+
+1) Create orbit plugin python project. Example ray plugin has below folder structure holding helm chart. 
+
+    ```ray/__init__.py``` holds examples of deploy, destroy hooks usage.
+    ```ray/templates/ray-cluster.yaml``` holds examples of yaml template and helper functions.
+    
+    ```
+        ray
+        ├── ray
+        │    ├── Chart.yaml
+        │    ├── __init__.py
+        │    ├── templates
+        │    │   ├── _helpers.tpl
+        │    │   └── ray-cluster.yaml
+        │    └── values.yaml
+        ├── requirements-dev.in
+        ├── requirements-dev.txt
+        ├── requirements.txt
+        ├── setup.cfg
+        ├── setup.py
+        ├── pyproject.toml
+        ├── MANIFEST.in
+        ├── VERSION
+        ├── fix.sh
+        └── validate.sh
+    ```
+ 
+3) Map plugin functions to plugin registry callable hooks. Using orbit helm utils, package the helm repository. Orbit deploy and destory hooks are used to call helm install and uninstall. 
+   ```
+    # /aws-orbit-workbench/plugins/ray/ray/__init__.py
+       
+    @hooks.deploy
+    def deploy(
+        plugin_id: str,
+        context: "Context",
+        team_context: "TeamContext",
+        parameters: Dict[str, Any],
+    ) -> None:
+        ...    
+        repo_location = team_context.team_helm_repository
+        repo = team_context.name
+        helm.add_repo(repo=repo, repo_location=repo_location)
+        chart_name, chart_version, chart_package = helm.package_chart(repo=repo, chart_path=chart_path, values=vars)
+        helm.install_chart(
+            repo=repo,
+            namespace=team_context.name,
+            name=f"{team_context.name}-{plugin_id}",
+            chart_name=chart_name,
+            chart_version=chart_version,
+        )
+    
+    
+        @hooks.destroy
+        def destroy(
+            plugin_id: str,
+            context: "Context",
+            team_context: "TeamContext",
+            parameters: Dict[str, Any],
+        ) -> None:
+            ...
+            helm.uninstall_chart(f"{team_context.name}-{plugin_id}", namespace=team_context.name)
+
+   
+   ```
