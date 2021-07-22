@@ -94,6 +94,11 @@ spec:
         name: orbit
         path: kubeflow/manifests/stacks/aws/application/centraldashboard
     name: centraldashboard
+  - kustomizeConfig:
+      repoRef:
+        name: orbit
+        path: kubeflow/manifests/stacks/aws/application/aws-alb-ingress-controller
+    name: aws-alb-ingress-controller
   plugins:
   - kind: KfAwsPlugin
     metadata:
@@ -112,5 +117,5 @@ spec:
   - name: manifests
     uri: https://github.com/kubeflow/manifests/archive/v1.2.0.tar.gz
   - name: orbit
-    uri: https://github.com/awslabs/aws-orbit-workbench/archive/refs/heads/main.tar.gz
+    uri: https://github.com/chamcca/aws-orbit-workbench/archive/refs/heads/main.tar.gz
   version: v1.2-branch
