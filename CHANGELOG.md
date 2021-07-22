@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added Credential store in Secrets Manager for Docker credentials
 - Enabled AWS_STS_REGIONAL_ENDPOINTS env variable on kubeflow Pods
 - Enable/Disable WAF on ALB Controller dependent on internet-accessibility
+- Added orbit/applied-podsettings annotation to Pods when PodSetting is applied
 
 ### **Changed**
 

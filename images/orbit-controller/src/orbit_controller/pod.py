@@ -207,6 +207,14 @@ def apply_settings_to_pod(
     ps_spec = pod_setting["spec"]
     pod_spec = pod["spec"]
 
+    # Compile list of any PodSettings applied to the Pod and store as an annotation
+    applied_pod_settings = pod["metadata"].get("annotations", {}).get("orbit/applied-podsettings", "").split(",")
+    applied_pod_settings.append(pod_setting["metadata"]["name"])
+    if "annotations" in pod["metadata"]:
+        pod["metadata"]["annotations"]["orbit/applied-podsettings"] = ",".join(applied_pod_settings)
+    else:
+        pod["metadata"]["annotations"] = {"orbit/applied-podsettings": ",".join(applied_pod_settings)}
+
     # Merge
     if "serviceAccountName" in ps_spec:
         pod_spec["serviceAccountName"] = ps_spec.get("serviceAccountName", None)
