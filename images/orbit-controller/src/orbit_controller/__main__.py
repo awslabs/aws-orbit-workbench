@@ -21,6 +21,7 @@ from multiprocessing.queues import Queue
 from typing import Any, Dict, Optional, cast
 
 import click
+from click import ClickException
 from orbit_controller import (
     get_module_state,
     image_replication,
@@ -257,7 +258,9 @@ def watch_image_replications(workers: Optional[int] = None, watcher: Optional[bo
                 for image_replications_processor in image_replications_processors:
                     image_replications_processor.join()
             except Exception:
-                logger.exception("Failed to prime work queue from inventory")
+                msg = "Failed to prime work queue from inventory"
+                logger.exception(msg)
+                raise ClickException(msg)
 
 
 def main() -> int:
