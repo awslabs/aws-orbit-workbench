@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Enabled AWS_STS_REGIONAL_ENDPOINTS env variable on kubeflow Pods
 - Enable/Disable WAF on ALB Controller dependent on internet-accessibility
 - Added orbit/applied-podsettings annotation to Pods when PodSetting is applied
+- Added podsetting support in regression notebooks and sdk
 
 ### **Changed**
 
