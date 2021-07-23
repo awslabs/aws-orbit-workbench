@@ -10,5 +10,4 @@ patchesStrategicMerge:
   kind: Deployment
   metadata:
     name: alb-ingress-controller
-    annotations:
-      orbit/annotation: chauncy
+  $patch: delete
