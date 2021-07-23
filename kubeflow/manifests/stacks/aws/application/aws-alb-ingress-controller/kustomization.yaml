@@ -4,4 +4,10 @@ namespace: kubeflow
 resources:
 - ../../../../aws/aws-alb-ingress-controller/overlays/application
 patchesStrategicMerge:
-- delete-deployment.yaml
+# - delete-deployment.yaml
+- |-
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: alb-ingress-controller
+  $patch: delete
