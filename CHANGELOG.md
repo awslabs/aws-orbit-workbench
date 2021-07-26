@@ -37,6 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: SMLog support for users of Sagemaker Operators
 - FIX: Added default values to pull kubectl in the k8s-utilities image
 - FIX: Increase cluster-autoscaler resource limits
+- FIX: image-replicator fails if unable to prime env from image inventory
 
 ### **Removed**
 
