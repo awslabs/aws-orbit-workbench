@@ -117,10 +117,15 @@ This plugin enables Amazon FSx for Lustre file system availabilty to the Orbit p
 - PluginId: fast_fs_lustre
   Module: lustre
   Path: ../plugins/lustre/
+  Parameters:
+    - storage: 1200Gi
+    -folder: /fsx/data1
+
 ```
 #### Parameters 
--*storage* define the site of the file system, e.g. 1200Gi 
--*folder* define a mount path for the file system, e.g., /fsx/data1
+-*storage* define the site of the file system
+
+-*folder* define a mount path for the file system 
 
 References: 
 - [Amazon Amazon FSx for Lustre](https://docs.aws.amazon.com/fsx/latest/LustreGuide/what-is.html)
@@ -131,16 +136,16 @@ References:
 - PluginId: ray
   Module: ray
   Path: ../plugins/ray/
-  Parameters:
-    - parameter 1: <value>
-    - parameter 2: <value>
-    ...
-    - parameter N: <value>
+    Parameters:
+        workers: 3
+        release_tag: 1.3.0
   
 ```
 #### Parameters 
 
-TBD
+-*workers* the number of workers in the ray cluster
+
+-*release_tag* - the version of Ray used
 
 ----
 
@@ -180,9 +185,13 @@ References:
 #### Parameters 
 -*script* - Required. The bash script to run after the team has been created. A Pod will be created to run this script. 
 The pod can run a single time script , or even a script that run forever as a Daemon as shown in the example.
+
 -*restartPolicy*- Optional. Default is 'Never'. The restart policy of the pod.
+
 -*image* - Optional. The image address for the pod. Default is the base notebook image.   
+
 -*uid* - Optional. The user id for the pod security context.
+
 -*gid* - Optional. The group id for the pod security context.
 
 
