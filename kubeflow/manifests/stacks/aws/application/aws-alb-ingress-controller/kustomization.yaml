@@ -10,4 +10,5 @@ patchesStrategicMerge:
   kind: Deployment
   metadata:
     name: alb-ingress-controller
-  $patch: delete
+    labels:
+      orbit/node-type: fargate
