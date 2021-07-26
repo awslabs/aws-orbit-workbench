@@ -5,7 +5,10 @@ from os.path import expanduser
 from typing import Any, Dict, Tuple
 
 import boto3
+import botocore
 from yaml import safe_load
+
+from aws_orbit_sdk import __version__
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
@@ -91,6 +94,12 @@ def split_s3_path(s3_path: str) -> Tuple[str, str]:
     return bucket, key
 
 
+def get_botocore_config() -> botocore.config.Config:
+    return botocore.config.Config(retries={"max_attempts": 5}, connect_timeout=10, max_pool_connections=10, user_agent_extra=f"awsorbit/{__version__}")
+
+def boto3_client(service_name: str) -> boto3.client:
+    return boto3.Session().client(service_name=service_name, config=get_botocore_config())
+
 def get_workspace() -> Dict[str, str]:
     """
     Returns workspace configuration for your given role for your Team Space in a dictionary object.
@@ -111,7 +120,7 @@ def get_workspace() -> Dict[str, str]:
     >>> from aws_orbit_sdk.common import get_workspace
     >>> workspace = get_workspace()
     """
-    ssm = boto3.client("ssm")
+    ssm = boto3_client("ssm")
     props = get_properties()
 
     role_key = f"/orbit/{props['AWS_ORBIT_ENV']}/teams/{props['AWS_ORBIT_TEAM_SPACE']}/context"
