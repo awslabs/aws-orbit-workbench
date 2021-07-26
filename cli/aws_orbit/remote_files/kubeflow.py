@@ -18,6 +18,7 @@ import time
 from typing import Any, Dict
 
 from aws_orbit import ORBIT_CLI_ROOT, sh, utils
+from aws_orbit.exceptions import FailedShellCommand
 from aws_orbit.models.context import Context
 from aws_orbit.remote_files import kubectl
 from aws_orbit.remote_files.utils import get_k8s_context
@@ -147,4 +148,13 @@ def destroy_kubeflow(context: Context) -> None:
         output_path = os.path.abspath(output_path)
         _logger.debug(f"kubeflow config dir: {output_path}")
         utils.print_dir(output_path)
-        sh.run("./delete_kf.sh", cwd=output_path)
+
+        timeouts = 0
+        while timeouts < 3:
+            try:
+                _logger.info("Deleting kubeflow resources")
+                sh.run("./delete_kf.sh", cwd=output_path)
+            except FailedShellCommand:
+                _logger.info("The command returned a non-zero exit code. Retrying to delete resources")
+                timeouts += 1
+                time.sleep(300)

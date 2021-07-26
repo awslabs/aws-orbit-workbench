@@ -28,7 +28,6 @@ import pandas as pd
 from kubernetes import config as k8_config
 from kubernetes import watch as k8_watch
 from kubernetes.client import *
-from slugify import slugify
 
 from aws_orbit_sdk.common import get_properties, get_stepfunctions_waiter_config
 from aws_orbit_sdk.common_pod_specification import TeamConstants
@@ -648,6 +647,13 @@ def list_running_cronjobs():
     return res["items"]
 
 
+def get_podsetting_spec(podsetting_name, team_name):
+    load_kube_config()
+    co = CustomObjectsApi()
+    crd = co.get_namespaced_custom_object("orbit.aws", "v1", team_name, "podsettings", podsetting_name)
+    return crd
+
+
 def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1JobSpec:
     """
     Runs Task in Python in a notebook using lambda.
@@ -671,65 +677,44 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
         __CURRENT_ENV_MANIFEST__ = load_env_context_from_ssm(env_name)
 
     env = build_env(__CURRENT_ENV_MANIFEST__, env_name, taskConfiguration, team_name)
-    profile = resolve_profile(taskConfiguration)
-    image = resolve_image(__CURRENT_ENV_MANIFEST__, profile)
-    node_type = get_node_type(taskConfiguration)
+    env["AWS_ORBIT_ENV"] = props["AWS_ORBIT_ENV"]
+    env["AWS_ORBIT_TEAM_SPACE"] = props["AWS_ORBIT_TEAM_SPACE"]
+
+    podsetting_name = resolve_podsetting_name(taskConfiguration)
+    podsetting_spec = get_podsetting_spec(podsetting_name, team_name)
+    image = resolve_image_from_podsetting(__CURRENT_ENV_MANIFEST__, podsetting_spec)
 
     job_name: str = f'run-{taskConfiguration["task_type"]}'
-    volumes: List[Dict[str, Any]] = list()
-    volume_mounts: List[Dict[str, Any]] = list()
     grant_sudo = False
-    if "kubespawner_override" in profile:
-        if "volumes" in profile["kubespawner_override"]:
-            volumes.extend(profile["kubespawner_override"]["volumes"])
-            _logger.info("profile override is attaching volumes: %s", volumes)
-        if "volume_mounts" in profile["kubespawner_override"]:
-            volume_mounts.extend(profile["kubespawner_override"]["volume_mounts"])
-            _logger.info("profile override is mounting volumes: %s", volume_mounts)
-    if "compute" in taskConfiguration:
-        if "grant_sudo" in taskConfiguration["compute"]:
-            if taskConfiguration["compute"]["grant_sudo"] or taskConfiguration["compute"]["grant_sudo"] == "True":
-                grant_sudo = True
-        if "volumes" in taskConfiguration["compute"]:
-            volumes.extend(taskConfiguration["compute"]["volumes"])
-            _logger.info("task override is attaching volumes: %s", volumes)
-        if "volume_mounts" in taskConfiguration["compute"]:
-            volume_mounts.extend(taskConfiguration["compute"]["volume_mounts"])
-            _logger.info("task override is mounting volumes: %s", volume_mounts)
-        if "labels" in taskConfiguration["compute"]:
-            labels = {**labels, **taskConfiguration["compute"]["labels"]}
-    node_selector: List[Dict[str, str]] = list()
-    _logger.info("volumes:%s", json.dumps(volumes))
-    _logger.info("volume_mounts:%s", json.dumps(volume_mounts))
+
+    labels = {**labels, **podsetting_spec["metadata"]["labels"]}
+    # MUST set this to the name of the podsetting in format 'orbit/{podsetting-name} so orbit-controller watcher will apply the settings
+    # MUST set 'app' to orbit-runner
+    label_indicator = "orbit/" + podsetting_spec["metadata"]["name"]
+    labels[label_indicator] = ""
+
+    labels["app"] = "orbit-runner"
 
     pod_properties: Dict[str, str] = dict(
         name=job_name,
-        image=image,
         cmd=["bash", "-c", "python /opt/python-utils/notebook_cli.py"],
         port=22,
+        image=image,
         service_account="default-editor",
-        node_selector=node_selector,
         run_privileged=False,
         allow_privilege_escalation=True,
         env=env,
-        volumes=volumes,
-        volume_mounts=volume_mounts,
         labels=labels,
         logger=_logger,
         run_as_uid=1000,
         run_as_gid=100,
     )
 
-    if "kubespawner_override" in profile:
-        for k, v in profile["kubespawner_override"].items():
-            if k in ["image"]:
-                # special handling is already done for image
-                continue
-            if k in pod_properties:
-                raise RuntimeError("Override '%s' in profile is not allowed", k)
-            _logger.debug("profile overriding pod value %s=%s", k, v)
-            pod_properties[k] = v
-
+    ###
+    # 20210721 - podsettings are used, and the orbit-controller overrides the pod spec when created.
+    # The make_pod method has a lot of configurable items that are not used.  Orbit only needs the
+    # parameters to make a minimally viable pod spec.
+    ###
     pod: V1Pod = make_pod(**pod_properties)
     pod.spec.restart_policy = "Never"
     job_spec = V1JobSpec(
@@ -737,7 +722,6 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
         template=pod,
         ttl_seconds_after_finished=120,
     )
-
     return job_spec
 
 
@@ -1155,7 +1139,27 @@ def make_pod(
     return pod
 
 
+def get_podsetting_spec(podsetting_name, team_name):
+    # /apis/orbit.aws/v1/namespaces/lake-user/podsettings/orbit-custom-image-with-apps-lake-user
+    load_kube_config()
+    co = CustomObjectsApi()
+    return co.get_namespaced_custom_object("orbit.aws", "v1", team_name, "podsettings", podsetting_name)
+
+
+def resolve_image_from_podsetting(__CURRENT_ENV_MANIFEST__, podsetting_spec):
+    if podsetting_spec and podsetting_spec["spec"] and podsetting_spec["spec"]["image"]:
+        image = podsetting_spec["spec"]["image"]
+    else:
+        repository = (
+            f'{__CURRENT_ENV_MANIFEST__["Images"]["JupyterUser"]["Repository"]}:'
+            f'{__CURRENT_ENV_MANIFEST__["Images"]["JupyterUser"]["Version"]}'
+        )
+        image = f"{repository}"
+    return image
+
+
 def resolve_image(__CURRENT_ENV_MANIFEST__, profile):
+
     if not profile or "kubespawner_override" not in profile or "image" not in profile["kubespawner_override"]:
         repository = (
             f'{__CURRENT_ENV_MANIFEST__["Images"]["JupyterUser"]["Repository"]}:'
@@ -1178,19 +1182,9 @@ def build_env(__CURRENT_ENV_MANIFEST__, env_name, taskConfiguration, team_name):
     return env
 
 
-def resolve_profile(taskConfiguration):
-    team_constants = TeamConstants()
-    if "compute" in taskConfiguration and "profile" in taskConfiguration["compute"]:
-        profile_name = taskConfiguration["compute"]["profile"]
-        profile_name = slugify(profile_name)
-        _logger.info(f"using profile %s", profile_name)
-        profile = team_constants.profile(profile_name)
-        if not profile:
-            raise Exception("Profile '%s' not found", profile)
-    else:
-        profile = team_constants.default_profile()
-        _logger.info(f"using default profile %s", profile)
-    return profile
+def resolve_podsetting_name(taskConfiguration):
+    if "compute" in taskConfiguration and "podsetting" in taskConfiguration["compute"]:
+        return taskConfiguration["compute"]["podsetting"]
 
 
 def _run_task_eks(taskConfiguration: dict) -> Any:
