@@ -110,23 +110,5 @@ spec:
 ---
 {{ end }}
 ---
-apiVersion: orbit.aws/v1
-kind: PodSetting
-metadata:
-  name: orbit-vscode
-  namespace: {{ .Values.team }}
-  labels:
-    orbit/space: team
-    orbit/disable-watcher: "yes"
-    {{- include "team-space.labels" . | nindent 4 }}
-spec:
-  desc:  Start VSCode application
-  notebookApp: code-server
-  containerSelector:
-    jsonpath: "metadata.name"
-  podSelector:
-    matchExpressions:
-      - key: orbit/vscode
-        operator: Exists
----
+
 
