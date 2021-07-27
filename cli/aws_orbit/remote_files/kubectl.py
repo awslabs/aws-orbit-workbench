@@ -239,6 +239,7 @@ def _generate_kube_system_manifest(context: "Context", clean_up: bool = True) ->
             content,
             dict(
                 account_id=context.account_id,
+                region=context.region,
                 env_name=context.name,
                 cluster_name=f"orbit-{context.name}",
                 sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
@@ -551,8 +552,15 @@ def deploy_env(context: "Context") -> None:
 
         # Patch Kubeflow
         _logger.debug("Orbit applying KubeFlow patch")
-        sh.run(f'kubectl patch deployment jupyter-web-app-deployment --patch "{patch}" -n kubeflow')
+        sh.run(f'kubectl patch deployment -n kubeflow jupyter-web-app-deployment --patch "{patch}"')
         sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
+
+        patch = '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}}}}}'
+        sh.run(f"kubectl patch deployment -n istio-system authzadaptor --patch '{patch}'")
+
+        patch = '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}},"spec":{"containers":[{"name":"alb-ingress-controller","args":["--ingress-class=alb","--cluster-name=$(CLUSTER_NAME)","--aws-vpc-id=VPC_ID"]}]}}}}'
+        patch = patch.replace("VPC_ID", context.networking.vpc_id)
+        sh.run(f"kubectl patch deployment -n kubeflow alb-ingress-controller --patch '{patch}'")
 
         # Confirm env Service Endpoints
         confirm_endpoints(name="landing-page-service", namespace="orbit-system")

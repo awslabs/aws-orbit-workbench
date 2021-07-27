@@ -106,7 +106,7 @@ def create_fargate_profile(
     cluster_name: str,
     role_arn: str,
     subnets: List[str],
-    namespace: str,
+    namespaces: List[str],
     selector_labels: Optional[Dict[str, Any]] = None,
 ) -> None:
     _logger.debug(f"Creating EKS Fargate Profile: {profile_name}")
@@ -115,13 +115,15 @@ def create_fargate_profile(
         _logger.debug(f"EKS Fargate Profile already exists: {profile_name}")
         return
 
+    selectors = [{"namespace": namespace, "labels": selector_labels} for namespace in namespaces]
+    
     eks_client = boto3_client("eks")
     eks_client.create_fargate_profile(
         fargateProfileName=profile_name,
         clusterName=cluster_name,
         podExecutionRoleArn=role_arn,
         subnets=subnets,
-        selectors=[{"namespace": namespace, "labels": selector_labels}],
+        selectors=selectors,
     )
 
     waiter_model = WaiterModel(WAITER_CONFIG)

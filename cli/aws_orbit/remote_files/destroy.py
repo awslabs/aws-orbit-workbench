@@ -103,6 +103,9 @@ def destroy_env(args: Tuple[str, ...]) -> None:
     # Helps save time on target group issues with vpc
     cleanup.delete_target_group(env_stack_name=context.env_stack_name)
 
+    # Delete the optional Fargate Profile
+    cleanup.delete_system_fargate_profile(context=context)
+
     helm.destroy_env(context=context)
     _logger.debug("Helm Charts uninstalled")
 

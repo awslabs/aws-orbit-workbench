@@ -21,8 +21,8 @@ from typing import Any, Dict, List, Optional, cast
 
 import botocore.exceptions
 
-from aws_orbit.models.context import FoundationContext
-from aws_orbit.services import efs, elb, s3
+from aws_orbit.models.context import Context, FoundationContext
+from aws_orbit.services import cfn, efs, eks, elb, s3
 from aws_orbit.utils import boto3_client, boto3_resource
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -259,3 +259,18 @@ def delete_target_group(env_stack_name: str) -> None:
                         _logger.error(f"Target in use: {err}")
 
     _logger.info("Target group removed")
+
+
+def delete_system_fargate_profile(context: Context) -> None:
+    cluster_name = f"orbit-{context.name}"
+    eks_stack_name = f"eksctl-{cluster_name}-cluster"
+    if cfn.does_stack_exist(stack_name=eks_stack_name) and not context.networking.data.internet_accessible:
+        fargate_profile = f"orbit-{context.name}-system"
+        _logger.info(f"Deleting Fargate Profile: {fargate_profile}")
+        eks.delete_fargate_profile(
+            profile_name=fargate_profile,
+            cluster_name=cluster_name,
+        )
+    else:
+        _logger.info("Skipping Fargate Profile Deletion")
+

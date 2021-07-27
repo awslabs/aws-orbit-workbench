@@ -311,7 +311,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
     _logger.debug("Synthetizing the EKSCTL Environment manifest")
     cluster_name = f"orbit-{context.name}"
 
-    if cfn.does_stack_exist(stack_name=final_eks_stack_name) is False:
+    if not cfn.does_stack_exist(stack_name=final_eks_stack_name):
 
         requested_nodegroups = (
             changeset.managed_nodegroups_changeset.added_nodegroups
@@ -451,6 +451,16 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
         },
     )
 
+    if not context.networking.data.internet_accessible:
+        eks.create_fargate_profile(
+            profile_name=f"orbit-{context.name}-system",
+            cluster_name=f"orbit-{context.name}",
+            role_arn=cast(str, context.eks_fargate_profile_role_arn),
+            subnets=[s.subnet_id for s in context.networking.private_subnets],
+            namespaces=["orbit-system", "istio-system", "kubeflow"],
+            selector_labels={"orbit/node-type": "fargate"},
+        )
+
     _logger.debug("EKSCTL deployed")
 
 
@@ -476,7 +486,7 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
                 cluster_name=f"orbit-{context.name}",
                 role_arn=cast(str, context.eks_fargate_profile_role_arn),
                 subnets=subnets_ids,
-                namespace=team_context.name,
+                namespaces=[team_context.name],
                 selector_labels={"team": team_context.name, "orbit/node-type": "fargate"},
             )
 
