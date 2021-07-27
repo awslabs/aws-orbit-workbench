@@ -95,10 +95,17 @@ def split_s3_path(s3_path: str) -> Tuple[str, str]:
 
 
 def get_botocore_config() -> botocore.config.Config:
-    return botocore.config.Config(retries={"max_attempts": 5}, connect_timeout=10, max_pool_connections=10, user_agent_extra=f"awsorbit/{__version__}")
+    return botocore.config.Config(
+        retries={"max_attempts": 5},
+        connect_timeout=10,
+        max_pool_connections=10,
+        user_agent_extra=f"awsorbit/{__version__}",
+    )
+
 
 def boto3_client(service_name: str) -> boto3.client:
     return boto3.Session().client(service_name=service_name, config=get_botocore_config())
+
 
 def get_workspace() -> Dict[str, str]:
     """
