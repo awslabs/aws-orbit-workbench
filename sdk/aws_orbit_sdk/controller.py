@@ -653,6 +653,9 @@ def get_podsetting_spec(podsetting_name, team_name):
     crd = co.get_namespaced_custom_object("orbit.aws", "v1", team_name, "podsettings", podsetting_name)
     return crd
 
+def get_priority(taskConfiguration: dict):
+    if "compute" in taskConfiguration and "priorityClassName" in taskConfiguration["compute"]:
+        return taskConfiguration["compute"]["priorityClassName"]
 
 def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1JobSpec:
     """
@@ -680,6 +683,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
     env["AWS_ORBIT_ENV"] = props["AWS_ORBIT_ENV"]
     env["AWS_ORBIT_TEAM_SPACE"] = props["AWS_ORBIT_TEAM_SPACE"]
 
+    priority_class_name = get_priority(taskConfiguration)
     podsetting_name = resolve_podsetting_name(taskConfiguration)
     podsetting_spec = get_podsetting_spec(podsetting_name, team_name)
     image = resolve_image_from_podsetting(__CURRENT_ENV_MANIFEST__, podsetting_spec)
@@ -704,6 +708,7 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
         run_privileged=False,
         allow_privilege_escalation=True,
         env=env,
+        priority_class_name=priority_class_name,
         labels=labels,
         logger=_logger,
         run_as_uid=1000,
@@ -945,6 +950,8 @@ def make_pod(
             for secret_ref in image_pull_secrets
         ]
 
+    if priority_class_name:
+        pod.spec.priority_class_name = priority_class_name
     if node_selector:
         pod.spec.node_selector = node_selector
 
