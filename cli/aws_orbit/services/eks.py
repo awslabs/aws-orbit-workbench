@@ -116,7 +116,7 @@ def create_fargate_profile(
         return
 
     selectors = [{"namespace": namespace, "labels": selector_labels} for namespace in namespaces]
-    
+
     eks_client = boto3_client("eks")
     eks_client.create_fargate_profile(
         fargateProfileName=profile_name,

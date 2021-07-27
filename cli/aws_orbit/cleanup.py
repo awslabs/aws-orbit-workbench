@@ -273,4 +273,3 @@ def delete_system_fargate_profile(context: Context) -> None:
         )
     else:
         _logger.info("Skipping Fargate Profile Deletion")
-

@@ -16,7 +16,7 @@ import logging
 import os
 import shutil
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import aws_orbit
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
@@ -558,8 +558,12 @@ def deploy_env(context: "Context") -> None:
         patch = '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}}}}}'
         sh.run(f"kubectl patch deployment -n istio-system authzadaptor --patch '{patch}'")
 
-        patch = '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}},"spec":{"containers":[{"name":"alb-ingress-controller","args":["--ingress-class=alb","--cluster-name=$(CLUSTER_NAME)","--aws-vpc-id=VPC_ID"]}]}}}}'
-        patch = patch.replace("VPC_ID", context.networking.vpc_id)
+        patch = (
+            '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}},'
+            '"spec":{"containers":[{"name":"alb-ingress-controller","args":["--ingress-class=alb"'
+            ',"--cluster-name=$(CLUSTER_NAME)","--aws-vpc-id=VPC_ID"]}]}}}}'
+        )
+        patch = patch.replace("VPC_ID", cast(str, context.networking.vpc_id))
         sh.run(f"kubectl patch deployment -n kubeflow alb-ingress-controller --patch '{patch}'")
 
         # Confirm env Service Endpoints
