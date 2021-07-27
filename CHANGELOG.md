@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Enable/Disable WAF on ALB Controller dependent on internet-accessibility
 - Added orbit/applied-podsettings annotation to Pods when PodSetting is applied
 - Added podsetting support in regression notebooks and sdk
+- Added Fargate Profile for kubeflow/istio-system Pods when deploying in isolated subnets
 
 ### **Changed**
 
