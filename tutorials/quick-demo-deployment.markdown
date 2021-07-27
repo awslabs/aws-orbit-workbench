@@ -35,6 +35,7 @@ usage: script_lancher.sh --orbit-version version --oauth-token github-token [--d
 
   --orbit-version         The version of Orbit to install
   --oauth-token           The GitHub OAuth token that will allow access to pull the Orbit repo
+  --branch-override       [OPTIONAL] Overrides the branch that the pipeline pulls from. Default is main
   --destroy-pipeline      [OPTIONAL] Creates a pipeline that destroys the Orbit deployment. Default is false
 ```
 
