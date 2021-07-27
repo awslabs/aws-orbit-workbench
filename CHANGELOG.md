@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Enabled AWS_STS_REGIONAL_ENDPOINTS env variable on kubeflow Pods
 - Enable/Disable WAF on ALB Controller dependent on internet-accessibility
 - Added orbit/applied-podsettings annotation to Pods when PodSetting is applied
+- Added podsetting support in regression notebooks and sdk
 
 ### **Changed**
 
@@ -35,6 +36,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FEATURE: orbit-system is first namespace deployed to enable environment manipulation
 - FIX: SMLog support for users of Sagemaker Operators
 - FIX: Added default values to pull kubectl in the k8s-utilities image
+- FIX: Increase cluster-autoscaler resource limits
+- FIX: image-replicator fails if unable to prime env from image inventory
+- FIX: reset the resource_version in the orbit-controller when watch dies gracefully
 
 ### **Removed**
 

@@ -6,12 +6,17 @@ usage(){
     echo ""
     echo "  --orbit-version         The version of Orbit to install"
     echo "  --oauth-token           The GitHub OAuth token that will access to the Orbit repo"
+    echo "  --branch-override       [OPTIONAL] Overrides the branch that the pipeline pulls from. Default is main"
     echo "  --destroy-pipeline      [OPTIONAL] Creates a pipeline that destroys the Orbit deployment. Default is false"
     echo "  -h, --help              Display help"
     echo ""
     exit 1
     
 }
+
+if [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; then
+    usage
+fi
 
 if ! aws --version &> /dev/null; then
     echo "Please install the AWS Cli. More information can be found here: https://docs.aws.amazon.com/cli/latest/userguide/welcome-versions.html"
@@ -26,14 +31,14 @@ else
     fi
 fi
 
-if [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; then
-    usage
-fi
-
 while [[ $# -gt 0 ]]; do
     case $1 in 
         --orbit-version)
             ORBIT_VERSION=$2
+            shift
+            ;;
+        --branch-override)
+            BRANCH_OVERRIDE=$2
             shift
             ;;
         --oauth-token)
@@ -56,6 +61,10 @@ fi
 if [[ -z "${OAUTH_TOKEN}" ]]; then
     echo "Please provide a GitHub OAuth token"
     usage
+fi
+
+if [[ -z "${BRANCH_OVERRIDE}" ]]; then
+    BRANCH_OVERRIDE="main"
 fi
 
 if [[ -z "${DESTROY_PIPELINE}" ]]; then
@@ -109,7 +118,7 @@ aws cloudformation deploy \
     --stack-name orbit-demo \
     --capabilities CAPABILITY_IAM \
     --parameter-overrides \
-        Branch=main \
+        Branch="${BRANCH_OVERRIDE}" \
         EnvName="${ORBIT_ENV_NAME}" \
         Version="${ORBIT_VERSION}" \
         K8AdminRole="${ORBIT_ADMIN_ROLE}" \
