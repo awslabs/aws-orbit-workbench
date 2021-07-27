@@ -653,9 +653,11 @@ def get_podsetting_spec(podsetting_name, team_name):
     crd = co.get_namespaced_custom_object("orbit.aws", "v1", team_name, "podsettings", podsetting_name)
     return crd
 
+
 def get_priority(taskConfiguration: dict):
     if "compute" in taskConfiguration and "priorityClassName" in taskConfiguration["compute"]:
         return taskConfiguration["compute"]["priorityClassName"]
+
 
 def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1JobSpec:
     """

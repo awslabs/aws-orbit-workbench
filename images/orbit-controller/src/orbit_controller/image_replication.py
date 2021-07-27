@@ -273,8 +273,9 @@ def watch(
             logger.exception("Unknown error in ImageReplicationWatcher. Failing")
             raise
         else:
+            state["lastResourceVersion"] = "0"
             logger.warning(
-                "Watch died gracefully, starting back up with last_resource_version: %s",
+                "Watch died gracefully, starting back up with a reset resource_version: %s",
                 state["lastResourceVersion"],
             )
 
