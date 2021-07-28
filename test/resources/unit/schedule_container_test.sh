@@ -8,7 +8,8 @@ cat <<EOF |  orbit schedule notebook --env $ENV_NAME --team lake-creator --user 
           "container" : {
               "p_concurrent": "1"
           },
-          "node_type": "ec2"
+          "node_type": "ec2",
+          "podsetting":"orbit-runner-support-small"
       },
       "tasks":  [{
           "notebookName": "sanity-good.ipynb",
