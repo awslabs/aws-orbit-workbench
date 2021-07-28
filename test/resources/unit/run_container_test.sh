@@ -8,7 +8,8 @@ cat <<EOF |  orbit run notebook --env $ENV_NAME --team $TEST_TEAM_SPACE --user t
           "container" : {
               "p_concurrent": "1"
           },
-          "node_type": "ec2"
+          "node_type": "ec2",
+          "podsetting":"orbit-runner-support-small"
       },
       "tasks":  [{
           "notebookName": "sanity-good.ipynb",

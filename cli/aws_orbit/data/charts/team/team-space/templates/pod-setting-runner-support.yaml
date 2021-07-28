@@ -7,7 +7,7 @@ metadata:
     orbit/space: team
     {{- include "team-space.labels" . | nindent 4 }}
 spec:
-  desc: Orbit Runner Suppoprt SMALL - 1G + 1CPU
+  desc: Orbit Runner Suppoprt SMALL - 256Mi + 200m
   containerSelector:
     jsonpath: "metadata.labels.app"
   podSelector:
@@ -21,11 +21,11 @@ spec:
       value: runner
   resources:
     limits:
-      cpu: '1.0'
-      memory: 1Gi
+      cpu: 200m
+      memory: 256Mi
     requests:
-      cpu: '1.0'
-      memory: 1Gi
+      cpu: 200m
+      memory: 256Mi
   image: {{ .Values.jupyter_team_image}}
 ---
 apiVersion: orbit.aws/v1
@@ -37,7 +37,7 @@ metadata:
     orbit/space: team
     {{- include "team-space.labels" . | nindent 4 }}
 spec:
-  desc: Orbit Runner Suppoprt SMALL - 3G + 3CPU
+  desc: Orbit Runner Suppoprt SMALL - 1G + 1CPU
   containerSelector:
     jsonpath: "metadata.labels.app"
   podSelector:
@@ -51,9 +51,9 @@ spec:
       value: runner
   resources:
     limits:
-      cpu: '3.0'
-      memory: 3Gi
+      cpu: '1.0'
+      memory: 1Gi
     requests:
-      cpu: '3.0'
-      memory: 3Gi
+      cpu: '1.0'
+      memory: 1Gi
   image: {{ .Values.jupyter_team_image}}
