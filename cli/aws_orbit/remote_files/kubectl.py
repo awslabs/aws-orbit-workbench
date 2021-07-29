@@ -568,8 +568,11 @@ def deploy_env(context: "Context") -> None:
             patch = patch.replace("VPC_ID", cast(str, context.networking.vpc_id))
             sh.run(f"kubectl patch deployment -n kubeflow alb-ingress-controller --patch '{patch}'")
 
-            patch = '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}}}}}'
-            sh.run(f"kubectl patch deployment -n orbit-system landing-page-service --patch '{patch}'")
+            patch = (
+                '[{"op": "add", "path": "/spec/template/metadata/labels/orbit~1node-type", "value": "fargate"}, '
+                '{"op": "replace", "path": "/spec/template/spec/nodeSelector", "value": {}}]'
+            )
+            sh.run(f"kubectl patch deployment -n orbit-system landing-page-service --type json --patch '{patch}'")
 
         # Confirm env Service Endpoints
         confirm_endpoints(name="landing-page-service", namespace="orbit-system")
