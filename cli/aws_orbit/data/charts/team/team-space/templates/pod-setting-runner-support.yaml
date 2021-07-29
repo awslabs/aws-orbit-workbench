@@ -21,11 +21,11 @@ spec:
       value: runner
   resources:
     limits:
-      cpu: 200m
-      memory: 256Mi
+      cpu: 400m
+      memory: 512Mi
     requests:
-      cpu: 200m
-      memory: 256Mi
+      cpu: 400m
+      memory: 512Mi
   image: {{ .Values.jupyter_team_image}}
 ---
 apiVersion: orbit.aws/v1
