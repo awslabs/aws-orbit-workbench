@@ -42,6 +42,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: image-replicator fails if unable to prime env from image inventory
 - FIX: reset the resource_version in the orbit-controller when watch dies gracefully
 - FIX: reduce destroy time by selectively removing k8s resources
+- FIX: fixed the issue of ray workers not joining ray head
+- FIX: reduced the sleep time for resources deletion between user spaces
+- FIX: Added `AuthenticationGroups` to the manifest.yaml under samples   
+
 
 ### **Removed**
 
