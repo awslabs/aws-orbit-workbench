@@ -44,6 +44,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: reduce destroy time by selectively removing k8s resources
 - FIX: landing-page-service liveness and readiness probes in isolated subnet
 - FIX: landing-page-service into Fargate task in isolated subnet
+- FIX: fixed the issue of ray workers not joining ray head
+- FIX: reduced the sleep time for resources deletion between user spaces
+- FIX: Added `AuthenticationGroups` to the manifest.yaml under samples
+
 
 ### **Removed**
 

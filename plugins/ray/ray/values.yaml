@@ -31,6 +31,7 @@ env:
 podAnnotations: {}
 restartPolicy: ${restart_policy}
 headLabels:
+  orbit/attach-security-group: "yes"
   orbit/node-type: ec2
   app: "orbit-ray"
   component: ray-head
