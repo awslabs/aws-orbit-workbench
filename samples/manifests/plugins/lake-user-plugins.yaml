@@ -42,11 +42,6 @@
         number_of_nodes: "2"
 -   PluginId: enable_emr_on_eks
     Module: emr_on_eks
--   PluginId: ray
-    Module: ray
-    Parameters:
-        workers: 3
-        release_tag: 1.3.0
 -   PluginId: sm-operator
     Module: sm-operator
 -   PluginId: team-voila
