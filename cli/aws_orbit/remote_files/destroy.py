@@ -77,7 +77,7 @@ def destroy_teams(args: Tuple[str, ...]) -> None:
         try:
             sh.run(
                 f"bash -c 'for p in $(kubectl get pods --field-selector=status.phase=Pending -n {team_context.name} "
-                f"--output=jsonpath={{.items..metadata.name}}; "
+                f"--output=jsonpath={{.items..metadata.name}}); "
                 f"do kubectl delete pod $p -n {team_context.name} --force; sleep 2; "
                 f"done'"
             )
