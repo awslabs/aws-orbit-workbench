@@ -3,7 +3,8 @@
         "node_type": "ec2",
         "container": {
             "p_concurrent" :1
-        }
+        },
+        "podsetting":"orbit-runner-support-small"
     },
     "tasks":  [
         {

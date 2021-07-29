@@ -24,6 +24,8 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Optional,
 import boto3
 import botocore.exceptions
 
+from aws_orbit import __version__
+
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context
 
@@ -36,7 +38,12 @@ def chunkify(lst: List[Any], num_chunks: int = 1, max_length: Optional[int] = No
 
 
 def get_botocore_config() -> botocore.config.Config:
-    return botocore.config.Config(retries={"max_attempts": 5}, connect_timeout=10, max_pool_connections=10)
+    return botocore.config.Config(
+        retries={"max_attempts": 5},
+        connect_timeout=10,
+        max_pool_connections=10,
+        user_agent_extra=f"awsorbit/{__version__}",
+    )
 
 
 def boto3_client(service_name: str) -> boto3.client:
