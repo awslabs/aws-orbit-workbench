@@ -28,7 +28,7 @@ spec:
           image: ${orbit_controller_image}
           imagePullPolicy: ${image_pull_policy}
           ports:
-            - containerPort: 80
+            - containerPort: 8082
               name: http
               protocol: TCP
           envFrom:
@@ -37,7 +37,7 @@ spec:
           command:
             - gunicorn
           args:
-            - "--bind=0.0.0.0:80"
+            - "--bind=0.0.0.0:8082"
             - "--workers=$(GUNICORN_WORKERS)"
             - "--reload"
             - "orbit_controller.server:app"
@@ -45,16 +45,16 @@ spec:
             httpGet:
               path: /health
               scheme: HTTP
-              port: 80
-            initialDelaySeconds: 3
-            periodSeconds: 5
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 30
           livenessProbe:
             httpGet:
               path: /health
               scheme: HTTP
-              port: 80
-            initialDelaySeconds: 3
-            periodSeconds: 5
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 30
           resources:
             limits:
               cpu: 2
@@ -92,7 +92,7 @@ spec:
   ports:
     - port: 80
       protocol: TCP
-      targetPort: 80
+      targetPort: 8082
       name: ui
   selector:
     app: landing-page-service

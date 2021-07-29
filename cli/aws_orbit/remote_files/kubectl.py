@@ -555,16 +555,21 @@ def deploy_env(context: "Context") -> None:
         sh.run(f'kubectl patch deployment -n kubeflow jupyter-web-app-deployment --patch "{patch}"')
         sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
 
-        patch = '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}}}}}'
-        sh.run(f"kubectl patch deployment -n istio-system authzadaptor --patch '{patch}'")
+        # Patch Pods to push into Fargate when deploying in an isolated subnet
+        if not context.networking.data.internet_accessible:
+            patch = '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}}}}}'
+            sh.run(f"kubectl patch deployment -n istio-system authzadaptor --patch '{patch}'")
 
-        patch = (
-            '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}},'
-            '"spec":{"containers":[{"name":"alb-ingress-controller","args":["--ingress-class=alb"'
-            ',"--cluster-name=$(CLUSTER_NAME)","--aws-vpc-id=VPC_ID"]}]}}}}'
-        )
-        patch = patch.replace("VPC_ID", cast(str, context.networking.vpc_id))
-        sh.run(f"kubectl patch deployment -n kubeflow alb-ingress-controller --patch '{patch}'")
+            patch = (
+                '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}},'
+                '"spec":{"containers":[{"name":"alb-ingress-controller","args":["--ingress-class=alb"'
+                ',"--cluster-name=$(CLUSTER_NAME)","--aws-vpc-id=VPC_ID"]}]}}}}'
+            )
+            patch = patch.replace("VPC_ID", cast(str, context.networking.vpc_id))
+            sh.run(f"kubectl patch deployment -n kubeflow alb-ingress-controller --patch '{patch}'")
+
+            patch = '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}}}}}'
+            sh.run(f"kubectl patch deployment -n orbit-system landing-page-service --patch '{patch}'")
 
         # Confirm env Service Endpoints
         confirm_endpoints(name="landing-page-service", namespace="orbit-system")

@@ -208,7 +208,8 @@ def apply_settings_to_pod(
     pod_spec = pod["spec"]
 
     # Compile list of any PodSettings applied to the Pod and store as an annotation
-    applied_pod_settings = pod["metadata"].get("annotations", {}).get("orbit/applied-podsettings", "").split(",")
+    applied_pod_settings = pod["metadata"].get("annotations", {}).get("orbit/applied-podsettings", "")
+    re.A
     applied_pod_settings.append(pod_setting["metadata"]["name"])
     if "annotations" in pod["metadata"]:
         pod["metadata"]["annotations"]["orbit/applied-podsettings"] = ",".join(applied_pod_settings)

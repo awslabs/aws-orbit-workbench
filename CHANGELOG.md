@@ -42,6 +42,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: image-replicator fails if unable to prime env from image inventory
 - FIX: reset the resource_version in the orbit-controller when watch dies gracefully
 - FIX: reduce destroy time by selectively removing k8s resources
+- FIX: landing-page-service liveness and readiness probes in isolated subnet
+- FIX: landing-page-service into Fargate task in isolated subnet
 
 ### **Removed**
 
