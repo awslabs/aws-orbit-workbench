@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Enable/Disable WAF on ALB Controller dependent on internet-accessibility
 - Added orbit/applied-podsettings annotation to Pods when PodSetting is applied
 - Added podsetting support in regression notebooks and sdk
+- Added Fargate Profile for kubeflow/istio-system Pods when deploying in isolated subnets
 - Track Orbit usage
 
 ### **Changed**
@@ -40,9 +41,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: Increase cluster-autoscaler resource limits
 - FIX: image-replicator fails if unable to prime env from image inventory
 - FIX: reset the resource_version in the orbit-controller when watch dies gracefully
+- FIX: reduce destroy time by selectively removing k8s resources
+- FIX: landing-page-service liveness and readiness probes in isolated subnet
+- FIX: landing-page-service into Fargate task in isolated subnet
 - FIX: fixed the issue of ray workers not joining ray head
 - FIX: reduced the sleep time for resources deletion between user spaces
-- FIX: Added `AuthenticationGroups` to the manifest.yaml under samples   
+- FIX: Added `AuthenticationGroups` to the manifest.yaml under samples
+
 
 ### **Removed**
 

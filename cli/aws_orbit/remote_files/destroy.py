@@ -18,7 +18,7 @@ from typing import Tuple
 from aws_orbit import cleanup, plugins, sh
 from aws_orbit.exceptions import FailedShellCommand
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
-from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, kubeflow, teams
+from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, teams
 from aws_orbit.services import ecr, secretsmanager, ssm
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -112,18 +112,26 @@ def destroy_env(args: Tuple[str, ...]) -> None:
     _logger.debug("context.name %s", context.name)
 
     # Helps save time on target group issues with vpc
-    cleanup.delete_target_group(env_stack_name=context.env_stack_name)
+    cleanup.delete_istio_ingress(context=context)
+    cleanup.delete_target_group(cluster_name=context.env_stack_name)
 
-    helm.destroy_env(context=context)
-    _logger.debug("Helm Charts uninstalled")
+    # Delete the optional Fargate Profile
+    cleanup.delete_system_fargate_profile(context=context)
 
-    kubeflow.destroy_kubeflow(context=context)
-    _logger.debug("Kubeflow uninstalled")
+    # helm.destroy_env(context=context)
+    # _logger.debug("Helm Charts uninstalled")
 
-    kubectl.destroy_env(context=context)
-    _logger.debug("Kubernetes Environment components destroyed")
+    # kubeflow.destroy_kubeflow(context=context)
+    # _logger.debug("Kubeflow uninstalled")
+
+    # kubectl.destroy_env(context=context)
+    # _logger.debug("Kubernetes Environment components destroyed")
+
     eksctl.destroy_env(context=context)
     _logger.debug("EKS Environment Stacks destroyed")
+
+    cleanup.delete_elb_security_group(cluster_name=context.env_stack_name)
+
     env.destroy(context=context)
     _logger.debug("Env Stack destroyed")
     cdk_toolkit.destroy(context=context)
