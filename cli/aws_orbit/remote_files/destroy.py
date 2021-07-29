@@ -73,6 +73,17 @@ def destroy_teams(args: Tuple[str, ...]) -> None:
             except FailedShellCommand:
                 _logger.debug("Ignoring failed deletion of: %s", resource)
 
+        # Get rid of any pods stuck  in 'Pending' state
+        try:
+            sh.run(
+                f"bash -c 'for p in $(kubectl get pods --field-selector=status.phase=Pending -n {team_context.name} "
+                f"--output=jsonpath={{.items..metadata.name}}; "
+                f"do kubectl delete pod $p -n {team_context.name} --force; sleep 2; "
+                f"done'"
+            )
+        except FailedShellCommand:
+            _logger.debug("Ignoring failed deletion of Pending Pods in: %s", team_context.name)
+
         try:
             sh.run(f"kubectl delete namespaces -l orbit/team={team_context.name},orbit/space=user --wait=true")
         except FailedShellCommand:
