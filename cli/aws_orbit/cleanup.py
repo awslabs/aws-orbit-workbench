@@ -21,7 +21,9 @@ from typing import Any, Dict, List, Optional, cast
 
 import botocore.exceptions
 
+from aws_orbit import sh
 from aws_orbit.models.context import Context, FoundationContext
+from aws_orbit.remote_files.utils import get_k8s_context
 from aws_orbit.services import cfn, efs, eks, elb, s3
 from aws_orbit.utils import boto3_client, boto3_resource
 
@@ -223,19 +225,19 @@ def delete_kubeflow_roles(env_stack_name: str, region: str, account_id: str) -> 
 
 # Removes ELB since the listener is attached to the target group
 # and the target group can't be removed with a listener attached
-def delete_target_group(env_stack_name: str) -> None:
+def delete_target_group(cluster_name: str) -> None:
     elb_client = boto3_client("elbv2")
 
     target_groups = elb_client.describe_target_groups()
 
-    for target_group in target_groups.get("TargetGroups"):
+    for target_group in target_groups.get("TargetGroups", []):
         target_group_arn = target_group.get("TargetGroupArn")
 
         target_group_tags = elb_client.describe_tags(ResourceArns=[target_group_arn])
 
         for tag in target_group_tags.get("TagDescriptions", [{}])[0].get("Tags", []):
             if tag.get("Key") == "ingress.k8s.aws/cluster":
-                if tag.get("Value") == env_stack_name:
+                if tag.get("Value") == cluster_name:
                     elbs = target_group.get("LoadBalancerArns")
 
                     for _elb in elbs:
@@ -243,6 +245,7 @@ def delete_target_group(env_stack_name: str) -> None:
                             _logger.info(f"Removing ELB: {_elb}")
                             elb_client.delete_load_balancer(LoadBalancerArn=_elb)
                             time.sleep(10)
+                            _logger.info("ELB deleted")
                         except elb_client.exceptions.LoadBalancerNotFoundException as err:
                             _logger.warning(f"ELB not found: {err}")
                         except elb_client.exceptions.OperationNotPermittedException as err:
@@ -258,7 +261,26 @@ def delete_target_group(env_stack_name: str) -> None:
                     except elb_client.exceptions.ResourceInUseException as err:
                         _logger.error(f"Target in use: {err}")
 
-    _logger.info("Target group removed")
+
+def delete_elb_security_group(cluster_name: str) -> None:
+    ec2_client = boto3_client("ec2")
+
+    security_groups = ec2_client.describe_security_groups(
+        Filters=[
+            {"Name": "tag:ingress.k8s.aws/resource", "Values": ["ManagedLBSecurityGroup"]},
+            {"Name": "tag:kubernetes.io/cluster-name", "Values": [cluster_name]},
+        ]
+    )
+
+    for security_group in security_groups.get("SecurityGroups", []):
+        security_group_id = security_group.get("GroupId")
+
+        try:
+            _logger.info("Removing Security Group: %s", security_group_id)
+            ec2_client.delete_security_group(GroupId=security_group_id)
+            _logger.info("Security Group deleted")
+        except Exception:
+            _logger.exception("Failed to delete Security Group")
 
 
 def delete_system_fargate_profile(context: Context) -> None:
@@ -273,3 +295,17 @@ def delete_system_fargate_profile(context: Context) -> None:
         )
     else:
         _logger.info("Skipping Fargate Profile Deletion")
+
+
+def delete_istio_ingress(context: Context) -> None:
+    sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
+    k8s_context = get_k8s_context(context=context)
+    _logger.debug("k8s_context: %s", k8s_context)
+
+    try:
+        _logger.info("Deleting istio-ingress")
+        sh.run(f"kubectl delete ingress -n istio-system --context {k8s_context} --wait istio-ingress")
+        time.sleep(30)
+        _logger.info("Deleted istio-ingress")
+    except:  # noqa: E722
+        _logger.exception("Failed to delete istio-ingress")
