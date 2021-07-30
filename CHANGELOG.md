@@ -47,12 +47,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: fixed the issue of ray workers not joining ray head
 - FIX: reduced the sleep time for resources deletion between user spaces
 - FIX: Added `AuthenticationGroups` to the manifest.yaml under samples
-
+- FIX: cleanup of istio-ingress raises exception when no cluster exists
 
 ### **Removed**
 
 - Docker credentials from `foundation` and `env` commands
 - S3 Docker credential store
 - Duplicate cluster-autoscaler manifest creation
-
-

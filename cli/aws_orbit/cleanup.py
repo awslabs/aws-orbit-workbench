@@ -298,11 +298,11 @@ def delete_system_fargate_profile(context: Context) -> None:
 
 
 def delete_istio_ingress(context: Context) -> None:
-    sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
-    k8s_context = get_k8s_context(context=context)
-    _logger.debug("k8s_context: %s", k8s_context)
-
     try:
+        sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
+        k8s_context = get_k8s_context(context=context)
+        _logger.debug("k8s_context: %s", k8s_context)
+
         _logger.info("Deleting istio-ingress")
         sh.run(f"kubectl delete ingress -n istio-system --context {k8s_context} --wait istio-ingress")
         time.sleep(30)
