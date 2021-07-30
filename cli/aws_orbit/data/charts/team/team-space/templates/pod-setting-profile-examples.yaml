@@ -28,8 +28,8 @@ spec:
       cpu: '2.0'
       memory: 2Gi
     requests:
-      cpu: '2.0'
-      memory: 2Gi
+      cpu: '1.0'
+      memory: 1Gi
 ---
 apiVersion: orbit.aws/v1
 kind: PodSetting
@@ -91,8 +91,8 @@ spec:
       value: custom_value
   resources:
     limits:
-      cpu: '1.0'
-      memory: 1Gi
+      cpu: '2.0'
+      memory: 2Gi
     requests:
       cpu: '1.0'
       memory: 1Gi
@@ -127,5 +127,5 @@ spec:
       cpu: '8.0'
       memory: 40Gi
     requests:
-      cpu: '8.0'
-      memory: 40Gi
+      cpu: '4.0'
+      memory: 20Gi

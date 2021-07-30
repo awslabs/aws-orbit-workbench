@@ -28,5 +28,5 @@ spec:
       cpu: '4.0'
       memory: 4Gi
     requests:
-      cpu: '4.0'
-      memory: 4Gi
+      cpu: '3.0'
+      memory: 3Gi
