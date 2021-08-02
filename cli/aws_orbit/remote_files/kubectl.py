@@ -34,22 +34,27 @@ MODELS_PATH = os.path.join(ORBIT_CLI_ROOT, "data", "kubectl")
 
 
 def _orbit_system_commons(context: "Context", output_path: str) -> None:
-    filename = "00-commons.yaml"
-    input = os.path.join(MODELS_PATH, "orbit-system", filename)
-    output = os.path.join(output_path, filename)
+    filenames = [
+        "00a-commons.yaml",
+        "00b-cert-manager.yaml"
+    ]
 
-    with open(input, "r") as file:
-        content: str = file.read()
-    content = resolve_parameters(
-        content,
-        dict(
-            account_id=context.account_id,
-            region=context.region,
-            env_name=context.name,
-        ),
-    )
-    with open(output, "w") as file:
-        file.write(content)
+    for filename in filenames:
+        input = os.path.join(MODELS_PATH, "orbit-system", filename)
+        output = os.path.join(output_path, filename)
+
+        with open(input, "r") as file:
+            content: str = file.read()
+        content = resolve_parameters(
+            content,
+            dict(
+                account_id=context.account_id,
+                region=context.region,
+                env_name=context.name,
+            ),
+        )
+        with open(output, "w") as file:
+            file.write(content)
 
 
 def _kubeflow_namespaces(context: "Context", clean_up: bool = True) -> str:
@@ -83,7 +88,7 @@ def _kubeflow_namespaces(context: "Context", clean_up: bool = True) -> str:
 
 
 def _orbit_controller(context: "Context", output_path: str) -> None:
-    filenames = ["01a-orbit-controller.yaml", "01b-cert-manager.yaml"]
+    filenames = ["01a-orbit-controller.yaml"]
 
     for filename in filenames:
         input = os.path.join(MODELS_PATH, "orbit-system", filename)
@@ -111,7 +116,7 @@ def _orbit_controller(context: "Context", output_path: str) -> None:
 
 
 def _orbit_image_replicator(context: "Context", output_path: str) -> None:
-    filenames = ["01c-image-replicator.yaml"]
+    filenames = ["01b-image-replicator.yaml"]
 
     for filename in filenames:
         input = os.path.join(MODELS_PATH, "orbit-system", filename)
@@ -229,6 +234,7 @@ def _generate_kube_system_manifest(context: "Context", clean_up: bool = True) ->
         "01-nvidia-daemonset.yaml",
         "02-cluster-autoscaler-autodiscover.yaml",
     ]
+
     for filename in filenames:
         input = os.path.join(MODELS_PATH, "kube-system", filename)
         output = os.path.join(output_path, filename)
@@ -253,13 +259,12 @@ def _generate_kube_system_manifest(context: "Context", clean_up: bool = True) ->
     return output_path
 
 
-def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -> str:
+def _generate_orbit_system_commons_manifest(context: "Context", clean_up: bool = True) -> str:
     output_path = os.path.join(".orbit.out", context.name, "kubectl", "orbit-system")
     os.makedirs(output_path, exist_ok=True)
     if clean_up:
         _cleanup_output(output_path=output_path)
     _orbit_system_commons(context=context, output_path=output_path)
-    _orbit_controller(context=context, output_path=output_path)
     if context.account_id is None:
         raise ValueError("context.account_id is None!")
     if context.user_pool_id is None:
@@ -268,6 +273,17 @@ def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -
         raise ValueError("context.user_pool_client_id is None!")
     if context.identity_pool_id is None:
         raise ValueError("context.identity_pool_id is None!")
+
+    return output_path
+
+
+def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -> str:
+    output_path = os.path.join(".orbit.out", context.name, "kubectl", "orbit-system")
+    os.makedirs(output_path, exist_ok=True)
+    if clean_up:
+        _cleanup_output(output_path=output_path)
+
+    _orbit_controller(context=context, output_path=output_path)
 
     if context.install_ssm_agent:
         _logger.debug("Deploying SSM Agent Installer")
@@ -477,11 +493,10 @@ def deploy_env(context: "Context") -> None:
         _logger.debug("k8s_context: %s", k8s_context)
 
         # orbit-system
-        output_path: Optional[str] = _generate_orbit_system_manifest(context=context)
-        sh.run(
-            f"kubectl delete jobs -l app=cert-manager -n orbit-system --context {k8s_context} "
-            "--ignore-not-found=true --wait"
-        )
+        output_path: Optional[str] = _generate_orbit_system_commons_manifest(context=context)
+        sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
+
+        output_path: Optional[str] = _generate_orbit_system_manifest(context=context, clean_up=True)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
         output_path = _generate_orbit_image_replicator_manifest(context=context, clean_up=True)
@@ -604,7 +619,6 @@ def destroy_env(context: "Context") -> None:
         sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
         k8s_context = get_k8s_context(context=context)
         _logger.debug("kubectl k8s_context: %s", k8s_context)
-        output_path = _generate_orbit_system_manifest(context=context)
         try:
             # Here we remove some finalizers that can cause our delete to hang indefinitely
             try:
@@ -616,10 +630,17 @@ def destroy_env(context: "Context") -> None:
             except FailedShellCommand:
                 _logger.debug("Ignoring patch failure")
 
+            output_path = _generate_orbit_system_manifest(context=context)
             sh.run(
                 f"kubectl delete -f {output_path} --grace-period=0 --force "
                 f"--ignore-not-found --wait --context {k8s_context}"
             )
+            output_path: Optional[str] = _generate_orbit_system_commons_manifest(context=context, clean_up=True)
+            sh.run(
+                f"kubectl delete -f {output_path} --grace-period=0 --force "
+                f"--ignore-not-found --wait --context {k8s_context}"
+            )
+
         except exceptions.FailedShellCommand as ex:
             _logger.debug("Skipping: %s", ex)
             pass  # Let's leave for eksctl, it will destroy everything anyway...
