@@ -34,10 +34,7 @@ MODELS_PATH = os.path.join(ORBIT_CLI_ROOT, "data", "kubectl")
 
 
 def _orbit_system_commons(context: "Context", output_path: str) -> None:
-    filenames = [
-        "00a-commons.yaml",
-        "00b-cert-manager.yaml"
-    ]
+    filenames = ["00a-commons.yaml", "00b-cert-manager.yaml"]
 
     for filename in filenames:
         input = os.path.join(MODELS_PATH, "orbit-system", filename)
@@ -496,7 +493,7 @@ def deploy_env(context: "Context") -> None:
         output_path: Optional[str] = _generate_orbit_system_commons_manifest(context=context)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
-        output_path: Optional[str] = _generate_orbit_system_manifest(context=context, clean_up=True)
+        output_path = _generate_orbit_system_manifest(context=context, clean_up=True)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
         output_path = _generate_orbit_image_replicator_manifest(context=context, clean_up=True)
@@ -635,7 +632,7 @@ def destroy_env(context: "Context") -> None:
                 f"kubectl delete -f {output_path} --grace-period=0 --force "
                 f"--ignore-not-found --wait --context {k8s_context}"
             )
-            output_path: Optional[str] = _generate_orbit_system_commons_manifest(context=context, clean_up=True)
+            output_path = _generate_orbit_system_commons_manifest(context=context, clean_up=True)
             sh.run(
                 f"kubectl delete -f {output_path} --grace-period=0 --force "
                 f"--ignore-not-found --wait --context {k8s_context}"
