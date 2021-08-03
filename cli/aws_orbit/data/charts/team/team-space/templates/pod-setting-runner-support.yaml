@@ -5,6 +5,7 @@ metadata:
   namespace: {{ .Values.team }}
   labels:
     orbit/space: team
+    orbit/disable-watcher: "yes"
     {{- include "team-space.labels" . | nindent 4 }}
 spec:
   desc: Orbit Runner Suppoprt SMALL - 2G + 1CPU
@@ -35,6 +36,7 @@ metadata:
   namespace: {{ .Values.team }}
   labels:
     orbit/space: team
+    orbit/disable-watcher: "yes"
     {{- include "team-space.labels" . | nindent 4 }}
 spec:
   desc: Orbit Runner Suppoprt LARGE - 2G + 4CPU
@@ -65,6 +67,7 @@ metadata:
   namespace: {{ .Values.team }}
   labels:
     orbit/space: team
+    orbit/disable-watcher: "yes"
     {{- include "team-space.labels" . | nindent 4 }}
 spec:
   desc: Orbit Runner Suppoprt SMALL - 3G + 6CPU
