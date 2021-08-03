@@ -75,7 +75,6 @@ def _kubeflow_namespaces(context: "Context", clean_up: bool = True) -> str:
                 account_id=context.account_id,
                 region=context.region,
                 sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
-                waf_enabled="true" if context.networking.data.internet_accessible else "false",
             ),
         )
         with open(output, "w") as file:
@@ -137,14 +136,14 @@ def _orbit_image_replicator(context: "Context", output_path: str) -> None:
 
 
 def _ssm_agent_installer(output_path: str, context: "Context") -> None:
-    filename = "02-ssm-agent-daemonset-installer.yaml"
+    filename = "02a-ssm-agent-daemonset-installer.yaml"
     input = os.path.join(MODELS_PATH, "orbit-system", filename)
     output = os.path.join(output_path, filename)
     shutil.copyfile(src=input, dst=output)
 
 
 def _sm_operator_installer(output_path: str, context: "Context") -> None:
-    filename = "10-sm-operator.yaml"
+    filename = "10a-sm-operator.yaml"
     input = os.path.join(MODELS_PATH, "orbit-system", filename)
     output = os.path.join(output_path, filename)
     shutil.copyfile(src=input, dst=output)
