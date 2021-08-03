@@ -51,21 +51,23 @@ def get_team_pod_defaults(client: dynamic.DynamicClient, team: str) -> List[Dict
 def construct(
     name: str,
     desc: str,
-    owner_reference: Dict[str, str],
+    owner_reference: Optional[Dict[str, str]] = None,
     labels: Optional[Dict[str, str]] = None,
     annnotations: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
-    return {
+    pod_default: Dict[str, Any] = {
         "apiVersion": f"{KUBEFLOW_API_GROUP}/{KUBEFLOW_API_VERSION}",
         "kind": "PodDefault",
         "metadata": {
             "name": name,
             "labels": labels,
             "annotations": annnotations,
-            "ownerReferences": [owner_reference],
         },
         "spec": {"selector": {"matchLabels": {f"orbit/{name}": ""}}, "desc": desc},
     }
+    if owner_reference is not None:
+        pod_default["metadata"]["ownerReferences"] = [owner_reference]
+    return pod_default
 
 
 def create_pod_default(namespace: str, pod_default: Dict[str, Any], client: dynamic.DynamicClient) -> None:
