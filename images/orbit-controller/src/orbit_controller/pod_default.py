@@ -51,21 +51,23 @@ def get_team_pod_defaults(client: dynamic.DynamicClient, team: str) -> List[Dict
 def construct(
     name: str,
     desc: str,
-    owner_reference: Dict[str, str],
+    owner_reference: Optional[Dict[str, str]] = None,
     labels: Optional[Dict[str, str]] = None,
     annnotations: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
-    return {
+    pod_default: Dict[str, Any] = {
         "apiVersion": f"{KUBEFLOW_API_GROUP}/{KUBEFLOW_API_VERSION}",
         "kind": "PodDefault",
         "metadata": {
             "name": name,
             "labels": labels,
             "annotations": annnotations,
-            "ownerReferences": [owner_reference],
         },
         "spec": {"selector": {"matchLabels": {f"orbit/{name}": ""}}, "desc": desc},
     }
+    if owner_reference is not None:
+        pod_default["metadata"]["ownerReferences"] = [owner_reference]
+    return pod_default
 
 
 def create_pod_default(namespace: str, pod_default: Dict[str, Any], client: dynamic.DynamicClient) -> None:
@@ -97,14 +99,17 @@ def copy_pod_defaults_to_user_namespaces(
                 "name": pod_default["metadata"]["name"],
                 "desc": pod_default["spec"]["desc"],
                 "labels": {"orbit/space": "user", "orbit/team": pod_default["metadata"]["labels"].get("team", None)},
-                "owner_reference": {
-                    "apiVersion": f"{KUBEFLOW_API_GROUP}/{KUBEFLOW_API_VERSION}",
-                    "kind": "PodDefault",
-                    "name": pod_default["metadata"]["name"],
-                    "uid": pod_default["metadata"]["uid"],
-                },
             }
             create_pod_default(namespace=namespace, pod_default=construct(**kwargs), client=client)
+
+
+def delete_pod_defaults_from_user_namespaces(
+    pod_defaults: List[Dict[str, Any]], user_namespaces: List[str], client: DynamicClient
+) -> None:
+    logger.debug("Deleting pod_defaults from user namespaces: %s, %s", dump_resource(pod_defaults), user_namespaces)
+    for pod_default in pod_defaults:
+        for namespace in user_namespaces:
+            delete_pod_default(namespace=namespace, name=pod_default["metadata"]["name"], client=client)
 
 
 def process_added_event(pod_default: Dict[str, Any]) -> None:
@@ -144,7 +149,20 @@ def process_modified_event(pod_default: Dict[str, Any]) -> None:
 
 
 def process_deleted_event(pod_default: Dict[str, Any]) -> None:
-    logger.debug("Skipping DELETE processing")
+    client = dynamic_client()
+    labels = pod_default.get("metadata", {}).get("labels", {})
+
+    if labels.get("orbit/space", None) != "team":
+        logger.debug("Skipping DELETE processing, non-teamspace PodDefault: %s", dump_resource(pod_default))
+        return
+
+    team = labels.get("orbit/team", None)
+    if not team:
+        logger.error("Skipping DELETE processing, unable to determine Team: %s", dump_resource(pod_default))
+        return
+
+    user_namespaces = [item["metadata"]["name"] for item in _get_user_namespaces(client=client, team=team)]
+    delete_pod_defaults_from_user_namespaces(pod_defaults=[pod_default], user_namespaces=user_namespaces, client=client)
 
 
 def watch(queue: Queue, state: Dict[str, Any]) -> int:  # type: ignore

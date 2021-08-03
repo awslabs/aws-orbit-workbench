@@ -5,9 +5,10 @@ metadata:
   namespace: {{ .Values.team }}
   labels:
     orbit/space: team
+    orbit/disable-watcher: "yes"
     {{- include "team-space.labels" . | nindent 4 }}
 spec:
-  desc: Orbit Runner Suppoprt SMALL - 256Mi + 200m
+  desc: Orbit Runner Suppoprt SMALL - 2G + 1CPU
   containerSelector:
     jsonpath: "metadata.labels.app"
   podSelector:
@@ -35,9 +36,10 @@ metadata:
   namespace: {{ .Values.team }}
   labels:
     orbit/space: team
+    orbit/disable-watcher: "yes"
     {{- include "team-space.labels" . | nindent 4 }}
 spec:
-  desc: Orbit Runner Suppoprt SMALL - 1G + 1CPU
+  desc: Orbit Runner Suppoprt LARGE - 2G + 4CPU
   containerSelector:
     jsonpath: "metadata.labels.app"
   podSelector:
@@ -56,4 +58,35 @@ spec:
     requests:
       cpu: '1.0'
       memory: 2Gi
+  image: {{ .Values.jupyter_team_image}}
+---
+apiVersion: orbit.aws/v1
+kind: PodSetting
+metadata:
+  name: orbit-runner-support-xlarge
+  namespace: {{ .Values.team }}
+  labels:
+    orbit/space: team
+    orbit/disable-watcher: "yes"
+    {{- include "team-space.labels" . | nindent 4 }}
+spec:
+  desc: Orbit Runner Suppoprt SMALL - 3G + 6CPU
+  containerSelector:
+    jsonpath: "metadata.labels.app"
+  podSelector:
+    matchExpressions:
+      - key: orbit/orbit-runner-support-xlarge
+        operator: Exists
+  securityContext:
+    runAsUser: 1000
+  env:
+    - name: usage
+      value: runner
+  resources:
+    limits:
+      cpu: '3.0'
+      memory: 6Gi
+    requests:
+      cpu: '2.0'
+      memory: 4Gi
   image: {{ .Values.jupyter_team_image}}
