@@ -40,7 +40,7 @@ FN_PREFIX = "Fn::"
 NoDatesSafeLoader = yaml.SafeLoader
 
 
-class CfnYamlLoader(yaml.Loader):
+class CfnSafeYamlLoader(yaml.SafeLoader):
     yaml_implicit_resolvers = {
         k: [r for r in v if r[0] != "tag:yaml.org,2002:timestamp"]
         for k, v in NoDatesSafeLoader.yaml_implicit_resolvers.items()
@@ -141,8 +141,8 @@ class ODict(collections.OrderedDict):
 
 
 # Customise our loader
-CfnYamlLoader.add_constructor(TAG_MAP, construct_mapping)
-CfnYamlLoader.add_multi_constructor("!", multi_constructor)
+CfnSafeYamlLoader.add_constructor(TAG_MAP, construct_mapping)
+CfnSafeYamlLoader.add_multi_constructor("!", multi_constructor)
 
 
 class Team(Stack):
@@ -167,7 +167,7 @@ class NestedCfnStack(NestedStack):
         if not os.path.isfile(template_path):
             raise FileNotFoundError(f"CloudFormation template not found at {template_path}")
 
-        custom_cfn_yaml = yaml.load(open(template_path).read(), Loader=CfnYamlLoader)
+        custom_cfn_yaml = yaml.load(open(template_path).read(), Loader=CfnSafeYamlLoader)
         _logger.debug("Yaml loading compelted")
         CfnInclude(self, id="custom-cfn-nested-stack", template=custom_cfn_yaml)
         _logger.debug("Nested stack addition completed")
