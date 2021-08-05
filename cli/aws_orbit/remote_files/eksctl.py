@@ -457,7 +457,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
             cluster_name=f"orbit-{context.name}",
             role_arn=cast(str, context.eks_fargate_profile_role_arn),
             subnets=[s.subnet_id for s in context.networking.private_subnets],
-            namespaces=["orbit-system", "istio-system", "kubeflow"],
+            namespaces=["cert-manager", "istio-system", "kubeflow", "kube-system", "orbit-system"],
             selector_labels={"orbit/node-type": "fargate"},
         )
 

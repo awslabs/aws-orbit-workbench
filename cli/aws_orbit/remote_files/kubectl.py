@@ -476,7 +476,22 @@ def _generate_fsx_driver_manifest(output_path: str, context: "Context") -> str:
     return overlays_path
 
 
-#######
+# Confirm orbit-system Service Endpoints
+def _confirm_endpoints(name: str, namespace: str, k8s_context: str) -> None:
+    addresses = k8s.get_service_addresses(name=name, namespace=namespace, k8s_context=k8s_context)
+    if addresses:
+        for address in addresses:
+            _logger.debug(
+                "Service: %s Namespace: %s Hostname: %s IP: %s",
+                name,
+                namespace,
+                address.get("hostname"),
+                address.get("ip"),
+            )
+    else:
+        raise Exception("No Endpoints found for Service: %s Namespace: %s", name, namespace)
+
+
 def write_kubeconfig(context: "Context") -> None:
     sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
 
@@ -492,6 +507,17 @@ def deploy_env(context: "Context") -> None:
         output_path: Optional[str] = _generate_orbit_system_commons_manifest(context=context)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
+        # Patch the cert-manager deployments to push into Fargate if running in isolated env
+        if not context.networking.data.internet_accessible:
+            patch = (
+                '[{"op": "add", "path": "/spec/template/metadata/labels/orbit~1node-type", "value": "fargate"}, '
+                '{"op": "replace", "path": "/spec/template/spec/nodeSelector", "value": {}}]'
+            )
+            sh.run(f"kubectl patch deployment -n cert-manager --all --type json --patch '{patch}'")
+
+        # Wait until cert-manager webhook is available
+        _confirm_endpoints(name="cert-manager-webhook", namespace="cert-manager", k8s_context=k8s_context)
+
         output_path = _generate_orbit_system_manifest(context=context, clean_up=True)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
@@ -503,25 +529,10 @@ def deploy_env(context: "Context") -> None:
         sh.run(f"kubectl rollout restart deployments -n orbit-system --context {k8s_context}")
         sh.run(f"kubectl rollout restart statefulsets -n orbit-system --context {k8s_context}")
 
-        # Confirm orbit-system Service Endpoints
-        def confirm_endpoints(name: str, namespace: str) -> None:
-            addresses = k8s.get_service_addresses(name=name, namespace=namespace, k8s_context=k8s_context)
-            if addresses:
-                for address in addresses:
-                    _logger.debug(
-                        "Service: %s Namespace: %s Hostname: %s IP: %s",
-                        name,
-                        namespace,
-                        address.get("hostname"),
-                        address.get("ip"),
-                    )
-            else:
-                raise Exception("No Endpoints found for Service: %s Namespace: %s", name, namespace)
-
-        confirm_endpoints(name="podsettings-pod-modifier", namespace="orbit-system")
+        _confirm_endpoints(name="podsettings-pod-modifier", namespace="orbit-system", k8s_context=k8s_context)
 
         if context.install_image_replicator or not context.networking.data.internet_accessible:
-            confirm_endpoints(name="pod-image-updater", namespace="orbit-system")
+            _confirm_endpoints(name="pod-image-updater", namespace="orbit-system", k8s_context=k8s_context)
             for _ in range(20):
                 status = k8s.get_stateful_set_status(
                     name="pod-image-replicator", namespace="orbit-system", k8s_context=k8s_context
@@ -586,7 +597,7 @@ def deploy_env(context: "Context") -> None:
             sh.run(f"kubectl patch deployment -n orbit-system landing-page-service --type json --patch '{patch}'")
 
         # Confirm env Service Endpoints
-        confirm_endpoints(name="landing-page-service", namespace="orbit-system")
+        _confirm_endpoints(name="landing-page-service", namespace="orbit-system", k8s_context=k8s_context)
 
 
 def deploy_team(context: "Context", team_context: "TeamContext") -> None:
