@@ -32,7 +32,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 MANIFEST: Dict[str, Any] = {
     "apiVersion": "eksctl.io/v1alpha5",
     "kind": "ClusterConfig",
-    "metadata": {"name": None, "region": None},
+    "metadata": {"name": None, "region": None, "version": "1.20"},
     "vpc": {"id": None, "cidr": None, "subnets": {"private": {}, "public": {}}},
     "iam": {"serviceRoleARN": None},
     "cloudWatch": {"clusterLogging": {"enableTypes": ["*"]}},
