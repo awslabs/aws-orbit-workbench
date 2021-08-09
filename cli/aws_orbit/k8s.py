@@ -90,13 +90,20 @@ def get_ingress_dns(name: str, k8s_context: str, namespace: str = "default") -> 
         raise Exception(f"Timeout while waiting for Ingress {name}.{namespace}")
 
 
-def get_stateful_set_status(name: str, k8s_context: str, namespace: str = "orbit-system") -> Dict[str, Any]:
-    _logger.debug("Retrieving Status for StatefulSet %s in Namespace %s", name, namespace)
+def get_resource_set_status(name: str, k8s_context: str, type: str, namespace: str = "orbit-system") -> Dict[str, Any]:
+    _logger.debug("Retrieving Status for %s %s in Namespace %s", type, name, namespace)
     config.load_kube_config(context=k8s_context)
     apps = AppsV1Api()
-    resp = apps.read_namespaced_stateful_set_status(name=name, namespace=namespace)
-    stateful_set = resp.to_dict()
-    return cast(Dict[str, Any], stateful_set.get("status"))
+    if type.lower() == "statefulset":
+        api = apps.read_namespaced_stateful_set_status
+    elif type.lower() == "deployment":
+        api = apps.read_namespaced_deployment_status
+    else:
+        raise Exception("Unknown resource type")
+
+    resp = api(name=name, namespace=namespace)
+    resource = resp.to_dict()
+    return cast(Dict[str, Any], resource.get("status"))
 
 
 if __name__ == "__main__":

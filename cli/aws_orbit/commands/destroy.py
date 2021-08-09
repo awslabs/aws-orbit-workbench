@@ -16,6 +16,7 @@ import logging
 from typing import cast
 
 import botocore.exceptions
+import click
 
 from aws_orbit import bundle, remote, utils
 from aws_orbit.messages import MessagesContext
@@ -103,8 +104,7 @@ def destroy_env(env: str, debug: bool) -> None:
         msg_ctx.progress(2)
 
         if any(cfn.does_stack_exist(stack_name=t.stack_name) for t in context.teams):
-            msg_ctx.error("Found Teams dependent on the Envrionment.")
-            return
+            raise click.ClickException("Found Teams dependent on the Envrionment.")
 
         if (
             cfn.does_stack_exist(stack_name=context.env_stack_name)
