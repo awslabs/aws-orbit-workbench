@@ -147,12 +147,12 @@ def destroy_env(env: str, debug: bool) -> None:
 
 def destroy_foundation(env: str, debug: bool) -> None:
     with MessagesContext("Destroying", debug=debug) as msg_ctx:
-        ssm.cleanup_changeset(env_name=env, top_level="orbit-foundation")
-        ssm.cleanup_manifest(env_name=env, top_level="orbit-foundation")
+        ssm.cleanup_changeset(env_name=env, top_level="orbit-f")
+        ssm.cleanup_manifest(env_name=env, top_level="orbit-f")
 
-        if ssm.does_parameter_exist(name=f"/orbit-foundation/{env}/context") is False:
+        if ssm.does_parameter_exist(name=f"/orbit-f/{env}/context") is False:
             msg_ctx.info(f"Foundation {env} not found. Destroying only possible remaining resources.")
-            destroy_remaining_resources(env_name=env, top_level="orbit-foundation")
+            destroy_remaining_resources(env_name=env, top_level="orbit-f")
             msg_ctx.progress(100)
             return
 
@@ -188,14 +188,14 @@ def destroy_foundation(env: str, debug: bool) -> None:
         msg_ctx.progress(95)
 
         try:
-            destroy_toolkit(env_name=context.name, top_level="orbit-foundation")
+            destroy_toolkit(env_name=context.name, top_level="orbit-f")
         except botocore.exceptions.ClientError as ex:
             error = ex.response["Error"]
             if "does not exist" not in error["Message"]:
                 raise
             _logger.debug(f"Skipping toolkit destroy: {error['Message']}")
         msg_ctx.info("Toolkit destroyed")
-        ssm.cleanup_env(env_name=context.name, top_level="orbit-foundation")
+        ssm.cleanup_env(env_name=context.name, top_level="orbit-f")
 
         msg_ctx.progress(100)
 

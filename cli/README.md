@@ -72,7 +72,7 @@
 
 * Install [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html)
 * Go to the IAM console
-* Find the Admin Role (`arn:aws:iam::{ACCOUNT_ID}:role/orbit-{ENV_NAME}-admin`).
+* Find the Admin Role (`arn:aws:iam::{ACCOUNT_ID}:role/orbit-{ENV_NAME}-{REGION}-admin`).
 * Add your user or role under the `Trust Relationship` tab.
 
 ```json
@@ -86,7 +86,7 @@
 ```
 
 * Open the temrinal and user the AWS CLI to configure your kubeconfig
-* `aws eks update-kubeconfig --name orbit-{ENV_NAME} --role-arn arn:aws:iam::{ACCOUNT_ID}:role/orbit-{ENV_NAME}-admin`
+* `aws eks update-kubeconfig --name orbit-{ENV_NAME} --role-arn arn:aws:iam::{ACCOUNT_ID}:role/orbit-{ENV_NAME}-{REGION}-admin`
 * Validate you access
 * `kubectl get pod -A`
 
