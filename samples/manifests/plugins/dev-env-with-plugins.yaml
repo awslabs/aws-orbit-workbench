@@ -43,7 +43,7 @@ ManagedNodegroups:
 -   Name: primary-gpu
     InstanceType: g4dn.xlarge
     LocalStorageSize: 128
-    NodesNumDesired: 1
+    NodesNumDesired: 0
     NodesNumMax: 4
     NodesNumMin: 0
 Teams:
