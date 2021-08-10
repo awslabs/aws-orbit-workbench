@@ -26648,7 +26648,7 @@ spec:
   ports:
   - name: https
     port: 443
-    targetPort: 10250
+    targetPort: ${secure_port}
   selector:
     app.kubernetes.io/component: webhook
     app.kubernetes.io/instance: cert-manager
@@ -26771,7 +26771,7 @@ spec:
       containers:
       - args:
         - --v=2
-        - --secure-port=10250
+        - --secure-port=${secure_port}
         - --dynamic-serving-ca-secret-namespace=$(POD_NAMESPACE)
         - --dynamic-serving-ca-secret-name=cert-manager-webhook-ca
         - --dynamic-serving-dns-names=cert-manager-webhook,cert-manager-webhook.cert-manager,cert-manager-webhook.cert-manager.svc
@@ -26794,7 +26794,7 @@ spec:
           timeoutSeconds: 1
         name: cert-manager
         ports:
-        - containerPort: 10250
+        - containerPort: ${secure_port}
           name: https
         readinessProbe:
           failureThreshold: 3
