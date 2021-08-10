@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import logging
+import threading
 from typing import Tuple
 
 from aws_orbit import cleanup, plugins, sh
@@ -40,55 +41,67 @@ def delete_image(args: Tuple[str, ...]) -> None:
     _logger.debug("Docker Image Destroyed from ECR")
 
 
+def destroy_team_user_resources(team_name: str) -> None:
+    thread_name = threading.current_thread().name
+    _logger.debug("Destroying all %s resources using thread %s", team_name, thread_name)
+    # Force delete any Pods belonging to the Team in an attempt to eliminate Termination hangs
+    for resource in [
+        "hyperparametertuningjob.sagemaker.aws.amazon.com",
+        "trainingjobs.sagemaker.aws.amazon.com",
+        "batchtransformjob.sagemaker.aws.amazon.com",
+        "hostingdeployment.sagemaker.aws.amazon.com",
+        "jobs",
+        "notebooks",
+        "deployments",
+        "statefulsets",
+        "pods",
+    ]:
+        _logger.debug("Force deleting %s for Team %s", resource, team_name)
+        try:
+            sh.run(
+                f"bash -c 'for ns in $(kubectl get namespaces --output=jsonpath={{.items..metadata.name}} "
+                f"-l orbit/team={team_name}); "
+                f"do kubectl delete {resource} -n $ns --all --force; sleep 10; "
+                f"done'"
+            )
+        except FailedShellCommand:
+            _logger.debug("Ignoring failed deletion of: %s", resource)
+
+    # Get rid of any pods stuck  in 'Pending' state
+    try:
+        sh.run(
+            f"bash -c 'for p in $(kubectl get pods --field-selector=status.phase=Pending -n {team_name} "
+            f"--output=jsonpath={{.items..metadata.name}}); "
+            f"do kubectl delete pod $p -n {team_name} --force; sleep 2; "
+            f"done'"
+        )
+    except FailedShellCommand:
+        _logger.debug("Ignoring failed deletion of Pending Pods in: %s", team_name)
+
+    try:
+        sh.run(f"kubectl delete namespaces -l orbit/team={team_name},orbit/space=user --wait=true")
+    except FailedShellCommand:
+        _logger.debug("Ignoring failed deletion of namespace: %s", team_name)
+    _logger.debug("Destroyed all %s resources using thread %s", team_name, thread_name)
+
+
 def destroy_teams(args: Tuple[str, ...]) -> None:
     _logger.debug("args %s", args)
     env_name: str = args[0]
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("context.name %s", context.name)
-
     plugins.PLUGINS_REGISTRIES.load_plugins(context=context, plugin_changesets=[], teams_changeset=None)
     kubectl.write_kubeconfig(context=context)
+    threads = []
+    # Create thread per team
     for team_context in context.teams:
-        _logger.debug("Destory all user namespaces for %s", team_context.name)
-        # Force delete any Pods belonging to the Team in an attempt to eliminate Termination hangs
-        for resource in [
-            "hyperparametertuningjob.sagemaker.aws.amazon.com",
-            "trainingjobs.sagemaker.aws.amazon.com",
-            "batchtransformjob.sagemaker.aws.amazon.com",
-            "hostingdeployment.sagemaker.aws.amazon.com",
-            "jobs",
-            "notebooks",
-            "deployments",
-            "statefulsets",
-            "pods",
-        ]:
-            _logger.debug("Force deleting %s for Team %s", resource, team_context.name)
-            try:
-                sh.run(
-                    f"bash -c 'for ns in $(kubectl get namespaces --output=jsonpath={{.items..metadata.name}} "
-                    f"-l orbit/team={team_context.name}); "
-                    f"do kubectl delete {resource} -n $ns --all --force; sleep 10; "
-                    f"done'"
-                )
-            except FailedShellCommand:
-                _logger.debug("Ignoring failed deletion of: %s", resource)
-
-        # Get rid of any pods stuck  in 'Pending' state
-        try:
-            sh.run(
-                f"bash -c 'for p in $(kubectl get pods --field-selector=status.phase=Pending -n {team_context.name} "
-                f"--output=jsonpath={{.items..metadata.name}}); "
-                f"do kubectl delete pod $p -n {team_context.name} --force; sleep 2; "
-                f"done'"
-            )
-        except FailedShellCommand:
-            _logger.debug("Ignoring failed deletion of Pending Pods in: %s", team_context.name)
-
-        try:
-            sh.run(f"kubectl delete namespaces -l orbit/team={team_context.name},orbit/space=user --wait=true")
-        except FailedShellCommand:
-            _logger.debug("Ignoring failed deletion of namepace: %s", team_context.name)
-
+        _logger.debug("Destroy all user namespaces for %s", team_context.name)
+        thread = threading.Thread(target=destroy_team_user_resources, args=(team_context.name,))
+        threads.append(thread)
+        thread.start()
+    # Wait for threads to finish
+    for thread in threads:
+        thread.join()
     _logger.debug("Plugins loaded")
     for team_context in context.teams:
         plugins.PLUGINS_REGISTRIES.destroy_team_plugins(context=context, team_context=team_context)
