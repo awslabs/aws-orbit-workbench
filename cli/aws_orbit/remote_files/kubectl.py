@@ -328,7 +328,7 @@ def _orbit_system_env_base(output_path: str, context: Context) -> None:
     os.makedirs(os.path.join(output_path, "base"), exist_ok=True)
     filenames = ["kustomization.yaml", "00-commons.yaml"]
     for filename in filenames:
-        input = os.path.join(MODELS_PATH, "orbit-system", "env", "base", filename)
+        input = os.path.join(MODELS_PATH, "env", "base", filename)
         output = os.path.join(output_path, "base", filename)
         with open(input, "r") as file:
             content: str = file.read()
@@ -354,15 +354,13 @@ def _orbit_system_env_base(output_path: str, context: Context) -> None:
 
 
 def _generate_orbit_system_env_manifest(output_path: str, context: "Context") -> str:
-    output_path = os.path.join(output_path, "commons")
-    os.makedirs(output_path, exist_ok=True)
     _cleanup_output(output_path=output_path)
     _orbit_system_env_base(output_path=output_path, context=context)
     overlays_path = os.path.join(output_path, "overlays")
     src = (
-        os.path.join(MODELS_PATH, "orbit-system", "env", "overlays", "private")
+        os.path.join(MODELS_PATH, "env", "overlays", "private")
         if context.networking.data.internet_accessible
-        else os.path.join(MODELS_PATH, "orbit-system", "env", "overlays", "isolated")
+        else os.path.join(MODELS_PATH, "env", "overlays", "isolated")
     )
     shutil.copytree(
         src=src,
@@ -629,11 +627,11 @@ def deploy_env(context: "Context") -> None:
             patch = patch.replace("VPC_ID", cast(str, context.networking.vpc_id))
             sh.run(f"kubectl patch deployment -n kubeflow alb-ingress-controller --patch '{patch}'")
 
-            patch = (
-                '[{"op": "add", "path": "/spec/template/metadata/labels/orbit~1node-type", "value": "fargate"}, '
-                '{"op": "replace", "path": "/spec/template/spec/nodeSelector", "value": {}}]'
-            )
-            sh.run(f"kubectl patch deployment -n orbit-system landing-page-service --type json --patch '{patch}'")
+            # patch = (
+            #     '[{"op": "add", "path": "/spec/template/metadata/labels/orbit~1node-type", "value": "fargate"}, '
+            #     '{"op": "replace", "path": "/spec/template/spec/nodeSelector", "value": {}}]'
+            # )
+            # sh.run(f"kubectl patch deployment -n orbit-system landing-page-service --type json --patch '{patch}'")
 
         # Confirm env Service Endpoints
         _confirm_endpoints(name="landing-page-service", namespace="orbit-system", k8s_context=k8s_context)

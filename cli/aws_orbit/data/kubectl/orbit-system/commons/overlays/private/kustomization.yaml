@@ -13,4 +13,4 @@ images:
     newName: public.ecr.aws/v3o4w1g6/quay.io/jetstack/cert-manager-webhook
     newTag: v1.3.2
 patches:
-  - ./patch-deployments.yaml
+  - ./patches.yaml
