@@ -57,6 +57,7 @@ Teams:
     - 0.0.0.0/0
     Plugins: !include lake-admin-plugins.yaml
     EfsLifeCycle: AFTER_7_DAYS
+    AuthenticationGroups:
     - lake-admin
 -   Name: lake-creator
     Policies:
