@@ -3,10 +3,10 @@ CodeartifactDomain: !ENV ${CODEARTIFACT_DOMAIN::}
 CodeartifactRepository: !ENV ${CODEARTIFACT_REPOSITORY::}
 EksSystemMastersRoles:
 -   !ENV ${ORBIT_ADMIN_ROLE::Admin}
-ScratchBucketArn: !SSM ${/orbit-foundation/dev-env-iso/resources::ScratchBucketArn}
-UserPoolId: !SSM ${/orbit-foundation/dev-env-iso/resources::UserPoolId}
-SharedEfsFsId: !SSM ${/orbit-foundation/dev-env-iso/resources::SharedEfsFsId}
-SharedEfsSgId: !SSM ${/orbit-foundation/dev-env-iso/resources::SharedEfsSgId}
+ScratchBucketArn: !SSM ${/orbit-f/dev-env-iso/resources::ScratchBucketArn}
+UserPoolId: !SSM ${/orbit-f/dev-env-iso/resources::UserPoolId}
+SharedEfsFsId: !SSM ${/orbit-f/dev-env-iso/resources::SharedEfsFsId}
+SharedEfsSgId: !SSM ${/orbit-f/dev-env-iso/resources::SharedEfsSgId}
 InstallSsmAgent: true
 CognitoExternalProvider: !ENV ${COGNITO_EXTERNAL_PROVIDER::}
 CognitoExternalProviderLabel: !ENV ${COGNITO_EXTERNAL_PROVIDER_LABEL::}
@@ -21,16 +21,16 @@ Images:
         Repository: !ENV ${UTILITY_DATA_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data}
         Version: !ENV ${VERSION::latest}
 Networking:
-    VpcId: !SSM ${/orbit-foundation/dev-env-iso/resources::VpcId}
-    PublicSubnets: !SSM ${/orbit-foundation/dev-env-iso/resources::PublicSubnets}
-    PrivateSubnets: !SSM ${/orbit-foundation/dev-env-iso/resources::PrivateSubnets}
-    IsolatedSubnets: !SSM ${/orbit-foundation/dev-env-iso/resources::IsolatedSubnets}
+    VpcId: !SSM ${/orbit-f/dev-env-iso/resources::VpcId}
+    PublicSubnets: !SSM ${/orbit-f/dev-env-iso/resources::PublicSubnets}
+    PrivateSubnets: !SSM ${/orbit-f/dev-env-iso/resources::PrivateSubnets}
+    IsolatedSubnets: !SSM ${/orbit-f/dev-env-iso/resources::IsolatedSubnets}
     Data:
         InternetAccessible: !ENV ${INTERNET_ACCESSIBLE::false}
-        NodesSubnets: !SSM ${/orbit-foundation/dev-env-iso/resources::NodesSubnets}
+        NodesSubnets: !SSM ${/orbit-f/dev-env-iso/resources::NodesSubnets}
     Frontend:
-        LoadBalancersSubnets: !SSM ${/orbit-foundation/dev-env-iso/resources::LoadBalancersSubnets}
-        SslCertArn: !SSM ${/orbit-foundation/dev-env-iso/resources::SslCertArn}
+        LoadBalancersSubnets: !SSM ${/orbit-f/dev-env-iso/resources::LoadBalancersSubnets}
+        SslCertArn: !SSM ${/orbit-f/dev-env-iso/resources::SslCertArn}
 ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge
@@ -49,7 +49,7 @@ ManagedNodegroups:
 Teams:
 -   Name: lake-admin
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-demo-lake-admin-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-${AWS_DEFAULT_REGION::}-demo-lake-admin-add-policy
     GrantSudo: true
     Fargate: false
     K8Admin: true
@@ -57,9 +57,11 @@ Teams:
     - 0.0.0.0/0
     Plugins: !include lake-admin-plugins.yaml
     EfsLifeCycle: AFTER_7_DAYS
+    AuthenticationGroups:
+    - lake-admin
 -   Name: lake-creator
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-demo-lake-creator-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-${AWS_DEFAULT_REGION::}-demo-lake-creator-add-policy
     GrantSudo: true
     Fargate: false
     K8Admin: false
@@ -67,12 +69,17 @@ Teams:
     - 0.0.0.0/0
     Plugins: !include lake-creator-plugins.yaml
     EfsLifeCycle: AFTER_7_DAYS
+    AuthenticationGroups:
+    - lake-creator
 -   Name: lake-user
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-demo-lake-user-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-${AWS_DEFAULT_REGION::}-demo-lake-user-add-policy
     JupyterhubInboundRanges:
     - 0.0.0.0/0
     GrantSudo: true
     Profiles: !include lake-user-profiles.json
     Plugins: !include lake-user-plugins.yaml
     EfsLifeCycle: AFTER_7_DAYS
+    AuthenticationGroups:
+    - lake-user
+

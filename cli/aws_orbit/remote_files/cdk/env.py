@@ -90,7 +90,7 @@ class Env(Stack):
         self._create_post_authentication_lambda()
 
     def _create_role_cluster(self) -> iam.Role:
-        name: str = f"orbit-{self.context.name}-eks-cluster-role"
+        name: str = f"orbit-{self.context.name}-{self.context.region}-eks-cluster-role"
         role = iam.Role(
             scope=self,
             id=name,
@@ -148,7 +148,7 @@ class Env(Stack):
         return role
 
     def _create_role_fargate_profile(self) -> iam.Role:
-        name: str = f"orbit-{self.context.name}-eks-fargate-profile-role"
+        name: str = f"orbit-{self.context.name}-{self.context.region}-eks-fargate-profile-role"
         return iam.Role(
             scope=self,
             id=name,
@@ -187,7 +187,7 @@ class Env(Stack):
         )
 
     def _create_env_nodegroup_role(self) -> iam.Role:
-        name: str = f"orbit-{self.context.name}-eks-nodegroup-role"
+        name: str = f"orbit-{self.context.name}-{self.context.region}-eks-nodegroup-role"
         role = iam.Role(
             scope=self,
             id=name,
@@ -205,7 +205,7 @@ class Env(Stack):
         return role
 
     def _create_cluster_autoscaler_role(self) -> iam.Role:
-        name: str = f"orbit-{self.context.name}-cluster-autoscaler-role"
+        name: str = f"orbit-{self.context.name}-{self.context.region}-cluster-autoscaler-role"
         return iam.Role(
             scope=self,
             id=name,
@@ -269,7 +269,7 @@ class Env(Stack):
                 )
             ],
         )
-        name = f"{self.id}-cognito-authenticated-identity-role"
+        name = f"{self.id}-{self.context.region}-cognito-authenticated-identity-role"
         authenticated_role = iam.Role(
             scope=self,
             id=name,
@@ -311,7 +311,7 @@ class Env(Stack):
                 ),
             },
         )
-        name = f"{self.id}-cognito-unauthenticated-identity-role"
+        name = f"{self.id}-{self.context.region}-cognito-unauthenticated-identity-role"
         unauthenticated_role = iam.Role(
             scope=self,
             id=name,
@@ -416,7 +416,7 @@ class Env(Stack):
             parameters={"LayerName": k8s_layer_name},
         )
 
-        role_name = f"orbit-{self.context.name}-admin"
+        role_name = self.context.toolkit.admin_role
         role_arn = f"arn:aws:iam::{self.context.account_id}:role/{role_name}"
 
         lambda_python.PythonFunction(
