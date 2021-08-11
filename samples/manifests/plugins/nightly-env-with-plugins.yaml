@@ -3,10 +3,10 @@ CodeartifactDomain: !ENV ${CODEARTIFACT_DOMAIN::}
 CodeartifactRepository: !ENV ${CODEARTIFACT_REPOSITORY::}
 EksSystemMastersRoles:
 -   !ENV ${ORBIT_ADMIN_ROLE::Admin}
-ScratchBucketArn: !SSM ${/orbit-foundation/nightly/resources::ScratchBucketArn}
-UserPoolId: !SSM ${/orbit-foundation/nightly/resources::UserPoolId}
-SharedEfsFsId: !SSM ${/orbit-foundation/nightly/resources::SharedEfsFsId}
-SharedEfsSgId: !SSM ${/orbit-foundation/nightly/resources::SharedEfsSgId}
+ScratchBucketArn: !SSM ${/orbit-f/nightly/resources::ScratchBucketArn}
+UserPoolId: !SSM ${/orbit-f/nightly/resources::UserPoolId}
+SharedEfsFsId: !SSM ${/orbit-f/nightly/resources::SharedEfsFsId}
+SharedEfsSgId: !SSM ${/orbit-f/nightly/resources::SharedEfsSgId}
 InstallSsmAgent: true
 CognitoExternalProvider: !ENV ${COGNITO_EXTERNAL_PROVIDER::}
 CognitoExternalProviderLabel: !ENV ${COGNITO_EXTERNAL_PROVIDER_LABEL::}
@@ -21,16 +21,16 @@ Images:
         Repository: !ENV ${UTILITY_DATA_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data}
         Version: !ENV ${VERSION::latest}
 Networking:
-    VpcId: !SSM ${/orbit-foundation/nightly/resources::VpcId}
-    PublicSubnets: !SSM ${/orbit-foundation/nightly/resources::PublicSubnets}
-    PrivateSubnets: !SSM ${/orbit-foundation/nightly/resources::PrivateSubnets}
-    IsolatedSubnets: !SSM ${/orbit-foundation/nightly/resources::IsolatedSubnets}
+    VpcId: !SSM ${/orbit-f/nightly/resources::VpcId}
+    PublicSubnets: !SSM ${/orbit-f/nightly/resources::PublicSubnets}
+    PrivateSubnets: !SSM ${/orbit-f/nightly/resources::PrivateSubnets}
+    IsolatedSubnets: !SSM ${/orbit-f/nightly/resources::IsolatedSubnets}
     Data:
         InternetAccessible: !ENV ${INTERNET_ACCESSIBLE::false}
-        NodesSubnets: !SSM ${/orbit-foundation/nightly/resources::NodesSubnets}
+        NodesSubnets: !SSM ${/orbit-f/nightly/resources::NodesSubnets}
     Frontend:
-        LoadBalancersSubnets: !SSM ${/orbit-foundation/nightly/resources::LoadBalancersSubnets}
-        SslCertArn: !SSM ${/orbit-foundation/nightly/resources::SslCertArn}
+        LoadBalancersSubnets: !SSM ${/orbit-f/nightly/resources::LoadBalancersSubnets}
+        SslCertArn: !SSM ${/orbit-f/nightly/resources::SslCertArn}
 ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge
