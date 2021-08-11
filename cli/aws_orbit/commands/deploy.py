@@ -30,6 +30,7 @@ from aws_orbit.models.manifest import (
     Manifest,
     ManifestSerDe,
     NetworkingManifest,
+    _manifest_validations,
 )
 from aws_orbit.services import cfn, codebuild
 from aws_orbit.services import cognito as orbit_cognito
@@ -232,12 +233,10 @@ def deploy_env(
         msg_ctx.info(f"Manifest loaded: {filename}")
         msg_ctx.progress(3)
 
+        _manifest_validations(manifest)
+
         context: "Context" = ContextSerDe.load_context_from_manifest(manifest=manifest)
         image_manifests = {"code_build": manifest.images.code_build}
-
-        for managed_nodegroup in context.managed_nodegroups:
-            if managed_nodegroup.nodes_num_desired and managed_nodegroup.nodes_num_desired < 1:
-                raise ValueError(f"{managed_nodegroup.name}  number of desired nodes should be greater than 0")
 
         for name in context.images.names:
             # We don't allow these images to be managed with an input Manifest
