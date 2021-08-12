@@ -52,3 +52,19 @@ def delete_image(env: str, name: str, debug: bool) -> None:
         )
         msg_ctx.info("Docker Image destroyed from ECR")
         msg_ctx.progress(100)
+
+
+def delete_podsetting(namespace: str, podsetting_name: str, debug: bool) -> None:
+    with MessagesContext("Podsetting Deleted", debug=debug) as msg_ctx:
+        msg_ctx.info("Recieved request to delete podsetting")
+        _logger.debug(f"Recieved request to delete podsetting {podsetting_name} in namespace {namespace}")
+        try:
+            import aws_orbit_sdk.controller as controller
+            controller.delete_podsetting(namespace=namespace, podsetting_name=podsetting_name)
+        except ImportError:
+            raise ImportError("Make sure the Orbit SDK is installed")
+        except:
+            raise
+        msg_ctx.tip("Podsetting deleted")
+        msg_ctx.progress(100)
+        return

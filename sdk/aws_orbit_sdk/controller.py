@@ -18,6 +18,9 @@ import os
 import sys
 import time
 import urllib
+import yaml
+
+from kubernetes import client
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, cast
@@ -27,10 +30,11 @@ import botocore
 import pandas as pd
 from kubernetes import config as k8_config
 from kubernetes import watch as k8_watch
+from kubernetes import dynamic
 from kubernetes.client import *
 
 from aws_orbit_sdk.common import get_properties, get_stepfunctions_waiter_config
-from aws_orbit_sdk.common_pod_specification import TeamConstants
+#from aws_orbit_sdk.common_pod_specification import TeamConstants
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -1642,3 +1646,100 @@ def all_tasks_stopped(tasks_state: Any) -> bool:
         if t["lastStatus"] in ("PENDING", "RUNNING"):
             return False
     return True
+
+def build_podsetting(env_name: str, team_name: str, podsetting: str, debug: bool) -> None:
+    ps = json.loads(podsetting)
+    if not ps['description'] or not ps['name']:
+        raise Exception(f"Podsetting name and description not present")
+    podsetting_name=ps['name']
+    spec_template = _generate_podsetting_spec_base(podsetting_name=podsetting_name,
+                            description=ps['description'],
+                            env_name=env_name,
+                            team_name=team_name)
+    spec=yaml.load(spec_template,Loader=yaml.SafeLoader)
+    env_params = ps.get('env', None)
+    if env_params:
+        spec['spec']['env']= env_params
+    
+    image = ps.get('image', None)
+    if image:
+        spec['spec']['image'] = image
+    
+    resources = ps.get('resources', None)
+    if resources is not None:
+        spec['spec']['resources']=resources
+
+    nodegroup = ps.get('node-group',None)
+    instancetype=ps.get('instance-type',None)
+    if nodegroup or instancetype: 
+       spec['spec']['nodeSelector'] = {}
+       if nodegroup:
+            spec['spec']['nodeSelector']['orbit/node-group']=nodegroup
+       if instancetype:
+            spec['spec']['nodeSelector']['node.kubernetes.io/instance-type']=instancetype
+
+    _logger.debug(yaml.dump(spec))
+
+    dynamic_client=_dynamic_client()
+    # This is a hack....we cannot update/patch so delete and create (for now)
+    try:
+        _destroy_podsetting(namespace=team_name, 
+                            podsetting_name=podsetting_name, 
+                            client=dynamic_client)
+        time.sleep(3)
+    except ApiException as e:
+        _logger.info(f"Tried to delete {podsetting_name} but that podsetting was not found...moving on")
+    
+    _deploy_podsetting(namespace=team_name, 
+                       name=podsetting_name,
+                       client=dynamic_client,
+                       podsetting_spec=spec)
+    _logger.info(f"PodSetting {podsetting_name} deployed to {team_name}")
+
+def delete_podsetting(namespace: str, podsetting_name: str) -> None:
+    try:
+        _destroy_podsetting(namespace, 
+                            podsetting_name,
+                            client=_dynamic_client())
+    except ApiException as e:
+        _logger.info(f"PodSetting {podsetting_name} failed to delete - : {e}")
+
+def _deploy_podsetting(namespace: str, name: str, client: dynamic.DynamicClient, podsetting_spec: Dict[str, Any]) -> None:
+    ORBIT_API_VERSION = os.environ.get("ORBIT_API_VERSION", "v1")
+    ORBIT_API_GROUP = os.environ.get("ORBIT_API_GROUP", "orbit.aws")
+    api = client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="PodSetting")
+    api.create(namespace=namespace, body=podsetting_spec)
+    
+def _destroy_podsetting(namespace: str, podsetting_name: str, client: dynamic.DynamicClient) -> None:
+    ORBIT_API_VERSION = os.environ.get("ORBIT_API_VERSION", "v1")
+    ORBIT_API_GROUP = os.environ.get("ORBIT_API_GROUP", "orbit.aws")
+    api = client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="PodSetting")
+    api.delete(namespace=namespace, name=podsetting_name, body={})
+
+def _dynamic_client() -> dynamic.DynamicClient:
+    load_kube_config()
+    return dynamic.DynamicClient(client=api_client.ApiClient())
+
+def _generate_podsetting_spec_base(podsetting_name, description, env_name, team_name):
+    spec_template= '''
+        kind: PodSetting
+        apiVersion: orbit.aws/v1
+        metadata:
+            labels:
+                orbit/env: {env_name}
+                orbit/space: team
+                orbit/team: {team_name}
+            name: {podsetting_name}
+            namespace: {team_name}
+        spec:
+            containerSelector:
+                jsonpath: metadata.labels.app
+            desc: {description}
+            podSelector:
+                matchExpressions:
+                - key: orbit/{podsetting_name}
+                  operator: Exists
+            securityContext:
+                runAsUser: 1000
+    '''.format(team_name=team_name,description=description,env_name=env_name,podsetting_name=podsetting_name)
+    return spec_template
