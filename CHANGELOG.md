@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added MaxAvailabilityZones to foundation deployment
 - Added EfaEnabled to NodeGroups
 - Added AvailabilityZones filter to NodeGroups
+- Manifest validator to check the managed node group desired number of nodes value
 
 ### **Changed**
 

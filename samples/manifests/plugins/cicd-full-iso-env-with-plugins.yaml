@@ -1,12 +1,12 @@
-Name: !ENV ${ORBIT_ENV_NAME::nightly-iso}
+Name: !ENV ${ORBIT_ENV_NAME::full-iso}
 CodeartifactDomain: !ENV ${CODEARTIFACT_DOMAIN::}
 CodeartifactRepository: !ENV ${CODEARTIFACT_REPOSITORY::}
 EksSystemMastersRoles:
 -   !ENV ${ORBIT_ADMIN_ROLE::Admin}
-ScratchBucketArn: !SSM ${/orbit-f/nightly-iso/resources::ScratchBucketArn}
-UserPoolId: !SSM ${/orbit-f/nightly-iso/resources::UserPoolId}
-SharedEfsFsId: !SSM ${/orbit-f/nightly-iso/resources::SharedEfsFsId}
-SharedEfsSgId: !SSM ${/orbit-f/nightly-iso/resources::SharedEfsSgId}
+ScratchBucketArn: !SSM ${/orbit-f/full-iso/resources::ScratchBucketArn}
+UserPoolId: !SSM ${/orbit-f/full-iso/resources::UserPoolId}
+SharedEfsFsId: !SSM ${/orbit-f/full-iso/resources::SharedEfsFsId}
+SharedEfsSgId: !SSM ${/orbit-f/full-iso/resources::SharedEfsSgId}
 InstallSsmAgent: true
 CognitoExternalProvider: !ENV ${COGNITO_EXTERNAL_PROVIDER::}
 CognitoExternalProviderLabel: !ENV ${COGNITO_EXTERNAL_PROVIDER_LABEL::}
@@ -21,16 +21,16 @@ Images:
         Repository: !ENV ${UTILITY_DATA_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data}
         Version: !ENV ${VERSION::latest}
 Networking:
-    VpcId: !SSM ${/orbit-f/nightly-iso/resources::VpcId}
-    PublicSubnets: !SSM ${/orbit-f/nightly-iso/resources::PublicSubnets}
-    PrivateSubnets: !SSM ${/orbit-f/nightly-iso/resources::PrivateSubnets}
-    IsolatedSubnets: !SSM ${/orbit-f/nightly-iso/resources::IsolatedSubnets}
+    VpcId: !SSM ${/orbit-f/full-iso/resources::VpcId}
+    PublicSubnets: !SSM ${/orbit-f/full-iso/resources::PublicSubnets}
+    PrivateSubnets: !SSM ${/orbit-f/full-iso/resources::PrivateSubnets}
+    IsolatedSubnets: !SSM ${/orbit-f/full-iso/resources::IsolatedSubnets}
     Data:
         InternetAccessible: !ENV ${INTERNET_ACCESSIBLE::false}
-        NodesSubnets: !SSM ${/orbit-f/nightly-iso/resources::NodesSubnets}
+        NodesSubnets: !SSM ${/orbit-f/full-iso/resources::NodesSubnets}
     Frontend:
-        LoadBalancersSubnets: !SSM ${/orbit-f/nightly-iso/resources::LoadBalancersSubnets}
-        SslCertArn: !SSM ${/orbit-f/nightly-iso/resources::SslCertArn}
+        LoadBalancersSubnets: !SSM ${/orbit-f/full-iso/resources::LoadBalancersSubnets}
+        SslCertArn: !SSM ${/orbit-f/full-iso/resources::SslCertArn}
 ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge
@@ -49,7 +49,7 @@ ManagedNodegroups:
 Teams:
 -   Name: lake-admin
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-demo-lake-admin-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::full-iso}-demo-lake-admin-add-policy
     GrantSudo: true
     Fargate: false
     K8Admin: true
@@ -61,7 +61,7 @@ Teams:
     - lake-admin
 -   Name: lake-creator
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-demo-lake-creator-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::full-iso}-demo-lake-creator-add-policy
     GrantSudo: true
     Fargate: false
     K8Admin: false
@@ -73,7 +73,7 @@ Teams:
     - lake-creator
 -   Name: lake-user
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-demo-lake-user-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::full-iso}-demo-lake-user-add-policy
     JupyterhubInboundRanges:
     - 0.0.0.0/0
     GrantSudo: true
