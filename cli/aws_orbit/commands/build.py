@@ -119,11 +119,12 @@ def build_podsetting(
         # Looks ok...call the SDK to build and deploy
         try:
             import aws_orbit_sdk.controller as controller
+
             controller.build_podsetting(env_name=env_name, team_name=team_name, podsetting=podsetting, debug=debug)
         except ImportError:
             raise ImportError("Make sure the Orbit SDK is installed")
         except:
             raise
-        
+
         msg_ctx.info(f"PodSetting {ps_name} created")
         msg_ctx.progress(100)

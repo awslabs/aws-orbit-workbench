@@ -60,6 +60,7 @@ def delete_podsetting(namespace: str, podsetting_name: str, debug: bool) -> None
         _logger.debug(f"Recieved request to delete podsetting {podsetting_name} in namespace {namespace}")
         try:
             import aws_orbit_sdk.controller as controller
+
             controller.delete_podsetting(namespace=namespace, podsetting_name=podsetting_name)
         except ImportError:
             raise ImportError("Make sure the Orbit SDK is installed")
