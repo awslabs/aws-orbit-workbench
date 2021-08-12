@@ -81,10 +81,10 @@ public.ecr.aws/v3o4w1g6/aws-orbit-workbench/quay.io/k8scsi/csi-node-driver-regis
 public.ecr.aws/v3o4w1g6/aws-orbit-workbench/quay.io/k8scsi/csi-provisioner:v1.3.0
 public.ecr.aws/v3o4w1g6/aws-orbit-workbench/quay.io/k8scsi/livenessprobe:v2.0.0
 public.ecr.aws/v3o4w1g6/gcr.io/google-containers/pause:2.0
+public.ecr.aws/v3o4w1g6/quay.io/jetstack/cert-manager-cainjector:v1.3.2
+public.ecr.aws/v3o4w1g6/quay.io/jetstack/cert-manager-controller:v1.3.2
+public.ecr.aws/v3o4w1g6/quay.io/jetstack/cert-manager-webhook:v1.3.2
 public.ecr.aws/v3o4w1g6/ssm-agent-installer:latest
 python:3.7
-quay.io/jetstack/cert-manager-cainjector:v0.11.0
-quay.io/jetstack/cert-manager-controller:v0.11.0
-quay.io/jetstack/cert-manager-webhook:v0.11.0
 seedjeffwan/istio-adapter:0.1
 seldonio/seldon-core-operator:1.4.0

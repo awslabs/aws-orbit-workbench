@@ -20,9 +20,6 @@ spec:
       name: landing-page-service
     spec:
       serviceAccountName: orbit-${env_name}-admin
-      nodeSelector:
-        orbit/usage: reserved
-        orbit/node-group: env
       containers:
         - name: webhook
           image: ${orbit_controller_image}

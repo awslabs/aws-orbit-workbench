@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: nodes_subnets vs private_subnets inconsistencies
 - UPDATED: nvidia daemonset version
 - UPDATED: vpc-cni version
+- FIX: replace cert-manager/jobs with cert-manager/certifactes
+- FIX: remove the ownerReference on userspace PodDefaults (because they're in the teamspace namespace)
 - FIX: yaml parameter replacement regex
 
 ### **Removed**

@@ -12,10 +12,28 @@ spec:
     port: 443
     targetPort: 443
 ---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  labels:
+    app.kubernetes.io/name: pod-image-replicator
+  name: pod-image-replicator-cert
+  namespace: orbit-system
+spec:
+  dnsNames:
+  - pod-image-updater.orbit-system.svc
+  - pod-image-updater.orbit-system.svc.cluster.local
+  issuerRef:
+    kind: ClusterIssuer
+    name: orbit-self-signing-issuer
+  secretName: pod-image-replicator-webhook-tls
+---
 kind: MutatingWebhookConfiguration
 apiVersion: admissionregistration.k8s.io/v1beta1
 metadata:
   name: orbit-pod-image-updater
+  annotations:
+    cert-manager.io/inject-ca-from: orbit-system/pod-image-replicator-cert
 webhooks:
   - name: pod-image-updater.orbit-system.svc
     sideEffects: None
@@ -87,7 +105,7 @@ spec:
           volumeMounts:
             - readOnly: true
               mountPath: /certs
-              name: orbit-controller-certs
+              name: pod-image-replicator-certs
             - mountPath: /state
               name: orbit-controller-state
               readOnly: false
@@ -113,9 +131,9 @@ spec:
               cpu: 100m
               memory: 100M
       volumes:
-        - name: orbit-controller-certs
+        - name: pod-image-replicator-certs
           secret:
-            secretName: pod-image-updater-certs
+            secretName: pod-image-replicator-webhook-tls
         - name: orbit-controller-state
           configMap:
             name: orbit-controller-state
@@ -198,51 +216,3 @@ spec:
         - name: orbit-controller-state
           configMap:
             name: orbit-controller-state
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: cert-manager-setup-pod-image-replication
-  namespace: orbit-system
-  labels:
-    app: cert-manager
-spec:
-  template:
-    metadata:
-      labels:
-        orbit/node-type: ec2
-    spec:
-      serviceAccountName: cert-manager-service-account
-      containers:
-        - name: metadata-cert-setup
-          image: ${k8s_utilities_image}
-          imagePullPolicy: IfNotPresent
-          command: ["/cert-manager-scripts/generate_certificate.sh"]
-          args:
-            - "--service"
-            - "pod-image-updater"
-            - "--webhook"
-            - "orbit-pod-image-updater"
-            - "--secret"
-            - "pod-image-updater-certs"
-            - "--namespace"
-            - "orbit-system"
-            - "--force"
-            - "yes"
-          volumeMounts:
-            - name: cert-manager-scripts
-              mountPath: /cert-manager-scripts
-          resources:
-            limits:
-              cpu: 500m
-              memory: 300Mi
-            requests:
-              cpu: 100m
-              memory: 100Mi
-      restartPolicy: Never
-      volumes:
-        - name: cert-manager-scripts
-          configMap:
-            name: cert-manager-scripts
-            defaultMode: 0744
-  backoffLimit: 1
