@@ -5,9 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 #
 ## **[1.2.0] - Unreleased**
 ### **Added**
+
+- Added MaxAvailabilityZones to foundation deployment
+- Added EfaEnabled to NodeGroups
+- Added AvailabilityZones filter to NodeGroups
+
 ### **Changed**
 
 - REFACTOR: Moved the path of installation of VSCode to /home/jovyan/.code-server
+- FIX: nodes_subnets vs private_subnets inconsistencies
+- UPDATED: nvidia daemonset version
+- UPDATED: vpc-cni version
+
 ### **Removed**
 
 
@@ -34,9 +43,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added podsetting support in regression notebooks and sdk
 - Added Fargate Profile for kubeflow/istio-system Pods when deploying in isolated subnets
 - Track Orbit usage
-- Added MaxAvailabilityZones to foundation deployment
-- Added EfaEnabled to NodeGroups
-- Added AvailabilityZones filter to NodeGroups
 
 ### **Changed**
 
@@ -61,9 +67,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: Added `AuthenticationGroups` to the manifest.yaml under samples
 - FIX: cleanup of istio-ingress raises exception when no cluster exists
 - FIX: remove the ownerReference on userspace PodDefaults (because they're in the teamspace namespace)
-- FIX: nodes_subnets vs private_subnets inconsistencies
-- UPDATED: nvidia daemonset version
-- UPDATED: vpc-cni version
 
 ### **Removed**
 
