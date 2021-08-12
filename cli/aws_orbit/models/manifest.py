@@ -98,6 +98,8 @@ class ManagedNodeGroupManifest:
     nodes_num_min: int = 1
     labels: Dict[str, str] = field(default_factory=dict)
     enable_virtual_gpu: bool = False
+    availability_zones: Optional[List[str]] = None
+    efa_enabled: Optional[bool] = None
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
@@ -181,6 +183,7 @@ class NetworkingManifest:
     public_subnets: List[str] = field(default_factory=list)
     private_subnets: List[str] = field(default_factory=list)
     isolated_subnets: List[str] = field(default_factory=list)
+    max_availability_zones: Optional[int] = None
     frontend: FrontendNetworkingManifest = FrontendNetworkingManifest()
     data: DataNetworkingManifest = DataNetworkingManifest()
 
