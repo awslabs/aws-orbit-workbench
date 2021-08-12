@@ -123,8 +123,6 @@ def build_podsetting(
             controller.build_podsetting(env_name=env_name, team_name=team_name, podsetting=podsetting, debug=debug)
         except ImportError:
             raise ImportError("Make sure the Orbit SDK is installed")
-        except:
-            raise
 
         msg_ctx.info(f"PodSetting {ps_name} created")
         msg_ctx.progress(100)

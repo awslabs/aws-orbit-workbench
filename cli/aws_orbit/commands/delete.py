@@ -64,8 +64,6 @@ def delete_podsetting(namespace: str, podsetting_name: str, debug: bool) -> None
             controller.delete_podsetting(namespace=namespace, podsetting_name=podsetting_name)
         except ImportError:
             raise ImportError("Make sure the Orbit SDK is installed")
-        except:
-            raise
         msg_ctx.tip("Podsetting deleted")
         msg_ctx.progress(100)
         return

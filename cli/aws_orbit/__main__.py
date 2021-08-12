@@ -567,9 +567,6 @@ def add_podsetting_cli(env: str, team: str, debug: bool, podsetting: TextIO) -> 
         build_podsetting(env_name=env, team_name=team, podsetting=podsetting_str, debug=debug)
     except ImportError:
         raise click.ClickException('The "utils" submodule is required to use "run" commands')
-    except:
-        raise
-    # build_podsetting(env_name=env, team_name=team, podsetting=podsetting_str, debug=debug)
 
 
 @click.group(name="delete")
