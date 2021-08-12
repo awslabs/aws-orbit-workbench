@@ -6,11 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## **[1.2.0] - Unreleased**
 ### **Added**
 
+- Added MaxAvailabilityZones to foundation deployment
+- Added EfaEnabled to NodeGroups
+- Added AvailabilityZones filter to NodeGroups
 - Manifest validator to check the managed node group desired number of nodes value
 
 ### **Changed**
 
 - REFACTOR: Moved the path of installation of VSCode to /home/jovyan/.code-server
+- FIX: nodes_subnets vs private_subnets inconsistencies
+- UPDATED: nvidia daemonset version
+- UPDATED: vpc-cni version
 - FIX: replace cert-manager/jobs with cert-manager/certifactes
 - FIX: remove the ownerReference on userspace PodDefaults (because they're in the teamspace namespace)
 - FIX: yaml parameter replacement regex
