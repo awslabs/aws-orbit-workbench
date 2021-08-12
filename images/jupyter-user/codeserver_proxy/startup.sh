@@ -4,13 +4,13 @@
 port=$1
 
 # VSCode Extensions for extra_user_apps/codeserver 
-if [ -d "/opt/orbit/apps/codeserver/extensions" ] && ! [ -d "/home/jovyan/private/code-server/extensions" ]; then
-    mkdir -p /home/jovyan/private/code-server/extensions && \
-    cp -r /opt/orbit/apps/codeserver/extensions /home/jovyan/private/code-server
+if [ -d "/opt/orbit/apps/codeserver/extensions" ] && ! [ -d "/home/jovyan/.code-server/extensions" ]; then
+    mkdir -p /home/jovyan/.code-server/extensions && \
+    cp -r /opt/orbit/apps/codeserver/extensions /home/jovyan/.code-server
 fi
-if [ -d "/opt/orbit/apps/codeserver/CachedExtensionVSIXs" ] && ! [ -d "/home/jovyan/private/code-server/CachedExtensionVSIXs" ]; then
-    mkdir -p /home/jovyan/private/code-server/CachedExtensionVSIXs && \
-    cp -r /opt/orbit/apps/codeserver/CachedExtensionVSIXs /home/jovyan/private/code-server
+if [ -d "/opt/orbit/apps/codeserver/CachedExtensionVSIXs" ] && ! [ -d "/home/jovyan/.code-server/CachedExtensionVSIXs" ]; then
+    mkdir -p /home/jovyan/.code-server/CachedExtensionVSIXs && \
+    cp -r /opt/orbit/apps/codeserver/CachedExtensionVSIXs /home/jovyan/.code-server
 fi
 
 # Populate an aws/credentials file base on the attached role

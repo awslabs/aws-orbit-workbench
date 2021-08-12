@@ -328,7 +328,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
             "--write-kubeconfig --verbose 4"
         )
 
-        username = f"orbit-{context.name}-admin"
+        username = context.toolkit.admin_role
         arn = f"arn:aws:iam::{context.account_id}:role/{username}"
         _logger.debug(f"Adding IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters")
         sh.run(
@@ -410,7 +410,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
     authorize_cluster_pod_security_group(context=context)
 
     iam.add_assume_role_statement(
-        role_name=f"orbit-{context.name}-cluster-autoscaler-role",
+        role_name=f"orbit-{context.name}-{context.region}-cluster-autoscaler-role",
         statement={
             "Effect": "Allow",
             "Principal": {"Federated": f"arn:aws:iam::{context.account_id}:oidc-provider/{context.eks_oidc_provider}"},
@@ -424,7 +424,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
     )
 
     iam.add_assume_role_statement(
-        role_name=f"orbit-{context.name}-eks-cluster-role",
+        role_name=f"orbit-{context.name}-{context.region}-eks-cluster-role",
         statement={
             "Effect": "Allow",
             "Principal": {"Federated": f"arn:aws:iam::{context.account_id}:oidc-provider/{context.eks_oidc_provider}"},
@@ -438,7 +438,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
     )
 
     iam.add_assume_role_statement(
-        role_name=f"orbit-{context.name}-admin",
+        role_name=cast(str, context.toolkit.admin_role),
         statement={
             "Effect": "Allow",
             "Principal": {"Federated": f"arn:aws:iam::{context.account_id}:oidc-provider/{context.eks_oidc_provider}"},

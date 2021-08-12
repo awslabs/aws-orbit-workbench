@@ -163,7 +163,7 @@ def foundation_remaining_dependencies_contextless(env_name: str, vpc_id: Optiona
 
 def delete_cert_from_iam(context: "FoundationContext") -> None:
     iam_client = boto3_client("iam")
-    cert_name = context.name
+    cert_name = f"{context.name}-{context.region}"
     try:
         iam_client.delete_server_certificate(ServerCertificateName=cert_name)
     except botocore.exceptions.ClientError as ex:

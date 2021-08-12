@@ -44,8 +44,7 @@ class IamBuilder:
         partition = core.Aws.PARTITION
         account = core.Aws.ACCOUNT_ID
         region = core.Aws.REGION
-
-        lake_role_name: str = f"orbit-{env_name}-{team_name}-role"
+        lake_role_name: str = f"orbit-{env_name}-{team_name}-{region}-role"
         kms_keys = [team_kms_key.key_arn]
         scratch_bucket_kms_key = IamBuilder.get_kms_key_scratch_bucket(context=context)
         if scratch_bucket_kms_key:
@@ -54,7 +53,7 @@ class IamBuilder:
         lake_operational_policy = iam.ManagedPolicy(
             scope=scope,
             id="lake_operational_policy",
-            managed_policy_name=f"orbit-{env_name}-{team_name}-user-access",
+            managed_policy_name=f"orbit-{env_name}-{team_name}-{region}-user-access",
             statements=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -338,7 +337,7 @@ class IamBuilder:
 
         role = iam.Role(
             scope=scope,
-            id=lake_role_name,
+            id=f"lakerole-for-{env_name}-{team_name}",
             role_name=lake_role_name,
             assumed_by=cast(
                 iam.IPrincipal,

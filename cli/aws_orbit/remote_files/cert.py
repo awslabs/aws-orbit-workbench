@@ -52,7 +52,7 @@ def deploy_selfsigned_cert(context: "FoundationContext") -> str:
 def upload_cert_iam(context: "FoundationContext", private_pem: str, public_pem: str) -> str:
     """ Uploads the cert to AWS IAM """
     iam_client = boto3.client("iam")
-    ssl_cert_name = context.name
+    ssl_cert_name = f"{context.name}-{context.region}"
     try:
         response = iam_client.get_server_certificate(ServerCertificateName=ssl_cert_name)
         return cast(str, response["ServerCertificate"]["ServerCertificateMetadata"]["Arn"])

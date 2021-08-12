@@ -43,8 +43,8 @@
 -   PluginId: enable_emr_on_eks
     Module: emr_on_eks
 # provide ability for containers to create fast fs for data science loads
--   PluginId: fast_fs_lustre
-    Module: lustre
+# -   PluginId: fast_fs_lustre
+#     Module: lustre
 -   PluginId: ray
     Module: ray
     Parameters:

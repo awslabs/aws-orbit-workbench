@@ -29,6 +29,8 @@ Resources:
         - ''
         - - 'orbit-'
           - !Ref envname
+          - '-'
+          - !Ref "AWS::Region"
           - '-demo-lake-'
           - !Ref 'AWS::AccountId'
           - '-'
@@ -62,6 +64,8 @@ Resources:
         - ''
         - - 'orbit-'
           - !Ref envname
+          - '-'
+          - !Ref "AWS::Region"
           - '-secured-demo-lake-'
           - !Ref 'AWS::AccountId'
           - '-'
@@ -166,6 +170,8 @@ Resources:
         - ''
         - - 'orbit-'
           - !Ref envname
+          - '-'
+          - !Ref "AWS::Region"
           - '-demo-lake-creator-add-policy'
       Path: /
 

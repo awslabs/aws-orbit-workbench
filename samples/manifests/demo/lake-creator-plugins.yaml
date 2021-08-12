@@ -75,5 +75,5 @@
         use_fips_ssl: "true"
         node_type: "DC2.large"
         number_of_nodes: "2"
--   PluginId: fast_fs_lustre
-    Module: lustre
+# -   PluginId: fast_fs_lustre
+#     Module: lustre

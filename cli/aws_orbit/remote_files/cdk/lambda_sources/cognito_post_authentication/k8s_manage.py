@@ -14,6 +14,8 @@ logger.setLevel(logging.INFO)
 
 ORBIT_ENV = os.environ.get("ORBIT_ENV")
 ACCOUNT_ID = os.environ.get("ACCOUNT_ID")
+REGION = os.environ.get("REGION")
+
 KUBECONFIG_PATH = "/tmp/.kubeconfig"
 
 ssm = boto3.client("ssm")
@@ -47,7 +49,7 @@ def create_kubeconfig() -> None:
         (
             "aws eks update-kubeconfig "
             f"--name orbit-{ORBIT_ENV} "
-            f"--role-arn arn:aws:iam::{ACCOUNT_ID}:role/orbit-{ORBIT_ENV}-admin "
+            f"--role-arn arn:aws:iam::{ACCOUNT_ID}:role/orbit-{ORBIT_ENV}-{REGION}-admin "
             f"--kubeconfig {KUBECONFIG_PATH}"
         )
     )

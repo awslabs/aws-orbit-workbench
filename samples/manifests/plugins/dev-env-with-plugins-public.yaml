@@ -3,22 +3,22 @@ CodeartifactDomain: !ENV ${CODEARTIFACT_DOMAIN::}
 CodeartifactRepository: !ENV ${CODEARTIFACT_REPOSITORY::}
 EksSystemMastersRoles:
 -   !ENV ${ORBIT_ADMIN_ROLE::Admin}
-ScratchBucketArn: !SSM ${/orbit-foundation/public2/resources::ScratchBucketArn}
-UserPoolId: !SSM ${/orbit-foundation/public2/resources::UserPoolId}
-SharedEfsFsId: !SSM ${/orbit-foundation/public2/resources::SharedEfsFsId}
-SharedEfsSgId: !SSM ${/orbit-foundation/public2/resources::SharedEfsSgId}
+ScratchBucketArn: !SSM ${/orbit-f/public2/resources::ScratchBucketArn}
+UserPoolId: !SSM ${/orbit-f/public2/resources::UserPoolId}
+SharedEfsFsId: !SSM ${/orbit-f/public2/resources::SharedEfsFsId}
+SharedEfsSgId: !SSM ${/orbit-f/public2/resources::SharedEfsSgId}
 InstallSsmAgent: true
 Networking:
-    VpcId: !SSM ${/orbit-foundation/public2/resources::VpcId}
-    PublicSubnets: !SSM ${/orbit-foundation/public2/resources::PublicSubnets}
-    PrivateSubnets: !SSM ${/orbit-foundation/public2/resources::PrivateSubnets}
-    IsolatedSubnets: !SSM ${/orbit-foundation/public2/resources::IsolatedSubnets}
+    VpcId: !SSM ${/orbit-f/public2/resources::VpcId}
+    PublicSubnets: !SSM ${/orbit-f/public2/resources::PublicSubnets}
+    PrivateSubnets: !SSM ${/orbit-f/public2/resources::PrivateSubnets}
+    IsolatedSubnets: !SSM ${/orbit-f/public2/resources::IsolatedSubnets}
     Data:
         InternetAccessible: !ENV ${INTERNET_ACCESSIBLE::false}
-        NodesSubnets: !SSM ${/orbit-foundation/public2/resources::NodesSubnets}
+        NodesSubnets: !SSM ${/orbit-f/public2/resources::NodesSubnets}
     Frontend:
-        LoadBalancersSubnets: !SSM ${/orbit-foundation/public2/resources::LoadBalancersSubnets}
-        SslCertArn: !SSM ${/orbit-foundation/public2/resources::SslCertArn}
+        LoadBalancersSubnets: !SSM ${/orbit-f/public2/resources::LoadBalancersSubnets}
+        SslCertArn: !SSM ${/orbit-f/public2/resources::SslCertArn}
 ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge
@@ -31,7 +31,7 @@ ManagedNodegroups:
 Teams:
 -   Name: lake-admin
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::public2}-demo-lake-admin-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::public2}-${AWS_DEFAULT_REGION::}-demo-lake-admin-add-policy
     GrantSudo: true
     Fargate: false
     K8Admin: true
@@ -43,7 +43,7 @@ Teams:
     - lake-admin
 -   Name: lake-creator
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::public2}-demo-lake-creator-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::public2}-${AWS_DEFAULT_REGION::}-demo-lake-creator-add-policy
     GrantSudo: true
     Fargate: false
     K8Admin: true
@@ -55,7 +55,7 @@ Teams:
     - lake-creator
 -   Name: lake-user
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::public2}-demo-lake-user-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::public2}-${AWS_DEFAULT_REGION::}-demo-lake-user-add-policy
     JupyterhubInboundRanges:
     - 0.0.0.0/0
     GrantSudo: true
