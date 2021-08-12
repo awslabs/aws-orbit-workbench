@@ -30,6 +30,7 @@ from aws_orbit.models.manifest import (
     Manifest,
     ManifestSerDe,
     NetworkingManifest,
+    manifest_validations,
 )
 from aws_orbit.services import cfn, codebuild
 from aws_orbit.services import cognito as orbit_cognito
@@ -231,6 +232,8 @@ def deploy_env(
         manifest: "Manifest" = ManifestSerDe.load_manifest_from_file(filename=filename, type=Manifest)
         msg_ctx.info(f"Manifest loaded: {filename}")
         msg_ctx.progress(3)
+
+        manifest_validations(manifest)
 
         context: "Context" = ContextSerDe.load_context_from_manifest(manifest=manifest)
         image_manifests = {"code_build": manifest.images.code_build}

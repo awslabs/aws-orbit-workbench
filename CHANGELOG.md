@@ -5,10 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 #
 ## **[1.2.0] - Unreleased**
 ### **Added**
+
 - FEATURE: Added CLI support for podsettings (build and delete)
+- Manifest validator to check the managed node group desired number of nodes value
+
 ### **Changed**
 
 - REFACTOR: Moved the path of installation of VSCode to /home/jovyan/.code-server
+
 ### **Removed**
 
 
