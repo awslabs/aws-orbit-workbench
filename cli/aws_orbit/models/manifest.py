@@ -240,7 +240,7 @@ def _add_ssm_param_injector(tag: str = "!SSM") -> Set[str]:
         port: !SSM ${/orbit-f/dev-env/resources::/PublicSubnet/*}
     """
     # pattern for global vars: look for ${word}
-    pattern = re.compile(".*?\${(.[0-9a-zA-Z-_:/]+)}.*?")  # noqa: W605
+    pattern = re.compile(".*?\${([^}]+::[^}]*)}.*?")  # noqa: W605
     loader = yaml.SafeLoader
 
     # the tag will be used to mark where to start searching for the pattern
@@ -310,7 +310,7 @@ def _add_env_var_injector(tag: str = "!ENV") -> None:
         something_else: !ENV '${AWESOME_ENV_VAR}/var/${A_SECOND_AWESOME_VAR}'
     """
     # pattern for global vars: look for ${word}
-    pattern = re.compile(".*?\${(.[0-9a-zA-Z-_:]+)}.*?")  # noqa: W605
+    pattern = re.compile(".*?\${([^}]+::[^}]*)}.*?")  # noqa: W605
     loader = yaml.SafeLoader
 
     # the tag will be used to mark where to start searching for the pattern
