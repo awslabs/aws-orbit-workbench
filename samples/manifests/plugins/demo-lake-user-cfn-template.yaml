@@ -112,6 +112,8 @@ Resources:
         - ''
         - - 'orbit-'
           - !Ref envname
+          - '-'
+          - !Ref "AWS::Region"
           - '-demo-lake-user-add-policy'
       Path: /
   LakeUserGroup:

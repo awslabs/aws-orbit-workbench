@@ -190,6 +190,7 @@ class ToolkitManifest:
     stack_name: str
     codebuild_project: str
     deploy_id: Optional[str] = None
+    admin_role: Optional[str] = None
     kms_arn: Optional[str] = None
     kms_alias: Optional[str] = None
     s3_bucket: Optional[str] = None
@@ -452,7 +453,7 @@ class ContextSerDe(Generic[T, V]):
     @staticmethod
     def _load_foundation_context_from_manifest(manifest: "FoundationManifest") -> FoundationContext:
         _logger.debug("Loading Context from manifest")
-        context_parameter_name: str = f"/orbit-foundation/{manifest.name}/context"
+        context_parameter_name: str = f"/orbit-f/{manifest.name}/context"
         if ssm.does_parameter_exist(name=context_parameter_name):
             context: FoundationContext = ContextSerDe.load_context_from_ssm(
                 env_name=manifest.name, type=FoundationContext
@@ -466,20 +467,20 @@ class ContextSerDe(Generic[T, V]):
                 name=manifest.name,
                 account_id=utils.get_account_id(),
                 region=utils.get_region(),
-                env_tag=f"orbit-foundation-{manifest.name}",
+                env_tag=f"orbit-f-{manifest.name}",
                 ssm_parameter_name=context_parameter_name,
-                resources_ssm_parameter_name=f"/orbit-foundation/{manifest.name}/resources",
+                resources_ssm_parameter_name=f"/orbit-f/{manifest.name}/resources",
                 toolkit=ToolkitManifest(
-                    stack_name=f"orbit-foundation-{manifest.name}-toolkit",
-                    codebuild_project=f"orbit-foundation-{manifest.name}",
+                    stack_name=f"orbit-f-{manifest.name}-toolkit",
+                    codebuild_project=f"orbit-f-{manifest.name}",
                 ),
-                cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-foundation-{manifest.name}-cdk-toolkit"),
+                cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-f-{manifest.name}-cdk-toolkit"),
                 codeartifact_domain=manifest.codeartifact_domain,
                 codeartifact_repository=manifest.codeartifact_repository,
                 networking=create_networking_context_from_manifest(networking=manifest.networking),
                 images=manifest.images,
                 policies=manifest.policies,
-                stack_name=f"orbit-foundation-{manifest.name}",
+                stack_name=f"orbit-f-{manifest.name}",
             )
         ContextSerDe.fetch_toolkit_data(context=context)
         ContextSerDe.dump_context_to_ssm(context=context)
@@ -539,7 +540,7 @@ class ContextSerDe(Generic[T, V]):
             main["Teams"] = [t for t in teams if t]
             return cast(V, Context.Schema().load(data=main, many=False, partial=False, unknown="EXCLUDE"))
         elif type is FoundationContext:
-            context_parameter_name = f"/orbit-foundation/{env_name}/context"
+            context_parameter_name = f"/orbit-f/{env_name}/context"
             main = ssm.get_parameter(name=context_parameter_name)
             return cast(V, FoundationContext.Schema().load(data=main, many=False, partial=False, unknown="EXCLUDE"))
         else:
@@ -551,7 +552,7 @@ class ContextSerDe(Generic[T, V]):
         if not (isinstance(context, Context) or isinstance(context, FoundationContext)):
             raise ValueError("Unknown 'context' Type")
 
-        top_level = "orbit" if isinstance(context, Context) else "orbit-foundation"
+        top_level = "orbit" if isinstance(context, Context) else "orbit-f"
 
         resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
         try:
@@ -583,6 +584,10 @@ class ContextSerDe(Generic[T, V]):
             if output["ExportName"] == f"{top_level}-{context.name}-kms-arn":
                 _logger.debug("Export value: %s", output["OutputValue"])
                 context.toolkit.kms_arn = output["OutputValue"]
+            if output["ExportName"] == f"{top_level}-{context.name}-admin-role":
+                _logger.debug("Export value: %s", output["OutputValue"])
+                context.toolkit.admin_role = output["OutputValue"]
+
         if context.toolkit.deploy_id is None:
             raise RuntimeError(
                 f"Stack {context.toolkit.stack_name} does not have the expected {top_level}-{context.name}-deploy-id output."
@@ -591,6 +596,11 @@ class ContextSerDe(Generic[T, V]):
             raise RuntimeError(
                 f"Stack {context.toolkit.stack_name} does not have the expected {top_level}-{context.name}-kms-arn output."
             )
+        if context.toolkit.admin_role is None:
+            raise RuntimeError(
+                f"Stack {context.toolkit.stack_name} does not have the expected {top_level}-{context.name}-admin-role output."
+            )
+
         context.toolkit.kms_alias = f"{top_level}-{context.name}-{context.toolkit.deploy_id}"
         context.toolkit.s3_bucket = (
             f"{top_level}-{context.name}-toolkit-{context.account_id}-{context.toolkit.deploy_id}"

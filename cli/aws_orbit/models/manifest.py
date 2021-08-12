@@ -236,11 +236,11 @@ def _add_ssm_param_injector(tag: str = "!SSM") -> Set[str]:
     to be parsed: ${SSM_PARAMETER_PATH::JSONPATH}.
     E.g.:
     database:
-        host: !SSM ${/orbit-foundation/dev-env/resources::/UserAccessPolicy}
-        port: !SSM ${/orbit-foundation/dev-env/resources::/PublicSubnet/*}
+        host: !SSM ${/orbit-f/dev-env/resources::/UserAccessPolicy}
+        port: !SSM ${/orbit-f/dev-env/resources::/PublicSubnet/*}
     """
     # pattern for global vars: look for ${word}
-    pattern = re.compile(".*?\${(.*)}.*?")  # noqa: W605
+    pattern = re.compile(".*?\${(.[0-9a-zA-Z-_:/]+)}.*?")  # noqa: W605
     loader = yaml.SafeLoader
 
     # the tag will be used to mark where to start searching for the pattern
@@ -310,7 +310,7 @@ def _add_env_var_injector(tag: str = "!ENV") -> None:
         something_else: !ENV '${AWESOME_ENV_VAR}/var/${A_SECOND_AWESOME_VAR}'
     """
     # pattern for global vars: look for ${word}
-    pattern = re.compile(".*?\${(.*)}.*?")  # noqa: W605
+    pattern = re.compile(".*?\${(.[0-9a-zA-Z-_:]+)}.*?")  # noqa: W605
     loader = yaml.SafeLoader
 
     # the tag will be used to mark where to start searching for the pattern
@@ -363,7 +363,7 @@ class ManifestSerDe(Generic[T]):
             raw["SsmParameterName"] = f"/orbit/{raw['Name']}/manifest"
             manifest: T = cast(T, Manifest.Schema().load(data=raw, many=False, partial=False, unknown=EXCLUDE))
         elif type is FoundationManifest:
-            raw["SsmParameterName"] = f"/orbit-foundation/{raw['Name']}/manifest"
+            raw["SsmParameterName"] = f"/orbit-f/{raw['Name']}/manifest"
             manifest = cast(T, FoundationManifest.Schema().load(data=raw, many=False, partial=False, unknown=EXCLUDE))
         else:
             raise ValueError("Unknown 'manifest' Type")
@@ -399,7 +399,7 @@ class ManifestSerDe(Generic[T]):
             manifest_parameter_name = manifest.ssm_parameter_name
         elif isinstance(manifest, FoundationManifest):
             content = cast(Dict[str, Any], FoundationManifest.Schema().dump(manifest))
-            ssm.cleanup_manifest(env_name=manifest.name, top_level="orbit-foundation")
+            ssm.cleanup_manifest(env_name=manifest.name, top_level="orbit-f")
             manifest_parameter_name = manifest.ssm_parameter_name
         else:
             raise ValueError("Unknown 'manifest' Type")
@@ -419,7 +419,7 @@ class ManifestSerDe(Generic[T]):
             main["Teams"] = teams
             return cast(T, Manifest.Schema().load(data=main, many=False, partial=False, unknown=EXCLUDE))
         elif type is FoundationManifest:
-            context_parameter_name = f"/orbit-foundation/{env_name}/manifest"
+            context_parameter_name = f"/orbit-f/{env_name}/manifest"
             main = ssm.get_parameter_if_exists(name=context_parameter_name)
             if main is None:
                 return None

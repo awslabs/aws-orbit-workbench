@@ -14,7 +14,7 @@
 
 import logging
 import os
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, cast
 
 import boto3
 
@@ -64,7 +64,7 @@ def deploy(
     ):
         iam.update_assume_role_roles(
             account_id=context.account_id,
-            role_name=f"orbit-{context.name}-admin",
+            role_name=cast(str, context.toolkit.admin_role),
             roles_to_add=eks_system_masters_roles_changes.added_values,
             roles_to_remove=eks_system_masters_roles_changes.removed_values,
         )

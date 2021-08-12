@@ -248,7 +248,7 @@ Resources:
               - arn:aws:serverlessrepo:us-east-1:903779448426:applications/lambda-layer-kubectl
         Version: '2012-10-17'
       Description: ''
-      ManagedPolicyName: ${top_level}-${env_name}-admin-other
+      ManagedPolicyName: ${top_level}-${env_name}-${region}-admin-other
       Path: /
   OrbitAdminPolicyIAMS3:
     Type: AWS::IAM::ManagedPolicy
@@ -277,10 +277,10 @@ Resources:
               - arn:aws:s3:::${top_level}-${env_name}-toolkit-${account_id}-${deploy_id}
               - arn:aws:s3:::${top_level}-${env_name}-cdk-toolkit-${account_id}-${deploy_id}/*
               - arn:aws:s3:::${top_level}-${env_name}-cdk-toolkit-${account_id}-${deploy_id}
-              - arn:aws:s3:::${top_level}-${env_name}-demo-lake-${account_id}-${deploy_id}/*
-              - arn:aws:s3:::${top_level}-${env_name}-demo-lake-${account_id}-${deploy_id}
-              - arn:aws:s3:::${top_level}-${env_name}-secured-demo-lake-${account_id}-${deploy_id}/*
-              - arn:aws:s3:::${top_level}-${env_name}-secured-demo-lake-${account_id}-${deploy_id}
+              - arn:aws:s3:::${top_level}-${env_name}-${region}-demo-lake-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::${top_level}-${env_name}-${region}-demo-lake-${account_id}-${deploy_id}
+              - arn:aws:s3:::${top_level}-${env_name}-${region}-secured-demo-lake-${account_id}-${deploy_id}/*
+              - arn:aws:s3:::${top_level}-${env_name}-${region}-secured-demo-lake-${account_id}-${deploy_id}
           - Effect: Allow
             Action:
               - s3:GetEncryptionConfiguration
@@ -334,10 +334,10 @@ Resources:
             Action:
               - sts:AssumeRole
             Resource:
-              - arn:aws:iam::${account_id}:role/${top_level}-${env_name}-admin
+              - arn:aws:iam::${account_id}:role/${top_level}-${env_name}-${region}-admin
         Version: '2012-10-17'
       Description: ''
-      ManagedPolicyName: ${top_level}-${env_name}-admin-iam-s3
+      ManagedPolicyName: ${top_level}-${env_name}-${region}-admin-iam-s3
       Path: /
   AdminRole:
     Type: AWS::IAM::Role
@@ -347,7 +347,7 @@ Resources:
         - Ref: OrbitAdminPolicyOther
         - Ref: OrbitAdminPolicyIAMS3
         - Ref: OrbitCodeArtifactPolicy
-      RoleName: ${top_level}-${env_name}-admin
+      RoleName: ${top_level}-${env_name}-${region}-admin
       MaxSessionDuration: 10000
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -456,6 +456,10 @@ Outputs:
     Value: '${deploy_id}'
     Export:
       Name: ${top_level}-${env_name}-deploy-id
+  AdminRole:
+    Value: !Ref AdminRole
+    Export:
+      Name: ${top_level}-${env_name}-admin-role
   KmsKeyArn:
     Value:
       Fn::GetAtt:

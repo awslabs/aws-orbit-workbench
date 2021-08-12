@@ -179,7 +179,7 @@ def deploy_foundation(
                 name=name,
                 codeartifact_domain=codeartifact_domain,
                 codeartifact_repository=codeartifact_repository,
-                ssm_parameter_name=f"/orbit-foundation/{name}/manifest",
+                ssm_parameter_name=f"/orbit-f/{name}/manifest",
                 networking=NetworkingManifest(
                     max_availability_zones=max_availability_zones,
                     data=DataNetworkingManifest(internet_accessible=internet_accessibility),
@@ -199,7 +199,7 @@ def deploy_foundation(
 
         _deploy_toolkit(
             context=cast(Context, context),
-            top_level="orbit-foundation",
+            top_level="orbit-f",
         )
         msg_ctx.info("Toolkit deployed")
         msg_ctx.progress(8)

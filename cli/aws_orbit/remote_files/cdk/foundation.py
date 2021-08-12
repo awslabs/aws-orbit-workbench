@@ -83,7 +83,7 @@ class FoundationStack(Stack):
         toolkit_s3_bucket_name: str = context.toolkit.s3_bucket
         acct: str = core.Aws.ACCOUNT_ID
         self.bucket_names: Dict[str, Any] = {
-            "scratch-bucket": f"orbit-foundation-{self.env_name}-scratch-{acct}-{context.toolkit.deploy_id}",
+            "scratch-bucket": f"orbit-f-{self.env_name}-scratch-{acct}-{context.toolkit.deploy_id}",
             "toolkit-bucket": toolkit_s3_bucket_name,
         }
         self._build_kms_key_for_env()
@@ -154,33 +154,33 @@ class FoundationStack(Stack):
         CfnOutput(
             scope=self,
             id=f"{id}vpcid",
-            export_name=f"orbit-foundation-{self.env_name}-vpc-id",
+            export_name=f"orbit-f-{self.env_name}-vpc-id",
             value=self.vpc.vpc_id,
         )
 
         CfnOutput(
             scope=self,
             id=f"{id}publicsubnetsids",
-            export_name=f"orbit-foundation-{self.env_name}-public-subnet-ids",
+            export_name=f"orbit-f-{self.env_name}-public-subnet-ids",
             value=",".join(self.public_subnets.subnet_ids),
         )
         CfnOutput(
             scope=self,
             id=f"{id}privatesubnetsids",
-            export_name=f"orbit-foundation-{self.env_name}-private-subnet-ids",
+            export_name=f"orbit-f-{self.env_name}-private-subnet-ids",
             value=",".join(self.private_subnets.subnet_ids),
         )
         if not context.networking.data.internet_accessible:
             CfnOutput(
                 scope=self,
                 id=f"{id}isolatedsubnetsids",
-                export_name=f"orbit-foundation-{self.env_name}-isolated-subnet-ids",
+                export_name=f"orbit-f-{self.env_name}-isolated-subnet-ids",
                 value=",".join(self.isolated_subnets.subnet_ids),
             )
         CfnOutput(
             scope=self,
             id=f"{id}nodesubnetsids",
-            export_name=f"orbit-foundation-{self.env_name}-nodes-subnet-ids",
+            export_name=f"orbit-f-{self.env_name}-nodes-subnet-ids",
             value=",".join(self.nodes_subnets.subnet_ids),
         )
 
