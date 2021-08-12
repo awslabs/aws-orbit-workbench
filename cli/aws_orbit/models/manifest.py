@@ -428,5 +428,5 @@ class ManifestSerDe(Generic[T]):
 def _manifest_validations(manifest: Manifest) -> None:
     for managed_nodegroup in manifest.managed_nodegroups:
         _logger.debug(f"Validating managed node group {managed_nodegroup} ")
-        if managed_nodegroup.nodes_num_desired and managed_nodegroup.nodes_num_desired < 1:
+        if managed_nodegroup.nodes_num_desired < 1:
             raise ValueError(f"{managed_nodegroup.name}  number of desired nodes should be greater than 0")
