@@ -1,0 +1,10 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: orbit-system
+  name: landing-page-service
+spec:
+  template:
+    metadata:
+      labels:
+        orbit/node-type: fargate

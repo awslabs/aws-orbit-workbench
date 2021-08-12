@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: orbit-system
+  name: landing-page-service
+spec:
+  template:
+    spec:
+      nodeSelector:
+        orbit/usage: reserved
+        orbit/node-group: env
