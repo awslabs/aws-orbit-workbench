@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### **Changed**
 
 - REFACTOR: Moved the path of installation of VSCode to /home/jovyan/.code-server
+- FIX: replace cert-manager/jobs with cert-manager/certifactes
+- FIX: remove the ownerReference on userspace PodDefaults (because they're in the teamspace namespace)
+
 ### **Removed**
 
 
@@ -57,8 +60,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: reduced the sleep time for resources deletion between user spaces
 - FIX: Added `AuthenticationGroups` to the manifest.yaml under samples
 - FIX: cleanup of istio-ingress raises exception when no cluster exists
-- FIX: replace cert-manager/jobs with cert-manager/certifactes
-- FIX: remove the ownerReference on userspace PodDefaults (because they're in the teamspace namespace)
 
 ### **Removed**
 
