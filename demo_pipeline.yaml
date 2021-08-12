@@ -63,7 +63,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: 'demo-fndn'
+            Value: !Ref FoundationName
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DEPLOY_FOUNDATION
@@ -75,10 +75,10 @@ Resources:
             Value: !Ref 'EnvName'
           - Name: INTERNET_ACCESSIBLE
             Type: PLAINTEXT
-            Value: 'true'
+            Value: !Ref 'IsInternetAccessible'
           - Name: INTERNET_ACCESSIBILITY_ARG
             Type: PLAINTEXT
-            Value: '--internet-accessibility'
+            Value: { "Fn::FindInMap" : [ "InternetAccessibility", { !Ref 'IsInternetAccessible' } ]}
           - Name: VERSION
             Type: PLAINTEXT
             Value: !Ref 'Version'
@@ -108,7 +108,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: 'demo-fndn'
+            Value: !Ref FoundationName
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DESTROY_FOUNDATION
@@ -120,10 +120,10 @@ Resources:
             Value: !Ref 'EnvName'
           - Name: INTERNET_ACCESSIBLE
             Type: PLAINTEXT
-            Value: 'true'
+            Value: !Ref 'IsInternetAccessible'
           - Name: INTERNET_ACCESSIBILITY_ARG
             Type: PLAINTEXT
-            Value: '--internet-accessibility'
+            Value: { "Fn::FindInMap" : [ "InternetAccessibility", { !Ref 'IsInternetAccessible' } ]}
           - Name: VERSION
             Type: PLAINTEXT
             Value: !Ref 'Version'
@@ -153,7 +153,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: 'demo-fndn'
+            Value: !Ref FoundationName
           - Name: ORBIT_ADMIN_DEMO_ROLE
             Type: PLAINTEXT
             Value: !Ref 'K8AdminRole'
@@ -168,10 +168,10 @@ Resources:
             Value: !Ref 'EnvName'
           - Name: INTERNET_ACCESSIBLE
             Type: PLAINTEXT
-            Value: 'true'
+            Value: !Ref 'IsInternetAccessible'
           - Name: INTERNET_ACCESSIBILITY_ARG
             Type: PLAINTEXT
-            Value: '--internet-accessibility'
+            Value: { "Fn::FindInMap" : [ "InternetAccessibility", { !Ref 'IsInternetAccessible' } ]}
           - Name: VERSION
             Type: PLAINTEXT
             Value: !Ref 'Version'
@@ -201,7 +201,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: 'demo-fndn'
+            Value: !Ref FoundationName
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DESTROY_ENV
@@ -213,10 +213,10 @@ Resources:
             Value: !Ref 'EnvName'
           - Name: INTERNET_ACCESSIBLE
             Type: PLAINTEXT
-            Value: 'true'
+            Value: !Ref 'IsInternetAccessible'
           - Name: INTERNET_ACCESSIBILITY_ARG
             Type: PLAINTEXT
-            Value: '--internet-accessibility'
+            Value: { "Fn::FindInMap" : [ "InternetAccessibility", { !Ref 'IsInternetAccessible' } ]}
           - Name: VERSION
             Type: PLAINTEXT
             Value: !Ref 'Version'
@@ -246,7 +246,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: 'demo-fndn'
+            Value: !Ref FoundationName
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DEPLOY_TEAMS
@@ -258,10 +258,10 @@ Resources:
             Value: !Ref 'EnvName'
           - Name: INTERNET_ACCESSIBLE
             Type: PLAINTEXT
-            Value: 'true'
+            Value: !Ref 'IsInternetAccessible'
           - Name: INTERNET_ACCESSIBILITY_ARG
             Type: PLAINTEXT
-            Value: '--internet-accessibility'
+            Value: { "Fn::FindInMap" : [ "InternetAccessibility", { !Ref 'IsInternetAccessible' } ]}
           - Name: VERSION
             Type: PLAINTEXT
             Value: !Ref 'Version'
@@ -291,7 +291,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: 'demo-fndn'
+            Value: !Ref FoundationName
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DEPLOY_REGRESSION
@@ -303,10 +303,10 @@ Resources:
             Value: !Ref 'EnvName'
           - Name: INTERNET_ACCESSIBLE
             Type: PLAINTEXT
-            Value: 'true'
+            Value: !Ref 'IsInternetAccessible'
           - Name: INTERNET_ACCESSIBILITY_ARG
             Type: PLAINTEXT
-            Value: '--internet-accessibility'
+            Value: { "Fn::FindInMap" : [ "InternetAccessibility", { !Ref 'IsInternetAccessible' } ]}
           - Name: VERSION
             Type: PLAINTEXT
             Value: !Ref 'Version'
@@ -334,7 +334,7 @@ Resources:
         EnvironmentVariables:
           - Name: ORBIT_FOUNDATION_NAME
             Type: PLAINTEXT
-            Value: 'demo-fndn'
+            Value: !Ref FoundationName
           - Name: BUILD_ACTION
             Type: PLAINTEXT
             Value: DESTROY_TEAMS
@@ -346,10 +346,10 @@ Resources:
             Value: !Ref 'EnvName'
           - Name: INTERNET_ACCESSIBLE
             Type: PLAINTEXT
-            Value: 'true'
+            Value: !Ref 'IsInternetAccessible'
           - Name: INTERNET_ACCESSIBILITY_ARG
             Type: PLAINTEXT
-            Value: '--internet-accessibility'
+            Value: { "Fn::FindInMap" : [ "InternetAccessibility", { !Ref 'IsInternetAccessible' } ]}
           - Name: VERSION
             Type: PLAINTEXT
             Value: !Ref 'Version'
@@ -560,11 +560,24 @@ Resources:
     DependsOn:
       - OrbitDeploymentRole
 
+Mappings:
+  InternetAccessibility:
+    "true": "--internet-accessibility"
+    "false": "--no-internet-accessibility"
+
 Parameters:
+  FoundationName:
+    Type: String
+    Description: Foundation name
+    Default: demo-fndn
   EnvName:
     Type: String
-    Description: Unique name for both foundation and env in the account
+    Description: Environment name
     Default: demo-env
+  IsInternetAccessible:
+    Type: String
+    Description: A string boolean that determines if internet will be accessible for the deployment. Default is true
+    Default: "true"
   Branch:
     Type: String
     Description: The release branch to use with this deployment. Required for latest deployment pipeline code
