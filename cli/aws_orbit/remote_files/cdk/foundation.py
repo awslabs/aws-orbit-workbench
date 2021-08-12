@@ -228,7 +228,9 @@ class FoundationStack(Stack):
             cidr="10.0.0.0/16",
             enable_dns_hostnames=True,
             enable_dns_support=True,
-            max_azs=2,
+            max_azs=context.networking.max_availability_zones
+            if context.networking.max_availability_zones is not None
+            else 2,
             nat_gateways=1,
             subnet_configuration=subnet_configuration,
         )
@@ -393,8 +395,16 @@ def main() -> None:
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
 
-    app = App(outdir=outdir)
-    FoundationStack(scope=app, id=cast(str, context.stack_name), context=context, ssl_cert_arn=ssl_cert_arn)
+    app = App(
+        outdir=outdir,
+    )
+    FoundationStack(
+        scope=app,
+        id=cast(str, context.stack_name),
+        context=context,
+        ssl_cert_arn=ssl_cert_arn,
+        env=core.Environment(account=os.environ["CDK_DEFAULT_ACCOUNT"], region=os.environ["CDK_DEFAULT_REGION"]),
+    )
     app.synth(force=True)
 
 
