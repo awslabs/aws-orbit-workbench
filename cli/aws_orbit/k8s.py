@@ -90,7 +90,7 @@ def get_ingress_dns(name: str, k8s_context: str, namespace: str = "default") -> 
         raise Exception(f"Timeout while waiting for Ingress {name}.{namespace}")
 
 
-def get_resource_set_status(name: str, k8s_context: str, type: str, namespace: str = "orbit-system") -> Dict[str, Any]:
+def get_resource_status(name: str, k8s_context: str, type: str, namespace: str = "orbit-system") -> Dict[str, Any]:
     _logger.debug("Retrieving Status for %s %s in Namespace %s", type, name, namespace)
     config.load_kube_config(context=k8s_context)
     apps = AppsV1Api()

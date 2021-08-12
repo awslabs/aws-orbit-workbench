@@ -528,7 +528,7 @@ def _confirm_endpoints(name: str, namespace: str, k8s_context: str) -> None:
 
 def _confirm_readiness(name: str, namespace: str, type: str, k8s_context: str) -> None:
     for _ in range(20):
-        status = k8s.get_resource_set_status(name=name, namespace=namespace, type=type, k8s_context=k8s_context)
+        status = k8s.get_resource_status(name=name, namespace=namespace, type=type, k8s_context=k8s_context)
         ready_replicas = status.get("ready_replicas")
         if ready_replicas and int(ready_replicas) > 0:
             _logger.debug("%s/%s ready", namespace, name)
