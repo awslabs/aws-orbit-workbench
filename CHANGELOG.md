@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 #
 ## **[1.2.0] - Unreleased**
 ### **Added**
+
+- Manifest validator to check the managed node group desired number of nodes value
+
 ### **Changed**
 
 - REFACTOR: Moved the path of installation of VSCode to /home/jovyan/.code-server
@@ -34,7 +37,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added podsetting support in regression notebooks and sdk
 - Added Fargate Profile for kubeflow/istio-system Pods when deploying in isolated subnets
 - Track Orbit usage
-- Manifest validator to check the managed node group desired number of nodes value
 
 ### **Changed**
 
