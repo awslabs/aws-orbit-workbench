@@ -462,6 +462,7 @@ class ContextSerDe(Generic[T, V]):
             context.policies = manifest.policies
             context.codeartifact_domain = manifest.codeartifact_domain
             context.codeartifact_repository = manifest.codeartifact_repository
+            context.networking = create_networking_context_from_manifest(networking=manifest.networking)
         else:
             context = FoundationContext(
                 name=manifest.name,
