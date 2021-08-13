@@ -53,7 +53,7 @@ def create_nodegroup_structure(context: "Context", nodegroup: ManagedNodeGroupMa
     tags = {f"k8s.io/cluster-autoscaler/node-template/label/{k}": v for k, v in labels.items()}
     tags["Env"] = f"orbit-{context.name}"
 
-    return {
+    config = {
         "name": nodegroup.name,
         "privateNetworking": True,
         "instanceType": nodegroup.instance_type,
@@ -66,6 +66,13 @@ def create_nodegroup_structure(context: "Context", nodegroup: ManagedNodeGroupMa
         "tags": tags,
         "iam": {"instanceRoleARN": context.eks_env_nodegroup_role_arn},
     }
+
+    if nodegroup.availability_zones is not None:
+        config["availabilityZones"] = nodegroup.availability_zones
+    if nodegroup.efa_enabled is not None:
+        config["efaEnabled"] = nodegroup.efa_enabled
+
+    return config
 
 
 def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[ManagedNodeGroupManifest]]) -> str:
@@ -92,7 +99,16 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
             "cidr": subnet.cidr_block,
         }
 
-    private_subnets = context.networking.private_subnets if internet else context.networking.isolated_subnets
+    private_subnets = [
+        s
+        for s in context.networking.private_subnets + context.networking.isolated_subnets
+        if s.subnet_id in context.networking.data.nodes_subnets
+    ]
+    if not private_subnets:
+        raise ValueError(
+            "No Non-public Subnets configured for the cluster, this may be a mismatch between "
+            "InternetAccessibility and Manifest Subnets"
+        )
     for subnet in private_subnets:
         if subnet.availability_zone is None:
             raise ValueError("subnet.availability_zone is None for %s!", subnet.subnet_id)
@@ -109,6 +125,8 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
     labels = {"orbit/node-group": "env", "orbit/usage": "reserved", "orbit/node-type": "ec2"}
     tags = tags = {f"k8s.io/cluster-autoscaler/node-template/label/{k}": v for k, v in labels.items()}
     tags["Env"] = f"orbit-{context.name}"
+
+    MANIFEST["addOns"] = [{"name": "vpc-cni", "version": "1.9.0"}]
 
     # Env
     MANIFEST["managedNodeGroups"].append(
@@ -457,7 +475,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
             cluster_name=f"orbit-{context.name}",
             role_arn=cast(str, context.eks_fargate_profile_role_arn),
             subnets=[s.subnet_id for s in context.networking.private_subnets],
-            namespaces=["orbit-system", "istio-system", "kubeflow"],
+            namespaces=["cert-manager", "istio-system", "kubeflow", "kube-system", "orbit-system"],
             selector_labels={"orbit/node-type": "fargate"},
         )
 
@@ -472,12 +490,7 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
     cluster_name = f"orbit-{context.name}"
     if cfn.does_stack_exist(stack_name=final_eks_stack_name) and context.teams:
         if team_context.fargate:
-            subnets = (
-                context.networking.private_subnets
-                if context.networking.data.internet_accessible
-                else context.networking.isolated_subnets
-            )
-            subnets_ids = [s.subnet_id for s in subnets]
+            subnets_ids = context.networking.data.nodes_subnets
 
             sh.run(f"aws eks wait cluster-active --name orbit-{context.name} --debug")
 

@@ -102,6 +102,7 @@ class NetworkingContext:
     availability_zones: Optional[List[str]] = None
     frontend: FrontendNetworkingManifest = FrontendNetworkingManifest()
     data: DataNetworkingManifest = DataNetworkingManifest()
+    max_availability_zones: Optional[int] = None
 
     def _fetch_vpc_cidr(self) -> None:
         ec2 = boto3_resource("ec2")
@@ -351,7 +352,11 @@ def create_teams_context_from_manifest(manifest: "Manifest") -> List[TeamContext
 
 
 def create_networking_context_from_manifest(networking: "NetworkingManifest") -> NetworkingContext:
-    args: Dict[str, Any] = {"frontend": networking.frontend, "data": networking.data}
+    args: Dict[str, Any] = {
+        "frontend": networking.frontend,
+        "data": networking.data,
+        "max_availability_zones": networking.max_availability_zones,
+    }
     if networking.vpc_id:
         args["vpc_id"] = networking.vpc_id
         args["public_subnets"] = [
@@ -457,6 +462,7 @@ class ContextSerDe(Generic[T, V]):
             context.policies = manifest.policies
             context.codeartifact_domain = manifest.codeartifact_domain
             context.codeartifact_repository = manifest.codeartifact_repository
+            context.networking = create_networking_context_from_manifest(networking=manifest.networking)
         else:
             context = FoundationContext(
                 name=manifest.name,

@@ -29,21 +29,21 @@ spec:
         name: manifests
         path: application/v3
     name: application
-  - kustomizeConfig:
-      repoRef:
-        name: manifests
-        path: stacks/aws/application/cert-manager-crds
-    name: cert-manager-crds
-  - kustomizeConfig:
-      repoRef:
-        name: manifests
-        path: stacks/aws/application/cert-manager-kube-system-resources
-    name: cert-manager-kube-system-resources
-  - kustomizeConfig:
-      repoRef:
-        name: manifests
-        path: stacks/aws/application/cert-manager
-    name: cert-manager
+  # - kustomizeConfig:
+  #     repoRef:
+  #       name: manifests
+  #       path: stacks/aws/application/cert-manager-crds
+  #   name: cert-manager-crds
+  # - kustomizeConfig:
+  #     repoRef:
+  #       name: manifests
+  #       path: stacks/aws/application/cert-manager-kube-system-resources
+  #   name: cert-manager-kube-system-resources
+  # - kustomizeConfig:
+  #     repoRef:
+  #       name: manifests
+  #       path: stacks/aws/application/cert-manager
+  #   name: cert-manager
   - kustomizeConfig:
       repoRef:
         name: manifests

@@ -45,10 +45,35 @@ spec:
     port: 443
     targetPort: 443
 ---
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: orbit-self-signing-issuer
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  labels:
+    app.kubernetes.io/name: orbit-controller
+  name: orbit-controller-cert
+  namespace: orbit-system
+spec:
+  dnsNames:
+  - podsettings-pod-modifier.orbit-system.svc
+  - podsettings-pod-modifier.orbit-system.svc.cluster.local
+  issuerRef:
+    kind: ClusterIssuer
+    name: orbit-self-signing-issuer
+  secretName: orbit-controller-webhook-tls
+---
 kind: MutatingWebhookConfiguration
 apiVersion: admissionregistration.k8s.io/v1beta1
 metadata:
   name: orbit-podsettings-pod-modifier
+  annotations:
+    cert-manager.io/inject-ca-from: orbit-system/orbit-controller-cert
 webhooks:
   - name: podsettings-pod-modifier.orbit-system.svc
     sideEffects: None
@@ -153,7 +178,7 @@ spec:
       volumes:
         - name: orbit-controller-certs
           secret:
-            secretName: podsettings-pod-modifier-certs
+            secretName: orbit-controller-webhook-tls
         - name: orbit-controller-state
           configMap:
             name: orbit-controller-state

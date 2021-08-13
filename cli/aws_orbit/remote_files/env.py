@@ -31,15 +31,17 @@ _logger: logging.Logger = logging.getLogger(__name__)
 def update_subnet_tags(context: "Context") -> None:
     ec2 = boto3.client("ec2")
     cluster_name = f"orbit-{context.name}"
-    subnet_ids = [x.subnet_id for x in context.networking.public_subnets]
-    _logger.debug('updating public subnet tags with "kubernetes.io/role/elb"')
-    ec2.create_tags(
-        Resources=subnet_ids,
-        Tags=[
-            {"Key": "kubernetes.io/role/elb", "Value": "1"},
-            {"Key": f"kubernetes.io/cluster/{cluster_name}", "Value": "shared"},
-        ],
-    )
+    if context.networking.public_subnets:
+        subnet_ids = [x.subnet_id for x in context.networking.public_subnets]
+        _logger.debug('updating public subnet tags with "kubernetes.io/role/elb"')
+        ec2.create_tags(
+            Resources=subnet_ids,
+            Tags=[
+                {"Key": "kubernetes.io/role/elb", "Value": "1"},
+                {"Key": f"kubernetes.io/cluster/{cluster_name}", "Value": "shared"},
+            ],
+        )
+
     subnet_ids = [x for x in context.networking.data.nodes_subnets]
     _logger.debug('updating private subnet tags with "kubernetes.io/role/internal-elb"')
     ec2.create_tags(

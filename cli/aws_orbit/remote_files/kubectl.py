@@ -16,7 +16,7 @@ import logging
 import os
 import shutil
 import time
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, cast
 
 import aws_orbit
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
@@ -33,23 +33,49 @@ _logger: logging.Logger = logging.getLogger(__name__)
 MODELS_PATH = os.path.join(ORBIT_CLI_ROOT, "data", "kubectl")
 
 
-def _orbit_system_commons(context: "Context", output_path: str) -> None:
-    filename = "00-commons.yaml"
-    input = os.path.join(MODELS_PATH, "orbit-system", filename)
-    output = os.path.join(output_path, filename)
+def _generate_orbit_system_kustomizations(context: "Context", clean_up: bool = True) -> List[str]:
+    output_path = os.path.join(".orbit.out", context.name, "kubectl", "orbit-system")
+    os.makedirs(output_path, exist_ok=True)
+    if clean_up:
+        _cleanup_output(output_path=output_path)
 
-    with open(input, "r") as file:
-        content: str = file.read()
-    content = resolve_parameters(
-        content,
-        dict(
-            account_id=context.account_id,
-            region=context.region,
-            env_name=context.name,
-        ),
+    commons_output_path = _generate_orbit_system_commons_manifest(output_path=output_path, context=context)
+
+    return [commons_output_path]
+
+
+def _orbit_system_commons_base(output_path: str, context: Context) -> None:
+    os.makedirs(os.path.join(output_path, "base"), exist_ok=True)
+    filenames = ["kustomization.yaml", "00a-commons.yaml", "00b-cert-manager.yaml"]
+    for filename in filenames:
+        input = os.path.join(MODELS_PATH, "orbit-system", "commons", "base", filename)
+        output = os.path.join(output_path, "base", filename)
+        with open(input, "r") as file:
+            content: str = file.read()
+        content = resolve_parameters(
+            content,
+            dict(account_id=context.account_id, region=context.region, env_name=context.name, secure_port="10260"),
+        )
+        with open(output, "w") as file:
+            file.write(content)
+
+
+def _generate_orbit_system_commons_manifest(output_path: str, context: "Context") -> str:
+    output_path = os.path.join(output_path, "commons")
+    os.makedirs(output_path, exist_ok=True)
+    _cleanup_output(output_path=output_path)
+    _orbit_system_commons_base(output_path=output_path, context=context)
+    overlays_path = os.path.join(output_path, "overlays")
+    src = (
+        os.path.join(MODELS_PATH, "orbit-system", "commons", "overlays", "private")
+        if context.networking.data.internet_accessible
+        else os.path.join(MODELS_PATH, "orbit-system", "commons", "overlays", "isolated")
     )
-    with open(output, "w") as file:
-        file.write(content)
+    shutil.copytree(
+        src=src,
+        dst=overlays_path,
+    )
+    return overlays_path
 
 
 def _kubeflow_namespaces(context: "Context", clean_up: bool = True) -> str:
@@ -73,7 +99,6 @@ def _kubeflow_namespaces(context: "Context", clean_up: bool = True) -> str:
                 account_id=context.account_id,
                 region=context.region,
                 sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
-                waf_enabled="true" if context.networking.data.internet_accessible else "false",
             ),
         )
         with open(output, "w") as file:
@@ -83,7 +108,7 @@ def _kubeflow_namespaces(context: "Context", clean_up: bool = True) -> str:
 
 
 def _orbit_controller(context: "Context", output_path: str) -> None:
-    filenames = ["01a-orbit-controller.yaml", "01b-cert-manager.yaml"]
+    filenames = ["01a-orbit-controller.yaml"]
 
     for filename in filenames:
         input = os.path.join(MODELS_PATH, "orbit-system", filename)
@@ -111,7 +136,7 @@ def _orbit_controller(context: "Context", output_path: str) -> None:
 
 
 def _orbit_image_replicator(context: "Context", output_path: str) -> None:
-    filenames = ["01c-image-replicator.yaml"]
+    filenames = ["01b-image-replicator.yaml"]
 
     for filename in filenames:
         input = os.path.join(MODELS_PATH, "orbit-system", filename)
@@ -135,14 +160,14 @@ def _orbit_image_replicator(context: "Context", output_path: str) -> None:
 
 
 def _ssm_agent_installer(output_path: str, context: "Context") -> None:
-    filename = "02-ssm-agent-daemonset-installer.yaml"
+    filename = "02a-ssm-agent-daemonset-installer.yaml"
     input = os.path.join(MODELS_PATH, "orbit-system", filename)
     output = os.path.join(output_path, filename)
     shutil.copyfile(src=input, dst=output)
 
 
 def _sm_operator_installer(output_path: str, context: "Context") -> None:
-    filename = "10-sm-operator.yaml"
+    filename = "10a-sm-operator.yaml"
     input = os.path.join(MODELS_PATH, "orbit-system", filename)
     output = os.path.join(output_path, filename)
     shutil.copyfile(src=input, dst=output)
@@ -229,6 +254,7 @@ def _generate_kube_system_manifest(context: "Context", clean_up: bool = True) ->
         "01-nvidia-daemonset.yaml",
         "02-cluster-autoscaler-autodiscover.yaml",
     ]
+
     for filename in filenames:
         input = os.path.join(MODELS_PATH, "kube-system", filename)
         output = os.path.join(output_path, filename)
@@ -258,16 +284,8 @@ def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -
     os.makedirs(output_path, exist_ok=True)
     if clean_up:
         _cleanup_output(output_path=output_path)
-    _orbit_system_commons(context=context, output_path=output_path)
+
     _orbit_controller(context=context, output_path=output_path)
-    if context.account_id is None:
-        raise ValueError("context.account_id is None!")
-    if context.user_pool_id is None:
-        raise ValueError("context.user_pool_id is None!")
-    if context.user_pool_client_id is None:
-        raise ValueError("context.user_pool_client_id is None!")
-    if context.identity_pool_id is None:
-        raise ValueError("context.identity_pool_id is None!")
 
     if context.install_ssm_agent:
         _logger.debug("Deploying SSM Agent Installer")
@@ -295,38 +313,67 @@ def _generate_orbit_image_replicator_manifest(context: "Context", clean_up: bool
         return None
 
 
-def _generate_env_manifest(context: "Context", clean_up: bool = True) -> Tuple[str, str]:
-    filename = "00-commons.yaml"
+def _generate_orbit_system_env_kustomizations(context: "Context", clean_up: bool = True) -> List[str]:
     output_path = os.path.join(".orbit.out", context.name, "kubectl", "env")
     os.makedirs(output_path, exist_ok=True)
     if clean_up:
         _cleanup_output(output_path=output_path)
 
-    input = os.path.join(MODELS_PATH, "env", filename)
-    output = os.path.join(output_path, filename)
-    shutil.copyfile(src=input, dst=output)
+    env_output_path = _generate_orbit_system_env_manifest(output_path=output_path, context=context)
 
-    with open(input, "r") as file:
-        content = file.read()
+    return [env_output_path]
 
-    content = utils.resolve_parameters(
-        content,
-        dict(
-            env_name=context.name,
-            orbit_controller_image=f"{context.images.orbit_controller.repository}:"
-            f"{context.images.orbit_controller.version}",
-            k8s_utilities_image=f"{context.images.k8s_utilities.repository}:" f"{context.images.k8s_utilities.version}",
-            image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
-            certArn=context.networking.frontend.ssl_cert_arn,
-            cognitoAppClientId=context.user_pool_client_id,
-            cognitoUserPoolID=context.user_pool_id,
-            account_id=context.account_id,
-            region=context.region,
-            cognitoUserPoolDomain=context.cognito_external_provider_domain,
-        ),
+
+def _orbit_system_env_base(output_path: str, context: Context) -> None:
+    os.makedirs(os.path.join(output_path, "base"), exist_ok=True)
+    filenames = ["kustomization.yaml", "00-commons.yaml"]
+    for filename in filenames:
+        input = os.path.join(MODELS_PATH, "env", "base", filename)
+        output = os.path.join(output_path, "base", filename)
+        with open(input, "r") as file:
+            content: str = file.read()
+        content = utils.resolve_parameters(
+            content,
+            dict(
+                env_name=context.name,
+                orbit_controller_image=f"{context.images.orbit_controller.repository}:"
+                f"{context.images.orbit_controller.version}",
+                k8s_utilities_image=f"{context.images.k8s_utilities.repository}:"
+                f"{context.images.k8s_utilities.version}",
+                image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
+                certArn=context.networking.frontend.ssl_cert_arn,
+                cognitoAppClientId=context.user_pool_client_id,
+                cognitoUserPoolID=context.user_pool_id,
+                account_id=context.account_id,
+                region=context.region,
+                cognitoUserPoolDomain=context.cognito_external_provider_domain,
+            ),
+        )
+        with open(output, "w") as file:
+            file.write(content)
+
+
+def _generate_orbit_system_env_manifest(output_path: str, context: "Context") -> str:
+    _cleanup_output(output_path=output_path)
+    _orbit_system_env_base(output_path=output_path, context=context)
+    overlays_path = os.path.join(output_path, "overlays")
+    src = (
+        os.path.join(MODELS_PATH, "env", "overlays", "private")
+        if context.networking.data.internet_accessible
+        else os.path.join(MODELS_PATH, "env", "overlays", "isolated")
     )
-    with open(output, "w") as file:
-        file.write(content)
+    shutil.copytree(
+        src=src,
+        dst=overlays_path,
+    )
+    return overlays_path
+
+
+def _generate_kubeflow_patch(context: "Context", clean_up: bool = True) -> str:
+    output_path = os.path.join(".orbit.out", context.name, "kubectl", "env")
+    os.makedirs(output_path, exist_ok=True)
+    if clean_up:
+        _cleanup_output(output_path=output_path)
 
     # kubeflow jupyter launcher configmap
     input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-launcher.yaml")
@@ -349,7 +396,7 @@ def _generate_env_manifest(context: "Context", clean_up: bool = True) -> Tuple[s
     with open(input, "r") as file:
         patch = file.read()
 
-    return (output_path, patch)
+    return patch
 
 
 def _prepare_team_context_path(context: "Context") -> str:
@@ -426,7 +473,6 @@ def _generate_efs_driver_manifest(output_path: str, context: "Context") -> str:
     return overlays_path
 
 
-#######
 def _fsx_driver_base(output_path: str, context: "Context") -> None:
     os.makedirs(os.path.join(output_path, "base"), exist_ok=True)
     filenames = ["controller.yaml", "csidriver.yaml", "kustomization.yaml", "node.yaml", "rbac.yaml"]
@@ -464,7 +510,36 @@ def _generate_fsx_driver_manifest(output_path: str, context: "Context") -> str:
     return overlays_path
 
 
-#######
+# Confirm orbit-system Service Endpoints
+def _confirm_endpoints(name: str, namespace: str, k8s_context: str) -> None:
+    addresses = k8s.get_service_addresses(name=name, namespace=namespace, k8s_context=k8s_context)
+    if addresses:
+        for address in addresses:
+            _logger.debug(
+                "Service: %s Namespace: %s Hostname: %s IP: %s",
+                name,
+                namespace,
+                address.get("hostname"),
+                address.get("ip"),
+            )
+    else:
+        raise Exception("No Endpoints found for Service: %s Namespace: %s", name, namespace)
+
+
+def _confirm_readiness(name: str, namespace: str, type: str, k8s_context: str) -> None:
+    for _ in range(20):
+        status = k8s.get_resource_status(name=name, namespace=namespace, type=type, k8s_context=k8s_context)
+        ready_replicas = status.get("ready_replicas")
+        if ready_replicas and int(ready_replicas) > 0:
+            _logger.debug("%s/%s ready", namespace, name)
+            break
+        else:
+            _logger.debug("%s/%s not yet ready, sleeping for 1 minute", namespace, name)
+            time.sleep(60)
+    else:
+        raise Exception("Timeout wating for Image Replicator to become ready")
+
+
 def write_kubeconfig(context: "Context") -> None:
     sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
 
@@ -476,12 +551,19 @@ def deploy_env(context: "Context") -> None:
         k8s_context = get_k8s_context(context=context)
         _logger.debug("k8s_context: %s", k8s_context)
 
-        # orbit-system
-        output_path: Optional[str] = _generate_orbit_system_manifest(context=context)
-        sh.run(
-            f"kubectl delete jobs -l app=cert-manager -n orbit-system --context {k8s_context} "
-            "--ignore-not-found=true --wait"
+        # orbit-system kustomizations
+        output_paths = _generate_orbit_system_kustomizations(context=context)
+        for path in output_paths:
+            sh.run(f"kubectl apply -k {path} --context {k8s_context} --wait")
+
+        # Wait until cert-manager webhook is available
+        _confirm_endpoints(name="cert-manager-webhook", namespace="cert-manager", k8s_context=k8s_context)
+        _confirm_readiness(name="cert-manager", namespace="cert-manager", type="Deployment", k8s_context=k8s_context)
+        _confirm_readiness(
+            name="cert-manager-cainjector", namespace="cert-manager", type="Deployment", k8s_context=k8s_context
         )
+
+        output_path: Optional[str] = _generate_orbit_system_manifest(context=context, clean_up=True)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
         output_path = _generate_orbit_image_replicator_manifest(context=context, clean_up=True)
@@ -489,41 +571,16 @@ def deploy_env(context: "Context") -> None:
             sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
         # Restart orbit-system deployments and statefulsets to force reload of caches etc
-        sh.run(f"kubectl rollout restart deployments -n orbit-system --context {k8s_context}")
-        sh.run(f"kubectl rollout restart statefulsets -n orbit-system --context {k8s_context}")
+        # sh.run(f"kubectl rollout restart deployments -n orbit-system --context {k8s_context}")
+        # sh.run(f"kubectl rollout restart statefulsets -n orbit-system --context {k8s_context}")
 
-        # Confirm orbit-system Service Endpoints
-        def confirm_endpoints(name: str, namespace: str) -> None:
-            addresses = k8s.get_service_addresses(name=name, namespace=namespace, k8s_context=k8s_context)
-            if addresses:
-                for address in addresses:
-                    _logger.debug(
-                        "Service: %s Namespace: %s Hostname: %s IP: %s",
-                        name,
-                        namespace,
-                        address.get("hostname"),
-                        address.get("ip"),
-                    )
-            else:
-                raise Exception("No Endpoints found for Service: %s Namespace: %s", name, namespace)
-
-        confirm_endpoints(name="podsettings-pod-modifier", namespace="orbit-system")
+        _confirm_endpoints(name="podsettings-pod-modifier", namespace="orbit-system", k8s_context=k8s_context)
 
         if context.install_image_replicator or not context.networking.data.internet_accessible:
-            confirm_endpoints(name="pod-image-updater", namespace="orbit-system")
-            for _ in range(20):
-                status = k8s.get_stateful_set_status(
-                    name="pod-image-replicator", namespace="orbit-system", k8s_context=k8s_context
-                )
-                ready_replicas = status.get("ready_replicas")
-                if ready_replicas and int(ready_replicas) > 0:
-                    _logger.debug("Image Replicator ready")
-                    break
-                else:
-                    _logger.debug("Image Replicator not yet ready, sleeping for 1 minute")
-                    time.sleep(60)
-            else:
-                raise Exception("Timeout wating for Image Replicator to become ready")
+            _confirm_endpoints(name="pod-image-updater", namespace="orbit-system", k8s_context=k8s_context)
+            _confirm_readiness(
+                name="pod-image-replicator", namespace="orbit-system", type="statefulset", k8s_context=k8s_context
+            )
 
         # kube-system kustomizations
         output_paths = _generate_kube_system_kustomizations(context=context)
@@ -547,11 +604,13 @@ def deploy_env(context: "Context") -> None:
         kubeflow.deploy_kubeflow(context=context)
 
         # env
-        (output_path, patch) = _generate_env_manifest(context=context)
-        sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
+        output_paths = _generate_orbit_system_env_kustomizations(context=context)
+        for output_path in output_paths:
+            sh.run(f"kubectl apply -k {output_path} --context {k8s_context} --wait")
 
         # Patch Kubeflow
         _logger.debug("Orbit applying KubeFlow patch")
+        patch = _generate_kubeflow_patch(context=context)
         sh.run(f'kubectl patch deployment -n kubeflow jupyter-web-app-deployment --patch "{patch}"')
         sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
 
@@ -568,14 +627,14 @@ def deploy_env(context: "Context") -> None:
             patch = patch.replace("VPC_ID", cast(str, context.networking.vpc_id))
             sh.run(f"kubectl patch deployment -n kubeflow alb-ingress-controller --patch '{patch}'")
 
-            patch = (
-                '[{"op": "add", "path": "/spec/template/metadata/labels/orbit~1node-type", "value": "fargate"}, '
-                '{"op": "replace", "path": "/spec/template/spec/nodeSelector", "value": {}}]'
-            )
-            sh.run(f"kubectl patch deployment -n orbit-system landing-page-service --type json --patch '{patch}'")
+            # patch = (
+            #     '[{"op": "add", "path": "/spec/template/metadata/labels/orbit~1node-type", "value": "fargate"}, '
+            #     '{"op": "replace", "path": "/spec/template/spec/nodeSelector", "value": {}}]'
+            # )
+            # sh.run(f"kubectl patch deployment -n orbit-system landing-page-service --type json --patch '{patch}'")
 
         # Confirm env Service Endpoints
-        confirm_endpoints(name="landing-page-service", namespace="orbit-system")
+        _confirm_endpoints(name="landing-page-service", namespace="orbit-system", k8s_context=k8s_context)
 
 
 def deploy_team(context: "Context", team_context: "TeamContext") -> None:
@@ -585,16 +644,15 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
         k8s_context = get_k8s_context(context=context)
         _logger.debug("kubectl context: %s", k8s_context)
         output_path = _generate_team_context(context=context, team_context=team_context)
-
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
-        (output_path, patch) = _generate_env_manifest(context=context, clean_up=False)
-        sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
+        # (output_path, patch) = _generate_env_manifest(context=context, clean_up=False)
+        # sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
         # Patch Kubeflow
-        _logger.debug("Orbit applying KubeFlow patch")
-        sh.run(f'kubectl patch deployment jupyter-web-app-deployment --patch "{patch}" -n kubeflow')
-        sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
+        # _logger.debug("Orbit applying KubeFlow patch")
+        # sh.run(f'kubectl patch deployment jupyter-web-app-deployment --patch "{patch}" -n kubeflow')
+        # sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
 
 
 def destroy_env(context: "Context") -> None:
@@ -604,7 +662,6 @@ def destroy_env(context: "Context") -> None:
         sh.run(f"eksctl utils write-kubeconfig --cluster orbit-{context.name} --set-kubeconfig-context")
         k8s_context = get_k8s_context(context=context)
         _logger.debug("kubectl k8s_context: %s", k8s_context)
-        output_path = _generate_orbit_system_manifest(context=context)
         try:
             # Here we remove some finalizers that can cause our delete to hang indefinitely
             try:
@@ -616,10 +673,18 @@ def destroy_env(context: "Context") -> None:
             except FailedShellCommand:
                 _logger.debug("Ignoring patch failure")
 
+            output_path = _generate_orbit_system_manifest(context=context)
             sh.run(
                 f"kubectl delete -f {output_path} --grace-period=0 --force "
                 f"--ignore-not-found --wait --context {k8s_context}"
             )
+            output_paths = _generate_orbit_system_kustomizations(context=context, clean_up=True)
+            for output_path in output_paths:
+                sh.run(
+                    f"kubectl delete -k {output_path} --grace-period=0 --force "
+                    f"--ignore-not-found --wait --context {k8s_context}"
+                )
+
         except exceptions.FailedShellCommand as ex:
             _logger.debug("Skipping: %s", ex)
             pass  # Let's leave for eksctl, it will destroy everything anyway...

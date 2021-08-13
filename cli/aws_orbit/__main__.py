@@ -270,6 +270,14 @@ def deploy_env(
     show_default=True,
 )
 @click.option(
+    "--max-availability-zones",
+    default=2,
+    help="The maximum number of Availability Zones to attempt to deploy in the VPC",
+    show_default=True,
+    type=int,
+    required=False,
+)
+@click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
@@ -282,6 +290,7 @@ def deploy_foundation(
     internet_accessibility: bool = True,
     codeartifact_domain: Optional[str] = None,
     codeartifact_repository: Optional[str] = None,
+    max_availability_zones: Optional[int] = None,
 ) -> None:
     """Deploy a Orbit Workbench foundation based on a manisfest file (yaml)."""
     if debug:
@@ -296,6 +305,7 @@ def deploy_foundation(
     _logger.debug("name: %s", name)
     _logger.debug("codeartifact_domain: %s", codeartifact_domain)
     _logger.debug("codeartifact_repository: %s", codeartifact_repository)
+    _logger.debug("max_availability_zones: %s", max_availability_zones)
     deploy_commands.deploy_foundation(
         filename=filename,
         name=name,
@@ -303,6 +313,7 @@ def deploy_foundation(
         codeartifact_repository=codeartifact_repository,
         debug=debug,
         internet_accessibility=internet_accessibility,
+        max_availability_zones=max_availability_zones,
     )
 
 

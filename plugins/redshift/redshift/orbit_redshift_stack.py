@@ -257,12 +257,7 @@ class RedshiftStack(Stack):
             "teamspace_name": team_context.name,
             "lake_role_name": f"orbit-{context.name}-{team_context.name}-role",
             "vpc_id": context.networking.vpc_id,
-            "subnet_ids": [
-                s.subnet_id
-                for s in context.networking.public_subnets
-                + context.networking.isolated_subnets
-                + context.networking.private_subnets
-            ],
+            "subnet_ids": context.networking.data.nodes_subnets,
             "team_security_group_id": team_context.team_security_group_id,
             "team_kms_key_arn": team_context.team_kms_key_arn,
         }
