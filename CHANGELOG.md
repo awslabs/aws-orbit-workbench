@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: remove the ownerReference on userspace PodDefaults (because they're in the teamspace namespace)
 - FIX: yaml parameter replacement regex
 - FIX: greedy bucket deletion by prefix when destroying
+- FIX: jupyter-webapp custom configmap
 
 ### **Removed**
 
