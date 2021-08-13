@@ -42,11 +42,11 @@ def deploy(
     if "cpu" not in parameters:
         parameters["cpu"] = "1"
 
-    if "node_group" in parameters:
-        node_group = parameters["node_group"]
-        del parameters["node_group"]
-    else: 
-        node_group = "primary-compute"
+    if "node_group" not in parameters:
+        raise Exception("The node-group is necessary to define where overprovisioning will run")
+
+    node_group = parameters["node_group"]
+    del parameters["node_group"]
 
     resources = {"resources": parameters}
 
