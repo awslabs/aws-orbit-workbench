@@ -78,7 +78,7 @@ Resources:
             Value: !Ref 'IsInternetAccessible'
           - Name: INTERNET_ACCESSIBILITY_ARG
             Type: PLAINTEXT
-            Value: { "Fn::FindInMap" : [ "InternetAccessibility", { !Ref 'IsInternetAccessible' } ]}
+            Value: !FindInMap [ "InternetAccessibilityMap", "InternetAccessibility", !Ref 'IsInternetAccessible' ]
           - Name: VERSION
             Type: PLAINTEXT
             Value: !Ref 'Version'
@@ -123,7 +123,7 @@ Resources:
             Value: !Ref 'IsInternetAccessible'
           - Name: INTERNET_ACCESSIBILITY_ARG
             Type: PLAINTEXT
-            Value: { "Fn::FindInMap" : [ "InternetAccessibility", { !Ref 'IsInternetAccessible' } ]}
+            Value: !FindInMap [ "InternetAccessibilityMap", "InternetAccessibility", !Ref 'IsInternetAccessible' ]
           - Name: VERSION
             Type: PLAINTEXT
             Value: !Ref 'Version'
@@ -171,7 +171,7 @@ Resources:
             Value: !Ref 'IsInternetAccessible'
           - Name: INTERNET_ACCESSIBILITY_ARG
             Type: PLAINTEXT
-            Value: { "Fn::FindInMap" : [ "InternetAccessibility", { !Ref 'IsInternetAccessible' } ]}
+            Value: !FindInMap [ "InternetAccessibilityMap", "InternetAccessibility", !Ref 'IsInternetAccessible' ]
           - Name: VERSION
             Type: PLAINTEXT
             Value: !Ref 'Version'
@@ -216,7 +216,7 @@ Resources:
             Value: !Ref 'IsInternetAccessible'
           - Name: INTERNET_ACCESSIBILITY_ARG
             Type: PLAINTEXT
-            Value: { "Fn::FindInMap" : [ "InternetAccessibility", { !Ref 'IsInternetAccessible' } ]}
+            Value: !FindInMap [ "InternetAccessibilityMap", "InternetAccessibility", !Ref 'IsInternetAccessible' ]
           - Name: VERSION
             Type: PLAINTEXT
             Value: !Ref 'Version'
@@ -261,7 +261,7 @@ Resources:
             Value: !Ref 'IsInternetAccessible'
           - Name: INTERNET_ACCESSIBILITY_ARG
             Type: PLAINTEXT
-            Value: { "Fn::FindInMap" : [ "InternetAccessibility", { !Ref 'IsInternetAccessible' } ]}
+            Value: !FindInMap [ "InternetAccessibilityMap", "InternetAccessibility", !Ref 'IsInternetAccessible' ]
           - Name: VERSION
             Type: PLAINTEXT
             Value: !Ref 'Version'
@@ -306,7 +306,7 @@ Resources:
             Value: !Ref 'IsInternetAccessible'
           - Name: INTERNET_ACCESSIBILITY_ARG
             Type: PLAINTEXT
-            Value: { "Fn::FindInMap" : [ "InternetAccessibility", { !Ref 'IsInternetAccessible' } ]}
+            Value: !FindInMap [ "InternetAccessibilityMap", "InternetAccessibility", !Ref 'IsInternetAccessible' ]
           - Name: VERSION
             Type: PLAINTEXT
             Value: !Ref 'Version'
@@ -349,7 +349,7 @@ Resources:
             Value: !Ref 'IsInternetAccessible'
           - Name: INTERNET_ACCESSIBILITY_ARG
             Type: PLAINTEXT
-            Value: { "Fn::FindInMap" : [ "InternetAccessibility", { !Ref 'IsInternetAccessible' } ]}
+            Value: !FindInMap [ "InternetAccessibilityMap", "InternetAccessibility", !Ref 'IsInternetAccessible' ]
           - Name: VERSION
             Type: PLAINTEXT
             Value: !Ref 'Version'
@@ -561,9 +561,10 @@ Resources:
       - OrbitDeploymentRole
 
 Mappings:
-  InternetAccessibility:
-    "true": "--internet-accessibility"
-    "false": "--no-internet-accessibility"
+  InternetAccessibilityMap:
+    InternetAccessibility:
+      true: "--internet-accessibility"
+      false: "--no-internet-accessibility"
 
 Parameters:
   FoundationName:
