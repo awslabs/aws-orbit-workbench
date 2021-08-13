@@ -43,7 +43,7 @@ def deploy(
         parameters["cpu"] = "1"
 
     if "node_group" not in parameters:
-        raise Exception("The node-group is necessary to define where overprovisioning will run")
+        raise Exception(f"The parameter 'node_group' is missing for {plugin_id}...please add it")
 
     node_group = parameters["node_group"]
     del parameters["node_group"]
