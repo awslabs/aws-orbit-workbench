@@ -13,12 +13,12 @@
 #    limitations under the License.
 
 import logging
-from typing import cast
+from typing import Optional, cast
 
 import botocore.exceptions
 import click
 
-from aws_orbit import bundle, remote, utils
+from aws_orbit import bundle, remote
 from aws_orbit.messages import MessagesContext
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
 from aws_orbit.services import cfn, codebuild, ecr, elb, s3, ssm
@@ -26,11 +26,22 @@ from aws_orbit.services import cfn, codebuild, ecr, elb, s3, ssm
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def destroy_toolkit(env_name: str, top_level: str = "orbit") -> None:
+def destroy_toolkit(
+    env_name: str,
+    top_level: str = "orbit",
+    toolkit_bucket: Optional[str] = None,
+    cdk_toolkit_bucket: Optional[str] = None,
+) -> None:
     try:
-        s3.delete_bucket_by_prefix(prefix=f"{top_level}-{env_name}-toolkit-{utils.get_account_id()}-")
+        if toolkit_bucket:
+            s3.delete_bucket(bucket=toolkit_bucket)
     except Exception as ex:
         _logger.debug("Skipping Toolkit bucket deletion. Cause: %s", ex)
+    try:
+        if cdk_toolkit_bucket:
+            s3.delete_bucket(bucket=cdk_toolkit_bucket)
+    except Exception as ex:
+        _logger.debug("Skipping CDK Toolkit bucket deletion. Cause: %s", ex)
     toolkit_stack_name: str = f"{top_level}-{env_name}-toolkit"
     if cfn.does_stack_exist(stack_name=toolkit_stack_name):
         cfn.destroy_stack(stack_name=toolkit_stack_name)
@@ -39,7 +50,6 @@ def destroy_toolkit(env_name: str, top_level: str = "orbit") -> None:
 
 def destroy_remaining_resources(env_name: str, top_level: str = "orbit") -> None:
     ecr.cleanup_remaining_repos(env_name=env_name)
-    s3.delete_bucket_by_prefix(prefix=f"{top_level}-{env_name}-cdk-toolkit-{utils.get_account_id()}-")
     env_cdk_toolkit: str = f"{top_level}-{env_name}-cdk-toolkit"
     if cfn.does_stack_exist(stack_name=env_cdk_toolkit):
         cfn.destroy_stack(stack_name=env_cdk_toolkit)
@@ -133,7 +143,11 @@ def destroy_env(env: str, debug: bool) -> None:
         msg_ctx.progress(95)
 
         try:
-            destroy_toolkit(env_name=context.name)
+            destroy_toolkit(
+                env_name=context.name,
+                toolkit_bucket=context.toolkit.s3_bucket,
+                cdk_toolkit_bucket=context.cdk_toolkit.s3_bucket,
+            )
         except botocore.exceptions.ClientError as ex:
             error = ex.response["Error"]
             if "does not exist" not in error["Message"]:
@@ -188,7 +202,12 @@ def destroy_foundation(env: str, debug: bool) -> None:
         msg_ctx.progress(95)
 
         try:
-            destroy_toolkit(env_name=context.name, top_level="orbit-f")
+            destroy_toolkit(
+                env_name=context.name,
+                top_level="orbit-f",
+                toolkit_bucket=context.toolkit.s3_bucket,
+                cdk_toolkit_bucket=context.cdk_toolkit.s3_bucket,
+            )
         except botocore.exceptions.ClientError as ex:
             error = ex.response["Error"]
             if "does not exist" not in error["Message"]:
