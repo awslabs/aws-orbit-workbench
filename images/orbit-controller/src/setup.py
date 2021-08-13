@@ -24,7 +24,7 @@ setup(
     packages=find_packages(include=["orbit_controller", "orbit_controller.*"]),
     python_requires=">=3.7, <3.9",
     install_requires=[
-        "boto3~=1.17",
+        "boto3~=1.18",
         "botocore~=1.15",
         "click~=7.1.0",
         "kubernetes~=12.0.1",
