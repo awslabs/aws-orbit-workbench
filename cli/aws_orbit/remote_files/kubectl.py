@@ -16,7 +16,7 @@ import logging
 import os
 import shutil
 import time
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import aws_orbit
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
@@ -369,7 +369,7 @@ def _generate_orbit_system_env_manifest(output_path: str, context: "Context") ->
     return overlays_path
 
 
-def _generate_kubeflow_patch(context: "Context", clean_up: bool = True) -> str:
+def _generate_kubeflow_patch(context: "Context", clean_up: bool = True) -> Tuple[str, str]:
     output_path = os.path.join(".orbit.out", context.name, "kubectl", "env")
     os.makedirs(output_path, exist_ok=True)
     if clean_up:
@@ -391,12 +391,11 @@ def _generate_kubeflow_patch(context: "Context", clean_up: bool = True) -> str:
         file.write(content)
 
     input = os.path.join(MODELS_PATH, "kubeflow", "kf-jupyter-patch.yaml")
-    output = os.path.join(output_path, "kf-jupyter-patch.yaml")
 
     with open(input, "r") as file:
         patch = file.read()
 
-    return patch
+    return output, patch
 
 
 def _prepare_team_context_path(context: "Context") -> str:
@@ -610,7 +609,8 @@ def deploy_env(context: "Context") -> None:
 
         # Patch Kubeflow
         _logger.debug("Orbit applying KubeFlow patch")
-        patch = _generate_kubeflow_patch(context=context)
+        jupyter_launcher_config_map, patch = _generate_kubeflow_patch(context=context)
+        sh.run(f"kubectl apply -f {jupyter_launcher_config_map} --context {k8s_context} --wait")
         sh.run(f'kubectl patch deployment -n kubeflow jupyter-web-app-deployment --patch "{patch}"')
         sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
 
