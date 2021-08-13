@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - REFACTOR: modified overprovisioning plugin to leverage nodeSelector for application to nodeGroups
 - FIX: greedy bucket deletion by prefix when destroying
 - FIX: jupyter-webapp custom configmap
+- FIX: restart SSM Agent DaemonSet after image replication
 
 ### **Removed**
 
