@@ -16,14 +16,14 @@ replicas: ${containers}
 podAnnotations: {}
 restartPolicy: ${restart_policy}
 headLabels:
-  orbit/node-type: ec2
+  orbit/node-group: ${node_group}
   orbit/attach-security-group: "yes"
   app: "orbit-overprovisioning"
   component: overprovisioning-head
   type: overprovisioning
 
 workerLabels:
-  orbit/node-type: ec2
+  orbit/node-group: ${node_group}
   orbit/attach-security-group: "yes"
   app: "orbit-overprovisioning"
   component: overprovisioning-worker
@@ -31,6 +31,6 @@ workerLabels:
 
 nodeSelector:
   orbit/usage: teams
-  orbit/node-type: ec2
+  orbit/node-group: ${node_group}
 
 ${resources}

@@ -42,9 +42,15 @@ def deploy(
     if "cpu" not in parameters:
         parameters["cpu"] = "1"
 
+    if "node_group" not in parameters:
+        raise Exception(f"The parameter 'node_group' is missing for {plugin_id}...please add it")
+
+    node_group = parameters["node_group"]
+    del parameters["node_group"]
+
     resources = {"resources": parameters}
 
-    _logger.info(f"overprovisioning installed with {containers} containers of profile:  {resources}.")
+    _logger.info(f"overprovisioning installed with {containers} containers of resources:  {resources}.")
 
     vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
@@ -56,6 +62,7 @@ def deploy(
         containers=containers,
         resources=yaml.dump(resources),
         toolkit_s3_bucket=context.toolkit.s3_bucket,
+        node_group=node_group,
     )
 
     repo = team_context.name
