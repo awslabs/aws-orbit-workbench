@@ -22,6 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: yaml parameter replacement regex
 - FIX: greedy bucket deletion by prefix when destroying
 - FIX: jupyter-webapp custom configmap
+- FIX: configured team_scrip_launcher to optinally add an FS mount
+- FIX: clean-lakeformation-glue-database does not user fs, added in lighter image
 
 ### **Removed**
 
