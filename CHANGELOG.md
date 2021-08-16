@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## **[1.2.0] - Unreleased**
 ### **Added**
 
+- FEATURE: Added CLI support for podsettings (build and delete)
 - Added MaxAvailabilityZones to foundation deployment
 - Added EfaEnabled to NodeGroups
 - Added AvailabilityZones filter to NodeGroups
@@ -25,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: jupyter-webapp custom configmap
 - FIX: restart SSM Agent DaemonSet after image replication
 - UPDATED: python packages and dependencies
+
 
 ### **Removed**
 -- REMOVED: call to install ~/.kube/config
