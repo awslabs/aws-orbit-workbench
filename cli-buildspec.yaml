@@ -71,6 +71,12 @@ phases:
             echo "Deploying Env"
             orbit deploy env --debug -f $MANIFEST --debug
           else
+            if [[ "${INTERNET_ACCESSIBLE}" = "false" ]]; then
+              echo "Deploying toolkit"
+              orbit deploy toolkit -f $MANIFEST --debug
+              echo "Deploying credentials"
+              orbit deploy credentials -f $MANIFEST --registry docker.io --username tempuserid --password '123456Ab!' --debug
+            fi
             echo "Deploying Env"
             orbit deploy env --debug -f $MANIFEST
           fi
