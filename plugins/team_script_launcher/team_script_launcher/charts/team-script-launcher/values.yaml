@@ -58,4 +58,5 @@ jobAffinity:
         matchExpressions:
         - key: k8s.amazonaws.com/accelerator
           operator: DoesNotExist
-
+        
+fileystem_indicator: ${fileystem_indicator}
