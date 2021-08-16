@@ -45,10 +45,10 @@ def helm_package(
 
     # Indicate that we need a filesystem by default...then override if the flag is set
     # if the fileystem_indicator is 0, then the efs WILL BE MOUNTED
-    fileystem_indicator=0
+    fileystem_indicator = 0
     try:
         if "needFilesystem" in parameters and parameters["needFilesystem"].lower() == "never":
-            fileystem_indicator=1
+            fileystem_indicator = 1
     except Exception:
         _logger.info(f"Ran into an issue with setting the fs on ${plugin_id}, the fs will be installed")
 
@@ -67,7 +67,7 @@ def helm_package(
         image=image,
         uid=parameters["uid"] if "uid" in parameters else "1000",
         gid=parameters["gid"] if "gid" in parameters else "100",
-        fileystem_indicator=fileystem_indicator,
+        fileystem_indicator=str(fileystem_indicator),
     )
 
     if "script" in parameters:
