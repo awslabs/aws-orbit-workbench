@@ -1,7 +1,7 @@
 FROM public.ecr.aws/v3o4w1g6/aws-orbit-workbench/python:3.8.7-slim-buster
 
 ARG CDK_VERSION=1.100.0
-ARG BOTO_VERSION=1.17.0
+ARG BOTO_VERSION=1.18.0
 
 RUN apt -y update && \
     # Install dependencies

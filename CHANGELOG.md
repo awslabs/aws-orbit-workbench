@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: greedy bucket deletion by prefix when destroying
 - FIX: jupyter-webapp custom configmap
 - FIX: restart SSM Agent DaemonSet after image replication
+- UPDATED: python packages and dependencies
 
 ### **Removed**
 
