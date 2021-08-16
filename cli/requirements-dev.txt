@@ -532,7 +532,7 @@ cffi==1.14.6
     #   cryptography
 cfn-flip==1.2.3
     # via aws-orbit
-cfn-lint==0.44.7
+cfn-lint==0.53.0
     # via -r requirements-dev.in
 chardet==4.0.0
     # via requests
