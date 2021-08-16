@@ -24,8 +24,7 @@ setup(
     packages=find_packages(include=["orbit_controller", "orbit_controller.*"]),
     python_requires=">=3.7, <3.9",
     install_requires=[
-        "boto3~=1.17",
-        "botocore~=1.15",
+        "boto3~=1.18",
         "click~=7.1.0",
         "kubernetes~=12.0.1",
         "pyyaml~=5.4",
@@ -36,6 +35,7 @@ setup(
         "jsonpath-ng~=1.5.0",
         "cryptography~=3.4.7",
         "python-jose~=3.2.0",
+        "kopf~=1.33.0",
     ],
     entry_points={"console_scripts": ["orbit-controller = orbit_controller.__main__:main"]},
     include_package_data=True,

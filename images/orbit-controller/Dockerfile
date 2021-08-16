@@ -4,6 +4,9 @@ RUN mkdir -p /var/orbit-controller
 
 ADD src /var/orbit-controller/
 ADD image_inventory.txt /var/orbit-controller/image_inventory.txt
+ADD requirements.txt /var/orbit-controller/requirements.txt
+
+RUN pip install -r /var/orbit-controller/requirements.txt
 
 RUN cd /var/orbit-controller/ && \
     pip3 install -e .
