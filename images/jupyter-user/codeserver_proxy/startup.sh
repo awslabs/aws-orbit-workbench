@@ -17,7 +17,7 @@ fi
 python3 /opt/orbit/codeserver_proxy/getcreds.py
 
 # get the k8s info and create a config on start
-/opt/orbit/codeserver_proxy/create_kubeconfig.sh
+#/opt/orbit/codeserver_proxy/create_kubeconfig.sh
 
 # Start codeserver 
 /opt/orbit/codeserver_proxy/start_codeserver.sh $1

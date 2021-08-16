@@ -22,8 +22,9 @@ import click
 
 from aws_orbit.commands import deploy as deploy_commands
 from aws_orbit.commands import destroy as destroy_commands
-from aws_orbit.commands.delete import delete_image
-from aws_orbit.commands.image import build_image, build_profile, delete_profile, list_profiles
+from aws_orbit.commands.build import build_image, build_podsetting
+from aws_orbit.commands.delete import delete_image, delete_podsetting
+from aws_orbit.commands.image import build_profile, delete_profile, list_profiles
 from aws_orbit.commands.init import init
 from aws_orbit.commands.list import list_env, list_images
 from aws_orbit.utils import print_dir
@@ -554,6 +555,31 @@ def add_profile_cli(env: str, team: str, debug: bool, profile: TextIO) -> None:
     build_profile(env=env, team=team, profile=profile_str, debug=debug)
 
 
+@build.command(name="podsetting")
+@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
+@click.option("--team", "-t", type=str, required=True, help="Orbit Team.")
+@click.argument("podsetting", type=click.File("r"))
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def add_podsetting_cli(env: str, team: str, debug: bool, podsetting: TextIO) -> None:
+    """Deploy a new podsetting to the K8s cluster."""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    _logger.debug("env: %s", env)
+    _logger.debug("team: %s", team)
+    podsetting_str = podsetting.read()
+    _logger.debug("podsetting: %s", podsetting_str)
+    _logger.debug("debug: %s", debug)
+    try:
+        build_podsetting(env_name=env, team_name=team, podsetting=podsetting_str, debug=debug)
+    except ImportError:
+        raise click.ClickException('The "utils" submodule is required to use "run" commands')
+
+
 @click.group(name="delete")
 def delete() -> None:
     """Delete images,profiles,etc in your Orbit Workbench."""
@@ -579,6 +605,25 @@ def delete_profile_cli(env: str, team: str, profile: str, debug: bool) -> None:
     _logger.debug("profile: %s", profile)
     _logger.debug("debug: %s", debug)
     delete_profile(env=env, team=team, profile_name=profile, debug=debug)
+
+
+@delete.command(name="podsetting")
+@click.option("--team", "-t", type=str, help="Orbit Team.", required=True)
+@click.option("--podsetting", "-n", type=str, help="Podsetting name to delete", required=True)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def delete_podsetting_cli(team: str, podsetting: str, debug: bool) -> None:
+    """Delete a podsetting"""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    _logger.debug("team: %s", team)
+    _logger.debug("podsetting: %s", podsetting)
+    _logger.debug("debug: %s", debug)
+    delete_podsetting(namespace=team, podsetting_name=podsetting, debug=debug)
 
 
 @delete.command(name="image")

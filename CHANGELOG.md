@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## **[1.2.0] - Unreleased**
 ### **Added**
 
+- FEATURE: Added CLI support for podsettings (build and delete)
 - Added MaxAvailabilityZones to foundation deployment
 - Added EfaEnabled to NodeGroups
 - Added AvailabilityZones filter to NodeGroups
@@ -20,12 +21,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: replace cert-manager/jobs with cert-manager/certifactes
 - FIX: remove the ownerReference on userspace PodDefaults (because they're in the teamspace namespace)
 - FIX: yaml parameter replacement regex
+- REFACTOR: modified overprovisioning plugin to leverage nodeSelector for application to nodeGroups
 - FIX: greedy bucket deletion by prefix when destroying
 - FIX: jupyter-webapp custom configmap
 - FIX: configured team_scrip_launcher to optinally add an FS mount
 - FIX: clean-lakeformation-glue-database does not user fs, added in lighter image
+- FIX: restart SSM Agent DaemonSet after image replication
+- UPDATED: python packages and dependencies
+
 
 ### **Removed**
+-- REMOVED: call to install ~/.kube/config
 
 
 #
