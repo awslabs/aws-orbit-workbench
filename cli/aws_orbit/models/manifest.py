@@ -245,7 +245,7 @@ def _add_ssm_param_injector(tag: str = "!SSM") -> Set[str]:
 
     # the tag will be used to mark where to start searching for the pattern
     # e.g. somekey: !SSM somestring${MYENVVAR}blah blah blah
-    loader.add_implicit_resolver(tag, pattern, None) # type: ignore
+    loader.add_implicit_resolver(tag, pattern, None)  # type: ignore
 
     ssm_parameters = set()
 
@@ -292,7 +292,7 @@ def _add_ssm_param_injector(tag: str = "!SSM") -> Set[str]:
             return full_value
         return value
 
-    loader.add_constructor(tag, constructor_ssm_parameter) # type: ignore
+    loader.add_constructor(tag, constructor_ssm_parameter)  # type: ignore
     return ssm_parameters
 
 
@@ -315,7 +315,7 @@ def _add_env_var_injector(tag: str = "!ENV") -> None:
 
     # the tag will be used to mark where to start searching for the pattern
     # e.g. somekey: !ENV somestring${MYENVVAR}blah blah blah
-    loader.add_implicit_resolver(tag, pattern, None) # type: ignore
+    loader.add_implicit_resolver(tag, pattern, None)  # type: ignore
 
     def constructor_env_variables(loader, node) -> Any:  # type: ignore
         """
@@ -339,7 +339,7 @@ def _add_env_var_injector(tag: str = "!ENV") -> None:
             return full_value
         return value
 
-    loader.add_constructor(tag, constructor_env_variables) # type: ignore
+    loader.add_constructor(tag, constructor_env_variables)  # type: ignore
 
 
 T = TypeVar("T")
