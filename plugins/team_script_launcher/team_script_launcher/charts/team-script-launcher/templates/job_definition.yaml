@@ -45,14 +45,18 @@ spec:
           {{- toYaml .Values.jobResources | nindent 12 }}
 
         volumeMounts:
+          {{- if not .Values.fileystem_indicator }}
           - mountPath: /efs
             name: efs-volume
+          {{- end }}
           - name: scripts
             mountPath: /scripts
       volumes:
+        {{- if not .Values.fileystem_indicator }}
         - name: efs-volume
           persistentVolumeClaim:
             claimName: team-efs
+        {{- end }}
         - name: scripts
           configMap:
             name: {{ .Values.configMapName }}
