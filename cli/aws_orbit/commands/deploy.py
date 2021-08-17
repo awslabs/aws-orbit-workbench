@@ -26,6 +26,7 @@ from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
 from aws_orbit.models.manifest import (
     DataNetworkingManifest,
     FoundationManifest,
+    FrontendNetworkingManifest,
     ImagesManifest,
     Manifest,
     ManifestSerDe,
@@ -161,6 +162,8 @@ def deploy_foundation(
     internet_accessibility: bool = True,
     codeartifact_domain: Optional[str] = None,
     codeartifact_repository: Optional[str] = None,
+    ssl_cert_arn: Optional[str] = None,
+    custom_domain_name: Optional[str] = None,
     max_availability_zones: Optional[int] = None,
 ) -> None:
     with MessagesContext("Deploying", debug=debug) as msg_ctx:
@@ -176,6 +179,13 @@ def deploy_foundation(
                     'and "codeartifact-repository" ignored.'
                 )
         elif name:
+            if ssl_cert_arn:
+                if not custom_domain_name:
+                    raise ValueError('If "ssl_cert_arn" is provided, "custom_domain_name" should be provided')
+            if custom_domain_name:
+                if not ssl_cert_arn:
+                    raise ValueError('If "custom_domain_name" is provided, "ssl_cert_arn" should be provided')
+
             manifest: FoundationManifest = FoundationManifest(  # type: ignore
                 name=name,
                 codeartifact_domain=codeartifact_domain,
@@ -183,6 +193,9 @@ def deploy_foundation(
                 ssm_parameter_name=f"/orbit-f/{name}/manifest",
                 networking=NetworkingManifest(
                     max_availability_zones=max_availability_zones,
+                    frontend=FrontendNetworkingManifest(
+                        ssl_cert_arn=ssl_cert_arn, custom_domain_name=custom_domain_name
+                    ),
                     data=DataNetworkingManifest(internet_accessible=internet_accessibility),
                 ),
             )

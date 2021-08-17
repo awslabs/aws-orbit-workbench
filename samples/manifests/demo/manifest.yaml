@@ -18,6 +18,8 @@ Networking:
     Frontend:
         LoadBalancersSubnets: !SSM ${/orbit-f/demo-fndn/resources::LoadBalancersSubnets}
         SslCertArn: !SSM ${/orbit-f/demo-fndn/resources::SslCertArn}
+        #SslCertArn: "arn:aws:acm:us-east-2:1234567890:certificate/f427f322-c99f-44d2-8298-bde7a0177e5c"
+        #CustomDomainName: !ENV ${ORBIT_DNS_NAME::orbit-rockstars.orbit.oss.aws.dev}
 ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge

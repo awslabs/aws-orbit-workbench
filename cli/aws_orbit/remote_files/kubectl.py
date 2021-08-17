@@ -434,7 +434,11 @@ def fetch_kubectl_data(context: "Context", k8s_context: str) -> None:
 
     ingress_url: str = k8s.get_ingress_dns(name="istio-ingress", k8s_context=k8s_context, namespace="istio-system")
 
-    context.landing_page_url = f"https://{ingress_url}"
+    if context.networking.frontend.custom_domain_name:
+        context.landing_page_url = f"https://{context.networking.frontend.custom_domain_name}"
+    else:
+        context.landing_page_url = f"https://{ingress_url}"
+
     if context.cognito_external_provider:
         context.cognito_external_provider_redirect = context.landing_page_url
 

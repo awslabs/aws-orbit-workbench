@@ -167,6 +167,7 @@ class FrontendNetworkingManifest:
     Schema: ClassVar[Type[Schema]] = Schema
     load_balancers_subnets: List[str] = field(default_factory=list)
     ssl_cert_arn: Optional[str] = None
+    custom_domain_name: Optional[str] = None
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
