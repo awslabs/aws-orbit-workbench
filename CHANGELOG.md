@@ -28,7 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: clean-lakeformation-glue-database does not user fs, added in lighter image
 - FIX: restart SSM Agent DaemonSet after image replication
 - UPDATED: python packages and dependencies
-
+- UPDATED: Fsx Lustre serviceaccount IAM role policy change to allow fsx resource tagging
 
 ### **Removed**
 -- REMOVED: call to install ~/.kube/config
