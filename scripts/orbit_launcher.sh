@@ -2,11 +2,10 @@
 
 usage(){
     echo ""
-    echo "usage: `basename $0` --orbit-version version --oauth-token github-token [--destroy-pipeline true|false --internet-accessibility true|false]"
+    echo "usage: `basename $0` --orbit-version version --oauth-token github-token [--destroy-pipeline true|false]"
     echo ""
     echo "  --orbit-version             The version of Orbit to install"
     echo "  --oauth-token               The GitHub OAuth token that will access the Orbit repo"
-    echo "  --internet-accessibility    [OPTIONAL] Determines if internet will be accessible for the deployment. Default is true"
     echo "  --branch-override           [OPTIONAL] Overrides the branch that the pipeline pulls from. Default is main"
     echo "  --destroy-pipeline          [OPTIONAL] Creates a pipeline that destroys the Orbit deployment. Default is false"
     echo "  -h, --help                  Display help"
