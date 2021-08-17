@@ -643,7 +643,8 @@ def deploy_env(context: "Context") -> None:
             _logger.debug("Orbit applying KubeFlow patch to ALB Controller with Internet Access")
             patch = (
                 '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"ec2"}},'
-                '"spec":{"nodeSelector":{"orbit/usage":"reserved","orbit/node-group": "env"}}}}}')
+                '"spec":{"nodeSelector":{"orbit/usage":"reserved","orbit/node-group": "env"}}}}}'
+            )
             sh.run(f"kubectl patch deployment -n kubeflow alb-ingress-controller --patch '{patch}'")
 
         _confirm_endpoints(name="landing-page-service", namespace="orbit-system", k8s_context=k8s_context)
