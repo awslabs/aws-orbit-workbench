@@ -6,10 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## **[1.2.0] - Unreleased**
 ### **Added**
 
+- FEATURE: Added CLI support for podsettings (build and delete)
 - Added MaxAvailabilityZones to foundation deployment
 - Added EfaEnabled to NodeGroups
 - Added AvailabilityZones filter to NodeGroups
 - Manifest validator to check the managed node group desired number of nodes value
+- Added support for `Custom Domain Name` attribute to point Orbit using custom dns
+- Added support for externally providing `SSL CertArn`
+- Added Multi stage Orbit deployment ability
 
 ### **Changed**
 
@@ -20,10 +24,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: replace cert-manager/jobs with cert-manager/certifactes
 - FIX: remove the ownerReference on userspace PodDefaults (because they're in the teamspace namespace)
 - FIX: yaml parameter replacement regex
+- REFACTOR: modified overprovisioning plugin to leverage nodeSelector for application to nodeGroups
 - FIX: greedy bucket deletion by prefix when destroying
 - FIX: jupyter-webapp custom configmap
+- FIX: restart SSM Agent DaemonSet after image replication
+- UPDATED: python packages and dependencies
+
 
 ### **Removed**
+-- REMOVED: call to install ~/.kube/config
 
 
 #

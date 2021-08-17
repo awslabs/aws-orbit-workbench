@@ -49,7 +49,7 @@ ManagedNodegroups:
 Teams:
 -   Name: lake-admin
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::full-iso}-demo-lake-admin-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::full-iso}-${AWS_DEFAULT_REGION::}-demo-lake-admin-add-policy
     GrantSudo: true
     Fargate: false
     K8Admin: true
@@ -61,7 +61,7 @@ Teams:
     - lake-admin
 -   Name: lake-creator
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::full-iso}-demo-lake-creator-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::full-iso}-${AWS_DEFAULT_REGION::}-demo-lake-creator-add-policy
     GrantSudo: true
     Fargate: false
     K8Admin: false
@@ -73,7 +73,7 @@ Teams:
     - lake-creator
 -   Name: lake-user
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::full-iso}-demo-lake-user-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::full-iso}-${AWS_DEFAULT_REGION::}-demo-lake-user-add-policy
     JupyterhubInboundRanges:
     - 0.0.0.0/0
     GrantSudo: true

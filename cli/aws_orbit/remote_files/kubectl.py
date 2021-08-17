@@ -584,6 +584,10 @@ def deploy_env(context: "Context") -> None:
             _confirm_readiness(
                 name="pod-image-replicator", namespace="orbit-system", type="statefulset", k8s_context=k8s_context
             )
+            sh.run(
+                "kubectl rollout restart daemonsets -n orbit-system-ssm-daemons "
+                f"ssm-agent-installer --context {k8s_context}"
+            )
 
         # kube-system kustomizations
         output_paths = _generate_kube_system_kustomizations(context=context)
