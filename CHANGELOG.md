@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added EfaEnabled to NodeGroups
 - Added AvailabilityZones filter to NodeGroups
 - Manifest validator to check the managed node group desired number of nodes value
+- Added support for `Custom Domain Name` attribute to point Orbit using custom dns
+- Added support for externally providing `SSL CertArn`
+- Added Multi stage Orbit deployment ability
 
 ### **Changed**
 

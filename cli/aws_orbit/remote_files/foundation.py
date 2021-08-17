@@ -18,7 +18,7 @@ from typing import cast
 
 from aws_orbit import ORBIT_CLI_ROOT, cdk, cleanup
 from aws_orbit.models.context import FoundationContext
-from aws_orbit.remote_files.cert import deploy_selfsigned_cert
+from aws_orbit.remote_files.cert import check_cert
 from aws_orbit.services import cfn, ssm, vpc
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ def deploy(context: "FoundationContext") -> None:
     stack_name: str = cast(str, context.stack_name)
 
     _logger.debug("Deploying self signed cert...")
-    ssl_cert_arn = deploy_selfsigned_cert(context=context)
+    ssl_cert_arn = check_cert(context=context)
 
     _logger.debug("Deploying %s Foundation...", stack_name)
     cdk.deploy(
