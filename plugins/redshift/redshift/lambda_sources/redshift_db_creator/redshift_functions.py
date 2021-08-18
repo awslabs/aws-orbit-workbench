@@ -65,7 +65,7 @@ def lambda_handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> 
             {"Key": "SubProduct", "Value": "Redshift"},
             {"Key": "Env", "Value": os.environ["Env"]},
             {"Key": "TeamSpace", "Value": os.environ["TeamSpace"]},
-            {"Key": "EnvTeamSpace", "Value": os.environ["Env"]+"-"+os.environ["TeamSpace"]},
+            {"Key": "EnvTeamSpace", "Value": os.environ["Env"] + "-" + os.environ["TeamSpace"]},
             {"Key": "MasterPasswordSecretID", "Value": os.environ["SecretId"]},
         ],
     )
