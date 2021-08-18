@@ -76,7 +76,6 @@ def destroy(
     )
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
     env_name = context.name
-    region = context.region
     acct: str = context.account_id
     deploy_id: str = cast(str, context.toolkit.deploy_id)
     plugin_id = plugin_id.replace("_", "-")
