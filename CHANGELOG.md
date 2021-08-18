@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - UPDATED: python packages and dependencies
 - UPDATED: Fsx Lustre serviceaccount IAM role policy change to allow fsx resource tagging
 - FIX: force alb-controller in kubeflow to use env nodes
+- FIX: redshift plugin describe cluster based on specific env and team tags
 
 ### **Removed**
 -- REMOVED: call to install ~/.kube/config
