@@ -190,13 +190,14 @@ class RedshiftFunctionStandard(core.Construct):
         env_name: str = redshift_common.env_name
         teamspace_name: str = redshift_common.teamspace_name
         code = aws_lambda.Code.asset(_lambda_path(path="redshift_db_creator"))
+        region: str = redshift_common.region
 
         if redshift_common.lake_role_arn is None:
             raise ValueError("Orbit lake role arn required")
 
         lake_role = iam.Role.from_role_arn(
             self,
-            f"{env_name}-{teamspace_name}-role",
+            f"{env_name}-{teamspace_name}-{region}-role",
             redshift_common.lake_role_arn,
             mutable=False,
         )
@@ -255,7 +256,7 @@ class RedshiftStack(Stack):
             "partition": core.Aws.PARTITION,
             "env_name": context.name,
             "teamspace_name": team_context.name,
-            "lake_role_name": f"orbit-{context.name}-{team_context.name}-role",
+            "lake_role_name": f"orbit-{context.name}-{team_context.name}-{context.region}-role",
             "vpc_id": context.networking.vpc_id,
             "subnet_ids": context.networking.data.nodes_subnets,
             "team_security_group_id": team_context.team_security_group_id,
