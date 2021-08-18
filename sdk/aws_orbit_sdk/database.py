@@ -900,7 +900,8 @@ class RedshiftUtils(DatabaseCommon):
         redshift = boto3.client("redshift")
         props = get_properties()
         if cluster_id == None:
-            clusters = redshift.describe_clusters(TagValues=[props["AWS_ORBIT_TEAM_SPACE"]])["Clusters"]
+            redshift_cluster_search_tag = props["AWS_ORBIT_ENV"] + "-" + props["AWS_ORBIT_TEAM_SPACE"]
+            clusters = redshift.describe_clusters(TagValues=[redshift_cluster_search_tag])["Clusters"]
         else:
             clusters = redshift.describe_clusters(
                 ClusterIdentifier=cluster_id,
