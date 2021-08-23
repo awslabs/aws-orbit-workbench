@@ -563,8 +563,8 @@ Resources:
 Mappings:
   InternetAccessibilityMap:
     InternetAccessibility:
-      true: "--internet-accessibility"
-      false: "--no-internet-accessibility"
+      "true": "--internet-accessibility"
+      "false": "--no-internet-accessibility"
 
 Parameters:
   FoundationName:
