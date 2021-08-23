@@ -35,6 +35,8 @@ Networking:
         NodesSubnets: # list of subnets where your EKS nodes should be created
     Frontend:
         LoadBalancersSubnets: # list of subnets where your front end load balancers should be created
+        SslCertArn: # Provide a reference to an SSL Cert   
+        CustomDomainName: # Conditionally required to integrate a DNS name to the custom created SSLCert
 ManagedNodegroups:
 # define here your EKS node pools
 -   Name: primary-compute # A general compute node pool used for simple ETL
@@ -115,6 +117,20 @@ Teams:
 Orbit's deployment needs underlying networking resources support. Customer can deploy Orbit foundation which provides the required networking resources, but if the customer is planning on using existing networking resources, they should consider providing the `physical_id(s)` of their respective resources or the location of SSM parameter which has them.    
 
 ***Required***: `Optional`    
+
+***   
+
+#### SslCertArn   
+
+The default behavior is Orbit framework will create a self signed certificate and integrate with the ALB.
+> Syntax: !SSM ${/orbit-f/demo-fndn/resources::SslCertArn}   
+
+If you would like to provide an externally created SSL Certificate, below is the syntax.   
+> Syntax: "arn:aws:acm:us-east-1:123456789012:certificate/12345678-1234-1234-1234-123456789012"
+
+
+
+***Required***: `Optional`
 
 ***   
 
