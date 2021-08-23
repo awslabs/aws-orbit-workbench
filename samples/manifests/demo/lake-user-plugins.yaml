@@ -42,13 +42,11 @@
         number_of_nodes: "2"
 -   PluginId: enable_emr_on_eks
     Module: emr_on_eks
-# provide ability for containers to create fast fs for data science loads
-# -   PluginId: fast_fs_lustre
-#     Module: lustre
-# -   PluginId: ray
-#     Module: ray
-#     Parameters:
-#         workers: 2
-#         release_tag: 1.3.0
-# -   PluginId: sm-operator
-#     Module: sm-operator
+-   PluginId: sm-operator
+    Module: sm-operator
+-   PluginId: team-voila
+    Module: voila
+    Parameters:
+        restartPolicy: Always
+        path: "/home/jovyan/shared/notebooks/V-Voila"
+        options: "--debug"

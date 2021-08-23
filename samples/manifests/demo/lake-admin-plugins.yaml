@@ -25,9 +25,10 @@
         image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data:latest
         uid: 0
         gid: 0
--   PluginId: overprovisioning1
+-   PluginId: overprovisioning-primary-compute
     Module: overprovisioning
     Parameters:
+        node_group: primary-compute
         replicas: 3
-        cpu: 2
-        memory: 4G
+        cpu: 3
+        memory: 4GG
