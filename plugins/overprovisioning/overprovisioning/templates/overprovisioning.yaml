@@ -37,3 +37,7 @@ spec:
             {{- with .Values.resources }}
               {{- toYaml . | nindent 12 }}
               {{- end }}
+          limits:
+            {{- with .Values.resources }}
+              {{- toYaml . | nindent 12 }}
+              {{- end }}
