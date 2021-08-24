@@ -69,9 +69,26 @@ spec:
     - name: v1
       served: true
       storage: true
+      additionalPrinterColumns:
+      - name: ReplicationStatus
+        jsonPath: .status.replication.replicationStatus
+        type: string
+      - name: Attempt
+        jsonPath: .status.replication.attempt
+        type: number
+      - name: CodeBuildStatus
+        jsonPath: .status.replication.codeBuildStatus
+        type: string
+      - name: CodeBuildId
+        jsonPath: .status.replication.codeBuildId
+        type: string
+      - name: Source
+        jsonPath: .spec.source
+        type : string
       schema:
         openAPIV3Schema:
           type: object
+          x-kubernetes-preserve-unknown-fields: true
           properties:
             spec:
               type: object
@@ -102,6 +119,7 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
+          x-kubernetes-preserve-unknown-fields: true
           properties:
             spec:
               type: object

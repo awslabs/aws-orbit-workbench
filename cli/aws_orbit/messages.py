@@ -27,7 +27,7 @@ PROGRESS_BAR_FORMAT = "{desc} |{bar}| {percentage:3.0f}% "
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def stylize(text: str, color: str = COLOR_ORBIT, bold: bool = False, underline: bool = False) -> Any[str]:
+def stylize(text: str, color: str = COLOR_ORBIT, bold: bool = False, underline: bool = False) -> str:
     return click.style(text=text, bold=bold, underline=underline, fg=color)
 
 

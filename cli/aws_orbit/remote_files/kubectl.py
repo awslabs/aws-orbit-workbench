@@ -147,11 +147,11 @@ def _orbit_image_replicator(context: "Context", output_path: str) -> None:
         content = resolve_parameters(
             content,
             dict(
+                account_id=context.account_id,
+                region=context.region,
                 env_name=context.name,
                 orbit_controller_image=f"{context.images.orbit_controller.repository}:"
                 f"{context.images.orbit_controller.version}",
-                k8s_utilities_image=f"{context.images.k8s_utilities.repository}:"
-                f"{context.images.k8s_utilities.version}",
                 image_pull_policy="Always" if aws_orbit.__version__.endswith(".dev0") else "IfNotPresent",
             ),
         )
