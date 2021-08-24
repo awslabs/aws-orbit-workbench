@@ -661,10 +661,13 @@ def deploy_env(context: "Context") -> None:
 
         _confirm_endpoints(name="landing-page-service", namespace="orbit-system", k8s_context=k8s_context)
 
-def _apply_deployment_patch_force_env_nodes(namespace: str)-> None:
+
+def _apply_deployment_patch_force_env_nodes(namespace: str) -> None:
     _logger.debug(f"Force {namespace} deployments to env nodes")
-    patch=('{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"ec2"}},'
-            '"spec":{"nodeSelector":{"orbit/usage":"reserved","orbit/node-group":"env"}}}}}')
+    patch = (
+        '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"ec2"}},'
+        '"spec":{"nodeSelector":{"orbit/usage":"reserved","orbit/node-group":"env"}}}}}'
+    )
     try:
         sh.run(
             f"bash -c 'for dep in $(kubectl get deployments -n {namespace} "
@@ -675,6 +678,7 @@ def _apply_deployment_patch_force_env_nodes(namespace: str)-> None:
 
     except FailedShellCommand:
         _logger.debug(f"Ignoring failed moving of {namespace} pods to env nodes")
+
 
 def deploy_team(context: "Context", team_context: "TeamContext") -> None:
     eks_stack_name: str = f"eksctl-orbit-{context.name}-cluster"
