@@ -582,7 +582,7 @@ def deploy_env(context: "Context") -> None:
 
         if context.install_image_replicator or not context.networking.data.internet_accessible:
             _confirm_readiness(
-                name="image-replication-operator", namespace="orbit-system", type="statefulset", k8s_context=k8s_context
+                name="image-replication-operator", namespace="orbit-system", type="deployment", k8s_context=k8s_context
             )
             _confirm_endpoints(name="image-replication-operator", namespace="orbit-system", k8s_context=k8s_context)
             sh.run(
@@ -635,7 +635,7 @@ def deploy_env(context: "Context") -> None:
 
             patch = (
                 '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}},'
-                '"spec":{"containers":[{"name":"alb-ingress-controller","args":["--ingress-class=alb"'
+                '"spec":{"nodeSelector": null, "containers":[{"name":"alb-ingress-controller","args":["--ingress-class=alb"'
                 ',"--cluster-name=$(CLUSTER_NAME)","--aws-vpc-id=VPC_ID"]}]}}}}'
             )
             patch = patch.replace("VPC_ID", cast(str, context.networking.vpc_id))

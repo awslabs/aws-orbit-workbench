@@ -73,17 +73,20 @@ webhooks:
         path: /update-pod-images
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+# kind: StatefulSet
+kind: Deployment
 metadata:
   labels:
     app: orbit-controller
   namespace: orbit-system
   name: image-replication-operator
 spec:
-  podManagementPolicy: OrderedReady
   replicas: 1
-  revisionHistoryLimit: 10
-  serviceName: image-replication-operator
+  strategy:
+    type: Recreate
+  # podManagementPolicy: OrderedReady
+  # revisionHistoryLimit: 10
+  # serviceName: image-replication-operator
   selector:
     matchLabels:
       app: image-replication-operator
