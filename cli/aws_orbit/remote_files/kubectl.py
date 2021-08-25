@@ -625,10 +625,8 @@ def deploy_env(context: "Context") -> None:
 
         _apply_deployment_patch_force_env_nodes("istio-system")
         _apply_deployment_patch_force_env_nodes("knative-serving")
-        _apply_deployment_patch_force_env_nodes("cert-manager")
         _apply_deployment_patch_force_env_nodes("kube-system")
         _apply_deployment_patch_force_env_nodes("kubeflow")
-        _apply_deployment_patch_force_env_nodes("orbit-system")
 
         # Patch Pods to push into Fargate when deploying in an isolated subnet
         if not context.networking.data.internet_accessible:
@@ -650,15 +648,6 @@ def deploy_env(context: "Context") -> None:
             # sh.run(f"kubectl patch deployment -n orbit-system landing-page-service --type json --patch '{patch}'")
 
         # Confirm env Service Endpoints
-        # Patch the alb-controller specifically to run in the env nodegroup IF we do have internet access
-        if context.networking.data.internet_accessible:
-            _logger.debug("Orbit applying KubeFlow patch to ALB Controller with Internet Access")
-            patch = (
-                '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"ec2"}},'
-                '"spec":{"nodeSelector":{"orbit/usage":"reserved","orbit/node-group": "env"}}}}}'
-            )
-            sh.run(f"kubectl patch deployment -n kubeflow alb-ingress-controller --patch '{patch}'")
-
         _confirm_endpoints(name="landing-page-service", namespace="orbit-system", k8s_context=k8s_context)
 
 
