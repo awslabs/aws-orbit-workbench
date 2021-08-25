@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### **Changed**
 FIX: overprovisioning fixed to support gpu
 
+FIX: force support pods (istio-system,knative-serving, etc.) to run on ENV nodes
+
 ### **Removed**
 
 ## **[1.2.0]**

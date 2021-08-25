@@ -623,6 +623,11 @@ def deploy_env(context: "Context") -> None:
         sh.run(f'kubectl patch deployment -n kubeflow jupyter-web-app-deployment --patch "{patch}"')
         sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
 
+        _apply_deployment_patch_force_env_nodes("istio-system")
+        _apply_deployment_patch_force_env_nodes("knative-serving")
+        _apply_deployment_patch_force_env_nodes("kube-system")
+        _apply_deployment_patch_force_env_nodes("kubeflow")
+
         # Patch Pods to push into Fargate when deploying in an isolated subnet
         if not context.networking.data.internet_accessible:
             patch = '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}}}}}'
@@ -643,16 +648,25 @@ def deploy_env(context: "Context") -> None:
             # sh.run(f"kubectl patch deployment -n orbit-system landing-page-service --type json --patch '{patch}'")
 
         # Confirm env Service Endpoints
-        # Patch the alb-controller specifically to run in the env nodegroup IF we do have internet access
-        if context.networking.data.internet_accessible:
-            _logger.debug("Orbit applying KubeFlow patch to ALB Controller with Internet Access")
-            patch = (
-                '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"ec2"}},'
-                '"spec":{"nodeSelector":{"orbit/usage":"reserved","orbit/node-group": "env"}}}}}'
-            )
-            sh.run(f"kubectl patch deployment -n kubeflow alb-ingress-controller --patch '{patch}'")
-
         _confirm_endpoints(name="landing-page-service", namespace="orbit-system", k8s_context=k8s_context)
+
+
+def _apply_deployment_patch_force_env_nodes(namespace: str) -> None:
+    _logger.debug(f"Force {namespace} deployments to env nodes")
+    patch = (
+        '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"ec2"}},'
+        '"spec":{"nodeSelector":{"orbit/usage":"reserved","orbit/node-group":"env"}}}}}'
+    )
+    try:
+        sh.run(
+            f"bash -c 'for dep in $(kubectl get deployments -n {namespace} "
+            f"--output=jsonpath={{.items..metadata.name}}); "
+            f"do kubectl patch deployment $dep -n {namespace} --patch '\"'\"'{patch}'\"'\"'; "
+            f"done'"
+        )
+
+    except FailedShellCommand:
+        _logger.debug(f"Ignoring failed moving of {namespace} pods to env nodes")
 
 
 def deploy_team(context: "Context", team_context: "TeamContext") -> None:
