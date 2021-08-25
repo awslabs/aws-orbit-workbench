@@ -134,7 +134,7 @@ def process_added_event(namespace: Dict[str, Any]) -> None:
     repo = f"{team}--userspace"
     # add the team repo
     run_command(f"helm repo add {repo} {helm_repo_url}")
-
+    run_command(f"helm repo update")
     run_command(f"helm search repo --devel {repo} -o json > /tmp/charts.json")
     with open("/tmp/charts.json", "r") as f:
         charts = json.load(f)

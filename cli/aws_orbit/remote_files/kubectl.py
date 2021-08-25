@@ -479,7 +479,14 @@ def _generate_efs_driver_manifest(output_path: str, context: "Context") -> str:
 
 def _fsx_driver_base(output_path: str, context: "Context") -> None:
     os.makedirs(os.path.join(output_path, "base"), exist_ok=True)
-    filenames = ["controller.yaml", "csidriver.yaml", "kustomization.yaml", "node.yaml", "rbac.yaml"]
+    filenames = [
+        "controller-deployment.yaml",
+        "controller-serviceaccount.yaml",
+        "csidriver.yaml",
+        "kustomization.yaml",
+        "node-daemonset.yaml",
+        "node-serviceaccount.yaml",
+    ]
     for filename in filenames:
         input = os.path.join(MODELS_PATH, "kube-system", "fsx_driver", "base", filename)
         output = os.path.join(output_path, "base", filename)
