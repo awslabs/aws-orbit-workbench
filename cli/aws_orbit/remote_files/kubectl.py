@@ -574,6 +574,7 @@ def deploy_env(context: "Context") -> None:
         if output_path is not None:
             sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
+        # Commented until we confirm this isn't needed
         # Restart orbit-system deployments and statefulsets to force reload of caches etc
         # sh.run(f"kubectl rollout restart deployments -n orbit-system --context {k8s_context}")
         # sh.run(f"kubectl rollout restart statefulsets -n orbit-system --context {k8s_context}")
@@ -635,17 +636,11 @@ def deploy_env(context: "Context") -> None:
 
             patch = (
                 '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}},'
-                '"spec":{"nodeSelector": null, "containers":[{"name":"alb-ingress-controller","args":["--ingress-class=alb"'
-                ',"--cluster-name=$(CLUSTER_NAME)","--aws-vpc-id=VPC_ID"]}]}}}}'
+                '"spec":{"nodeSelector": null, "containers":[{"name":"alb-ingress-controller","args":'
+                '["--ingress-class=alb","--cluster-name=$(CLUSTER_NAME)","--aws-vpc-id=VPC_ID"]}]}}}}'
             )
             patch = patch.replace("VPC_ID", cast(str, context.networking.vpc_id))
             sh.run(f"kubectl patch deployment -n kubeflow alb-ingress-controller --patch '{patch}'")
-
-            # patch = (
-            #     '[{"op": "add", "path": "/spec/template/metadata/labels/orbit~1node-type", "value": "fargate"}, '
-            #     '{"op": "replace", "path": "/spec/template/spec/nodeSelector", "value": {}}]'
-            # )
-            # sh.run(f"kubectl patch deployment -n orbit-system landing-page-service --type json --patch '{patch}'")
 
         # Confirm env Service Endpoints
         _confirm_endpoints(name="landing-page-service", namespace="orbit-system", k8s_context=k8s_context)
@@ -677,14 +672,6 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
         _logger.debug("kubectl context: %s", k8s_context)
         output_path = _generate_team_context(context=context, team_context=team_context)
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
-
-        # (output_path, patch) = _generate_env_manifest(context=context, clean_up=False)
-        # sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
-
-        # Patch Kubeflow
-        # _logger.debug("Orbit applying KubeFlow patch")
-        # sh.run(f'kubectl patch deployment jupyter-web-app-deployment --patch "{patch}" -n kubeflow')
-        # sh.run("kubectl rollout restart deployment jupyter-web-app-deployment -n kubeflow")
 
 
 def destroy_env(context: "Context") -> None:

@@ -291,7 +291,7 @@ def update_pod_images(
 @kopf.on.create(ORBIT_API_GROUP, ORBIT_API_VERSION, "imagereplications", field="status.replication", value=kopf.ABSENT)
 def replication_checker(spec: kopf.Spec, status: kopf.Status, patch: kopf.Patch, logger: kopf.Logger, **_: Any) -> str:
     if status.get("replication", None) is not None:
-        return status["replication"].get("replicationStatus", "Unknown")
+        return cast(str, status["replication"].get("replicationStatus", "Unknown"))
 
     replication = {}
     if _image_replicated(image=spec["destination"], logger=logger):

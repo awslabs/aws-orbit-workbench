@@ -6,11 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## **[1.3.0] - Unreleased **
 
 ### **Added**
+- ImageReplication Operator and informative CRDs
 
 ### **Changed**
-FIX: overprovisioning fixed to support gpu
-
-FIX: force support pods (istio-system,knative-serving, etc.) to run on ENV nodes
+- FIX: overprovisioning fixed to support gpu
+- FIX: force support pods (istio-system,knative-serving, etc.) to run on ENV nodes
+- FIX: alb-ingress-controller deployment in isolated env
 
 ### **Removed**
 - removed: changes to team-script-launcher...filesystem is now always used
