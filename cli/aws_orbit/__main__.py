@@ -263,6 +263,16 @@ def deploy_env(
     help="CodeArtifact Repository to pull packages from.",
 )
 @click.option(
+    "--ssl-cert-arn",
+    type=str,
+    help="SSL Certificate to integrate the ALB with.",
+)
+@click.option(
+    "--custom-domain-name",
+    type=str,
+    help="The Custom Domain Name to associate the orbit framework with",
+)
+@click.option(
     "--internet-accessibility/--no-internet-accessibility",
     default=True,
     help="Configure for deployment to Private (internet accessibility) "
@@ -290,6 +300,8 @@ def deploy_foundation(
     internet_accessibility: bool = True,
     codeartifact_domain: Optional[str] = None,
     codeartifact_repository: Optional[str] = None,
+    ssl_cert_arn: Optional[str] = None,
+    custom_domain_name: Optional[str] = None,
     max_availability_zones: Optional[int] = None,
 ) -> None:
     """Deploy a Orbit Workbench foundation based on a manisfest file (yaml)."""
@@ -305,12 +317,16 @@ def deploy_foundation(
     _logger.debug("name: %s", name)
     _logger.debug("codeartifact_domain: %s", codeartifact_domain)
     _logger.debug("codeartifact_repository: %s", codeartifact_repository)
+    _logger.debug("ssl_cert_arn: %s", ssl_cert_arn)
+    _logger.debug("custom_domain_name: %s", custom_domain_name)
     _logger.debug("max_availability_zones: %s", max_availability_zones)
     deploy_commands.deploy_foundation(
         filename=filename,
         name=name,
         codeartifact_domain=codeartifact_domain,
         codeartifact_repository=codeartifact_repository,
+        ssl_cert_arn=ssl_cert_arn,
+        custom_domain_name=custom_domain_name,
         debug=debug,
         internet_accessibility=internet_accessibility,
         max_availability_zones=max_availability_zones,

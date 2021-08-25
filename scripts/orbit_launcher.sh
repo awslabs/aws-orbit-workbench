@@ -4,17 +4,17 @@ usage(){
     echo ""
     echo "usage: `basename $0` --orbit-version version --oauth-token github-token [--destroy-pipeline true|false]"
     echo ""
-    echo "  --orbit-version         The version of Orbit to install"
-    echo "  --oauth-token           The GitHub OAuth token that will access to the Orbit repo"
-    echo "  --branch-override       [OPTIONAL] Overrides the branch that the pipeline pulls from. Default is main"
-    echo "  --destroy-pipeline      [OPTIONAL] Creates a pipeline that destroys the Orbit deployment. Default is false"
-    echo "  -h, --help              Display help"
+    echo "  --orbit-version             The version of Orbit to install"
+    echo "  --oauth-token               The GitHub OAuth token that will access the Orbit repo"
+    echo "  --branch-override           [OPTIONAL] Overrides the branch that the pipeline pulls from. Default is main"
+    echo "  --destroy-pipeline          [OPTIONAL] Creates a pipeline that destroys the Orbit deployment. Default is false"
+    echo "  -h, --help                  Display help"
     echo ""
     exit 1
     
 }
 
-if [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; then
+if [[ $1 == "-h" ]] || [[ $1 == "--help" ]] || [[ $# -eq 0 ]]; then
     usage
 fi
 
@@ -45,6 +45,10 @@ while [[ $# -gt 0 ]]; do
             OAUTH_TOKEN=$2
             shift
             ;;
+        --internet-accessibility)
+            INTERNET_ACCESSIBILITY=$2
+            shift
+            ;;
         --destroy-pipeline)
             DESTROY_PIPELINE=$2
             shift
@@ -65,6 +69,10 @@ fi
 
 if [[ -z "${BRANCH_OVERRIDE}" ]]; then
     BRANCH_OVERRIDE="main"
+fi
+
+if [[ -z "${INTERNET_ACCESSIBILITY}" ]]; then
+    INTERNET_ACCESSIBILITY="true"
 fi
 
 if [[ -z "${DESTROY_PIPELINE}" ]]; then
@@ -123,4 +131,5 @@ aws cloudformation deploy \
         Version="${ORBIT_VERSION}" \
         K8AdminRole="${ORBIT_ADMIN_ROLE}" \
         GitHubOAuthToken="${OAUTH_TOKEN}" \
-        DestroyPipeline="${DESTROY_PIPELINE}"
+        DestroyPipeline="${DESTROY_PIPELINE}" \
+        IsInternetAccessible="${INTERNET_ACCESSIBILITY}"

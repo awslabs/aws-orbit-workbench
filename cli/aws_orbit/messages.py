@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import logging
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Dict, Optional, Sequence, cast
 
 import click
 import tqdm
@@ -28,7 +28,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def stylize(text: str, color: str = COLOR_ORBIT, bold: bool = False, underline: bool = False) -> str:
-    return click.style(text=text, bold=bold, underline=underline, fg=color)
+    return cast(str, click.style(text=text, bold=bold, underline=underline, fg=color))
 
 
 def print_list(tittle: str, items: Sequence[str]) -> None:

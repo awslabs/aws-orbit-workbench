@@ -21,6 +21,14 @@ def run_command(cmd: str) -> str:
     return output
 
 
+def check_cert(context: "FoundationContext") -> str:
+    ssl_cert_arn: str = cast(str, context.networking.frontend.ssl_cert_arn)
+    if ssl_cert_arn:
+        return ssl_cert_arn
+    else:
+        return deploy_selfsigned_cert(context)
+
+
 def deploy_selfsigned_cert(context: "FoundationContext") -> str:
     """ Module to deploy self signed cert """
 

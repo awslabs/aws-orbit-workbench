@@ -37,5 +37,5 @@
 #    Parameters:
 #        node_group: primary-gpu
 #        replicas: 1
-#        gpu: 1
+#        nvidia.com/gpu: 1
 #        memory: 5G 

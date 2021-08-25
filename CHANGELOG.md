@@ -3,7 +3,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 #
-## **[1.2.0] - Unreleased**
+## **[1.3.0] - Unreleased **
+
+### **Added**
+
+### **Changed**
+FIX: overprovisioning fixed to support gpu
+
+FIX: force support pods (istio-system,knative-serving, etc.) to run on ENV nodes
+
+### **Removed**
+
+## **[1.2.0]**
 ### **Added**
 
 - FEATURE: Added CLI support for podsettings (build and delete)
@@ -11,6 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added EfaEnabled to NodeGroups
 - Added AvailabilityZones filter to NodeGroups
 - Manifest validator to check the managed node group desired number of nodes value
+- Added support for `Custom Domain Name` attribute to point Orbit using custom dns
+- Added support for externally providing `SSL CertArn`
+- Added Multi stage Orbit deployment ability
 
 ### **Changed**
 
@@ -24,9 +38,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - REFACTOR: modified overprovisioning plugin to leverage nodeSelector for application to nodeGroups
 - FIX: greedy bucket deletion by prefix when destroying
 - FIX: jupyter-webapp custom configmap
+- FIX: configured team_scrip_launcher to optinally add an FS mount
+- FIX: clean-lakeformation-glue-database does not user fs, added in lighter image
 - FIX: restart SSM Agent DaemonSet after image replication
 - UPDATED: python packages and dependencies
-
+- UPDATED: Fsx Lustre serviceaccount IAM role policy change to allow fsx resource tagging
+- FIX: force alb-controller in kubeflow to use env nodes
+- FIX: redshift plugin describe cluster based on specific env and team tags
+- FIX: added region to team when deploying plugins
 
 ### **Removed**
 -- REMOVED: call to install ~/.kube/config

@@ -76,15 +76,14 @@ def destroy(
     )
     _logger.debug("Team Env name: %s | Team name: %s", context.name, team_context.name)
     env_name = context.name
-    region = context.region
     acct: str = context.account_id
     deploy_id: str = cast(str, context.toolkit.deploy_id)
     plugin_id = plugin_id.replace("_", "-")
     stack_name = f"orbit-{context.name}-{team_context.name}-{plugin_id}-custom-demo-resources"
     _logger.debug(f"stack_name={stack_name}")
     bucket_names: Dict[str, Any] = {
-        "lake-bucket": f"orbit-{env_name}-{region}-demo-lake-{acct}-{deploy_id}",
-        "secured-lake-bucket": f"orbit-{env_name}-{region}-secured-demo-lake-{acct}-{deploy_id}",
+        "lake-bucket": f"orbit-{env_name}-demo-lake-{acct}-{deploy_id}",
+        "secured-lake-bucket": f"orbit-{env_name}-secured-demo-lake-{acct}-{deploy_id}",
     }
     _logger.debug(f"bucket_names={bucket_names}")
     # CDK skips bucket deletion.

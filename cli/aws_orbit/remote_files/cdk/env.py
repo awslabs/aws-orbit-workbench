@@ -137,6 +137,7 @@ class Env(Stack):
                                 "fsx:CreateFileSystem",
                                 "fsx:DeleteFileSystem",
                                 "fsx:DescribeFileSystems",
+                                "fsx:TagResource",
                             ],
                             resources=["*"],
                         ),

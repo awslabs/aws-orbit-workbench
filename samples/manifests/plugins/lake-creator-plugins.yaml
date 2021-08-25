@@ -1,6 +1,7 @@
 -   PluginId: clean-lakeformation-glue-database
     Module: team_script_launcher
     Parameters:
+        image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s-utilities:latest 
         scope: destroy
         script: |
             echo "Deleting cms_secured_db glue database"
@@ -8,6 +9,7 @@
             aws glue delete-database --name cms_secured_db
             echo "Deleted cms_secured_db glue database"
         restartPolicy: Never
+        needFilesystem: Never
 -   PluginId: custom_cfn
     Module: custom_cfn
     Parameters:
