@@ -13,6 +13,7 @@ FIX: overprovisioning fixed to support gpu
 FIX: force support pods (istio-system,knative-serving, etc.) to run on ENV nodes
 
 ### **Removed**
+- removed: changes to team-script-launcher...filesystem is now always used
 
 ## **[1.2.0]**
 ### **Added**
