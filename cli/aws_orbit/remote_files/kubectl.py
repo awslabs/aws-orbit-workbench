@@ -576,10 +576,10 @@ def deploy_env(context: "Context") -> None:
         _confirm_endpoints(name="podsettings-pod-modifier", namespace="orbit-system", k8s_context=k8s_context)
 
         if context.install_image_replicator or not context.networking.data.internet_accessible:
-            _confirm_endpoints(name="pod-image-updater", namespace="orbit-system", k8s_context=k8s_context)
             _confirm_readiness(
-                name="pod-image-replicator", namespace="orbit-system", type="statefulset", k8s_context=k8s_context
+                name="image-replication-operator", namespace="orbit-system", type="statefulset", k8s_context=k8s_context
             )
+            _confirm_endpoints(name="image-replication-operator", namespace="orbit-system", k8s_context=k8s_context)
             sh.run(
                 "kubectl rollout restart daemonsets -n orbit-system-ssm-daemons "
                 f"ssm-agent-installer --context {k8s_context}"

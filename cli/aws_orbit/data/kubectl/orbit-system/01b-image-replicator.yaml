@@ -110,11 +110,9 @@ spec:
               value: "10"
           command:
             - python
-            - image_repliation_operatory.py
-          volumeMounts:
-            - mountPath: /state
-              name: orbit-controller-state
-              readOnly: false
+          args:
+            - -m
+            - orbit_controller.image_replication_operator
           resources:
             limits:
               cpu: 2

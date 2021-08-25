@@ -17,6 +17,7 @@ import os
 import re
 import threading
 import time
+from copy import deepcopy
 from queue import Queue
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
@@ -255,7 +256,9 @@ def update_pod_images(
             image = container.get("image", "")
             desired_image = _get_desired_image(image=image)
             if image != desired_image:
-                dest_containers.append({"name": container["name"], "image": desired_image})
+                container_copy = deepcopy(container)
+                container_copy["image"] = desired_image
+                dest_containers.append(container_copy)
                 replications[image] = desired_image
                 annotations[f"original-container-image~1{container['name']}"] = image
 
