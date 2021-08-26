@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: force support pods (istio-system,knative-serving, etc.) to run on ENV nodes
 - FIX: remove system:masters group from team -runner role mappings
 - FIX: alb-ingress-controller deployment in isolated env
+- FIX: podsettings call typos
 
 ### **Removed**
 - removed: changes to team-script-launcher...filesystem is now always used
