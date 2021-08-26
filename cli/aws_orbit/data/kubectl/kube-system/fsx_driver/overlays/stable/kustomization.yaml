@@ -5,3 +5,4 @@ bases:
 images:
   - name: amazon/aws-fsx-csi-driver
     newTag: v0.5.0
+    newName: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/amazon/aws-fsx-csi-driver
