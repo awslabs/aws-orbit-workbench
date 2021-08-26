@@ -142,7 +142,7 @@ def destroy_env(env: str, preserve_credentials: bool, debug: bool) -> None:
         if not preserve_credentials:
             secretsmanager.delete_docker_credentials(secret_id=f"orbit-{context.name}-docker-credentials")
             _logger.info("Removed docker credentials from SecretsManager")
-            
+
         msg_ctx.info("Env destroyed")
         msg_ctx.progress(95)
 
