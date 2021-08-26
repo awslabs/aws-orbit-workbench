@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### **Added**
 - iamidentitymapping for team role to team RoleBinding and ClusterRoleBinding
 - ImageReplication Operator and informative CRDs
+- Opttional removal of docker credentials on env destroy
 
 ### **Changed**
 - FIX: overprovisioning fixed to support gpu
