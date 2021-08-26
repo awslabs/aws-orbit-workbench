@@ -21,7 +21,7 @@ import click
 from aws_orbit import bundle, remote
 from aws_orbit.messages import MessagesContext
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
-from aws_orbit.services import cfn, codebuild, ecr, elb, s3, ssm
+from aws_orbit.services import cfn, codebuild, ecr, elb, s3, secretsmanager, ssm
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -96,7 +96,7 @@ def destroy_teams(env: str, debug: bool) -> None:
         msg_ctx.progress(100)
 
 
-def destroy_env(env: str, debug: bool) -> None:
+def destroy_env(env: str, preserve_credentials: bool, debug: bool) -> None:
     with MessagesContext("Destroying", debug=debug) as msg_ctx:
         ssm.cleanup_changeset(env_name=env)
         ssm.cleanup_manifest(env_name=env)
@@ -138,6 +138,10 @@ def destroy_env(env: str, debug: bool) -> None:
                 codebuild_log_callback=msg_ctx.progress_bar_callback,
                 timeout=120,
             )
+
+        if not preserve_credentials:
+            secretsmanager.delete_docker_credentials(secret_id=f"orbit-{context.name}-docker-credentials")
+            _logger.info("Removed docker credentials from SecretsManager")
 
         msg_ctx.info("Env destroyed")
         msg_ctx.progress(95)

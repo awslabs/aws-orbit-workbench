@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### **Added**
 - iamidentitymapping for team role to team RoleBinding and ClusterRoleBinding
 - ImageReplication Operator and informative CRDs
+- Opttional removal of docker credentials on env destroy
 
 ### **Changed**
 - FIX: overprovisioning fixed to support gpu
@@ -15,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: remove system:masters group from team -runner role mappings
 - FIX: alb-ingress-controller deployment in isolated env
 - FIX: fsx csi driver changes and helm chart cache refresh in the orbit-controller
+- FIX: podsettings call typos
 
 ### **Removed**
 - removed: changes to team-script-launcher...filesystem is now always used
