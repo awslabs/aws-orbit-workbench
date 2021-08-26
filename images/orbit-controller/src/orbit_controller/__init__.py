@@ -30,7 +30,7 @@ ORBIT_API_GROUP = os.environ.get("ORBIT_API_GROUP", "orbit.aws")
 ORBIT_SYSTEM_NAMESPACE = os.environ.get("ORBIT_SYSTEM_NAMESPCE", "orbit-system")
 ORBIT_STATE_PATH = os.environ.get("ORBIT_STATE_PATH", "/state")
 
-DEBUG_LOGGING_FORMAT = "[%(asctime)s][%(filename)-13s:%(lineno)3d][%(levelname)s] %(message)s"
+DEBUG_LOGGING_FORMAT = "[%(asctime)s][%(filename)-13s:%(lineno)3d][%(levelname)s][%(threadName)s] %(message)s"
 
 
 def _get_logger() -> logging.Logger:
