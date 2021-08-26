@@ -36,6 +36,7 @@ setup(
         "jsonpath-ng~=1.5.0",
         "cryptography~=3.4.7",
         "python-jose~=3.2.0",
+        "kopf~=1.33.0",
     ],
     entry_points={"console_scripts": ["orbit-controller = orbit_controller.__main__:main"]},
     include_package_data=True,

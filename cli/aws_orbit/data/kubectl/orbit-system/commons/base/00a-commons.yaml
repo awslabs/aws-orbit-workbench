@@ -69,27 +69,37 @@ spec:
     - name: v1
       served: true
       storage: true
+      additionalPrinterColumns:
+      - name: ReplicationStatus
+        jsonPath: .status.replication.replicationStatus
+        type: string
+      - name: Attempt
+        jsonPath: .status.replication.attempt
+        type: number
+      - name: CodeBuildStatus
+        jsonPath: .status.replication.codeBuildStatus
+        type: string
+      - name: CodeBuildId
+        jsonPath: .status.replication.codeBuildId
+        type: string
+      - name: Source
+        jsonPath: .spec.source
+        type : string
       schema:
         openAPIV3Schema:
           type: object
+          x-kubernetes-preserve-unknown-fields: true
           properties:
             spec:
               type: object
               required:
-              - images
+              - source
+              - destination
               properties:
-                images:
-                  type: array
-                  items:
-                    type: object
-                    required:
-                    - source
-                    - destination
-                    properties:
-                      source:
-                        type: string
-                      destination:
-                        type: string
+                source:
+                  type: string
+                destination:
+                  type: string
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -109,6 +119,7 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
+          x-kubernetes-preserve-unknown-fields: true
           properties:
             spec:
               type: object
