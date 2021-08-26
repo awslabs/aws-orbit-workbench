@@ -207,7 +207,7 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
 
     with open(input, "r") as file:
         content = file.read()
-    content = utils.resolve_parameters(content, dict(team=team_context.name))
+    content = utils.resolve_parameters(content, dict(env_name=context.name, team=team_context.name))
     with open(output, "w") as file:
         file.write(content)
 
