@@ -211,6 +211,9 @@ class RedshiftMagics(DatabaseMagics):
             The data descrption language statement to execute in SQL.
         local_ns : str
             The namespace to load into IPython user namespace
+        --a : str, optional
+            Specifiy name-value pairs to replace in the SQL statement
+            --a name=value name2=value2 name3=value3
 
         Returns
         -------
@@ -219,9 +222,15 @@ class RedshiftMagics(DatabaseMagics):
 
         Examples
         --------
-        >>>%%ddl
+        >>>%%ddl --a name1=value1
         >>>drop table if exists mydatabase.Table3
         """
+        parser = ArgumentParserNoSysExit(description="database utils support - DDL")
+        parser.add_argument("--a", "--args", nargs="+", default=[], help="name value pairs for dynamic replacement")
+        args = parser.parse_args(line.strip().split(" "))
+        for val in args.a:
+            v1, v2 = val.split("=")
+            cell = cell.replace(str(":" + v1), v2)
 
         self.database_utils.execute_ddl(cell, local_ns)
 
@@ -319,6 +328,9 @@ class RedshiftMagics(DatabaseMagics):
             list of Amazon S3 object paths (used only if no database has no location).
         -u : str, optional
             Specify additional unload properties for when creating new table.
+        --a : str, optional
+            Specifiy name-value pairs to replace in the SQL statement
+            --a name=value name2=value2 name3=value3
 
         Returns
         -------
@@ -327,8 +339,8 @@ class RedshiftMagics(DatabaseMagics):
 
         Example
         --------
-        >>> %%create_external_table -g users -t myQuery1
-        >>> select c.id as id1,c.status from users.Table1 as c
+        >>> %%create_external_table -g users -t myQuery1 --a db_name=users
+        >>> select c.id as id1,c.status from :db_name.Table1 as c
         """
         if len(line) == 0:
             return self.database_utils.getCatalog()
@@ -349,9 +361,14 @@ class RedshiftMagics(DatabaseMagics):
             help="specify s3 location or leave out to use Glue DB location",
         )
         parser.add_argument("-u", nargs="?", default="", help="other unload properties")
+        parser.add_argument("--a", "--args", nargs="+", default=[], help="name value pairs for dynamic replacement")
 
         try:
             args = parser.parse_args(line.strip().split(" "))
+            # Support for dynamic string replacement in the sql passed in
+            for val in args.a:
+                v1, v2 = val.split("=")
+                cell = cell.replace(str(":" + v1), v2)
 
             return self.database_utils.create_external_table(
                 select=cell,
