@@ -42,6 +42,11 @@
         number_of_nodes: "2"
 -   PluginId: enable_emr_on_eks
     Module: emr_on_eks
+-   PluginId: fast_fs_lustre
+    Module: lustre
+    Parameters:
+        storage: 1200Gi
+        folder: /fsx
 -   PluginId: sm-operator
     Module: sm-operator
 -   PluginId: team-voila
