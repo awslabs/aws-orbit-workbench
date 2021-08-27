@@ -3,10 +3,10 @@
     Parameters:
         scope: destroy
         script: |
-            echo "Deleting cms_secured_db glue database"
+            echo "Deleting cms_secured_db_${env_name} glue database"
             aws sts get-caller-identity
-            aws glue delete-database --name cms_secured_db
-            echo "Deleted cms_secured_db glue database"
+            aws glue delete-database --name cms_secured_db_${env_name}
+            echo "Deleted cms_secured_db_${env_name} glue database"
         restartPolicy: Never
 -   PluginId: custom_cfn
     Module: custom_cfn
