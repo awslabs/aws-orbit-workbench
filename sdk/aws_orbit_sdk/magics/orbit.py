@@ -213,7 +213,7 @@ class OrbitWorkbenchMagics(Magics):
             help="specify unique identifier for this scheduled task",
         )
         parser.add_argument("--a", "--args", nargs="+", default=[], help="name value pairs for dynamic replacement")
-        
+
         try:
             args = parser.parse_args(line.strip().split(" "))
             # Support for dynamic string replacement in the cell passed in
@@ -309,7 +309,7 @@ class OrbitWorkbenchMagics(Magics):
             for val in args.a:
                 v1, v2 = val.split("=")
                 cell = cell.replace(v1, v2)
-                
+
             return controller.run_notebooks(taskConfiguration=json.loads(cell))
         except Exception as e:
             print("Error!")
