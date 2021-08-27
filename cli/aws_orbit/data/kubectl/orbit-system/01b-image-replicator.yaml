@@ -1,42 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: image-replication-config
+  namespace: orbit-system
+data:
+  REPO_HOST: ${account_id}.dkr.ecr.${region}.amazonaws.com
+  REPO_PREFIX: orbit-${env_name}
+  CODEBUILD_PROJECT: orbit-${env_name}
+  CODEBUILD_TIMEOUT: "30"
+  REPLICATE_EXTERNAL_REPOS: "no"
+  WORKERS: "5"
+  MAX_REPLICATION_ATTEMPTS: "3"
+---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:π
+  labels:
+    app.kubernetes.io/name: image-replication-operator
+  name: image-replication-operator-cert
+  namespace: orbit-system
+spec:
+  dnsNames:
+  - image-replication-operator.orbit-system.svc
+  - image-replication-operator.orbit-system.svc.cluster.local
+  issuerRef:
+    kind: ClusterIssuer
+    name: orbit-self-signing-issuer
+  secretName: image-replication-operator-webhook-tls
+---
 kind: Service
 apiVersion: v1
 metadata:
-  name: pod-image-updater
+  name: image-replication-operator
   namespace: orbit-system
 spec:
   selector:
-    app: pod-image-updater
+    app: image-replication-operator
   ports:
   - name: https
     protocol: TCP
     port: 443
     targetPort: 443
 ---
-apiVersion: cert-manager.io/v1alpha2
-kind: Certificate
-metadata:
-  labels:
-    app.kubernetes.io/name: pod-image-replicator
-  name: pod-image-replicator-cert
-  namespace: orbit-system
-spec:
-  dnsNames:
-  - pod-image-updater.orbit-system.svc
-  - pod-image-updater.orbit-system.svc.cluster.local
-  issuerRef:
-    kind: ClusterIssuer
-    name: orbit-self-signing-issuer
-  secretName: pod-image-replicator-webhook-tls
----
 kind: MutatingWebhookConfiguration
 apiVersion: admissionregistration.k8s.io/v1beta1
 metadata:
-  name: orbit-pod-image-updater
+  name: orbit-image-replication-operator
   annotations:
-    cert-manager.io/inject-ca-from: orbit-system/pod-image-replicator-cert
+    cert-manager.io/inject-ca-from: orbit-system/image-replication-operator-cert
 webhooks:
-  - name: pod-image-updater.orbit-system.svc
-    sideEffects: None
+  - name: image-replication-operator.orbit-system.svc
+    sideEffects: NoneOnDryRun
     reinvocationPolicy: IfNeeded
     failurePolicy: Fail
     matchPolicy: Equivalent
@@ -55,109 +69,28 @@ webhooks:
       caBundle: ""
       service:
         namespace: orbit-system
-        name: pod-image-updater
-        path: /pod-image-replication
+        name: image-replication-operator
+        path: /update-pod-images
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   labels:
     app: orbit-controller
   namespace: orbit-system
-  name: pod-image-updater
+  name: image-replication-operator
 spec:
-  podManagementPolicy: OrderedReady
   replicas: 1
-  revisionHistoryLimit: 10
-  serviceName: pod-image-updater
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
-      app: pod-image-updater
+      app: image-replication-operator
   template:
     metadata:
       labels:
-        app: pod-image-updater
-      name: pod-image-updater
-      annotations:
-        sidecar.istio.io/inject: "false"
-    spec:
-      serviceAccountName: orbit-${env_name}-admin
-      containers:
-        - name: webhook
-          image: ${orbit_controller_image}
-          imagePullPolicy: ${image_pull_policy}
-          ports:
-            - containerPort: 443
-              name: https
-              protocol: TCP
-          envFrom:
-            - configMapRef:
-                name: orbit-controller-config
-          command:
-            - gunicorn
-          args:
-            - "--bind=0.0.0.0:443"
-            - "--certfile=/certs/tls.crt"
-            - "--keyfile=/certs/tls.key"
-            - "--workers=$(GUNICORN_WORKERS)"
-            - "--reload"
-            - "orbit_controller.server:app"
-          volumeMounts:
-            - readOnly: true
-              mountPath: /certs
-              name: pod-image-replicator-certs
-            - mountPath: /state
-              name: orbit-controller-state
-              readOnly: false
-          readinessProbe:
-            httpGet:
-              path: /health
-              scheme: HTTPS
-              port: 443
-            initialDelaySeconds: 3
-            periodSeconds: 5
-          livenessProbe:
-            httpGet:
-              path: /health
-              scheme: HTTPS
-              port: 443
-            initialDelaySeconds: 3
-            periodSeconds: 5
-          resources:
-            limits:
-              cpu: 2
-              memory: 2G
-            requests:
-              cpu: 100m
-              memory: 100M
-      volumes:
-        - name: pod-image-replicator-certs
-          secret:
-            secretName: pod-image-replicator-webhook-tls
-        - name: orbit-controller-state
-          configMap:
-            name: orbit-controller-state
----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  labels:
-    app: orbit-controller
-  namespace: orbit-system
-  name: pod-image-replicator
-spec:
-  podManagementPolicy: OrderedReady
-  replicas: 1
-  revisionHistoryLimit: 10
-  serviceName: ""
-  selector:
-    matchLabels:
-      app: pod-image-replicator
-  template:
-    metadata:
-      labels:
-        app: pod-image-replicator
-      name: pod-image-replicator
+        app: image-replication-operator
+      name: image-replication-operator
       annotations:
         sidecar.istio.io/inject: "false"
     spec:
@@ -169,17 +102,16 @@ spec:
           envFrom:
             - configMapRef:
                 name: orbit-controller-config
+            - configMapRef:
+                name: image-replication-config
+          env:
+            - name: WORKERS
+              value: "10"
           command:
-            - orbit-controller
-            - process
-            - imagereplications
+            - python
           args:
-            - "--inventory"
-            - "--workers=10"
-          volumeMounts:
-            - mountPath: /state
-              name: orbit-controller-state
-              readOnly: false
+            - -m
+            - orbit_controller.image_replication_operator
           resources:
             limits:
               cpu: 2
@@ -188,23 +120,45 @@ spec:
               cpu: 100m
               memory: 100M
       containers:
-        - name: watcher
+        - name: operator
           image: ${orbit_controller_image}
           imagePullPolicy: ${image_pull_policy}
+          ports:
+            - containerPort: 443
+              name: https
+              protocol: TCP
           envFrom:
             - configMapRef:
                 name: orbit-controller-config
+            - configMapRef:
+                name: image-replication-config
           command:
-            - orbit-controller
-            - process
-            - imagereplications
+            - kopf
+            - run
           args:
-            - "--watcher"
-            - "--workers=$(IMAGE_REPLICATIONS_WATCHER_WORKERS)"
+            - "--liveness=http://0.0.0.0:8080/healthz"
+            - "--log-format=json"
+            - "--module=orbit_controller.image_replication_operator"
+            - "--verbose"
           volumeMounts:
-            - mountPath: /state
-              name: orbit-controller-state
-              readOnly: false
+            - readOnly: true
+              mountPath: /certs
+              name: image-replication-operator-certs
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 600
           resources:
             limits:
               cpu: 2
@@ -213,6 +167,6 @@ spec:
               cpu: 100m
               memory: 100M
       volumes:
-        - name: orbit-controller-state
-          configMap:
-            name: orbit-controller-state
+        - name: image-replication-operator-certs
+          secret:
+            secretName: image-replication-operator-webhook-tls
