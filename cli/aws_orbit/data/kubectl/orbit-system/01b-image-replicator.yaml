@@ -14,7 +14,7 @@ data:
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
-metadata:π
+metadata:
   labels:
     app.kubernetes.io/name: image-replication-operator
   name: image-replication-operator-cert
