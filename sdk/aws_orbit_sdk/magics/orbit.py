@@ -145,6 +145,9 @@ class OrbitWorkbenchMagics(Magics):
                 specify cron-based schedule
             '-id' : str
                 specify unique identifier for this scheduled task
+            --a : str, optional
+                Specifiy name-value pairs to replace in the SQL statement
+                --a name=value name2=value2 name3=value3
 
         Cell parameters:
             'taskConfiguration' : dict
@@ -181,7 +184,7 @@ class OrbitWorkbenchMagics(Magics):
 
         Example
         -------
-        >>> %%schedule_notebook -cron cron(0/3 * 1/1 * ? *)  -id yyy
+        >>> %%schedule_notebook -cron cron(0/3 * 1/1 * ? *)  -id yyy --a MY_DB=cms_raw_db
         >>> {
         >>>      "tasks":  [
         >>>            {
@@ -190,7 +193,7 @@ class OrbitWorkbenchMagics(Magics):
         >>>                  "targetPath": "tests/Z-Tests/Scheduling",
         >>>                  "targetPrefix": "yyy",
         >>>                  "params": {
-        >>>                        "glue_db" : "cms_raw_db",
+        >>>                        "glue_db" : MY_DB,
         >>>                        "target_db" : "users"
         >>>                  }
         >>>            }
@@ -209,9 +212,15 @@ class OrbitWorkbenchMagics(Magics):
             required=True,
             help="specify unique identifier for this scheduled task",
         )
-
+        parser.add_argument("--a", "--args", nargs="+", default=[], help="name value pairs for dynamic replacement")
+        
         try:
             args = parser.parse_args(line.strip().split(" "))
+            # Support for dynamic string replacement in the cell passed in
+            for val in args.a:
+                v1, v2 = val.split("=")
+                cell = cell.replace(v1, v2)
+
             cronStr = " ".join(args.cron)
             return controller.schedule_notebooks(
                 triggerName=args.id,
@@ -231,6 +240,9 @@ class OrbitWorkbenchMagics(Magics):
         ----------
         local_ns : str
             The namespace to load into IPython user namespace
+            --a : str, optional
+                Specifiy name-value pairs to replace in the SQL statement
+                --a name=value name2=value2 name3=value3
 
         Cell parameters:
             'taskConfiguration' : dict
@@ -264,7 +276,7 @@ class OrbitWorkbenchMagics(Magics):
 
         Example
         -------
-        >>> %%run_notebook
+        >>> %%run_notebook  --a clusterName=MYCLUSTERNAME
         >>> taskConfiguration = {
         >>> "notebooks":  [ {
         >>>     "notebookName": "Example-2-Extract-Files.ipynb",
@@ -290,7 +302,14 @@ class OrbitWorkbenchMagics(Magics):
         >>>     "sns.topic.name": 'TestTopic',
         >>> }}
         """
+        parser = ArgumentParserNoSysExit(description="run_notebook support")
+        parser.add_argument("--a", "--args", nargs="+", default=[], help="name value pairs for dynamic replacement")
         try:
+            args = parser.parse_args(line.strip().split(" "))
+            for val in args.a:
+                v1, v2 = val.split("=")
+                cell = cell.replace(v1, v2)
+                
             return controller.run_notebooks(taskConfiguration=json.loads(cell))
         except Exception as e:
             print("Error!")

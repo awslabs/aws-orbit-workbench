@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: fsx csi driver changes and helm chart cache refresh in the orbit-controller
 - FIX: podsettings call typos
 - FIX: added suppprt for sql parameters in magics (ddl and create_external_table --- database.py)
-
+- FIX: added suppprt for  parameters in magics (run_notebooks and schedule_notebooks --- orbit.py)
 ### **Removed**
 - REMOVED: changes to team-script-launcher...filesystem is now always used
 
