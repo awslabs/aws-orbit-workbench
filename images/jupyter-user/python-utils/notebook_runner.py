@@ -131,7 +131,7 @@ def prepareAndValidateNotebooks(default_output_directory, notebooks):
             if task["sourcePath"] and "codecommit::" in task["sourcePath"]
         ]
     )
-
+    logger.info(f"cc_repo_list={cc_repo_list}")
     # For each code repo, clone to specific repo name based folder.
     for cc_repo in cc_repo_list:
         repo_path = cc_repo.replace("::", f"::{cc_region}://")
@@ -166,6 +166,7 @@ def print_dir(dir: str, exclude: List[str] = []) -> None:
 
 
 def prepareNotebook(default_output_directory, notebook, key):
+    logger.info(f"prepareNotebook={notebook}")
     notebookName = notebook["notebookName"]
     sourcePath = notebook["sourcePath"]
     targetPath = notebook.get("targetPath", default_output_directory)
