@@ -27,11 +27,13 @@ import aws_cdk.aws_sam as sam
 import aws_cdk.aws_ssm as ssm
 from aws_cdk import aws_lambda
 from aws_cdk.core import App, Construct, Duration, Environment, IConstruct, Stack, Tags
+from botocore.exceptions import ClientError
 
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.cdk import _lambda_path
 from aws_orbit.remote_files.cdk.team_builders.codeartifact import DeployCodeArtifact
 from aws_orbit.services import cognito as orbit_cognito
+from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -57,9 +59,20 @@ class Env(Stack):
             raise ValueError("self.context.networking.vpc_id is None.")
         if self.context.networking.availability_zones is None:
             raise ValueError("self.context.networking.availability_zones is None.")
+
         # Checks if CodeArtifact exists outside of the scope of Orbit, else creates it.
         if not self.context.codeartifact_domain and not self.context.codeartifact_repository:
-            DeployCodeArtifact(self, id="CodeArtifact-from-Env")
+            if not self._check_ca_domain_existence() and not self._check_ca_repo_existence():
+                _logger.debug("Deploying Codeartifact resources via Orbit Environment")
+                DeployCodeArtifact(self, id="CodeArtifact-from-Env")
+            else:
+                _logger.debug(
+                    "Detected CodeArtifact domain: aws-orbit and CodeArtifact Repo: python-repository in the account"
+                )
+        else:
+            _logger.debug(
+                "Detected CodeArtifact resources from the framework's metadata, and not deploying Codeartifact"
+            )
 
         self.i_vpc = ec2.Vpc.from_vpc_attributes(
             scope=self,
@@ -88,6 +101,28 @@ class Env(Stack):
         self.cluster_pod_security_group = self._create_cluster_pod_security_group()
         self.context_parameter = self._create_manifest_parameter()
         self._create_post_authentication_lambda()
+
+    def _check_ca_domain_existence(self) -> bool:
+        ca_client = boto3_client("codeartifact")
+        try:
+            ca_client.describe_domain(domain="aws-orbit")
+        except ClientError as ex:
+            if ex.response["Error"]["Code"] == "ResourceNotFoundException":
+                return False
+            else:
+                raise ex
+        return True
+
+    def _check_ca_repo_existence(self) -> bool:
+        ca_client = boto3_client("codeartifact")
+        try:
+            ca_client.describe_repository(domain="aws-orbit", repository="python-repository")
+        except ClientError as ex:
+            if ex.response["Error"]["Code"] == "ResourceNotFoundException":
+                return False
+            else:
+                raise ex
+        return True
 
     def _create_role_cluster(self) -> iam.Role:
         name: str = f"orbit-{self.context.name}-{self.context.region}-eks-cluster-role"

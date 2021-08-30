@@ -33,7 +33,7 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
 
 
 def run_command(cmd: str) -> None:
-    """ Module to run shell commands. """
+    """Module to run shell commands."""
     cmds = cmd.split(" ")
     try:
         output = subprocess.run(cmds, stderr=subprocess.STDOUT, shell=False, timeout=120, universal_newlines=True)

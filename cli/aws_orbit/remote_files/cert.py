@@ -12,7 +12,7 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def run_command(cmd: str) -> str:
-    """ Module to run shell commands. """
+    """Module to run shell commands."""
     try:
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True, timeout=3, universal_newlines=True)
     except subprocess.CalledProcessError as exc:
@@ -30,7 +30,7 @@ def check_cert(context: "FoundationContext") -> str:
 
 
 def deploy_selfsigned_cert(context: "FoundationContext") -> str:
-    """ Module to deploy self signed cert """
+    """Module to deploy self signed cert"""
 
     _logger.debug("Generating self-signed certificate...")
     generate_cert: str = (
@@ -58,7 +58,7 @@ def deploy_selfsigned_cert(context: "FoundationContext") -> str:
 
 
 def upload_cert_iam(context: "FoundationContext", private_pem: str, public_pem: str) -> str:
-    """ Uploads the cert to AWS IAM """
+    """Uploads the cert to AWS IAM"""
     iam_client = boto3.client("iam")
     ssl_cert_name = f"{context.name}-{context.region}"
     try:
