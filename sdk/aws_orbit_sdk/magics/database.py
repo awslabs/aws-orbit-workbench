@@ -227,7 +227,7 @@ class RedshiftMagics(DatabaseMagics):
         """
         parser = ArgumentParserNoSysExit(description="database utils support - DDL")
         parser.add_argument("--a", "--args", nargs="+", default=[], help="name value pairs for dynamic replacement")
-        #if line and 
+
         if line and (line.strip().split(" ") is not None):
             args = parser.parse_args(line.strip().split(" "))
             for val in args.a:
