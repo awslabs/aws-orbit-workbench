@@ -227,10 +227,12 @@ class RedshiftMagics(DatabaseMagics):
         """
         parser = ArgumentParserNoSysExit(description="database utils support - DDL")
         parser.add_argument("--a", "--args", nargs="+", default=[], help="name value pairs for dynamic replacement")
-        args = parser.parse_args(line.strip().split(" "))
-        for val in args.a:
-            v1, v2 = val.split("=")
-            cell = cell.replace(str(":" + v1), v2)
+        #if line and 
+        if line and (line.strip().split(" ") is not None):
+            args = parser.parse_args(line.strip().split(" "))
+            for val in args.a:
+                v1, v2 = val.split("=")
+                cell = cell.replace(str(":" + v1), v2)
 
         self.database_utils.execute_ddl(cell, local_ns)
 
