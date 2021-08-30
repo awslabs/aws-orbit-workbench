@@ -507,16 +507,25 @@ def deploy_team(context: "Context", team_context: "TeamContext") -> None:
         arn = f"arn:aws:iam::{context.account_id}:role/{username}"
         for line in sh.run_iterating(f"eksctl get iamidentitymapping --cluster {cluster_name} --arn {arn}"):
             if line == f'Error: no iamidentitymapping with arn "{arn}" found':
-                _logger.debug(f"Adding IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters")
+                _logger.debug(f"Adding IAM Identity Mapping - Role: {arn}, Username: {username}")
                 sh.run(
-                    f"eksctl create iamidentitymapping --cluster {cluster_name} "
-                    f"--arn {arn} --username {username} --group system:masters"
+                    f"eksctl create iamidentitymapping --cluster {cluster_name} " f"--arn {arn} --username {username}"
                 )
                 break
         else:
-            _logger.debug(
-                f"Skipping existing IAM Identity Mapping - Role: {arn}, Username: {username}, Group: system:masters"
-            )
+            _logger.debug(f"Skipping existing IAM Identity Mapping - Role: {arn}, Username: {username}")
+
+        username = f"orbit-{context.name}-{team_context.name}"
+        arn = cast(str, team_context.eks_pod_role_arn)
+        for line in sh.run_iterating(f"eksctl get iamidentitymapping --cluster {cluster_name} --arn {arn}"):
+            if line == f'Error: no iamidentitymapping with arn "{arn}" found':
+                _logger.debug(f"Adding IAM Identity Mapping - Role: {arn}, Username: {username}")
+                sh.run(
+                    f"eksctl create iamidentitymapping --cluster {cluster_name} " f"--arn {arn} --username {username}"
+                )
+                break
+        else:
+            _logger.debug(f"Skipping existing IAM Identity Mapping - Role: {arn}, Username: {username}")
 
 
 def destroy_env(context: "Context") -> None:
@@ -546,6 +555,16 @@ def destroy_teams(context: "Context") -> None:
 
             username = f"orbit-{context.name}-{team.name}-runner"
             arn = f"arn:aws:iam::{context.account_id}:role/{username}"
+            for line in sh.run_iterating(f"eksctl get iamidentitymapping --cluster {cluster_name} --arn {arn}"):
+                if line == f'Error: no iamidentitymapping with arn "{arn}" found':
+                    _logger.debug(f"Skipping non-existent IAM Identity Mapping - Role: {arn}")
+                    break
+            else:
+                _logger.debug(f"Removing IAM Identity Mapping - Role: {arn}")
+                sh.run(f"eksctl delete iamidentitymapping --cluster {cluster_name} --arn {arn}")
+
+            username = f"orbit-{context.name}-{team.name}"
+            arn = cast(str, team.eks_pod_role_arn)
             for line in sh.run_iterating(f"eksctl get iamidentitymapping --cluster {cluster_name} --arn {arn}"):
                 if line == f'Error: no iamidentitymapping with arn "{arn}" found':
                     _logger.debug(f"Skipping non-existent IAM Identity Mapping - Role: {arn}")

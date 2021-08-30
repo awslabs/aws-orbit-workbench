@@ -37,6 +37,9 @@ from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
+# Client Connections
+CA_CLIENT = boto3_client("codeartifact")
+
 
 class Env(Stack):
     def __init__(
@@ -103,9 +106,8 @@ class Env(Stack):
         self._create_post_authentication_lambda()
 
     def _check_ca_domain_existence(self) -> bool:
-        ca_client = boto3_client("codeartifact")
         try:
-            ca_client.describe_domain(domain="aws-orbit")
+            CA_CLIENT.describe_domain(domain="aws-orbit")
         except ClientError as ex:
             if ex.response["Error"]["Code"] == "ResourceNotFoundException":
                 return False
@@ -114,9 +116,8 @@ class Env(Stack):
         return True
 
     def _check_ca_repo_existence(self) -> bool:
-        ca_client = boto3_client("codeartifact")
         try:
-            ca_client.describe_repository(domain="aws-orbit", repository="python-repository")
+            CA_CLIENT.describe_repository(domain="aws-orbit", repository="python-repository")
         except ClientError as ex:
             if ex.response["Error"]["Code"] == "ResourceNotFoundException":
                 return False

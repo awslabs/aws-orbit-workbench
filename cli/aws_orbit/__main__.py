@@ -358,17 +358,23 @@ def destroy_teams(env: str, debug: bool) -> None:
 @destroy.command(name="env")
 @click.option("--env", "-e", type=str, required=True, help="Destroy Orbit Environment.")
 @click.option(
+    "--preserve-credentials/--destroy-credentials",
+    default=True,
+    help="Preserve any docker credentials in Secrets Manager.",
+    show_default=True,
+)
+@click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
     show_default=True,
 )
-def destroy_env(env: str, debug: bool) -> None:
+def destroy_env(env: str, preserve_credentials: bool, debug: bool) -> None:
     """Destroy a Orbit Workbench environment based on a manisfest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     _logger.debug("env: %s", env)
-    destroy_commands.destroy_env(env=env, debug=debug)
+    destroy_commands.destroy_env(env=env, preserve_credentials=preserve_credentials, debug=debug)
 
 
 @destroy.command(name="foundation")
