@@ -141,7 +141,7 @@ class TeamContext:
     jupyterhub_inbound_ranges: List[str]
     image: Optional[str]
     plugins: List[PluginManifest]
-    profiles: List[Dict[str, Union[str, Dict[str, Any]]]]
+    #profiles: Optional[List[Dict[str, Union[str, Dict[str, Any]]]]]
     efs_life_cycle: Optional[str]
 
     # Context
@@ -172,6 +172,7 @@ class TeamContext:
 
     # Manifest default
     authentication_groups: Optional[List[str]] = None
+    profiles: Optional[List[Dict[str, Union[str, Dict[str, Any]]]]] = None
 
     def fetch_team_data(self) -> None:
         _logger.debug("Fetching Team %s data...", self.name)
@@ -406,11 +407,11 @@ class ContextSerDe(Generic[T, V]):
             context.codeartifact_repository = manifest.codeartifact_repository
             context.cognito_external_provider = manifest.cognito_external_provider
             context.cognito_external_provider_label = manifest.cognito_external_provider_label
-            for team_manifest in manifest.teams:
-                team_context: Optional[TeamContext] = context.get_team_by_name(name=team_manifest.name)
-                if team_context:
-                    _logger.debug("Updating context profiles for team %s", team_manifest.name)
-                    team_context.profiles = team_manifest.profiles
+            #for team_manifest in manifest.teams:
+            #    team_context: Optional[TeamContext] = context.get_team_by_name(name=team_manifest.name)
+            #    if team_context:
+            #        _logger.debug("Updating context profiles for team %s", team_manifest.name)
+            #        team_context.profiles = team_manifest.profiles
         else:
             context = Context(
                 name=manifest.name,

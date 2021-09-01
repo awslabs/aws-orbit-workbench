@@ -58,7 +58,6 @@ class TeamManifest:
     jupyterhub_inbound_ranges: List[str] = field(default_factory=lambda: ["0.0.0.0/0"])
     image: Optional[str] = None
     plugins: List[PluginManifest] = field(default_factory=list)
-    profiles: List[Dict[str, Union[str, Dict[str, Any]]]] = field(default_factory=list)
     efs_life_cycle: Optional[str] = None
     authentication_groups: Optional[List[str]] = None
 

@@ -24,7 +24,6 @@ from aws_orbit.commands import deploy as deploy_commands
 from aws_orbit.commands import destroy as destroy_commands
 from aws_orbit.commands.build import build_image, build_podsetting
 from aws_orbit.commands.delete import delete_image, delete_podsetting
-from aws_orbit.commands.image import build_profile, delete_profile, list_profiles
 from aws_orbit.commands.init import init
 from aws_orbit.commands.list import list_env, list_images
 from aws_orbit.utils import print_dir
@@ -413,7 +412,7 @@ def destroy_credentials(env: str, registry: str, debug: bool) -> None:
 
 @click.group(name="build")
 def build() -> None:
-    """Build images,profiles,etc in your Orbit Workbench."""
+    """Build images,podsettings,etc in your Orbit Workbench."""
     pass
 
 
@@ -556,9 +555,9 @@ def replicate_image_cli(
 
 
 @build.command(name="profile")
-@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
-@click.option("--team", "-t", type=str, help="Orbit Team.", required=True)
-@click.argument("profile", type=click.File("r"))
+@click.option("--env", "-e", type=str, required=False, help="Orbit Environment.")
+@click.option("--team", "-t", type=str, help="Orbit Team.", required=False)
+@click.argument("profile", type=click.File("r"), required=False)
 @click.option(
     "--debug/--no-debug",
     default=False,
@@ -566,15 +565,7 @@ def replicate_image_cli(
     show_default=True,
 )
 def add_profile_cli(env: str, team: str, debug: bool, profile: TextIO) -> None:
-    """Build and Deploy a new Docker image into ECR."""
-    if debug:
-        enable_debug(format=DEBUG_LOGGING_FORMAT)
-    _logger.debug("env: %s", env)
-    _logger.debug("team: %s", team)
-    profile_str = profile.read()
-    _logger.debug("profile: %s", profile_str)
-    _logger.debug("debug: %s", debug)
-    build_profile(env=env, team=team, profile=profile_str, debug=debug)
+    raise click.ClickException('Profiles are no longer supported...please use podsettings')
 
 
 @build.command(name="podsetting")
@@ -604,14 +595,14 @@ def add_podsetting_cli(env: str, team: str, debug: bool, podsetting: TextIO) -> 
 
 @click.group(name="delete")
 def delete() -> None:
-    """Delete images,profiles,etc in your Orbit Workbench."""
+    """Delete images,podsettings,etc in your Orbit Workbench."""
     pass
 
 
 @delete.command(name="profile")
-@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
-@click.option("--team", "-t", type=str, help="Orbit Team.", required=True)
-@click.option("--profile", "-p", type=str, help="Profile name to delete", required=True)
+@click.option("--env", "-e", type=str, required=False, help="Orbit Environment.")
+@click.option("--team", "-t", type=str, help="Orbit Team.", required=False)
+@click.option("--profile", "-p", type=str, help="Profile name to delete", required=False)
 @click.option(
     "--debug/--no-debug",
     default=False,
@@ -619,14 +610,7 @@ def delete() -> None:
     show_default=True,
 )
 def delete_profile_cli(env: str, team: str, profile: str, debug: bool) -> None:
-    """Build and Deploy a new Docker image into ECR."""
-    if debug:
-        enable_debug(format=DEBUG_LOGGING_FORMAT)
-    _logger.debug("env: %s", env)
-    _logger.debug("team: %s", team)
-    _logger.debug("profile: %s", profile)
-    _logger.debug("debug: %s", debug)
-    delete_profile(env=env, team=team, profile_name=profile, debug=debug)
+    raise click.ClickException('Profiles are no longer supported...please use podsettings')
 
 
 @delete.command(name="podsetting")
@@ -669,13 +653,13 @@ def delete_image_cli(env: str, name: str, debug: bool) -> None:
 
 @click.group(name="list")
 def list() -> None:
-    """List images,profiles,etc in your Orbit Workbench."""
+    """List images, etc in your Orbit Workbench."""
     pass
 
 
 @list.command(name="profile")
-@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
-@click.option("--team", "-t", type=str, help="Orbit Team.", required=True)
+@click.option("--env", "-e", type=str, required=False, help="Orbit Environment.")
+@click.option("--team", "-t", type=str, help="Orbit Team.", required=False)
 @click.option(
     "--debug/--no-debug",
     default=False,
@@ -683,14 +667,7 @@ def list() -> None:
     show_default=True,
 )
 def list_profiles_cli(env: str, team: str, debug: bool) -> None:
-    """Build and Deploy a new Docker image into ECR."""
-    if debug:
-        enable_debug(format=DEBUG_LOGGING_FORMAT)
-    _logger.debug("env: %s", env)
-    _logger.debug("team: %s", team)
-    _logger.debug("debug: %s", debug)
-    list_profiles(env=env, team=team, debug=debug)
-
+    raise click.ClickException('Profiles are no longer supported.')
 
 @list.command(name="image")
 @click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
