@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - iamidentitymapping for team role to team RoleBinding and ClusterRoleBinding
 - ImageReplication Operator and informative CRDs
 - Opttional removal of docker credentials on env destroy
+- Lens support in jupyter-user-with-apps image
 
 ### **Changed**
 
