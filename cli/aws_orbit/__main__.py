@@ -565,7 +565,7 @@ def replicate_image_cli(
     show_default=True,
 )
 def add_profile_cli(env: str, team: str, debug: bool, profile: TextIO) -> None:
-    raise click.ClickException('Profiles are no longer supported...please use podsettings')
+    raise click.ClickException("Profiles are no longer supported...please use podsettings")
 
 
 @build.command(name="podsetting")
@@ -610,7 +610,7 @@ def delete() -> None:
     show_default=True,
 )
 def delete_profile_cli(env: str, team: str, profile: str, debug: bool) -> None:
-    raise click.ClickException('Profiles are no longer supported...please use podsettings')
+    raise click.ClickException("Profiles are no longer supported...please use podsettings")
 
 
 @delete.command(name="podsetting")
@@ -667,7 +667,8 @@ def list() -> None:
     show_default=True,
 )
 def list_profiles_cli(env: str, team: str, debug: bool) -> None:
-    raise click.ClickException('Profiles are no longer supported.')
+    raise click.ClickException("Profiles are no longer supported.")
+
 
 @list.command(name="image")
 @click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")

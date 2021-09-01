@@ -172,6 +172,8 @@ class Team(Stack):
             simple_name=False,
             tier=ssm.ParameterTier.INTELLIGENT_TIERING,
         )
+
+
 #        ssm_profile_name = f"/orbit/{self.context.name}/teams/{self.team_name}/user/profiles"
 #        self.user_profiles: ssm.StringParameter = ssm.StringParameter(
 #           scope=self,
