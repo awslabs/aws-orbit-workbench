@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: Example-6-Schedule-Notebook, removed git:// reference
 ### **Removed**
 - REMOVED: changes to team-script-launcher...filesystem is now always used
+- REMOVED: orbit profile support (use podsettings)
 
 ## **[1.2.0]**
 ### **Added**

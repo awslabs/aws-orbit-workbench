@@ -18,17 +18,16 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from aws_orbit_sdk.common import get_workspace
-from aws_orbit_sdk.common_pod_specification import TeamConstants
 from jupyter_server.base.handlers import APIHandler
 from tornado import web
 
 DATA: Dict[str, List[Dict[str, str]]] = {}
-PROFILES_DATA: List[Dict[str, str]] = {}
+
 
 
 class TeamRouteHandler(APIHandler):
     @staticmethod
-    def _dump(data, profiles_data) -> str:
+    def _dump(data) -> str:
         ret: Dict[str, Any] = {}
         common_props = ["Fargate", "ScratchBucket"]
         security_props = [
@@ -56,10 +55,6 @@ class TeamRouteHandler(APIHandler):
             if key in security_props:
                 ret["security"][key] = value
 
-        ret["profiles"] = {}
-        if profiles_data:
-            for p in profiles_data:
-                ret["profiles"][p["slug"]] = p
 
         ret["other"] = {}
         for key, value in data.items():
@@ -85,7 +80,6 @@ class TeamRouteHandler(APIHandler):
         self.log.info(f"GET - {self.__class__}")
         if "MOCK" not in os.environ or os.environ["MOCK"] == "0":
             DATA = get_workspace()
-            PROFILES_DATA = TeamConstants().team_profiles()
             # hide some details
             if "Elbs" in DATA:
                 del DATA["Elbs"]
@@ -102,4 +96,4 @@ class TeamRouteHandler(APIHandler):
             with open(path) as f:
                 DATA = json.load(f)
 
-        self.finish(self._dump(DATA, PROFILES_DATA))
+        self.finish(self._dump(DATA))

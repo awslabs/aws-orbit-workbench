@@ -59,7 +59,6 @@ Teams:
     JupyterhubInboundRanges:
     - 0.0.0.0/0
     GrantSudo: true
-    Profiles: !include lake-user-profiles.json
     Plugins: !include lake-user-plugins.yaml
     EfsLifeCycle: AFTER_7_DAYS
     AuthenticationGroups:
