@@ -1,0 +1,62 @@
+-   PluginId: clean-lakeformation-glue-database
+    Module: team_script_launcher
+    Parameters:
+        scope: destroy
+        script: |
+            echo "Deleting cms_secured_db_${env_name} glue database "
+            aws sts get-caller-identity
+            aws glue delete-database --name cms_secured_db_${env_name}
+            echo "Deleted cms_secured_db glue database_${env_name}"
+        restartPolicy: Never
+-   PluginId: custom_cfn
+    Module: custom_cfn
+    Parameters:
+        CfnTemplatePath: "./bundle/plugins/demo-lake-creator-cfn-template.yaml"
+-   PluginId: clean_regression_files
+    Module: team_script_launcher
+    Parameters:
+        script: |
+            i=0
+            while [ $i -lt 1 ];
+            do
+              find /home/jovyan/shared/regression -mtime +5 -type f -exec rm {} \;
+              sleep 60
+            done
+            echo "DONE LOOP"
+        restartPolicy: Never
+-   PluginId: copy-regression-data
+    Module: team_script_launcher
+    Parameters:
+        script: |
+            echo "Copy data to s3 from orbit-regression image ";
+            i=0;o='orbit';
+            while [ $i -lt 1 ];
+            do
+                p="$(aws ssm get-parameter --name '/orbit/${env_name}/demo'| jq -r '.Parameter.Value | fromjson | .LakeBucket' | sed 's/arn:aws:s3::://g')";
+                if [[ "$p" =~ .*"$o".* ]];
+                then
+                    echo 'Found bucket '$p;
+                    aws s3 cp /opt/orbit/data/cms s3://$p/landing/data/cms/ --recursive;
+                    aws s3 cp /opt/orbit/data/sagemaker s3://$p/landing/data/sagemaker/ --recursive;
+                    aws s3 cp /opt/orbit/cms/schema s3://$p/landing/cms/schema/ --recursive;
+                    exit 0;
+                else
+                    echo 'No Lake Bucket Found in SSM...sleeping';
+                    sleep 60;
+                fi
+            done
+        restartPolicy: Never
+        image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data:latest
+        uid: 0
+        gid: 0
+-   PluginId: copy-sample-code
+    Module: team_script_launcher
+    Parameters:
+        script: |
+            echo "Copy samples to efs from image ";
+            rm -rf /efs/samples;
+            cp -R -v /opt/orbit/samples/ /efs;
+        restartPolicy: Never
+        image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data:latest
+        uid: 0
+        gid: 0
