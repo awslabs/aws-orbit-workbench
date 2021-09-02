@@ -638,7 +638,10 @@ def deploy_env(context: "Context") -> None:
 
         # Patch Pods to push into Fargate when deploying in an isolated subnet
         if not context.networking.data.internet_accessible:
-            patch = '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}}}}}'
+            patch = (
+                '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}},'
+                '"spec":{"nodeSelector": null}}}}'
+            )
             sh.run(f"kubectl patch deployment -n istio-system authzadaptor --patch '{patch}'")
 
             patch = (
