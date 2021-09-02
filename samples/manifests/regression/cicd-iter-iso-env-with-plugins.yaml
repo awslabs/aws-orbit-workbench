@@ -67,7 +67,7 @@ Teams:
     K8Admin: false
     JupyterhubInboundRanges:
     - 0.0.0.0/0
-    Plugins: !include lake-creator-plugins.yaml
+    Plugins: !include lake-creator-plugins-iso.yaml
     EfsLifeCycle: AFTER_7_DAYS
     AuthenticationGroups:
     - lake-creator
@@ -77,7 +77,8 @@ Teams:
     JupyterhubInboundRanges:
     - 0.0.0.0/0
     GrantSudo: true
-    Plugins: !include lake-user-plugins.yaml
+    Profiles: !include lake-user-profiles.json
+    Plugins: !include lake-user-plugins-iso.yaml
     EfsLifeCycle: AFTER_7_DAYS
     AuthenticationGroups:
     - lake-user
