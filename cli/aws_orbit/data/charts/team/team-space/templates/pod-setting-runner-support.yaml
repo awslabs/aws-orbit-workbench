@@ -22,11 +22,11 @@ spec:
       value: runner
   resources:
     limits:
-      cpu: '1.0'
-      memory: 2Gi
+      cpu: '2.0'
+      memory: 6Gi
     requests:
-      cpu: 500m
-      memory: 1Gi
+      cpu: '1.0'
+      memory: 4Gi
   image: {{ .Values.jupyter_team_image}}
 ---
 apiVersion: orbit.aws/v1
@@ -53,11 +53,11 @@ spec:
       value: runner
   resources:
     limits:
-      cpu: '2.0'
-      memory: 4Gi
+      cpu: '4.0'
+      memory: 8Gi
     requests:
-      cpu: '1.0'
-      memory: 2Gi
+      cpu: '3.0'
+      memory: 8Gi
   image: {{ .Values.jupyter_team_image}}
 ---
 apiVersion: orbit.aws/v1
@@ -84,9 +84,9 @@ spec:
       value: runner
   resources:
     limits:
-      cpu: '3.0'
-      memory: 6Gi
+      cpu: '4.0'
+      memory: 10Gi
     requests:
-      cpu: '2.0'
-      memory: 4Gi
+      cpu: '3.0'
+      memory: 10Gi
   image: {{ .Values.jupyter_team_image}}
