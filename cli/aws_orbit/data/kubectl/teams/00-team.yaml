@@ -62,7 +62,7 @@ metadata:
   name: default-editor
   namespace: ${team}
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::${account_id}:role/orbit-${env_name}-${team}-${region}-role
+    eks.amazonaws.com/role-arn: arn:aws:iam::${account_id}:role{role_prefix}orbit-${env_name}-${team}-${region}-role
 ---
 apiVersion: vpcresources.k8s.aws/v1beta1
 kind: SecurityGroupPolicy

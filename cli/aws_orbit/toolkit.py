@@ -57,6 +57,7 @@ def synth(context: "Context", top_level: str = "orbit") -> str:
     content: str = yaml.dump(template, Dumper=yaml_dumper.get_dumper())
     content = content.replace("$", "").format(
         top_level=top_level,
+        role_prefix=f"/{context.role_prefix}/" if context.role_prefix else "/",
         env_name=context.name,
         account_id=context.account_id,
         region=context.region,

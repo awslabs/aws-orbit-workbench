@@ -19,6 +19,7 @@ import shutil
 import sys
 from typing import Any, Dict, List, cast
 
+import jsii
 from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
@@ -26,7 +27,7 @@ from aws_cdk import aws_kms as kms
 from aws_cdk import aws_s3 as s3
 from aws_cdk import aws_ssm as ssm
 from aws_cdk import core
-from aws_cdk.core import App, CfnOutput, Construct, Duration, Stack, Tags
+from aws_cdk.core import App, Aspects, CfnOutput, Construct, Duration, Stack, Tags
 
 from aws_orbit.models.context import ContextSerDe, FoundationContext
 from aws_orbit.remote_files.cdk.team_builders.codeartifact import DeployCodeArtifact
@@ -398,13 +399,27 @@ def main() -> None:
     app = App(
         outdir=outdir,
     )
-    FoundationStack(
+
+    @jsii.implements(core.IAspect)
+    class AddDeployPathIAM:
+        """ Implementing CDK Aspects to add optional IAM Role prefix to IAM roles """
+
+        def visit(self, node: core.IConstruct) -> None:
+            """ Function to implement a path pattern """
+            if isinstance(node, iam.CfnRole):
+                node.path = f"/{context.role_prefix}/" if context.role_prefix else "/"
+
+    # role_prefix = AddDeployPathIAM(context)
+
+    foundation_stack = FoundationStack(
         scope=app,
         id=cast(str, context.stack_name),
         context=context,
         ssl_cert_arn=ssl_cert_arn,
         env=core.Environment(account=os.environ["CDK_DEFAULT_ACCOUNT"], region=os.environ["CDK_DEFAULT_REGION"]),
     )
+
+    Aspects.of(scope=cast(core.IConstruct, foundation_stack)).add(cast(core.IAspect, AddDeployPathIAM()))
     app.synth(force=True)
 
 
