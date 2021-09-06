@@ -34,8 +34,6 @@ from kubernetes.client import *
 
 from aws_orbit_sdk.common import get_properties, get_stepfunctions_waiter_config
 
-# from aws_orbit_sdk.common_pod_specification import TeamConstants
-
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
     level=logging.INFO,

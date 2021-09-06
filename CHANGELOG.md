@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - iamidentitymapping for team role to team RoleBinding and ClusterRoleBinding
 - ImageReplication Operator and informative CRDs
 - Opttional removal of docker credentials on env destroy
-
+- Lens support in jupyter-user-apps
 ### **Changed**
 
 - FIX: overprovisioning fixed to support gpu
@@ -20,8 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: podsettings call typos
 - FIX: added suppprt for sql parameters in magics (ddl and create_external_table --- database.py)
 - FIX: added suppprt for  parameters in magics (run_notebooks and schedule_notebooks --- orbit.py)
+- FIX: Example-6-Schedule-Notebook, removed git:// reference
 ### **Removed**
 - REMOVED: changes to team-script-launcher...filesystem is now always used
+- REMOVED: orbit profile support (use podsettings)
 
 ## **[1.2.0]**
 ### **Added**
