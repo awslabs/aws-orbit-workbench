@@ -3,6 +3,7 @@
     Parameters:
         scope: destroy
         script: |
+            env_name=`echo "${env_name}" | sed 's/-/_/g'`
             echo "Deleting cms_secured_db_${env_name} glue database "
             aws sts get-caller-identity
             aws glue delete-database --name cms_secured_db_${env_name}
