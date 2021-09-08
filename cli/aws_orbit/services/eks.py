@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import logging
+import time
 from typing import Any, Dict, List, Optional, cast
 
 from botocore.waiter import WaiterModel, create_waiter_with_client
@@ -143,10 +144,26 @@ def delete_fargate_profile(
         return
 
     eks_client = boto3_client("eks")
-    eks_client.delete_fargate_profile(
-        fargateProfileName=profile_name,
-        clusterName=cluster_name,
-    )
+
+    try:
+        timeout = 0
+        res = eks_client.describe_cluster(name=cluster_name)
+        eks_status = res.get("cluster").get("status")
+
+        while eks_status != "ACTIVE" or timeout < 30:
+            _logger.debug(f"EKS is an {eks_status} state. Retrying in 1min - attempt {timeout}")
+            time.sleep(60)
+            timeout += 1
+            res = eks_client.describe_cluster(name=cluster_name)
+            eks_status = res.get("cluster").get("status")
+
+        eks_client.delete_fargate_profile(
+            fargateProfileName=profile_name,
+            clusterName=cluster_name,
+        )
+
+    except eks_client.exceptions.ResourceNotFoundException as err:
+        _logger.debug(err)
 
     waiter_model = WaiterModel(WAITER_CONFIG)
     waiter = create_waiter_with_client("FargateProfileDeleted", waiter_model, eks_client)
