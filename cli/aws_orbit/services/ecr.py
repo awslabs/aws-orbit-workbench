@@ -21,8 +21,6 @@ def _filter_repos(env_name: str, page: Dict[str, Any]) -> Iterator[str]:
     for repo in page["repositories"]:
         if repo["repositoryName"].startswith(f"orbit-{env_name}/"):
             yield repo["repositoryName"]
-        #elif repo["repositoryName"].startswith(f"orbit-{env_name}-"):
-        #    yield repo["repositoryName"]
         else:
             response: Dict[str, Any] = client.list_tags_for_resource(resourceArn=repo["repositoryArn"])
             for tag in response["tags"]:
