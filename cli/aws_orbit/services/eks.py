@@ -158,6 +158,7 @@ def delete_fargate_profile(
             res = eks_client.describe_cluster(name=cluster_name)
             eks_status = res.get("cluster").get("status")
 
+        _logger.debug(f"Deleting fargate profile {profile_name}")
         eks_client.delete_fargate_profile(
             fargateProfileName=profile_name,
             clusterName=cluster_name,
