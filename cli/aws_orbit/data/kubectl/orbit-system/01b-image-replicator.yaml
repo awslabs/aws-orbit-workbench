@@ -12,44 +12,44 @@ data:
   WORKERS: "5"
   MAX_REPLICATION_ATTEMPTS: "3"
 ---
-apiVersion: cert-manager.io/v1alpha2
-kind: Certificate
-metadata:π
-  labels:
-    app.kubernetes.io/name: image-replication-operator
-  name: image-replication-operator-cert
-  namespace: orbit-system
-spec:
-  dnsNames:
-  - image-replication-operator.orbit-system.svc
-  - image-replication-operator.orbit-system.svc.cluster.local
-  issuerRef:
-    kind: ClusterIssuer
-    name: orbit-self-signing-issuer
-  secretName: image-replication-operator-webhook-tls
----
 kind: Service
 apiVersion: v1
 metadata:
-  name: image-replication-operator
+  name: imagereplication-pod-webhook
   namespace: orbit-system
 spec:
   selector:
-    app: image-replication-operator
+    app: imagereplication-pod-webhook
   ports:
   - name: https
     protocol: TCP
     port: 443
     targetPort: 443
 ---
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  labels:
+    app.kubernetes.io/name: imagereplication-pod-webhook
+  name: imagereplication-pod-webhook-cert
+  namespace: orbit-system
+spec:
+  dnsNames:
+  - imagereplication-pod-webhook.orbit-system.svc
+  - imagereplication-pod-webhook.orbit-system.svc.cluster.local
+  issuerRef:
+    kind: ClusterIssuer
+    name: orbit-self-signing-issuer
+  secretName: imagereplication-pod-webhook-tls
+---
 kind: MutatingWebhookConfiguration
 apiVersion: admissionregistration.k8s.io/v1beta1
 metadata:
-  name: orbit-image-replication-operator
+  name: orbit-imagereplication-pod-webhook
   annotations:
-    cert-manager.io/inject-ca-from: orbit-system/image-replication-operator-cert
+    cert-manager.io/inject-ca-from: orbit-system/imagereplication-pod-webhook-cert
 webhooks:
-  - name: image-replication-operator.orbit-system.svc
+  - name: imagereplication-pod-webhook.orbit-system.svc
     sideEffects: NoneOnDryRun
     reinvocationPolicy: IfNeeded
     failurePolicy: Fail
@@ -69,7 +69,7 @@ webhooks:
       caBundle: ""
       service:
         namespace: orbit-system
-        name: image-replication-operator
+        name: imagereplication-pod-webhook
         path: /update-pod-images
 ---
 apiVersion: apps/v1
@@ -78,19 +78,94 @@ metadata:
   labels:
     app: orbit-controller
   namespace: orbit-system
-  name: image-replication-operator
+  name: imagereplication-pod-webhook
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: image-replication-operator
+      app: imagereplication-pod-webhook
   template:
     metadata:
       labels:
-        app: image-replication-operator
-      name: image-replication-operator
+        app: imagereplication-pod-webhook
+      name: imagereplication-pod-webhook
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: orbit-${env_name}-admin
+      containers:
+        - name: webhook
+          image: ${orbit_controller_image}
+          imagePullPolicy: ${image_pull_policy}
+          ports:
+            - containerPort: 443
+              name: https
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: orbit-controller-config
+            - configMapRef:
+                name: image-replication-config
+          command:
+            - kopf
+            - run
+          args:
+            - "--liveness=http://0.0.0.0:8080/healthz"
+            - "--log-format=json"
+            - "--module=orbit_controller.webhooks.imagereplication_pod_webhook"
+            - "--verbose"
+          volumeMounts:
+            - readOnly: true
+              mountPath: /certs
+              name: imagereplication-pod-webhook-certs
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 600
+          resources:
+            limits:
+              cpu: 2
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 500Mi
+      volumes:
+        - name: imagereplication-pod-webhook-certs
+          secret:
+            secretName: imagereplication-pod-webhook-tls
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: orbit-controller
+  namespace: orbit-system
+  name: imagereplication-operator
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: imagereplication-operator
+  template:
+    metadata:
+      labels:
+        app: imagereplication-operator
+      name: imagereplication-operator
       annotations:
         sidecar.istio.io/inject: "false"
     spec:
@@ -111,22 +186,18 @@ spec:
             - python
           args:
             - -m
-            - orbit_controller.image_replication_operator
+            - orbit_controller.operators.imagereplication_operator
           resources:
             limits:
               cpu: 2
-              memory: 2G
+              memory: 2Gi
             requests:
-              cpu: 100m
-              memory: 100M
+              cpu: 500m
+              memory: 500Mi
       containers:
         - name: operator
           image: ${orbit_controller_image}
           imagePullPolicy: ${image_pull_policy}
-          ports:
-            - containerPort: 443
-              name: https
-              protocol: TCP
           envFrom:
             - configMapRef:
                 name: orbit-controller-config
@@ -138,12 +209,8 @@ spec:
           args:
             - "--liveness=http://0.0.0.0:8080/healthz"
             - "--log-format=json"
-            - "--module=orbit_controller.image_replication_operator"
+            - "--module=orbit_controller.operators.imagereplication_operator"
             - "--verbose"
-          volumeMounts:
-            - readOnly: true
-              mountPath: /certs
-              name: image-replication-operator-certs
           readinessProbe:
             httpGet:
               path: /healthz
@@ -162,11 +229,7 @@ spec:
           resources:
             limits:
               cpu: 2
-              memory: 2G
+              memory: 2Gi
             requests:
-              cpu: 100m
-              memory: 100M
-      volumes:
-        - name: image-replication-operator-certs
-          secret:
-            secretName: image-replication-operator-webhook-tls
+              cpu: 500m
+              memory: 500Mi

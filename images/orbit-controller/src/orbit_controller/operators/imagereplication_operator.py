@@ -14,173 +14,19 @@
 
 import logging
 import os
-import re
 import threading
 import time
-from copy import deepcopy
 from queue import Queue
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Union, cast
 
 import boto3
 import kopf
-import yaml
-from kubernetes import dynamic
 from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, dynamic_client
+from orbit_controller.utils import imagereplication_utils
 
 LOCK: threading.Lock
 CONFIG: Dict[str, Any]
 WORKERS_IN_PROCESS: int = 0
-
-
-def _get_config() -> Dict[str, Any]:
-    config = {
-        "repo_host": os.environ.get("REPO_HOST", ""),
-        "repo_prefix": os.environ.get("REPO_PREFIX", ""),
-        "codebuild_project": os.environ.get("CODEBUILD_PROJECT", ""),
-        "codebuild_timeout": int(os.environ.get("CODEBUILD_TIMEOUT", "30")),
-        "codebuild_image": os.environ.get("ORBIT_CODEBUILD_IMAGE", ""),
-        "replicate_external_repos": os.environ.get("REPLICATE_EXTERNAL_REPOS", "False").lower() in ["true", "yes", "1"],
-        "workers": int(os.environ.get("WORKERS", "4")),
-        "max_replication_attempts": int(os.environ.get("MAX_REPLICATION_ATTEMPTS", "3")),
-    }
-    return config
-
-
-def _generate_buildspec(repo_host: str, repo_prefix: str, src: str, dest: str) -> Dict[str, Any]:
-    repo = dest.replace(f"{repo_host}/", "").split(":")[0]
-    build_spec = {
-        "version": 0.2,
-        "phases": {
-            "install": {
-                "runtime-versions": {"python": 3.7, "docker": 19},
-                "commands": [
-                    (
-                        "nohup /usr/sbin/dockerd --host=unix:///var/run/docker.sock "
-                        "--host=tcp://0.0.0.0:2375 --storage-driver=overlay&"
-                    ),
-                    'timeout 15 sh -c "until docker info; do echo .; sleep 1; done"',
-                ],
-            },
-            "pre_build": {
-                "commands": [
-                    "/var/scripts/retrieve_docker_creds.py && echo 'Docker logins successful' "
-                    "|| echo 'Docker logins failed'",
-                    f"aws ecr get-login-password | docker login --username AWS --password-stdin {repo_host}",
-                    (
-                        f"aws ecr create-repository --repository-name {repo} "
-                        f"--tags Key=Env,Value={repo_prefix} || echo 'Already exists'"
-                    ),
-                ]
-            },
-            "build": {"commands": [f"docker pull {src}", f"docker tag {src} {dest}", f"docker push {dest}"]},
-        },
-    }
-    return build_spec
-
-
-def _replicate_image(src: str, dest: str) -> Tuple[Optional[str], Optional[str]]:
-    buildspec = yaml.safe_dump(_generate_buildspec(CONFIG["repo_host"], CONFIG["repo_prefix"], src, dest))
-
-    try:
-        client = boto3.client("codebuild")
-        build_id = client.start_build(
-            projectName=CONFIG["codebuild_project"],
-            sourceTypeOverride="NO_SOURCE",
-            buildspecOverride=buildspec,
-            timeoutInMinutesOverride=CONFIG["codebuild_timeout"],
-            privilegedModeOverride=True,
-            imageOverride=CONFIG["codebuild_image"],
-        )["build"]["id"]
-        return build_id, None
-    except Exception as e:
-        return None, str(e)
-
-
-def _get_desired_image(image: str) -> str:
-    external_ecr_match = re.compile(r"^[0-9]{12}\.dkr\.ecr\..+\.amazonaws.com/")
-    public_ecr_match = re.compile(r"^public.ecr.aws/.+/")
-
-    if image.startswith(CONFIG["repo_host"]):
-        return image
-    elif external_ecr_match.match(image):
-        if CONFIG["replicate_external_repos"]:
-            return external_ecr_match.sub(
-                f"{CONFIG['repo_host']}/{CONFIG['repo_prefix']}/", image.replace("@sha256", "")
-            )
-        else:
-            return image
-    elif public_ecr_match.match(image):
-        return public_ecr_match.sub(f"{CONFIG['repo_host']}/{CONFIG['repo_prefix']}/", image.replace("@sha256", ""))
-    else:
-        return f"{CONFIG['repo_host']}/{CONFIG['repo_prefix']}/{image.replace('@sha256', '')}"
-
-
-def _create_image_replication(
-    namespace: str,
-    source: str,
-    destination: str,
-    client: dynamic.DynamicClient,
-    logger: Union[kopf.Logger, logging.Logger],
-) -> Tuple[str, str]:
-    api = client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="ImageReplication")
-    image_replication = {
-        "apiVersion": f"{ORBIT_API_GROUP}/{ORBIT_API_VERSION}",
-        "kind": "ImageReplication",
-        "metadata": {
-            "generateName": "image-replication-",
-        },
-        "spec": {"destination": destination, "source": source},
-    }
-    result = api.create(namespace=namespace, body=image_replication).to_dict()
-    logger.debug("Created ImageReplication: %s", result)
-    metadata = result.get("metadata", {})
-    return metadata.get("namespace", None), metadata.get("name", None)
-
-
-def _image_replicated(image: str, logger: Union[kopf.Logger, logging.Logger]) -> bool:
-    try:
-        repo, tag = image.split(":")
-        repo = "/".join(repo.split("/")[1:])
-        client = boto3.client("ecr")
-        paginator = client.get_paginator("list_images")
-        for page in paginator.paginate(repositoryName=repo):
-            for imageId in page["imageIds"]:
-                if imageId.get("imageTag", None) == tag:
-                    logger.info("ECR Repository contains Image: %s", image)
-                    return True
-        logger.debug("Tag %s not found in ECR Repository %s", tag, repo)
-        return False
-    except Exception as e:
-        logger.warn(str(e))
-        return False
-
-
-def _patch_imagereplication(
-    namespace: str,
-    name: str,
-    patch: Dict[str, Any],
-    client: dynamic.DynamicClient,
-    logger: Union[kopf.Logger, logging.Logger],
-) -> None:
-    api = client.resources.get(group=ORBIT_API_GROUP, api_version=ORBIT_API_VERSION, kind="ImageReplication")
-    logger.debug("Patching %s/%s with %s", namespace, name, patch)
-    api.patch(namespace=namespace, name=name, body=patch, content_type="application/merge-patch+json")
-
-
-def _update_imagereplication_status(
-    namespace: str,
-    name: str,
-    status: Dict[str, str],
-    client: dynamic.DynamicClient,
-    logger: Union[kopf.Logger, logging.Logger],
-) -> None:
-    _patch_imagereplication(
-        namespace=namespace,
-        name=name,
-        client=client,
-        logger=logger,
-        patch={"status": status},
-    )
 
 
 def _set_globals(logger: Union[kopf.Logger, logging.Logger]) -> None:
@@ -188,7 +34,7 @@ def _set_globals(logger: Union[kopf.Logger, logging.Logger]) -> None:
     LOCK = threading.Lock()
 
     global CONFIG
-    CONFIG = _get_config()
+    CONFIG = imagereplication_utils.get_config()
     logger.info("CONFIG: %s", CONFIG)
 
     global WORKERS_IN_PROCESS
@@ -197,9 +43,6 @@ def _set_globals(logger: Union[kopf.Logger, logging.Logger]) -> None:
 
 @kopf.on.startup()
 def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) -> None:
-    settings.admission.server = kopf.WebhookServer(
-        cafile="/certs/ca.crt", certfile="/certs/tls.crt", pkeyfile="/certs/tls.key", port=443
-    )
     settings.persistence.progress_storage = kopf.MultiProgressStorage(
         [
             kopf.AnnotationsProgressStorage(prefix="orbit.aws"),
@@ -210,83 +53,6 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
     _set_globals(logger=logger)
 
 
-def _check_replication_status(value: str, **_: Any) -> bool:
-    return value not in ["Failed", "MaxAttemptsExceeded"]
-
-
-@kopf.index(  # type: ignore
-    ORBIT_API_GROUP,
-    ORBIT_API_VERSION,
-    "imagereplications",
-    field="status.replication.replicationStatus",
-    value=_check_replication_status,
-)
-def imagereplications_idx(namespace: str, name: str, spec: kopf.Spec, status: kopf.Status, **_: Any) -> Dict[str, Any]:
-    replication_status = status.get("replication", {}).get("replicationStatus", None)
-    return {
-        spec["destination"]: {
-            "namespace": namespace,
-            "name": name,
-            "source": spec["source"],
-            "replicationStatus": replication_status,
-        }
-    }
-
-
-@kopf.on.mutate("pods", id="update-pod-images")  # type: ignore
-def update_pod_images(
-    spec: kopf.Spec,
-    patch: kopf.Patch,
-    dryrun: bool,
-    logger: kopf.Logger,
-    imagereplications_idx: kopf.Index[str, List[str]],
-    **_: Any,
-) -> kopf.Patch:
-    if dryrun:
-        logger.debug("DryRun - Skip Pod Mutation")
-        return patch
-
-    annotations = {}
-    init_containers: List[Dict[str, Any]] = []
-    containers: List[Dict[str, Any]] = []
-    replications = {}
-
-    def process_containers(src_containers: List[Dict[str, Any]], dest_containers: List[Dict[str, Any]]) -> None:
-        for container in src_containers:
-            image = container.get("image", "")
-            desired_image = _get_desired_image(image=image)
-            if image != desired_image:
-                container_copy = deepcopy(container)
-                container_copy["image"] = desired_image
-                dest_containers.append(container_copy)
-                replications[image] = desired_image
-                annotations[f"original-container-image~1{container['name']}"] = image
-
-    process_containers(spec.get("initContainers", []), init_containers)
-    process_containers(spec.get("containers", []), containers)
-
-    if replications:
-        client = dynamic_client()
-        for source, destination in replications.items():
-            if not imagereplications_idx.get(destination, []):
-                _create_image_replication(
-                    namespace="orbit-system", source=source, destination=destination, client=client, logger=logger
-                )
-            else:
-                logger.debug("Skipping ImageReplication Creation")
-
-    if annotations:
-        patch["metadata"] = {"annotations": annotations}
-        patch["spec"] = {}
-    if init_containers:
-        patch["spec"]["initContainers"] = init_containers
-    if containers:
-        patch["spec"]["containers"] = containers
-
-    logger.debug("Patch: %s", str(patch))
-    return patch
-
-
 @kopf.on.resume(ORBIT_API_GROUP, ORBIT_API_VERSION, "imagereplications", field="status.replication", value=kopf.ABSENT)
 @kopf.on.create(ORBIT_API_GROUP, ORBIT_API_VERSION, "imagereplications", field="status.replication", value=kopf.ABSENT)
 def replication_checker(spec: kopf.Spec, status: kopf.Status, patch: kopf.Patch, logger: kopf.Logger, **_: Any) -> str:
@@ -294,7 +60,7 @@ def replication_checker(spec: kopf.Spec, status: kopf.Status, patch: kopf.Patch,
         return cast(str, status["replication"].get("replicationStatus", "Unknown"))
 
     replication = {}
-    if _image_replicated(image=spec["destination"], logger=logger):
+    if imagereplication_utils.image_replicated(image=spec["destination"], logger=logger):
         logger.info("Skipped: Image previously replicated to ECR")
         replication["replicationStatus"] = "ECRImageExists"
     else:
@@ -377,7 +143,7 @@ def rescheduler(status: kopf.Status, patch: kopf.Patch, logger: kopf.Logger, **_
 def codebuild_runner(spec: kopf.Spec, patch: kopf.Patch, status: kopf.Status, logger: kopf.Logger, **_: Any) -> str:
     replication = status.get("replication", {})
 
-    build_id, error = _replicate_image(src=spec["source"], dest=spec["destination"])
+    build_id, error = imagereplication_utils.replicate_image(src=spec["source"], dest=spec["destination"])
 
     replication["replicationStatus"] = "Replicating"
     replication["codeBuildId"] = build_id
@@ -454,7 +220,7 @@ def replication_worker(queue: Queue, statuses: Dict[str, Any], logger: logging.L
                 queue.task_done()
                 continue
             status = patch
-            namespace, name = _create_image_replication(
+            namespace, name = imagereplication_utils.create_imagereplication(
                 namespace="orbit-system", source=source, destination=destination, client=client, logger=logger
             )
             statuses[destination]["namespace"] = namespace
@@ -464,7 +230,7 @@ def replication_worker(queue: Queue, statuses: Dict[str, Any], logger: logging.L
             replication_status = status.get("status", {}).get("replication", {}).get("replicationStatus", None)
 
         status = {**status, **patch}
-        _update_imagereplication_status(
+        imagereplication_utils.update_imagereplication_status(
             namespace=statuses[destination]["namespace"],
             name=statuses[destination]["name"],
             status=status["status"],
@@ -481,7 +247,7 @@ def replication_worker(queue: Queue, statuses: Dict[str, Any], logger: logging.L
         patch = {}
         replication_status = scheduler(status=status["status"], patch=patch, logger=logger)  # type: ignore
         status = {**status, **patch}
-        _update_imagereplication_status(
+        imagereplication_utils.update_imagereplication_status(
             namespace=statuses[destination]["namespace"],
             name=statuses[destination]["name"],
             status=status["status"],
@@ -500,7 +266,7 @@ def replication_worker(queue: Queue, statuses: Dict[str, Any], logger: logging.L
             spec=cast(kopf.Spec, spec), status=status["status"], patch=cast(kopf.Patch, patch), logger=logger
         )
         status = {**status, **patch}
-        _update_imagereplication_status(
+        imagereplication_utils.update_imagereplication_status(
             namespace=statuses[destination]["namespace"],
             name=statuses[destination]["name"],
             status=status["status"],
@@ -520,7 +286,7 @@ def replication_worker(queue: Queue, statuses: Dict[str, Any], logger: logging.L
         patch = {}
         replication_status = codebuild_monitor(status=status["status"], patch=patch, logger=logger)  # type: ignore
         status = {**status, **patch}
-        _update_imagereplication_status(
+        imagereplication_utils.update_imagereplication_status(
             namespace=statuses[destination]["namespace"],
             name=statuses[destination]["name"],
             status=status["status"],
@@ -540,7 +306,7 @@ def replication_worker(queue: Queue, statuses: Dict[str, Any], logger: logging.L
 
         with LOCK:
             statuses[destination]["status"] = status
-        _update_imagereplication_status(
+        imagereplication_utils.update_imagereplication_status(
             namespace=statuses[destination]["namespace"],
             name=statuses[destination]["name"],
             status=status["status"],
@@ -565,7 +331,7 @@ if __name__ == "__main__":
     with open(inventory_path, "r") as inventory:
         for source_image in inventory:
             source_image = source_image.strip()
-            desired_image = _get_desired_image(image=source_image)
+            desired_image = imagereplication_utils.get_desired_image(image=source_image)
             if source_image != desired_image:
                 logger.debug("Queueing: %s", desired_image)
                 statuses[desired_image] = {"source": source_image, "destination": desired_image, "status": None}
