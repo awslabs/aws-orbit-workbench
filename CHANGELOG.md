@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: added suppprt for  parameters in magics (run_notebooks and schedule_notebooks --- orbit.py)
 - FIX: Example-6-Schedule-Notebook, removed git:// reference
 - FIX: ecr repo filter logic used to delete existing env repos
+- FIX: make sure Laekformation regression tests do not run in -iso envs
 ### **Removed**
 - REMOVED: changes to team-script-launcher...filesystem is now always used
 - REMOVED: orbit profile support (use podsettings)
