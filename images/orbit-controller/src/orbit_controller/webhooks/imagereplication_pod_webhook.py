@@ -110,7 +110,7 @@ def update_pod_images(
 
     if annotations:
         patch["metadata"] = {"annotations": annotations}
-        patch["spec"] = {}
+    patch["spec"] = {}
     if init_containers:
         patch["spec"]["initContainers"] = init_containers
     if containers:

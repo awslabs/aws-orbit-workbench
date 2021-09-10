@@ -109,7 +109,7 @@ def filter_podsettings(
 
 def filter_pod_containers(
     containers: List[Dict[str, Any]],
-    pod_spec: Dict[str, Any],
+    pod: Dict[str, Any],
     container_selector: Dict[str, str],
 ) -> List[Dict[str, Any]]:
     filtered_containers = []
@@ -125,7 +125,7 @@ def filter_pod_containers(
             [
                 c
                 for c in containers
-                if c.get("name", "") in [match.value for match in container_selector_jsonpath.find(pod_spec)]
+                if c.get("name", "") in [match.value for match in container_selector_jsonpath.find(pod)]
             ]
         )
 
@@ -165,6 +165,15 @@ def apply_settings_to_pod(
             **pod_spec.get("nodeSelector", {}),
             **ps_spec.get("nodeSelector", {}),
         }
+        # There exists a bug in some k8s client libs where a / in the key is interpretted as a path.
+        # With annotations and labels, replacing / with ~1 like below works and ~1 is interpretted as
+        # an escaped / char. This does not work here w/ the nodeSelector keys. Keys with a / are
+        # interpretted as a jsonpath, and keys with ~1 are deemed invalid.
+        # pod_spec["nodeSelector"] = {k.replace("/", "~1"): v for k, v in pod_spec["nodeSelector"].items()}
+
+        # So instead, we strip out any path from the nodeSelector keys and use a multi-label approach
+        # on our ManagedNodeGroups
+        pod_spec["nodeSelector"] = {k.split("/")[-1]: v for k, v in pod_spec["nodeSelector"].items()}
 
     # Merge
     if "securityContext" in ps_spec:
@@ -187,14 +196,14 @@ def apply_settings_to_pod(
     # Merge
     for container in filter_pod_containers(
         containers=pod_spec.get("initContainers", []),
-        pod_spec=pod_spec,
+        pod=pod,
         container_selector=ps_spec.get("containerSelector", {}),
     ):
         apply_settings_to_container(namespace=namespace, podsetting=podsetting, pod=pod, container=container)
         logger.info("Applied PodSetting %s to InitContainer %s", podsetting["name"], container["name"])
     for container in filter_pod_containers(
         containers=pod_spec.get("containers", []),
-        pod_spec=pod_spec,
+        pod=pod,
         container_selector=ps_spec.get("containerSelector", {}),
     ):
         apply_settings_to_container(namespace=namespace, podsetting=podsetting, pod=pod, container=container)
@@ -210,7 +219,7 @@ def apply_settings_to_container(
 ) -> None:
     ns_labels = namespace.get("labels", {})
     ns_annotations = namespace.get("annotations", {})
-    ps_spec = podsetting["spec"]
+    ps_spec = {k: v for k, v in podsetting["spec"].items()}
 
     # Drop any previous AWS_ORBIT_USER_SPACE or AWS_ORBIT_IMAGE env variables
     ps_spec["env"] = [e for e in ps_spec.get("env", []) if e["name"] not in ["AWS_ORBIT_USER_SPACE", "AWS_ORBIT_IMAGE"]]

@@ -74,7 +74,8 @@ def update_pod_images(
         logger.debug("DryRun - Skip Pod Mutation")
         return patch
 
-    ns = cast(List[Dict[str, Any]], namespaces_idx.get(namespace, [{}]))[0]
+    for ns in namespaces_idx.get(namespace, [{}]):
+        logger.debug("Namespace: %s", ns)
 
     team = ns.get("labels", {}).get("orbit/team", None)
     if not team:
@@ -96,28 +97,36 @@ def update_pod_images(
         return patch
 
     applied_podsetting_names = []
-    modified_body = deepcopy(body)
+    body_dict = {
+        "metadata": {k: v for k, v in body["metadata"].items()},
+        "spec": {k: v for k, v in body["spec"].items()}
+    }
+    logger.debug("BodyDict: %s", body_dict)
+    mutable_body = deepcopy(body)
     for podsetting in fitlered_podsettings:
         try:
-            podsetting_utils.apply_settings_to_pod(namespace=ns, podsetting=podsetting, pod=body, logger=logger)
+            podsetting_utils.apply_settings_to_pod(namespace=ns, podsetting=podsetting, pod=mutable_body, logger=logger)
             applied_podsetting_names.append(podsetting["name"])
         except Exception as e:
-            logger.error("Error applying PodSetting %s: %s", podsetting["name"], str(e))
+            logger.exception("Error applying PodSetting %s: %s", podsetting["name"], str(e))
             warnings.append(f"Error applying PodSetting {podsetting['name']}: {str(e)}")
 
-    if body == modified_body:
+    if body_dict["spec"] == mutable_body["spec"] and body_dict["metadata"] == mutable_body["metadata"]:
         logger.warn("PodSetting Selectors matched the Pod but no changes were applied")
         warnings.append("PodSetting Selectors matched the Pod but no changes were applied")
         return patch
 
     patch["metadata"] = {}
     patch["metadata"]["annotations"] = {
-        **modified_body["metadata"].get("annotations", {}),
+        **mutable_body["metadata"].get("annotations", {}),
         **{"orbit/applied-podsettings": ",".join(applied_podsetting_names)},
     }
-    if "labels" in modified_body["metadata"]:
-        patch["metadata"]["labels"] = modified_body["meta"]
-    patch["spec"] = modified_body["spec"]
+    patch["metadata"]["annotations"] = {k.replace("/", "~1"): v for k, v in patch["metadata"]["annotations"].items()}
+
+    if "labels" in mutable_body["metadata"]:
+        patch["metadata"]["labels"] = {k.replace("/", "~1"): v for k, v in mutable_body["metadata"]["labels"].items()}
+
+    patch["spec"] = mutable_body["spec"]
 
     logger.info("Applying Patch %s", patch)
     return patch
