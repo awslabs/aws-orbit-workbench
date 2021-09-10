@@ -165,6 +165,7 @@ def deploy_foundation(
     ssl_cert_arn: Optional[str] = None,
     custom_domain_name: Optional[str] = None,
     max_availability_zones: Optional[int] = None,
+    role_prefix: Optional[str] = None,
 ) -> None:
     with MessagesContext("Deploying", debug=debug) as msg_ctx:
         msg_ctx.progress(2)
@@ -191,6 +192,7 @@ def deploy_foundation(
                 codeartifact_domain=codeartifact_domain,
                 codeartifact_repository=codeartifact_repository,
                 ssm_parameter_name=f"/orbit-f/{name}/manifest",
+                role_prefix=role_prefix,
                 networking=NetworkingManifest(
                     max_availability_zones=max_availability_zones,
                     frontend=FrontendNetworkingManifest(

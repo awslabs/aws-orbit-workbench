@@ -300,6 +300,8 @@ Resources:
               - iam:ListAttachedRolePolicies
               - iam:UpdateAssumeRolePolicy
             Resource:
+              - arn:aws:iam::${account_id}:role${role_prefix}${top_level}-${env_name}-*
+              - arn:aws:iam::${account_id}:role${role_prefix}eksctl-${top_level}-${env_name}-*
               - arn:aws:iam::${account_id}:role/${top_level}-${env_name}-*
               - arn:aws:iam::${account_id}:role/eksctl-${top_level}-${env_name}-*
               - arn:aws:iam::${account_id}:role/kf-user-${region}-${top_level}-${env_name}
@@ -334,7 +336,7 @@ Resources:
             Action:
               - sts:AssumeRole
             Resource:
-              - arn:aws:iam::${account_id}:role/${top_level}-${env_name}-${region}-admin
+              - arn:aws:iam::${account_id}:role${role_prefix}${top_level}-${env_name}-${region}-admin
         Version: '2012-10-17'
       Description: ''
       ManagedPolicyName: ${top_level}-${env_name}-${region}-admin-iam-s3
@@ -342,7 +344,7 @@ Resources:
   AdminRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: /
+      Path: ${role_prefix}
       ManagedPolicyArns:
         - Ref: OrbitAdminPolicyOther
         - Ref: OrbitAdminPolicyIAMS3
@@ -376,7 +378,7 @@ Resources:
         - Key: Env
           Value: ${top_level}-${env_name}
       Description: Orbit Workbench CLI backend.
-      ServiceRole: !Ref AdminRole
+      ServiceRole: !GetAtt AdminRole.Arn
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
@@ -460,6 +462,13 @@ Outputs:
     Value: !Ref AdminRole
     Export:
       Name: ${top_level}-${env_name}-admin-role
+  AdminRoleArn:
+    Value:
+      Fn::GetAtt:
+        - AdminRole
+        - Arn
+    Export:
+      Name: ${top_level}-${env_name}-admin-role-arn
   KmsKeyArn:
     Value:
       Fn::GetAtt:

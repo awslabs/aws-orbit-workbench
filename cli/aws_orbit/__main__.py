@@ -272,6 +272,11 @@ def deploy_env(
     help="The Custom Domain Name to associate the orbit framework with",
 )
 @click.option(
+    "--role-prefix",
+    type=str,
+    help="The Prefix to attach to the IAM Role",
+)
+@click.option(
     "--internet-accessibility/--no-internet-accessibility",
     default=True,
     help="Configure for deployment to Private (internet accessibility) "
@@ -302,6 +307,7 @@ def deploy_foundation(
     ssl_cert_arn: Optional[str] = None,
     custom_domain_name: Optional[str] = None,
     max_availability_zones: Optional[int] = None,
+    role_prefix: Optional[str] = None,
 ) -> None:
     """Deploy a Orbit Workbench foundation based on a manisfest file (yaml)."""
     if debug:
@@ -319,6 +325,7 @@ def deploy_foundation(
     _logger.debug("ssl_cert_arn: %s", ssl_cert_arn)
     _logger.debug("custom_domain_name: %s", custom_domain_name)
     _logger.debug("max_availability_zones: %s", max_availability_zones)
+    _logger.debug("role_prefix: %s", role_prefix)
     deploy_commands.deploy_foundation(
         filename=filename,
         name=name,
@@ -329,6 +336,7 @@ def deploy_foundation(
         debug=debug,
         internet_accessibility=internet_accessibility,
         max_availability_zones=max_availability_zones,
+        role_prefix=role_prefix,
     )
 
 

@@ -14,7 +14,7 @@ metadata:
   name: orbit-${env_name}-admin
   namespace: orbit-system
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::${account_id}:role/orbit-${env_name}-${region}-admin
+    eks.amazonaws.com/role-arn: arn:aws:iam::${account_id}:role${role_prefix}orbit-${env_name}-${region}-admin
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

@@ -192,6 +192,7 @@ class NetworkingManifest:
 class FoundationManifest:
     Schema: ClassVar[Type[Schema]] = Schema
     name: str
+    role_prefix: Optional[str] = None
     codeartifact_domain: Optional[str] = None
     codeartifact_repository: Optional[str] = None
     images: FoundationImagesManifest = FoundationImagesManifest()
@@ -204,6 +205,7 @@ class FoundationManifest:
 class Manifest:
     Schema: ClassVar[Type[Schema]] = Schema
     name: str
+    role_prefix: Optional[str] = None
     user_pool_id: Optional[str] = None
     scratch_bucket_arn: Optional[str] = None
     eks_system_masters_roles: Optional[List[str]] = cast(List[str], field(default_factory=list))
