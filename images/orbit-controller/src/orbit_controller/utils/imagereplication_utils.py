@@ -50,7 +50,13 @@ def _generate_buildspec(repo_host: str, repo_prefix: str, src: str, dest: str) -
                     ),
                 ]
             },
-            "build": {"commands": [f"docker pull {src}", f"docker tag {src} {dest}", f"docker push {dest}"]},
+            "build": {
+                "commands": [
+                    f"docker pull {src}",
+                    f"docker tag {src} {dest}",
+                    f"docker push {dest}",
+                ]
+            },
         },
     }
     return build_spec
@@ -65,7 +71,12 @@ def _patch_imagereplication(
 ) -> None:
     api = client.resources.get(group=ORBIT_API_GROUP, api_version=ORBIT_API_VERSION, kind="ImageReplication")
     logger.debug("Patching %s/%s with %s", namespace, name, patch)
-    api.patch(namespace=namespace, name=name, body=patch, content_type="application/merge-patch+json")
+    api.patch(
+        namespace=namespace,
+        name=name,
+        body=patch,
+        content_type="application/merge-patch+json",
+    )
 
 
 def get_config() -> Dict[str, Any]:
@@ -109,12 +120,16 @@ def get_desired_image(image: str, config: Dict[str, Any]) -> str:
     elif external_ecr_match.match(image):
         if config["replicate_external_repos"]:
             return external_ecr_match.sub(
-                f"{config['repo_host']}/{config['repo_prefix']}/", image.replace("@sha256", "")
+                f"{config['repo_host']}/{config['repo_prefix']}/",
+                image.replace("@sha256", ""),
             )
         else:
             return image
     elif public_ecr_match.match(image):
-        return public_ecr_match.sub(f"{config['repo_host']}/{config['repo_prefix']}/", image.replace("@sha256", ""))
+        return public_ecr_match.sub(
+            f"{config['repo_host']}/{config['repo_prefix']}/",
+            image.replace("@sha256", ""),
+        )
     else:
         return f"{config['repo_host']}/{config['repo_prefix']}/{image.replace('@sha256', '')}"
 

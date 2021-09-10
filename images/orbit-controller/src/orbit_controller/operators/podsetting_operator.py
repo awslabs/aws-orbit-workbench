@@ -42,7 +42,13 @@ def namespaces_idx(
     name: str, annotations: Dict[str, str], labels: Dict[str, str], **_: Any
 ) -> Dict[str, Dict[str, Any]]:
     """Index of user namespaces by team"""
-    return {labels["orbit/teams"]: {"name": name, "annotations": annotations, "labels": labels}}
+    return {
+        labels["orbit/teams"]: {
+            "name": name,
+            "annotations": annotations,
+            "labels": labels,
+        }
+    }
 
 
 def _should_process_podsetting(labels: Dict[str, str], status: kopf.Status, **_: Any) -> bool:
@@ -66,10 +72,6 @@ def create_poddefaults(
     namespaces_idx: kopf.Index[str, Dict[str, Any]],
     **_: Any,
 ) -> str:
-    # poddefaults_created = status.get("podDefaultsCreated", None)
-    # if poddefaults_created is not None:
-    #     return "PodDefaultsPreviouslyCreated"
-
     team = labels.get("orbit/team", None)
     if team is None:
         logger.error("Missing required orbit/team label")
@@ -78,7 +80,9 @@ def create_poddefaults(
 
     # Contruct a pseudo poddefault for the team to be copied to users
     poddefault = poddefault_utils.construct(
-        name=name, desc=spec.get("desc", ""), labels={"orbit/space": "team", "orbit/team": team}
+        name=name,
+        desc=spec.get("desc", ""),
+        labels={"orbit/space": "team", "orbit/team": team},
     )
     user_namespaces = [ns.get("name") for ns in namespaces_idx.get(team, [])]
     poddefault_utils.copy_poddefaults_to_user_namespaces(
@@ -109,11 +113,16 @@ def update_poddefaults(
 
     # Contruct a pseudo poddefault for the team to be copied to users
     poddefault = poddefault_utils.construct(
-        name=name, desc=spec.get("desc", ""), labels={"orbit/space": "team", "orbit/team": team}
+        name=name,
+        desc=spec.get("desc", ""),
+        labels={"orbit/space": "team", "orbit/team": team},
     )
     user_namespaces = [namespace["name"] for namespace in namespaces_idx.get(team, [])]
     poddefault_utils.modify_poddefaults_in_user_namespaces(
-        poddefaults=[poddefault], user_namespaces=user_namespaces, client=dynamic_client(), logger=logger
+        poddefaults=[poddefault],
+        user_namespaces=user_namespaces,
+        client=dynamic_client(),
+        logger=logger,
     )
 
     return "PodDefaultsUpdated"
@@ -136,11 +145,16 @@ def delete_poddefaults(
 
     # Contruct a pseudo poddefault for the team to be deleted from users
     poddefault = poddefault_utils.construct(
-        name=name, desc=spec.get("desc", ""), labels={"orbit/space": "team", "orbit/team": team}
+        name=name,
+        desc=spec.get("desc", ""),
+        labels={"orbit/space": "team", "orbit/team": team},
     )
     user_namespaces = [namespace["name"] for namespace in namespaces_idx.get(team, [])]
     poddefault_utils.delete_poddefaults_from_user_namespaces(
-        poddefaults=[poddefault], user_namespaces=user_namespaces, client=dynamic_client(), logger=logger
+        poddefaults=[poddefault],
+        user_namespaces=user_namespaces,
+        client=dynamic_client(),
+        logger=logger,
     )
 
     return "PodDefaultsDeleted"

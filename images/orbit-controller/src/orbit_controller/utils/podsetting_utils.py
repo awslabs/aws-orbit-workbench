@@ -85,17 +85,20 @@ def filter_podsettings(
             continue
         elif selector_labels == {} and selector_expressions == []:
             logger.debug(
-                "NoHit: PodSetting contains no podSelectors to match against. PodSetting: %s", podsetting["name"]
+                "NoHit: PodSetting contains no podSelectors to match against. PodSetting: %s",
+                podsetting["name"],
             )
             continue
         elif not labels_match(pod_labels, selector_labels):
             logger.debug(
-                "NoHit: Pod labels and PodSetting matchLabels do not match. PodSetting: %s", podsetting["name"]
+                "NoHit: Pod labels and PodSetting matchLabels do not match. PodSetting: %s",
+                podsetting["name"],
             )
             continue
         elif not expressions_match(pod_labels, selector_expressions):
             logger.debug(
-                "NoHit: Pod labels and PodSetting matchExpressions do not match. PodSetting: %s", podsetting["name"]
+                "NoHit: Pod labels and PodSetting matchExpressions do not match. PodSetting: %s",
+                podsetting["name"],
             )
             continue
         else:
@@ -200,14 +203,22 @@ def apply_settings_to_pod(
         container_selector=ps_spec.get("containerSelector", {}),
     ):
         apply_settings_to_container(namespace=namespace, podsetting=podsetting, pod=pod, container=container)
-        logger.info("Applied PodSetting %s to InitContainer %s", podsetting["name"], container["name"])
+        logger.info(
+            "Applied PodSetting %s to InitContainer %s",
+            podsetting["name"],
+            container["name"],
+        )
     for container in filter_pod_containers(
         containers=pod_spec.get("containers", []),
         pod=pod,
         container_selector=ps_spec.get("containerSelector", {}),
     ):
         apply_settings_to_container(namespace=namespace, podsetting=podsetting, pod=pod, container=container)
-        logger.info("Applied PodSetting %s to Container %s", podsetting["name"], container["name"])
+        logger.info(
+            "Applied PodSetting %s to Container %s",
+            podsetting["name"],
+            container["name"],
+        )
     logger.info("Applied PodSetting %s to Pod", podsetting["name"])
 
 

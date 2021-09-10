@@ -45,14 +45,27 @@ def construct(
 
 
 def create_poddefault(
-    namespace: str, poddefault: Dict[str, Any], client: dynamic.DynamicClient, logger: kopf.Logger
+    namespace: str,
+    poddefault: Dict[str, Any],
+    client: dynamic.DynamicClient,
+    logger: kopf.Logger,
 ) -> None:
     api = client.resources.get(api_version=KUBEFLOW_API_VERSION, group=KUBEFLOW_API_GROUP, kind="PodDefault")
     api.create(namespace=namespace, body=poddefault)
-    logger.debug("Created PodDefault: %s in Namespace: %s", poddefault["metadata"]["name"], namespace)
+    logger.debug(
+        "Created PodDefault: %s in Namespace: %s",
+        poddefault["metadata"]["name"],
+        namespace,
+    )
 
 
-def modify_poddefault(namespace: str, name: str, desc: str, client: dynamic.DynamicClient, logger: kopf.Logger) -> None:
+def modify_poddefault(
+    namespace: str,
+    name: str,
+    desc: str,
+    client: dynamic.DynamicClient,
+    logger: kopf.Logger,
+) -> None:
     api = client.resources.get(api_version=KUBEFLOW_API_VERSION, group=KUBEFLOW_API_GROUP, kind="PodDefault")
     patch = {"spec": {"desc": desc}}
     api.patch(namespace=namespace, name=name, body=patch)
@@ -66,10 +79,15 @@ def delete_poddefault(namespace: str, name: str, client: dynamic.DynamicClient, 
 
 
 def copy_poddefaults_to_user_namespaces(
-    poddefaults: List[Dict[str, Any]], user_namespaces: List[str], client: DynamicClient, logger: kopf.Logger
+    poddefaults: List[Dict[str, Any]],
+    user_namespaces: List[str],
+    client: DynamicClient,
+    logger: kopf.Logger,
 ) -> None:
     logger.debug(
-        "Copying PodDefaults %s to user Namespaces %s", [pd["metadata"]["name"] for pd in poddefaults], user_namespaces
+        "Copying PodDefaults %s to user Namespaces %s",
+        [pd["metadata"]["name"] for pd in poddefaults],
+        user_namespaces,
     )
     for poddefault in poddefaults:
         for namespace in user_namespaces:
@@ -82,7 +100,12 @@ def copy_poddefaults_to_user_namespaces(
                         "orbit/team": poddefault["metadata"]["labels"].get("orbit/team", None),
                     },
                 }
-                create_poddefault(namespace=namespace, poddefault=construct(**kwargs), client=client, logger=logger)
+                create_poddefault(
+                    namespace=namespace,
+                    poddefault=construct(**kwargs),
+                    client=client,
+                    logger=logger,
+                )
             except Exception as e:
                 logger.warn(
                     "Unable to create PodDefault %s in Namespace %s: %s",
@@ -93,7 +116,10 @@ def copy_poddefaults_to_user_namespaces(
 
 
 def modify_poddefaults_in_user_namespaces(
-    poddefaults: List[Dict[str, Any]], user_namespaces: List[str], client: DynamicClient, logger: kopf.Logger
+    poddefaults: List[Dict[str, Any]],
+    user_namespaces: List[str],
+    client: DynamicClient,
+    logger: kopf.Logger,
 ) -> None:
     logger.debug(
         "Modifying PodDefaults %s in user Namespaces %s",
@@ -120,7 +146,10 @@ def modify_poddefaults_in_user_namespaces(
 
 
 def delete_poddefaults_from_user_namespaces(
-    poddefaults: List[Dict[str, Any]], user_namespaces: List[str], client: DynamicClient, logger: kopf.Logger
+    poddefaults: List[Dict[str, Any]],
+    user_namespaces: List[str],
+    client: DynamicClient,
+    logger: kopf.Logger,
 ) -> None:
     logger.debug(
         "Deleting PodDefaults %s from user Namespaces %s",
@@ -131,7 +160,10 @@ def delete_poddefaults_from_user_namespaces(
         for namespace in user_namespaces:
             try:
                 delete_poddefault(
-                    namespace=namespace, name=poddefault["metadata"]["name"], client=client, logger=logger
+                    namespace=namespace,
+                    name=poddefault["metadata"]["name"],
+                    client=client,
+                    logger=logger,
                 )
             except Exception as e:
                 logger.warn(

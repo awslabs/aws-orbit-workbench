@@ -25,7 +25,10 @@ from orbit_controller.utils import podsetting_utils
 @kopf.on.startup()
 def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) -> None:
     settings.admission.server = kopf.WebhookServer(
-        cafile="/certs/ca.crt", certfile="/certs/tls.crt", pkeyfile="/certs/tls.key", port=443
+        cafile="/certs/ca.crt",
+        certfile="/certs/tls.crt",
+        pkeyfile="/certs/tls.key",
+        port=443,
     )
     settings.persistence.progress_storage = kopf.MultiProgressStorage(
         [
@@ -54,7 +57,14 @@ def podsettings_idx(
     namespace: str, name: str, labels: Dict[str, str], spec: kopf.Spec, **_: Any
 ) -> Optional[Dict[str, Dict[str, Any]]]:
     """Index of podsettings by team"""
-    return {labels["orbit/team"]: {"namespace": namespace, "name": name, "labels": labels, "spec": spec}}
+    return {
+        labels["orbit/team"]: {
+            "namespace": namespace,
+            "name": name,
+            "labels": labels,
+            "spec": spec,
+        }
+    }
 
 
 @kopf.on.mutate("pods", id="apply-pod-settings")  # type: ignore
@@ -74,7 +84,9 @@ def update_pod_images(
         logger.debug("DryRun - Skip Pod Mutation")
         return patch
 
-    for ns in namespaces_idx.get(namespace, [{}]):
+    # This is a hack to get the only namespace from the index Store
+    ns: Dict[str, Any] = {}
+    for ns in cast(List[Dict[str, Any]], namespaces_idx.get(namespace, [{}])):
         logger.debug("Namespace: %s", ns)
 
     team = ns.get("labels", {}).get("orbit/team", None)
@@ -99,7 +111,7 @@ def update_pod_images(
     applied_podsetting_names = []
     body_dict = {
         "metadata": {k: v for k, v in body["metadata"].items()},
-        "spec": {k: v for k, v in body["spec"].items()}
+        "spec": {k: v for k, v in body["spec"].items()},
     }
     logger.debug("BodyDict: %s", body_dict)
     mutable_body = deepcopy(body)

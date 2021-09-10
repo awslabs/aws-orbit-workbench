@@ -23,7 +23,7 @@ from typing import Any, Dict, Optional
 import kopf
 from kubernetes.client import CoreV1Api, V1ConfigMap
 from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, dynamic_client, load_config, run_command
-from orbit_controller.utils import poddefault_utils
+from orbit_controller.utils import poddefault_utils, userspace_utils
 
 
 @kopf.on.startup()
@@ -47,7 +47,14 @@ def podsettings_idx(
     namespace: str, name: str, labels: Dict[str, str], spec: kopf.Spec, **_: Any
 ) -> Optional[Dict[str, Dict[str, Any]]]:
     """Index of podsettings by team"""
-    return {labels["orbit/team"]: {"namespace": namespace, "name": name, "labels": labels, "spec": spec}}
+    return {
+        labels["orbit/team"]: {
+            "namespace": namespace,
+            "name": name,
+            "labels": labels,
+            "spec": spec,
+        }
+    }
 
 
 def _install_helm_chart(
@@ -152,6 +159,21 @@ def install_team_charts(
         patch["metadata"] = {"annotations": {"orbit/helm-chart-installation": "Skipped"}}
         return "Skipping"
 
+    client = dynamic_client()
+    userspace = userspace_utils.construct(
+        name=name,
+        env=env,
+        space=space,
+        team=team,
+        user=user,
+        user_efsapid=user_efsapid,
+        user_email=user_email,
+    )
+    try:
+        userspace_utils.create_userspace(namespace=name, userspace=userspace, client=client, logger=logger)
+    except Exception as e:
+        logger.warn("Failed to create UserSpace %s: %s", name, str(e))
+
     team_context = _get_team_context(team=team, logger=logger)
     logger.info("team context keys: %s", team_context.keys())
     helm_repo_url = team_context["UserHelmRepository"]
@@ -192,7 +214,6 @@ def install_team_charts(
             logger.info("Helm release %s installed at %s", helm_release, name)
 
     logger.info("Copying PodDefaults from Team")
-    client = dynamic_client()
     # Construct pseudo poddefaults for each podsetting in the team namespace
     poddefaults = [
         poddefault_utils.construct(
@@ -212,7 +233,11 @@ def install_team_charts(
 
 @kopf.on.delete("namespaces", labels={"orbit/space": kopf.PRESENT})  # type: ignore
 def uninstall_team_charts(
-    name: str, annotations: Dict[str, str], labels: Dict[str, str], logger: kopf.Logger, **_: Any
+    name: str,
+    annotations: Dict[str, str],
+    labels: Dict[str, str],
+    logger: kopf.Logger,
+    **_: Any,
 ) -> str:
     logger.debug("loading kubeconfig")
     load_config()
@@ -224,7 +249,7 @@ def uninstall_team_charts(
         logger.info("delete all namespaces that belong to the team %s", name)
         run_command(f"kubectl delete profile -l orbit/team={name}")
         time.sleep(60)
-        run_command(f"kubectl delete namespace -l orbit/team={name}")
+        run_command(f"kubectl delete namespace -l orbit/team={name},orbit/space=user")
         logger.info("all namespaces that belong to the team %s are deleted", name)
     elif space == "user":
         env = labels.get("orbit/env", None)

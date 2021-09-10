@@ -146,8 +146,8 @@ spec:
               cpu: 2
               memory: 2Gi
             requests:
-              cpu: 500m
-              memory: 500Mi
+              cpu: 200m
+              memory: 256Mi
       nodeSelector:
         orbit/usage: reserved
         orbit/node-group: env
@@ -217,8 +217,8 @@ spec:
               cpu: 2
               memory: 2Gi
             requests:
-              cpu: 500m
-              memory: 500Mi
+              cpu: 200m
+              memory: 256Mi
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -261,10 +261,153 @@ spec:
             - "--log-format=json"
             - "--module=orbit_controller.operators.podsetting_operator"
             - "--verbose"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 600
           resources:
             limits:
               cpu: 2
               memory: 2Gi
             requests:
-              cpu: 500m
-              memory: 500Mi
+              cpu: 200m
+              memory: 256Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: orbit-controller
+  namespace: orbit-system
+  name: teamspace-operator
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: teamspace-operator
+  template:
+    metadata:
+      labels:
+        app: teamspace-operator
+      name: teamspace-operator
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: orbit-${env_name}-admin
+      nodeSelector:
+        orbit/usage: reserved
+        orbit/node-group: env
+      containers:
+        - name: controller
+          image: ${orbit_controller_image}
+          imagePullPolicy: ${image_pull_policy}
+          envFrom:
+            - configMapRef:
+                name: orbit-controller-config
+          command:
+            - kopf
+            - run
+          args:
+            - "--liveness=http://0.0.0.0:8080/healthz"
+            - "--log-format=json"
+            - "--module=orbit_controller.operators.teamspace_operator"
+            - "--verbose"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 600
+          resources:
+            limits:
+              cpu: 2
+              memory: 2Gi
+            requests:
+              cpu: 200m
+              memory: 256Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: orbit-controller
+  namespace: orbit-system
+  name: userspace-operator
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: userspace-operator
+  template:
+    metadata:
+      labels:
+        app: userspace-operator
+      name: userspace-operator
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: orbit-${env_name}-admin
+      nodeSelector:
+        orbit/usage: reserved
+        orbit/node-group: env
+      containers:
+        - name: controller
+          image: ${orbit_controller_image}
+          imagePullPolicy: ${image_pull_policy}
+          envFrom:
+            - configMapRef:
+                name: orbit-controller-config
+          command:
+            - kopf
+            - run
+          args:
+            - "--liveness=http://0.0.0.0:8080/healthz"
+            - "--log-format=json"
+            - "--module=orbit_controller.operators.userspace_operator"
+            - "--verbose"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 600
+          resources:
+            limits:
+              cpu: 2
+              memory: 2Gi
+            requests:
+              cpu: 200m
+              memory: 256Mi

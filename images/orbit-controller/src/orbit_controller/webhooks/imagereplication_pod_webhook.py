@@ -27,7 +27,10 @@ CONFIG: Dict[str, Any]
 @kopf.on.startup()
 def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) -> None:
     settings.admission.server = kopf.WebhookServer(
-        cafile="/certs/ca.crt", certfile="/certs/tls.crt", pkeyfile="/certs/tls.key", port=443
+        cafile="/certs/ca.crt",
+        certfile="/certs/tls.crt",
+        pkeyfile="/certs/tls.key",
+        port=443,
     )
     settings.persistence.progress_storage = kopf.MultiProgressStorage(
         [
@@ -103,7 +106,11 @@ def update_pod_images(
         for source, destination in replications.items():
             if not imagereplications_idx.get(destination, []):
                 imagereplication_utils.create_imagereplication(
-                    namespace="orbit-system", source=source, destination=destination, client=client, logger=logger
+                    namespace="orbit-system",
+                    source=source,
+                    destination=destination,
+                    client=client,
+                    logger=logger,
                 )
             else:
                 logger.debug("Skipping ImageReplication Creation")

@@ -54,9 +54,27 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
     _set_globals(logger=logger)
 
 
-@kopf.on.resume(ORBIT_API_GROUP, ORBIT_API_VERSION, "imagereplications", field="status.replication", value=kopf.ABSENT)
-@kopf.on.create(ORBIT_API_GROUP, ORBIT_API_VERSION, "imagereplications", field="status.replication", value=kopf.ABSENT)
-def replication_checker(spec: kopf.Spec, status: kopf.Status, patch: kopf.Patch, logger: kopf.Logger, **_: Any) -> str:
+@kopf.on.resume(
+    ORBIT_API_GROUP,
+    ORBIT_API_VERSION,
+    "imagereplications",
+    field="status.replication",
+    value=kopf.ABSENT,
+)
+@kopf.on.create(
+    ORBIT_API_GROUP,
+    ORBIT_API_VERSION,
+    "imagereplications",
+    field="status.replication",
+    value=kopf.ABSENT,
+)
+def replication_checker(
+    spec: kopf.Spec,
+    status: kopf.Status,
+    patch: kopf.Patch,
+    logger: kopf.Logger,
+    **_: Any,
+) -> str:
     if status.get("replication", None) is not None:
         return cast(str, status["replication"].get("replicationStatus", "Unknown"))
 
@@ -112,12 +130,21 @@ def _needs_rescheduling(status: kopf.Status, **_: Any) -> bool:
     if replication:
         replication_status = replication.get("replicationStatus", None)
         attempt = replication.get("attempt", 0)
-        return cast(bool, replication_status == "Failed" and attempt <= CONFIG["max_replication_attempts"])
+        return cast(
+            bool,
+            replication_status == "Failed" and attempt <= CONFIG["max_replication_attempts"],
+        )
     else:
         return False
 
 
-@kopf.timer(ORBIT_API_GROUP, ORBIT_API_VERSION, "imagereplications", interval=5, when=_needs_rescheduling)
+@kopf.timer(
+    ORBIT_API_GROUP,
+    ORBIT_API_VERSION,
+    "imagereplications",
+    interval=5,
+    when=_needs_rescheduling,
+)
 def rescheduler(status: kopf.Status, patch: kopf.Patch, logger: kopf.Logger, **_: Any) -> str:
     logger.debug("Rescheduling")
     replication = status.get("replication", {})
@@ -141,7 +168,13 @@ def rescheduler(status: kopf.Status, patch: kopf.Patch, logger: kopf.Logger, **_
     field="status.replication.replicationStatus",
     value="Scheduled",
 )
-def codebuild_runner(spec: kopf.Spec, patch: kopf.Patch, status: kopf.Status, logger: kopf.Logger, **_: Any) -> str:
+def codebuild_runner(
+    spec: kopf.Spec,
+    patch: kopf.Patch,
+    status: kopf.Status,
+    logger: kopf.Logger,
+    **_: Any,
+) -> str:
     replication = status.get("replication", {})
 
     build_id, error = imagereplication_utils.replicate_image(
@@ -192,7 +225,11 @@ def codebuild_monitor(status: kopf.Status, patch: kopf.Patch, logger: kopf.Logge
             WORKERS_IN_PROCESS -= 1
         codebuild_attempts = replication.get("codeBuildAttempts", [])
         codebuild_attempts.append(
-            {"codeBuildId": build_id, "codeBuildStatus": build["buildStatus"], "codeBuildPhase": build["currentPhase"]}
+            {
+                "codeBuildId": build_id,
+                "codeBuildStatus": build["buildStatus"],
+                "codeBuildPhase": build["currentPhase"],
+            }
         )
         replication["codeBuildAttempts"] = codebuild_attempts
         replication["replicationStatus"] = "Complete" if build["buildStatus"] == "SUCCEEDED" else "Failed"
@@ -224,7 +261,11 @@ def replication_worker(queue: Queue, statuses: Dict[str, Any], logger: logging.L
                 continue
             status = patch
             namespace, name = imagereplication_utils.create_imagereplication(
-                namespace="orbit-system", source=source, destination=destination, client=client, logger=logger
+                namespace="orbit-system",
+                source=source,
+                destination=destination,
+                client=client,
+                logger=logger,
             )
             statuses[destination]["namespace"] = namespace
             statuses[destination]["name"] = name
@@ -266,7 +307,10 @@ def replication_worker(queue: Queue, statuses: Dict[str, Any], logger: logging.L
 
         patch = {}
         replication_status = codebuild_runner(  # type: ignore
-            spec=cast(kopf.Spec, spec), status=status["status"], patch=cast(kopf.Patch, patch), logger=logger
+            spec=cast(kopf.Spec, spec),
+            status=status["status"],
+            patch=cast(kopf.Patch, patch),
+            logger=logger,
         )
         status = {**status, **patch}
         imagereplication_utils.update_imagereplication_status(
@@ -337,7 +381,11 @@ if __name__ == "__main__":
             desired_image = imagereplication_utils.get_desired_image(image=source_image, config=CONFIG)
             if source_image != desired_image:
                 logger.debug("Queueing: %s", desired_image)
-                statuses[desired_image] = {"source": source_image, "destination": desired_image, "status": None}
+                statuses[desired_image] = {
+                    "source": source_image,
+                    "destination": desired_image,
+                    "status": None,
+                }
                 queue.put(desired_image)
 
     for i in range(CONFIG["workers"]):

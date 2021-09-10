@@ -1,4 +1,4 @@
-f#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License").
 #    You may not use this file except in compliance with the License.
@@ -584,13 +584,18 @@ def deploy_env(context: "Context") -> None:
         # Commented until we confirm this isn't needed
         # Restart orbit-system deployments and statefulsets to force reload of caches etc
         # sh.run(f"kubectl rollout restart deployments -n orbit-system --context {k8s_context}")
-        # sh.run(f"kubectl rollout restart statefulsets -n orbit-system --context {k8s_context}")
 
         _confirm_readiness(
             name="namespace-controller", namespace="orbit-system", type="deployment", k8s_context=k8s_context
         )
         _confirm_readiness(
             name="podsetting-operator", namespace="orbit-system", type="deployment", k8s_context=k8s_context
+        )
+        _confirm_readiness(
+            name="teamspace-operator", namespace="orbit-system", type="deployment", k8s_context=k8s_context
+        )
+        _confirm_readiness(
+            name="userspace-operator", namespace="orbit-system", type="deployment", k8s_context=k8s_context
         )
         _confirm_endpoints(name="podsetting-pod-webhook", namespace="orbit-system", k8s_context=k8s_context)
 
