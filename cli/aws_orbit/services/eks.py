@@ -150,6 +150,7 @@ def delete_fargate_profile(
         _logger.debug(f"Checking {cluster_name} cluster current state")
         res = eks_client.describe_cluster(name=cluster_name)
         eks_status = res.get("cluster").get("status")
+        _logger.debug(f"{cluster_name} current state: {eks_status}")
 
         while eks_status != "ACTIVE" and timeout < 30:
             _logger.debug(f"EKS is an {eks_status} state. Retrying in 1min - attempt {timeout}")
