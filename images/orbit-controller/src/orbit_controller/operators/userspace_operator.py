@@ -33,10 +33,18 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
 
 
 @kopf.on.resume(
-    ORBIT_API_GROUP, ORBIT_API_VERSION, "userspaces", field="status.installation.installationStatus", value=kopf.ABSENT
+    ORBIT_API_GROUP,
+    ORBIT_API_VERSION,
+    "userspaces",
+    field="status.installation.installationStatus",
+    value=kopf.ABSENT,
 )
 @kopf.on.create(
-    ORBIT_API_GROUP, ORBIT_API_VERSION, "userspaces", field="status.installation.installationStatus", value=kopf.ABSENT
+    ORBIT_API_GROUP,
+    ORBIT_API_VERSION,
+    "userspaces",
+    field="status.installation.installationStatus",
+    value=kopf.ABSENT,
 )
 def install_team(patch: kopf.Patch, **_: Any) -> str:
     patch["status"] = {"installation": {"installationStatus": "Installed"}}
