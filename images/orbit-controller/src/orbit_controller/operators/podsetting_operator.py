@@ -12,7 +12,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import datetime
 import logging
 import os
 from typing import Any, Dict
@@ -30,6 +29,7 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
             kopf.StatusProgressStorage(field="status.orbit-aws"),
         ]
     )
+    settings.persistence.finalizer = "podsetting-operator.orbit.aws/kopf-finalizer"
     settings.posting.level = logging.getLevelName(os.environ.get("EVENT_LOG_LEVEL", "INFO"))
 
 
@@ -45,32 +45,12 @@ def namespaces_idx(
     return {labels["orbit/teams"]: {"name": name, "annotations": annotations, "labels": labels}}
 
 
-@kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings")  # type: ignore
-def podsettings_idx(
-    namespace: str, name: str, labels: Dict[str, str], spec: kopf.Spec, **_: Any
-) -> Dict[str, Dict[str, Any]]:
-    """Index of podsettings by namespace, name, and team"""
-    value = {"namespace": namespace, "name": name, "labels": labels, "spec": spec}
-    index = {f"namespace:{namespace}": value, f"name:{name}": value}
-    if labels.get("orbit/space", None) == "team" and "orbit/team" in labels:
-        index[f"team:{labels['orbit/teams']}"] = value
-    return index
-
-
-@kopf.index(poddefault_utils.KUBEFLOW_API_GROUP, poddefault_utils.KUBEFLOW_API_VERSION, "poddefaults")  # type: ignore
-def poddefaults_idx(
-    namespace: str, name: str, labels: Dict[str, str], spec: kopf.Spec, **_: Any
-) -> Dict[str, Dict[str, Any]]:
-    """Index of user poddefaults by team/name"""
-    value = {"namespace": namespace, "name": name, "labels": labels, "spec": spec}
-    index = {f"namespace:{namespace}": value, f"name:{name}": value}
-    if labels.get("orbit/space") == "user" and "orbit/team" in labels:
-        index[f"team:{labels['orbit/teams']}"] = value
-    return index
-
-
-def _should_process_podsetting(labels: Dict[str, str], **_: Any) -> bool:
-    return labels.get("orbit/space") == "team" and "orbit/disable-watcher" not in labels
+def _should_process_podsetting(labels: Dict[str, str], status: kopf.Status, **_: Any) -> bool:
+    return (
+        labels.get("orbit/space") == "team"
+        and "orbit/disable-watcher" not in labels
+        and "podDefaultsCreation" not in status
+    )
 
 
 @kopf.on.resume(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_process_podsetting)  # type: ignore
@@ -86,18 +66,19 @@ def create_poddefaults(
     namespaces_idx: kopf.Index[str, Dict[str, Any]],
     **_: Any,
 ) -> str:
-    poddefaults_created = status.get("podDefaultsCreated", None)
-    if poddefaults_created is not None:
-        return "PodDefaultsPreviouslyCreated"
+    # poddefaults_created = status.get("podDefaultsCreated", None)
+    # if poddefaults_created is not None:
+    #     return "PodDefaultsPreviouslyCreated"
 
     team = labels.get("orbit/team", None)
     if team is None:
         logger.error("Missing required orbit/team label")
+        patch["status"] = {"podDefaultsCreation": "MissingTeam"}
         return "MissingTeam"
 
     # Contruct a pseudo poddefault for the team to be copied to users
     poddefault = poddefault_utils.construct(
-        namesapce=namespace, name=name, desc=spec.get("desc", ""), labels={"orbit/space": "team", "orbit/team": team}
+        name=name, desc=spec.get("desc", ""), labels={"orbit/space": "team", "orbit/team": team}
     )
     user_namespaces = [ns.get("name") for ns in namespaces_idx.get(team, [])]
     poddefault_utils.copy_poddefaults_to_user_namespaces(
@@ -107,7 +88,7 @@ def create_poddefaults(
         logger=logger,
     )
 
-    patch["status"]["podDefaultsCreated"] = datetime.datetime.utcnow()
+    patch["status"] = {"podDefaultsCreation": "Complete"}
     return "PodDefaultsCreated"
 
 
@@ -128,7 +109,7 @@ def update_poddefaults(
 
     # Contruct a pseudo poddefault for the team to be copied to users
     poddefault = poddefault_utils.construct(
-        namesapce=namespace, name=name, desc=spec.get("desc", ""), labels={"orbit/space": "team", "orbit/team": team}
+        name=name, desc=spec.get("desc", ""), labels={"orbit/space": "team", "orbit/team": team}
     )
     user_namespaces = [namespace["name"] for namespace in namespaces_idx.get(team, [])]
     poddefault_utils.modify_poddefaults_in_user_namespaces(
@@ -155,7 +136,7 @@ def delete_poddefaults(
 
     # Contruct a pseudo poddefault for the team to be deleted from users
     poddefault = poddefault_utils.construct(
-        namesapce=namespace, name=name, desc=spec.get("desc", ""), labels={"orbit/space": "team", "orbit/team": team}
+        name=name, desc=spec.get("desc", ""), labels={"orbit/space": "team", "orbit/team": team}
     )
     user_namespaces = [namespace["name"] for namespace in namespaces_idx.get(team, [])]
     poddefault_utils.delete_poddefaults_from_user_namespaces(

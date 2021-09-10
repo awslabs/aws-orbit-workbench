@@ -49,6 +49,7 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
             kopf.StatusProgressStorage(field="status.orbit-aws"),
         ]
     )
+    settings.persistence.finalizer = "imagereplication-operator.orbit.aws/kopf-finalizer"
     settings.posting.level = logging.getLevelName(os.environ.get("EVENT_LOG_LEVEL", "INFO"))
     _set_globals(logger=logger)
 
@@ -143,7 +144,9 @@ def rescheduler(status: kopf.Status, patch: kopf.Patch, logger: kopf.Logger, **_
 def codebuild_runner(spec: kopf.Spec, patch: kopf.Patch, status: kopf.Status, logger: kopf.Logger, **_: Any) -> str:
     replication = status.get("replication", {})
 
-    build_id, error = imagereplication_utils.replicate_image(src=spec["source"], dest=spec["destination"])
+    build_id, error = imagereplication_utils.replicate_image(
+        src=spec["source"], dest=spec["destination"], config=CONFIG
+    )
 
     replication["replicationStatus"] = "Replicating"
     replication["codeBuildId"] = build_id
@@ -331,7 +334,7 @@ if __name__ == "__main__":
     with open(inventory_path, "r") as inventory:
         for source_image in inventory:
             source_image = source_image.strip()
-            desired_image = imagereplication_utils.get_desired_image(image=source_image)
+            desired_image = imagereplication_utils.get_desired_image(image=source_image, config=CONFIG)
             if source_image != desired_image:
                 logger.debug("Queueing: %s", desired_image)
                 statuses[desired_image] = {"source": source_image, "destination": desired_image, "status": None}

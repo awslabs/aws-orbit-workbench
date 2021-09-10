@@ -33,6 +33,7 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
             kopf.StatusProgressStorage(field="status.orbit-aws"),
         ]
     )
+    settings.persistence.finalizer = "podsetting-pod-webhook.orbit.aws/kopf-finalizer"
     settings.posting.level = logging.getLevelName(os.environ.get("EVENT_LOG_LEVEL", "INFO"))
 
 

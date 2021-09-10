@@ -21,11 +21,11 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: podsettings-pod-webhook
+  name: podsetting-pod-webhook
   namespace: orbit-system
 spec:
   selector:
-    app: podsettings-pod-webhook
+    app: podsetting-pod-webhook
   ports:
   - name: https
     protocol: TCP
@@ -36,26 +36,26 @@ apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
   labels:
-    app.kubernetes.io/name: podsettings-pod-webhook
-  name: podsettings-pod-webhook-cert
+    app.kubernetes.io/name: podsetting-pod-webhook
+  name: podsetting-pod-webhook-cert
   namespace: orbit-system
 spec:
   dnsNames:
-  - podsettings-pod-webhook.orbit-system.svc
-  - podsettings-pod-webhook.orbit-system.svc.cluster.local
+  - podsetting-pod-webhook.orbit-system.svc
+  - podsetting-pod-webhook.orbit-system.svc.cluster.local
   issuerRef:
     kind: ClusterIssuer
     name: orbit-self-signing-issuer
-  secretName: podsettings-pod-webhook-tls
+  secretName: podsetting-pod-webhook-tls
 ---
 kind: MutatingWebhookConfiguration
 apiVersion: admissionregistration.k8s.io/v1beta1
 metadata:
-  name: orbit-podsettings-pod-webhook
+  name: orbit-podsetting-pod-webhook
   annotations:
-    cert-manager.io/inject-ca-from: orbit-system/podsettings-pod-webhook-cert
+    cert-manager.io/inject-ca-from: orbit-system/podsetting-pod-webhook-cert
 webhooks:
-  - name: podsettings-pod-webhook.orbit-system.svc
+  - name: podsetting-pod-webhook.orbit-system.svc
     sideEffects: NoneOnDryRun
     reinvocationPolicy: IfNeeded
     failurePolicy: Fail
@@ -77,7 +77,7 @@ webhooks:
       caBundle: ""
       service:
         namespace: orbit-system
-        name: podsettings-pod-webhook
+        name: podsetting-pod-webhook
         path: /apply-pod-settings
 ---
 apiVersion: apps/v1
@@ -86,19 +86,19 @@ metadata:
   labels:
     app: orbit-controller
   namespace: orbit-system
-  name: podsettings-pod-webhook
+  name: podsetting-pod-webhook
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: podsettings-pod-webhook
+      app: podsetting-pod-webhook
   template:
     metadata:
       labels:
-        app: podsettings-pod-webhook
-      name: podsettings-pod-webhook
+        app: podsetting-pod-webhook
+      name: podsetting-pod-webhook
       annotations:
         sidecar.istio.io/inject: "false"
     spec:
@@ -125,7 +125,7 @@ spec:
           volumeMounts:
             - readOnly: true
               mountPath: /certs
-              name: podsettings-pod-webhook-certs
+              name: podsetting-pod-webhook-certs
           readinessProbe:
             httpGet:
               path: /healthz
@@ -152,9 +152,9 @@ spec:
         orbit/usage: reserved
         orbit/node-group: env
       volumes:
-        - name: podsettings-pod-webhook-certs
+        - name: podsetting-pod-webhook-certs
           secret:
-            secretName: podsettings-pod-webhook-tls
+            secretName: podsetting-pod-webhook-tls
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -197,6 +197,21 @@ spec:
             - "--log-format=json"
             - "--module=orbit_controller.controllers.namespace_controller"
             - "--verbose"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 600
           resources:
             limits:
               cpu: 2

@@ -15,6 +15,8 @@
 import json
 import logging
 import os
+import random
+import string
 import time
 from typing import Any, Dict, Optional
 
@@ -32,6 +34,7 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
             kopf.StatusProgressStorage(field="status.orbit-aws"),
         ]
     )
+    settings.persistence.finalizer = "namespace-controller.orbit.aws/kopf-finalizer"
     settings.posting.level = logging.getLevelName(os.environ.get("EVENT_LOG_LEVEL", "INFO"))
 
 
@@ -103,15 +106,21 @@ def _get_team_context(team: str, logger: kopf.Logger) -> Dict[str, Any]:
     return team_context
 
 
-@kopf.on.resume("namespaces", labels={"orbit/space": "user"})  # type: ignore
-@kopf.on.create("namespaces", labels={"orbit/space": "user"})
+def _should_process_namespace(annotations: Dict[str, str], labels: Dict[str, str], **_: Any) -> bool:
+    return "orbit/helm-chart-installation" not in annotations and labels.get("orbit/space", None) == "user"
+
+
+@kopf.on.resume("namespaces", when=_should_process_namespace)  # type: ignore
+@kopf.on.create("namespaces", when=_should_process_namespace)  # type: ignore
 def install_team_charts(
     name: str,
     annotations: Dict[str, str],
     labels: Dict[str, str],
+    patch: kopf.Patch,
     podsettings_idx: kopf.Index[str, Dict[str, Any]],
     logger: kopf.Logger,
-) -> None:
+    **_: Any,
+) -> str:
     logger.debug("loading kubeconfig")
     load_config()
 
@@ -131,16 +140,17 @@ def install_team_charts(
         logger.error(
             (
                 "All of env, space, team, user, user_efsapid, and user_email are required."
-                "Found: %s, %s, %s, %s, %s, %s, %s"
+                "Found: %s, %s, %s, %s, %s, %s"
             ),
             env,
             space,
             team,
             user,
-            user_email,
             user_efsapid,
+            user_email,
         )
-        return
+        patch["metadata"] = {"annotations": {"orbit/helm-chart-installation": "Skipped"}}
+        return "Skipping"
 
     team_context = _get_team_context(team=team, logger=logger)
     logger.info("team context keys: %s", team_context.keys())
@@ -148,14 +158,15 @@ def install_team_charts(
     logger.debug("Adding Helm Repository: %s at %s", team, helm_repo_url)
     repo = f"{team}--userspace"
     # add the team repo
+    unique_hash = "".join(random.choice(string.ascii_lowercase) for i in range(6))
     run_command(f"helm repo add {repo} {helm_repo_url}")
     run_command("helm repo update")
-    run_command(f"helm search repo --devel {repo} -o json > /tmp/charts.json")
-    with open("/tmp/charts.json", "r") as f:
+    run_command(f"helm search repo --devel {repo} -o json > /tmp/{unique_hash}-charts.json")
+    with open(f"/tmp/{unique_hash}-charts.json", "r") as f:
         charts = json.load(f)
 
-    run_command(f"helm list -n {team} -o json > /tmp/releases.json")
-    with open("/tmp/releases.json", "r") as f:
+    run_command(f"helm list -n {team} -o json > /tmp/{unique_hash}-releases.json")
+    with open(f"/tmp/{unique_hash}-releases.json", "r") as f:
         releaseList = json.load(f)
         releases = [r["name"] for r in releaseList]
         logger.info("current installed releases: %s", releases)
@@ -185,9 +196,8 @@ def install_team_charts(
     # Construct pseudo poddefaults for each podsetting in the team namespace
     poddefaults = [
         poddefault_utils.construct(
-            namesapce=ps["namespace"],
-            name=ps["names"],
-            desc=ps["spec"],
+            name=ps["name"],
+            desc=ps["spec"].get("desc", ""),
             labels={"orbit/space": "team", "orbit/team": team},
         )
         for ps in podsettings_idx.get(team, [])
@@ -196,9 +206,14 @@ def install_team_charts(
         client=client, poddefaults=poddefaults, user_namespaces=[name], logger=logger
     )
 
+    patch["metadata"] = {"annotations": {"orbit/helm-chart-installation": "Complete"}}
+    return "Complete"
+
 
 @kopf.on.delete("namespaces", labels={"orbit/space": kopf.PRESENT})  # type: ignore
-def uninstall_team_charts(name: str, annotations: Dict[str, str], labels: Dict[str, str], logger: kopf.Logger) -> None:
+def uninstall_team_charts(
+    name: str, annotations: Dict[str, str], labels: Dict[str, str], logger: kopf.Logger, **_: Any
+) -> str:
     logger.debug("loading kubeconfig")
     load_config()
 
@@ -228,19 +243,20 @@ def uninstall_team_charts(name: str, annotations: Dict[str, str], labels: Dict[s
                 user,
                 user_email,
             )
-            return
+            return "Skipping"
 
         team_context = _get_team_context(team=team, logger=logger)
         logger.info("team context keys: %s", team_context.keys())
         helm_repo_url = team_context["UserHelmRepository"]
         repo = f"{team}--userspace"
         # add the team repo
+        unique_hash = "".join(random.choice(string.ascii_lowercase) for i in range(6))
         run_command(f"helm repo add {repo} {helm_repo_url}")
-        run_command(f"helm search repo --devel {repo} -o json > /tmp/charts.json")
-        with open("/tmp/charts.json", "r") as f:
+        run_command(f"helm search repo --devel {repo} -o json > /tmp/{unique_hash}-charts.json")
+        with open(f"/tmp/{unique_hash}-charts.json", "r") as f:
             charts = json.load(f)
-        run_command(f"helm list -n {team} -o json > /tmp/releases.json")
-        with open("/tmp/releases.json", "r") as f:
+        run_command(f"helm list -n {team} -o json > /tmp/{unique_hash}-releases.json")
+        with open(f"/tmp/{unique_hash}-releases.json", "r") as f:
             releaseList = json.load(f)
             releases = [r["name"] for r in releaseList]
             logger.info("current installed releases: %s", releases)
@@ -250,3 +266,5 @@ def uninstall_team_charts(name: str, annotations: Dict[str, str], labels: Dict[s
             helm_release = f"{name}-{chart_name}"
             if helm_release in releases:
                 _uninstall_chart(helm_release=helm_release, namespace=team, logger=logger)
+
+    return "Complete"

@@ -79,7 +79,7 @@ def copy_poddefaults_to_user_namespaces(
                     "desc": poddefault["spec"]["desc"],
                     "labels": {
                         "orbit/space": "user",
-                        "orbit/team": poddefault["metadata"]["labels"].get("team", None),
+                        "orbit/team": poddefault["metadata"]["labels"].get("orbit/team", None),
                     },
                 }
                 create_poddefault(namespace=namespace, poddefault=construct(**kwargs), client=client, logger=logger)

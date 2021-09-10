@@ -21,6 +21,8 @@ import kopf
 from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, dynamic_client
 from orbit_controller.utils import imagereplication_utils
 
+CONFIG: Dict[str, Any]
+
 
 @kopf.on.startup()
 def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) -> None:
@@ -33,7 +35,12 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
             kopf.StatusProgressStorage(field="status.orbit-aws"),
         ]
     )
+    settings.persistence.finalizer = "imagereplication-pod-webhook.orbit.aws/kopf-finalizer"
     settings.posting.level = logging.getLevelName(os.environ.get("EVENT_LOG_LEVEL", "INFO"))
+
+    global CONFIG
+    CONFIG = imagereplication_utils.get_config()
+    logger.info("CONFIG: %s", CONFIG)
 
 
 def _check_replication_status(value: str, **_: Any) -> bool:
@@ -80,7 +87,7 @@ def update_pod_images(
     def process_containers(src_containers: List[Dict[str, Any]], dest_containers: List[Dict[str, Any]]) -> None:
         for container in src_containers:
             image = container.get("image", "")
-            desired_image = imagereplication_utils.get_desired_image(image=image)
+            desired_image = imagereplication_utils.get_desired_image(image=image, config=CONFIG)
             if image != desired_image:
                 container_copy = deepcopy(container)
                 container_copy["image"] = desired_image
