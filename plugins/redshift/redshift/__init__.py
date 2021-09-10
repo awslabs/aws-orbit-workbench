@@ -67,9 +67,11 @@ def destroy(
         for cluster in clusters:
             cluster_id = cluster["ClusterIdentifier"]
             _logger.debug(f"cluster_id={cluster_id}")
-            cluster_name = cluster_id if namespace in cluster_id else namespace + cluster_id
-            redshift.delete_cluster(ClusterIdentifier=cluster_name, SkipFinalClusterSnapshot=True)
-            _logger.debug(f"Delete redshift cluster_name={cluster_name}")
+            _logger.debug(f"namespace={namespace}")
+            if namespace in cluster_id:
+                cluster_name = cluster_id
+                redshift.delete_cluster(ClusterIdentifier=cluster_name, SkipFinalClusterSnapshot=True)
+                _logger.debug(f"Delete redshift cluster_name={cluster_name}")
         # Hold before destroying the redshift plugin resource.
         time.sleep(180)
         _logger.debug(f"Deleted {team_context.name} team redshift clusters")

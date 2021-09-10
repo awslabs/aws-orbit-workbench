@@ -54,7 +54,13 @@ def _orbit_system_commons_base(output_path: str, context: Context) -> None:
             content: str = file.read()
         content = resolve_parameters(
             content,
-            dict(account_id=context.account_id, region=context.region, env_name=context.name, secure_port="10260"),
+            dict(
+                account_id=context.account_id,
+                region=context.region,
+                env_name=context.name,
+                role_prefix=f"/{context.role_prefix}/" if context.role_prefix else "/",
+                secure_port="10260",
+            ),
         )
         with open(output, "w") as file:
             file.write(content)
@@ -189,6 +195,7 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
             efsprivateapid=team_context.efs_private_ap_id if team_context.efs_private_ap_id else "",
             account_id=context.account_id,
             env_name=context.name,
+            role_prefix=f"/{context.role_prefix}/" if context.role_prefix else "/",
             team_kms_key_arn=team_context.team_kms_key_arn,
             team_security_group_id=team_context.team_security_group_id,
             cluster_pod_security_group_id=context.cluster_pod_sg_id,
@@ -267,6 +274,7 @@ def _generate_kube_system_manifest(context: "Context", clean_up: bool = True) ->
             dict(
                 account_id=context.account_id,
                 region=context.region,
+                role_prefix=f"/{context.role_prefix}/" if context.role_prefix else "/",
                 env_name=context.name,
                 cluster_name=f"orbit-{context.name}",
                 sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
@@ -649,7 +657,10 @@ def deploy_env(context: "Context") -> None:
 
         # Patch Pods to push into Fargate when deploying in an isolated subnet
         if not context.networking.data.internet_accessible:
-            patch = '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}}}}}'
+            patch = (
+                '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}},'
+                '"spec":{"nodeSelector": null}}}}'
+            )
             sh.run(f"kubectl patch deployment -n istio-system authzadaptor --patch '{patch}'")
 
             patch = (

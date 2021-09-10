@@ -182,6 +182,11 @@ def install_team_charts(
     # add the team repo
     unique_hash = "".join(random.choice(string.ascii_lowercase) for i in range(6))
     run_command(f"helm repo add {repo} {helm_repo_url}")
+    try:
+        # In isolated envs, we cannot refresh stable, and since we don't use it, we remove it
+        run_command("helm repo remove stable")
+    except Exception:
+        logger.info("Tried to remove stable repo...got an error, but moving on")
     run_command("helm repo update")
     run_command(f"helm search repo --devel {repo} -o json > /tmp/{unique_hash}-charts.json")
     with open(f"/tmp/{unique_hash}-charts.json", "r") as f:

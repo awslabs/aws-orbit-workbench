@@ -9,17 +9,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - iamidentitymapping for team role to team RoleBinding and ClusterRoleBinding
 - ImageReplication Operator and informative CRDs
 - Opttional removal of docker credentials on env destroy
-
+- Lens support in jupyter-user-apps
 ### **Changed**
+
 - FIX: overprovisioning fixed to support gpu
 - FIX: force support pods (istio-system,knative-serving, etc.) to run on ENV nodes
 - FIX: remove system:masters group from team -runner role mappings
 - FIX: alb-ingress-controller deployment in isolated env
 - FIX: fsx csi driver changes and helm chart cache refresh in the orbit-controller
 - FIX: podsettings call typos
-
+- FIX: added suppprt for sql parameters in magics (ddl and create_external_table --- database.py)
+- FIX: added suppprt for  parameters in magics (run_notebooks and schedule_notebooks --- orbit.py)
+- FIX: Example-6-Schedule-Notebook, removed git:// reference
+- FIX: ecr repo filter logic used to delete existing env repos
+- FIX: make sure Laekformation regression tests do not run in -iso envs
 ### **Removed**
-- removed: changes to team-script-launcher...filesystem is now always used
+- REMOVED: changes to team-script-launcher...filesystem is now always used
+- REMOVED: orbit profile support (use podsettings)
 
 ## **[1.2.0]**
 ### **Added**

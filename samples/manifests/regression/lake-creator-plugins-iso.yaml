@@ -4,22 +4,15 @@
         scope: destroy
         script: |
             env_name=`echo "${env_name}" | sed 's/-/_/g'`
-            echo "Deleting cms_secured_db_${env_name} glue database"
+            echo "Deleting cms_secured_db_${env_name} glue database "
             aws sts get-caller-identity
             aws glue delete-database --name cms_secured_db_${env_name}
-            echo "Deleted cms_secured_db_${env_name} glue database"
+            echo "Deleted cms_secured_db glue database_${env_name}"
         restartPolicy: Never
 -   PluginId: custom_cfn
     Module: custom_cfn
     Parameters:
         CfnTemplatePath: "./bundle/plugins/demo-lake-creator-cfn-template.yaml"
--   PluginId: code_commit
-    Module: code_commit
--   PluginId: hello_world
-    Module: hello_world
-    Parameters:
-        foo: boo
-        xoo: 1234
 -   PluginId: clean_regression_files
     Module: team_script_launcher
     Parameters:
@@ -27,7 +20,7 @@
             i=0
             while [ $i -lt 1 ];
             do
-              find /home/jovyan/shared/regression -mtime +5 -exec rm {} \;
+              find /home/jovyan/shared/regression -mtime +5 -type f -exec rm {} \;
               sleep 60
             done
             echo "DONE LOOP"
@@ -68,13 +61,3 @@
         image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data:latest
         uid: 0
         gid: 0
--   PluginId: redshift
-    Module: redshift
-    Parameters:
-        enable_user_activity_logging: "true"
-        require_ssl: "true"
-        use_fips_ssl: "true"
-        node_type: "DC2.large"
-        number_of_nodes: "2"
-# -   PluginId: fast_fs_lustre
-#     Module: lustre

@@ -17,7 +17,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import cast
+from typing import Any, cast
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2
@@ -25,8 +25,9 @@ import aws_cdk.aws_iam as iam
 import aws_cdk.aws_lambda_python as lambda_python
 import aws_cdk.aws_sam as sam
 import aws_cdk.aws_ssm as ssm
-from aws_cdk import aws_lambda
-from aws_cdk.core import App, Construct, Duration, Environment, IConstruct, Stack, Tags
+import jsii
+from aws_cdk import aws_lambda, core
+from aws_cdk.core import App, Aspects, Construct, Duration, Environment, IAspect, IConstruct, Stack, Tags
 
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.cdk import _lambda_path
@@ -34,6 +35,16 @@ from aws_orbit.remote_files.cdk.team_builders.codeartifact import DeployCodeArti
 from aws_orbit.services import cognito as orbit_cognito
 
 _logger: logging.Logger = logging.getLogger(__name__)
+
+"""
+Custom Implementation of NonPathRole is to extract EKS Roles (NodeGroup and Fargate).
+https://github.com/kubernetes-sigs/aws-iam-authenticator/issues/268
+"""
+
+
+class NonPathRole(iam.Role):
+    def __init__(self, scope: core.Construct, id: str, **kwargs: Any):
+        super().__init__(scope, id, **kwargs)
 
 
 class Env(Stack):
@@ -148,9 +159,9 @@ class Env(Stack):
 
         return role
 
-    def _create_role_fargate_profile(self) -> iam.Role:
+    def _create_role_fargate_profile(self) -> NonPathRole:
         name: str = f"orbit-{self.context.name}-{self.context.region}-eks-fargate-profile-role"
-        return iam.Role(
+        role = NonPathRole(
             scope=self,
             id=name,
             role_name=name,
@@ -186,10 +197,11 @@ class Env(Stack):
                 )
             },
         )
+        return role
 
-    def _create_env_nodegroup_role(self) -> iam.Role:
+    def _create_env_nodegroup_role(self) -> NonPathRole:
         name: str = f"orbit-{self.context.name}-{self.context.region}-eks-nodegroup-role"
-        role = iam.Role(
+        role = NonPathRole(
             scope=self,
             id=name,
             role_name=name,
@@ -417,8 +429,7 @@ class Env(Stack):
             parameters={"LayerName": k8s_layer_name},
         )
 
-        role_name = self.context.toolkit.admin_role
-        role_arn = f"arn:aws:iam::{self.context.account_id}:role/{role_name}"
+        role_arn = cast(str, self.context.toolkit.admin_role_arn)
 
         lambda_python.PythonFunction(
             scope=self,
@@ -461,6 +472,7 @@ class Env(Stack):
                 "PATH": "/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin:/opt/awscli:/opt/kubectl:/opt/helm",
                 "ORBIT_ENV": self.context.name,
                 "ACCOUNT_ID": self.context.account_id,
+                "ROLE_PREFIX": f"/{self.context.role_prefix}/" if self.context.role_prefix else "/",
             },
             layers=[
                 aws_lambda.LayerVersion.from_layer_version_arn(
@@ -520,11 +532,28 @@ def main() -> None:
     shutil.rmtree(outdir)
 
     app = App(outdir=outdir)
-    Env(
+
+    @jsii.implements(core.IAspect)
+    class AddDeployPathIAM:
+        """ Implementing CDK Aspects to add optional IAM Role prefix to IAM roles """
+
+        def visit(self, obj: core.IConstruct) -> None:
+            """ Function to implement a path pattern """
+            if isinstance(obj, NonPathRole):
+                cfn_role = obj.node.find_child("Resource")
+                path = "/"
+                cfn_role.add_property_override("Path", path)
+            elif isinstance(obj, iam.Role):
+                cfn_role = obj.node.find_child("Resource")
+                path = f"/{context.role_prefix}/" if context.role_prefix else "/"
+                cfn_role.add_property_override("Path", path)
+
+    env_stack = Env(
         scope=app,
         id=context.env_stack_name,
         context=context,
     )
+    Aspects.of(scope=cast(IConstruct, env_stack)).add(cast(IAspect, AddDeployPathIAM()))
     app.synth(force=True)
 
 

@@ -141,7 +141,6 @@ class TeamContext:
     jupyterhub_inbound_ranges: List[str]
     image: Optional[str]
     plugins: List[PluginManifest]
-    profiles: List[Dict[str, Union[str, Dict[str, Any]]]]
     efs_life_cycle: Optional[str]
 
     # Context
@@ -172,6 +171,7 @@ class TeamContext:
 
     # Manifest default
     authentication_groups: Optional[List[str]] = None
+    profiles: Optional[List[Dict[str, Union[str, Dict[str, Any]]]]] = None
 
     def fetch_team_data(self) -> None:
         _logger.debug("Fetching Team %s data...", self.name)
@@ -191,6 +191,7 @@ class ToolkitManifest:
     codebuild_project: str
     deploy_id: Optional[str] = None
     admin_role: Optional[str] = None
+    admin_role_arn: Optional[str] = None
     kms_arn: Optional[str] = None
     kms_alias: Optional[str] = None
     s3_bucket: Optional[str] = None
@@ -218,6 +219,7 @@ class FoundationContext:
     cognito_users_url: Optional[str] = None
     cognito_external_provider_redirect: Optional[str] = None
     cognito_external_provider_domain: Optional[str] = None
+    role_prefix: Optional[str] = None
     stack_name: Optional[str] = None
     ssm_parameter_name: Optional[str] = None
     resources_ssm_parameter_name: Optional[str] = None
@@ -243,6 +245,7 @@ class Context:
     toolkit: ToolkitManifest
     cdk_toolkit: CdkToolkitManifest
     networking: NetworkingContext
+    role_prefix: Optional[str] = None
     user_pool_id: Optional[str] = None
     scratch_bucket_arn: Optional[str] = None
     cognito_users_url: Optional[str] = None
@@ -404,13 +407,10 @@ class ContextSerDe(Generic[T, V]):
             context.policies = manifest.policies
             context.codeartifact_domain = manifest.codeartifact_domain
             context.codeartifact_repository = manifest.codeartifact_repository
+            context.role_prefix = manifest.role_prefix
             context.cognito_external_provider = manifest.cognito_external_provider
             context.cognito_external_provider_label = manifest.cognito_external_provider_label
-            for team_manifest in manifest.teams:
-                team_context: Optional[TeamContext] = context.get_team_by_name(name=team_manifest.name)
-                if team_context:
-                    _logger.debug("Updating context profiles for team %s", team_manifest.name)
-                    team_context.profiles = team_manifest.profiles
+
         else:
             context = Context(
                 name=manifest.name,
@@ -428,6 +428,7 @@ class ContextSerDe(Generic[T, V]):
                 cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-{manifest.name}-cdk-toolkit"),
                 codeartifact_domain=manifest.codeartifact_domain,
                 codeartifact_repository=manifest.codeartifact_repository,
+                role_prefix=manifest.role_prefix,
                 scratch_bucket_arn=manifest.scratch_bucket_arn,
                 networking=create_networking_context_from_manifest(networking=manifest.networking),
                 images=manifest.images,
@@ -462,6 +463,7 @@ class ContextSerDe(Generic[T, V]):
             context.policies = manifest.policies
             context.codeartifact_domain = manifest.codeartifact_domain
             context.codeartifact_repository = manifest.codeartifact_repository
+            context.role_prefix = manifest.role_prefix
             context.networking = create_networking_context_from_manifest(networking=manifest.networking)
         else:
             context = FoundationContext(
@@ -478,6 +480,7 @@ class ContextSerDe(Generic[T, V]):
                 cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-f-{manifest.name}-cdk-toolkit"),
                 codeartifact_domain=manifest.codeartifact_domain,
                 codeartifact_repository=manifest.codeartifact_repository,
+                role_prefix=manifest.role_prefix,
                 networking=create_networking_context_from_manifest(networking=manifest.networking),
                 images=manifest.images,
                 policies=manifest.policies,
@@ -588,6 +591,9 @@ class ContextSerDe(Generic[T, V]):
             if output["ExportName"] == f"{top_level}-{context.name}-admin-role":
                 _logger.debug("Export value: %s", output["OutputValue"])
                 context.toolkit.admin_role = output["OutputValue"]
+            if output["ExportName"] == f"{top_level}-{context.name}-admin-role-arn":
+                _logger.debug("Export value: %s", output["OutputValue"])
+                context.toolkit.admin_role_arn = output["OutputValue"]
 
         if context.toolkit.deploy_id is None:
             raise RuntimeError(
@@ -601,7 +607,10 @@ class ContextSerDe(Generic[T, V]):
             raise RuntimeError(
                 f"Stack {context.toolkit.stack_name} does not have the expected {top_level}-{context.name}-admin-role output."
             )
-
+        if context.toolkit.admin_role_arn is None:
+            raise RuntimeError(
+                f"Stack {context.toolkit.stack_name} does not have the expected {top_level}-{context.name}-admin-role-arn output."
+            )
         context.toolkit.kms_alias = f"{top_level}-{context.name}-{context.toolkit.deploy_id}"
         context.toolkit.s3_bucket = (
             f"{top_level}-{context.name}-toolkit-{context.account_id}-{context.toolkit.deploy_id}"

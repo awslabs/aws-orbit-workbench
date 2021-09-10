@@ -21,6 +21,7 @@ from typing import List
 
 import papermill as pm
 import yaml as yaml
+from aws_orbit import sh
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
@@ -121,6 +122,24 @@ def runNotebook(parameters):
 
 
 def prepareAndValidateNotebooks(default_output_directory, notebooks):
+    cc_region = os.environ.get("AWS_DEFAULT_REGION")
+    # Get all git repos
+    cc_repo_list = set(
+        [
+            task["sourcePath"].split("/")[0]
+            for task in notebooks["tasks"]
+            if task["sourcePath"] and "codecommit::" in task["sourcePath"]
+        ]
+    )
+    logger.info(f"cc_repo_list={cc_repo_list}")
+    # For each code repo, clone to specific repo name based folder.
+    for cc_repo in cc_repo_list:
+        repo_path = cc_repo.replace("::", f"::{cc_region}://")
+        repo_name = cc_repo.split("::")[-1]
+        logger.info(f"Cloning {repo_path}")
+        sh.run(f"git clone {repo_path} /tmp/{repo_name}/")
+        # sh.run(f"git clone codecommit::{cc_region}://orbit-iter-lake-user /tmp/{repo_name}/")
+
     reportsToRun = []
     id = 1
     for notebook in notebooks["tasks"]:
@@ -147,6 +166,7 @@ def print_dir(dir: str, exclude: List[str] = []) -> None:
 
 
 def prepareNotebook(default_output_directory, notebook, key):
+    logger.info(f"prepareNotebook={notebook}")
     notebookName = notebook["notebookName"]
     sourcePath = notebook["sourcePath"]
     targetPath = notebook.get("targetPath", default_output_directory)
@@ -157,6 +177,10 @@ def prepareNotebook(default_output_directory, notebook, key):
 
     logger.debug(f"Source Path: {sourcePath}")
     sourcePath = sourcePath.replace("$ORBIT_TRANSFORMATION_NOTEBOOKS_ROOT", "/opt/transformations/")
+
+    # Check for codecommit and replace with temp path
+    sourcePath = sourcePath.replace("codecommit::", "/tmp/")
+
     workdir = os.path.abspath(sourcePath)
 
     pathToNotebook = os.path.join(sourcePath, notebookName)

@@ -70,6 +70,7 @@ class RedshiftClustersCommon(core.Construct):
         self.lake_role_arn = f"arn:{self.partition}:iam::{self.account}:role/{self.lake_role_name}"
         self.team_security_group_id = team_space_props["team_security_group_id"]
         self.team_kms_key_arn = team_space_props["team_kms_key_arn"]
+        self.role_prefix = team_space_props["role_prefix"]
 
         # Adding plugin parameters to redshift parameter group
         self._parameter_group = redshift.CfnClusterParameterGroup(
@@ -124,6 +125,7 @@ class RedshiftClustersCommon(core.Construct):
             self,
             "lambda_orbit_lake_formation_trigger",
             assumed_by=cast(iam.IPrincipal, iam.ServicePrincipal("lambda.amazonaws.com")),
+            path=self.role_prefix,
             inline_policies={
                 "lambda-policy": iam.PolicyDocument(
                     statements=[
@@ -257,6 +259,7 @@ class RedshiftStack(Stack):
             "env_name": context.name,
             "teamspace_name": team_context.name,
             "lake_role_name": f"orbit-{context.name}-{team_context.name}-{context.region}-role",
+            "role_prefix": f"/{context.role_prefix}/" if context.role_prefix else "/",
             "vpc_id": context.networking.vpc_id,
             "subnet_ids": context.networking.data.nodes_subnets,
             "team_security_group_id": team_context.team_security_group_id,
