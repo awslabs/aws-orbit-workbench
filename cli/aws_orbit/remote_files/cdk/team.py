@@ -225,7 +225,6 @@ def main() -> None:
             if isinstance(node, iam.CfnRole):
                 node.path = f"/{context.role_prefix}/" if context.role_prefix else "/"
 
-    # role_prefix = AddDeployPathIAM(context)
     team_stack = Team(
         scope=app, id=stack_name, context=context, team_name=team_name, team_policies=team_policies, image=image
     )

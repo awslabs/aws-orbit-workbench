@@ -54,7 +54,13 @@ def _orbit_system_commons_base(output_path: str, context: Context) -> None:
             content: str = file.read()
         content = resolve_parameters(
             content,
-            dict(account_id=context.account_id, region=context.region, env_name=context.name, role_prefix=f"/{context.role_prefix}/" if context.role_prefix else "/", secure_port="10260"),
+            dict(
+                account_id=context.account_id,
+                region=context.region,
+                env_name=context.name,
+                role_prefix=f"/{context.role_prefix}/" if context.role_prefix else "/",
+                secure_port="10260",
+            ),
         )
         with open(output, "w") as file:
             file.write(content)

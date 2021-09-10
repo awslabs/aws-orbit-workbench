@@ -17,12 +17,11 @@ import logging
 import os
 import shutil
 import sys
-from typing import cast, Any
+from typing import Any, cast
 
 import aws_cdk.aws_cognito as cognito
 import aws_cdk.aws_ec2 as ec2
 import aws_cdk.aws_iam as iam
-from aws_cdk.aws_kms import Key
 import aws_cdk.aws_lambda_python as lambda_python
 import aws_cdk.aws_sam as sam
 import aws_cdk.aws_ssm as ssm
@@ -38,13 +37,15 @@ from aws_orbit.services import cognito as orbit_cognito
 _logger: logging.Logger = logging.getLogger(__name__)
 
 """
-Custom Implementation of NonPathRole is to extract NodeGroup IAM role and Fargate IAM role since EKS doesnt support Path prefix roles.
-Ref: https://github.com/kubernetes-sigs/aws-iam-authenticator/issues/268 
+Custom Implementation of NonPathRole is to extract EKS Roles (NodeGroup and Fargate).
+https://github.com/kubernetes-sigs/aws-iam-authenticator/issues/268
 """
+
 
 class NonPathRole(iam.Role):
     def __init__(self, scope: core.Construct, id: str, **kwargs: Any):
         super().__init__(scope, id, **kwargs)
+
 
 class Env(Stack):
     def __init__(
@@ -428,8 +429,7 @@ class Env(Stack):
             parameters={"LayerName": k8s_layer_name},
         )
 
-        role_arn = self.context.toolkit.admin_role_arn
-        #role_arn = f"arn:aws:iam::{self.context.account_id}:role{cast(str, self.context.role_prefix)}{role_name}"
+        role_arn = cast(str, self.context.toolkit.admin_role_arn)
 
         lambda_python.PythonFunction(
             scope=self,
@@ -444,7 +444,7 @@ class Env(Stack):
             environment={
                 "REGION": self.context.region,
                 "ORBIT_ENV": self.context.name,
-                "ACCOUNT_ID": self.context.account_id
+                "ACCOUNT_ID": self.context.account_id,
             },
             memory_size=128,
         ).add_permission(
@@ -472,7 +472,7 @@ class Env(Stack):
                 "PATH": "/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin:/opt/awscli:/opt/kubectl:/opt/helm",
                 "ORBIT_ENV": self.context.name,
                 "ACCOUNT_ID": self.context.account_id,
-                "ROLE_PREFIX": f"/{self.context.role_prefix}/" if self.context.role_prefix else "/"
+                "ROLE_PREFIX": f"/{self.context.role_prefix}/" if self.context.role_prefix else "/",
             },
             layers=[
                 aws_lambda.LayerVersion.from_layer_version_arn(
@@ -540,13 +540,13 @@ def main() -> None:
         def visit(self, obj: core.IConstruct) -> None:
             """ Function to implement a path pattern """
             if isinstance(obj, NonPathRole):
-                cfn_role = obj.node.find_child('Resource')
+                cfn_role = obj.node.find_child("Resource")
                 path = "/"
-                cfn_role.add_property_override('Path', path)
+                cfn_role.add_property_override("Path", path)
             elif isinstance(obj, iam.Role):
-                cfn_role = obj.node.find_child('Resource')
+                cfn_role = obj.node.find_child("Resource")
                 path = f"/{context.role_prefix}/" if context.role_prefix else "/"
-                cfn_role.add_property_override('Path', path)
+                cfn_role.add_property_override("Path", path)
 
     env_stack = Env(
         scope=app,
