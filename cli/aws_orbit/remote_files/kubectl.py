@@ -671,6 +671,14 @@ def deploy_env(context: "Context") -> None:
             patch = patch.replace("VPC_ID", cast(str, context.networking.vpc_id))
             sh.run(f"kubectl patch deployment -n kubeflow alb-ingress-controller --patch '{patch}'")
 
+        # Patch the kubeflow mpi-operator deployment to version lock the images to v0.2.3
+        patch = (
+            '{"spec":{"template":{"spec":{"containers":[{"name":"mpi-operator","args":["-alsologtostderr",'
+            '"--lock-namespace","kubeflow","--kubectl-delivery-image","mpioperator/kubectl-delivery:v0.2.3"],'
+            '"image":"mpioperator/mpi-operator:v0.2.3"}]}}}}'
+        )
+        sh.run(f"kubectl patch deployment -n kubeflow mpi-operator --patch '{patch}'")
+
         # Confirm env Service Endpoints
         _confirm_endpoints(name="landing-page-service", namespace="orbit-system", k8s_context=k8s_context)
 

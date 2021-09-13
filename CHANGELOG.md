@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## **[1.3.0] - Unreleased **
 
 ### **Added**
+
 - iamidentitymapping for team role to team RoleBinding and ClusterRoleBinding
 - ImageReplication Operator and informative CRDs
 - Opttional removal of docker credentials on env destroy
@@ -27,12 +28,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: ecr repo filter logic used to delete existing env repos
 - FIX: make sure Laekformation regression tests do not run in -iso envs
 - REFACTOR: orbit-controller operators, webhooks, and controllers
+- FIX: mpi-operator not version locked, `latest` fails to start
 
 ### **Removed**
+
 - REMOVED: changes to team-script-launcher...filesystem is now always used
 - REMOVED: orbit profile support (use podsettings)
 
 ## **[1.2.0]**
+
 ### **Added**
 
 - FEATURE: Added CLI support for podsettings (build and delete)

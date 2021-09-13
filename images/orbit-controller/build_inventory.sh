@@ -16,7 +16,7 @@
 #
 #
 #
-#   This script should be executed on a newly deployed, clean environment 
+#   This script should be executed on a newly deployed, clean environment
 #   with internet accessbility enabled.
 
 kubectl get pods -A -o yaml | \
@@ -26,4 +26,4 @@ kubectl get pods -A -o yaml | \
     sort | uniq | \
     grep -vE "k8s-utilities|orbit-controller" \
   > image_inventory.txt
-
+cat extra_images.txt >> image_inventory.txt
