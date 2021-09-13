@@ -60,7 +60,7 @@ metadata:
   name: teamspaces.orbit.aws
 spec:
   group: orbit.aws
-  scope: Cluster
+  scope: Namespaced
   names:
     plural: teamspaces
     singular: teamspace

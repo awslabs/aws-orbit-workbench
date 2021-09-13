@@ -11,6 +11,7 @@ apiVersion: orbit.aws/v1
 kind: TeamSpace
 metadata:
   name: ${team}
+  namespace: ${team}
 spec:
   env: ${env_name}
   space: team
