@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - ImageReplication Operator and informative CRDs
 - Opttional removal of docker credentials on env destroy
 - Lens support in jupyter-user-apps
+- Added support for Path prefix to Orbit frameowork's IAM roles
 ### **Changed**
 
 - FIX: overprovisioning fixed to support gpu
@@ -23,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: Example-6-Schedule-Notebook, removed git:// reference
 - FIX: ecr repo filter logic used to delete existing env repos
 - FIX: make sure Laekformation regression tests do not run in -iso envs
+- FIX: Fixed the way we generate self signed certs
 ### **Removed**
 - REMOVED: changes to team-script-launcher...filesystem is now always used
 - REMOVED: orbit profile support (use podsettings)
