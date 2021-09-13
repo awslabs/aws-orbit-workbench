@@ -535,10 +535,10 @@ def main() -> None:
 
     @jsii.implements(core.IAspect)
     class AddDeployPathIAM:
-        """Implementing CDK Aspects to add optional IAM Role prefix to IAM roles"""
+        """ Implementing CDK Aspects to add optional IAM Role prefix to IAM roles """
 
         def visit(self, obj: core.IConstruct) -> None:
-            """Function to implement a path pattern"""
+            """ Function to implement a path pattern """
             if isinstance(obj, NonPathRole):
                 cfn_role = obj.node.find_child("Resource")
                 path = "/"
