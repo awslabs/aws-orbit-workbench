@@ -218,10 +218,10 @@ def main() -> None:
 
     @jsii.implements(core.IAspect)
     class AddDeployPathIAM:
-        """ Implementing CDK Aspects to add optional IAM Role prefix to IAM roles """
+        """Implementing CDK Aspects to add optional IAM Role prefix to IAM roles"""
 
         def visit(self, node: IConstruct) -> None:
-            """ Function to implement a path pattern """
+            """Function to implement a path pattern"""
             if isinstance(node, iam.CfnRole):
                 node.path = f"/{context.role_prefix}/" if context.role_prefix else "/"
 
