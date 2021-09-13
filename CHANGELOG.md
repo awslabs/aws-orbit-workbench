@@ -25,6 +25,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: ecr repo filter logic used to delete existing env repos
 - FIX: make sure Laekformation regression tests do not run in -iso envs
 - FIX: Fixed the way we generate self signed certs
+
+- FIX: Regression tests for athena notebook needs parameterized env_name in users.population_by_age table
 ### **Removed**
 - REMOVED: changes to team-script-launcher...filesystem is now always used
 - REMOVED: orbit profile support (use podsettings)
