@@ -241,6 +241,7 @@ Resources:
             Resource:
               - arn:aws:secretsmanager:${region}:${account_id}:secret:${top_level}-redshift-master-${env_name}*
               - arn:aws:secretsmanager:${region}:${account_id}:secret:${top_level}-${env_name}-*
+              - arn:aws:secretsmanager:${region}:${account_id}:secret:*-docker-credentials
           - Effect: Allow
             Action:
               - serverlessrepo:*
