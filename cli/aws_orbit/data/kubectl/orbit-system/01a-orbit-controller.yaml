@@ -7,37 +7,9 @@ metadata:
 data:
   AWS_ORBIT_ENV: ${env_name}
   ORBIT_CODEBUILD_IMAGE: ${code_build_image}
-  FLASK_DEBUG: "1"
-  FLASK_ENV: development
-  GUNICORN_WORKERS: "1"
   ORBIT_CONTROLLER_DEBUG: "1"
-  ORBIT_CONTROLLER_LOG_VERBOSITY: "0"
   IN_CLUSTER_DEPLOYMENT: "1"
-  USERSPACE_CHART_MANAGER_WORKERS: "1"
-  POD_DEFAULTS_WATCHER_WORKERS: "1"
-  POD_SETTINGS_WATCHER_WORKERS: "1"
   AWS_STS_REGIONAL_ENDPOINTS: ${sts_ep}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: orbit-controller-state
-  namespace: orbit-system
-data: {}
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: podsettings-pod-modifier
-  namespace: orbit-system
-spec:
-  selector:
-    app: podsettings-pod-modifier
-  ports:
-  - name: https
-    protocol: TCP
-    port: 443
-    targetPort: 443
 ---
 apiVersion: cert-manager.io/v1alpha2
 kind: ClusterIssuer
@@ -46,31 +18,45 @@ metadata:
 spec:
   selfSigned: {}
 ---
+kind: Service
+apiVersion: v1
+metadata:
+  name: podsetting-pod-webhook
+  namespace: orbit-system
+spec:
+  selector:
+    app: podsetting-pod-webhook
+  ports:
+  - name: https
+    protocol: TCP
+    port: 443
+    targetPort: 443
+---
 apiVersion: cert-manager.io/v1alpha2
 kind: Certificate
 metadata:
   labels:
-    app.kubernetes.io/name: orbit-controller
-  name: orbit-controller-cert
+    app.kubernetes.io/name: podsetting-pod-webhook
+  name: podsetting-pod-webhook-cert
   namespace: orbit-system
 spec:
   dnsNames:
-  - podsettings-pod-modifier.orbit-system.svc
-  - podsettings-pod-modifier.orbit-system.svc.cluster.local
+  - podsetting-pod-webhook.orbit-system.svc
+  - podsetting-pod-webhook.orbit-system.svc.cluster.local
   issuerRef:
     kind: ClusterIssuer
     name: orbit-self-signing-issuer
-  secretName: orbit-controller-webhook-tls
+  secretName: podsetting-pod-webhook-tls
 ---
 kind: MutatingWebhookConfiguration
 apiVersion: admissionregistration.k8s.io/v1beta1
 metadata:
-  name: orbit-podsettings-pod-modifier
+  name: orbit-podsetting-pod-webhook
   annotations:
-    cert-manager.io/inject-ca-from: orbit-system/orbit-controller-cert
+    cert-manager.io/inject-ca-from: orbit-system/podsetting-pod-webhook-cert
 webhooks:
-  - name: podsettings-pod-modifier.orbit-system.svc
-    sideEffects: None
+  - name: podsetting-pod-webhook.orbit-system.svc
+    sideEffects: NoneOnDryRun
     reinvocationPolicy: IfNeeded
     failurePolicy: Fail
     matchPolicy: Equivalent
@@ -91,29 +77,28 @@ webhooks:
       caBundle: ""
       service:
         namespace: orbit-system
-        name: podsettings-pod-modifier
-        path: /pod-pod-setting
+        name: podsetting-pod-webhook
+        path: /apply-pod-settings
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   labels:
     app: orbit-controller
   namespace: orbit-system
-  name: podsettings-pod-modifier
+  name: podsetting-pod-webhook
 spec:
-  podManagementPolicy: OrderedReady
   replicas: 1
-  revisionHistoryLimit: 10
-  serviceName: podsettings-pod-modifier
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
-      app: podsettings-pod-modifier
+      app: podsetting-pod-webhook
   template:
     metadata:
       labels:
-        app: podsettings-pod-modifier
-      name: podsettings-pod-modifier
+        app: podsetting-pod-webhook
+      name: podsetting-pod-webhook
       annotations:
         sidecar.istio.io/inject: "false"
     spec:
@@ -130,73 +115,130 @@ spec:
             - configMapRef:
                 name: orbit-controller-config
           command:
-            - gunicorn
+            - kopf
+            - run
           args:
-            - "--bind=0.0.0.0:443"
-            - "--certfile=/certs/tls.crt"
-            - "--keyfile=/certs/tls.key"
-            - "--workers=$(GUNICORN_WORKERS)"
-            - "--reload"
-            - "orbit_controller.server:app"
+            - "--liveness=http://0.0.0.0:8080/healthz"
+            - "--log-format=json"
+            - "--module=orbit_controller.webhooks.podsetting_pod_webhook"
+            - "--verbose"
           volumeMounts:
             - readOnly: true
               mountPath: /certs
-              name: orbit-controller-certs
-            - mountPath: /state
-              name: orbit-controller-state
-              readOnly: false
+              name: podsetting-pod-webhook-certs
           readinessProbe:
             httpGet:
-              path: /health
-              scheme: HTTPS
-              port: 443
+              path: /healthz
+              scheme: HTTP
+              port: 8080
             initialDelaySeconds: 3
             periodSeconds: 5
+            successThreshold: 1
           livenessProbe:
             httpGet:
-              path: /health
-              scheme: HTTPS
-              port: 443
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 600
+          resources:
+            limits:
+              cpu: 2
+              memory: 2Gi
+            requests:
+              cpu: 200m
+              memory: 256Mi
+      nodeSelector:
+        orbit/usage: reserved
+        orbit/node-group: env
+      volumes:
+        - name: podsetting-pod-webhook-certs
+          secret:
+            secretName: podsetting-pod-webhook-tls
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: orbit-controller
+  namespace: orbit-system
+  name: namespace-controller
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: namespace-controller
+  template:
+    metadata:
+      labels:
+        app: namespace-controller
+      name: namespace-controller
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: orbit-${env_name}-admin
+      nodeSelector:
+        orbit/usage: reserved
+        orbit/node-group: env
+      containers:
+        - name: controller
+          image: ${orbit_controller_image}
+          imagePullPolicy: ${image_pull_policy}
+          envFrom:
+            - configMapRef:
+                name: orbit-controller-config
+          command:
+            - kopf
+            - run
+          args:
+            - "--liveness=http://0.0.0.0:8080/healthz"
+            - "--log-format=json"
+            - "--module=orbit_controller.controllers.namespace_controller"
+            - "--verbose"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
             initialDelaySeconds: 3
             periodSeconds: 5
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 600
           resources:
             limits:
               cpu: 2
-              memory: 2G
+              memory: 2Gi
             requests:
-              cpu: 100m
-              memory: 100M
-      nodeSelector:
-        orbit/usage: reserved
-        orbit/node-group: env
-      volumes:
-        - name: orbit-controller-certs
-          secret:
-            secretName: orbit-controller-webhook-tls
-        - name: orbit-controller-state
-          configMap:
-            name: orbit-controller-state
+              cpu: 200m
+              memory: 256Mi
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   labels:
     app: orbit-controller
   namespace: orbit-system
-  name: userspace-chart-manager
+  name: podsetting-operator
 spec:
-  podManagementPolicy: OrderedReady
   replicas: 1
-  revisionHistoryLimit: 10
-  serviceName: ""
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
-      app: userspace-chart-manager
+      app: podsetting-operator
   template:
     metadata:
       labels:
-        app: userspace-chart-manager
-      name: userspace-chart-manager
+        app: podsetting-operator
+      name: podsetting-operator
       annotations:
         sidecar.istio.io/inject: "false"
     spec:
@@ -205,54 +247,62 @@ spec:
         orbit/usage: reserved
         orbit/node-group: env
       containers:
-        - name: watcher
+        - name: controller
           image: ${orbit_controller_image}
           imagePullPolicy: ${image_pull_policy}
           envFrom:
             - configMapRef:
                 name: orbit-controller-config
           command:
-            - orbit-controller
-            - process
-            - namespaces
+            - kopf
+            - run
           args:
-            - "--workers=$(USERSPACE_CHART_MANAGER_WORKERS)"
-          volumeMounts:
-            - mountPath: /state
-              name: orbit-controller-state
-              readOnly: false
+            - "--liveness=http://0.0.0.0:8080/healthz"
+            - "--log-format=json"
+            - "--module=orbit_controller.operators.podsetting_operator"
+            - "--verbose"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 600
           resources:
             limits:
               cpu: 2
-              memory: 2G
+              memory: 2Gi
             requests:
-              cpu: 100m
-              memory: 100M
-      volumes:
-        - name: orbit-controller-state
-          configMap:
-            name: orbit-controller-state
+              cpu: 200m
+              memory: 256Mi
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   labels:
     app: orbit-controller
   namespace: orbit-system
-  name: podsettings-poddefaults-manager
+  name: teamspace-operator
 spec:
-  podManagementPolicy: OrderedReady
   replicas: 1
-  revisionHistoryLimit: 10
-  serviceName: ""
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
-      app: podsettings-poddefaults-manager
+      app: teamspace-operator
   template:
     metadata:
       labels:
-        app: podsettings-poddefaults-manager
-      name: podsettings-poddefaults-manager
+        app: teamspace-operator
+      name: teamspace-operator
       annotations:
         sidecar.istio.io/inject: "false"
     spec:
@@ -261,53 +311,103 @@ spec:
         orbit/usage: reserved
         orbit/node-group: env
       containers:
-        - name: podsettings-watcher
+        - name: controller
           image: ${orbit_controller_image}
           imagePullPolicy: ${image_pull_policy}
           envFrom:
             - configMapRef:
                 name: orbit-controller-config
           command:
-            - orbit-controller
-            - process
-            - podsettings
+            - kopf
+            - run
           args:
-            - "--workers=$(POD_SETTINGS_WATCHER_WORKERS)"
-          volumeMounts:
-            - mountPath: /state
-              name: orbit-controller-state
-              readOnly: false
+            - "--liveness=http://0.0.0.0:8080/healthz"
+            - "--log-format=json"
+            - "--module=orbit_controller.operators.teamspace_operator"
+            - "--verbose"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 600
           resources:
             limits:
               cpu: 2
-              memory: 2G
+              memory: 2Gi
             requests:
-              cpu: 100m
-              memory: 100M
-        - name: poddefaults-watcher
+              cpu: 200m
+              memory: 256Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: orbit-controller
+  namespace: orbit-system
+  name: userspace-operator
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: userspace-operator
+  template:
+    metadata:
+      labels:
+        app: userspace-operator
+      name: userspace-operator
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: orbit-${env_name}-admin
+      nodeSelector:
+        orbit/usage: reserved
+        orbit/node-group: env
+      containers:
+        - name: controller
           image: ${orbit_controller_image}
           imagePullPolicy: ${image_pull_policy}
           envFrom:
             - configMapRef:
                 name: orbit-controller-config
           command:
-            - orbit-controller
-            - process
-            - poddefaults
+            - kopf
+            - run
           args:
-            - "--workers=$(POD_DEFAULTS_WATCHER_WORKERS)"
-          volumeMounts:
-            - mountPath: /state
-              name: orbit-controller-state
-              readOnly: false
+            - "--liveness=http://0.0.0.0:8080/healthz"
+            - "--log-format=json"
+            - "--module=orbit_controller.operators.userspace_operator"
+            - "--verbose"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 600
           resources:
             limits:
               cpu: 2
-              memory: 2G
+              memory: 2Gi
             requests:
-              cpu: 100m
-              memory: 100M
-      volumes:
-        - name: orbit-controller-state
-          configMap:
-            name: orbit-controller-state
+              cpu: 200m
+              memory: 256Mi

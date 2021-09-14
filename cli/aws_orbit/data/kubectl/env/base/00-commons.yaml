@@ -21,7 +21,7 @@ spec:
     spec:
       serviceAccountName: orbit-${env_name}-admin
       containers:
-        - name: webhook
+        - name: landing-page
           image: ${orbit_controller_image}
           imagePullPolicy: ${image_pull_policy}
           ports:
