@@ -222,6 +222,7 @@ def main() -> None:
 
         def visit(self, node: IConstruct) -> None:
             """ Function to implement a path pattern """
+
             if isinstance(node, iam.CfnRole):
                 node.path = f"/{context.role_prefix}/" if context.role_prefix else "/"
 
