@@ -50,7 +50,11 @@ def deploy(
     )
     if team_context.eks_pod_role_arn is None:
         raise ValueError("Pod Role arn required")
-    role_name = team_context.eks_pod_role_arn.split("/")[2]
+    role_name = (
+        team_context.eks_pod_role_arn.split("/")[2]
+        if context.role_prefix
+        else team_context.eks_pod_role_arn.split("/")[1]
+    )
     sh.run(
         f" aws emr-containers update-role-trust-policy \
        --cluster-name {cluster_name} \
