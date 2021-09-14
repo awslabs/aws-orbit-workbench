@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### **Removed**
 - REMOVED: changes to team-script-launcher...filesystem is now always used
 - REMOVED: orbit profile support (use podsettings)
+- REMOVED: sagemaker on eks tests for isolated envs
 
 ## **[1.2.0]**
 ### **Added**
