@@ -3,12 +3,12 @@ import logging
 import os
 import socket
 import time
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Mapping, Optional, Tuple, cast
 
 import boto3
 import requests
 
-from aws_orbit_sdk.common import *
+from aws_orbit_sdk.common import AWS_ORBIT_TEAM_SPACE, ORBIT_ENV, ORBIT_PRODUCT_KEY, ORBIT_PRODUCT_NAME, get_properties
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -33,6 +33,8 @@ def get_virtual_cluster_id() -> str:
     for c in response["virtualClusters"]:
         if c["name"] == f"orbit-{env_name}-{team_space}":
             return c["id"]
+    else:
+        return ""
 
 
 def stop_cluster(cluster_id: str) -> None:
@@ -85,7 +87,8 @@ def connect_to_spark(
     clusterArgs : dict, optional
         Optional list of arguments to control the EMR definition used to start the new cluster
     waitWhenResizing : bool, optional
-        If waitWhenResizing is True and the cluster task nodes are resizing, the call will wait until operation is completed
+        If waitWhenResizing is True and the cluster task nodes are resizing, the call will wait until
+        operation is completed
 
     Returns
     -------
@@ -107,10 +110,11 @@ def connect_to_spark(
     ...                                                            clusterArgs={},
     ...                                                            waitWhenResizing=True)
     """
-    props = get_properties()
-    if cluster_name == None:
-        if "ClusterName" in clusterArgs:
+    if cluster_name is None:
+        if clusterArgs and "ClusterName" in clusterArgs:
             cluster_name = clusterArgs["ClusterName"]
+        else:
+            raise Exception("One of `cluster_name` or `clusterArgs['ClusterName']` is required")
 
     emr = boto3.client("emr")
     ClusterStates = ["STARTING", "BOOTSTRAPPING", "RUNNING", "WAITING"]
@@ -121,7 +125,7 @@ def connect_to_spark(
         clusters = [c for c in clusters if c["Name"] == cluster_name]
         if clusters:
             break
-        elif not "Marker" in res.keys():
+        elif "Marker" not in res.keys():
             break
         else:
             res = emr.list_clusters(Marker=res["Marker"], ClusterStates=ClusterStates)
@@ -131,9 +135,9 @@ def connect_to_spark(
     if reuseCluster:
         if not clusters:
             if not startCluster:
-                raise Exception("cannot find running EMR cluster: " + cluster_name)
+                raise Exception(f"cannot find running EMR cluster: {cluster_name}")
             else:
-                (master_ip, cluster_id) = _start_and_wait_for_emr(emr, cluster_name, props, clusterArgs)
+                (master_ip, cluster_id) = _start_and_wait_for_emr(emr, cluster_name, clusterArgs)
                 started = True
         else:
             cluster_id = clusters[0]["Id"]
@@ -145,7 +149,7 @@ def connect_to_spark(
         if not startCluster:
             raise Exception("If reuseCluster is False , then startCluster must be True")
         else:
-            (master_ip, cluster_id) = _start_and_wait_for_emr(emr, cluster_name, props, clusterArgs)
+            (master_ip, cluster_id) = _start_and_wait_for_emr(emr, cluster_name, clusterArgs)
             started = True
 
     if waitWhenResizing:
@@ -158,7 +162,7 @@ def connect_to_spark(
     return (conn, cluster_id, started)
 
 
-def getSparkSessionInfo(livyUrl: str, appID: str) -> Dict[str, Any]:
+def getSparkSessionInfo(livyUrl: str, appID: str) -> Optional[Dict[str, Any]]:
     """
     Returns spark session info for each session created (e.g. id, name, owner, appInfo, log, etc.)
 
@@ -185,17 +189,16 @@ def getSparkSessionInfo(livyUrl: str, appID: str) -> Dict[str, Any]:
     >>> getSparkSessionInfo(livyUrl = livy_url, appID = appID)
     """
     sessionInfo = livyUrl + "/sessions"
-    r_params = {}
-    r = requests.get(url=sessionInfo, params=r_params).json()
+    r = requests.get(url=sessionInfo, params={}).json()
     print("session count:" + str(r["total"]))
     sessions = [s for s in r["sessions"] if s["appId"] == appID]
     if len(sessions) > 0:
-        return next(sessions)
+        return next(cast(Iterator[Dict[str, Any]], sessions))
     else:
         return None
 
 
-def _get_cluster_id(emr: boto3.client("emr"), clusterName: str) -> str:
+def _get_cluster_id(emr: boto3.client, clusterName: str) -> str:
     """
     Returns the id of a running cluster with given cluster name.
     """
@@ -210,7 +213,7 @@ def _get_cluster_id(emr: boto3.client("emr"), clusterName: str) -> str:
     return clusters[0]["Id"]
 
 
-def _get_cluster_ip(emr: boto3.client("emr"), cluster_id: str, wait_ready: Optional[bool] = True) -> str:
+def _get_cluster_ip(emr: boto3.client, cluster_id: str, wait_ready: Optional[bool] = True) -> str:
     """
     Waits for instances to be running and then returns the private ip address from the cluster master node.
     """
@@ -258,16 +261,15 @@ def get_emr_step_function_error(execution_arn: str) -> None:
         error = json.loads(state["Error"]["Cause"])
         logger.error(error["errorMessage"])
         raise Exception(error["errorMessage"])
-    except:
+    except Exception:
         logger.error(json.dumps(response))
         raise Exception("Cluster failed starting")
 
 
 def _start_and_wait_for_emr(
-    emr: boto3.client("emr"),
+    emr: boto3.client,
     cluster_name: str,
-    props: Dict[str, str],
-    clusterArgs: Optional[Dict[str, str]] = dict(),
+    clusterArgs: Optional[Dict[str, str]] = None,
     wait_ready: Optional[bool] = True,
 ) -> Tuple[str, str]:
     """
@@ -280,6 +282,7 @@ def _start_and_wait_for_emr(
     if len(emr_functions) == 0:
         raise Exception("cannot find any EMR launch functions for this team space")
 
+    clusterArgs = {} if clusterArgs is None else clusterArgs
     if "emr_start_function" in clusterArgs.keys():
         emr_function = emr_functions[clusterArgs["emr_start_function"]]
         del clusterArgs["emr_start_function"]
@@ -296,13 +299,13 @@ def _start_and_wait_for_emr(
     while True:
         time.sleep(20)
         des_res = sfn.describe_execution(executionArn=response["executionArn"])
-        logger.info(f"waiting for EMR to start...")
+        logger.info("waiting for EMR to start...")
         if not wait_ready:
             return ("", "")
         if des_res["status"] != "RUNNING":
             break
 
-    logger.info(f"Finished EMR step function")
+    logger.info("Finished EMR step function")
 
     if (des_res["status"]) != "SUCCEEDED":
         get_emr_step_function_error(response["executionArn"])
@@ -384,7 +387,7 @@ def describe_emr_function(funcName: str) -> Dict[str, Any]:
     return _get_emr_functions()[funcName]
 
 
-def _get_emr_functions() -> List[str]:
+def _get_emr_functions() -> Dict[str, Any]:
     """
     Returns a list of all EMR Launch functions and their current values.
     """
@@ -405,7 +408,7 @@ def _get_emr_functions() -> List[str]:
     return func
 
 
-def _wait_for_cluster_groups(emr: boto3.client("emr"), cluster_id: str) -> None:
+def _wait_for_cluster_groups(emr: boto3, cluster_id: str) -> None:
     """
     Waits for instance groups in cluster to start running.
     """
@@ -497,13 +500,13 @@ def spark_submit(job: Dict[str, Any]) -> Dict[str, Any]:
     ...                                             })
     """
     cluster_id = job["cluster_id"] if "cluster_id" in job.keys() else None
-    if cluster_id == None:
+    if cluster_id is None:
         raise Exception("cluster_id must be provided")
     app_name = job["app_name"] if "app_name" in job.keys() else None
-    if app_name == None:
+    if app_name is None:
         raise Exception("app_name must be provided")
     module = job["module"] if "module" in job.keys() else None
-    if module == None:
+    if module is None:
         raise Exception("module must be provided")
 
     waitAppCompletion = job["wait_app_completion"] if "wait_app_completion" in job.keys() else False
@@ -587,7 +590,7 @@ def get_team_clusters(cluster_id: Optional[str] = None) -> Dict[str, Dict[str, s
 
     emr = boto3.client("emr")
     props = get_properties()
-    if cluster_id == None:
+    if cluster_id is None:
         clusters = emr.list_clusters(ClusterStates=["STARTING", "BOOTSTRAPPING", "RUNNING", "WAITING"])
         if "Clusters" not in clusters:
             raise Exception("Error calling list_clusters()")
@@ -600,8 +603,8 @@ def get_team_clusters(cluster_id: Optional[str] = None) -> Dict[str, Dict[str, s
 
     clusters_info = {}
     for cluster in clusters:
-        cluster_id = cluster["Id"]
-        cluster_info = emr.describe_cluster(ClusterId=cluster_id)
+        clstr_id = cluster["Id"]
+        cluster_info = emr.describe_cluster(ClusterId=clstr_id)
         if "Cluster" not in cluster_info:
             raise Exception("Error calling describe_cluster()")
 
@@ -616,11 +619,11 @@ def get_team_clusters(cluster_id: Optional[str] = None) -> Dict[str, Dict[str, s
         if tags[ORBIT_ENV] != props["AWS_ORBIT_ENV"] or tags[AWS_ORBIT_TEAM_SPACE] != props["AWS_ORBIT_TEAM_SPACE"]:
             continue
 
-        cluster_nodes_info = get_cluster_info(cluster_id)
-        ip = _get_cluster_ip(emr, cluster_id, False)
+        cluster_nodes_info = get_cluster_info(clstr_id)
+        ip = _get_cluster_ip(emr, clstr_id, False)
         livy_url = f"http://{ip}:8998"
         cluster_model = {}
-        cluster_model["cluster_id"] = cluster_id
+        cluster_model["cluster_id"] = clstr_id
         cluster_model["livy_url"] = livy_url
         cluster_model["ip"] = ip
         cluster_model["Name"] = cluster["Name"]
@@ -628,6 +631,6 @@ def get_team_clusters(cluster_id: Optional[str] = None) -> Dict[str, Dict[str, s
         cluster_model["info"] = cluster_info
         cluster_model["dashboard_link"] = "http://tbd"
         cluster_model["instances"] = cluster_nodes_info
-        clusters_info[cluster_id] = cluster_model
+        clusters_info[clstr_id] = cluster_model
 
     return clusters_info
