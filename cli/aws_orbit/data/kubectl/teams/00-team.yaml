@@ -7,6 +7,16 @@ metadata:
     orbit/team: ${team}
     orbit/env: ${env_name}
 ---
+apiVersion: orbit.aws/v1
+kind: TeamSpace
+metadata:
+  name: ${team}
+  namespace: ${team}
+spec:
+  env: ${env_name}
+  space: team
+  team: ${team}
+---
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
