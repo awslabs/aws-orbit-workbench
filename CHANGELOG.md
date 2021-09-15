@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: Fixed the way we generate self signed certs
 - FIX: Regression tests for athena notebook needs parameterized env_name in users.population_by_age table
 - FIX: regression tests for DataBrew needed parameterized names
+- FIX: fix podsettings filter when copying into user namespace
 
 ### **Removed**
 
