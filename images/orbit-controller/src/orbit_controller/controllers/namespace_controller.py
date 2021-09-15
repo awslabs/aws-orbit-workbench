@@ -39,7 +39,7 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
 
 
 def _should_index_podsetting(labels: Dict[str, str], **_: Any) -> bool:
-    return labels.get("orbit/space") == "team" and "orbit/team" in labels
+    return labels.get("orbit/space") == "team" and "orbit/team" in labels and "orbit/disable-watcher" not in labels
 
 
 @kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_index_podsetting)  # type: ignore
