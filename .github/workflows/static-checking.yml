@@ -61,10 +61,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
-      # - name: Mypy Check
-      #   run: mypy .
-      # - name: Flake8 Check
-      #   run: flake8 .
+      - name: Mypy Check
+        run: mypy .
+      - name: Flake8 Check
+        run: flake8 .
       - name: Black Check
         run: black --check .
       - name: Isort Check

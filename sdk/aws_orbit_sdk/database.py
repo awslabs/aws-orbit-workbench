@@ -4,7 +4,7 @@ import json
 import logging
 import time
 import urllib.parse
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 from urllib.parse import quote_plus
 
 import boto3
@@ -13,12 +13,11 @@ import pandas as pd
 import pyathena
 import sqlalchemy as sa
 from IPython import get_ipython
-from IPython.display import JSON
 from pandas import DataFrame
-from sqlalchemy.engine import create_engine
+from sqlalchemy.engine import Engine, create_engine
 from sqlalchemy.orm import sessionmaker
 
-from aws_orbit_sdk.common import *
+from aws_orbit_sdk.common import AWS_ORBIT_TEAM_SPACE, ORBIT_ENV, get_properties, get_workspace, split_s3_path
 from aws_orbit_sdk.glue_catalog import run_crawler
 from aws_orbit_sdk.json import display_json
 from aws_orbit_sdk.magics.database import AthenaMagics, RedshiftMagics
@@ -46,7 +45,7 @@ def check_in_jupyter():
 
 def get_redshift():
     global __redshift__
-    if __redshift__ == None:
+    if __redshift__ is None:
         __redshift__ = RedshiftUtils()
         if check_in_jupyter():
             ip = get_ipython()
@@ -58,7 +57,7 @@ def get_redshift():
 
 def get_athena():
     global __athena__
-    if __athena__ == None:
+    if __athena__ is None:
         __athena__ = AthenaUtils()
         if check_in_jupyter():
             ip = get_ipython()
@@ -95,10 +94,10 @@ class DatabaseCommon:
         Executes a SQL query.
     """
 
-    current_engine = None
-    db_url = None
-    redshift_role = None
-    db_class = None
+    current_engine: Optional[Engine] = None
+    db_url: Optional[str] = None
+    redshift_role: Optional[str] = None
+    db_class: Optional[str] = None
 
     def execute_ddl(self, ddl: str, namespace: Optional[Dict[str, str]] = dict()) -> None:
         """
@@ -125,13 +124,16 @@ class DatabaseCommon:
         >>> db_utils.execute_ddl(f'drop table if exists "mydatabase."{table_name}"')
         """
 
-        with self.current_engine.connect() as conn:
-            session = sessionmaker(bind=self.current_engine)()
-            session.connection().connection.set_isolation_level(0)
-            session.execute(ddl, namespace)
-            conn.close()
+        if self.current_engine:
+            with self.current_engine.connect() as conn:
+                session = sessionmaker(bind=self.current_engine)()
+                session.connection().connection.set_isolation_level(0)
+                session.execute(ddl, namespace)
+                conn.close()
 
-    def execute_query(self, sql: str, namespace: Optional[Dict[str, str]] = dict()) -> sa.engine.result.ResultProxy:
+    def execute_query(
+        self, sql: str, namespace: Optional[Dict[str, str]] = dict()
+    ) -> Optional[sa.engine.result.ResultProxy]:
         """
         Executes a SQL query.
 
@@ -155,10 +157,13 @@ class DatabaseCommon:
         >>> db_utils.execute_query("select username from mydatabase.users")
         """
 
-        with self.current_engine.connect() as conn:
-            rs = self.current_engine.execute(sql, namespace)
-            conn.close()
-        return rs
+        if self.current_engine:
+            with self.current_engine.connect() as conn:
+                rs = self.current_engine.execute(sql, namespace)
+                conn.close()
+            return rs
+        else:
+            return None
 
 
 class RedshiftUtils(DatabaseCommon):
@@ -298,7 +303,7 @@ class RedshiftUtils(DatabaseCommon):
         hostName = clusterInfo["Clusters"][0]["Endpoint"]["Address"]
         port = clusterInfo["Clusters"][0]["Endpoint"]["Port"]
 
-        self.db_url = "redshift+psycopg2://{}:{}@{}:{}/{}".format(DbUser, DbPassword, hostName, port, DbName)
+        self.db_url: str = "redshift+psycopg2://{}:{}@{}:{}/{}".format(DbUser, DbPassword, hostName, port, DbName)
         if clusterInfo["Clusters"][0]["IamRoles"]:
             self.redshift_role = clusterInfo["Clusters"][0]["IamRoles"][0]["IamRoleArn"]
         else:
@@ -334,7 +339,10 @@ class RedshiftUtils(DatabaseCommon):
         >>> RedshiftUtils.create_external_schema(schema_name="my_schema", glue_database="my_database")
         """
 
-        createSchemaSql = f"create external schema IF NOT EXISTS {schema_name} from data catalog database '{glue_database}'\n iam_role '{self.redshift_role}'"
+        createSchemaSql = (
+            f"create external schema IF NOT EXISTS {schema_name} from data catalog database "
+            f"'{glue_database}'\n iam_role '{self.redshift_role}'"
+        )
         self.execute_ddl(createSchemaSql, dict())
 
     def create_external_table(
@@ -391,8 +399,8 @@ class RedshiftUtils(DatabaseCommon):
         target_s3 = glue.get_database(Name=database_name)["Database"]["LocationUri"]
         s3 = boto3.client("s3")
 
-        if target_s3 == None or len(target_s3) == 0:
-            if s3_location != None:
+        if target_s3 is None or len(target_s3) == 0:
+            if s3_location is not None:
                 target_s3 = s3_location
             else:
                 raise Exception("Database does not have a location , and location was not provided")
@@ -434,8 +442,8 @@ class RedshiftUtils(DatabaseCommon):
     def connect_to_redshift(
         self,
         cluster_name: str,
-        reuseCluster: Optional[str] = True,
-        startCluster: Optional[str] = False,
+        reuseCluster: Optional[bool] = True,
+        startCluster: Optional[bool] = False,
         clusterArgs: Optional[Dict[str, str]] = dict(),
     ) -> Dict[str, Union[str, sa.engine.Engine, bool]]:
         """
@@ -483,7 +491,7 @@ class RedshiftUtils(DatabaseCommon):
         cluster_identifier = f"orbit-{env}-{team_space}-{cluster_name}".lower()
         try:
             clusters = redshift.describe_clusters(ClusterIdentifier=cluster_identifier)["Clusters"]
-        except:
+        except Exception:
             clusters = []
 
         started = False
@@ -658,7 +666,7 @@ class RedshiftUtils(DatabaseCommon):
                     and "StartRedshift" in func["FunctionName"]
                 ):
                     funcs.append(func)
-            if token == None:
+            if token is None:
                 break
 
         func_descs = {}
@@ -680,10 +688,10 @@ class RedshiftUtils(DatabaseCommon):
 
     def _start_and_wait_for_redshift(
         self,
-        redshift: boto3.client("redshift"),
+        redshift: boto3.client,
         cluster_name: str,
         props: Dict[str, str],
-        clusterArgs: Dict[str, str],
+        clusterArgs: Optional[Dict[str, str]],
     ) -> Tuple[str, str]:
         """
         Starts the Redshift Cluster and waits until cluster is available for use.
@@ -691,7 +699,8 @@ class RedshiftUtils(DatabaseCommon):
         """
         env = props["AWS_ORBIT_ENV"]
         team_space = props["AWS_ORBIT_TEAM_SPACE"]
-        funcName = f"Standard"
+        funcName = "Standard"
+        clusterArgs = {} if clusterArgs is None else clusterArgs
         if "redshift_start_function" in clusterArgs.keys():
             funcName = clusterArgs["redshift_start_function"]
 
@@ -758,9 +767,9 @@ class RedshiftUtils(DatabaseCommon):
 
     def _add_json_schema(
         self,
-        s3: boto3.client("s3"),
-        glue: boto3.client("glue"),
-        table: str,
+        s3: boto3.client,
+        glue: boto3.client,
+        table: Dict[str, str],
         database_name: str,
         table_name: str,
     ) -> None:
@@ -770,14 +779,17 @@ class RedshiftUtils(DatabaseCommon):
         """
 
         response = glue.get_table(DatabaseName=database_name, Name=table_name)
-        # This is another way to get the properties. however, for now we will stick with the glue way that can also work in the future for Athena
+        # This is another way to get the properties. however, for now we will stick with the glue way that can also
+        # work in the future for Athena
         # """
         # SELECT  tablename, parameters
         #         FROM (
         #         SELECT btrim(ext_tables.tablename::text)::character varying(128) AS tablename,
         #         btrim(ext_tables.parameters::text)::character varying(500) AS parameters
-        #         FROM pg_get_external_tables() ext_tables(esoid integer, schemaname character varying, tablename character varying, "location" character varying, input_format character varying,
-        #         output_format character varying, serialization_lib character varying, serde_parameters character varying, compressed integer, parameters character varying)
+        #         FROM pg_get_external_tables() ext_tables(esoid integer, schemaname character varying, tablename
+        #              character varying, "location" character varying, input_format character varying,
+        #              output_format character varying, serialization_lib character varying, serde_parameters character
+        #              varying, compressed integer, parameters character varying)
         #         ) A
         #         LIMIT 10
         #         ;
@@ -800,7 +812,7 @@ class RedshiftUtils(DatabaseCommon):
 
     def getCatalog(
         self, schema_name: Optional[str] = None, table_name: Optional[str] = None
-    ) -> IPython.core.display.JSON:
+    ) -> Optional[IPython.core.display.JSON]:
         """
         Get Glue Catalog metadata of a specific Database table.
 
@@ -830,9 +842,11 @@ class RedshiftUtils(DatabaseCommon):
         glue = boto3.client("glue")
         s3 = boto3.client("s3")
         sql = """
-                    SELECT cols.schemaname, cols.tablename, cols.columnname, cols.external_type, cols.columnnum, tables.location, schemas.databasename, tables.parameters
-                     FROM SVV_EXTERNAL_COLUMNS cols natural join SVV_EXTERNAL_TABLES tables natural join SVV_EXTERNAL_SCHEMAS schemas
-                """
+            SELECT cols.schemaname, cols.tablename, cols.columnname, cols.external_type, cols.columnnum,
+                tables.location, schemas.databasename, tables.parameters
+            FROM SVV_EXTERNAL_COLUMNS cols natural
+            join SVV_EXTERNAL_TABLES tables natural join SVV_EXTERNAL_SCHEMAS schemas
+        """
 
         if schema_name or table_name:
             sql += "WHERE "
@@ -845,15 +859,18 @@ class RedshiftUtils(DatabaseCommon):
 
         sql += "\n order by schemas.schemaname, tables.tablename, columnnum\n"
 
-        rs = self.current_engine.execute(sql)
+        if self.current_engine:
+            rs = self.current_engine.execute(sql)
+        else:
+            return None
         res = rs.fetchall()
         if len(res) == 0:
             print("no external schema or tables found")
-            return
+            return None
 
         df = DataFrame(res)
         df.columns = rs.keys()
-        schemas = dict()
+        schemas: Dict[str, Any] = dict()
         for row in df.itertuples():
             if row[1] not in schemas:
                 schemas[row[1]] = dict()
@@ -899,17 +916,17 @@ class RedshiftUtils(DatabaseCommon):
 
         redshift = boto3.client("redshift")
         props = get_properties()
-        if cluster_id == None:
+        if cluster_id is None:
             redshift_cluster_search_tag = props["AWS_ORBIT_ENV"] + "-" + props["AWS_ORBIT_TEAM_SPACE"]
             clusters = redshift.describe_clusters(TagValues=[redshift_cluster_search_tag])["Clusters"]
         else:
             clusters = redshift.describe_clusters(
                 ClusterIdentifier=cluster_id,
             )["Clusters"]
-        clusters_info = {}
+        clusters_info: Dict[str, Any] = {}
         for cluster in clusters:
-            cluster_id = cluster["ClusterIdentifier"]
-            cluster_model = {}
+            cluster_id = cluster.get("ClusterIdentifier", "")
+            cluster_model: Dict[str, Any] = {}
             cluster_model["cluster_id"] = cluster_id
             cluster_model["Name"] = cluster_id
             cluster_model["State"] = cluster["ClusterStatus"]
@@ -921,7 +938,7 @@ class RedshiftUtils(DatabaseCommon):
                 "nodes": len(cluster["ClusterNodes"]),
             }
             cluster_model["instances"] = cluster_nodes_info
-            clusters_info[cluster_id] = cluster_model
+            clusters_info[cast(str, cluster_id)] = cluster_model
             cluster_model["info"] = cluster
         return clusters_info
 
@@ -980,10 +997,10 @@ class AthenaUtils(DatabaseCommon):
         """
 
         workspace = get_workspace()
-        if region_name == None:
+        if region_name is None:
             region_name = workspace["region"]
 
-        if S3QueryResultsLocation == None:
+        if S3QueryResultsLocation is None:
             S3QueryResultsLocation = f"{workspace['ScratchBucket']}/athena"
 
         template_con_str = (
@@ -1029,13 +1046,13 @@ class AthenaUtils(DatabaseCommon):
         schemas = dict()
         response = glue.get_tables(DatabaseName=database, MaxResults=1000)
         for t in response["TableList"]:
-            table = dict()
+            table: Dict[str, Any] = dict()
             schemas[t["Name"]] = table
             table["name"] = t["Name"]
             table["location"] = t["StorageDescriptor"]["Location"]
             table["cols"] = dict()
             for c in t["StorageDescriptor"]["Columns"]:
-                col = dict()
+                col: Dict[str, str] = dict()
                 table["cols"][c["Name"]] = col
                 col["name"] = c["Name"]
                 col["type"] = c["Type"]
