@@ -43,7 +43,7 @@ def namespaces_idx(
 ) -> Dict[str, Dict[str, Any]]:
     """Index of user namespaces by team"""
     return {
-        labels["orbit/teams"]: {
+        labels["orbit/team"]: {
             "name": name,
             "annotations": annotations,
             "labels": labels,
