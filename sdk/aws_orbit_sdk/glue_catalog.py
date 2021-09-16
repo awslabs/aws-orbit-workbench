@@ -162,7 +162,7 @@ def _update_column_parameters(table: Dict[str, Any], name: str, key: str, value:
     columns = table["StorageDescriptor"]["Columns"]
     for c in columns:
         if c["Name"] == name:
-            if value != None:
+            if value is not None:
                 if "Parameters" not in c:
                     c["Parameters"] = {}
 
@@ -230,18 +230,17 @@ def tag_columns(
         del update_table["CreatedBy"]
     if "IsRegisteredWithLakeFormation" in update_table:
         del update_table["IsRegisteredWithLakeFormation"]
-    if columns != None:
-        for c in columns:
-            _update_column_parameters(update_table, c, key, column_tag_value)
+    for c in columns if columns else []:
+        _update_column_parameters(update_table, c, key, column_tag_value)
     glue.update_table(DatabaseName=database, TableInput=update_table)
     return update_table
 
 
 def untag_columns(
     database: str,
+    key: str,
     table_name: Optional[str] = None,
     columns: Optional[List[str]] = None,
-    key: Optional[str] = None,
     table_tag: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
@@ -276,7 +275,7 @@ def untag_columns(
     """
     glue = boto3.client("glue")
     table_names = []
-    if table_name != None:
+    if table_name is not None:
         table_names = [table_name]
     else:
         tables = glue.get_tables(DatabaseName=database)["TableList"]
@@ -291,7 +290,7 @@ def untag_columns(
         if "Parameters" not in update_table["StorageDescriptor"]:
             update_table["StorageDescriptor"]["Parameters"] = {}
 
-        if table_tag != None:
+        if table_tag is not None:
             update_table["StorageDescriptor"]["Parameters"][key] = table_tag
         else:
             if key in update_table["StorageDescriptor"]["Parameters"]:
@@ -308,12 +307,7 @@ def untag_columns(
         if "IsRegisteredWithLakeFormation" in update_table:
             del update_table["IsRegisteredWithLakeFormation"]
 
-        if columns == None:
-            cols = table["StorageDescriptor"]["Columns"]
-            columns = []
-            for c in cols:
-                columns.append(c["Name"])
-
+        columns = [c["Name"] for c in table["StorageDescriptor"]["Columns"]] if columns is None else columns
         for c in columns:
             _update_column_parameters(update_table, c, key)
 
@@ -322,7 +316,7 @@ def untag_columns(
     return update_table
 
 
-def getCatalogAsDict(database: Optional[str] = None) -> Dict:
+def getCatalogAsDict(database: Optional[str] = None) -> List[Dict[str, Any]]:
     """
     Get Data Catalog of a specific Database
 
@@ -346,10 +340,16 @@ def getCatalogAsDict(database: Optional[str] = None) -> Dict:
     schemas: List[Dict[str, Any]] = []
     response = glue.get_databases()
     key: int = 0
-    for db in response["DatabaseList"]:
+    for db in [d for d in response["DatabaseList"] if database is None or database == d["Name"]]:
         key += 1
-        database = {"title": db["Name"], "key": str(key), "qname": db["Name"], "children": [], "_class": "database"}
-        schemas.append(database)
+        database_metadata = {
+            "title": db["Name"],
+            "key": str(key),
+            "qname": db["Name"],
+            "children": [],
+            "_class": "database",
+        }
+        schemas.append(database_metadata)
         response = glue.get_tables(DatabaseName=db["Name"], MaxResults=50)
         for t in response["TableList"]:
             key += 1
@@ -366,9 +366,9 @@ def getCatalogAsDict(database: Optional[str] = None) -> Dict:
             table["_class"] = "table"
             table["db"] = db["Name"]
             table["table"] = t["Name"]
-            database["children"].append(table)
+            database_metadata["children"].append(table)
             for c in t["StorageDescriptor"]["Columns"]:
-                col = dict()
+                col: Dict[str, str] = {}
                 key += 1
                 table["children"].append(col)
                 col["title"] = c["Name"]

@@ -33,8 +33,8 @@ logger.info(f"Team space: {team_space}, Environment name: {env_name}")
 
 
 def create_tasks(
-    glue_tables: List[str], target_folder: str, database: str, samplingRatio: float
-) -> List[Dict[str, str]]:
+    glue_tables: Dict[str, Any], target_folder: str, database: str, samplingRatio: float
+) -> List[Dict[str, Any]]:
     """
     Creating a data profiling task for each Glue table in the database.
 
@@ -89,7 +89,7 @@ def create_tasks(
 
 #
 # Main profiling function
-def data_profile(parameters: Dict[str, str]) -> Dict[str, Any]:
+def data_profile(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """
     Runs a data profiling task and returns the profiling reports to a target folder in s3.
 
@@ -167,7 +167,7 @@ def data_profile(parameters: Dict[str, str]) -> Dict[str, Any]:
         parameters["samplingRatio"] = 0.05
 
     # Start Spark
-    logger.info(f"Starting Spark cluster")
+    logger.info("Starting Spark cluster")
     livy_url, cluster_id, started = sparkConnection.connect_to_spark(
         parameters["cluster_name"],
         reuseCluster=parameters["reuse_cluster"],
@@ -191,8 +191,8 @@ def data_profile(parameters: Dict[str, str]) -> Dict[str, Any]:
     )
 
     # Running the tasks
-    logger.info(f"Starting to run spark tasks")
-    notebooks_to_run = {
+    logger.info("Starting to run spark tasks")
+    notebooks_to_run: Dict[str, Any] = {
         "compute": {"container": {"p_concurrent": parameters["container_concurrency"]}},
         "tasks": tasks,
         "env_vars": [
@@ -239,7 +239,7 @@ def data_profile(parameters: Dict[str, str]) -> Dict[str, Any]:
 
     # Shutting down Spark cluster
     if started and parameters["terminate_cluster"] == "True":
-        logger.info(f"Shutting down Spark cluster")
+        logger.info("Shutting down Spark cluster")
         sparkConnection.stop_cluster(cluster_id)
 
     logger.debug(f"data_profile results are in: {base_path}")
