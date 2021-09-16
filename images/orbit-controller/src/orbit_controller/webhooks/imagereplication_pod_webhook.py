@@ -15,7 +15,7 @@
 import logging
 import os
 from copy import deepcopy
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import kopf
 from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, dynamic_client
@@ -87,8 +87,10 @@ def update_pod_images(
     containers: List[Dict[str, Any]] = []
     replications = {}
 
-    def process_containers(src_containers: List[Dict[str, Any]], dest_containers: List[Dict[str, Any]]) -> None:
-        for container in src_containers:
+    def process_containers(
+        src_containers: Optional[List[Dict[str, Any]]], dest_containers: List[Dict[str, Any]]
+    ) -> None:
+        for container in src_containers if src_containers else []:
             image = container.get("image", "")
             desired_image = imagereplication_utils.get_desired_image(image=image, config=CONFIG)
             if image != desired_image:
