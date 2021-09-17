@@ -121,11 +121,15 @@ class RedshiftClustersCommon(core.Construct):
             ),
         )
 
+        """
+        Redshift clusters doesnt support Path prefix IAM roles
+        When the support is announced, path should be set to self.role_prefix
+        """
         self._lambda_role: iam.Role = iam.Role(
             self,
             "lambda_orbit_lake_formation_trigger",
             assumed_by=cast(iam.IPrincipal, iam.ServicePrincipal("lambda.amazonaws.com")),
-            path=self.role_prefix,
+            path="/",
             inline_policies={
                 "lambda-policy": iam.PolicyDocument(
                     statements=[
