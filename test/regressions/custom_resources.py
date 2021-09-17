@@ -20,6 +20,10 @@ from kubernetes import dynamic
 from kubernetes.client import V1DeleteOptions, V1Status, api_client
 from kubetest.manifest import render
 from kubetest.objects import ApiObject
+from kubetest.client import TestClient
+
+# This elminates some collection warnings for all tests using the TestClient
+TestClient.__test__ = False
 
 log = logging.getLogger("kubetest")
 
