@@ -47,7 +47,7 @@ class CustomApiObject(ApiObject):
 
     @property
     def name(self) -> str:
-        return self.obj["metadata"]["name"]
+        return self.obj["metadata"].get("name")
 
     @name.setter
     def name(self, name: str):
@@ -105,8 +105,7 @@ class CustomApiObject(ApiObject):
         with open(path, "r") as f:
             content = render(f, dict(path=path))
             objs = yaml.load_all(content, Loader=yaml.SafeLoader)
-
-        filtered = [o for o in objs if objs["apiVersion"] == f"{cls.group}/{cls.api_version}" and objs["kind"] == cls.kind]
+            filtered = [o for o in objs if o["apiVersion"] == f"{cls.group}/{cls.api_version}" and o["kind"] == cls.kind]
 
         if len(filtered) == 0:
             raise ValueError(
@@ -129,7 +128,7 @@ class CustomApiObject(ApiObject):
 
         for o in filtered:
             if o.get("metadata", {}).get("name") == name:
-                return o
+                return cls(o)
         else:
             raise ValueError(
                 "Unable to load resource from file - multiple resource definitions found for "
