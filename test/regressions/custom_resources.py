@@ -13,52 +13,48 @@
 #    limitations under the License.
 
 import logging
+from typing import Any, Dict, List, Optional, cast
+
 import yaml
-
-from typing import Dict, List, Optional, Union
-
-from kubernetes.client import api_client, V1DeleteOptions, V1Status
-from kubernetes.client.rest import ApiException
 from kubernetes import dynamic
+from kubernetes.client import V1DeleteOptions, V1Status, api_client
 from kubetest.manifest import render
 from kubetest.objects import ApiObject
 
 log = logging.getLogger("kubetest")
 
 
-class CustomApiObject(ApiObject):
-    group = None
-    api_version = None
-    kind = None
+class CustomApiObject(ApiObject):  # type: ignore
+    group: Optional[str] = None
+    api_version: Optional[str] = None
+    kind: Optional[str] = None
 
     obj_type = dynamic.Resource
-    api_clients = {
-        "preferred": dynamic.DynamicClient
-    }
+    api_clients = {"preferred": dynamic.DynamicClient}
 
-    def __init__(self, resource) -> None:
+    def __init__(self, resource: Dict[str, Any]) -> None:
         self.obj = resource
 
         self._api_client = None
 
     @property
     def version(self) -> str:
-        return self.obj["apiVersion"]
+        return cast(str, self.obj["apiVersion"])
 
     @property
     def name(self) -> str:
-        return self.obj["metadata"].get("name")
+        return cast(str, self.obj["metadata"].get("name"))
 
     @name.setter
-    def name(self, name: str):
+    def name(self, name: str) -> None:
         self.obj["metadata"]["name"] = name
 
     @property
-    def namespace(self) -> str:
-        return self.obj["metadata"].get("namespace")
+    def namespace(self) -> Optional[str]:
+        return cast(Optional[str], self.obj["metadata"].get("namespace"))
 
     @namespace.setter
-    def namespace(self, name: str):
+    def namespace(self, name: str) -> None:
         """Set the namespace of the object, if it hasn't already been set.
 
         Raises:
@@ -67,45 +63,48 @@ class CustomApiObject(ApiObject):
         if self.obj["metadata"].get("namespace") is None:
             self.obj["metadata"]["namespace"] = name
         else:
-            raise AttributeError(
-                "Cannot set namespace - object already has a namespace"
-            )
+            raise AttributeError("Cannot set namespace - object already has a namespace")
 
     @property
-    def api_client(self):
+    def api_client(self) -> dynamic.DynamicClient:
         if self._api_client is None:
             c = self.api_clients.get(self.version)
             # If we didn't find the client in the api_clients dict, use the
             # preferred version.
             if c is None:
-                log.warning(
-                    f"unknown version ({self.version}), falling back to preferred version"
-                )
+                log.warning(f"unknown version ({self.version}), falling back to preferred version")
                 c = self.api_clients.get("preferred")
                 if c is None:
                     raise ValueError(
-                        "unknown version specified and no preferred version "
-                        f"defined for resource ({self.version})"
+                        "unknown version specified and no preferred version " f"defined for resource ({self.version})"
                     )
             # If we did find it, initialize that client version.
-            self._api_client = c(client=api_client.ApiClient()).resources.get(group=self.group, api_version=self.api_version, kind=self.kind)
+            self._api_client = c(client=api_client.ApiClient()).resources.get(
+                group=self.group, api_version=self.api_version, kind=self.kind
+            )
         return self._api_client
 
     @classmethod
-    def preferred_client(cls):
+    def preferred_client(cls) -> dynamic.DynamicClient:
         c = cls.api_clients.get("preferred")
         if c is None:
             raise ValueError(
                 f"no preferred api client defined for object {cls.__name__}",
             )
-        return c(client=api_client.ApiClient()).resources.get(group=cls.group, api_version=cls.api_version, kind=cls.kind)
+        return c(client=api_client.ApiClient()).resources.get(
+            group=cls.group, api_version=cls.api_version, kind=cls.kind
+        )
 
     @classmethod
     def _load(cls, path: str, name: Optional[str] = None) -> List[ApiObject]:
         with open(path, "r") as f:
             content = render(f, dict(path=path))
             objs = yaml.load_all(content, Loader=yaml.SafeLoader)
-            filtered = [o for o in objs if o and o.get("apiVersion") == f"{cls.group}/{cls.api_version}" and o.get("kind") == cls.kind]
+            filtered = [
+                o
+                for o in objs
+                if o and o.get("apiVersion") == f"{cls.group}/{cls.api_version}" and o.get("kind") == cls.kind
+            ]
 
         if len(filtered) == 0:
             raise ValueError(
@@ -145,7 +144,7 @@ class CustomApiObject(ApiObject):
         filtered = cls._load(path=path)
         return [cls(o) for o in filtered]
 
-    def create(self, namespace: str = None) -> None:
+    def create(self, namespace: Optional[str] = None) -> None:
         if namespace is None:
             namespace = self.namespace
 

@@ -13,9 +13,10 @@
 #    limitations under the License.
 
 import os
-import pytest
 
+import pytest
 from custom_resources import CustomApiObject
+from kubetest.client import TestClient
 
 MANIFESTS_PATH = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
@@ -37,28 +38,30 @@ class PodDefault(CustomApiObject):
 
 @pytest.mark.order(2)
 @pytest.mark.namespace(create=False)
-def test_poddefault_1(kube):
+def test_poddefault_1(kube: TestClient) -> None:
 
     poddefaults = PodDefault.load_all(os.path.join(MANIFESTS_PATH, "poddefault.yaml"))
-    poddefault = [pd for pd in poddefaults if pd.obj["metadata"].get("generateName") == "orbit-stuff-"][0]
-    
+    poddefault: PodDefault = [pd for pd in poddefaults if pd.obj["metadata"].get("generateName") == "orbit-stuff-"][0]
+
     poddefault.create(namespace="orbit-system")
-    assert poddefault.name is not None
+    assert poddefault.name is not None and poddefault.is_ready()
     poddefault.delete()
 
 
 @pytest.mark.order(1)
 @pytest.mark.namespace(create=False)
-def test_poddefault_2(kube):
+def test_poddefault_2(kube: TestClient) -> None:
     body = {
         "apiVersion": "kubeflow.org/v1alpha1",
         "kind": "PodDefault",
-        "metadata": {
-            "name": "orbit-stuff-2"
+        "metadata": {"name": "orbit-stuff-2"},
+        "spec": {
+            "selector": {"matchLabels": {"orbit/stuff": ""}},
+            "desc": "Orbit Stuff",
         },
-        "spec": {"selector": {"matchLabels": {f"orbit/stuff": ""}}, "desc": "Orbit Stuff"},
     }
 
     poddefault = PodDefault(body)
     poddefault.create(namespace="orbit-system")
+    assert poddefault.is_ready()
     poddefault.delete()
