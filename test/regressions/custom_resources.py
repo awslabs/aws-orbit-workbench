@@ -176,16 +176,3 @@ class CustomApiObject(ApiObject):
             name=self.name,
             namespace=self.namespace,
         ).to_dict()
-
-
-class PodDefault(CustomApiObject):
-
-    group = "kubeflow.org"
-    api_version = "v1alpha1"
-    kind = "PodDefault"
-
-    def is_ready(self) -> bool:
-        self.refresh()
-
-        # if there is no uid, the poddefault wasn't created
-        return self.obj["metadata"].get("uid") is not None

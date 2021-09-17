@@ -14,21 +14,34 @@
 
 import os
 import pytest
-from typing import Optional
 
-from kubernetes import config
-from custom_resources import PodDefault
+from custom_resources import CustomApiObject
 
 MANIFESTS_PATH = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
     "manifests",
 )
 
+
+class PodDefault(CustomApiObject):
+
+    group = "kubeflow.org"
+    api_version = "v1alpha1"
+    kind = "PodDefault"
+
+    def is_ready(self) -> bool:
+        self.refresh()
+        # if there is no uid, the poddefault wasn't created
+        return self.obj["metadata"].get("uid") is not None
+
+
 @pytest.mark.order(2)
 @pytest.mark.namespace(create=False)
 def test_poddefault_1(kube):
 
-    poddefault = PodDefault.load(os.path.join(MANIFESTS_PATH, "poddefault.yaml"))
+    poddefaults = PodDefault.load_all(os.path.join(MANIFESTS_PATH, "poddefault.yaml"))
+    poddefault = [pd for pd in poddefaults if pd.obj["metadata"].get("generateName") == "orbit-stuff-"][0]
+    
     poddefault.create(namespace="orbit-system")
     assert poddefault.name is not None
     poddefault.delete()
