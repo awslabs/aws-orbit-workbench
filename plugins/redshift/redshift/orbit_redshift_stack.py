@@ -67,10 +67,10 @@ class RedshiftClustersCommon(core.Construct):
         self.env_name = team_space_props["env_name"]
         self.teamspace_name = team_space_props["teamspace_name"]
         self.lake_role_name = team_space_props["lake_role_name"]
-        self.lake_role_arn = f"arn:{self.partition}:iam::{self.account}:role/{self.lake_role_name}"
+        self.role_prefix = team_space_props["role_prefix"]
+        self.lake_role_arn = f"arn:{self.partition}:iam::{self.account}:role{self.role_prefix}{self.lake_role_name}"
         self.team_security_group_id = team_space_props["team_security_group_id"]
         self.team_kms_key_arn = team_space_props["team_kms_key_arn"]
-        self.role_prefix = team_space_props["role_prefix"]
 
         # Adding plugin parameters to redshift parameter group
         self._parameter_group = redshift.CfnClusterParameterGroup(
