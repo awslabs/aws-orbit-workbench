@@ -28,8 +28,9 @@ MANIFESTS_PATH = os.path.join(
 @pytest.mark.namespace(create=False)
 def test_poddefault_1(kube):
 
-    poddefault = PodDefault.load(os.path.join(MANIFESTS_PATH, "poddefault.yaml"), name="orbit-stuff-1")
+    poddefault = PodDefault.load(os.path.join(MANIFESTS_PATH, "poddefault.yaml"))
     poddefault.create(namespace="orbit-system")
+    assert poddefault.name is not None
     poddefault.delete()
 
 

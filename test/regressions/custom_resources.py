@@ -101,18 +101,23 @@ class CustomApiObject(ApiObject):
         return c(client=api_client.ApiClient()).resources.get(group=cls.group, api_version=cls.api_version, kind=cls.kind)
 
     @classmethod
-    def load(cls, path: str, name: Optional[str] = None) -> "ApiObject":
+    def _load(cls, path: str, name: Optional[str] = None) -> List[ApiObject]:
         with open(path, "r") as f:
             content = render(f, dict(path=path))
             objs = yaml.load_all(content, Loader=yaml.SafeLoader)
-            filtered = [o for o in objs if o["apiVersion"] == f"{cls.group}/{cls.api_version}" and o["kind"] == cls.kind]
+            filtered = [o for o in objs if o and o.get("apiVersion") == f"{cls.group}/{cls.api_version}" and o.get("kind") == cls.kind]
 
         if len(filtered) == 0:
             raise ValueError(
                 "Unable to load resource from file - no resource definitions found "
                 f"with type {cls.group}/{cls.api_version}/{cls.kind}."
             )
+        else:
+            return filtered
 
+    @classmethod
+    def load(cls, path: str, name: Optional[str] = None) -> ApiObject:
+        filtered = cls._load(path=path, name=name)
         if len(filtered) == 1:
             return cls(filtered[0])
 
@@ -134,6 +139,11 @@ class CustomApiObject(ApiObject):
                 "Unable to load resource from file - multiple resource definitions found for "
                 f"{cls.group}/{cls.api_version}/{cls.kind}, but none match specified name: {name}"
             )
+
+    @classmethod
+    def load_all(cls, path: str) -> ApiObject:
+        filtered = cls._load(path=path)
+        return [cls(o) for o in filtered]
 
     def create(self, namespace: str = None) -> None:
         if namespace is None:
@@ -173,15 +183,6 @@ class PodDefault(CustomApiObject):
     group = "kubeflow.org"
     api_version = "v1alpha1"
     kind = "PodDefault"
-
-    body = {
-        "apiVersion": "kubeflow.org/v1alpha1",
-        "kind": "PodDefault",
-        "metadata": {
-            "name": "orbit-stuff"
-        },
-        "spec": {"selector": {"matchLabels": {f"orbit/stuff": ""}}, "desc": "Orbit Stuff"},
-    }
 
     def is_ready(self) -> bool:
         self.refresh()
