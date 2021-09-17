@@ -973,10 +973,13 @@ pyroma==3.0.1
     # via -r requirements-dev.in
 pyrsistent==0.18.0
     # via jsonschema
+pytest-order==1.0.0
+    # via -r requirements-dev.in
 pytest==6.2.5
     # via
     #   -r requirements-dev.in
     #   kubetest
+    #   pytest-order
 python-dateutil==2.8.2
     # via
     #   botocore

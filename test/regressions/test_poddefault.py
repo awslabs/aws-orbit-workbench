@@ -25,7 +25,6 @@ MANIFESTS_PATH = os.path.join(
 
 
 class PodDefault(CustomApiObject):
-
     group = "kubeflow.org"
     api_version = "v1alpha1"
     kind = "PodDefault"

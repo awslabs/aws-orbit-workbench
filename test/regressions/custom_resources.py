@@ -25,10 +25,11 @@ log = logging.getLogger("kubetest")
 
 
 class CustomApiObject(ApiObject):  # type: ignore
-    group: Optional[str] = None
-    api_version: Optional[str] = None
-    kind: Optional[str] = None
+    group: str = ""
+    api_version: str = ""
+    kind: str = ""
 
+    obj: Dict[str, Any] = {}
     obj_type = dynamic.Resource
     api_clients = {"preferred": dynamic.DynamicClient}
 
@@ -140,7 +141,7 @@ class CustomApiObject(ApiObject):  # type: ignore
             )
 
     @classmethod
-    def load_all(cls, path: str) -> ApiObject:
+    def load_all(cls, path: str) -> List[ApiObject]:
         filtered = cls._load(path=path)
         return [cls(o) for o in filtered]
 
