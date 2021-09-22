@@ -40,7 +40,14 @@ MANIFEST: Dict[str, Any] = {
 
 
 def create_nodegroup_structure(context: "Context", nodegroup: ManagedNodeGroupManifest) -> Dict[str, Any]:
-    labels = {"orbit/node-group": nodegroup.name, "orbit/usage": "teams", "orbit/node-type": "ec2"}
+    labels = {
+        "orbit/node-group": nodegroup.name,
+        "orbit/usage": "teams",
+        "orbit/node-type": "ec2",
+        "node-group": nodegroup.name,
+        "usage": "teams",
+        "node-type": "ec2",
+    }
     labels.update(nodegroup.labels)
 
     # Extra label for gpu instance types
@@ -122,7 +129,14 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
     MANIFEST["iam"]["serviceRoleARN"] = context.eks_cluster_role_arn
     MANIFEST["managedNodeGroups"] = []
 
-    labels = {"orbit/node-group": "env", "orbit/usage": "reserved", "orbit/node-type": "ec2"}
+    labels = {
+        "orbit/node-group": "env",
+        "orbit/usage": "reserved",
+        "orbit/node-type": "ec2",
+        "node-group": "env",
+        "usage": "reserved",
+        "node-type": "ec2",
+    }
     tags = tags = {f"k8s.io/cluster-autoscaler/node-template/label/{k}": v for k, v in labels.items()}
     tags["Env"] = f"orbit-{context.name}"
 

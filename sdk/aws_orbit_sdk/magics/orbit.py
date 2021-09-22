@@ -1,11 +1,11 @@
 import argparse
 import json
 import sys
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 
 import IPython.core.display
 from IPython import get_ipython
-from IPython.core.magic import Magics, cell_magic, line_cell_magic, line_magic, magics_class, needs_local_scope
+from IPython.core.magic import Magics, cell_magic, line_magic, magics_class, needs_local_scope
 
 from aws_orbit_sdk import controller
 from aws_orbit_sdk.json import display_json, run_schema_induction_args
@@ -28,7 +28,7 @@ class OrbitWorkbenchMagics(Magics):
         self.ip = get_ipython()
 
     @line_magic
-    def schema_induction(self, line: str) -> Dict[str, Union[str, Dict[str, str]]]:
+    def schema_induction(self, line: str) -> Dict[str, Dict[str, str]]:
         """
         Calls on run_process to run Schema Induction with given user arguments gets ddl and schema metadata for a
         specified table.
@@ -104,7 +104,7 @@ class OrbitWorkbenchMagics(Magics):
 
     @needs_local_scope
     @line_magic
-    def display_tree(self, line: str, local_ns: Optional[Dict[str, str]] = None) -> IPython.core.display.JSON:
+    def display_tree(self, line: str, local_ns: Dict[str, Dict[str, Any]]) -> IPython.core.display.JSON:
         """
 
         Parameters
@@ -134,7 +134,7 @@ class OrbitWorkbenchMagics(Magics):
         ip._showtraceback = exception_handler
 
     @cell_magic
-    def schedule_notebook(self, line: str, cell: str, local_ns: Optional[Dict[str, str]] = None) -> str:
+    def schedule_notebook(self, line: str, cell: str, local_ns: Optional[Dict[str, str]] = None):
         """
         Schedule a notebook execution.
 
@@ -232,7 +232,7 @@ class OrbitWorkbenchMagics(Magics):
             print(str(e))
 
     @cell_magic
-    def run_notebook(self, line: Optional[str], cell: str, local_ns: Optional[Dict[str, str]] = None) -> List[str]:
+    def run_notebook(self, line: str, cell: str, local_ns: Optional[Dict[str, str]] = None):
         """
         Run a notebook execution.
 
@@ -316,7 +316,7 @@ class OrbitWorkbenchMagics(Magics):
             print(str(e))
 
     @cell_magic
-    def run_python(self, line: Optional[str], cell: str, local_ns: Optional[Dict[str, str]] = None) -> List[str]:
+    def run_python(self, line: Optional[str], cell: str, local_ns: Optional[Dict[str, str]] = None):
         """
         Run some python code.
 

@@ -15,9 +15,7 @@
 import json
 import logging
 import os
-import sys
 import time
-import urllib
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, cast
@@ -26,15 +24,43 @@ import boto3
 import botocore
 import pandas as pd
 import yaml
-from kubernetes import client
 from kubernetes import config as k8_config
 from kubernetes import dynamic
 from kubernetes import watch as k8_watch
-from kubernetes.client import *
+from kubernetes.client import (
+    ApiException,
+    BatchV1Api,
+    BatchV1beta1Api,
+    CoreV1Api,
+    CustomObjectsApi,
+    StorageV1Api,
+    V1beta1CronJob,
+    V1beta1CronJobSpec,
+    V1beta1CronJobStatus,
+    V1beta1JobTemplateSpec,
+    V1Container,
+    V1ContainerPort,
+    V1ContainerState,
+    V1ContainerStatus,
+    V1EnvVar,
+    V1Job,
+    V1JobList,
+    V1JobSpec,
+    V1JobStatus,
+    V1ObjectMeta,
+    V1Pod,
+    V1PodCondition,
+    V1PodList,
+    V1PodSecurityContext,
+    V1PodSpec,
+    V1PodStatus,
+    V1ResourceRequirements,
+    V1SecurityContext,
+    api_client,
+    exceptions,
+)
 
-from aws_orbit_sdk.common import get_properties, get_stepfunctions_waiter_config
-
-# from aws_orbit_sdk.common_pod_specification import TeamConstants
+from aws_orbit_sdk.common import get_properties
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -46,13 +72,13 @@ _logger = logging.getLogger()
 MANIFEST_PLUGIN_TYPE = Dict[str, Union[str, Dict[str, Any]]]
 MANIFEST_PROPERTY_MAP_TYPE = Dict[str, Union[str, Dict[str, Any]]]
 MANIFEST_FILE_TEAM_TYPE = Dict[str, Union[str, int, None, List[MANIFEST_PROPERTY_MAP_TYPE], List[str]]]
-MANIFEST_TEAM_TYPE = Dict[str, Union[str, int, None, List[MANIFEST_PLUGIN_TYPE]]]
-MANIFEST_PROPERTY_MAP_TYPE = Dict[str, Union[str, Dict[str, Any]]]
+MANIFEST_TEAM_TYPE = Optional[Dict[str, Union[str, int, None, List[MANIFEST_PLUGIN_TYPE]]]]
+
 
 __CURRENT_TEAM_MANIFEST__: MANIFEST_TEAM_TYPE = None
 __CURRENT_ENV_MANIFEST__: MANIFEST_TEAM_TYPE = None
 
-APP_LABEL_SELECTOR: [str] = ["orbit-runner", "emr-spark"]
+APP_LABEL_SELECTOR: List[str] = ["orbit-runner", "emr-spark"]
 
 
 def read_team_manifest_ssm(env_name: str, team_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
@@ -71,7 +97,7 @@ def read_team_manifest_ssm(env_name: str, team_name: str) -> Optional[MANIFEST_T
 def get_parameter(client, name: str) -> Dict[str, Any]:
     try:
         json_str: str = client.get_parameter(Name=name)["Parameter"]["Value"]
-    except botocore.errorfactory.ParameterNotFound as e:
+    except botocore.errorfactory.ParameterNotFound:
         _logger.error("failed to read parameter %s", name)
         raise
     return cast(Dict[str, Any], json.loads(json_str))
@@ -136,48 +162,6 @@ def _get_execution_history_from_local(notebook_basedir: str, src_notebook: str, 
 
     df = pd.DataFrame(executions, columns=["relativePath", "timestamp", "path"])
     return df
-
-
-def _get_execution_history_from_s3(notebookBaseDir: str, srcNotebook: str, props: str) -> pd.DataFrame:
-    """
-    Get Notebook Execution History from s3
-    """
-    s3 = boto3.client("s3")
-
-    notebookDir = os.path.join(notebookBaseDir, srcNotebook.split(".")[0])
-
-    path = "{}/output/notebooks/{}/".format(props["AWS_ORBIT_TEAM_SPACE"], notebookDir)
-    executions = []
-    objects = s3.list_objects_v2(Bucket=props["AWS_ORBIT_S3_BUCKET"], Prefix=path)
-    if "Contents" in objects.keys():
-        for key in s3.list_objects_v2(Bucket=props["AWS_ORBIT_S3_BUCKET"], Prefix=path)["Contents"]:
-            if key["Key"][-1] == "/":
-                continue
-            notebookName = os.path.basename(key["Key"])
-            path = key["Key"]
-            arg = urllib.parse.quote(path)
-            s3path = "s3://{}/{}".format(props["AWS_ORBIT_S3_BUCKET"], path)
-            #     link = '<a href="{}" target="_blank">{}</a>'.format(site + arg,"open")
-            timestamp = key["LastModified"]
-            executions.append((notebookName, timestamp, s3path))
-    else:
-        _logger.info("No output notebooks founds at: s3://{}/{}".format(props["AWS_ORBIT_S3_BUCKET"], path))
-
-    df = pd.DataFrame(executions, columns=["relativePath", "timestamp", "s3path"])
-    return df
-
-
-def _get_invoke_function_name() -> Any:
-    """
-    Get invoke function Name.
-
-    Returns
-    -------
-    Function Name.
-    """
-    props = get_properties()
-    functionName = f"orbit-{props['AWS_ORBIT_ENV']}-{props['AWS_ORBIT_TEAM_SPACE']}-container-runner"
-    return functionName
 
 
 def run_python(taskConfiguration: dict) -> Any:
@@ -333,11 +317,10 @@ def list_my_running_jobs():
 
 
 def list_running_jobs(namespace: str):
-    props = get_properties()
     load_kube_config()
     api_instance = BatchV1Api()
 
-    label_selector = f"app=orbit-runner"
+    label_selector = "app=orbit-runner"
     try:
         api_response = api_instance.list_namespaced_job(
             namespace=namespace,
@@ -401,7 +384,7 @@ def list_current_pods(label_selector: str = None):
     load_kube_config()
     api_instance = CoreV1Api()
     try:
-        params = dict()
+        params: Dict[str, Any] = {}
         params["namespace"] = namespace
         params["_preload_content"] = False
         if label_selector:
@@ -443,7 +426,7 @@ def delete_storage_pvc(pvc_name: str):
     load_kube_config()
     api_instance = CoreV1Api()
     props = get_properties()
-    params = dict()
+    params: Dict[str, Any] = {}
     params["name"] = pvc_name
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     params["namespace"] = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
@@ -505,7 +488,7 @@ def get_nodegroups(cluster_name: str):
     props = get_properties()
     env_name = props["AWS_ORBIT_ENV"]
     nodegroups_with_lt = []
-    nodegroups: List[Dict[str, str]] = []
+    nodegroups: List[Dict[str, Any]] = []
     _logger.debug(f"Fetching cluster {cluster_name} nodegroups")
     try:
         response: Dict[str, Any] = boto3.client("lambda").invoke(
@@ -622,7 +605,7 @@ def delete_all_my_jobs():
 
     load_kube_config()
     api_instance = BatchV1Api()
-    label_selector = f"app=orbit-runner"
+    label_selector = "app=orbit-runner"
     try:
         api_instance.delete_collection_namespaced_job(
             namespace=namespace, _preload_content=False, orphan_dependents=False, label_selector=label_selector
@@ -654,8 +637,7 @@ def list_running_cronjobs():
 def get_podsetting_spec(podsetting_name, team_name):
     load_kube_config()
     co = CustomObjectsApi()
-    crd = co.get_namespaced_custom_object("orbit.aws", "v1", team_name, "podsettings", podsetting_name)
-    return crd
+    return co.get_namespaced_custom_object("orbit.aws", "v1", team_name, "podsettings", podsetting_name)
 
 
 def get_priority(taskConfiguration: dict):
@@ -680,9 +662,9 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
     global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
     env_name = props["AWS_ORBIT_ENV"]
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
-    if __CURRENT_TEAM_MANIFEST__ == None or __CURRENT_TEAM_MANIFEST__["Name"] != team_name:
+    if __CURRENT_TEAM_MANIFEST__ is None or __CURRENT_TEAM_MANIFEST__["Name"] != team_name:
         __CURRENT_TEAM_MANIFEST__ = load_team_context_from_ssm(env_name, team_name)
-    if __CURRENT_ENV_MANIFEST__ == None:
+    if __CURRENT_ENV_MANIFEST__ is None:
         __CURRENT_ENV_MANIFEST__ = load_env_context_from_ssm(env_name)
 
     env = build_env(__CURRENT_ENV_MANIFEST__, env_name, taskConfiguration, team_name)
@@ -695,17 +677,17 @@ def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1J
     image = resolve_image_from_podsetting(__CURRENT_ENV_MANIFEST__, podsetting_spec)
 
     job_name: str = f'run-{taskConfiguration["task_type"]}'
-    grant_sudo = False
 
     labels = {**labels, **podsetting_spec["metadata"]["labels"]}
-    # MUST set this to the name of the podsetting in format 'orbit/{podsetting-name} so orbit-controller watcher will apply the settings
+    # MUST set this to the name of the podsetting in format 'orbit/{podsetting-name} so orbit-controller
+    # watcher will apply the settings
     # MUST set 'app' to orbit-runner
     label_indicator = "orbit/" + podsetting_spec["metadata"]["name"]
     labels[label_indicator] = ""
 
     labels["app"] = "orbit-runner"
 
-    pod_properties: Dict[str, str] = dict(
+    pod_properties: Dict[str, Any] = dict(
         name=job_name,
         cmd=["bash", "-c", "python /opt/python-utils/notebook_cli.py"],
         port=22,
@@ -741,41 +723,13 @@ def make_pod(
     cmd,
     port,
     image,
-    image_pull_policy=None,
-    image_pull_secrets=None,
-    node_selector=None,
     run_as_uid=None,
     run_as_gid=None,
-    fs_gid=None,
-    supplemental_gids=None,
     run_privileged=False,
     allow_privilege_escalation=True,
     env=None,
-    working_dir=None,
-    volumes=None,
-    volume_mounts=None,
     labels=None,
-    annotations=None,
-    cpu_limit=None,
-    cpu_guarantee=None,
-    mem_limit=None,
-    mem_guarantee=None,
-    extra_resource_limits=None,
-    extra_resource_guarantees=None,
-    lifecycle_hooks=None,
-    init_containers=None,
     service_account=None,
-    extra_container_config=None,
-    extra_pod_config=None,
-    extra_containers=None,
-    scheduler_name=None,
-    tolerations=None,
-    node_affinity_preferred=None,
-    node_affinity_required=None,
-    pod_affinity_preferred=None,
-    pod_affinity_required=None,
-    pod_anti_affinity_preferred=None,
-    pod_anti_affinity_required=None,
     priority_class_name=None,
     logger=None,
 ):
@@ -791,21 +745,10 @@ def make_pod(
         Image specification - usually a image name and tag in the form
         of image_name:tag. Same thing you would use with docker commandline
         arguments
-    image_pull_policy:
-        Image pull policy - one of 'Always', 'IfNotPresent' or 'Never'. Decides
-        when kubernetes will check for a newer version of image and pull it when
-        running a pod.
-    image_pull_secrets:
-        Image pull secrets - a list of references to Kubernetes Secret resources
-        with credentials to pull images from image registries. This list can
-        either have strings in it or objects with the string value nested under
-        a name field.
     port:
         Port the notebook server is going to be listening on
     cmd:
         The command used to execute the singleuser server.
-    node_selector:
-        Dictionary Selector to match nodes where to launch the Pods
     run_as_uid:
         The UID used to run single-user pods. The default is to run as the user
         specified in the Dockerfile, if this is set to None.
@@ -816,122 +759,16 @@ def make_pod(
         otherwise the effective GID of the pod will be 0 (root).  In addition, not
         setting `run_as_gid` once feature-gate RunAsGroup is enabled will also
         result in an effective GID of 0 (root).
-    fs_gid
-        The gid that will own any fresh volumes mounted into this pod, if using
-        volume types that support this (such as GCE). This should be a group that
-        the uid the process is running as should be a member of, so that it can
-        read / write to the volumes mounted.
-    supplemental_gids:
-        A list of GIDs that should be set as additional supplemental groups to
-        the user that the container runs as. You may have to set this if you are
-        deploying to an environment with RBAC/SCC enforced and pods run with a
-        'restricted' SCC which results in the image being run as an assigned
-        user ID. The supplemental group IDs would need to include the
-        corresponding group ID of the user ID the image normally would run as.
-        The image must setup all directories/files any application needs access
-        to, as group writable.
     run_privileged:
         Whether the container should be run in privileged mode.
     allow_privilege_escalation:
         Controls whether a process can gain more privileges than its parent process.
     env:
         Dictionary of environment variables.
-    volumes:
-        List of dictionaries containing the volumes of various types this pod
-        will be using. See k8s documentation about volumes on how to specify
-        these
-    volume_mounts:
-        List of dictionaries mapping paths in the container and the volume(
-        specified in volumes) that should be mounted on them. See the k8s
-        documentaiton for more details
-    working_dir:
-        String specifying the working directory for the notebook container
     labels:
         Labels to add to the spawned pod.
-    annotations:
-        Annotations to add to the spawned pod.
-    cpu_limit:
-        Float specifying the max number of CPU cores the user's pod is
-        allowed to use.
-    cpu_guarentee:
-        Float specifying the max number of CPU cores the user's pod is
-        guaranteed to have access to, by the scheduler.
-    mem_limit:
-        String specifying the max amount of RAM the user's pod is allowed
-        to use. String instead of float/int since common suffixes are allowed
-    mem_guarantee:
-        String specifying the max amount of RAM the user's pod is guaranteed
-        to have access to. String ins loat/int since common suffixes
-        are allowed
-    lifecycle_hooks:
-        Dictionary of lifecycle hooks
-    init_containers:
-        List of initialization containers belonging to the pod.
     service_account:
         Service account to mount on the pod. None disables mounting
-    extra_container_config:
-        Extra configuration (e.g. envFrom) for notebook container which is not covered by parameters above.
-    extra_pod_config:
-        Extra configuration (e.g. tolerations) for pod which is not covered by parameters above.
-    extra_containers:
-        Extra containers besides notebook container. Used for some housekeeping jobs (e.g. crontab).
-    scheduler_name:
-        The pod's scheduler explicitly named.
-    tolerations:
-        Tolerations can allow a pod to schedule or execute on a tainted node. To
-        learn more about pod tolerations, see
-        https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/.
-
-        Pass this field an array of "Toleration" objects.*
-        * https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.10/#nodeselectorterm-v1-core
-    node_affinity_preferred:
-        Affinities describe where pods prefer or require to be scheduled, they
-        may prefer or require a node to have a certain label or be in proximity
-        / remoteness to another pod. To learn more visit
-        https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-
-        Pass this field an array of "PreferredSchedulingTerm" objects.*
-        * https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.10/#preferredschedulingterm-v1-core
-    node_affinity_required:
-        Affinities describe where pods prefer or require to be scheduled, they
-        may prefer or require a node to have a certain label or be in proximity
-        / remoteness to another pod. To learn more visit
-        https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-
-        Pass this field an array of "NodeSelectorTerm" objects.*
-        * https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.10/#nodeselectorterm-v1-core
-    pod_affinity_preferred:
-        Affinities describe where pods prefer or require to be scheduled, they
-        may prefer or require a node to have a certain label or be in proximity
-        / remoteness to another pod. To learn more visit
-        https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-
-        Pass this field an array of "WeightedPodAffinityTerm" objects.*
-        * https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.10/#weightedpodaffinityterm-v1-core
-    pod_affinity_required:
-        Affinities describe where pods prefer or require to be scheduled, they
-        may prefer or require a node to have a certain label or be in proximity
-        / remoteness to another pod. To learn more visit
-        https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-
-        Pass this field an array of "PodAffinityTerm" objects.*
-        * https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.10/#podaffinityterm-v1-core
-    pod_anti_affinity_preferred:
-        Affinities describe where pods prefer or require to be scheduled, they
-        may prefer or require a node to have a certain label or be in proximity
-        / remoteness to another pod. To learn more visit
-        https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-
-        Pass this field an array of "WeightedPodAffinityTerm" objects.*
-        * https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.10/#weightedpodaffinityterm-v1-core
-    pod_anti_affinity_required:
-        Affinities describe where pods prefer or require to be scheduled, they
-        may prefer or require a node to have a certain label or be in proximity
-        / remoteness to another pod. To learn more visit
-        https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
-
-        Pass this field an array of "PodAffinityTerm" objects.*
-        * https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.10/#podaffinityterm-v1-core
     priority_class_name:
         The name of the PriorityClass to be assigned the pod. This feature is Beta available in K8s 1.11.
     """
@@ -940,47 +777,15 @@ def make_pod(
     pod.kind = "Pod"
     pod.api_version = "v1"
 
-    pod.metadata = V1ObjectMeta(name=name, labels=(labels or {}).copy(), annotations=(annotations or {}).copy())
+    pod.metadata = V1ObjectMeta(name=name, labels=(labels or {}).copy())
 
     pod.spec = V1PodSpec(containers=[])
     pod.spec.restart_policy = "OnFailure"
 
-    if image_pull_secrets is not None:
-        # image_pull_secrets as received by the make_pod function should always
-        # be a list, but it is allowed to have "a-string" elements or {"name":
-        # "a-string"} elements.
-        pod.spec.image_pull_secrets = [
-            V1LocalObjectReference(name=secret_ref)
-            if type(secret_ref) == str
-            else get_k8s_model(V1LocalObjectReference, secret_ref)
-            for secret_ref in image_pull_secrets
-        ]
-
     if priority_class_name:
         pod.spec.priority_class_name = priority_class_name
-    if node_selector:
-        pod.spec.node_selector = node_selector
 
-    if lifecycle_hooks:
-        lifecycle_hooks = get_k8s_model(V1Lifecycle, lifecycle_hooks)
-
-    # There are security contexts both on the Pod level or the Container level.
-    # The security settings that you specify for a Pod apply to all Containers
-    # in the Pod, but settings on the container level can override them.
-    #
-    # We configure the pod to be spawned on the container level unless the
-    # option is only available on the pod level, such as for those relating to
-    # the volumes as compared to the running user of the container. Volumes
-    # belong to the pod and are only mounted by containers after all.
-    #
-    # ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-    # ref: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#securitycontext-v1-core (container)
-    # ref: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.16/#podsecuritycontext-v1-core (pod)
     pod_security_context = V1PodSecurityContext()
-    if fs_gid is not None:
-        pod_security_context.fs_group = int(fs_gid)
-    if supplemental_gids is not None and supplemental_gids:
-        pod_security_context.supplemental_groups = [int(gid) for gid in supplemental_gids]
     # Only clutter pod spec with actual content
     if not all([e is None for e in pod_security_context.to_dict().values()]):
         pod.spec.security_context = pod_security_context
@@ -998,29 +803,16 @@ def make_pod(
     if all([e is None for e in container_security_context.to_dict().values()]):
         container_security_context = None
 
-    # Transform a dict into valid Kubernetes EnvVar Python representations. This
-    # representation shall always have a "name" field as well as either a
-    # "value" field or "value_from" field. For examples see the
-    # test_make_pod_with_env function.
     prepared_env = []
     for k, v in (env or {}).items():
-        if type(v) == dict:
-            if not "name" in v:
-                v["name"] = k
-            prepared_env.append(get_k8s_model(V1EnvVar, v))
-        else:
-            prepared_env.append(V1EnvVar(name=k, value=v))
+        prepared_env.append(V1EnvVar(name=k, value=v))
     notebook_container = V1Container(
         name="orbit-runner",
         image=image,
-        working_dir=working_dir,
         ports=[V1ContainerPort(name="notebook-port", container_port=port)],
         env=prepared_env,
         args=cmd,
-        image_pull_policy=image_pull_policy,
-        lifecycle=lifecycle_hooks,
         resources=V1ResourceRequirements(),
-        volume_mounts=[get_k8s_model(V1VolumeMount, obj) for obj in (volume_mounts or [])],
         security_context=container_security_context,
     )
 
@@ -1032,131 +824,15 @@ def make_pod(
         pod.spec.service_account_name = service_account
 
     notebook_container.resources.requests = {}
-    if cpu_guarantee:
-        notebook_container.resources.requests["cpu"] = cpu_guarantee
-    if mem_guarantee:
-        notebook_container.resources.requests["memory"] = mem_guarantee
-    if extra_resource_guarantees:
-        notebook_container.resources.requests.update(extra_resource_guarantees)
-
     notebook_container.resources.limits = {}
-    if cpu_limit:
-        notebook_container.resources.limits["cpu"] = cpu_limit
-    if mem_limit:
-        notebook_container.resources.limits["memory"] = mem_limit
-    if extra_resource_limits:
-        notebook_container.resources.limits.update(extra_resource_limits)
-
-    if extra_container_config:
-        notebook_container = update_k8s_model(
-            target=notebook_container,
-            changes=extra_container_config,
-            logger=logger,
-            target_name="notebook_container",
-            changes_name="extra_container_config",
-        )
 
     pod.spec.containers.append(notebook_container)
-
-    if extra_containers:
-        pod.spec.containers.extend([get_k8s_model(V1Container, obj) for obj in extra_containers])
-    if tolerations:
-        pod.spec.tolerations = [get_k8s_model(V1Toleration, obj) for obj in tolerations]
-    if init_containers:
-        pod.spec.init_containers = [get_k8s_model(V1Container, obj) for obj in init_containers]
-    if volumes:
-        pod.spec.volumes = [get_k8s_model(V1Volume, obj) for obj in volumes]
-    else:
-        # Keep behaving exactly like before by not cleaning up generated pod
-        # spec by setting the volumes field even though it is an empty list.
-        pod.spec.volumes = []
-    if scheduler_name:
-        pod.spec.scheduler_name = scheduler_name
-
-    node_affinity = None
-    if node_affinity_preferred or node_affinity_required:
-        node_selector = None
-        if node_affinity_required:
-            node_selector = V1NodeSelector(
-                node_selector_terms=[get_k8s_model(V1NodeSelectorTerm, obj) for obj in node_affinity_required],
-            )
-
-        preferred_scheduling_terms = None
-        if node_affinity_preferred:
-            preferred_scheduling_terms = [
-                get_k8s_model(V1PreferredSchedulingTerm, obj) for obj in node_affinity_preferred
-            ]
-
-        node_affinity = V1NodeAffinity(
-            preferred_during_scheduling_ignored_during_execution=preferred_scheduling_terms,
-            required_during_scheduling_ignored_during_execution=node_selector,
-        )
-
-    pod_affinity = None
-    if pod_affinity_preferred or pod_affinity_required:
-        weighted_pod_affinity_terms = None
-        if pod_affinity_preferred:
-            weighted_pod_affinity_terms = [
-                get_k8s_model(V1WeightedPodAffinityTerm, obj) for obj in pod_affinity_preferred
-            ]
-
-        pod_affinity_terms = None
-        if pod_affinity_required:
-            pod_affinity_terms = [get_k8s_model(V1PodAffinityTerm, obj) for obj in pod_affinity_required]
-
-        pod_affinity = V1PodAffinity(
-            preferred_during_scheduling_ignored_during_execution=weighted_pod_affinity_terms,
-            required_during_scheduling_ignored_during_execution=pod_affinity_terms,
-        )
-
-    pod_anti_affinity = None
-    if pod_anti_affinity_preferred or pod_anti_affinity_required:
-        weighted_pod_affinity_terms = None
-        if pod_anti_affinity_preferred:
-            weighted_pod_affinity_terms = [
-                get_k8s_model(V1WeightedPodAffinityTerm, obj) for obj in pod_anti_affinity_preferred
-            ]
-
-        pod_affinity_terms = None
-        if pod_anti_affinity_required:
-            pod_affinity_terms = [get_k8s_model(V1PodAffinityTerm, obj) for obj in pod_anti_affinity_required]
-
-        pod_anti_affinity = V1PodAffinity(
-            preferred_during_scheduling_ignored_during_execution=weighted_pod_affinity_terms,
-            required_during_scheduling_ignored_during_execution=pod_affinity_terms,
-        )
-
-    affinity = None
-    if node_affinity or pod_affinity or pod_anti_affinity:
-        affinity = V1Affinity(
-            node_affinity=node_affinity,
-            pod_affinity=pod_affinity,
-            pod_anti_affinity=pod_anti_affinity,
-        )
-
-    if affinity:
-        pod.spec.affinity = affinity
+    pod.spec.volumes = []
 
     if priority_class_name:
         pod.spec.priority_class_name = priority_class_name
 
-    if extra_pod_config:
-        pod.spec = update_k8s_model(
-            target=pod.spec,
-            changes=extra_pod_config,
-            logger=logger,
-            target_name="pod.spec",
-            changes_name="extra_pod_config",
-        )
-
     return pod
-
-
-def get_podsetting_spec(podsetting_name, team_name):
-    # /apis/orbit.aws/v1/namespaces/lake-user/podsettings/orbit-custom-image-with-apps-lake-user
-    load_kube_config()
-    co = CustomObjectsApi()
-    return co.get_namespaced_custom_object("orbit.aws", "v1", team_name, "podsettings", podsetting_name)
 
 
 def resolve_image_from_podsetting(__CURRENT_ENV_MANIFEST__, podsetting_spec):
@@ -1215,9 +891,8 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
     """
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
-    username = (os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))).split("@")[0]
     node_type = get_node_type(taskConfiguration)
-    labels = {"app": f"orbit-runner", "orbit/node-type": node_type, "notebook-name": os.environ.get("HOSTNAME")}
+    labels = {"app": "orbit-runner", "orbit/node-type": node_type, "notebook-name": os.environ.get("HOSTNAME", "")}
     if node_type == "ec2":
         labels["orbit/attach-security-group"] = "yes"
     job_spec = _create_eks_job_spec(taskConfiguration, labels=labels)
@@ -1373,10 +1048,9 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
     node_type = get_node_type(taskConfiguration)
-    username = (os.environ.get("JUPYTERHUB_USER", os.environ.get("USERNAME"))).split("@")[0]
     cronjob_id = f"orbit-{namespace}-{triggerName}"
     labels = {
-        "app": f"orbit-runner",
+        "app": "orbit-runner",
         "orbit/node-type": node_type,
         "cronjob_id": cronjob_id,
         "notebook-name": "scheduled",
@@ -1400,8 +1074,6 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
         "ExecutionType": "eks",
         "Identifier": metadata.name,
     }
-    metadata: V1ObjectMeta = job_instance.metadata
-    _logger.debug(f"started job {metadata.name}")
 
 
 def load_kube_config():
@@ -1427,30 +1099,30 @@ def delete_task_schedule_eks(triggerName: str) -> None:
     BatchV1beta1Api().delete_namespaced_cron_job(name=f"orbit-{team_name}-{triggerName}", namespace=namespace)
 
 
-def order_def(task_definition: Any) -> datetime:
-    """
-    Order task definitions by their timestamps of when they start at.
+# def order_def(task_definition: Any) -> datetime:
+#     """
+#     Order task definitions by their timestamps of when they start at.
 
-    Parameters
-    -----------
-    task_definition: Any
+#     Parameters
+#     -----------
+#     task_definition: Any
 
-    Returns
-    --------
-    date : datetime
-        Timestamp for a specific task definition, or the current timestamp if one does not already exist.
-    """
+#     Returns
+#     --------
+#     date : datetime
+#         Timestamp for a specific task definition, or the current timestamp if one does not already exist.
+#     """
 
-    if "epoch" in task_definition:
-        return task_definition["epoch"]
-    return datetime.now().timestamp()
+#     if "epoch" in task_definition:
+#         return task_definition["epoch"]
+#     return datetime.now().timestamp()
 
 
 def wait_for_tasks_to_complete(
-    tasks: List[Dict[str, str]],
-    delay: Optional[int] = 10,
-    maxAttempts: Optional[int] = 10,
-    tail_log: Optional[bool] = False,
+    tasks: List[Any],
+    delay: int = 10,
+    maxAttempts: int = 10,
+    tail_log: bool = False,
 ) -> bool:
     """
     Parameters
@@ -1459,7 +1131,7 @@ def wait_for_tasks_to_complete(
        A list of structures with container type, execution arn, and job arn.
     delay: int
        Number of seconds to wait until checking containers state again (default = 60).
-    maxAttempts: str
+    maxAttempts: int
         Number of attempts to check if containers stopped before returning a failure (default = 10).
     tail_log: bool
        if True, will tail the log of the containers until they are stopped (default = false).
@@ -1490,15 +1162,13 @@ def wait_for_tasks_to_complete(
             _logger.debug("Checking execution state of: %s", task)
             try:
                 current_jobs: V1JobList = BatchV1Api().list_namespaced_job(
-                    namespace=namespace, label_selector=f"app=orbit-runner"
+                    namespace=namespace, label_selector="app=orbit-runner"
                 )
             except exceptions.ApiException as e:
                 _logger.error("Error during list jobs for %s: %s", team_name, e)
                 # try again after 5 seconds.
                 time.sleep(5)
-                current_jobs: V1JobList = BatchV1Api().list_namespaced_job(
-                    namespace=namespace, label_selector=f"app=orbit-runner"
-                )
+                current_jobs = BatchV1Api().list_namespaced_job(namespace=namespace, label_selector="app=orbit-runner")
             task_name = task["Identifier"]
             for job in current_jobs.items:
                 job_instance: V1Job = cast(V1Job, job)
@@ -1589,7 +1259,6 @@ def logEvents(paginator: Any, logGroupName: Any, logStreams: Any, fromTime: Any)
     -------
     """
     logging.basicConfig(format="%(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
-    event_logger = logging.getLogger("event")
 
     response_iterator = paginator.paginate(
         logGroupName=logGroupName,
@@ -1612,7 +1281,7 @@ def logEvents(paginator: Any, logGroupName: Any, logStreams: Any, fromTime: Any)
             else:
                 marker = None
 
-        if marker == None:
+        if marker is None:
             return lastTime + 1
         else:
             response_iterator = paginator.paginate(
@@ -1651,7 +1320,7 @@ def all_tasks_stopped(tasks_state: Any) -> bool:
 def build_podsetting(env_name: str, team_name: str, podsetting: str, debug: bool) -> None:
     ps = json.loads(podsetting)
     if not ps["description"] or not ps["name"]:
-        raise Exception(f"Podsetting name and description not present")
+        raise Exception("Podsetting name and description not present")
     podsetting_name = ps["name"]
     spec_template = _generate_podsetting_spec_base(
         podsetting_name=podsetting_name, description=ps["description"], env_name=env_name, team_name=team_name
@@ -1685,7 +1354,7 @@ def build_podsetting(env_name: str, team_name: str, podsetting: str, debug: bool
     try:
         _destroy_podsetting(namespace=team_name, podsetting_name=podsetting_name, client=dynamic_client)
         time.sleep(3)
-    except ApiException as e:
+    except ApiException:
         _logger.info(f"Tried to delete {podsetting_name} but that podsetting was not found...moving on")
 
     _deploy_podsetting(namespace=team_name, name=podsetting_name, client=dynamic_client, podsetting_spec=spec)

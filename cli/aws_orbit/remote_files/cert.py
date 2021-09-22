@@ -33,22 +33,26 @@ def deploy_selfsigned_cert(context: "FoundationContext") -> str:
     """Module to deploy self signed cert"""
 
     _logger.debug("Generating self-signed certificate...")
-    generate_cert: str = (
-        "openssl req -x509 -nodes -days 365 -newkey rsa:2048 "
-        "-keyout privateKey.key -out certificate.crt "
+
+    _logger.debug("Creating private key...")
+    convert_key: str = "openssl genrsa 2048 > private.pem"
+    run_command(cmd=convert_key)
+
+    _logger.debug("Creating Certificate signing request...")
+    generate_csr: str = (
+        "openssl req -new -key private.pem "
+        "-out csr.pem "
         '-subj "/C=US/ST=SEA/L=SEA/O=AWSOrbit Security/OU=AWSOrbit Department/CN=AWSOrbit"'
     )
-    run_command(cmd=generate_cert)
+    run_command(cmd=generate_csr)
 
-    _logger.debug("Converting the key into .pem file...")
-    convert_key: str = "openssl rsa -in privateKey.key -text > private.pem"
-    run_command(cmd=convert_key)
+    _logger.debug("Creating Public certificate...")
+    generate_pub: str = "openssl x509 -req -days 365 -in csr.pem " "-signkey private.pem -out public.pem "
+    run_command(cmd=generate_pub)
+
     with open("private.pem", "r") as fp:
         private_pem = fp.read()
 
-    _logger.debug("Converting the cert into .pem file...")
-    convert_pem: str = "openssl x509 -inform PEM -in certificate.crt > public.pem"
-    run_command(cmd=convert_pem)
     with open("public.pem", "r") as fp:
         public_pem = fp.read()
 

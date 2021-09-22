@@ -35,8 +35,8 @@ def get_properties() -> Dict[str, str]:
     Returns
     -------
     prop : dict
-        Dictionary containing pathnames for the Orbit Workbench Enviornment, Team Space, S3 Bucket Path, Orbit Workbench Source
-        Repository.
+        Dictionary containing pathnames for the Orbit Workbench Enviornment, Team Space, S3 Bucket Path,
+        Orbit Workbench Source Repository.
 
     Example
     -------
@@ -53,9 +53,10 @@ def get_properties() -> Dict[str, str]:
                 AWS_ORBIT_TEAM_SPACE=os.environ.get("AWS_ORBIT_TEAM_SPACE", ""),
             )
             if "AWS_ORBIT_S3_BUCKET" in os.environ.keys():
-                prop["AWS_ORBIT_S3_BUCKET"] = os.environ.get("AWS_ORBIT_S3_BUCKET")
+                prop["AWS_ORBIT_S3_BUCKET"] = os.environ.get("AWS_ORBIT_S3_BUCKET", "")
     else:
-        # this path is used by the sagemaker notebooks where we cannot create the env variable in the context of the notebook
+        # this path is used by the sagemaker notebooks where we cannot create the env variable in the
+        # context of the notebook
         home = expanduser("~")
         propFilePath = f"{home}/orbit.yaml"
         with open(propFilePath, "r") as f:
@@ -174,7 +175,7 @@ def get_scratch_database() -> str:
             if new_location == db["LocationUri"]:
                 return scratch_db_name
             else:
-                ## scratch database left from previous teamspace creation , will delete it.
+                # scratch database left from previous teamspace creation , will delete it.
                 glue.delete_database(Name=scratch_db_name)
 
     response = glue.create_database(

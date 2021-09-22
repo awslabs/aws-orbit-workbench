@@ -4,23 +4,6 @@
         CfnTemplatePath: "./bundle/plugins/demo-lake-user-cfn-template.yaml"
 -   PluginId: code_commit
     Module: code_commit
--   PluginId: hello_world
-    Module: hello_world
-    Parameters:
-        foo: boo
-        xoo: 1234
--   PluginId: clean-regression-files
-    Module: team_script_launcher
-    Parameters:
-        script: |
-            i=0
-            while [ $i -lt 1 ];
-            do
-              find /home/jovyan/shared/regression -mtime +5 -type f -exec rm {} \;
-              sleep 60
-            done
-            echo "DONE LOOP"
-        restartPolicy: Never
 -   PluginId: copy-sample-code
     Module: team_script_launcher
     Parameters:
@@ -42,16 +25,6 @@
         number_of_nodes: "2"
 -   PluginId: enable_emr_on_eks
     Module: emr_on_eks
--   PluginId: fast_fs_lustre
-    Module: lustre
-    Parameters:
-        storage: 1200Gi
-        folder: /fsx
 -   PluginId: sm-operator
     Module: sm-operator
--   PluginId: team-voila
-    Module: voila
-    Parameters:
-        restartPolicy: Always
-        path: "/home/jovyan/shared/notebooks/V-Voila"
-        options: "--debug"
+

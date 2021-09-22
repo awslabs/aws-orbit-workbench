@@ -25,8 +25,9 @@ import aws_cdk.aws_iam as iam
 import aws_cdk.aws_kms as kms
 import aws_cdk.aws_s3 as s3
 import aws_cdk.aws_ssm as ssm
-import aws_cdk.core as core
-from aws_cdk.core import App, Construct, Duration, Environment, IConstruct, Stack, Tags
+import jsii
+from aws_cdk import core
+from aws_cdk.core import App, Aspects, Construct, Duration, Environment, IAspect, IConstruct, Stack, Tags
 
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
@@ -172,17 +173,6 @@ class Team(Stack):
             simple_name=False,
             tier=ssm.ParameterTier.INTELLIGENT_TIERING,
         )
-        ssm_profile_name = f"/orbit/{self.context.name}/teams/{self.team_name}/user/profiles"
-        self.user_profiles: ssm.StringParameter = ssm.StringParameter(
-            scope=self,
-            id=ssm_profile_name,
-            string_value="[]",
-            type=ssm.ParameterType.STRING,
-            description="Team additional profiles created by the team users",
-            parameter_name=ssm_profile_name,
-            simple_name=False,
-            tier=ssm.ParameterTier.INTELLIGENT_TIERING,
-        )
 
 
 def main() -> None:
@@ -225,7 +215,21 @@ def main() -> None:
     os.makedirs(outdir, exist_ok=True)
     shutil.rmtree(outdir)
     app = App(outdir=outdir)
-    Team(scope=app, id=stack_name, context=context, team_name=team_name, team_policies=team_policies, image=image)
+
+    @jsii.implements(core.IAspect)
+    class AddDeployPathIAM:
+        """ Implementing CDK Aspects to add optional IAM Role prefix to IAM roles """
+
+        def visit(self, node: IConstruct) -> None:
+            """ Function to implement a path pattern """
+
+            if isinstance(node, iam.CfnRole):
+                node.path = f"/{context.role_prefix}/" if context.role_prefix else "/"
+
+    team_stack = Team(
+        scope=app, id=stack_name, context=context, team_name=team_name, team_policies=team_policies, image=image
+    )
+    Aspects.of(scope=cast(IConstruct, team_stack)).add(cast(IAspect, AddDeployPathIAM()))
     app.synth(force=True)
 
 

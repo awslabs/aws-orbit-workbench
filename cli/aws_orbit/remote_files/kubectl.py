@@ -54,7 +54,13 @@ def _orbit_system_commons_base(output_path: str, context: Context) -> None:
             content: str = file.read()
         content = resolve_parameters(
             content,
-            dict(account_id=context.account_id, region=context.region, env_name=context.name, secure_port="10260"),
+            dict(
+                account_id=context.account_id,
+                region=context.region,
+                env_name=context.name,
+                role_prefix=f"/{context.role_prefix}/" if context.role_prefix else "/",
+                secure_port="10260",
+            ),
         )
         with open(output, "w") as file:
             file.write(content)
@@ -189,6 +195,7 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
             efsprivateapid=team_context.efs_private_ap_id if team_context.efs_private_ap_id else "",
             account_id=context.account_id,
             env_name=context.name,
+            role_prefix=f"/{context.role_prefix}/" if context.role_prefix else "/",
             team_kms_key_arn=team_context.team_kms_key_arn,
             team_security_group_id=team_context.team_security_group_id,
             cluster_pod_security_group_id=context.cluster_pod_sg_id,
@@ -267,6 +274,7 @@ def _generate_kube_system_manifest(context: "Context", clean_up: bool = True) ->
             dict(
                 account_id=context.account_id,
                 region=context.region,
+                role_prefix=f"/{context.role_prefix}/" if context.role_prefix else "/",
                 env_name=context.name,
                 cluster_name=f"orbit-{context.name}",
                 sts_ep="legacy" if context.networking.data.internet_accessible else "regional",
@@ -584,15 +592,26 @@ def deploy_env(context: "Context") -> None:
         # Commented until we confirm this isn't needed
         # Restart orbit-system deployments and statefulsets to force reload of caches etc
         # sh.run(f"kubectl rollout restart deployments -n orbit-system --context {k8s_context}")
-        # sh.run(f"kubectl rollout restart statefulsets -n orbit-system --context {k8s_context}")
 
-        _confirm_endpoints(name="podsettings-pod-modifier", namespace="orbit-system", k8s_context=k8s_context)
+        _confirm_readiness(
+            name="namespace-controller", namespace="orbit-system", type="deployment", k8s_context=k8s_context
+        )
+        _confirm_readiness(
+            name="podsetting-operator", namespace="orbit-system", type="deployment", k8s_context=k8s_context
+        )
+        _confirm_readiness(
+            name="teamspace-operator", namespace="orbit-system", type="deployment", k8s_context=k8s_context
+        )
+        _confirm_readiness(
+            name="userspace-operator", namespace="orbit-system", type="deployment", k8s_context=k8s_context
+        )
+        _confirm_endpoints(name="podsetting-pod-webhook", namespace="orbit-system", k8s_context=k8s_context)
 
         if context.install_image_replicator or not context.networking.data.internet_accessible:
             _confirm_readiness(
-                name="image-replication-operator", namespace="orbit-system", type="deployment", k8s_context=k8s_context
+                name="imagereplication-operator", namespace="orbit-system", type="deployment", k8s_context=k8s_context
             )
-            _confirm_endpoints(name="image-replication-operator", namespace="orbit-system", k8s_context=k8s_context)
+            _confirm_endpoints(name="imagereplication-pod-webhook", namespace="orbit-system", k8s_context=k8s_context)
             sh.run(
                 "kubectl rollout restart daemonsets -n orbit-system-ssm-daemons "
                 f"ssm-agent-installer --context {k8s_context}"
@@ -638,7 +657,10 @@ def deploy_env(context: "Context") -> None:
 
         # Patch Pods to push into Fargate when deploying in an isolated subnet
         if not context.networking.data.internet_accessible:
-            patch = '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}}}}}'
+            patch = (
+                '{"spec":{"template":{"metadata":{"labels":{"orbit/node-type":"fargate"}},'
+                '"spec":{"nodeSelector": null}}}}'
+            )
             sh.run(f"kubectl patch deployment -n istio-system authzadaptor --patch '{patch}'")
 
             patch = (
@@ -648,6 +670,14 @@ def deploy_env(context: "Context") -> None:
             )
             patch = patch.replace("VPC_ID", cast(str, context.networking.vpc_id))
             sh.run(f"kubectl patch deployment -n kubeflow alb-ingress-controller --patch '{patch}'")
+
+        # Patch the kubeflow mpi-operator deployment to version lock the images to v0.2.3
+        patch = (
+            '{"spec":{"template":{"spec":{"containers":[{"name":"mpi-operator","args":["-alsologtostderr",'
+            '"--lock-namespace","kubeflow","--kubectl-delivery-image","mpioperator/kubectl-delivery:v0.2.3"],'
+            '"image":"mpioperator/mpi-operator:v0.2.3"}]}}}}'
+        )
+        sh.run(f"kubectl patch deployment -n kubeflow mpi-operator --patch '{patch}'")
 
         # Confirm env Service Endpoints
         _confirm_endpoints(name="landing-page-service", namespace="orbit-system", k8s_context=k8s_context)

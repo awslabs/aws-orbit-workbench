@@ -14,7 +14,7 @@ metadata:
   name: orbit-${env_name}-admin
   namespace: orbit-system
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::${account_id}:role/orbit-${env_name}-${region}-admin
+    eks.amazonaws.com/role-arn: arn:aws:iam::${account_id}:role${role_prefix}orbit-${env_name}-${region}-admin
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -57,6 +57,103 @@ rules:
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  name: teamspaces.orbit.aws
+spec:
+  group: orbit.aws
+  scope: Namespaced
+  names:
+    plural: teamspaces
+    singular: teamspace
+    kind: TeamSpace
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+      - name: InstallationStatus
+        jsonPath: .status.installation.installationStatus
+        type: string
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-preserve-unknown-fields: true
+          properties:
+            spec:
+              type: object
+              required:
+              - env
+              - space
+              - team
+              properties:
+                env:
+                  type: string
+                space:
+                  type: string
+                team:
+                  type: string
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: userspaces.orbit.aws
+spec:
+  group: orbit.aws
+  scope: Namespaced
+  names:
+    plural: userspaces
+    singular: userspace
+    kind: UserSpace
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+      - name: Team
+        jsonPath: .spec.team
+        type: string
+      - name: User
+        jsonPath: .spec.user
+        type: string
+      - name: InstallationStatus
+        jsonPath: .status.installation.installationStatus
+        type: string
+      # - name: HelmRepository
+      #   jsonPath: .status.installation.helmRepository
+      #   type: string
+      # - name: HelmReleases
+      #   jsonPath: .status.installation.helmReleases
+      #   type: string
+      schema:
+        openAPIV3Schema:
+          type: object
+          x-kubernetes-preserve-unknown-fields: true
+          properties:
+            spec:
+              type: object
+              required:
+              - env
+              - space
+              - team
+              - user
+              - userEfsApId
+              - userEmail
+              properties:
+                env:
+                  type: string
+                space:
+                  type: string
+                team:
+                  type: string
+                user:
+                  type: string
+                userEfsApId:
+                  type: string
+                userEmail:
+                  type: string
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
   name: imagereplications.orbit.aws
 spec:
   group: orbit.aws
@@ -94,7 +191,6 @@ spec:
               type: object
               required:
               - source
-              - destination
               properties:
                 source:
                   type: string

@@ -1,12 +1,11 @@
 import argparse
 import sys
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 import IPython.display
 import sql.connection
 from IPython import get_ipython
 from IPython.core.magic import Magics, cell_magic, line_magic, magics_class, needs_local_scope
-from IPython.display import JSON
 
 
 def exception_handler(exception_type, exception, traceback):
@@ -96,7 +95,7 @@ class RedshiftMagics(DatabaseMagics):
         try:
             args = parser.parse_args(line.strip().split(" "))
             clusterArgs = dict()
-            if args.func != None:
+            if args.func is not None:
                 clusterArgs["redshift_start_function"] = args.func[0]
                 for arg in args.func[1:]:
                     keypair = arg.split("=")
@@ -227,10 +226,12 @@ class RedshiftMagics(DatabaseMagics):
         """
         parser = ArgumentParserNoSysExit(description="database utils support - DDL")
         parser.add_argument("--a", "--args", nargs="+", default=[], help="name value pairs for dynamic replacement")
-        args = parser.parse_args(line.strip().split(" "))
-        for val in args.a:
-            v1, v2 = val.split("=")
-            cell = cell.replace(str(":" + v1), v2)
+
+        if line and (line.strip().split(" ") is not None):
+            args = parser.parse_args(line.strip().split(" "))
+            for val in args.a:
+                v1, v2 = val.split("=")
+                cell = cell.replace(str(":" + v1), v2)
 
         self.database_utils.execute_ddl(cell, local_ns)
 
