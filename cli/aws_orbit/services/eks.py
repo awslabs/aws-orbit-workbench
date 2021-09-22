@@ -161,7 +161,9 @@ def delete_fargate_profile(
 
         timeout = 0
         _logger.debug(f"Checking fargate profile {profile_name} current state")
-        fargate_profile_res = eks_client.describe_fargate_profile(clusterName=cluster_name, fargateProfileName=profile_name)
+        fargate_profile_res = eks_client.describe_fargate_profile(
+            clusterName=cluster_name, fargateProfileName=profile_name
+        )
         fargate_profile_status = fargate_profile_res.get("fargateProfile").get("status")
         _logger.debug(f"{profile_name} current state: {fargate_profile_status}")
 
@@ -169,7 +171,9 @@ def delete_fargate_profile(
             _logger.debug(f"Fargate profile is in {fargate_profile_status} state. Retrying in 1min - attempt {timeout}")
             time.sleep(60)
             timeout += 1
-            fargate_profile_res = eks_client.describe_fargate_profile(clusterName=cluster_name, fargateProfileName=profile_name)
+            fargate_profile_res = eks_client.describe_fargate_profile(
+                clusterName=cluster_name, fargateProfileName=profile_name
+            )
             fargate_profile_status = fargate_profile_res.get("fargateProfile").get("status")
 
         _logger.debug(f"Deleting fargate profile {profile_name}")
