@@ -12,7 +12,7 @@ import boto3
 import IPython.display
 from IPython.display import JSON
 
-from aws_orbit_sdk.common import get_properties, get_workspace, split_s3_path
+from aws_orbit_sdk.common import split_s3_path
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -176,12 +176,12 @@ def run_process(args: Union[str, List[str]]) -> None:
     except subprocess.CalledProcessError as err:
         logger.error(f"ERROR: {err}")
     else:
-        out = completed.stdout.decode("utf-8")
-        err = completed.stderr.decode("utf-8")
-        if len(out) > 0:
-            logger.info(out)
-        if len(err):
-            logger.error(err)
+        stdout = completed.stdout.decode("utf-8")
+        stderr = completed.stderr.decode("utf-8")
+        if len(stdout) > 0:
+            logger.info(stdout)
+        if len(stderr):
+            logger.error(stderr)
 
 
 def run_schema_induction_args(user_args: Union[str, List[str]]) -> Dict[str, Dict[str, str]]:

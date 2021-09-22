@@ -3,14 +3,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 #
-## **[1.3.0] - Unreleased **
+
+## **[1.4.0] - Unreleased **
 
 ### **Added**
+
+### **Changed**
+
+### **Removed**
+
+## **[1.3.0]**
+
+### **Added**
+
 - iamidentitymapping for team role to team RoleBinding and ClusterRoleBinding
 - ImageReplication Operator and informative CRDs
 - Opttional removal of docker credentials on env destroy
 - Lens support in jupyter-user-apps
+- TeamSpace CRD and Operator
+- UserSpace CRD and Operator
 - Added support for Path prefix to Orbit frameowork's IAM roles
+
 ### **Changed**
 
 - FIX: overprovisioning fixed to support gpu
@@ -24,14 +37,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: Example-6-Schedule-Notebook, removed git:// reference
 - FIX: ecr repo filter logic used to delete existing env repos
 - FIX: make sure Laekformation regression tests do not run in -iso envs
+- REFACTOR: orbit-controller operators, webhooks, and controllers
+- FIX: mpi-operator not version locked, `latest` fails to start
 - FIX: Fixed the way we generate self signed certs
+- FIX: Regression tests for athena notebook needs parameterized env_name in users.population_by_age table
 - FIX: regression tests for DataBrew needed parameterized names
+- FIX: fix podsettings filter when copying into user namespace
+- FIX: imagereplication-pod-webhook patching when no changes occur
+
 ### **Removed**
+
 - REMOVED: changes to team-script-launcher...filesystem is now always used
 - REMOVED: orbit profile support (use podsettings)
 - REMOVED: sagemaker on eks tests for isolated envs
 
 ## **[1.2.0]**
+
 ### **Added**
 
 - FEATURE: Added CLI support for podsettings (build and delete)

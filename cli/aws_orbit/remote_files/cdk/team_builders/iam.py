@@ -45,6 +45,7 @@ class IamBuilder:
         account = core.Aws.ACCOUNT_ID
         region = core.Aws.REGION
         lake_role_name: str = f"orbit-{env_name}-{team_name}-{region}-role"
+        role_prefix: str = f"/{context.role_prefix}/" if context.role_prefix else "/"
         kms_keys = [team_kms_key.key_arn]
         scratch_bucket_kms_key = IamBuilder.get_kms_key_scratch_bucket(context=context)
         if scratch_bucket_kms_key:
@@ -120,7 +121,7 @@ class IamBuilder:
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=["iam:PassRole"],
-                    resources=[f"arn:{partition}:iam::{account}:role/{lake_role_name}"],
+                    resources=[f"arn:{partition}:iam::{account}:role{role_prefix}{lake_role_name}"],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,

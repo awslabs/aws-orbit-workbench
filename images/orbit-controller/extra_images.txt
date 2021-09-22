@@ -1,0 +1,2 @@
+mpioperator/kubectl-delivery:v0.2.3
+mpioperator/mpi-operator:v0.2.3

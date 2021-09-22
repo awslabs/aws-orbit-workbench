@@ -592,15 +592,26 @@ def deploy_env(context: "Context") -> None:
         # Commented until we confirm this isn't needed
         # Restart orbit-system deployments and statefulsets to force reload of caches etc
         # sh.run(f"kubectl rollout restart deployments -n orbit-system --context {k8s_context}")
-        # sh.run(f"kubectl rollout restart statefulsets -n orbit-system --context {k8s_context}")
 
-        _confirm_endpoints(name="podsettings-pod-modifier", namespace="orbit-system", k8s_context=k8s_context)
+        _confirm_readiness(
+            name="namespace-controller", namespace="orbit-system", type="deployment", k8s_context=k8s_context
+        )
+        _confirm_readiness(
+            name="podsetting-operator", namespace="orbit-system", type="deployment", k8s_context=k8s_context
+        )
+        _confirm_readiness(
+            name="teamspace-operator", namespace="orbit-system", type="deployment", k8s_context=k8s_context
+        )
+        _confirm_readiness(
+            name="userspace-operator", namespace="orbit-system", type="deployment", k8s_context=k8s_context
+        )
+        _confirm_endpoints(name="podsetting-pod-webhook", namespace="orbit-system", k8s_context=k8s_context)
 
         if context.install_image_replicator or not context.networking.data.internet_accessible:
             _confirm_readiness(
-                name="image-replication-operator", namespace="orbit-system", type="deployment", k8s_context=k8s_context
+                name="imagereplication-operator", namespace="orbit-system", type="deployment", k8s_context=k8s_context
             )
-            _confirm_endpoints(name="image-replication-operator", namespace="orbit-system", k8s_context=k8s_context)
+            _confirm_endpoints(name="imagereplication-pod-webhook", namespace="orbit-system", k8s_context=k8s_context)
             sh.run(
                 "kubectl rollout restart daemonsets -n orbit-system-ssm-daemons "
                 f"ssm-agent-installer --context {k8s_context}"
@@ -659,6 +670,14 @@ def deploy_env(context: "Context") -> None:
             )
             patch = patch.replace("VPC_ID", cast(str, context.networking.vpc_id))
             sh.run(f"kubectl patch deployment -n kubeflow alb-ingress-controller --patch '{patch}'")
+
+        # Patch the kubeflow mpi-operator deployment to version lock the images to v0.2.3
+        patch = (
+            '{"spec":{"template":{"spec":{"containers":[{"name":"mpi-operator","args":["-alsologtostderr",'
+            '"--lock-namespace","kubeflow","--kubectl-delivery-image","mpioperator/kubectl-delivery:v0.2.3"],'
+            '"image":"mpioperator/mpi-operator:v0.2.3"}]}}}}'
+        )
+        sh.run(f"kubectl patch deployment -n kubeflow mpi-operator --patch '{patch}'")
 
         # Confirm env Service Endpoints
         _confirm_endpoints(name="landing-page-service", namespace="orbit-system", k8s_context=k8s_context)

@@ -12,22 +12,17 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import json
 import logging
 import os
 import subprocess
-import time
-from copy import deepcopy
-from typing import Any, Dict, List, Optional, Union
 
 from kubernetes import config as k8_config
 from kubernetes import dynamic
-from kubernetes.client import CoreV1Api, V1ConfigMap, api_client
-from kubernetes.client.exceptions import ApiException
+from kubernetes.client import api_client
 
 ORBIT_API_VERSION = os.environ.get("ORBIT_API_VERSION", "v1")
 ORBIT_API_GROUP = os.environ.get("ORBIT_API_GROUP", "orbit.aws")
-ORBIT_SYSTEM_NAMESPACE = os.environ.get("ORBIT_SYSTEM_NAMESPCE", "orbit-system")
+ORBIT_SYSTEM_NAMESPACE = os.environ.get("ORBIT_SYSTEM_NAMESPACE", "orbit-system")
 ORBIT_STATE_PATH = os.environ.get("ORBIT_STATE_PATH", "/state")
 
 DEBUG_LOGGING_FORMAT = "[%(asctime)s][%(filename)-13s:%(lineno)3d][%(levelname)s][%(threadName)s] %(message)s"
@@ -49,132 +44,6 @@ def _get_logger() -> logging.Logger:
         logging.getLogger("urllib3").setLevel(logging.ERROR)
         logging.getLogger("kubernetes").setLevel(logging.ERROR)
     return logger
-
-
-def dump_resource(resource: Union[Optional[Dict[str, Any]], List[Dict[str, Any]]]) -> str:
-    def strip_resource(resource: Dict[str, Any]) -> Dict[str, Any]:
-        verbosity = 0
-        try:
-            verbosity = int(os.environ.get("ORBIT_CONTROLLER_LOG_VERBOSITY", "0"))
-        except Exception:
-            pass
-
-        if verbosity > 2:
-            return resource
-
-        stripped_resource = {
-            "metadata": {
-                "name": resource.get("metadata", {}).get("name", None),
-                "namespace": resource.get("metadata", {}).get("namespace", None),
-            },
-        }
-
-        if verbosity > 1:
-            stripped_resource["metadata"]["labels"] = resource.get("metadata", {}).get("labels", None)
-            stripped_resource["metadata"]["annotations"] = resource.get("metadata", {}).get("annotations", None)
-            try:
-                del stripped_resource["metadata"]["annotations"]["kubectl.kubernetes.io/last-applied-configuration"]
-            except Exception:
-                pass
-
-            if "spec" in resource:
-                stripped_resource["spec"] = resource["spec"]
-
-        return stripped_resource
-
-    if isinstance(resource, dict):
-        return json.dumps(strip_resource(resource))
-    elif isinstance(resource, list):
-        return json.dumps([strip_resource(r) for r in resource])
-    elif resource is None:
-        return str(resource)
-    else:
-        raise ValueError("Invalid resource type: %s", type(resource))
-
-
-def get_orbit_controller_state() -> V1ConfigMap:
-    try:
-        config_map: V1ConfigMap = CoreV1Api().read_namespaced_config_map(
-            name="orbit-controller-state", namespace=ORBIT_SYSTEM_NAMESPACE
-        )
-
-        logger.debug("orbit-controller-state: %s", config_map.to_dict())
-        return config_map
-    except ApiException as e:
-        if e.status == 404:
-            logger.info(
-                "The orbit-controller-state ConfigMap was not found in the %s Namespace",
-                ORBIT_SYSTEM_NAMESPACE,
-            )
-            return initialize_orbit_controller_state()
-        else:
-            logger.exception("Error fetching orbit-controller-state ConfigMap")
-            raise e
-    except Exception:
-        logger.exception("Error fetching orbit-controller-state ConfigMap")
-        raise
-
-
-def initialize_orbit_controller_state() -> V1ConfigMap:
-    try:
-        logger.info(
-            "Initializing orbit-controller-state ConfigMap in the %s Namesapce",
-            ORBIT_SYSTEM_NAMESPACE,
-        )
-        return CoreV1Api().create_namespaced_config_map(
-            namespace=ORBIT_SYSTEM_NAMESPACE,
-            body={
-                "apiVersion": "v1",
-                "kind": "ConfigMap",
-                "metadata": {"name": "orbit-controller-state"},
-                "data": {},
-            },
-        )
-    except Exception:
-        logger.exception("Error putting orbit-controller-state ConfigMap")
-        raise
-
-
-def get_module_state(module: str) -> Dict[str, Any]:
-    # module_path = os.path.join(ORBIT_STATE_PATH, module)
-    # if os.path.exists(module_path):
-    #     with open(module_path, "r") as module_file:
-    #         return cast(Dict[str, Any], json.load(module_file))
-    # else:
-    #     return {}
-    config_map = get_orbit_controller_state()
-    config_map_data = config_map.data if config_map.data is not None else {}
-    data = {k: json.loads(v) for k, v in config_map_data.items()} if config_map is not None else {}
-
-    return data.get(module, {})
-
-
-def put_module_state(module: str, state: Dict[str, Any]) -> None:
-    try:
-        body = {"data": {module: json.dumps({k: v for k, v in state.items()})}}
-        logger.debug(
-            "Patching orbit-controller-state in Namespace %s with %s",
-            ORBIT_SYSTEM_NAMESPACE,
-            body,
-        )
-        CoreV1Api().patch_namespaced_config_map(
-            name="orbit-controller-state",
-            namespace=ORBIT_SYSTEM_NAMESPACE,
-            body=body,
-        )
-    except Exception:
-        logger.exception("Error patching orbit-controller-state ConfigMap")
-        raise
-
-
-def maintain_module_state(module: str, state: Dict[str, Any], sleep_time: int = 1) -> None:
-    last_state = None
-    while True:
-        state_copy = deepcopy(state)
-        if state_copy != last_state:
-            put_module_state(module=module, state=state)
-        last_state = state_copy
-        time.sleep(sleep_time)
 
 
 def load_config(in_cluster: bool = True) -> None:
