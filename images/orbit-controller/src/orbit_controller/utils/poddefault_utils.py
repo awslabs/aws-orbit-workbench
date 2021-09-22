@@ -23,7 +23,7 @@ KUBEFLOW_API_VERSION = "v1alpha1"
 
 
 def construct(
-name: str,
+    name: str,
     desc: str,
     owner_reference: Optional[Dict[str, str]] = None,
     labels: Optional[Dict[str, str]] = None,
