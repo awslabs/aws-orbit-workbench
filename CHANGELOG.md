@@ -3,7 +3,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 #
-## **[1.3.0] - Unreleased **
+
+## **[1.4.0] - Unreleased **
+
+### **Added**
+
+### **Changed**
+
+### **Removed**
+
+## **[1.3.0]**
 
 ### **Added**
 
@@ -34,6 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: Regression tests for athena notebook needs parameterized env_name in users.population_by_age table
 - FIX: regression tests for DataBrew needed parameterized names
 - FIX: fix podsettings filter when copying into user namespace
+- FIX: imagereplication-pod-webhook patching when no changes occur
 
 ### **Removed**
 
