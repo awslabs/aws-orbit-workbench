@@ -194,20 +194,26 @@ spec:
                         type: string
                       targetPath:
                         type: string
+                      targetPrefix:
+                        type: string
                       params:
                         type: object
                         additionalProperties:
                           type: string
+                notebookName:
+                  type: string
                 compute:
                   type: object
                   properties:
+                    computeType:
+                      type: string
+                    nodeType:
+                      type: string
                     container:
                       type: object
                       properties:
                         concurrentProcesses:
                           type: number
-                    nodeType:
-                      type: string
                     env:
                       type: array
                       items:

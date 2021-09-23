@@ -58,4 +58,5 @@ Teams:
     Plugins: !include lake-admin-plugins.yaml
     EfsLifeCycle: AFTER_7_DAYS
     AuthenticationGroups:
-    - LDAP:hrs-lob-datascience
+    - LDAP:hrs-lob-datascience-1
+    - LDAP:hrs-lob-datascience-2

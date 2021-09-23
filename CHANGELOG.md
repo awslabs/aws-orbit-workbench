@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - TeamSpace CRD and Operator
 - UserSpace CRD and Operator
 - Added support for Path prefix to Orbit frameowork's IAM roles
+- Added orbitjob-operator and CRD
 
 ### **Changed**
 

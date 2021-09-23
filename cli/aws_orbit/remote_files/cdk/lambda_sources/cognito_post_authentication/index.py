@@ -13,7 +13,7 @@ orbit_env = os.environ.get("ORBIT_ENV")
 
 
 def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
-
+    
     cognito_client = boto3.client("cognito-idp")
     lambda_client = boto3.client("lambda")
 
