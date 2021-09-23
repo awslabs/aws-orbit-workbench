@@ -36,6 +36,10 @@ anyio==3.3.0
     # via jupyter-server
 appdirs==1.4.4
     # via black
+appnope==0.1.2
+    # via
+    #   ipykernel
+    #   ipython
 argcomplete==1.12.3
     # via ipykernel
 argon2-cffi==20.1.0
@@ -44,11 +48,12 @@ argon2-cffi==20.1.0
     #   notebook
 async-generator==1.10
     # via nbclient
-attrs==20.3.0
+attrs==21.2.0
     # via
     #   cattrs
     #   jsii
     #   jsonschema
+    #   pytest
 aws-cdk.assets==1.100.0
     # via
     #   aws-cdk.aws-codebuild
@@ -520,16 +525,14 @@ build==0.6.0.post1
     # via check-manifest
 cachetools==4.2.2
     # via google-auth
-cattrs==1.6.0
+cattrs==1.8.0
     # via jsii
 certifi==2021.5.30
     # via
     #   kubernetes
     #   requests
 cffi==1.14.6
-    # via
-    #   argon2-cffi
-    #   cryptography
+    # via argon2-cffi
 cfn-flip==1.2.3
     # via aws-orbit
 cfn-lint==0.53.0
@@ -601,8 +604,6 @@ constructs==3.3.121
     #   aws-cdk.custom-resources
     #   aws-cdk.lambda-layer-awscli
     #   aws-cdk.lambda-layer-kubectl
-cryptography==3.4.7
-    # via secretstorage
 debugpy==1.4.1
     # via ipykernel
 decorator==5.0.9
@@ -611,6 +612,8 @@ decorator==5.0.9
     #   jsonpath-ng
 defusedxml==0.7.1
     # via nbconvert
+deprecation==2.1.0
+    # via jupyter-packaging
 docutils==0.17.1
     # via
     #   pyroma
@@ -638,7 +641,11 @@ importlib-metadata==4.6.4
     #   jsonschema
     #   keyring
     #   pep517
+    #   pluggy
+    #   pytest
     #   twine
+iniconfig==1.1.1
+    # via pytest
 ipykernel==6.1.0
     # via notebook
 ipython-genutils==0.2.0
@@ -656,10 +663,6 @@ isort==5.7.0
     # via -r requirements-dev.in
 jedi==0.18.0
     # via ipython
-jeepney==0.7.1
-    # via
-    #   keyring
-    #   secretstorage
 jinja2==3.0.1
     # via
     #   jupyter-server
@@ -671,8 +674,9 @@ jmespath==0.10.0
     # via
     #   boto3
     #   botocore
-jsii==1.32.0
+jsii==1.34.0
     # via
+    #   -r requirements-dev.in
     #   aws-cdk.assets
     #   aws-cdk.aws-apigateway
     #   aws-cdk.aws-applicationautoscaling
@@ -762,7 +766,7 @@ jupyter-core==4.7.1
     #   nbconvert
     #   nbformat
     #   notebook
-jupyter-packaging==0.7.12
+jupyter-packaging==0.10.5
     # via -r requirements-dev.in
 jupyter-server==1.10.2
     # via
@@ -781,6 +785,9 @@ kubernetes==12.0.1
     # via
     #   aws-orbit
     #   aws-orbit-sdk
+    #   kubetest
+kubetest==0.9.5
+    # via -r requirements-dev.in
 markupsafe==2.0.1
     # via jinja2
 marshmallow-dataclass[enum,union]==8.3.2
@@ -834,9 +841,11 @@ packaging==21.0
     # via
     #   bleach
     #   build
+    #   deprecation
     #   jupyter-packaging
     #   jupyterlab
     #   jupyterlab-server
+    #   pytest
 pandas==1.2.0
     # via aws-orbit-sdk
 pandocfilters==1.4.3
@@ -855,6 +864,8 @@ pip-tools==5.5.0
     # via -r requirements-dev.in
 pkginfo==1.7.1
     # via twine
+pluggy==1.0.0
+    # via pytest
 ply==3.11
     # via jsonpath-ng
 prometheus-client==0.11.0
@@ -930,6 +941,8 @@ publication==0.0.3
     #   aws-cdk.lambda-layer-kubectl
     #   aws-cdk.region-info
     #   constructs
+py==1.10.0
+    # via pytest
 pyasn1-modules==0.2.8
     # via google-auth
 pyasn1==0.4.8
@@ -960,6 +973,13 @@ pyroma==3.0.1
     # via -r requirements-dev.in
 pyrsistent==0.18.0
     # via jsonschema
+pytest-order==1.0.0
+    # via -r requirements-dev.in
+pytest==6.2.5
+    # via
+    #   -r requirements-dev.in
+    #   kubetest
+    #   pytest-order
 python-dateutil==2.8.2
     # via
     #   botocore
@@ -987,6 +1007,7 @@ pyyaml==5.4.1
     #   cfn-flip
     #   cfn-lint
     #   kubernetes
+    #   kubetest
     #   pyyaml-include
 pyzmq==22.2.1
     # via
@@ -1020,8 +1041,6 @@ rsa==4.7.2
     #   python-jose
 s3transfer==0.5.0
     # via boto3
-secretstorage==3.3.1
-    # via keyring
 send2trash==1.8.0
     # via
     #   jupyter-server
@@ -1063,10 +1082,13 @@ toml==0.10.2
     #   black
     #   check-manifest
     #   mypy
+    #   pytest
 tomli==1.2.1
     # via
     #   build
     #   pep517
+tomlkit==0.7.2
+    # via jupyter-packaging
 tornado==6.1
     # via
     #   ipykernel
@@ -1136,7 +1158,9 @@ websocket-client==1.2.1
     #   jupyter-server
     #   kubernetes
 wheel==0.36.2
-    # via -r requirements-dev.in
+    # via
+    #   -r requirements-dev.in
+    #   jupyter-packaging
 zipp==3.5.0
     # via
     #   importlib-metadata
