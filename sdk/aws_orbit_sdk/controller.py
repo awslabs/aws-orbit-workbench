@@ -271,7 +271,7 @@ def run_notebooks(taskConfiguration: dict) -> Any:
     >>> import aws_orbit_sdk.controller as controller
     >>> response = controller.run_notebooks(
     ...     taskConfiguration = {
-    ...         "notebooks":  [ {
+    ...         "tasks":  [ {
     ...           "notebookName": "Example-2-Extract-Files.ipynb",
     ...           "sourcePath": "samples/notebooks/A-LakeCreator",
     ...           "targetPath": "tests/createLake",
@@ -836,7 +836,7 @@ def make_pod(
 
 
 def resolve_image_from_podsetting(__CURRENT_ENV_MANIFEST__, podsetting_spec):
-    if podsetting_spec and podsetting_spec["spec"] and podsetting_spec["spec"]["image"]:
+    if podsetting_spec and "spec" in podsetting_spec and "image" in podsetting_spec["spec"]:
         image = podsetting_spec["spec"]["image"]
     else:
         repository = (

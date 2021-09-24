@@ -411,3 +411,67 @@ spec:
             requests:
               cpu: 200m
               memory: 256Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: orbit-controller
+  namespace: orbit-system
+  name: orbitjob-operator
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: orbitjob-operator
+  template:
+    metadata:
+      labels:
+        app: orbitjob-operator
+      name: orbitjob-operator
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: orbit-${env_name}-admin
+      nodeSelector:
+        orbit/usage: reserved
+        orbit/node-group: env
+      containers:
+        - name: controller
+          image: ${orbit_controller_image}
+          imagePullPolicy: ${image_pull_policy}
+          envFrom:
+            - configMapRef:
+                name: orbit-controller-config
+          command:
+            - kopf
+            - run
+          args:
+            - "--liveness=http://0.0.0.0:8080/healthz"
+            - "--log-format=json"
+            - "--module=orbit_controller.operators.orbitjob_operator"
+            - "--verbose"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              scheme: HTTP
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 600
+          resources:
+            limits:
+              cpu: 2
+              memory: 2Gi
+            requests:
+              cpu: 200m
+              memory: 256Mi
