@@ -33,13 +33,13 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
     settings.posting.level = logging.getLevelName(os.environ.get("EVENT_LOG_LEVEL", "INFO"))
 
 
-def _should_index_namespaces(labels: Dict[str, str], **_: Any) -> bool:
+def _should_index_namespaces(labels: kopf.Labels, **_: Any) -> bool:
     return labels.get("orbit/space", None) == "user" and "orbit/team" in labels
 
 
 @kopf.index("namespaces", when=_should_index_namespaces)  # type: ignore
 def namespaces_idx(
-    name: str, annotations: Dict[str, str], labels: Dict[str, str], **_: Any
+    name: str, annotations: kopf.Annotations, labels: kopf.Labels, **_: Any
 ) -> Dict[str, Dict[str, Any]]:
     """Index of user namespaces by team"""
     return {
@@ -51,7 +51,7 @@ def namespaces_idx(
     }
 
 
-def _should_process_podsetting(labels: Dict[str, str], status: kopf.Status, **_: Any) -> bool:
+def _should_process_podsetting(labels: kopf.Labels, status: kopf.Status, **_: Any) -> bool:
     return (
         labels.get("orbit/space") == "team"
         and "orbit/disable-watcher" not in labels
@@ -60,11 +60,11 @@ def _should_process_podsetting(labels: Dict[str, str], status: kopf.Status, **_:
 
 
 @kopf.on.resume(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_process_podsetting)  # type: ignore
-@kopf.on.create(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_process_podsetting)  # type: ignore
+@kopf.on.create(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_process_podsetting)
 def create_poddefaults(
     namespace: str,
     name: str,
-    labels: Dict[str, str],
+    labels: kopf.Labels,
     spec: kopf.Spec,
     status: kopf.Status,
     patch: kopf.Patch,
@@ -100,7 +100,7 @@ def create_poddefaults(
 def update_poddefaults(
     namespace: str,
     name: str,
-    labels: Dict[str, str],
+    labels: kopf.Labels,
     spec: kopf.Spec,
     logger: kopf.Logger,
     namespaces_idx: kopf.Index[str, Dict[str, Any]],
@@ -132,7 +132,7 @@ def update_poddefaults(
 def delete_poddefaults(
     namespace: str,
     name: str,
-    labels: Dict[str, str],
+    labels: kopf.Labels,
     spec: kopf.Spec,
     logger: kopf.Logger,
     namespaces_idx: kopf.Index[str, Dict[str, Any]],

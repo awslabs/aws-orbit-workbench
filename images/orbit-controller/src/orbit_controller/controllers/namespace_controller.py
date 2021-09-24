@@ -38,13 +38,13 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
     settings.posting.level = logging.getLevelName(os.environ.get("EVENT_LOG_LEVEL", "INFO"))
 
 
-def _should_index_podsetting(labels: Dict[str, str], **_: Any) -> bool:
+def _should_index_podsetting(labels: kopf.Labels, **_: Any) -> bool:
     return labels.get("orbit/space") == "team" and "orbit/team" in labels and "orbit/disable-watcher" not in labels
 
 
 @kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_index_podsetting)  # type: ignore
 def podsettings_idx(
-    namespace: str, name: str, labels: Dict[str, str], spec: kopf.Spec, **_: Any
+    namespace: str, name: str, labels: kopf.Labels, spec: kopf.Spec, **_: Any
 ) -> Optional[Dict[str, Dict[str, Any]]]:
     """Index of podsettings by team"""
     return {
@@ -113,16 +113,16 @@ def _get_team_context(team: str, logger: kopf.Logger) -> Dict[str, Any]:
     return team_context
 
 
-def _should_process_namespace(annotations: Dict[str, str], labels: Dict[str, str], **_: Any) -> bool:
+def _should_process_namespace(annotations: kopf.Annotations, labels: kopf.Labels, **_: Any) -> bool:
     return "orbit/helm-chart-installation" not in annotations and labels.get("orbit/space", None) == "user"
 
 
 @kopf.on.resume("namespaces", when=_should_process_namespace)  # type: ignore
-@kopf.on.create("namespaces", when=_should_process_namespace)  # type: ignore
+@kopf.on.create("namespaces", when=_should_process_namespace)
 def install_team_charts(
     name: str,
-    annotations: Dict[str, str],
-    labels: Dict[str, str],
+    annotations: kopf.Annotations,
+    labels: kopf.Labels,
     patch: kopf.Patch,
     podsettings_idx: kopf.Index[str, Dict[str, Any]],
     logger: kopf.Logger,
@@ -239,8 +239,8 @@ def install_team_charts(
 @kopf.on.delete("namespaces", labels={"orbit/space": kopf.PRESENT})  # type: ignore
 def uninstall_team_charts(
     name: str,
-    annotations: Dict[str, str],
-    labels: Dict[str, str],
+    annotations: kopf.Annotations,
+    labels: kopf.Labels,
     logger: kopf.Logger,
     **_: Any,
 ) -> str:

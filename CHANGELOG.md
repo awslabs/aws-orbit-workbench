@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## **[1.4.0] - Unreleased **
 
 ### **Added**
+- Added orbitjob-operator and CRD
 
 ### **Changed**
 
@@ -23,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - TeamSpace CRD and Operator
 - UserSpace CRD and Operator
 - Added support for Path prefix to Orbit frameowork's IAM roles
+
 
 ### **Changed**
 

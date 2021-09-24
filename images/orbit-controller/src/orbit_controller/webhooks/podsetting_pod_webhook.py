@@ -42,19 +42,19 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
 
 @kopf.index("namespaces")  # type: ignore
 def namespaces_idx(
-    name: str, annotations: Dict[str, str], labels: Dict[str, str], **_: Any
+    name: str, annotations: kopf.Annotations, labels: kopf.Labels, **_: Any
 ) -> Dict[str, Dict[str, Any]]:
     """Index of namespaces by name"""
     return {name: {"name": name, "annotations": annotations, "labels": labels}}
 
 
-def _should_index_podsetting(labels: Dict[str, str], **_: Any) -> bool:
+def _should_index_podsetting(labels: kopf.Labels, **_: Any) -> bool:
     return labels.get("orbit/space") == "team" and "orbit/team" in labels
 
 
 @kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_index_podsetting)  # type: ignore
 def podsettings_idx(
-    namespace: str, name: str, labels: Dict[str, str], spec: kopf.Spec, **_: Any
+    namespace: str, name: str, labels: kopf.Labels, spec: kopf.Spec, **_: Any
 ) -> Optional[Dict[str, Dict[str, Any]]]:
     """Index of podsettings by team"""
     return {
@@ -70,7 +70,7 @@ def podsettings_idx(
 @kopf.on.mutate("pods", id="apply-pod-settings")  # type: ignore
 def update_pod_images(
     namespace: str,
-    labels: Dict[str, str],
+    labels: kopf.Labels,
     body: kopf.Body,
     patch: kopf.Patch,
     dryrun: bool,

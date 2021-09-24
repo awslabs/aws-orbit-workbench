@@ -21,12 +21,12 @@ import kopf
 
 def filter_podsettings(
     podsettings: List[Dict[str, Any]],
-    pod_labels: Dict[str, str],
+    pod_labels: kopf.Labels,
     logger: kopf.Logger,
 ) -> List[Dict[str, Any]]:
     filtered_podsettings: List[Dict[str, Any]] = []
 
-    def labels_match(labels: Dict[str, str], selector_labels: Dict[str, str]) -> bool:
+    def labels_match(labels: kopf.Labels, selector_labels: kopf.Labels) -> bool:
         for key, value in selector_labels.items():
             label_value = labels.get(key, None)
             if label_value != value:
@@ -39,7 +39,7 @@ def filter_podsettings(
                 return False
         return True
 
-    def expressions_match(labels: Dict[str, str], selector_expressions: List[Dict[str, Any]]) -> bool:
+    def expressions_match(labels: kopf.Labels, selector_expressions: List[Dict[str, Any]]) -> bool:
         for match_expression in selector_expressions:
             pod_label_value = labels.get(match_expression["key"], None)
             operator = match_expression["operator"]
