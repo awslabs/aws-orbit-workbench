@@ -32,13 +32,13 @@ class LakeAdmin(CustomApiObject):
 
     def is_ready(self) -> bool:
         self.refresh()
-        return self.obj.get("status", {}).get("installation", {}).get("installationStatus") == "Installed"
+        return self.obj.get("status", {}).get("orbitJobOperator", {}).get("jobStatus") == "JobCreated"
 
 
 @pytest.mark.order(1)
 @pytest.mark.namespace(create=False)
 @pytest.mark.testlakeadmin
-def test_userspace(kube: TestClient) -> None:
+def test_lakeadmin(kube: TestClient) -> None:
     body = {
         "apiVersion": "orbit.aws/v1",
         "kind": "OrbitJob",
@@ -50,7 +50,7 @@ def test_userspace(kube: TestClient) -> None:
             "compute": {
                  "nodeType": "ec2",
                  "container": {
-                     "concurrentProcesses": "1"
+                     "concurrentProcesses": 1
                  },
                  "podSetting": "orbit-runner-support-large"
             },
@@ -70,5 +70,5 @@ def test_userspace(kube: TestClient) -> None:
     print(body)
     lakeadmin = LakeAdmin(body)
     lakeadmin.create(namespace="lake-admin")
-    #lakeadmin.wait_until_ready(timeout=30)
+    lakeadmin.wait_until_ready(timeout=30)
     #lakeadmin.delete()
