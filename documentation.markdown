@@ -6,7 +6,7 @@ permalink: /documentation
 
 # What is AWS Orbit Workbench?
 
-AWS Orbit Workbench is a framework for building data platforms on AWS.  You can build a data platform that gives you access to 
+AWS Orbit Workbench is a framework for building data analytics workbenchs on AWS.  You can build a workbench that gives you access to 
 the right tools for your use cases, either through the out-of-the-box in [integrations](/aws-orbit-workbench/#integrations)
 or through the extensible architecture.  You also have control over the underlying infrastructure, whether your work
 needs extra GPUs, extra memory or could save money by running on the newest [Graviton2](https://aws.amazon.com/ec2/graviton/) processors. 
@@ -18,7 +18,7 @@ idea of what it offers and how it can fit into your business.
 
 ## Advantages of using AWS Orbit Workbench
 
-AWS Orbit Workbench has been built to let you build a secure data platform on AWS and give you control over the services you use,
+AWS Orbit Workbench has been built to let you build a secure workbench on AWS while giving you control over the services you use
 and the infrastructure you run on.  Advantages of using AWS Orbit Workbench are:
 
 * **Work efficiently** - Use analytical and machine learning services from AWS and partners to efficiently
