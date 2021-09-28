@@ -71,4 +71,4 @@ def test_lakeadmin(kube: TestClient) -> None:
     lakeadmin = LakeAdmin(body)
     lakeadmin.create(namespace="lake-admin")
     lakeadmin.wait_until_ready(timeout=30)
-    #lakeadmin.delete()
+    lakeadmin.delete()

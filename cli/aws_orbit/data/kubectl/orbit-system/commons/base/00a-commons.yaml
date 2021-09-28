@@ -167,8 +167,11 @@ spec:
       served: true
       storage: true
       additionalPrinterColumns:
-      - name: InstallationStatus
+      - name: JobStatus
         jsonPath: .status.orbitJobOperator.jobStatus
+        type: string
+      - name: JobName
+        jsonPath: .status.orbitJobOperator.jobName
         type: string
       schema:
         openAPIV3Schema:
