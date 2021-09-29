@@ -62,19 +62,33 @@ def _should_index_jobs(meta: kopf.Meta, **_: Any) -> bool:
 
 @kopf.index("jobs", when=_should_index_jobs)  # type: ignore
 def jobs_idx(
-    namespace: str, name: str, meta: kopf.Meta, spec: kopf.Spec, **_: Any
+    namespace: str, logger: kopf.Logger, name: str, meta: kopf.Meta, status: kopf.Status, **_: Any
 ) -> Dict[Tuple[str, str], Dict[str, Any]]:
     """Index of k8s jobs by orbitjob namespace/name"""
+
     orbit_job_reference = [owner_reference for owner_reference in meta.get("ownerReferences", [{}])].pop()
-    return {
-        (namespace, orbit_job_reference.get("name")): {"namespace": namespace, "name": name, "meta": meta, "spec": spec}
-    }
+    return {(namespace, orbit_job_reference.get("name")): {"namespace": namespace, "name": name, "status": status}}
 
 
-@kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "userspaces")  # type: ignore
-def userspace_idx(namespace: str, name: str, spec: kopf.Spec, **_: Any) -> Dict[str, Any]:
-    """Index of userspaces by name"""
-    return {name: {"namespace": namespace, "name": name, "spec": spec}}
+def _check_existence_k8s_job(
+    namespace: str,
+    name: str,
+    jobs_idx: kopf.Index[Tuple[str, str], Dict[str, Any]],
+    **_: Any,
+) -> bool:
+    k8s_job: Optional[Dict[str, Any]] = None
+    for k8s_job in jobs_idx.get((namespace, name), []):
+        if k8s_job is not None:
+            return True
+    else:
+        return False
+
+
+@kopf.index("namespaces")  # type: ignore
+def namespaces_idx(name: str, logger: kopf.Logger, labels: kopf.Labels, **_: Any) -> Dict[str, Any]:
+    """Index of namespace by name"""
+
+    return {name: {"name": name, "team": labels.get("orbit/team"), "env": labels.get("orbit/env")}}
 
 
 @kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings")  # type: ignore
@@ -102,24 +116,24 @@ def create_job(
     status: kopf.Status,
     patch: kopf.Patch,
     logger: kopf.Logger,
-    userspace_idx: kopf.Index[str, Dict[str, Any]],
+    namespaces_idx: kopf.Index[str, Dict[str, Any]],
     podsettings_idx: kopf.Index[Tuple[str, str], Dict[str, Any]],
     **_: Any,
 ) -> str:
-    userspace: Optional[Dict[str, Any]] = None
-    for userspace in userspace_idx.get(namespace, []):
-        logger.debug("UserSpace: %s")
+    ns: Optional[Dict[str, Any]] = None
+    for ns in namespaces_idx.get(namespace, []):
+        logger.debug("ns: %s", ns)
 
-    if userspace is None:
+    if ns is None:
         patch["status"] = {
-            "orbitJobOperator": {"jobStatus": "JobCreationFailed", "error": "No UserSpace resource found"}
+            "orbitJobOperator": {"jobStatus": "JobCreationFailed", "error": "No Namespace resource found"}
         }
         return "JobCreationFailed"
 
-    env = userspace["spec"]["env"]
-    team = userspace["spec"]["team"]
+    env = ns["env"]
+    team = ns["team"]
 
-    global ENV_CONTEXT
+    global ENV_CONTEXT  # Caching
     if ENV_CONTEXT is None:
         context = _load_env_context_from_ssm(env)
         if context is None:
@@ -167,3 +181,53 @@ def create_job(
         "orbitJobOperator": {"jobStatus": "JobCreated", "jobName": job_instance_metadata.name, "nodeType": node_type}
     }
     return "JobCreated"
+
+
+@kopf.on.timer(  # type: ignore
+    ORBIT_API_GROUP,
+    ORBIT_API_VERSION,
+    "orbitjobs",
+    interval=5,
+    initial_delay=20,
+    when=_check_existence_k8s_job,  # type: ignore
+)
+def orbit_job_monitor(
+    namespace: str,
+    name: str,
+    patch: kopf.Patch,
+    logger: kopf.Logger,
+    namespaces_idx: kopf.Index[str, Dict[str, Any]],
+    jobs_idx: kopf.Index[Tuple[str, str], Dict[str, Any]],
+    **_: Any,
+) -> Any:
+    ns: Optional[Dict[str, Any]] = None
+    k8s_job: Optional[Dict[str, Any]] = None
+
+    for ns in namespaces_idx.get(namespace, []):
+        logger.debug("ns: %s", ns)
+
+    if ns is None:
+        patch["status"] = {
+            "orbitJobOperator": {"jobStatus": "JobDetailsNotFound", "error": "No Namespace resource found"}
+        }
+        return "JobDetailsNotFound"
+
+    for k8s_job in jobs_idx.get((namespace, name), []):
+        logger.debug("k8s_job: %s", k8s_job)
+
+    if k8s_job is None:  # To tackle the race condition caused by Timer
+        return "JobMetadataNotFound"
+
+    job_status = k8s_job.get("status", {}).get("conditions", [{}])[0].get("type")
+    k8s_job_reason = k8s_job.get("status", {}).get("conditions", [{}])[0].get("status")
+    k8s_job_message = k8s_job.get("status", {}).get("conditions", [{}])[0].get("message")
+
+    patch["status"] = {
+        "orbitJobOperator": {
+            "jobStatus": job_status,
+            "jobName": k8s_job.get("name"),
+            "k8sJobReason": k8s_job_reason,
+            "k8sJobMessage": k8s_job_message,
+        }
+    }
+    return job_status
