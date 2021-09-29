@@ -52,7 +52,7 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
     settings.posting.level = logging.getLevelName(os.environ.get("EVENT_LOG_LEVEL", "INFO"))
 
 
-def _should_index_jobs(meta: kopf.Meta, **_: Any) -> bool:
+def _should_index_jobs(meta: kopf.Meta, logger: kopf.Logger, **_: Any) -> bool:
     for owner_reference in meta.get("ownerReferences", []):
         if owner_reference.get("kind") == "OrbitJob":
             return True
@@ -70,18 +70,14 @@ def jobs_idx(
     return {(namespace, orbit_job_reference.get("name")): {"namespace": namespace, "name": name, "status": status}}
 
 
-def _check_existence_k8s_job(
-    namespace: str,
-    name: str,
-    jobs_idx: kopf.Index[Tuple[str, str], Dict[str, Any]],
+def _monitor_k8s_job(
+    status: kopf.Status,
     **_: Any,
 ) -> bool:
-    k8s_job: Optional[Dict[str, Any]] = None
-    for k8s_job in jobs_idx.get((namespace, name), []):
-        if k8s_job is not None:
-            return True
-    else:
+    if status.get("orbitJobOperator", {}).get("jobStatus", None) in ["Complete", "Failed"]:
         return False
+    else:
+        return True
 
 
 @kopf.index("namespaces")  # type: ignore
@@ -184,12 +180,7 @@ def create_job(
 
 
 @kopf.on.timer(  # type: ignore
-    ORBIT_API_GROUP,
-    ORBIT_API_VERSION,
-    "orbitjobs",
-    interval=5,
-    initial_delay=20,
-    when=_check_existence_k8s_job,  # type: ignore
+    ORBIT_API_GROUP, ORBIT_API_VERSION, "orbitjobs", interval=5, initial_delay=5, when=_monitor_k8s_job
 )
 def orbit_job_monitor(
     namespace: str,
@@ -218,7 +209,11 @@ def orbit_job_monitor(
     if k8s_job is None:  # To tackle the race condition caused by Timer
         return "JobMetadataNotFound"
 
-    job_status = k8s_job.get("status", {}).get("conditions", [{}])[0].get("type")
+    if k8s_job.get("status", {}).get("active") == 1:
+        job_status = "Active"
+    else:
+        job_status = k8s_job.get("status", {}).get("conditions", [{}])[0].get("type")
+
     k8s_job_reason = k8s_job.get("status", {}).get("conditions", [{}])[0].get("status")
     k8s_job_message = k8s_job.get("status", {}).get("conditions", [{}])[0].get("message")
 
