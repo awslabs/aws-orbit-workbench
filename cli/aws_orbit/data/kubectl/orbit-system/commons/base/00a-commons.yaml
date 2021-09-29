@@ -202,6 +202,8 @@ spec:
                           type: string
                 notebookName:
                   type: string
+                schedule:
+                  type: string
                 compute:
                   type: object
                   properties:
