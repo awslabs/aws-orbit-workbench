@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+# set -e
 
 # Required os env variables. Replace with testing Orbit env details
 # AWS_ORBIT_ENV, AWS_ORBIT_TEAM_SPACE
