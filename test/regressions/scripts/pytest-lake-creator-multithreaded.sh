@@ -9,13 +9,13 @@ set -e
 pytest --kube-config ~/.kube/config -v -s  -k testlakecreator_cleaner
 
 # Multi threaded
-pytest --kube-config ~/.kube/config -v -s  -k testlakecreator_zip -n auto
+pytest --kube-config ~/.kube/config -v -s  -k testlakecreator_unzip -n auto
 
-pytest --kube-config ~/.kube/config -v -s  -k testlakecreator_unzip_check
+pytest --kube-config ~/.kube/config -v -s  -k testlakecreator_check_data_files
 
 # Multi threaded
-pytest --kube-config ~/.kube/config -v -s  -k testlakecreator_glue -n auto
+pytest --kube-config ~/.kube/config -v -s  -k testlakecreator_create_glue_tables -n auto
 
-pytest --kube-config ~/.kube/config -v -s  -k testlakecreator_checkglue
+pytest --kube-config ~/.kube/config -v -s  -k testlakecreator_check_glue_tables
 
 pytest --kube-config ~/.kube/config -v -s  -k testlakecreator_lf
