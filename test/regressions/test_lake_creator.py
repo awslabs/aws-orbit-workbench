@@ -21,6 +21,7 @@ from aws_orbit_sdk.common import get_workspace
 import boto3
 import json
 from pathlib import Path
+from common_utils import JOB_COMPLETION_STATUS
 
 import logging
 # Initialize parameters
@@ -192,7 +193,7 @@ lakecreator_zip_files= get_s3_extracted_files(lake_creator_config.get("bucketNam
 
 @pytest.mark.order(2)
 @pytest.mark.namespace(create=False)
-@pytest.mark.testlakecreator_zip
+@pytest.mark.testlakecreator_unzip
 @pytest.mark.parametrize('zip_file', lakecreator_zip_files)
 def test_lakecreator_extractor(zip_file, kube: TestClient):
     # Extract Zip Files in Parallel
@@ -245,7 +246,7 @@ def test_lakecreator_extractor(zip_file, kube: TestClient):
     logger.info(f"current_status={current_status}")
     # Cleanup
     lakecreator.delete()
-    assert current_status == "Complete"
+    assert current_status == JOB_COMPLETION_STATUS
 
 
 def lake_creator_list_of_extracted_files():
@@ -267,7 +268,7 @@ extracted_data_files = lake_creator_list_of_extracted_files()
 
 @pytest.mark.order(3)
 @pytest.mark.namespace(create=False)
-@pytest.mark.testlakecreator_unzip_check
+@pytest.mark.testlakecreator_check_data_files
 def test_lakecreator_s3_extracted_file_check(kube: TestClient):
     import pprint
     pprint.pprint(extracted_data_files)
@@ -277,7 +278,7 @@ def test_lakecreator_s3_extracted_file_check(kube: TestClient):
 
 @pytest.mark.order(4)
 @pytest.mark.namespace(create=False)
-@pytest.mark.testlakecreator_glue
+@pytest.mark.testlakecreator_create_glue_tables
 @pytest.mark.parametrize('datafile', extracted_data_files)
 def test_lakecreator_glue_table_creator(datafile, kube: TestClient):
     region = workspace.get("region")
@@ -340,13 +341,13 @@ def test_lakecreator_glue_table_creator(datafile, kube: TestClient):
     logger.info(f"current_status={current_status}")
     # Cleanup
     lakecreator.delete()
-    assert current_status == "Complete"
+    assert current_status == JOB_COMPLETION_STATUS
 
 
 #Check that Glue Tables are Created
 @pytest.mark.order(5)
 @pytest.mark.namespace(create=False)
-@pytest.mark.testlakecreator_checkglue
+@pytest.mark.testlakecreator_check_glue_tables
 def test_lakecreator_glue_tables(kube: TestClient):
     database_name = lake_creator_config.get("database_name")
     res = GLUE.get_tables(DatabaseName=database_name)
@@ -402,4 +403,4 @@ def test_lakecreator_lf(kube: TestClient):
     logger.info(f"current_status={current_status}")
     # Cleanup
     lakecreator.delete()
-    assert current_status == "Complete"
+    assert current_status == JOB_COMPLETION_STATUS

@@ -18,6 +18,7 @@ from custom_resources import OrbitJobCustomApiObject
 from kubetest.client import TestClient
 from aws_orbit_sdk.common import get_workspace
 from pathlib import Path
+from common_utils import JOB_COMPLETION_STATUS
 
 import logging
 # Initialize parameters
@@ -138,5 +139,5 @@ def test_lakeuser_notebooks(notebook_to_run, kube: TestClient) -> None:
     logger.info(f"current_status={current_status}")
     #Cleanup
     lakeuser.delete()
-    assert current_status == "Complete"
+    assert current_status == JOB_COMPLETION_STATUS
 
