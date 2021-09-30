@@ -1,9 +1,12 @@
 #!/bin/bash
 
-set -e
-
-# Required os env variables. Replace with testing Orbit env details
-# AWS_ORBIT_ENV, AWS_ORBIT_TEAM_SPACE
+#set -e
 
 # Set the .kube/config with respect to runtime environment
-pytest -c ./pytest.ini --kube-config ~/.kube/config -v -s  -k lakecreator --junitxml=regression_report.xml
+pytest --rootdir . -c ./pytest.ini --kube-config ~/.kube/config -v -s  -k testlakecreator -n auto --junitxml=regression_report.xml
+
+cat .pytest_cache/v/cache/lastfailed
+
+if [[ $? -ne 0 ]]; then
+    pytest --rootdir . -c ./pytest.ini --kube-config ~/.kube/config -v -s  -k testlakecreator -n auto --junitxml=regression_report.xml --lf
+fi
