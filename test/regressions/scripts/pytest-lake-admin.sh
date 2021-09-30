@@ -7,4 +7,4 @@ export AWS_ORBIT_ENV=iter
 export AWS_ORBIT_TEAM_SPACE=lake-admin
 
 # Set the .kube/config with respect to runtime environment
-pytest --kube-config /Users/stthoom/.kube/config -v -s  -k testlakeadmin -n auto
+pytest --kube-config ~/.kube/config -v -s  -k testlakeadmin -n auto

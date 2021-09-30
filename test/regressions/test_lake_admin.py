@@ -34,14 +34,6 @@ MANIFESTS_PATH = os.path.join(
     "manifests",
 )
 
-
-class LakeAdmin(OrbitJobCustomApiObject):
-    group = "orbit.aws"
-    api_version = "v1"
-    kind = "OrbitJob"
-
-
-
 #@pytest.fixture(autouse=True, scope='session', name='orbit_workspace')
 # @pytest.fixture(name='orbit_workspace')
 # def sess_scope():
@@ -82,7 +74,7 @@ def test_lakeadmin_1_ebs(kube: TestClient) -> None:
     }
 
     print(body)
-    lakeadmin = LakeAdmin(body)
+    lakeadmin = OrbitJobCustomApiObject(body)
     lakeadmin.create(namespace="lake-admin")
     # Logic to wait till OrbitJob creates
     lakeadmin.wait_until_ready(timeout=60)
@@ -123,7 +115,7 @@ def test_lakeadmin_2_image_with_apps(kube: TestClient) -> None:
     }
 
     print(body)
-    lakeadmin = LakeAdmin(body)
+    lakeadmin = OrbitJobCustomApiObject(body)
     lakeadmin.create(namespace="lake-admin")
     # Logic to wait till OrbitJob creates
     lakeadmin.wait_until_ready(timeout=60)
@@ -163,7 +155,7 @@ def test_lakeadmin_3_lf_account_settings(kube: TestClient) -> None:
     }
 
     print(body)
-    lakeadmin = LakeAdmin(body)
+    lakeadmin = OrbitJobCustomApiObject(body)
     lakeadmin.create(namespace="lake-admin")
     # Logic to wait till OrbitJob creates
     lakeadmin.wait_until_ready(timeout=60)

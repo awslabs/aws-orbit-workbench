@@ -123,7 +123,7 @@ def get_s3_extracted_files(bucket_name, source_folder):
 
 @pytest.mark.order(1)
 @pytest.mark.namespace(create=False)
-@pytest.mark.lakecreator_cleaner
+@pytest.mark.testlakecreator_cleaner
 def test_lake_creator_setup(kube: TestClient):
     workspace = get_workspace()
     notebook_bucket = workspace['ScratchBucket']
