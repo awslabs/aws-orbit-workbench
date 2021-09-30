@@ -6,6 +6,4 @@ set -e
 # AWS_ORBIT_ENV, AWS_ORBIT_TEAM_SPACE
 
 # Set the .kube/config with respect to runtime environment
-pytest --kube-config ~/.kube/config -v -s  -k testlakecreator
-
-
+pytest --kube-config ~/.kube/config -v -s  -k lakecreator --junitxml=regression_report.xml
