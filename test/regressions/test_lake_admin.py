@@ -15,9 +15,19 @@
 import os
 
 import pytest
-from custom_resources import CustomApiObject
+from custom_resources import OrbitJobCustomApiObject
 from kubetest.client import TestClient
+from aws_orbit_sdk.common import get_workspace
 
+import logging
+# Initialize parameters
+logging.basicConfig(
+    format="%(asctime)s %(levelname)-8s %(message)s",
+    level=logging.INFO,
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+logger = logging.getLogger()
 
 MANIFESTS_PATH = os.path.join(
     os.path.dirname(os.path.realpath(__file__)),
@@ -25,25 +35,33 @@ MANIFESTS_PATH = os.path.join(
 )
 
 
-class LakeAdmin(CustomApiObject):
+class LakeAdmin(OrbitJobCustomApiObject):
     group = "orbit.aws"
     api_version = "v1"
     kind = "OrbitJob"
 
-    def is_ready(self) -> bool:
-        self.refresh()
-        return self.obj.get("status", {}).get("orbitJobOperator", {}).get("jobStatus") == "JobCreated"
 
 
-@pytest.mark.order(1)
+#@pytest.fixture(autouse=True, scope='session', name='orbit_workspace')
+# @pytest.fixture(name='orbit_workspace')
+# def sess_scope():
+#     """A session scope fixture."""
+#     # Required os env
+#     # export AWS_ORBIT_ENV=iter
+#     # export AWS_ORBIT_TEAM_SPACE=lake-admin
+#     workspace = get_workspace()
+#     print(f"\nInside fixture workspace={workspace}\n")
+#     return workspace
+
+
 @pytest.mark.namespace(create=False)
 @pytest.mark.testlakeadmin
-def test_lakeadmin(kube: TestClient) -> None:
+def test_lakeadmin_1_ebs(kube: TestClient) -> None:
     body = {
         "apiVersion": "orbit.aws/v1",
         "kind": "OrbitJob",
         "metadata": {
-            "name": "test-orbit-job"
+            "generateName": "test-orbit-job-lake-admin-ebs-"
         },
         "spec": {
             "taskType": "jupyter",
@@ -52,17 +70,13 @@ def test_lakeadmin(kube: TestClient) -> None:
                  "container": {
                      "concurrentProcesses": 1
                  },
-                 "podSetting": "orbit-runner-support-large"
+                 "podSetting": "orbit-runner-support-small"
             },
             "tasks": [{
-                "notebookName": "Example-1-SQL-Analysis-Athena.ipynb",
-                "sourcePath": "shared/samples/notebooks/B-DataAnalyst",
-                "targetPath": "shared/regression/notebooks/B-DataAnalyst",
-                "targetPrefix": "yyy",
-                "params": {
-                    "glue_db": "glue_database",
-                    "target_db": "users"
-                }
+                "notebookName": "1-EBS.ipynb",
+                "sourcePath": "shared/samples/notebooks/M-Admin",
+                "targetPath": "shared/regression/notebooks/M-Admin",
+                "params": {}
             }]
         }
     }
@@ -70,5 +84,93 @@ def test_lakeadmin(kube: TestClient) -> None:
     print(body)
     lakeadmin = LakeAdmin(body)
     lakeadmin.create(namespace="lake-admin")
-    lakeadmin.wait_until_ready(timeout=30)
+    # Logic to wait till OrbitJob creates
+    lakeadmin.wait_until_ready(timeout=60)
+    # Logic to pass or fail the pytest
+    lakeadmin.wait_until_job_completes(timeout=1200)
+    current_status = lakeadmin.get_status().get("orbitJobOperator").get("jobStatus")
+    logger.info(f"current_status={current_status}")
+    #Cleanup
     lakeadmin.delete()
+    assert current_status == "Complete"
+
+
+@pytest.mark.namespace(create=False)
+@pytest.mark.testlakeadmin
+def test_lakeadmin_2_image_with_apps(kube: TestClient) -> None:
+    body = {
+        "apiVersion": "orbit.aws/v1",
+        "kind": "OrbitJob",
+        "metadata": {
+            "generateName": "test-orbit-job-lake-admin-image-with-apps-"
+        },
+        "spec": {
+            "taskType": "jupyter",
+            "compute": {
+                 "nodeType": "ec2",
+                 "container": {
+                     "concurrentProcesses": 1
+                 },
+                 "podSetting": "orbit-runner-support-small"
+            },
+            "tasks": [{
+                "notebookName": "2-Image_with_apps.ipynb",
+                "sourcePath": "shared/samples/notebooks/M-Admin",
+                "targetPath": "shared/regression/notebooks/M-Admin",
+                "params": {}
+            }]
+        }
+    }
+
+    print(body)
+    lakeadmin = LakeAdmin(body)
+    lakeadmin.create(namespace="lake-admin")
+    # Logic to wait till OrbitJob creates
+    lakeadmin.wait_until_ready(timeout=60)
+    # Logic to pass or fail the pytest
+    lakeadmin.wait_until_job_completes(timeout=1200)
+    current_status = lakeadmin.get_status().get("orbitJobOperator").get("jobStatus")
+    logger.info(f"current_status={current_status}")
+    #Cleanup
+    lakeadmin.delete()
+    assert current_status == "Complete"
+
+@pytest.mark.namespace(create=False)
+@pytest.mark.testlakeadmin_lf
+def test_lakeadmin_3_lf_account_settings(kube: TestClient) -> None:
+    body = {
+        "apiVersion": "orbit.aws/v1",
+        "kind": "OrbitJob",
+        "metadata": {
+            "generateName": "test-orbit-job-lake-admin-lf-account-settings-"
+        },
+        "spec": {
+            "taskType": "jupyter",
+            "compute": {
+                 "nodeType": "ec2",
+                 "container": {
+                     "concurrentProcesses": 1
+                 },
+                 "podSetting": "orbit-runner-support-small"
+            },
+            "tasks": [{
+                "notebookName": "4-LakeFormation-Account-Settings.ipynb",
+                "sourcePath": "shared/samples/notebooks/M-Admin",
+                "targetPath": "shared/regression/notebooks/M-Admin",
+                "params": {}
+            }]
+        }
+    }
+
+    print(body)
+    lakeadmin = LakeAdmin(body)
+    lakeadmin.create(namespace="lake-admin")
+    # Logic to wait till OrbitJob creates
+    lakeadmin.wait_until_ready(timeout=60)
+    # Logic to pass or fail the pytest
+    lakeadmin.wait_until_job_completes(timeout=1200)
+    current_status = lakeadmin.get_status().get("orbitJobOperator").get("jobStatus")
+    logger.info(f"current_status={current_status}")
+    #Cleanup
+    lakeadmin.delete()
+    assert current_status == "Complete"

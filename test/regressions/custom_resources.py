@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import logging
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, cast, Optional, Union
 
 import yaml
 from kubernetes import dynamic
@@ -21,6 +21,8 @@ from kubernetes.client import V1DeleteOptions, V1Status, api_client
 from kubetest.manifest import render
 from kubetest.objects import ApiObject
 from kubetest.client import TestClient
+from kubetest import condition, utils
+
 
 # This elminates some collection warnings for all tests using the TestClient
 TestClient.__test__ = False
@@ -180,3 +182,69 @@ class CustomApiObject(ApiObject):  # type: ignore
             name=self.name,
             namespace=self.namespace,
         ).to_dict()
+
+
+class OrbitJobCustomApiObject(CustomApiObject):
+    group = "orbit.aws"
+    api_version = "v1"
+    kind = "OrbitJob"
+
+    def __init__(self, resource: Dict[str, Any]) -> None:
+        self.obj = resource
+        self._api_client = None
+
+    def get_status(self) -> Dict[str,Any]:
+        self.refresh()
+        status_dict = self.obj.get("status", {})
+        return status_dict
+
+    # We are ready as soon as we see some status
+    def is_ready(self) -> bool:
+        self.refresh()
+        log.info(self.obj.get("status", {}).get("orbitJobOperator", {}))
+        return_status = False
+        if self.obj.get("status", {}).get("orbitJobOperator", {}).get("jobStatus"):
+            return_status = True
+        return return_status
+
+    # We are complete as soon as we see status as complete or Failed
+    def is_complete(self) -> bool:
+        self.refresh()
+        log.info(self.obj.get("status", {}).get("orbitJobOperator", {}))
+        return self.obj.get("status", {}).get("orbitJobOperator", {}).get("jobStatus") in ["Complete", "Failed"]
+
+    def wait_until_job_completes(
+        self,
+        timeout: int = None,
+        interval: Union[int, float] = 1,
+        fail_on_api_error: bool = False,
+    ) -> None:
+        """Wait until the orbit job completes. Can have completed or failed state
+
+        Args:
+            timeout: The maximum time to wait, in seconds, for the resource
+                to reach the ready state. If unspecified, this will wait
+                indefinitely. If specified and the timeout is met or exceeded,
+                a TimeoutError will be raised.
+            interval: The time, in seconds, to wait before re-checking if the
+                object is ready.
+            fail_on_api_error: Fail if an API error is raised. An API error can
+                be raised for a number of reasons, such as 'resource not found',
+                which could be the case when a resource is just being started or
+                restarted. When waiting for readiness we generally do not want to
+                fail on these conditions.
+
+        Raises:
+             TimeoutError: The specified timeout was exceeded.
+        """
+        job_complete_condition = condition.Condition(
+            "orbit job status check",
+            self.is_complete,
+        )
+        # Wait until Orbit job completes
+        utils.wait_for_condition(
+            condition=job_complete_condition,
+            timeout=timeout,
+            interval=interval,
+            fail_on_api_error=fail_on_api_error,
+        )
