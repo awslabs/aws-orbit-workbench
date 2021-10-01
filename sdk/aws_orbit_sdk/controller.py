@@ -637,7 +637,7 @@ def _create_eks_job_spec(taskConfiguration: dict) -> Dict[str, Any]:
         converted_compute["labels"] = compute["labels"]
     if "container" in compute:
         if "p_concurrent" in compute["container"]:
-            converted_compute["concurrentProcesses"] = compute["p_concurrent"]
+            converted_compute["concurrentProcesses"] = compute["container"]["p_concurrent"]
 
     return {
         "apiVersion": "orbit.aws/v1",
