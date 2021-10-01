@@ -274,7 +274,10 @@ def _update_userpool(context: Context) -> None:
         f"arn:aws:lambda:{context.region}:{context.account_id}:function:orbit-{context.name}-post-authentication"
     )
 
-    cognito_client.update_user_pool(UserPoolId=context.user_pool_id, LambdaConfig={"PostAuthentication": function_arn})
+    cognito_client.update_user_pool(
+        UserPoolId=context.user_pool_id,
+        LambdaConfig={"PostAuthentication": function_arn, "PostConfirmation": function_arn},
+    )
 
 
 def _update_userpool_client(context: Context) -> None:
@@ -284,6 +287,8 @@ def _update_userpool_client(context: Context) -> None:
         ClientId=context.user_pool_client_id,
         CallbackURLs=[
             f"{context.landing_page_url}/oauth2/idpresponse",
+            f"{context.landing_page_url}/orbit/login",
+            f"{context.landing_page_url}/saml2/idpresponse",
         ],
         LogoutURLs=[
             f"{context.landing_page_url}/orbit/logout",
