@@ -7,7 +7,7 @@ set -e
 # Set the .kube/config with respect to runtime environment
 pytest -k testlakecreator -n auto --junitxml=regression_report.xml
 
-cat .pytest_cache/v/cache/lastfailed
+cat .pytest_cache/v/cache/lastfailed || echo "No failed test"
 
 if [[ $? -ne 0 ]]; then
     pytest -k testlakecreator -n auto --junitxml=regression_report.xml --lf
