@@ -17,10 +17,12 @@ import base64
 import json
 import logging
 import os
+import re
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 from urllib.parse import urlencode, urlparse
 
+import boto3
 import requests
 from flask import Flask, jsonify, render_template, request
 from jose import jwk, jwt
@@ -33,7 +35,7 @@ _cognito_keys: Optional[List[Dict[str, str]]] = None
 
 def is_ready(logger: logging.Logger, app: Flask) -> Any:
     logger.debug("cookies: %s", json.dumps(request.cookies))
-    email, username = _get_user_info_from_jwt(logger)
+    email, username, groups = _get_user_info_from_jwt(logger)
 
     ready = _is_profile_ready_for_user(logger, username, email)
     logger.debug("username: %s, email: %s", username, email)
@@ -42,11 +44,18 @@ def is_ready(logger: logging.Logger, app: Flask) -> Any:
 
 def login(logger: logging.Logger, app: Flask) -> Any:
     logger.debug("cookies: %s", json.dumps(request.cookies))
-    email, username = _get_user_info_from_jwt(logger)
-    logger.debug("username: %s, email: %s", username, email)
+    email, username, groups = _get_user_info_from_jwt(logger)
 
-    groups = _get_user_groups_from_jwt(logger)
+    # If we have groups, then the provider sent them.
+    # Match them to the proper user groups
+    if groups is not None:
+        logger.info("We got groups in the auth payload, we need to align them to teams")
+        user_groups = _get_user_groups_from_provider(logger, list(groups))
+    else:
+        logger.info("No groups in auth payload, we are fetchng the from the Cognito User Pool")
+        user_groups = _get_user_groups_from_jwt(logger)
 
+    logger.debug("username: %s, email: %s, groups: %s", username, email, user_groups)
     ready = _is_profile_ready_for_user(logger, username, email)
     logger.debug("user space is READY? %s", ready)
 
@@ -60,7 +69,7 @@ def login(logger: logging.Logger, app: Flask) -> Any:
         logout_uri=logout_uri,
         client_id=client_id,
         cognito_domain=cognito_domain,
-        teams=groups,
+        teams=user_groups,
         env_name=env_name,
     )
 
@@ -105,7 +114,7 @@ def _get_kf_profiles(client: dynamic.DynamicClient) -> List[Dict[str, Any]]:
 
 
 # https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html
-def _get_user_info_from_jwt(logger: logging.Logger) -> Tuple[str, str]:
+def _get_user_info_from_jwt(logger: logging.Logger) -> Tuple[Any, Any, Optional[Any]]:
     logger.debug("headers: %s", json.dumps(dict(request.headers)))
     encoded_jwt = request.headers["x-amzn-oidc-data"]
     logger.debug("encoded_jwt 'x-amzn-oidc-data':\n %s", encoded_jwt)
@@ -122,9 +131,32 @@ def _get_user_info_from_jwt(logger: logging.Logger) -> Tuple[str, str]:
     # Step 3: Get the payload
     payload = jwt.decode(encoded_jwt, pub_key, algorithms=["ES256"])
     logger.debug("payload:\n %s", payload)
+
     username = payload["username"]
+    if "preferred_username" in payload:
+        username = payload["preferred_username"]
+
     email = payload["email"]
-    return email, username
+
+    groups = None
+    if "custom:groups" in payload:
+        groups = payload["custom:groups"].strip("][").split(", ")
+
+    return email, username, groups
+
+
+def _get_user_groups_from_provider(logger: logging.Logger, groups_from_provider: List[Any]) -> List[str]:
+    logger.info("Starting to get groups")
+    team_info = _get_auth_group_from_ssm(logger)
+    user_groups = []
+    for group_name in groups_from_provider:
+        for team_name in team_info:
+            if group_name in team_info[team_name]:
+                g = team_name
+                user_groups.append(g)
+    user_groups = list(dict.fromkeys(user_groups))
+    logger.info(f"User Groups: {user_groups}")
+    return user_groups
 
 
 def _get_user_groups_from_jwt(logger: logging.Logger) -> List[str]:
@@ -133,7 +165,22 @@ def _get_user_groups_from_jwt(logger: logging.Logger) -> List[str]:
     logger.debug("encoded_jwt 'X-Amzn-Oidc-Accesstoken':\n %s", encoded_jwt)
     claims = get_claims(logger, encoded_jwt)
     groups: Union[List[Any], str, int] = claims["cognito:groups"] if "cognito:groups" in claims else []
-    return cast(List[str], groups)
+    logger.debug(f"Groups from Cognito : {groups}")
+    team_info = _get_auth_group_from_ssm(logger)
+    orbit_env = os.environ["ENV_NAME"]
+    user_groups = []
+    for group_name in groups:  # type: ignore
+        if (f"{orbit_env}-") in group_name:
+            group_name = group_name.split(f"{orbit_env}-")[1]
+            for team_name in team_info:
+                logger.debug(
+                    f"Team Name: {team_name}  group_name: {group_name}  team_info[team_name] :{team_info[team_name]} "
+                )
+                if group_name in team_info[team_name]:
+                    g = team_name
+                    user_groups.append(g)
+    logger.info(f"User Groups: {user_groups}")
+    return user_groups
 
 
 def _get_keys(logger: logging.Logger) -> List[Dict[str, str]]:
@@ -178,3 +225,28 @@ def get_claims(logger: logging.Logger, token: str) -> Dict[str, Union[str, int]]
     logger.debug("claims: %s", claims)
 
     return cast(Dict[str, Union[str, int]], claims)
+
+
+def _get_auth_group_from_ssm(logger: logging.Logger) -> Dict[str, List[str]]:
+    ssm_client = boto3.client("ssm")
+
+    team_info = {}
+    orbit_env = os.environ["ENV_NAME"]
+
+    team_manifest_pattern = re.compile(rf"/orbit/{orbit_env}/teams/.*/manifest")
+
+    paginator = ssm_client.get_paginator("describe_parameters")
+    page_iterator = paginator.paginate()
+
+    for page in page_iterator:
+        for path in page.get("Parameters"):
+            param = path.get("Name")
+
+            if team_manifest_pattern.fullmatch(param):
+                param_value = json.loads(ssm_client.get_parameter(Name=param).get("Parameter").get("Value"))
+                team = param.split("/")[-2]
+                auth_group_val = param_value.get("AuthenticationGroups")
+                team_info[team] = auth_group_val
+
+    logger.info(f"Team Info fetch: {team_info}")
+    return team_info
