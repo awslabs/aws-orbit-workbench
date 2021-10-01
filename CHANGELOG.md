@@ -11,9 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added orbitjob-operator and CRD
 - Added schedule (cron string) to orbitjob CRD
 - Added monitoring to OrbitJob so pytest can evaluate the jobs execution
-
+- Added PyTest for lake admin, creator and user
 ### **Changed**
 - Moved away from Job index to Status object of K8s job to report the current status
+- Changed Lake Creator notebook
 
 ### **Removed**
 

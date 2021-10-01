@@ -22,6 +22,7 @@ jsii~=1.34.0
 pytest~=6.2.5
 kubetest~=0.9.5
 pytest-order~=1.0.0
+pytest-xdist~=2.4.0
 aws_cdk.core~=1.100.0
 aws-cdk.aws-codecommit~=1.100.0
 aws-cdk.aws-ec2~=1.100.0
