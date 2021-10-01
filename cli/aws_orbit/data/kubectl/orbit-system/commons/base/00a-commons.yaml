@@ -205,6 +205,8 @@ spec:
                           type: string
                 notebookName:
                   type: string
+                triggerName:
+                  type: string
                 schedule:
                   type: string
                 compute:
