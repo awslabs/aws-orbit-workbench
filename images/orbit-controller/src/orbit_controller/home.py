@@ -169,7 +169,7 @@ def _get_user_groups_from_jwt(logger: logging.Logger) -> List[str]:
     team_info = _get_auth_group_from_ssm(logger)
     orbit_env = os.environ["ENV_NAME"]
     user_groups = []
-    for group_name in groups:
+    for group_name in groups:  # type: ignore
         if (f"{orbit_env}-") in group_name:
             group_name = group_name.split(f"{orbit_env}-")[1]
             for team_name in team_info:
