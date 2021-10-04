@@ -29,33 +29,15 @@ from kubernetes import dynamic
 from kubernetes import watch as k8_watch
 from kubernetes.client import (
     ApiException,
-    BatchV1Api,
-    BatchV1beta1Api,
     CoreV1Api,
     CustomObjectsApi,
     StorageV1Api,
-    V1beta1CronJob,
-    V1beta1CronJobSpec,
-    V1beta1CronJobStatus,
-    V1beta1JobTemplateSpec,
-    V1Container,
-    V1ContainerPort,
     V1ContainerState,
     V1ContainerStatus,
-    V1EnvVar,
-    V1Job,
-    V1JobList,
-    V1JobSpec,
-    V1JobStatus,
-    V1ObjectMeta,
     V1Pod,
     V1PodCondition,
     V1PodList,
-    V1PodSecurityContext,
-    V1PodSpec,
     V1PodStatus,
-    V1ResourceRequirements,
-    V1SecurityContext,
     api_client,
     exceptions,
 )
@@ -79,6 +61,9 @@ __CURRENT_TEAM_MANIFEST__: MANIFEST_TEAM_TYPE = None
 __CURRENT_ENV_MANIFEST__: MANIFEST_TEAM_TYPE = None
 
 APP_LABEL_SELECTOR: List[str] = ["orbit-runner", "emr-spark"]
+
+ORBIT_API_VERSION = "v1"
+ORBIT_API_GROUP = "orbit.aws"
 
 
 def read_team_manifest_ssm(env_name: str, team_name: str) -> Optional[MANIFEST_TEAM_TYPE]:
@@ -317,26 +302,20 @@ def list_my_running_jobs():
 
 
 def list_running_jobs(namespace: str):
-    load_kube_config()
-    api_instance = BatchV1Api()
-
-    label_selector = "app=orbit-runner"
+    api = _dynamic_client().resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="OrbitJob")
+    label_selector = "k8sJobType=Job"
     try:
-        api_response = api_instance.list_namespaced_job(
-            namespace=namespace,
-            _preload_content=False,
-            label_selector=label_selector,
-            watch=False,
-        )
-        res = json.loads(api_response.data)
+        api_response = api.get(namespace=namespace, label_selector=label_selector)
+        res = api_response.to_dict()
     except ApiException as e:
-        _logger.info("Exception when calling BatchV1Api->list_namespaced_job: %s\n" % e)
+        _logger.info("Exception when calling DynamicClient.get() for OrbitJobs: %s\n" % e)
         raise e
 
-    if "items" not in res:
-        return []
-
-    return res["items"]
+    return [
+        oj
+        for oj in res.get("items", [])
+        if oj.get("status", {}).get("orbitJobOperator", {}).get("jobStatus") == "Active"
+    ]
 
 
 def list_team_running_pods():
@@ -392,7 +371,7 @@ def list_current_pods(label_selector: str = None):
         api_response = api_instance.list_namespaced_pod(**params)
         res = json.loads(api_response.data)
     except ApiException as e:
-        _logger.info("Exception when calling BatchV1Api->list_namespaced_job: %s\n" % e)
+        _logger.info("Exception when calling CoreV1Api->list_namespace_pod: %s\n" % e)
         raise e
 
     if "items" not in res:
@@ -546,38 +525,33 @@ def delete_pod(pod_name: str, grace_period_seconds: int = 30):
 
 def delete_job(job_name: str, grace_period_seconds: int = 30):
     props = get_properties()
-    global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
-    load_kube_config()
-    api_instance = BatchV1Api()
+    api = _dynamic_client().resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="OrbitJob")
     try:
-        api_instance.delete_namespaced_job(
+        api.delete(
             name=job_name,
             namespace=os.environ.get("AWS_ORBIT_USER_SPACE", team_name),
-            _preload_content=False,
             grace_period_seconds=grace_period_seconds,
             orphan_dependents=False,
         )
     except ApiException as e:
-        _logger.info("Exception when calling BatchV1Api->delete_namespaced_job: %s\n" % e)
+        _logger.info("Exception when calling DynamicClient.delete() for OrbitJobs: %s\n" % e)
         raise e
 
 
 def delete_cronjob(job_name: str, grace_period_seconds: int = 30):
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
-    load_kube_config()
-    api_instance = BatchV1beta1Api()
+    api = _dynamic_client().resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="OrbitJob")
     try:
-        api_instance.delete_namespaced_cron_job(
+        api.delete(
             name=job_name,
             namespace=os.environ.get("AWS_ORBIT_USER_SPACE", team_name),
-            _preload_content=False,
             grace_period_seconds=grace_period_seconds,
             orphan_dependents=False,
         )
     except ApiException as e:
-        _logger.info("Exception when calling BatchV1Api->delete_namespaced_cron_job: %s\n" % e)
+        _logger.info("Exception when calling DynamicClient.delete() for OrbitJobs: %s\n" % e)
         raise e
 
 
@@ -603,15 +577,12 @@ def delete_all_my_jobs():
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
 
-    load_kube_config()
-    api_instance = BatchV1Api()
-    label_selector = "app=orbit-runner"
+    api = _dynamic_client().resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="OrbitJob")
+    label_selector = "k8sJobType=Job"
     try:
-        api_instance.delete_collection_namespaced_job(
-            namespace=namespace, _preload_content=False, orphan_dependents=False, label_selector=label_selector
-        )
+        api.delete(namespace=namespace, orphan_dependents=False, label_selector=label_selector)
     except ApiException as e:
-        _logger.info("Exception when calling BatchV1Api->delete_collection_namespaced_job: %s\n" % e)
+        _logger.info("Exception when calling DynamicClient.delete() for OrbitJobs: %s\n" % e)
         raise e
 
 
@@ -619,19 +590,21 @@ def list_running_cronjobs():
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
-    load_kube_config()
-    api_instance = BatchV1beta1Api()
+
+    api = _dynamic_client().resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="OrbitJob")
+    label_selector = "k8sJobType=CronJob"
     try:
-        api_response = api_instance.list_namespaced_cron_job(namespace=namespace, _preload_content=False)
-        res = json.loads(api_response.data)
+        api_response = api.get(namespace=namespace, label_selector=label_selector)
+        res = api_response.to_dict()
     except ApiException as e:
-        _logger.info("Exception when calling BatchV1beta1Api->list_namespaced_cron_job: %s\n" % e)
+        _logger.info("Exception when calling DynamicClient.get() for OrbitJobs: %s\n" % e)
         raise e
 
-    if "items" not in res:
-        return []
-
-    return res["items"]
+    return [
+        oj
+        for oj in res.get("items", [])
+        if oj.get("status", {}).get("orbitJobOperator", {}).get("jobStatus") == "Active"
+    ]
 
 
 def get_podsetting_spec(podsetting_name, team_name):
@@ -645,194 +618,37 @@ def get_priority(taskConfiguration: dict):
         return taskConfiguration["compute"]["priorityClassName"]
 
 
-def _create_eks_job_spec(taskConfiguration: dict, labels: Dict[str, str]) -> V1JobSpec:
-    """
-    Runs Task in Python in a notebook using lambda.
+def _create_eks_job_spec(taskConfiguration: dict) -> Dict[str, Any]:
+    compute = taskConfiguration.get("compute", {})
+    converted_compute = {}
+    if "compute_type" in compute:
+        converted_compute["computeType"] = compute["compute_type"]
+    if "node_type" in compute:
+        converted_compute["nodeType"] = compute["node_type"]
+    if "env_vars" in compute:
+        converted_compute["env"] = compute["env_vars"]
+    if "sns.topic.name" in compute:
+        converted_compute["snsTopicName"] = compute["sns.topic.name"]
+    if "priorityClassName" in compute:
+        converted_compute["priorityClassName"] = compute["priorityClassName"]
+    if "podsetting" in compute:
+        converted_compute["podSetting"] = compute["podsetting"]
+    if "labels" in compute:
+        converted_compute["labels"] = compute["labels"]
+    if "container" in compute:
+        if "p_concurrent" in compute["container"]:
+            converted_compute["concurrentProcesses"] = compute["container"]["p_concurrent"]
 
-    Parameters
-    ----------
-    taskConfiguration: dict
-        A task definition to execute.
-
-    Returns
-    -------
-    Response Payload
-    """
-    props = get_properties()
-    global __CURRENT_TEAM_MANIFEST__, __CURRENT_ENV_MANIFEST__
-    env_name = props["AWS_ORBIT_ENV"]
-    team_name = props["AWS_ORBIT_TEAM_SPACE"]
-    if __CURRENT_TEAM_MANIFEST__ is None or __CURRENT_TEAM_MANIFEST__["Name"] != team_name:
-        __CURRENT_TEAM_MANIFEST__ = load_team_context_from_ssm(env_name, team_name)
-    if __CURRENT_ENV_MANIFEST__ is None:
-        __CURRENT_ENV_MANIFEST__ = load_env_context_from_ssm(env_name)
-
-    env = build_env(__CURRENT_ENV_MANIFEST__, env_name, taskConfiguration, team_name)
-    env["AWS_ORBIT_ENV"] = props["AWS_ORBIT_ENV"]
-    env["AWS_ORBIT_TEAM_SPACE"] = props["AWS_ORBIT_TEAM_SPACE"]
-
-    priority_class_name = get_priority(taskConfiguration)
-    podsetting_name = resolve_podsetting_name(taskConfiguration)
-    podsetting_spec = get_podsetting_spec(podsetting_name, team_name)
-    image = resolve_image_from_podsetting(__CURRENT_ENV_MANIFEST__, podsetting_spec)
-
-    job_name: str = f'run-{taskConfiguration["task_type"]}'
-
-    labels = {**labels, **podsetting_spec["metadata"]["labels"]}
-    # MUST set this to the name of the podsetting in format 'orbit/{podsetting-name} so orbit-controller
-    # watcher will apply the settings
-    # MUST set 'app' to orbit-runner
-    label_indicator = "orbit/" + podsetting_spec["metadata"]["name"]
-    labels[label_indicator] = ""
-
-    labels["app"] = "orbit-runner"
-
-    pod_properties: Dict[str, Any] = dict(
-        name=job_name,
-        cmd=["bash", "-c", "python /opt/python-utils/notebook_cli.py"],
-        port=22,
-        image=image,
-        service_account="default-editor",
-        run_privileged=False,
-        allow_privilege_escalation=True,
-        env=env,
-        priority_class_name=priority_class_name,
-        labels=labels,
-        logger=_logger,
-        run_as_uid=1000,
-        run_as_gid=100,
-    )
-
-    ###
-    # 20210721 - podsettings are used, and the orbit-controller overrides the pod spec when created.
-    # The make_pod method has a lot of configurable items that are not used.  Orbit only needs the
-    # parameters to make a minimally viable pod spec.
-    ###
-    pod: V1Pod = make_pod(**pod_properties)
-    pod.spec.restart_policy = "Never"
-    job_spec = V1JobSpec(
-        backoff_limit=0,
-        template=pod,
-        ttl_seconds_after_finished=120,
-    )
-    return job_spec
-
-
-def make_pod(
-    name,
-    cmd,
-    port,
-    image,
-    run_as_uid=None,
-    run_as_gid=None,
-    run_privileged=False,
-    allow_privilege_escalation=True,
-    env=None,
-    labels=None,
-    service_account=None,
-    priority_class_name=None,
-    logger=None,
-):
-    """
-    Make a k8s pod specification for running a user notebook.
-
-    Parameters
-    ----------
-    name:
-        Name of pod. Must be unique within the namespace the object is
-        going to be created in. Must be a valid DNS label.
-    image:
-        Image specification - usually a image name and tag in the form
-        of image_name:tag. Same thing you would use with docker commandline
-        arguments
-    port:
-        Port the notebook server is going to be listening on
-    cmd:
-        The command used to execute the singleuser server.
-    run_as_uid:
-        The UID used to run single-user pods. The default is to run as the user
-        specified in the Dockerfile, if this is set to None.
-    run_as_gid:
-        The GID used to run single-user pods. The default is to run as the primary
-        group of the user specified in the Dockerfile, if this is set to None.
-        Setting this parameter requires that *feature-gate* **RunAsGroup** be enabled,
-        otherwise the effective GID of the pod will be 0 (root).  In addition, not
-        setting `run_as_gid` once feature-gate RunAsGroup is enabled will also
-        result in an effective GID of 0 (root).
-    run_privileged:
-        Whether the container should be run in privileged mode.
-    allow_privilege_escalation:
-        Controls whether a process can gain more privileges than its parent process.
-    env:
-        Dictionary of environment variables.
-    labels:
-        Labels to add to the spawned pod.
-    service_account:
-        Service account to mount on the pod. None disables mounting
-    priority_class_name:
-        The name of the PriorityClass to be assigned the pod. This feature is Beta available in K8s 1.11.
-    """
-
-    pod = V1Pod()
-    pod.kind = "Pod"
-    pod.api_version = "v1"
-
-    pod.metadata = V1ObjectMeta(name=name, labels=(labels or {}).copy())
-
-    pod.spec = V1PodSpec(containers=[])
-    pod.spec.restart_policy = "OnFailure"
-
-    if priority_class_name:
-        pod.spec.priority_class_name = priority_class_name
-
-    pod_security_context = V1PodSecurityContext()
-    # Only clutter pod spec with actual content
-    if not all([e is None for e in pod_security_context.to_dict().values()]):
-        pod.spec.security_context = pod_security_context
-
-    container_security_context = V1SecurityContext()
-    if run_as_uid is not None:
-        container_security_context.run_as_user = int(run_as_uid)
-    if run_as_gid is not None:
-        container_security_context.run_as_group = int(run_as_gid)
-    if run_privileged:
-        container_security_context.privileged = True
-    if not allow_privilege_escalation:
-        container_security_context.allow_privilege_escalation = False
-    # Only clutter container spec with actual content
-    if all([e is None for e in container_security_context.to_dict().values()]):
-        container_security_context = None
-
-    prepared_env = []
-    for k, v in (env or {}).items():
-        prepared_env.append(V1EnvVar(name=k, value=v))
-    notebook_container = V1Container(
-        name="orbit-runner",
-        image=image,
-        ports=[V1ContainerPort(name="notebook-port", container_port=port)],
-        env=prepared_env,
-        args=cmd,
-        resources=V1ResourceRequirements(),
-        security_context=container_security_context,
-    )
-
-    if service_account is None:
-        # This makes sure that we don't accidentally give access to the whole
-        # kubernetes API to the users in the spawned pods.
-        pod.spec.automount_service_account_token = False
-    else:
-        pod.spec.service_account_name = service_account
-
-    notebook_container.resources.requests = {}
-    notebook_container.resources.limits = {}
-
-    pod.spec.containers.append(notebook_container)
-    pod.spec.volumes = []
-
-    if priority_class_name:
-        pod.spec.priority_class_name = priority_class_name
-
-    return pod
+    return {
+        "apiVersion": "orbit.aws/v1",
+        "kind": "OrbitJob",
+        "metadata": {},
+        "spec": {
+            "taskType": taskConfiguration["task_type"],
+            "compute": converted_compute,
+            "tasks": taskConfiguration["tasks"],
+        },
+    }
 
 
 def resolve_image_from_podsetting(__CURRENT_ENV_MANIFEST__, podsetting_spec):
@@ -891,35 +707,21 @@ def _run_task_eks(taskConfiguration: dict) -> Any:
     """
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
+    namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
     node_type = get_node_type(taskConfiguration)
-    labels = {"app": "orbit-runner", "orbit/node-type": node_type, "notebook-name": os.environ.get("HOSTNAME", "")}
-    if node_type == "ec2":
-        labels["orbit/attach-security-group"] = "yes"
-    job_spec = _create_eks_job_spec(taskConfiguration, labels=labels)
-    load_kube_config()
-    if "compute" in taskConfiguration:
-        if "labels" in taskConfiguration["compute"]:
-            labels = {**labels, **taskConfiguration["compute"]["labels"]}
-    job = V1Job(
-        api_version="batch/v1",
-        kind="Job",
-        metadata=V1ObjectMeta(
-            generate_name=f"orbit-{team_name}-{node_type}-runner-",
-            labels=labels,
-            namespace=os.environ.get("AWS_ORBIT_USER_SPACE", team_name),
-        ),
-        spec=job_spec,
-    )
-    job_instance: V1Job = BatchV1Api().create_namespaced_job(
-        namespace=os.environ.get("AWS_ORBIT_USER_SPACE", team_name),
-        body=job,
-    )
-    metadata: V1ObjectMeta = job_instance.metadata
+    job_spec = _create_eks_job_spec(taskConfiguration)
+    job_spec["spec"]["notebookName"] = os.environ.get("HOSTNAME", "")
+    job_spec["metadata"]["generateName"] = f"orbit-{team_name}-{node_type}-runner-"
 
-    _logger.debug(f"started job {metadata.name}")
+    dynamic_client = _dynamic_client()
+    api = dynamic_client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="OrbitJob")
+    job_instance = api.create(namespace=namespace, body=job_spec).to_dict()
+
+    metadata = job_instance["metadata"]
+    _logger.debug(f"started job {metadata['name']}")
     return {
         "ExecutionType": "eks",
-        "Identifier": metadata.name,
+        "Identifier": metadata["name"],
         "NodeType": node_type,
         "tasks": taskConfiguration["tasks"],
     }
@@ -1047,32 +849,21 @@ def schedule_task_eks(triggerName: str, frequency: str, taskConfiguration: dict)
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
-    node_type = get_node_type(taskConfiguration)
-    cronjob_id = f"orbit-{namespace}-{triggerName}"
-    labels = {
-        "app": "orbit-runner",
-        "orbit/node-type": node_type,
-        "cronjob_id": cronjob_id,
-        "notebook-name": "scheduled",
-    }
+    job_spec = _create_eks_job_spec(taskConfiguration)
+    job_spec["spec"]["schedule"] = frequency
+    job_spec["spec"]["triggerName"] = triggerName
+    job_spec["spec"]["notebookName"] = "schduled"
+    job_spec["metadata"]["name"] = f"orbit-{namespace}-{triggerName}"
 
-    job_spec = _create_eks_job_spec(taskConfiguration, labels=labels)
-    cron_job_template: V1beta1JobTemplateSpec = V1beta1JobTemplateSpec(spec=job_spec)
-    cron_job_spec: V1beta1CronJobSpec = V1beta1CronJobSpec(job_template=cron_job_template, schedule=frequency)
-    job = V1beta1CronJob(
-        api_version="batch/v1beta1",
-        kind="CronJob",
-        metadata=V1ObjectMeta(name=cronjob_id, labels=labels, namespace=namespace),
-        status=V1beta1CronJobStatus(),
-        spec=cron_job_spec,
-    )
-    load_kube_config()
+    dynamic_client = _dynamic_client()
+    api = dynamic_client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="OrbitJob")
+    job_instance = api.create(namespace=namespace, body=job_spec).to_dict()
 
-    job_instance: V1beta1CronJob = BatchV1beta1Api().create_namespaced_cron_job(namespace=namespace, body=job)
-    metadata: V1ObjectMeta = job_instance.metadata
+    metadata = job_instance["metadata"]
+    _logger.debug(f"started job {metadata['name']}")
     return {
         "ExecutionType": "eks",
-        "Identifier": metadata.name,
+        "Identifier": metadata["name"],
     }
 
 
@@ -1094,9 +885,10 @@ def delete_task_schedule_eks(triggerName: str) -> None:
     props = get_properties()
     team_name = props["AWS_ORBIT_TEAM_SPACE"]
     namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
-    load_kube_config()
 
-    BatchV1beta1Api().delete_namespaced_cron_job(name=f"orbit-{team_name}-{triggerName}", namespace=namespace)
+    dynamic_client = _dynamic_client()
+    api = dynamic_client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="OrbitJob")
+    api.delete(name=f"orbit-{team_name}-{triggerName}", namespace=namespace)
 
 
 # def order_def(task_definition: Any) -> datetime:
@@ -1155,35 +947,32 @@ def wait_for_tasks_to_complete(
 
     incomplete_tasks = []
     _logger.info("Waiting for %s tasks %s", len(tasks), tasks)
-    load_kube_config()
     namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
+    api = _dynamic_client().resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="OrbitJob")
     while True:
         for task in tasks:
             _logger.debug("Checking execution state of: %s", task)
             try:
-                current_jobs: V1JobList = BatchV1Api().list_namespaced_job(
-                    namespace=namespace, label_selector="app=orbit-runner"
-                )
+                current_jobs = api.get(namespace=namespace)
             except exceptions.ApiException as e:
                 _logger.error("Error during list jobs for %s: %s", team_name, e)
                 # try again after 5 seconds.
                 time.sleep(5)
-                current_jobs = BatchV1Api().list_namespaced_job(namespace=namespace, label_selector="app=orbit-runner")
+                current_jobs = api.get(namespace=namespace)
             task_name = task["Identifier"]
-            for job in current_jobs.items:
-                job_instance: V1Job = cast(V1Job, job)
-                job_metadata: V1ObjectMeta = cast(V1ObjectMeta, job_instance.metadata)
-                if job_metadata.name != task["Identifier"]:
+            for job in current_jobs["items"]:
+                job_metadata = job["metadata"]
+                job_status = job["status"].get("orbitJobOperator", {})
+                if job_metadata["name"] != task["Identifier"]:
                     continue
-                job_status: V1JobStatus = cast(V1JobStatus, job_instance.status)
                 _logger.debug(f"job-status={job_status}")
-                if job_status.active == 1:
+                if job_status.get("jobStatus") == "Active":
                     incomplete_tasks.append(task)
                     _logger.info("Task %s is running with status %s", task, job_status)
-                elif job_status.failed == 1:
+                elif job_status.get("jobStatus") == "Failed":
                     _logger.debug(f"Execution error: {task_name}")
                     errored_tasks.append(task)
-                elif job_status.succeeded:
+                elif job_status.get("jobStatus") == "Complete":
                     completed_tasks.append(task)
                 else:
                     incomplete_tasks.append(task)
@@ -1371,15 +1160,11 @@ def delete_podsetting(namespace: str, podsetting_name: str) -> None:
 def _deploy_podsetting(
     namespace: str, name: str, client: dynamic.DynamicClient, podsetting_spec: Dict[str, Any]
 ) -> None:
-    ORBIT_API_VERSION = os.environ.get("ORBIT_API_VERSION", "v1")
-    ORBIT_API_GROUP = os.environ.get("ORBIT_API_GROUP", "orbit.aws")
     api = client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="PodSetting")
     api.create(namespace=namespace, body=podsetting_spec)
 
 
 def _destroy_podsetting(namespace: str, podsetting_name: str, client: dynamic.DynamicClient) -> None:
-    ORBIT_API_VERSION = os.environ.get("ORBIT_API_VERSION", "v1")
-    ORBIT_API_GROUP = os.environ.get("ORBIT_API_GROUP", "orbit.aws")
     api = client.resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="PodSetting")
     api.delete(namespace=namespace, name=podsetting_name, body={})
 
