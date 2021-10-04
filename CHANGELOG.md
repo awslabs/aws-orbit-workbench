@@ -12,6 +12,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### **Removed**
 
+## **[1.3.1]**
+
+### **Added**
+
+### **Changed**
+- FIX - support for SAML authentication
+- FIX - updated logoc for AutenticatedGroups to team mappings
+- FIX - changed storage-driver for build image and image replicator
+### **Removed**
+
 ## **[1.3.0]**
 
 ### **Added**

@@ -245,7 +245,7 @@ def generate_spec(
     install = [
         (
             "nohup /usr/sbin/dockerd --host=unix:///var/run/docker.sock"
-            " --host=tcp://0.0.0.0:2375 --storage-driver=overlay&"
+            " --host=tcp://127.0.0.1:2375 --storage-driver=vfs&"
         ),
         'timeout 15 sh -c "until docker info; do echo .; sleep 1; done"',
     ]
