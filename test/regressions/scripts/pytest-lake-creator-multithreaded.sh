@@ -3,19 +3,20 @@
 set -e
 
 # Required os env variables. Replace with testing Orbit env details
-# AWS_ORBIT_ENV, AWS_ORBIT_TEAM_SPACE
+# export AWS_ORBIT_ENV=iter
+# export AWS_ORBIT_TEAM_SPACE=lake-creator
 
 # Set the .kube/config with respect to runtime environment
-pytest --kube-config ~/.kube/config -v -s  -k testlakecreator_cleaner
+pytest -k lakecreatorcleaner test_lake_creator.py
 
 # Multi threaded
-pytest --kube-config ~/.kube/config -v -s  -k testlakecreator_unzip -n auto
+pytest -k testlakecreator_zip -n auto test_lake_creator.py
 
-pytest --kube-config ~/.kube/config -v -s  -k testlakecreator_check_data_files
+pytest -k testlakecreator_unzip_check test_lake_creator.py
 
 # Multi threaded
-pytest --kube-config ~/.kube/config -v -s  -k testlakecreator_create_glue_tables -n auto
+pytest -k testlakecreator_glue -n auto test_lake_creator.py
 
-pytest --kube-config ~/.kube/config -v -s  -k testlakecreator_check_glue_tables
+pytest -k testlakecreator_checkglue test_lake_creator.py
 
-pytest --kube-config ~/.kube/config -v -s  -k testlakecreator_lf
+pytest -k testlakecreator_lf test_lake_creator.py

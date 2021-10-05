@@ -5,10 +5,6 @@ set -e
 # AWS_ORBIT_ENV, AWS_ORBIT_TEAM_SPACE
 
 # Set the .kube/config with respect to runtime environment
-pytest -k testlakecreator -n auto --junitxml=regression_report.xml
+pytest -k testlakecreator -n auto --junitxml=regression_report.xml test_lake_creator.py
 
 cat .pytest_cache/v/cache/lastfailed || echo "No failed test"
-
-if [[ $? -ne 0 ]]; then
-    pytest -k testlakecreator -n auto --junitxml=regression_report.xml --lf
-fi
