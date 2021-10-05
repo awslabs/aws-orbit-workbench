@@ -1,0 +1,29 @@
+-   PluginId: custom_cfn
+    Module: custom_cfn
+    Parameters:
+        CfnTemplatePath: "./bundle/plugins/demo-lake-admin-cfn-template.yaml"
+-   PluginId: copy-sample-code
+    Module: team_script_launcher
+    Parameters:
+        script: |
+            echo "Copy samples to efs from image ";
+            rm -rf /efs/samples;
+            cp -R -v /opt/orbit/samples/ /efs;
+        restartPolicy: Never
+        image: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data:latest
+        uid: 0
+        gid: 0
+#-   PluginId: overprovisioning-primary-compute
+#    Module: overprovisioning
+#    Parameters:
+#        node_group: primary-compute
+#       replicas: 3
+#        cpu: 3
+#        memory: 4G
+#-   PluginId: overprovisioning-primary-gpu
+#    Module: overprovisioning
+#    Parameters:
+#        node_group: primary-gpu
+#        replicas: 1
+#        nvidia.com/gpu: 1
+#        memory: 5G 
