@@ -961,6 +961,7 @@ def wait_for_tasks_to_complete(
                 current_jobs = api.get(namespace=namespace)
             task_name = task["Identifier"]
             for job in current_jobs["items"]:
+                _logger.info(f"orbit_job={job}")
                 job_metadata = job["metadata"]
                 job_status = job["status"].get("orbitJobOperator", {})
                 if job_metadata["name"] != task["Identifier"]:
