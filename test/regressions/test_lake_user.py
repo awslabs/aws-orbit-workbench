@@ -18,7 +18,7 @@ from custom_resources import OrbitJobCustomApiObject
 from kubetest.client import TestClient
 from aws_orbit_sdk.common import get_workspace
 from pathlib import Path
-from common_utils import JOB_COMPLETION_STATUS
+from common_utils import JOB_COMPLETION_STATUS, JOB_FAILED_STATUS
 
 import logging
 # Initialize parameters
@@ -99,7 +99,7 @@ notebooks_to_run= lake_creator_list_of_files["notebooks_to_run"]
 
 @pytest.mark.namespace(create=False)
 @pytest.mark.testlakeuser
-@pytest.mark.parametrize('notebook_to_run', [notebooks_to_run[0]])
+@pytest.mark.parametrize('notebook_to_run', notebooks_to_run)
 def test_lakeuser_notebooks(notebook_to_run, kube: TestClient) -> None:
     logger.info(f"notebook_to_run={notebook_to_run}")
     notebook_file_name = notebook_to_run['name'].split(".")[0]
@@ -141,3 +141,51 @@ def test_lakeuser_notebooks(notebook_to_run, kube: TestClient) -> None:
     lakeuser.delete()
     assert current_status == JOB_COMPLETION_STATUS
 
+
+
+
+
+@pytest.mark.namespace(create=False)
+@pytest.mark.testlakeuserfailure
+def test_lakeuser_notebooks_xfail(kube: TestClient) -> None:
+    notebook_to_run={
+        "name": "Example-90-Failure-Behavior.ipynb",
+        "folder": "B-DataAnalyst"
+    }
+    podsetting_name = "orbit-runner-support-small"
+    body = {
+        "apiVersion": "orbit.aws/v1",
+        "kind": "OrbitJob",
+        "metadata": {
+            "generateName": "test-orbit-job-lake-user-"
+        },
+        "spec": {
+            "taskType": "jupyter",
+            "compute": {
+                 "nodeType": "ec2",
+                 "container": {
+                     "concurrentProcesses": 1
+                 },
+                 "podSetting": podsetting_name
+            },
+            "tasks": [{
+                "notebookName": notebook_to_run['name'],
+                "sourcePath": f"shared/samples/notebooks/{notebook_to_run['folder']}",
+                "targetPath": f"shared/regression/notebooks/{notebook_to_run['folder']}",
+                "params": {}
+            }]
+        }
+    }
+
+    logger.info(body)
+    lakeuser = OrbitJobCustomApiObject(body)
+    lakeuser.create(namespace="lake-user")
+    # Logic to wait till OrbitJob creates
+    lakeuser.wait_until_ready(timeout=60)
+    # Logic to pass or fail the pytest
+    lakeuser.wait_until_job_completes(timeout=1200)
+    current_status = lakeuser.get_status().get("orbitJobOperator").get("jobStatus")
+    logger.info(f"current_status={current_status}")
+    #Cleanup
+    lakeuser.delete()
+    assert current_status == JOB_FAILED_STATUS
