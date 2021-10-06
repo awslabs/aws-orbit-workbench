@@ -949,6 +949,7 @@ def wait_for_tasks_to_complete(
     _logger.info("Waiting for %s tasks %s", len(tasks), tasks)
     namespace = os.environ.get("AWS_ORBIT_USER_SPACE", team_name)
     api = _dynamic_client().resources.get(api_version=ORBIT_API_VERSION, group=ORBIT_API_GROUP, kind="OrbitJob")
+    time.sleep(delay)
     while True:
         for task in tasks:
             _logger.debug("Checking execution state of: %s", task)
@@ -961,6 +962,7 @@ def wait_for_tasks_to_complete(
                 current_jobs = api.get(namespace=namespace)
             task_name = task["Identifier"]
             for job in current_jobs["items"]:
+                _logger.debug(f"orbit_job={job}")
                 job_metadata = job["metadata"]
                 job_status = job["status"].get("orbitJobOperator", {})
                 if job_metadata["name"] != task["Identifier"]:
