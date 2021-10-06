@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Moved away from Job index to Status object of K8s job to report the current status
 - Updated SDK to use OrbitJobs instead of Jobs and CronJobs
 - Changed Lake Creator notebook
+- Added sleep to Orbit SDK based OrbitJob CR job status check
 
 ### **Removed**
 
