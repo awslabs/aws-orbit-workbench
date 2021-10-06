@@ -219,7 +219,7 @@ class OrbitJobCustomApiObject(CustomApiObject):
     def wait_until_job_completes(
         self,
         timeout: int = None,
-        interval: Union[int, float] = 1,
+        interval: Union[int, float] = 5,
         fail_on_api_error: bool = False,
     ) -> None:
         """Wait until the orbit job completes. Can have completed or failed state

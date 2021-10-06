@@ -96,6 +96,9 @@ def get_lake_creator_list_of_files():
 lake_creator_list_of_files= get_lake_creator_list_of_files()
 notebooks_to_run= lake_creator_list_of_files["notebooks_to_run"]
 
+# notebook_to_run_fail=[{'folder': 'H-Model-Development', 'name': 'Example-2-SageMaker-Batch Transform - breast cancer prediction with high level SDK.ipynb', 'profile': 'small'}]
+# notebook_to_run_fail+=[{'folder': 'H-Model-Development', 'name': 'Example-1-SageMaker-xgboost_mnist.ipynb', 'profile': 'small'}]
+
 
 @pytest.mark.namespace(create=False)
 @pytest.mark.testlakeuser
@@ -134,7 +137,7 @@ def test_lakeuser_notebooks(notebook_to_run, kube: TestClient) -> None:
     # Logic to wait till OrbitJob creates
     lakeuser.wait_until_ready(timeout=60)
     # Logic to pass or fail the pytest
-    lakeuser.wait_until_job_completes(timeout=1200)
+    lakeuser.wait_until_job_completes(timeout=7200)
     current_status = lakeuser.get_status().get("orbitJobOperator").get("jobStatus")
     logger.info(f"current_status={current_status}")
     #Cleanup
