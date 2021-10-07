@@ -318,5 +318,5 @@ def delete_istio_pod_disruption_budget(context: Context) -> None:
             "bash -c 'for pdb in `kubectl get poddisruptionbudgets -n istio-system -o custom-columns=:metadata.name`; "
             "do kubectl delete poddisruptionbudgets $pdb -n istio-system; done'"
         )
-    except:
+    except:  # noqa: E722
         _logger.info("Unable to remove istio-system PDB")
