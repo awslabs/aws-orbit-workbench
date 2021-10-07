@@ -310,6 +310,7 @@ def delete_istio_ingress(context: Context) -> None:
     except:  # noqa: E722
         _logger.exception("Failed to delete istio-ingress")
 
+
 def delete_istio_pod_disruption_budget(context: Context) -> None:
     _logger.debug("Deleteing istio-system pod disruption budgets")
     try:
