@@ -309,3 +309,13 @@ def delete_istio_ingress(context: Context) -> None:
         _logger.info("Deleted istio-ingress")
     except:  # noqa: E722
         _logger.exception("Failed to delete istio-ingress")
+
+def delete_istio_pod_disruption_budget(context: Context) -> None:
+    _logger.debug("Deleteing istio-system pod disruption budgets")
+    try:
+        sh.run(
+            "bash -c 'for pdb in `kubectl get poddisruptionbudgets -n istio-system -o custom-columns=:metadata.name`; "
+            "do kubectl delete poddisruptionbudgets $pdb -n istio-system; done"
+        )
+    except:
+        _logger.info("Unable to remove istio-system PDB")
