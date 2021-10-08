@@ -71,9 +71,10 @@ def wait_for_custom_condition(
             if condition.check():
                 break
         except ApiException as e:
+            log.info(type(e))
             log.warning(f"got api exception while waiting: {e}")
             if count < retry_count:
-                if e.get('reason') == 'Unauthorized':
+                if e.reason == 'Unauthorized':
                     k8_config.load_kube_config()
                     log.info("loading the kubeconfig during Unauthorized exception and retrying")
                     count+=1
