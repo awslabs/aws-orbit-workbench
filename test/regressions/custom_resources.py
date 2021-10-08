@@ -18,12 +18,11 @@ from typing import Any, Dict, List, cast, Optional, Union
 import yaml
 from kubernetes import dynamic
 from kubernetes.client import V1DeleteOptions, V1Status, api_client
-from kubernetes import config as k8_config
 from kubetest.manifest import render
 from kubetest.objects import ApiObject
 from kubetest.client import TestClient
-from kubetest import condition, utils
-from common_utils import JOB_COMPLETION_STATUS, JOB_FAILED_STATUS
+from kubetest import condition
+from common_utils import JOB_COMPLETION_STATUS, JOB_FAILED_STATUS, wait_for_custom_condition
 
 # This elminates some collection warnings for all tests using the TestClient
 TestClient.__test__ = False
@@ -76,7 +75,6 @@ class CustomApiObject(ApiObject):  # type: ignore
     @property
     def api_client(self) -> dynamic.DynamicClient:
         if self._api_client is None:
-            k8_config.load_kube_config()
             c = self.api_clients.get(self.version)
             # If we didn't find the client in the api_clients dict, use the
             # preferred version.
@@ -247,7 +245,7 @@ class OrbitJobCustomApiObject(CustomApiObject):
             self.is_complete,
         )
         # Wait until Orbit job completes
-        utils.wait_for_condition(
+        wait_for_custom_condition(
             condition=job_complete_condition,
             timeout=timeout,
             interval=interval,
