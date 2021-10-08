@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Moved away from Job index to Status object of K8s job to report the current status
 - Updated SDK to use OrbitJobs instead of Jobs and CronJobs
 - Changed Lake Creator notebook
+- Added sleep to Orbit SDK based OrbitJob CR job status check
 
 ### **Removed**
 
@@ -56,6 +57,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: regression tests for DataBrew needed parameterized names
 - FIX: fix podsettings filter when copying into user namespace
 - FIX: imagereplication-pod-webhook patching when no changes occur
+- FIX: Removed the istio-system PDB before destroying istio-system resources, causing dead-lock
 
 ### **Removed**
 

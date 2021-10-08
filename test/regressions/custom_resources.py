@@ -21,8 +21,8 @@ from kubernetes.client import V1DeleteOptions, V1Status, api_client
 from kubetest.manifest import render
 from kubetest.objects import ApiObject
 from kubetest.client import TestClient
-from kubetest import condition, utils
-from common_utils import JOB_COMPLETION_STATUS, JOB_FAILED_STATUS
+from kubetest import condition
+from common_utils import JOB_COMPLETION_STATUS, JOB_FAILED_STATUS, wait_for_custom_condition
 
 # This elminates some collection warnings for all tests using the TestClient
 TestClient.__test__ = False
@@ -219,7 +219,7 @@ class OrbitJobCustomApiObject(CustomApiObject):
     def wait_until_job_completes(
         self,
         timeout: int = None,
-        interval: Union[int, float] = 1,
+        interval: Union[int, float] = 5,
         fail_on_api_error: bool = False,
     ) -> None:
         """Wait until the orbit job completes. Can have completed or failed state
@@ -245,7 +245,7 @@ class OrbitJobCustomApiObject(CustomApiObject):
             self.is_complete,
         )
         # Wait until Orbit job completes
-        utils.wait_for_condition(
+        wait_for_custom_condition(
             condition=job_complete_condition,
             timeout=timeout,
             interval=interval,

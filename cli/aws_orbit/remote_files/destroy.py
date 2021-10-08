@@ -131,6 +131,9 @@ def destroy_env(args: Tuple[str, ...]) -> None:
     # Delete the optional Fargate Profile
     cleanup.delete_system_fargate_profile(context=context)
 
+    # Delete istio-system pod disruption budget; Causes a dead lock
+    cleanup.delete_istio_pod_disruption_budget(context=context)
+
     # helm.destroy_env(context=context)
     # _logger.debug("Helm Charts uninstalled")
 

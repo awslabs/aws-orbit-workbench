@@ -21,7 +21,7 @@ ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge
     LocalStorageSize: 128
-    NodesNumDesired: 4
+    NodesNumDesired: 5
     NodesNumMax: 10
     NodesNumMin: 2
     Labels:

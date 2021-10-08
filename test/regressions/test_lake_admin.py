@@ -65,7 +65,7 @@ def test_lakeadmin_1_ebs(kube: TestClient) -> None:
     # Logic to wait till OrbitJob creates
     lakeadmin.wait_until_ready(timeout=60)
     # Logic to pass or fail the pytest
-    lakeadmin.wait_until_job_completes(timeout=1200)
+    lakeadmin.wait_until_job_completes(timeout=7200)
     current_status = lakeadmin.get_status().get("orbitJobOperator").get("jobStatus")
     logger.info(f"current_status={current_status}")
     #Cleanup
@@ -91,7 +91,7 @@ def test_lakeadmin_2_image_with_apps(kube: TestClient) -> None:
     # Logic to wait till OrbitJob creates
     lakeadmin.wait_until_ready(timeout=60)
     # Logic to pass or fail the pytest
-    lakeadmin.wait_until_job_completes(timeout=1200)
+    lakeadmin.wait_until_job_completes(timeout=7200)
     current_status = lakeadmin.get_status().get("orbitJobOperator").get("jobStatus")
     logger.info(f"current_status={current_status}")
     #Cleanup
@@ -116,7 +116,7 @@ def test_lakeadmin_3_lf_account_settings(kube: TestClient) -> None:
     # Logic to wait till OrbitJob creates
     lakeadmin.wait_until_ready(timeout=60)
     # Logic to pass or fail the pytest
-    lakeadmin.wait_until_job_completes(timeout=1200)
+    lakeadmin.wait_until_job_completes(timeout=7200)
     current_status = lakeadmin.get_status().get("orbitJobOperator").get("jobStatus")
     logger.info(f"current_status={current_status}")
     #Cleanup
