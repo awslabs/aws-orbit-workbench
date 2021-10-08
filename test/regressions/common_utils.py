@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import time
+import os
 import logging
 from typing import Union
 from kubernetes.client.rest import ApiException
@@ -24,6 +25,11 @@ JOB_FAILED_STATUS = "Failed"
 
 log = logging.getLogger("kubetest")
 
+def load_kube_config():
+    if "AWS_WEB_IDENTITY_TOKEN_FILE" in os.environ and "eks.amazonaws.com" in os.environ["AWS_WEB_IDENTITY_TOKEN_FILE"]:
+        k8_config.load_incluster_config()
+    else:
+        k8_config.load_kube_config()
 
 def wait_for_custom_condition(
     condition: condition.Condition,
@@ -75,7 +81,7 @@ def wait_for_custom_condition(
             log.warning(f"got api exception while waiting: {e}")
             if count < retry_count:
                 if e.reason == 'Unauthorized':
-                    k8_config.load_kube_config()
+                    load_kube_config()
                     log.info("loading the kubeconfig during Unauthorized exception and retrying")
                     count+=1
                     continue
