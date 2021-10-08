@@ -1,0 +1,597 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description : "This will create the AWS Orbit Workbench, with its own VPC and K8s resources"
+Resources:
+  ArtifactsBucket: 
+    DeletionPolicy: Delete
+    Description: Creating Amazon S3 bucket for AWS CodePipeline and CodeBuild artifacts
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Join
+        - '-'
+        - - !Ref 'AWS::StackName'
+          - ArtifactsBucket
+      VersioningConfiguration:
+        Status: Enabled
+    Type: AWS::S3::Bucket
+
+  OrbitDeploymentRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+          - Action: 'sts:AssumeRole'
+            Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+        Version: 2012-10-17
+      ManagedPolicyArns:
+        - !Join
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/PowerUserAccess'
+        - !Join
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/IAMFullAccess'
+        - !Join
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/AmazonElasticContainerRegistryPublicPowerUser'
+        - !Join
+          - ''
+          - - 'arn:'
+            - !Ref 'AWS::Partition'
+            - ':iam::aws:policy/AmazonSNSFullAccess'
+
+  OrbitBuildDemoDeployFoundation:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !FindInMap [RegionMap, !Ref "AWS::Region", OrbitFoundationName]
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DEPLOY_FOUNDATION
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: !Ref OrbitDeploymentRole
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !FindInMap [RegionMap, !Ref "AWS::Region", OrbitEnvName]
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: "true"
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: !FindInMap [ "InternetAccessibilityMap", "InternetAccessibility", "true" ]
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt
+        - OrbitDeploymentRole
+        - Arn
+      Source:
+        Location: !FindInMap [RegionMap, !Ref "AWS::Region", SpecLocation]
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+
+  OrbitBuildDemoDestroyFoundation:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !FindInMap [RegionMap, !Ref "AWS::Region", OrbitFoundationName]
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DESTROY_FOUNDATION
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: !Ref OrbitDeploymentRole
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !FindInMap [RegionMap, !Ref "AWS::Region", OrbitEnvName]
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: "true"
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: !FindInMap [ "InternetAccessibilityMap", "InternetAccessibility", "true" ]
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt
+        - OrbitDeploymentRole
+        - Arn
+      Source:
+        Location: !FindInMap [RegionMap, !Ref "AWS::Region", SpecLocation]
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+
+  OrbitBuildDemoDeployEnv:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !FindInMap [RegionMap, !Ref "AWS::Region", OrbitFoundationName]
+          - Name: ORBIT_ADMIN_DEMO_ROLE
+            Type: PLAINTEXT
+            Value: !Ref 'K8AdminRole'
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DEPLOY_ENV
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: !Ref OrbitDeploymentRole
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !FindInMap [RegionMap, !Ref "AWS::Region", OrbitEnvName]
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: "true"
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: !FindInMap [ "InternetAccessibilityMap", "InternetAccessibility", "true" ]
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt 
+        - OrbitDeploymentRole
+        - Arn
+      Source:
+        Location: !FindInMap [RegionMap, !Ref "AWS::Region", SpecLocation]
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+
+  OrbitBuildDemoDestroyEnv:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !FindInMap [RegionMap, !Ref "AWS::Region", OrbitFoundationName]
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DESTROY_ENV
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: !Ref OrbitDeploymentRole
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !FindInMap [RegionMap, !Ref "AWS::Region", OrbitEnvName]
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: "true"
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: !FindInMap [ "InternetAccessibilityMap", "InternetAccessibility", "true" ]
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt
+        - OrbitDeploymentRole
+        - Arn
+      Source:
+        Location: !FindInMap [RegionMap, !Ref "AWS::Region", SpecLocation]
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+
+  OrbitBuildDemoDeployTeams:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !FindInMap [RegionMap, !Ref "AWS::Region", OrbitFoundationName]
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DEPLOY_TEAMS
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: !Ref OrbitDeploymentRole
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !FindInMap [RegionMap, !Ref "AWS::Region", OrbitEnvName]
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: "true"
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: !FindInMap [ "InternetAccessibilityMap", "InternetAccessibility", "true" ]
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt 
+        - OrbitDeploymentRole
+        - Arn
+      Source:
+        Location: !FindInMap [RegionMap, !Ref "AWS::Region", SpecLocation]
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+
+  OrbitBuildDemoDestroyTeams:
+    Type: 'AWS::CodeBuild::Project'
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        EnvironmentVariables:
+          - Name: ORBIT_FOUNDATION_NAME
+            Type: PLAINTEXT
+            Value: !FindInMap [RegionMap, !Ref "AWS::Region", OrbitFoundationName]
+          - Name: BUILD_ACTION
+            Type: PLAINTEXT
+            Value: DESTROY_TEAMS
+          - Name: ORBIT_ADMIN_ROLE
+            Type: PLAINTEXT
+            Value: !Ref OrbitDeploymentRole
+          - Name: ORBIT_ENV_NAME
+            Type: PLAINTEXT
+            Value: !FindInMap [RegionMap, !Ref "AWS::Region", OrbitEnvName]
+          - Name: INTERNET_ACCESSIBLE
+            Type: PLAINTEXT
+            Value: "true"
+          - Name: INTERNET_ACCESSIBILITY_ARG
+            Type: PLAINTEXT
+            Value: !FindInMap [ "InternetAccessibilityMap", "InternetAccessibility", "true" ]
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref 'Version'
+        Image: 'aws/codebuild/standard:4.0'
+        ImagePullCredentialsType: CODEBUILD
+        PrivilegedMode: true
+        Type: LINUX_CONTAINER
+      ServiceRole: !GetAtt
+        - OrbitDeploymentRole
+        - Arn
+      Source:
+        Location: !FindInMap [RegionMap, !Ref "AWS::Region", SpecLocation]
+        Type: CODEPIPELINE
+      EncryptionKey: alias/aws/s3
+      TimeoutInMinutes: 120
+
+  OrbitBuildDemoAddUsers:
+      Type: 'AWS::CodeBuild::Project'
+      Properties:
+        Artifacts:
+          Type: CODEPIPELINE
+        Environment:
+          ComputeType: BUILD_GENERAL1_MEDIUM
+          EnvironmentVariables:
+            - Name: ORBIT_FOUNDATION_NAME
+              Type: PLAINTEXT
+              Value: !FindInMap [RegionMap, !Ref "AWS::Region", OrbitFoundationName]
+            - Name: ORBIT_ADMIN_DEMO_ROLE
+              Type: PLAINTEXT
+              Value: !Ref 'K8AdminRole'
+            - Name: BUILD_ACTION
+              Type: PLAINTEXT
+              Value: ADD_USERS
+            - Name: ORBIT_ADMIN_ROLE
+              Type: PLAINTEXT
+              Value: !Ref OrbitDeploymentRole
+            - Name: ORBIT_ENV_NAME
+              Type: PLAINTEXT
+              Value: !FindInMap [RegionMap, !Ref "AWS::Region", OrbitEnvName]
+            - Name: INTERNET_ACCESSIBLE
+              Type: PLAINTEXT
+              Value: "true"
+            - Name: INTERNET_ACCESSIBILITY_ARG
+              Type: PLAINTEXT
+              Value: !FindInMap [ "InternetAccessibilityMap", "InternetAccessibility", "true" ]
+            - Name: VERSION
+              Type: PLAINTEXT
+              Value: !Ref 'Version'
+          Image: 'aws/codebuild/standard:4.0'
+          ImagePullCredentialsType: CODEBUILD
+          PrivilegedMode: true
+          Type: LINUX_CONTAINER
+        ServiceRole: !GetAtt 
+          - OrbitDeploymentRole
+          - Arn
+        Source:
+          Location: !FindInMap [RegionMap, !Ref "AWS::Region", SpecLocation]
+          Type: CODEPIPELINE
+        EncryptionKey: alias/aws/s3
+        TimeoutInMinutes: 120
+
+
+  DemoEnvironmentDeployCodePipeline:
+    Type: 'AWS::CodePipeline::Pipeline'
+    Properties:
+      RoleArn: !GetAtt
+        - OrbitDeploymentRole
+        - Arn
+      Stages:
+        - Actions:
+            - ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: S3
+                Version: '1'
+              Configuration:
+                S3Bucket: !FindInMap [RegionMap, !Ref "AWS::Region", BucketSrc]
+                S3ObjectKey: deploy/trial.zip
+                PollForSourceChanges: false
+              Region: !Ref "AWS::Region"
+              Name: SourceCreate
+              OutputArtifacts:
+                - Name: CodeSource
+              RunOrder: 1
+          Name: CLI_Source
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDeployFoundation
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDeployFoundation
+              RoleArn: !GetAtt
+                - >-
+                  OrbitDeploymentRole
+                - Arn
+              RunOrder: 1
+          Name: CLI_DemoDeployFoundation
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDeployEnv
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDeployEnv
+              RoleArn: !GetAtt
+                - >-
+                  OrbitDeploymentRole
+                - Arn
+              RunOrder: 1
+          Name: CLI_DemoDeployEnv
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDeployTeams
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDeployTeams
+              RoleArn: !GetAtt
+                - >-
+                  OrbitDeploymentRole
+                - Arn
+              RunOrder: 1
+          Name: CLI_DemoDeployTeams
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoAddUsers
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_AddUsers
+              RoleArn: !GetAtt
+                - >-
+                  OrbitDeploymentRole
+                - Arn
+              RunOrder: 1
+          Name: CLI_AddUsers
+      ArtifactStore:
+        Location: !Ref ArtifactsBucket
+        Type: S3
+      Name: !Sub 'Orbit_Deploy_${AWS::StackName}'
+      RestartExecutionOnUpdate: false
+    DependsOn:
+      - OrbitDeploymentRole
+
+  DemoEnvironmentDestroyCodePipeline:
+    Type: 'AWS::CodePipeline::Pipeline'
+    Properties:
+      RoleArn: !GetAtt 
+        - OrbitDeploymentRole
+        - Arn
+      Stages:
+        - Actions:
+            - ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: S3
+                Version: '1'
+              Configuration:
+                S3Bucket: !FindInMap [RegionMap, !Ref "AWS::Region", BucketSrc]
+                S3ObjectKey: deploy/trial.zip
+                PollForSourceChanges: false
+              Region: !Ref "AWS::Region"
+              Name: SourceDestroy
+              OutputArtifacts:
+                - Name: CodeSource
+              RunOrder: 1
+          Name: CLI_SourceDestroy
+        - Actions:
+            - ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: '1'
+              Name: ApprovelDestroy
+              RunOrder: 1
+          Name: CLI_ApproveDestroy
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDestroyTeams
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDestroyTeams
+              RoleArn: !GetAtt 
+                - >-
+                  OrbitDeploymentRole
+                - Arn
+              RunOrder: 1
+          Name: CLI_DemoDestroyTeams
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDestroyEnv
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDestroyEnv
+              RoleArn: !GetAtt 
+                - >-
+                  OrbitDeploymentRole
+                - Arn
+              RunOrder: 1
+          Name: CLI_DemoDestroyEnv
+        - Actions:
+            - ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: '1'
+              Configuration:
+                ProjectName: !Ref OrbitBuildDemoDestroyFoundation
+                PrimarySource: CodeSource
+              InputArtifacts:
+                - Name: CodeSource
+              Name: CLI_DemoDestroyFoundation
+              RoleArn: !GetAtt 
+                - >-
+                  OrbitDeploymentRole
+                - Arn
+              RunOrder: 1
+          Name: CLI_DemoDestroyFoundation
+      ArtifactStore:
+        Location: !Ref ArtifactsBucket
+        Type: S3
+      Name: !Sub 'Orbit_Destroy_${AWS::StackName}'
+      RestartExecutionOnUpdate: false
+    DependsOn:
+      - OrbitDeploymentRole
+
+Mappings: 
+  RegionMap: 
+    us-east-1:
+      BucketSrc: aws-orbit-workbench-public-us-east-1
+      SpecLocation: aws-orbit-workbench-public-us-east-1/deploy/buildspec/
+      OrbitEnvName: trial
+      OrbitFoundationName: fdn
+    us-east-2:
+      BucketSrc: aws-orbit-workbench-public-us-east-2
+      SpecLocation: aws-orbit-workbench-public-us-east-2/deploy/buildspec/
+      OrbitEnvName: trial
+      OrbitFoundationName: fdn
+    us-west-1:
+      BucketSrc: aws-orbit-workbench-public-us-west-1
+      SpecLocation: aws-orbit-workbench-public-us-west-1/deploy/buildspec/
+      OrbitEnvName: trial
+      OrbitFoundationName: fdn
+    us-west-2:
+      BucketSrc: aws-orbit-workbench-public-us-west-2
+      SpecLocation: aws-orbit-workbench-public-us-west-2/deploy/buildspec/
+      OrbitEnvName: trial
+      OrbitFoundationName: fdn
+    eu-west-2:
+      BucketSrc: aws-orbit-workbench-public-eu-west-2
+      SpecLocation: aws-orbit-workbench-public-eu-west-2/deploy/buildspec/
+      OrbitEnvName: trial
+      OrbitFoundationName: fdn
+  OrbitParamMap:
+    OrbitEnvName: trial
+    OrbitFoundationName: fdn
+  InternetAccessibilityMap:
+    InternetAccessibility:
+      "true": "--internet-accessibility"
+      "false": "--no-internet-accessibility"
+      
+Parameters:
+  Version:
+    Type: String
+    Description: The version of Orbit from PyPi to deploy (1.3.1 and newer only)
+    Default: '1.3.1'
+  K8AdminRole:
+    Type: String
+    Description: An existing IAM role name for users that manage K8 in your accound 
+    Default: Admin
+
+    

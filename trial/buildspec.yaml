@@ -1,0 +1,75 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      python: 3.8
+      nodejs: 12
+    commands:
+      - env | sort
+      - npm install -g aws-cdk@1.100.0
+      - ls -al
+      - M_BASE=https://raw.githubusercontent.com/awslabs/aws-orbit-workbench/release/${VERSION}/samples/manifests/trial
+      - curl -LJOf $M_BASE/demo-lake-admin-cfn-template.yaml || true
+      - curl -LJOf $M_BASE/demo-lake-user-cfn-template.yaml || true
+      - curl -LJOf $M_BASE/demo-lake-creator-cfn-template.yaml  || true 
+      - curl -LJOf $M_BASE/lake-admin-plugins.yaml || true           
+      - curl -LJOf $M_BASE/lake-user-plugins.yaml || true
+      - curl -LJOf $M_BASE/lake-creator-plugins.yaml || true         
+      - curl -LJOf $M_BASE/trial-manifest.yaml || true
+      - MANIFEST=trial-manifest.yaml
+      - python3 -m venv .venv
+      - . .venv/bin/activate
+      - |
+        yes | pip install aws-orbit==${VERSION} \
+          aws-orbit-sdk==${VERSION} \
+          aws-orbit-jupyterlab-orbit==${VERSION} \
+          aws-orbit-custom-cfn==${VERSION} \
+          aws-orbit-code-commit==${VERSION} \
+          aws-orbit-emr-on-eks==${VERSION} \
+          aws-orbit-lustre==${VERSION} \
+          aws-orbit-overprovisioning==${VERSION} \
+          aws-orbit-ray==${VERSION} \
+          aws-orbit-redshift==${VERSION} \
+          aws-orbit-sm-operator==${VERSION} \
+          aws-orbit-team-script-launcher==${VERSION} \
+          pip install aws-orbit-voila==${VERSION}
+      - ls -al
+    
+  build:
+    commands:
+      - pwd
+      - env
+      - . .venv/bin/activate
+      - orbit --help
+      - echo $BUILD_ACTION
+      - |
+        if [ $BUILD_ACTION = "DESTROY_FOUNDATION" ]; then
+          echo "Destroying Foundation"
+          orbit destroy foundation --debug --name "${ORBIT_FOUNDATION_NAME}"
+        elif [ $BUILD_ACTION = "DEPLOY_FOUNDATION" ]; then
+          echo "Deploying Foundation"
+          if [ "${VERSION}" = "latest" ]; then
+            echo Using code artifact: ${CODEARTIFACT_DOMAIN} ${CODEARTIFACT_REPOSITORY}
+            orbit deploy foundation --name "${ORBIT_FOUNDATION_NAME}" --codeartifact-domain "${CODEARTIFACT_DOMAIN}" --codeartifact-repository "${CODEARTIFACT_REPOSITORY}" "${INTERNET_ACCESSIBILITY_ARG}" --debug
+          else
+            orbit deploy foundation --name "${ORBIT_FOUNDATION_NAME}" "${INTERNET_ACCESSIBILITY_ARG}" --debug
+          fi
+        elif [ $BUILD_ACTION = "DESTROY_TEAMS" ]; then
+          echo "Destroying Teams"
+          orbit destroy teams --debug -e "${ORBIT_ENV_NAME}"
+        elif [ $BUILD_ACTION = "DESTROY_ENV" ]; then
+          echo "Destroying Env"
+          orbit destroy env --debug -e "${ORBIT_ENV_NAME}"
+        elif [ $BUILD_ACTION = "DEPLOY_ENV" ]; then
+          echo "Deploying Env"
+          orbit deploy env --debug -f $MANIFEST
+        elif [ $BUILD_ACTION = "DEPLOY_TEAMS" ]; then
+          echo "Deploying Teams"
+          orbit deploy teams --debug -f $MANIFEST
+        elif [ $BUILD_ACTION = "ADD_USERS" ]; then
+          echo "Adding Users"
+          python add_user.py  ${ORBIT_ENV_NAME}  orbit someaddress@amazon.com OrbitPwd1!
+        else
+          echo "Invalid BUILD_ACTION: $BUILD_ACTION"
+          exit 1
+        fi

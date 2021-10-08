@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added schedule (cron string) to orbitjob CRD
 - Added monitoring to OrbitJob so pytest can evaluate the jobs execution
 - Added PyTest for lake admin, creator and user
+- Added 'one-click' support for trial usage of AWS Workbench
 
 ### **Changed**
 
