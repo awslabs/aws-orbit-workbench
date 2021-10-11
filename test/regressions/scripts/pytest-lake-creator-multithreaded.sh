@@ -7,7 +7,7 @@ set -e
 # export AWS_ORBIT_TEAM_SPACE=lake-creator
 
 # Set the .kube/config with respect to runtime environment
-pytest -k lakecreatorcleaner test_lake_creator.py
+pytest -k testlakecreator_cleaner test_lake_creator.py
 
 # Multi threaded
 pytest -k testlakecreator_zip -n auto test_lake_creator.py
