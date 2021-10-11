@@ -1,0 +1,28 @@
+These artifacts are to be deployed to a PUBLIC bucket for access.
+
+The script prep_trial.sh creates a ZIP file and stages all files on the designated S3 public bucket
+
+The bucket MUST be organized as such:
+{bucketname}/deploy/trial.zip
+{bucketname}/deploy/trial_pipeline_cfn.yaml
+{bucketname}/deploy/buildspec/buildspec.yaml
+
+
+*** buildspec.yaml MUST be in the trial.zip AND placed in the {bucketname}/deploy/buildspec/buildspec.yaml location!!
+
+
+Files necessary for trial.zip:
+    add_user.py
+    buildspec.yaml
+    demo-lake-admin-cfn-template.yaml
+    demo-lake-creator-cfn-template.yaml
+    demo-lake-user-cfn-template.yaml
+    lake-admin-plugins.yaml
+    lake-creator-plugins.yaml
+    lake-user-plugins.yaml
+    trial-manifest.yaml
+    trial_pipeline_cfn.yaml
+
+** NOTE: the buildspec will fetch the versioned manifests from github, if it doesn't find them, then the ones
+in the trial.zip file are used
+
