@@ -24,7 +24,7 @@ $  pip install aws-orbit-custom-cfn  \
     aws-orbit-redshift  \
     aws-orbit-sm-operator  \
     aws-orbit-team-script-launcher  \
-    aws-orbit-voila 
+    aws-orbit-voila
 ```
 
 
