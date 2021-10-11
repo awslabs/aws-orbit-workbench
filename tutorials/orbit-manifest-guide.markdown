@@ -25,6 +25,10 @@ ScratchBucketArn: # The S3 bucket that will be access by all teams. Each team ha
 UserPoolId: # The Cognito user pool id for controlling access to Orbit
 SharedEfsFsId: # The EFS filesystem ID that will be access by all teams. Each team has dedicated isolated folder.
 SharedEfsSgId: # The security group ID that controls access to the EFS.
+CognitoExternalProvider: # OPTIONAL - the confgired SSO provider in congito
+CognitoExternalProviderLabel: # OPTIONAL the confgired SSO provider label in congito
+CognitoExternalProviderDomain: # OPTIONAL the precomnfigired cognitio domain
+CognitoExternalProviderRedirect: # OPTIONAL the url redirect for SSO
 Networking:
     VpcId: # your vpc-id
     PublicSubnets: # list of public subnets
@@ -63,30 +67,10 @@ Teams:
     K8Admin: true # Will the team users be admin of the EKS Cluster
     JupyterhubInboundRanges: # Control the ingress access to JupyterHub
     - 0.0.0.0/0
-    Profiles:
-    # List of default profiles to define containers
-    - display_name: Nano # Defining a small container for quick look
-      slug: nano
-      description: 1 CPU + 1G MEM
-      kubespawner_override:
-          cpu_guarantee: 1
-          cpu_limit: 1
-          mem_guarantee: 1G
-          mem_limit: 1G
-    - display_name: Small (GPU Enabled) # Defining a container with GPU requirement and custom image
-      slug: small-gpu
-      description: 2 CPU + 4G MEM + 1 GPU
-      kubespawner_override:
-          image: "*****.dkr.ecr.us-west-2.amazonaws.com/my_custome_image"
-          cpu_guarantee: 2
-          cpu_limit: 2
-          mem_guarantee: 4G
-          mem_limit: 4G
-          extra_resource_limits:
-              nvidia.com/gpu: '1'
-          extra_resource_guarantees:
-              nvidia.com/gpu: '1'
-
+    EfsLifeCycle: AFTER_7_DAYS
+    AuthenticationGroups: # the logical groups that are in the team
+    - groupA
+    - groupB 
     Plugins:
     # Using plugins to extend Orbit Teams deployment with additional functionality
     # <The following plugin will launch a POD on team creation to clean up a certain directory>
