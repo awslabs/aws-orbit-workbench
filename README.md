@@ -48,11 +48,11 @@ Please see our [Home](https://awslabs.github.io/aws-orbit-workbench) for install
 
 - AWS Analytic Services Integrations
   - Amazon Redshift
-  - Amazon SageMaker (api calls)
-  - Amazon EMR (coming soon)
+  - Amazon SageMaker api calls and Kubernetes Operator
+  - Amazon EMR on EKS Kubernetes Operator
   - Amazon Athena
-  - AWS Glue 
-  - AWS Lake Formation (coming soon)
+  - AWS Glue DataBrew
+  - AWS Lake Formation
     
 
 ## Create an AWS Orbit Workbench trial environment
