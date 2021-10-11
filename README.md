@@ -84,7 +84,7 @@ The CloudFormation template has all the necessary parameters, but you may change
 
 
 - The Cloudformation stack will create two(2) [AWS CodePipelines](https://aws.amazon.com/codepipeline/):
-  - **Orbit_Deploy_trial** - wiich will start automatically and create your  workbench
+  - **Orbit_Deploy_trial** - which will start automatically and create your  workbench
   - **Orbit_Destroy_trial** - which will start automatically and will destroy your workbench
     - this pipeline has a Manual Approval stage that prevents your workbench from moving forward with 
       the destroy process  
