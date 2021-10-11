@@ -576,9 +576,6 @@ Mappings:
       SpecLocation: aws-orbit-workbench-public-eu-west-2/deploy/buildspec/
       OrbitEnvName: trial
       OrbitFoundationName: fdn
-  OrbitParamMap:
-    OrbitEnvName: trial
-    OrbitFoundationName: fdn
   InternetAccessibilityMap:
     InternetAccessibility:
       "true": "--internet-accessibility"
