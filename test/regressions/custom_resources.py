@@ -21,8 +21,9 @@ from kubernetes.client import V1DeleteOptions, V1Status, api_client
 from kubetest.manifest import render
 from kubetest.objects import ApiObject
 from kubetest.client import TestClient
-from kubetest import condition
-from common_utils import JOB_COMPLETION_STATUS, JOB_FAILED_STATUS, wait_for_custom_condition
+from kubetest import condition, utils
+from common_utils import JOB_COMPLETION_STATUS, JOB_FAILED_STATUS
+from kubernetes import config as k8_config
 
 # This elminates some collection warnings for all tests using the TestClient
 TestClient.__test__ = False
@@ -72,23 +73,25 @@ class CustomApiObject(ApiObject):  # type: ignore
         else:
             raise AttributeError("Cannot set namespace - object already has a namespace")
 
+    def refresh_api_client(self) -> None:
+        c = self.api_clients.get(self.version)
+        # If we didn't find the client in the api_clients dict, use the
+        # preferred version.
+        if c is None:
+            c = self.api_clients.get("preferred")
+            if c is None:
+                raise ValueError(
+                    "unknown version specified and no preferred version " f"defined for resource ({self.version})"
+                )
+        # If we did find it, initialize that client version.
+        self._api_client = c(client=api_client.ApiClient()).resources.get(
+            group=self.group, api_version=self.api_version, kind=self.kind
+        )
+
     @property
     def api_client(self) -> dynamic.DynamicClient:
-        if self._api_client is None:
-            c = self.api_clients.get(self.version)
-            # If we didn't find the client in the api_clients dict, use the
-            # preferred version.
-            if c is None:
-                log.warning(f"unknown version ({self.version}), falling back to preferred version")
-                c = self.api_clients.get("preferred")
-                if c is None:
-                    raise ValueError(
-                        "unknown version specified and no preferred version " f"defined for resource ({self.version})"
-                    )
-            # If we did find it, initialize that client version.
-            self._api_client = c(client=api_client.ApiClient()).resources.get(
-                group=self.group, api_version=self.api_version, kind=self.kind
-            )
+        self.refresh_api_client()
+        k8_config.load_kube_config()
         return self._api_client
 
     @classmethod
@@ -245,7 +248,7 @@ class OrbitJobCustomApiObject(CustomApiObject):
             self.is_complete,
         )
         # Wait until Orbit job completes
-        wait_for_custom_condition(
+        utils.wait_for_condition(
             condition=job_complete_condition,
             timeout=timeout,
             interval=interval,
