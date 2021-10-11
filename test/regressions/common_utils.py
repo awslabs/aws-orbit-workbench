@@ -33,10 +33,6 @@ logging.basicConfig(
 
 logger = logging.getLogger()
 
-# MANIFESTS_PATH = os.path.join(
-#     os.path.dirname(os.path.realpath(__file__)),
-#     "manifests",
-# )
 
 JOB_COMPLETION_STATUS = "Complete"
 JOB_FAILED_STATUS = "Failed"

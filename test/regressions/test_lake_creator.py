@@ -31,11 +31,6 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 
-# Required os env
-# export AWS_ORBIT_ENV=iter
-# export AWS_ORBIT_TEAM_SPACE=lake-creator
-
-
 def get_lake_creator_config() -> Dict[str, Any]:
     notebook_bucket = workspace['ScratchBucket']
     env_name = workspace['env_name']
