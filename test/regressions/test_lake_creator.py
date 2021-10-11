@@ -17,12 +17,9 @@ from typing import Any, Dict
 import pytest
 from custom_resources import OrbitJobCustomApiObject
 from kubetest.client import TestClient
-from aws_orbit_sdk.common import get_workspace
-import boto3
-import json
 from pathlib import Path
-from common_utils import JOB_COMPLETION_STATUS
 
+from common_utils import *
 import logging
 # Initialize parameters
 logging.basicConfig(
@@ -33,126 +30,10 @@ logging.basicConfig(
 
 logger = logging.getLogger()
 
-MANIFESTS_PATH = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)),
-    "manifests",
-)
-
 
 # Required os env
 # export AWS_ORBIT_ENV=iter
 # export AWS_ORBIT_TEAM_SPACE=lake-creator
-workspace = get_workspace()
-
-S3 = boto3.client('s3')
-GLUE = boto3.client('glue')
-
-
-def get_ssm_parameters(ssm_string, ignore_not_found=False):
-    ssm = boto3.client('ssm')
-    try:
-        return json.loads(ssm.get_parameter(Name=ssm_string)['Parameter']['Value'])
-    except Exception as e:
-        if ignore_not_found:
-            return {}
-        else:
-            raise e
-
-
-def get_demo_configuration(env_name):
-    return get_ssm_parameters(f"/orbit/{env_name}/demo", True)
-
-
-def create_db(name, location, description=''):
-    try:
-        response = GLUE.delete_database(
-            Name=name
-        )
-    except Exception as e:
-        logger.error(e)
-        pass
-    response = GLUE.create_database(
-        DatabaseInput={
-            'Name': name,
-            'Description': description,
-            'LocationUri': f's3://{location}/{name}'
-        }
-    )
-
-def get_schemas(source_bucket_name, prefix='', suffix=''):
-    s3 = boto3.resource("s3")
-    bucket = s3.Bucket(name=source_bucket_name)
-    schemas = []
-    for o in bucket.objects.all():
-        if (o.key.startswith(prefix)):
-            name = os.path.basename(o.key).split(".")[0]
-            schemaStr = o.get()['Body'].read().decode('utf-8')
-            schema = json.loads(schemaStr)  # StructType.fromJson(json.loads(schemaStr))
-            schemas.append((name, schema))
-    return schemas
-
-def get_schema(schemas, filename):
-    for (schema_name, schema) in schemas:
-        # logger.info(f"{schema_name} in {filename} : {schema_name in filename}")
-        if schema_name in filename:
-            return schema_name, schema
-    return None, None
-
-def clean_bucket_prefix(bucket_name, prefix) -> None:
-    response = S3.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
-    if "Contents" in response:
-        for object in response["Contents"]:
-            logger.info("Deleting {object['Key']}")
-            S3.delete_object(Bucket=bucket_name, Key=object["Key"])
-
-
-def check_database_exists(database_name) -> str:
-    response = GLUE.get_database(Name=database_name)
-    return response.get('Database').get("Name")
-
-
-def get_s3_extracted_files(bucket_name, source_folder):
-    bucketName = lake_creator_config.get("bucketName")
-    sourceFolder = lake_creator_config.get("sourceFolder")
-    # returning a list
-    s3_files= []
-    s3_files_response = S3.list_objects_v2(Bucket=bucket_name, Prefix=source_folder)
-    if 'Contents' in s3_files_response:
-        s3_files = s3_files_response['Contents']
-    logger.info(f"s3_files={s3_files}")
-    return s3_files
-
-@pytest.mark.order(1)
-@pytest.mark.namespace(create=False)
-@pytest.mark.testlakecreator_cleaner
-def test_lake_creator_setup(kube: TestClient):
-    workspace = get_workspace()
-    notebook_bucket = workspace['ScratchBucket']
-    env_name = workspace['env_name']
-    # Locate Bucket Paths
-    demo_config = get_demo_configuration(env_name)
-    lake_bucket = demo_config.get("LakeBucket").split(':::')[1]
-    users_bucket = notebook_bucket.split("/")[2]
-    logger.info(f"lake_bucket={lake_bucket}, users_bucket={users_bucket}")
-    # Create Databases
-    database_name = f"cms_raw_db_{env_name}".replace('-', '_')  # athena doesnt support '-' in db or table name
-    create_db(database_name, lake_bucket, 'lake: claims data from cms')
-    assert check_database_exists(database_name) == database_name
-    create_db('default', lake_bucket)
-    assert check_database_exists('default') == 'default'
-    create_db('users', users_bucket)
-    assert check_database_exists('users') == 'users'
-    # Get orbit job parameters
-    location = GLUE.get_database(Name=database_name)['Database']['LocationUri']
-    bucket = location[5:].split('/')[0]
-    logger.info(f"bucket={bucket}, location={location}")
-    extractedPrefix = "extracted/"
-    # S3 Clean Up
-    clean_bucket_prefix(bucket, extractedPrefix)
-    assert len(get_s3_extracted_files(bucket, extractedPrefix)) == 0
-    #sh.run("rm -f /home/jovyan/shared/regression/CREATOR_PASSED")
-    clean_bucket_prefix(bucket, database_name)
-    assert len(get_s3_extracted_files(bucket, database_name)) == 0
 
 
 def get_lake_creator_config() -> Dict[str, Any]:
@@ -191,7 +72,7 @@ lake_creator_config = get_lake_creator_config()
 lakecreator_zip_files= get_s3_extracted_files(lake_creator_config.get("bucketName"), lake_creator_config.get("sourceFolder"))
 
 
-@pytest.mark.order(2)
+@pytest.mark.order(1)
 @pytest.mark.namespace(create=False)
 @pytest.mark.testlakecreator_unzip
 @pytest.mark.parametrize('zip_file', lakecreator_zip_files)
@@ -266,7 +147,7 @@ def lake_creator_list_of_extracted_files():
 extracted_data_files = lake_creator_list_of_extracted_files()
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(2)
 @pytest.mark.namespace(create=False)
 @pytest.mark.testlakecreator_check_data_files
 def test_lakecreator_s3_extracted_file_check(kube: TestClient):
@@ -276,7 +157,7 @@ def test_lakecreator_s3_extracted_file_check(kube: TestClient):
     assert len(extracted_data_files) > 0
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(3)
 @pytest.mark.namespace(create=False)
 @pytest.mark.testlakecreator_create_glue_tables
 @pytest.mark.parametrize('datafile', extracted_data_files)
@@ -345,7 +226,7 @@ def test_lakecreator_glue_table_creator(datafile, kube: TestClient):
 
 
 #Check that Glue Tables are Created
-@pytest.mark.order(5)
+@pytest.mark.order(4)
 @pytest.mark.namespace(create=False)
 @pytest.mark.testlakecreator_check_glue_tables
 def test_lakecreator_glue_tables(kube: TestClient):
@@ -364,7 +245,7 @@ def test_lakecreator_glue_tables(kube: TestClient):
     assert raw_count == parq_count and raw_count > 0
 
 
-@pytest.mark.order(6)
+@pytest.mark.order(5)
 @pytest.mark.namespace(create=False)
 @pytest.mark.testlakecreator_lf
 def test_lakecreator_lf(kube: TestClient):
