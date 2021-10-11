@@ -1,6 +1,7 @@
 Name: !ENV ${ORBIT_ENV_NAME::trial}
 EksSystemMastersRoles:
--   !ENV ${ORBIT_ADMIN_ROLE::Admin}
+- !ENV ${ORBIT_ADMIN_ROLE::Admin}
+- !ENV ${ORBIT_ADMIN_DEMO_ROLE::Admin}
 ScratchBucketArn: !SSM ${/orbit-f/fdn/resources::ScratchBucketArn}
 UserPoolId: !SSM ${/orbit-f/fdn/resources::UserPoolId}
 SharedEfsFsId: !SSM ${/orbit-f/fdn/resources::SharedEfsFsId}
