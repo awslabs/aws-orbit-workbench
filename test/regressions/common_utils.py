@@ -38,9 +38,6 @@ JOB_COMPLETION_STATUS = "Complete"
 JOB_FAILED_STATUS = "Failed"
 
 
-# Required os env
-# export AWS_ORBIT_ENV=iter
-# export AWS_ORBIT_TEAM_SPACE=lake-creator
 workspace = get_workspace()
 
 S3 = boto3.client('s3')
