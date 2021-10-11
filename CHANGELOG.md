@@ -21,6 +21,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Changed Lake Creator notebook
 - Added sleep to Orbit SDK based OrbitJob CR job status check
 - Updating README.md
+- Fixed the expiring kubeconfig issue for long living k8s jobs
+
 
 ### **Removed**
 
