@@ -4,71 +4,86 @@
 
 layout: documentation
 title: Built-in Plugin Directory
-permalink: built-in-plugin-directory
+permalink: built-in-Plugin-directory
 ---
 
-Orbit plugins are individual python modules published to PyPi, can be installed to local python environment using pip.
-#### Installing Amazon Redshift Plugin
+Orbit Plugins are individual python modules published to PyPi.  They are installed to a local python environment using pip.
+<br>
+<br>
+For an indepth-description of the plugins, go <a href="/aws-orbit-workbench/plugin-library">HERE</a>.
+<br><br>
 
+If you want to install all plugins at once, try this:
 ```
-$ pip install aws-orbit-redshift
-```
-
-#### Installing team pod launcher Plugin
-
-```
-$ pip install aws-orbit-team-script-launcher
-```
-
-#### Installing code commit plugin
-
-```
-$ pip install aws-orbit-code-commit
+$  pip install aws-orbit-custom-cfn  \
+    aws-orbit-code-commit  \
+    aws-orbit-emr-on-eks  \
+    aws-orbit-lustre  \
+    aws-orbit-overprovisioning  \
+    aws-orbit-ray  \
+    aws-orbit-redshift  \
+    aws-orbit-sm-operator  \
+    aws-orbit-team-script-launcher  \
+    aws-orbit-voila 
 ```
 
-#### Installing custom cfn plugin
+
+#### Installing custom CFN Plugin
 
 ```
 $ pip install aws-orbit-custom-cfn
 ```
 
-#### Installing Hello World plugin
+#### Installing Code Commit Plugin
 
 ```
-$ pip install aws-orbit-hello-world
+$ pip install aws-orbit-code-commit
 ```
 
-#### Installing Hello World plugin
+
+
+#### Installing EMR on EKS Plugin
 
 ```
 $ pip install aws-orbit-emr-on-eks
 ```
 
-#### Installing Hello World plugin
+#### Installing Lustre Plugin
 
 ```
 $ pip install aws-orbit-lustre
 ```
 
-#### Installing Hello World plugin
+#### Installing Overprovisioning Pluing
 
 ```
 $ pip install aws-orbit-overprovisioning
 ```
 
-#### Installing Hello World plugin
+#### Installing Ray Plugin
 
 ```
 $ pip install aws-orbit-ray
 ```
 
-#### Installing Hello World plugin
+#### Installing Amazon Redshift Plugin
 
 ```
-aws-orbit-sm-operator
+$ pip install aws-orbit-redshift
 ```
-#### Installing Hello World plugin
+#### Installing Sagemaker Operator for K8s
 
 ```
-aws-orbit-voila
+$ pip install aws-orbit-sm-operator
+```
+
+#### Installing Team Script launcher Plugin
+
+```
+$ pip install aws-orbit-team-script-launcher
+```
+#### Installing Voila
+
+```
+$ pip install aws-orbit-voila
 ```

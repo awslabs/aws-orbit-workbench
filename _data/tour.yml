@@ -1,0 +1,6 @@
+docs_list_title: AWS Tour
+docs:
+  - group: Tour
+    sub:
+      - title: Introduction
+        url: tour
