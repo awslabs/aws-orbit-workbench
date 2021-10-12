@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### **Removed**
 
+## **[1.3.2] **
+
+### **Changed**
+FIX - Removed the istio-system pod disruption budget before tearing down the EKS cluster. The PDB was causing a dead-lock
+
 ## **[1.3.1]**
 
 ### **Added**
