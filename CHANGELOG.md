@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added monitoring to OrbitJob so pytest can evaluate the jobs execution
 - Added PyTest for lake admin, creator and user
 - Added 'one-click' support for trial usage of AWS Workbench
+- Added Userspace Role and RoleBinding
 
 ### **Changed**
 
@@ -22,7 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added sleep to Orbit SDK based OrbitJob CR job status check
 - Updating README.md
 - Fixed the expiring kubeconfig issue for long living k8s jobs
-
+- Fixing lake-creator pytest shell script and refactoring lake-creator pytest files
+- Removing lake user specific cron job notebooks from regression 
 
 ### **Removed**
 
