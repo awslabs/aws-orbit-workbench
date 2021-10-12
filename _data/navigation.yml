@@ -48,13 +48,13 @@ docs:
         url: built-in-plugin-directory
       - title: Plugins Development Guide
         url: plugin-development-guide
-  - group: Integrations
+  - group: SSO Provider Integration
     sub:
       - title: Okta Integration
         url: okta-integration
       - title: KeyCloak Integration
         url: keycloak-integration
-  - group: Developement
+  - group: Development
     sub:
       - title: Contribution Guide
         url: contribution-guide
