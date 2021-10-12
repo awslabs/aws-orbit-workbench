@@ -1,6 +1,41 @@
 docs_list_title: AWS Tour
 docs:
-  - group: Tour
+  - group: Getting Started
     sub:
-      - title: Introduction
-        url: tour
+      - title: Logging In
+        url: logging-in
+      - title: Notebook Server
+        url: notebook-server
+      - title: Notebook Server Configurations
+        url: notebook-server-configurations
+  - group: Jupyter Labs Landing Page
+    sub:
+      - title: Catalog
+        url: jl-compute
+      - title: Compute
+        url: jl-compute
+      - title: EKS Jobs
+        url: jl-compute
+      - title: Glue Data Brew
+        url: jl-compute
+      - title: Storage
+        url: jl-compute
+      - title: Teams
+        url: jl-compute
+  - group: Jupyter Notebooks
+    sub:
+      - title: Glue Examples     
+        url: jl-compute
+      - title: Sagemaker Examples     
+        url: jl-compute       
+      - title: Athena Examples     
+        url: jl-compute 
+  - group: Visual Studio Code 
+    sub:
+      - title: Start Up
+        url: vsc-starting
+      - title: AWS Toolkit Extension
+        url: vsc-aws-toolkit
+      - title: SQL Tools
+        url: vsc-sql-tools
+      
