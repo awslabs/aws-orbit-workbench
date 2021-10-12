@@ -35,7 +35,8 @@ permalink: okta-integration
 * In the left pane, click on `General settings` > `Attributes`
 * In the page botton click on `Add custom attribute` and then save it.
 
-![Custom Teams Attribute](https://github.com/awslabs/aws-orbit-workbench/blob/main/docs/_static/okta/create-teams-attribute.png?raw=true "Custom Teams Attribute")
+<img src="./img/integrations/user-pool-custom-attribute.png" alt="User Pool Attribute"/>
+
 
 * In the left pane, click on `App integration` > `Domain name`
 * Add any valid domain name
@@ -170,7 +171,7 @@ CognitoExternalProviderLabel: OKTA
 # The domain created in Coginto
 CognitoExternalProviderDomain: domain.auth.region.amazoncognito.com
 # The Orbit Workbench URL
-CognitoExternalProviderRedirect: https://a12389bc893fa0980ce08f1000ecf89a.region.elb.amazonaws.com
+CognitoExternalProviderRedirect: https://a12389bc893fa0980ce08f1000ecf89a.region.elb.amazonaws.com/orbit/login
 ```
 
 * Deploy:
