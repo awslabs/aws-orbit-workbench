@@ -71,3 +71,6 @@ services:
   - title: Okta
     image: img/service/Logo_Okta_Blue_RGB.png
     url: integrations/okta
+  - title: KeyCloak
+    image: img/service/keycloak_icon_32px.png
+    url: integrations/keycloak
