@@ -15,13 +15,21 @@
 import json
 import logging
 import os
-from typing import Any, Dict, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import boto3
 import botocore
-from botocore import retries
 import kopf
-from kubernetes.client import BatchV1Api, BatchV1beta1Api, V1Job, V1ObjectMeta, V1beta1CronJob, V1beta1CronJobSpec, V1beta1CronJobStatus, V1beta1JobTemplateSpec
+from kubernetes.client import (
+    BatchV1Api,
+    BatchV1beta1Api,
+    V1beta1CronJob,
+    V1beta1CronJobSpec,
+    V1beta1CronJobStatus,
+    V1beta1JobTemplateSpec,
+    V1Job,
+    V1ObjectMeta,
+)
 from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION
 from orbit_controller.utils import job_utils
 
@@ -54,7 +62,6 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
 
 
 def _should_index_jobs(meta: kopf.Meta, logger: kopf.Logger, **_: Any) -> bool:
-    logger.debug("L57")
     for owner_reference in meta.get("ownerReferences", []):
         if owner_reference.get("kind") == "OrbitJob":
             return True
@@ -168,23 +175,31 @@ def create_job(
 
     logger.debug("spec: %s", spec)
     if spec.get("schedule"):
-        cronjob_id = f"orbit-{namespace}-xxx"
+        cronjob_id = f"orbit-{namespace}-{spec.get('triggerName')}"
         cron_job_template: V1beta1JobTemplateSpec = V1beta1JobTemplateSpec(spec=job_spec)
-        cron_job_spec: V1beta1CronJobSpec = V1beta1CronJobSpec(job_template=cron_job_template, schedule=spec.get("schedule"))
+        cron_job_spec: V1beta1CronJobSpec = V1beta1CronJobSpec(
+            job_template=cron_job_template, schedule=spec.get("schedule")
+        )
         job = V1beta1CronJob(
             api_version="batch/v1beta1",
             kind="CronJob",
-            metadata=V1ObjectMeta(name=cronjob_id, labels={**labels, **spec.get("compute", {}).get("labels", {})}, namespace=namespace),
+            metadata=V1ObjectMeta(
+                name=cronjob_id, labels={**labels, **spec.get("compute", {}).get("labels", {})}, namespace=namespace
+            ),
             status=V1beta1CronJobStatus(),
             spec=cron_job_spec,
         )
         kopf.adopt(job, nested="spec.template")
-        job_instance: V1beta1CronJob = BatchV1beta1Api().create_namespaced_cron_job(namespace=namespace, body=job)
-        cronjob_instance_metadata: V1ObjectMeta = job_instance.metadata
+        cron_job_instance: V1beta1CronJob = BatchV1beta1Api().create_namespaced_cron_job(namespace=namespace, body=job)
+        cronjob_instance_metadata: V1ObjectMeta = cron_job_instance.metadata
         logger.debug("Started Cron Job: %s", cronjob_instance_metadata.name)
         patch["metadata"] = {"labels": {"k8sJobType": "CronJob"}}
         patch["status"] = {
-            "orbitJobOperator": {"jobStatus": "JobCreated", "jobName": cronjob_instance_metadata.name, "nodeType": node_type}
+            "orbitJobOperator": {
+                "jobStatus": "JobCreated",
+                "jobName": cronjob_instance_metadata.name,
+                "nodeType": node_type,
+            }
         }
         return "CronJobCreated"
     else:
@@ -202,9 +217,14 @@ def create_job(
         logger.debug("Started Job: %s", job_instance_metadata.name)
         patch["metadata"] = {"labels": {"k8sJobType": "Job"}}
         patch["status"] = {
-            "orbitJobOperator": {"jobStatus": "JobCreated", "jobName": job_instance_metadata.name, "nodeType": node_type}
+            "orbitJobOperator": {
+                "jobStatus": "JobCreated",
+                "jobName": job_instance_metadata.name,
+                "nodeType": node_type,
+            }
         }
         return "JobCreated"
+
 
 @kopf.on.timer(  # type: ignore
     ORBIT_API_GROUP, ORBIT_API_VERSION, "orbitjobs", interval=5, initial_delay=5, when=_monitor_k8s_job
@@ -260,10 +280,9 @@ def cron_jobs_idx(
     namespace: str, logger: kopf.Logger, name: str, meta: kopf.Meta, status: kopf.Status, **_: Any
 ) -> Dict[Tuple[str, str], Dict[str, Any]]:
     """Index of k8s Cron jobs by orbitjob namespace/name"""
-    logger.debug("meta is %s", meta)
-    logger.debug("status is %s", status)
     orbit_job_reference = [owner_reference for owner_reference in meta.get("ownerReferences", [{}])].pop()
     return {(namespace, orbit_job_reference.get("name")): {"namespace": namespace, "name": name, "status": status}}
+
 
 def _monitor_k8s_cron_job(
     status: kopf.Status,
@@ -278,6 +297,7 @@ def _monitor_k8s_cron_job(
     else:
         return False
 
+
 @kopf.on.timer(  # type: ignore
     ORBIT_API_GROUP, ORBIT_API_VERSION, "orbitjobs", interval=5, initial_delay=5, when=_monitor_k8s_cron_job
 )
@@ -285,6 +305,7 @@ def orbit_cron_job_monitor(
     namespace: str,
     name: str,
     patch: kopf.Patch,
+    status: kopf.Status,
     logger: kopf.Logger,
     namespaces_idx: kopf.Index[str, Dict[str, Any]],
     cron_jobs_idx: kopf.Index[Tuple[str, str], Dict[str, Any]],
@@ -309,20 +330,32 @@ def orbit_cron_job_monitor(
     if k8s_job is None:  # To tackle the race condition caused by Timer
         return "JobMetadataNotFound"
 
-    if k8s_job.get("status", {}).get("active") == 1:
-        job_status = "Active"
+    if not k8s_job.get("status", {}):
+        cron_job_status = "Activating"
     else:
-        job_status = k8s_job.get("status", {}).get("conditions", [{}])[0].get("type")
+        cron_job_status = "Active"
 
-    k8s_job_reason = k8s_job.get("status", {}).get("conditions", [{}])[0].get("status")
-    k8s_job_message = k8s_job.get("status", {}).get("conditions", [{}])[0].get("message")
-
-    patch["status"] = {
-        "orbitJobOperator": {
-            "jobStatus": job_status,
-            "jobName": k8s_job.get("name"),
-            "k8sJobReason": k8s_job_reason,
-            "k8sJobMessage": k8s_job_message,
+    if k8s_job.get("status"):
+        for i in k8s_job.get("status", {}).get("active", [{}]):
+            if i.get("name") not in status.get("orbitJobOperator", {}).get("cronJobIds", []):
+                cron_job_ids: List[str] = status.get("orbitJobOperator", {}).get("cronJobIds", [])
+                cron_job_ids.append(i.get("name"))
+                patch["status"] = {
+                    "orbitJobOperator": {
+                        "jobStatus": cron_job_status,
+                        "jobName": k8s_job.get("name"),
+                        "cronJobIds": cron_job_ids,
+                    }
+                }
+            else:
+                return cron_job_status
+    else:
+        patch["status"] = {
+            "orbitJobOperator": {
+                "jobStatus": cron_job_status,
+                "jobName": k8s_job.get("name"),
+                "cronJobIds": status.get("orbitJobOperator", {}).get("cronJobIds", []),
+            }
         }
-    }
-    return job_status
+
+    return cron_job_status

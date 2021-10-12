@@ -123,4 +123,3 @@ def test_lakeadmin_3_lf_account_settings(kube: TestClient) -> None:
     #Cleanup
     lakeadmin.delete()
     assert current_status == JOB_COMPLETION_STATUS
-
