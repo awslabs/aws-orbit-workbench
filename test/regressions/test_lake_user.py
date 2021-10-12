@@ -43,7 +43,8 @@ def get_lake_creator_list_of_files():
     notebooks_run_config = {
         # a list of notebooks names to skip the execution for. Example: ["Example-7-Data-Profiling"]
         "exclusion_list": ['Example-3-Ray Job Example', 'Example-4-Ray Tune Example', 'Example-92-Delete-DemoCronJobs',
-                       'Example-1-simple', 'Example-2-spark', 'Example-3-gpu', 'Example-90-Failure-Behavior'],
+                       'Example-1-simple', 'Example-2-spark', 'Example-3-gpu', 'Example-90-Failure-Behavior',
+                       'Example-6-Schedule-Notebook', 'Example-92-Delete-DemoCronJobs'],
         "inclusion_list": [],  # if not empty, only those will run. Example: ["Example-7-Data-Profiling"]
         "optional_list": [],
         # indicates to ignore a failure. Example: ["Example-6-Schedule-Notebook", "Example-8-LakeFormation-Security"]
