@@ -52,6 +52,8 @@ docs:
     sub:
       - title: Okta Integration
         url: okta-integration
+      - title: KeyCloak Integration
+        url: keycloak-integration
   - group: Developement
     sub:
       - title: Contribution Guide

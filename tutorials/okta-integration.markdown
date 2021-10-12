@@ -129,14 +129,20 @@ permalink: okta-integration
 * In the left navigation pane, under Federation, choose Attribute mapping.
 * On the attribute mapping page, choose the SAML tab.
 * Choose Add SAML attribute.
+* Map the groups attributes
+  * For **SAML attribute**, enter the SAML attribute name `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/teams`.
 * Map the e-mail attributes
   * For **SAML attribute**, enter the SAML attribute name `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress`.
   * For **User** pool attribute, choose `Email` from the list.
-* Map the teams attributes
-  * For **SAML attribute**, enter the SAML attribute name `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/teams`.
-  * For **User** pool attribute, choose `custom:teams` from the list.
+  * For **User** pool attribute, choose `custom:groups` from the list.
+* Map the email_verified attributes
+  * For **SAML attribute**, enter the SAML attribute name `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/email_verified`.
+  * For **User** pool attribute, choose `Email Verified` from the list.
+* Map the username attributes
+  * For **SAML attribute**, enter the SAML attribute name `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/username`.
+  * For **User** pool attribute, choose `Preferred User Name` from the list.
 
-![Mapped Attributes](https://github.com/awslabs/aws-orbit-workbench/blob/main/docs/_static/okta/mapped-attributes.png?raw=true "Mapped Attributes")
+<img src="./img/integrations/okta-attribute-mapping.png" alt="OKTA Mappings"/>
 
 > _For more information, see [Specifying identity provider attribute mappings for your user pool](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-specifying-attribute-mapping.html)._
 
@@ -145,29 +151,20 @@ permalink: okta-integration
 ## 8 - Get the Orbit Workbench URL
 * Open the Systems Manager Console
   * On the left, select `Parameter Store`
-  * Select /orbit/<your-env-name>/context
+  * Select /orbit/`{your-env-name}`/context
   * Search for LandingPageUrl, you will need it below
 
 ## 9 - Configuring Cognito User Pool - Client Settings
 
-* In the left navigation pane, under **App integration**, choose **App client settings**.
-  * On the app client page, do the following:
-Under Enabled Identity Providers, select the Okta and Cognito User Pool check boxes.
-  * For Callback URL(s), enter a URL where you want your users to be redirected after they log in. Enter your Orbit Workbench URL.
-  * For Sign out URL(s), enter a URL where you want your users to be redirected after they log out.  Enter your Orbit Workbench URL.
-  * Under Allowed OAuth Flows, be sure to select at least the Implicit grant check box.
-  * Under Allowed OAuth Scopes, be sure to select at least the email and openid check boxes.
-  * Choose Save changes.
+* In the left navigation pane, under **General settings**, get the `Pool Id` of the User Pool
 
-> _For more information, see [App client settings overview](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-app-idp-settings.html#cognito-user-pools-app-idp-settings-about)._
-
-![Client Settings](https://github.com/awslabs/aws-orbit-workbench/blob/main/docs/_static/okta/client-settings.png?raw=true "Client Settings")
 
 ## 10 - Configuring the Orbit Workbench manifest file (YAML)
 
 * Add these new attributes in the root level, and fill in `CognitoExternalProviderDomain` and `CognitoExternalProviderRedirect` with your configurations:
 
 ```yaml
+UserPoolId: us-west-X_xXXXxxXXx
 CognitoExternalProvider: okta
 CognitoExternalProviderLabel: OKTA
 # The domain created in Coginto
@@ -185,22 +182,7 @@ You should see a 'Sign in with Okta' button on the landing page
 <!---![Landing Page](https://github.com/awslabs/aws-orbit-workbench/blob/main/docs/_static/okta/landing-page.png?raw=true "Landing Page")--->
 
 
-## 11 - Map Cognito groups to Okta groups
-* Go to your Cognito console
-  * On the left click `General settings` > `Users and groups`
-  * Select the `Groups` tab
-    * You will need these group names for the next step
-
-* Go to your Okta console
-  * On the left, click on Directory > Groups
-  * Click on the `All` tab and click on `Add Group`
-    * Add a group name that matches exactly the group name in Cognito Groups from the previous step
-* On the left, go to `Directory` > `People`
-  * Select the user you want to add to a group
-  * Click on the `Groups` tab
-    * Add the group from the Groups search bar
-
-## 12 - Sign in
+## 11 - Sign in
 * Go back to your landing page and click on `Sign in with Okta`
   * You will be prompted to login with with your Okta account
   * You should see the Lake Creator and Lake user groups after you sign in
