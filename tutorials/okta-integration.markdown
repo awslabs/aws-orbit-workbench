@@ -132,10 +132,10 @@ permalink: okta-integration
 * Choose Add SAML attribute.
 * Map the groups attributes
   * For **SAML attribute**, enter the SAML attribute name `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/teams`.
+  * For **User** pool attribute, choose `custom:groups` from the list.
 * Map the e-mail attributes
   * For **SAML attribute**, enter the SAML attribute name `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress`.
   * For **User** pool attribute, choose `Email` from the list.
-  * For **User** pool attribute, choose `custom:groups` from the list.
 * Map the email_verified attributes
   * For **SAML attribute**, enter the SAML attribute name `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/email_verified`.
   * For **User** pool attribute, choose `Email Verified` from the list.
