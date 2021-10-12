@@ -11,7 +11,7 @@ permalink: quick-demo-deployment
 We have provided a `one-click deployment` that will install most features of the AWS Orbit Workbench in a trial environment in your AWS account.  If you are just evaluating the workbench, 
 we suggest you use this deployment.  
 
-You can always use the <a href="/aws-orbit-workbench/cli-guide">CLI</a> to redeploy to add / remove teams or plugins to an existing workbench.
+You can always use the [CLI](cli-guide) to redeploy to add / remove teams or plugins to an existing workbench.
 
 ## Pre-deploy
 
