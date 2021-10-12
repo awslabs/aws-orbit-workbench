@@ -15,12 +15,21 @@
 import json
 import logging
 import os
-from typing import Any, Dict, Optional, Tuple, cast
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import boto3
 import botocore
 import kopf
-from kubernetes.client import BatchV1Api, V1Job, V1ObjectMeta
+from kubernetes.client import (
+    BatchV1Api,
+    BatchV1beta1Api,
+    V1beta1CronJob,
+    V1beta1CronJobSpec,
+    V1beta1CronJobStatus,
+    V1beta1JobTemplateSpec,
+    V1Job,
+    V1ObjectMeta,
+)
 from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION
 from orbit_controller.utils import job_utils
 
@@ -65,19 +74,22 @@ def jobs_idx(
     namespace: str, logger: kopf.Logger, name: str, meta: kopf.Meta, status: kopf.Status, **_: Any
 ) -> Dict[Tuple[str, str], Dict[str, Any]]:
     """Index of k8s jobs by orbitjob namespace/name"""
-
     orbit_job_reference = [owner_reference for owner_reference in meta.get("ownerReferences", [{}])].pop()
     return {(namespace, orbit_job_reference.get("name")): {"namespace": namespace, "name": name, "status": status}}
 
 
 def _monitor_k8s_job(
     status: kopf.Status,
+    logger: kopf.Logger,
     **_: Any,
 ) -> bool:
-    if status.get("orbitJobOperator", {}).get("jobStatus", None) in ["Complete", "Failed"]:
-        return False
+    if (status.get("create_job", "")).startswith("Job"):
+        if status.get("orbitJobOperator", {}).get("jobStatus", None) in ["Complete", "Failed"]:
+            return False
+        else:
+            return True
     else:
-        return True
+        return False
 
 
 @kopf.index("namespaces")  # type: ignore
@@ -160,23 +172,58 @@ def create_job(
         orbit_job_spec=spec,
         labels=labels,
     )
-    job = V1Job(
-        api_version="batch/v1",
-        kind="Job",
-        metadata=V1ObjectMeta(labels={**labels, **spec.get("compute", {}).get("labels", {})}),
-        spec=job_spec,
-    )
 
-    kopf.adopt(job, nested="spec.template")
-    job_instance: V1Job = BatchV1Api().create_namespaced_job(namespace=namespace, body=job)
+    logger.debug("spec: %s", spec)
+    if spec.get("schedule"):
+        cronjob_id = f"orbit-{namespace}-{spec.get('triggerName')}"
+        cron_job_template: V1beta1JobTemplateSpec = V1beta1JobTemplateSpec(spec=job_spec)
+        cron_job_spec: V1beta1CronJobSpec = V1beta1CronJobSpec(
+            job_template=cron_job_template, schedule=spec.get("schedule")
+        )
+        job = V1beta1CronJob(
+            api_version="batch/v1beta1",
+            kind="CronJob",
+            metadata=V1ObjectMeta(
+                name=cronjob_id, labels={**labels, **spec.get("compute", {}).get("labels", {})}, namespace=namespace
+            ),
+            status=V1beta1CronJobStatus(),
+            spec=cron_job_spec,
+        )
+        kopf.adopt(job, nested="spec.template")
+        cron_job_instance: V1beta1CronJob = BatchV1beta1Api().create_namespaced_cron_job(namespace=namespace, body=job)
+        cronjob_instance_metadata: V1ObjectMeta = cron_job_instance.metadata
+        logger.debug("Started Cron Job: %s", cronjob_instance_metadata.name)
+        patch["metadata"] = {"labels": {"k8sJobType": "CronJob"}}
+        patch["status"] = {
+            "orbitJobOperator": {
+                "jobStatus": "JobCreated",
+                "jobName": cronjob_instance_metadata.name,
+                "nodeType": node_type,
+            }
+        }
+        return "CronJobCreated"
+    else:
+        job = V1Job(
+            api_version="batch/v1",
+            kind="Job",
+            metadata=V1ObjectMeta(labels={**labels, **spec.get("compute", {}).get("labels", {})}),
+            spec=job_spec,
+        )
 
-    job_instance_metadata: V1ObjectMeta = job_instance.metadata
-    logger.debug("Started Job: %s", job_instance_metadata.name)
+        kopf.adopt(job, nested="spec.template")
+        job_instance: V1Job = BatchV1Api().create_namespaced_job(namespace=namespace, body=job)
 
-    patch["status"] = {
-        "orbitJobOperator": {"jobStatus": "JobCreated", "jobName": job_instance_metadata.name, "nodeType": node_type}
-    }
-    return "JobCreated"
+        job_instance_metadata: V1ObjectMeta = job_instance.metadata
+        logger.debug("Started Job: %s", job_instance_metadata.name)
+        patch["metadata"] = {"labels": {"k8sJobType": "Job"}}
+        patch["status"] = {
+            "orbitJobOperator": {
+                "jobStatus": "JobCreated",
+                "jobName": job_instance_metadata.name,
+                "nodeType": node_type,
+            }
+        }
+        return "JobCreated"
 
 
 @kopf.on.timer(  # type: ignore
@@ -226,3 +273,89 @@ def orbit_job_monitor(
         }
     }
     return job_status
+
+
+@kopf.index("batch", "v1beta1", "cronjobs", when=_should_index_jobs)  # type: ignore
+def cron_jobs_idx(
+    namespace: str, logger: kopf.Logger, name: str, meta: kopf.Meta, status: kopf.Status, **_: Any
+) -> Dict[Tuple[str, str], Dict[str, Any]]:
+    """Index of k8s Cron jobs by orbitjob namespace/name"""
+    orbit_job_reference = [owner_reference for owner_reference in meta.get("ownerReferences", [{}])].pop()
+    return {(namespace, orbit_job_reference.get("name")): {"namespace": namespace, "name": name, "status": status}}
+
+
+def _monitor_k8s_cron_job(
+    status: kopf.Status,
+    logger: kopf.Logger,
+    **_: Any,
+) -> bool:
+    if (status.get("create_job", "")).startswith("Cron"):
+        if status.get("orbitJobOperator", {}).get("jobStatus", None) in ["Complete", "Failed"]:
+            return False
+        else:
+            return True
+    else:
+        return False
+
+
+@kopf.on.timer(  # type: ignore
+    ORBIT_API_GROUP, ORBIT_API_VERSION, "orbitjobs", interval=5, initial_delay=5, when=_monitor_k8s_cron_job
+)
+def orbit_cron_job_monitor(
+    namespace: str,
+    name: str,
+    patch: kopf.Patch,
+    status: kopf.Status,
+    logger: kopf.Logger,
+    namespaces_idx: kopf.Index[str, Dict[str, Any]],
+    cron_jobs_idx: kopf.Index[Tuple[str, str], Dict[str, Any]],
+    **_: Any,
+) -> Any:
+    ns: Optional[Dict[str, Any]] = None
+    k8s_job: Optional[Dict[str, Any]] = None
+
+    for ns in namespaces_idx.get(namespace, []):
+        logger.debug("ns: %s", ns)
+
+    if ns is None:
+        patch["status"] = {
+            "orbitJobOperator": {"jobStatus": "JobDetailsNotFound", "error": "No Namespace resource found"}
+        }
+        return "JobDetailsNotFound"
+
+    logger.debug("cron_jobs_idx: %s", cron_jobs_idx)
+    for k8s_job in cron_jobs_idx.get((namespace, name), []):
+        logger.debug("k8s_job: %s", k8s_job)
+
+    if k8s_job is None:  # To tackle the race condition caused by Timer
+        return "JobMetadataNotFound"
+
+    if not k8s_job.get("status", {}):
+        cron_job_status = "Activating"
+    else:
+        cron_job_status = "Active"
+
+    if k8s_job.get("status"):
+        for i in k8s_job.get("status", {}).get("active", [{}]):
+            if i.get("name") not in status.get("orbitJobOperator", {}).get("cronJobIds", []):
+                cron_job_ids: List[str] = status.get("orbitJobOperator", {}).get("cronJobIds", [])
+                cron_job_ids.append(i.get("name"))
+                patch["status"] = {
+                    "orbitJobOperator": {
+                        "jobStatus": cron_job_status,
+                        "jobName": k8s_job.get("name"),
+                        "cronJobIds": cron_job_ids,
+                    }
+                }
+            else:
+                return cron_job_status
+    else:
+        patch["status"] = {
+            "orbitJobOperator": {
+                "jobStatus": cron_job_status,
+                "jobName": k8s_job.get("name"),
+                "cronJobIds": status.get("orbitJobOperator", {}).get("cronJobIds", []),
+            }
+        }
+
+    return cron_job_status
