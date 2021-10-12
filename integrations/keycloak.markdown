@@ -8,3 +8,5 @@ title: KeyCloak
 image: ../img/service/keycloak_icon_32px.png
 whatIs: "Keycloak is and opensource SSO authentication software and API to sign in, authorize and manage users."
 ---
+AWS Orbit Workbench uses Amazon Cognito to provide SSO integration and basic authentication.  By adding KeyCloak as an Identity Provider to the Cognito `User Pool`, SSO authentication can be handled by KeyCloak or Amazon Cognito or both!
+
