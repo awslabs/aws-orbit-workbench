@@ -4,7 +4,7 @@
 
 layout: documentation
 title: Built-in Plugin Directory
-permalink: built-in-Plugin-directory
+permalink: built-in-plugin-directory
 ---
 
 Orbit Plugins are individual python modules published to PyPi.  They are installed to a local python environment using pip.
