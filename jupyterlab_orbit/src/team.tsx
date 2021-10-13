@@ -27,7 +27,6 @@ interface IItem {
 interface IUseItemsReturn {
   commonItems: JSX.Element;
   securityItems: any;
-  profiles: any;
   other: any;
   refreshCallback: () => void;
 }
@@ -54,7 +53,6 @@ const useItems = (): IUseItemsReturn => {
   const [data, setData] = useState({
     common: [],
     security: {},
-    profiles: {},
     other: {}
   });
 
@@ -70,9 +68,8 @@ const useItems = (): IUseItemsReturn => {
   }, []);
   const commonItems = <Items data={data.common} />;
   const securityItems = data.security;
-  const profiles = data.profiles;
   const other = data.other;
-  return { commonItems, securityItems, profiles, other, refreshCallback };
+  return { commonItems, securityItems, other, refreshCallback };
 };
 
 class TeamCentralWidget extends ReactWidget {
@@ -96,13 +93,7 @@ class TeamCentralWidget extends ReactWidget {
 }
 
 const TeamComponentFunc = (): JSX.Element => {
-  const {
-    commonItems,
-    securityItems,
-    profiles,
-    other,
-    refreshCallback
-  } = useItems();
+  const { commonItems, securityItems, other, refreshCallback } = useItems();
   return (
     <div>
       <ListViewWithRefresh
