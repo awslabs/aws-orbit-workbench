@@ -111,7 +111,6 @@ const TeamComponentFunc = (): JSX.Element => {
         refreshCallback={refreshCallback}
       />
       <TreeView name={'Security'} item={securityItems} root_name={'security'} />
-      <TreeView name={'Profiles'} item={profiles} root_name={'team profiles'} />
       <TreeView name={'Other'} item={other} root_name={'properties'} />
     </div>
   );
