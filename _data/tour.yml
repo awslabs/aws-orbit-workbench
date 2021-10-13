@@ -11,25 +11,25 @@ docs:
   - group: Jupyter Labs Landing Page
     sub:
       - title: Catalog
-        url: jl-compute
+        url: jl-catalog
       - title: Compute
         url: jl-compute
       - title: EKS Jobs
-        url: jl-compute
+        url: jl-eks-jobs
       - title: Glue Data Brew
-        url: jl-compute
+        url: jl-databrew
       - title: Storage
-        url: jl-compute
+        url: jl-storage
       - title: Teams
-        url: jl-compute
+        url: jl-teams
   - group: Jupyter Notebooks
     sub:
       - title: Glue Examples     
-        url: jl-compute
+        url: jl-examples-glue
       - title: Sagemaker Examples     
-        url: jl-compute       
+        url: jl-examples-sagemaker
       - title: Athena Examples     
-        url: jl-compute 
+        url: jl-examples-athena
   - group: Visual Studio Code 
     sub:
       - title: Start Up
