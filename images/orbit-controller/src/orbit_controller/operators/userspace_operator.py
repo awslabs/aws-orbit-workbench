@@ -14,7 +14,7 @@
 
 import logging
 import os
-from typing import Any
+from typing import Any, Dict, Optional
 
 import kopf
 from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION
@@ -30,6 +30,25 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
     )
     settings.persistence.finalizer = "userspace-operator.orbit.aws/kopf-finalizer"
     settings.posting.level = logging.getLevelName(os.environ.get("EVENT_LOG_LEVEL", "INFO"))
+
+
+def _should_index_podsetting(labels: kopf.Labels, **_: Any) -> bool:
+    return labels.get("orbit/space") == "team" and "orbit/team" in labels and "orbit/disable-watcher" not in labels
+
+
+@kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_index_podsetting)  # type: ignore
+def podsettings_idx(
+    namespace: str, name: str, labels: kopf.Labels, spec: kopf.Spec, **_: Any
+) -> Optional[Dict[str, Dict[str, Any]]]:
+    """Index of podsettings by team"""
+    return {
+        labels["orbit/team"]: {
+            "namespace": namespace,
+            "name": name,
+            "labels": labels,
+            "spec": spec,
+        }
+    }
 
 
 @kopf.on.resume(
@@ -54,3 +73,5 @@ def install_team(patch: kopf.Patch, **_: Any) -> str:
 @kopf.on.delete(ORBIT_API_GROUP, ORBIT_API_VERSION, "userspaces")
 def uninstall_team(**_: Any) -> str:
     return "Uninstalled"
+
+
