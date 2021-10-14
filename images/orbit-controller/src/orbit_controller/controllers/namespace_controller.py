@@ -117,8 +117,8 @@ def _should_process_namespace(annotations: kopf.Annotations, labels: kopf.Labels
     return "orbit/helm-chart-installation" not in annotations and labels.get("orbit/space", None) == "user"
 
 
-@kopf.on.resume("namespaces", when=_should_process_namespace)  # type: ignore
-@kopf.on.create("namespaces", when=_should_process_namespace)
+#@kopf.on.resume("namespaces", when=_should_process_namespace)  # type: ignore
+#@kopf.on.create("namespaces", when=_should_process_namespace)
 def install_team_charts(
     name: str,
     annotations: kopf.Annotations,
@@ -236,7 +236,7 @@ def install_team_charts(
     return "Complete"
 
 
-@kopf.on.delete("namespaces", labels={"orbit/space": kopf.PRESENT})  # type: ignore
+#@kopf.on.delete("namespaces", labels={"orbit/space": kopf.PRESENT})  # type: ignore
 def uninstall_team_charts(
     name: str,
     annotations: kopf.Annotations,
