@@ -117,7 +117,7 @@ def test_lakecreator_extractor(zip_file, kube: TestClient):
     # Logic to wait till OrbitJob creates
     lakecreator.wait_until_ready(timeout=60)
     # Logic to pass or fail the pytest
-    lakecreator.wait_until_job_completes(timeout=7200)
+    lakecreator.wait_until_job_completes(timeout=600)
     current_status = lakecreator.get_status().get("orbitJobOperator").get("jobStatus")
     logger.info(f"current_status={current_status}")
     # Cleanup
@@ -212,7 +212,7 @@ def test_lakecreator_glue_table_creator(datafile, kube: TestClient):
     # Logic to wait till OrbitJob creates
     lakecreator.wait_until_ready(timeout=60)
     # Logic to pass or fail the pytest
-    lakecreator.wait_until_job_completes(timeout=7200)
+    lakecreator.wait_until_job_completes(timeout=1200)
     current_status = lakecreator.get_status().get("orbitJobOperator").get("jobStatus")
     logger.info(f"current_status={current_status}")
     # Cleanup
@@ -274,7 +274,7 @@ def test_lakecreator_lf(kube: TestClient):
     # Logic to wait till OrbitJob creates
     lakecreator.wait_until_ready(timeout=60)
     # Logic to pass or fail the pytest
-    lakecreator.wait_until_job_completes(timeout=7200)
+    lakecreator.wait_until_job_completes(timeout=1800)
     current_status = lakecreator.get_status().get("orbitJobOperator").get("jobStatus")
     logger.info(f"current_status={current_status}")
     # Cleanup
