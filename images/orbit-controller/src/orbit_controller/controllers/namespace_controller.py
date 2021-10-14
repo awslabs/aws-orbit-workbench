@@ -26,23 +26,23 @@ from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, dynamic_client,
 from orbit_controller.utils import poddefault_utils, userspace_utils
 
 
-@kopf.on.startup()
-def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) -> None:
-    settings.persistence.progress_storage = kopf.MultiProgressStorage(
-        [
-            kopf.AnnotationsProgressStorage(prefix="orbit.aws"),
-            kopf.StatusProgressStorage(field="status.orbit-aws"),
-        ]
-    )
-    settings.persistence.finalizer = "namespace-controller.orbit.aws/kopf-finalizer"
-    settings.posting.level = logging.getLevelName(os.environ.get("EVENT_LOG_LEVEL", "INFO"))
+# @kopf.on.startup()
+# def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) -> None:
+#     settings.persistence.progress_storage = kopf.MultiProgressStorage(
+#         [
+#             kopf.AnnotationsProgressStorage(prefix="orbit.aws"),
+#             kopf.StatusProgressStorage(field="status.orbit-aws"),
+#         ]
+#     )
+#     settings.persistence.finalizer = "namespace-controller.orbit.aws/kopf-finalizer"
+#     settings.posting.level = logging.getLevelName(os.environ.get("EVENT_LOG_LEVEL", "INFO"))
 
 
 def _should_index_podsetting(labels: kopf.Labels, **_: Any) -> bool:
     return labels.get("orbit/space") == "team" and "orbit/team" in labels and "orbit/disable-watcher" not in labels
 
 
-@kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_index_podsetting)  # type: ignore
+#@kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_index_podsetting)  # type: ignore
 def podsettings_idx(
     namespace: str, name: str, labels: kopf.Labels, spec: kopf.Spec, **_: Any
 ) -> Optional[Dict[str, Dict[str, Any]]]:

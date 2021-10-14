@@ -38,8 +38,8 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
     settings.posting.level = logging.getLevelName(os.environ.get("EVENT_LOG_LEVEL", "INFO"))
 
 
-def _should_index_podsetting(labels: kopf.Labels, **_: Any) -> bool:
-    return labels.get("orbit/space") == "team" and "orbit/team" in labels and "orbit/disable-watcher" not in labels
+def _should_index_podsetting( spec: kopf.Spec, **_: Any) -> bool:
+    return spec.get("space") == "team" and "team" in spec #and "orbit/disable-watcher" not in labels
 
 
 @kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_index_podsetting)  # type: ignore
