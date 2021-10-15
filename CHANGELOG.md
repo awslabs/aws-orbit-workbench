@@ -24,7 +24,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Updating README.md
 - Fixed the expiring kubeconfig issue for long living k8s jobs
 - Fixing lake-creator pytest shell script and refactoring lake-creator pytest files
-- Removing lake user specific cron job notebooks from regression 
+- Removing lake user specific cron job notebooks from regression
+- Removing profiles section from JL UI 
 
 ### **Removed**
 
