@@ -16,6 +16,10 @@ ORBIT_ENV = os.environ.get("ORBIT_ENV")
 ACCOUNT_ID = os.environ.get("ACCOUNT_ID")
 REGION = os.environ.get("REGION")
 ROLE_PREFIX = os.environ.get("ROLE_PREFIX")
+ORBIT_API_VERSION = os.environ.get("ORBIT_API_VERSION", "v1")
+ORBIT_API_GROUP = os.environ.get("ORBIT_API_GROUP", "orbit.aws")
+ORBIT_SYSTEM_NAMESPACE = os.environ.get("ORBIT_SYSTEM_NAMESPACE", "orbit-system")
+ORBIT_STATE_PATH = os.environ.get("ORBIT_STATE_PATH", "/state")
 
 KUBECONFIG_PATH = "/tmp/.kubeconfig"
 
@@ -127,7 +131,7 @@ def create_user_namespace(
                 logger.info(f"Created namespace {user_ns}")
             except ApiException:
                 logger.error(f"Exception when trying to create user namespace {user_ns}")
-
+            
 
 def delete_user_efs_endpoint(user_name: str, user_namespace: str, api: client.CoreV1Api) -> None:
     efs = boto3.client("efs")
@@ -169,7 +173,39 @@ def delete_user_namespace(
             except ApiException:
                 logger.error(f"Exception when trying to remove user namespace {user_ns}")
 
-
+def construct(
+    name: str,
+    env: str,
+    space: str,
+    team: str,
+    user: str,
+    user_efsapid: str,
+    user_email: str,
+    owner_reference: Optional[Dict[str, str]] = None,
+    labels: Optional[Dict[str, str]] = None,
+    annnotations: Optional[Dict[str, str]] = None,
+) -> Dict[str, Any]:
+    userspace: Dict[str, Any] = {
+        "apiVersion": f"{ORBIT_API_GROUP}/{ORBIT_API_VERSION}",
+        "kind": "UserSpace",
+        "metadata": {
+            "name": name,
+            "labels": labels,
+            "annotations": annnotations,
+        },
+        "spec": {
+            "env": env,
+            "space": space,
+            "team": team,
+            "user": user,
+            "userEfsApId": user_efsapid,
+            "userEmail": user_email,
+        },
+    }
+    if owner_reference is not None:
+        userspace["metadata"]["ownerReferences"] = [owner_reference]
+    return userspace
+ 
 def delete_user_profile(user_profile: str) -> None:
     logger.info(f"Removing profile {user_profile}")
     run_command(f"kubectl delete profile {user_profile} --kubeconfig {KUBECONFIG_PATH}")

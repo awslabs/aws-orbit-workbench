@@ -38,11 +38,11 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
     settings.posting.level = logging.getLevelName(os.environ.get("EVENT_LOG_LEVEL", "INFO"))
 
 
-def _should_index_podsetting( spec: kopf.Spec, **_: Any) -> bool:
-    return spec.get("space") == "team" and "team" in spec #and "orbit/disable-watcher" not in labels
+def _should_index_podsetting(labels: kopf.Labels, **_: Any) -> bool:
+    return labels.get("orbit/space") == "team" and "orbit/team" in labels and "orbit/disable-watcher" not in labels
 
-
-@kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_index_podsetting)  # type: ignore
+@kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_index_podsetting
+)  # type: ignore
 def podsettings_idx(
     namespace: str, name: str, labels: kopf.Labels, spec: kopf.Spec, **_: Any
 ) -> Optional[Dict[str, Dict[str, Any]]]:
@@ -96,12 +96,17 @@ def _install_helm_chart(
 
 
 def _uninstall_chart(helm_release: str, namespace: str, logger: kopf.Logger) -> None:
+    install_status= True
     cmd = f"/usr/local/bin/helm uninstall --debug --namespace {namespace} {helm_release}"
-    logger.debug("running uninstall cmd: %s", cmd)
-    output = run_command(cmd)
-    logger.debug(output)
-    logger.info("finished uninstall cmd: %s", cmd)
-
+    try:
+        logger.debug("running uninstall cmd: %s", cmd)
+        output = run_command(cmd)
+        logger.debug(output)
+        logger.info("finished uninstall cmd: %s", cmd)
+    except Exception:
+        logger.error("errored cmd: %s", cmd)
+        install_status= False
+    return install_status
 
 def _get_team_context(team: str, logger: kopf.Logger) -> Dict[str, Any]:
     try:
@@ -120,7 +125,6 @@ def _get_team_context(team: str, logger: kopf.Logger) -> Dict[str, Any]:
 
 def _should_process_userspace(annotations: kopf.Annotations, spec: kopf.Spec, **_: Any) -> bool:
     return "orbit/helm-chart-installation" not in annotations and spec.get("space", None) == "user"
-
 
 @kopf.on.resume(
     ORBIT_API_GROUP,
@@ -144,6 +148,7 @@ def install_team(
         spec: kopf.Spec,
         status: kopf.Status,
         patch: kopf.Patch,
+        podsettings_idx: kopf.Index[str, Dict[str, Any]],
         logger: kopf.Logger,
         **_: Any
 ) -> str:
@@ -179,19 +184,6 @@ def install_team(
         return "Skipping"
 
     client = dynamic_client()
-    # userspace = userspace_utils.construct(
-    #     name=name,
-    #     env=env,
-    #     space=space,
-    #     team=team,
-    #     user=user,
-    #     user_efsapid=user_efsapid,
-    #     user_email=user_email,
-    # )
-    # try:
-    #     userspace_utils.create_userspace(namespace=name, userspace=userspace, client=client, logger=logger)
-    # except Exception as e:
-    #     logger.warn("Failed to create UserSpace %s: %s", name, str(e))
 
     team_context = _get_team_context(team=team, logger=logger)
     logger.info("team context keys: %s", team_context.keys())
@@ -210,7 +202,7 @@ def install_team(
     run_command(f"helm search repo --devel {repo} -o json > /tmp/{unique_hash}-charts.json")
     with open(f"/tmp/{unique_hash}-charts.json", "r") as f:
         charts = json.load(f)
-
+    #charts.append("user-space-1.4.0-0-blabla.tgz")
     run_command(f"helm list -n {team} -o json > /tmp/{unique_hash}-releases.json")
     with open(f"/tmp/{unique_hash}-releases.json", "r") as f:
         releaseList = json.load(f)
@@ -239,11 +231,16 @@ def install_team(
                 logger.info("Helm release %s installed at %s", helm_release, name)
                 continue
             else:
-                patch["status"] = {"installation": {"installationStatus": "Failed", "chart_name": chart_name }}
+                patch["status"] = {
+                    "userSpaceJobOperator": {
+                        "installationStatus": "Failed to install",
+                        "chart_name": chart_name
+                    }
+                }
                 return 'Failed'
 
-
     logger.info("Copying PodDefaults from Team")
+    logger.info("podsettings_idx:%s", podsettings_idx)
     # Construct pseudo poddefaults for each podsetting in the team namespace
     poddefaults = [
         poddefault_utils.construct(
@@ -258,26 +255,91 @@ def install_team(
     )
 
     patch["metadata"] = {"annotations": {"orbit/helm-chart-installation": "Complete"}}
-    patch["status"] = {"installation": {"installationStatus": "Installed"}}
+    patch["status"] = {
+            "userSpaceJobOperator": {
+                "installationStatus": "Installed"
+            }
+        }
 
     return "Installed"
 
-
 @kopf.on.delete(ORBIT_API_GROUP, ORBIT_API_VERSION, "userspaces")
-def uninstall_team(**_: Any) -> str:
+def uninstall_team_charts(
+    name: str,
+    annotations: kopf.Annotations,
+    labels: kopf.Labels,
+    patch: kopf.Patch,
+    logger: kopf.Logger,
+    **_: Any,
+) -> str:
+    logger.debug("loading kubeconfig")
+    load_config()
+
+    logger.info("processing removed namespace %s", name)
+    space = labels.get("orbit/space", None)
+
+    if space == "team":
+        logger.info("delete all namespaces that belong to the team %s", name)
+        run_command(f"kubectl delete profile -l orbit/team={name}")
+        time.sleep(60)
+        run_command(f"kubectl delete namespace -l orbit/team={name},orbit/space=user")
+        logger.info("all namespaces that belong to the team %s are deleted", name)
+    elif space == "user":
+        env = labels.get("orbit/env", None)
+        team = labels.get("orbit/team", None)
+        user = labels.get("orbit/user", None)
+        user_email = annotations.get("owner", None)
+
+        logger.debug("removed namespace: %s,%s,%s,%s", team, user, user_email, name)
+
+        if not env or not space or not team or not user or not user_email:
+            logger.error(
+                "All of env, space, team, user, and user_email are required. Found: %s, %s, %s, %s, %s",
+                env,
+                space,
+                team,
+                user,
+                user_email,
+            )
+            return "Skipping"
+
+        team_context = _get_team_context(team=team, logger=logger)
+        logger.info("team context keys: %s", team_context.keys())
+        helm_repo_url = team_context["UserHelmRepository"]
+        repo = f"{team}--userspace"
+        # add the team repo
+        unique_hash = "".join(random.choice(string.ascii_lowercase) for i in range(6))
+        run_command(f"helm repo add {repo} {helm_repo_url}")
+        run_command(f"helm search repo --devel {repo} -o json > /tmp/{unique_hash}-charts.json")
+        with open(f"/tmp/{unique_hash}-charts.json", "r") as f:
+            charts = json.load(f)
+        run_command(f"helm list -n {team} -o json > /tmp/{unique_hash}-releases.json")
+        with open(f"/tmp/{unique_hash}-releases.json", "r") as f:
+            releaseList = json.load(f)
+            releases = [r["name"] for r in releaseList]
+            logger.info("current installed releases: %s", releases)
+
+        for chart in charts:
+            chart_name = chart["name"].split("/")[1]
+            helm_release = f"{name}-{chart_name}"
+            if helm_release in releases:
+                install_status=_uninstall_chart(helm_release=helm_release, namespace=team, logger=logger)
+
+                if install_status:
+                    logger.info("Helm release %s installed at %s", helm_release, name)
+                    continue
+                else:
+                    patch["status"] = {
+                        "userSpaceJobOperator": {
+                            "installationStatus": "Failed to uninstall",
+                            "chart_name": chart_name
+                        }
+                    }
+                    return 'Failed'
+
+    patch["status"] = {
+            "userSpaceJobOperator": {
+                "installationStatus": "Uninstalled"
+            }
+        }
     return "Uninstalled"
-
-
-# -------------------------
-#
-# apiVersion: orbit.aws/v1
-# kind: UserSpace
-# metadata:
-#   name: "lake-admin-ssriche"
-# spec:
-#     env: "dev-env"
-#     space: "user"
-#     team: "lake-admin"
-#     user: "ssriche"
-#     userEfsApId: "fsap-0eb4feaefabd77d78"
-#     userEmail: "ssriche@amazon.com"
