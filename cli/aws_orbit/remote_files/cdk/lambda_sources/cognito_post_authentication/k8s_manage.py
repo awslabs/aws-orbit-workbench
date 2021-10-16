@@ -6,8 +6,10 @@ import time
 from typing import Any, Dict, List, Optional, cast
 
 import boto3
-from kubernetes import client, config
+from kubernetes import client, config, dynamic
+from kubernetes.client import api_client
 from kubernetes.client.rest import ApiException
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -20,7 +22,7 @@ ORBIT_API_VERSION = os.environ.get("ORBIT_API_VERSION", "v1")
 ORBIT_API_GROUP = os.environ.get("ORBIT_API_GROUP", "orbit.aws")
 ORBIT_SYSTEM_NAMESPACE = os.environ.get("ORBIT_SYSTEM_NAMESPACE", "orbit-system")
 ORBIT_STATE_PATH = os.environ.get("ORBIT_STATE_PATH", "/state")
-
+CR_KIND = "UserSpace"
 KUBECONFIG_PATH = "/tmp/.kubeconfig"
 
 ssm = boto3.client("ssm")
@@ -84,6 +86,58 @@ def create_user_efs_endpoint(user: str, team_name: str) -> Dict[str, Any]:
     )
 
 
+def get_dynamic_client(cr_kind: str):
+    api_dc = dynamic.DynamicClient(client=api_client.ApiClient()).resources.get(
+        group=ORBIT_API_GROUP, api_version=ORBIT_API_VERSION, kind=cr_kind
+    )
+    return api_dc
+
+
+def create_cr(
+    cr_kind: str,
+    name: str,
+    env: str,
+    space: str,
+    team: str,
+    user: str,
+    user_efsapid: str,
+    user_email: str,
+    owner_reference: Optional[Dict[str, str]] = None,
+    labels: Optional[Dict[str, str]] = None,
+    annnotations: Optional[Dict[str, str]] = None,
+) -> Dict[str, Any]:
+    userspace: Dict[str, Any] = {
+        "apiVersion": f"{ORBIT_API_GROUP}/{ORBIT_API_VERSION}",
+        "kind": cr_kind,
+        "metadata": {
+            "name": name,
+            "labels": labels,
+            "annotations": annnotations,
+            "namespace": name
+        },
+        "spec": {
+            "env": env,
+            "space": space,
+            "team": team,
+            "user": user,
+            "userEfsApId": user_efsapid,
+            "userEmail": user_email,
+        },
+    }
+    if owner_reference is not None:
+        userspace["metadata"]["ownerReferences"] = [owner_reference]
+
+    api_dc = get_dynamic_client(cr_kind=cr_kind)
+    userspace_cr = api_dc.create(namespace=name, body=userspace).to_dict()
+
+    return userspace_cr
+
+
+def delete_cr(cr_kind: str, name: str):
+    api_dc = get_dynamic_client(cr_kind=cr_kind)
+    api_dc.delete(name=name, namespace=name).to_dict()
+
+
 def create_user_namespace(
     api: client.CoreV1Api,
     user_name: str,
@@ -127,11 +181,27 @@ def create_user_namespace(
             body.metadata = client.V1ObjectMeta(**kwargs)
 
             try:
-                api.create_namespace(body=body)
-                logger.info(f"Created namespace {user_ns}")
-            except ApiException:
-                logger.error(f"Exception when trying to create user namespace {user_ns}")
-            
+                try:
+                    api.create_namespace(body=body)
+                    logger.info(f"Created namespace {user_ns}")
+                except ApiException:
+                    logger.error(f"Exception when trying to create user namespace {user_ns}")
+                    continue
+                # create userspace custom resource for the given user namespace
+                create_cr(
+                    cr_kind=CR_KIND,
+                    name=user_ns,
+                    env=os.environ.get("ORBIT_ENV"),
+                    space="user",
+                    team=team,
+                    user=user_name,
+                    user_efsapid=access_point_id,
+                    user_email=user_email,
+                    owner_reference=kwargs["owner_references"],
+                )
+            except Exception:
+                logger.error(f"Exception when trying to create userspace custom resource {user_ns}")
+
 
 def delete_user_efs_endpoint(user_name: str, user_namespace: str, api: client.CoreV1Api) -> None:
     efs = boto3.client("efs")
@@ -167,45 +237,18 @@ def delete_user_namespace(
             logger.info(f"User {user_name} is not expected to be part of the {user_ns} namespace. Removing...")
 
             try:
-                api.delete_collection_namespaced_pod(namespace=user_ns, grace_period_seconds=0)
-                api.delete_namespace(name=user_ns)
-                logger.info(f"Removed namespace {user_ns}")
-            except ApiException:
-                logger.error(f"Exception when trying to remove user namespace {user_ns}")
+                try:
+                    api.delete_collection_namespaced_pod(namespace=user_ns, grace_period_seconds=0)
+                    api.delete_namespace(name=user_ns)
+                    logger.info(f"Removed namespace {user_ns}")
+                except ApiException:
+                    logger.error(f"Exception when trying to remove user namespace {user_ns}")
+                    continue
+                delete_cr(cr_kind=CR_KIND, name=user_ns)
+            except Exception:
+                logger.error(f"Exception when trying to remove userspace custom resource  {user_ns}")
 
-def construct(
-    name: str,
-    env: str,
-    space: str,
-    team: str,
-    user: str,
-    user_efsapid: str,
-    user_email: str,
-    owner_reference: Optional[Dict[str, str]] = None,
-    labels: Optional[Dict[str, str]] = None,
-    annnotations: Optional[Dict[str, str]] = None,
-) -> Dict[str, Any]:
-    userspace: Dict[str, Any] = {
-        "apiVersion": f"{ORBIT_API_GROUP}/{ORBIT_API_VERSION}",
-        "kind": "UserSpace",
-        "metadata": {
-            "name": name,
-            "labels": labels,
-            "annotations": annnotations,
-        },
-        "spec": {
-            "env": env,
-            "space": space,
-            "team": team,
-            "user": user,
-            "userEfsApId": user_efsapid,
-            "userEmail": user_email,
-        },
-    }
-    if owner_reference is not None:
-        userspace["metadata"]["ownerReferences"] = [owner_reference]
-    return userspace
- 
+
 def delete_user_profile(user_profile: str) -> None:
     logger.info(f"Removing profile {user_profile}")
     run_command(f"kubectl delete profile {user_profile} --kubeconfig {KUBECONFIG_PATH}")

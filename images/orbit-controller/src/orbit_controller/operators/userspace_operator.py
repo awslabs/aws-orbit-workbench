@@ -41,8 +41,7 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
 def _should_index_podsetting(labels: kopf.Labels, **_: Any) -> bool:
     return labels.get("orbit/space") == "team" and "orbit/team" in labels and "orbit/disable-watcher" not in labels
 
-@kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_index_podsetting
-)  # type: ignore
+@kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_index_podsetting)  # type: ignore
 def podsettings_idx(
     namespace: str, name: str, labels: kopf.Labels, spec: kopf.Spec, **_: Any
 ) -> Optional[Dict[str, Dict[str, Any]]]:
@@ -216,6 +215,7 @@ def install_team(
         # namespaces might
         if helm_release not in releaseList:
             # install the helm package for this user space
+            logger.info(f"install the helm package chart_name={chart_name} helm_release={helm_release}")
             install_status= _install_helm_chart(
                 helm_release=helm_release,
                 namespace=name,
@@ -241,6 +241,8 @@ def install_team(
 
     logger.info("Copying PodDefaults from Team")
     logger.info("podsettings_idx:%s", podsettings_idx)
+
+
     # Construct pseudo poddefaults for each podsetting in the team namespace
     poddefaults = [
         poddefault_utils.construct(
