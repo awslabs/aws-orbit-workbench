@@ -22,8 +22,12 @@ ORBIT_API_VERSION = os.environ.get("ORBIT_API_VERSION", "v1")
 ORBIT_API_GROUP = os.environ.get("ORBIT_API_GROUP", "orbit.aws")
 ORBIT_SYSTEM_NAMESPACE = os.environ.get("ORBIT_SYSTEM_NAMESPACE", "orbit-system")
 ORBIT_STATE_PATH = os.environ.get("ORBIT_STATE_PATH", "/state")
-CR_KIND = "UserSpace"
+USERSPACE_CR_KIND = "UserSpace"
 KUBECONFIG_PATH = "/tmp/.kubeconfig"
+
+USERSPACE_DYNAMIC_CIENT = dynamic.DynamicClient(client=api_client.ApiClient()).resources.get(
+        group=ORBIT_API_GROUP, api_version=ORBIT_API_VERSION, kind=USERSPACE_CR_KIND
+    )
 
 ssm = boto3.client("ssm")
 
@@ -127,15 +131,9 @@ def create_cr(
     if owner_reference is not None:
         userspace["metadata"]["ownerReferences"] = [owner_reference]
 
-    api_dc = get_dynamic_client(cr_kind=cr_kind)
-    userspace_cr = api_dc.create(namespace=name, body=userspace).to_dict()
+    userspace_cr = USERSPACE_DYNAMIC_CIENT.create(namespace=name, body=userspace).to_dict()
 
     return userspace_cr
-
-
-def delete_cr(cr_kind: str, name: str):
-    api_dc = get_dynamic_client(cr_kind=cr_kind)
-    api_dc.delete(name=name, namespace=name).to_dict()
 
 
 def create_user_namespace(
@@ -181,15 +179,16 @@ def create_user_namespace(
             body.metadata = client.V1ObjectMeta(**kwargs)
 
             try:
-                try:
-                    api.create_namespace(body=body)
-                    logger.info(f"Created namespace {user_ns}")
-                except ApiException:
-                    logger.error(f"Exception when trying to create user namespace {user_ns}")
-                    continue
+                # create userspace namespace resource
+                api.create_namespace(body=body)
+                logger.info(f"Created namespace {user_ns}")
+            except ApiException as ae:
+                logger.error(f"Exception when trying to create user namespace {user_ns}")
+                logger.error(ae.body)
+
+            try:
                 # create userspace custom resource for the given user namespace
                 create_cr(
-                    cr_kind=CR_KIND,
                     name=user_ns,
                     env=os.environ.get("ORBIT_ENV"),
                     space="user",
@@ -199,8 +198,10 @@ def create_user_namespace(
                     user_email=user_email,
                     owner_reference=kwargs["owner_references"],
                 )
-            except Exception:
+                logger.info(f"Created userspace custom resource {user_ns}")
+            except Exception as ae:
                 logger.error(f"Exception when trying to create userspace custom resource {user_ns}")
+                logger.error(ae.body)
 
 
 def delete_user_efs_endpoint(user_name: str, user_namespace: str, api: client.CoreV1Api) -> None:
@@ -235,18 +236,20 @@ def delete_user_namespace(
             delete_user_efs_endpoint(user_name=user_name, user_namespace=user_ns, api=api)
 
             logger.info(f"User {user_name} is not expected to be part of the {user_ns} namespace. Removing...")
-
             try:
-                try:
-                    api.delete_collection_namespaced_pod(namespace=user_ns, grace_period_seconds=0)
-                    api.delete_namespace(name=user_ns)
-                    logger.info(f"Removed namespace {user_ns}")
-                except ApiException:
-                    logger.error(f"Exception when trying to remove user namespace {user_ns}")
-                    continue
-                delete_cr(cr_kind=CR_KIND, name=user_ns)
-            except Exception:
-                logger.error(f"Exception when trying to remove userspace custom resource  {user_ns}")
+                USERSPACE_DYNAMIC_CIENT.delete(name=user_ns, namespace=user_ns)
+                logger.info(f"Removed userspace custom resource {user_ns}")
+            except Exception as ae:
+                logger.error(f"Exception when trying to remove userspace custom resource {user_ns}")
+                logger.error(ae.body)
+            try:
+                api.delete_collection_namespaced_pod(namespace=user_ns, grace_period_seconds=0)
+                api.delete_namespace(name=user_ns)
+                logger.info(f"Removed namespace {user_ns}")
+            except ApiException as ae:
+                logger.error(f"Exception when trying to remove user namespace {user_ns}")
+                logger.error(ae.body)
+
 
 
 def delete_user_profile(user_profile: str) -> None:
