@@ -100,6 +100,7 @@ def test_lakeadmin_2_image_with_apps(kube: TestClient) -> None:
 
 @pytest.mark.namespace(create=False)
 @pytest.mark.testlakeadmin_lf
+@pytest.mark.testlakeadmin_noniso
 def test_lakeadmin_3_lf_account_settings(kube: TestClient) -> None:
     lake_admin_job_lf = LAKE_ADMIN_JOB
     lake_admin_job_lf["metadata"]["generateName"] = "test-orbit-job-lake-admin-lf-account-settings-"
