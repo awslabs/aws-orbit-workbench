@@ -184,7 +184,7 @@ def create_user_namespace(
             try:
                 # create userspace custom resource for the given user namespace
                 create_userspace(
-                    userspace_dc=dynamic.DynamicClient,
+                    userspace_dc=userspace_dc,
                     name=user_ns,
                     env=os.environ.get("ORBIT_ENV"),
                     space="user",
