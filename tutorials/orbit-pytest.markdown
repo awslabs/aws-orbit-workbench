@@ -45,7 +45,7 @@ permalink: orbit-pytest
 
 ## Triggering PyTests
 * Orbit PyTest interanlly use KubeTest Python module to interact with EKS cluster. 
-* Orbit extends KubeTest [ApiObject](https://kubetest.readthedocs.io/en/latest/_modules/kubetest/objects/api_object.html) to allow interaction with Orbit defined Kubernetes Custom Object Defination(s) and Custom Object(s). 
-* Orbit PyTests will create, fetch status and delete the Orbit Custom Objects.
-* Orbit Controller image running the individual Custom Resource operators will act upon the Custom Resource events and updates the status to the CustomResource.
+* Orbit extends KubeTest [ApiObject](https://kubetest.readthedocs.io/en/latest/_modules/kubetest/objects/api_object.html) to allow interaction with Orbit defined Kubernetes Custom Resource Defination(s) and Custom Resource(s). 
+* Orbit PyTests will create, fetch status and delete the Orbit Custom Resources.
+* Orbit Controller image running the individual Custom Resource operators will act upon the Custom Resource object events and updates the relavent processing status to the Custom Resource object.
 * PyTest will utilize the Custom Resource status values to assert the testing outcome.
