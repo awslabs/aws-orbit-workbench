@@ -25,12 +25,9 @@ ORBIT_STATE_PATH = os.environ.get("ORBIT_STATE_PATH", "/state")
 USERSPACE_CR_KIND = "UserSpace"
 KUBECONFIG_PATH = "/tmp/.kubeconfig"
 
-USERSPACE_DYNAMIC_CIENT = dynamic.DynamicClient(client=api_client.ApiClient()).resources.get(
-        group=ORBIT_API_GROUP, api_version=ORBIT_API_VERSION, kind=USERSPACE_CR_KIND
-    )
+
 
 ssm = boto3.client("ssm")
-
 context = ssm.get_parameter(Name=f"/orbit/{ORBIT_ENV}/context")
 EFS_FS_ID = json.loads(context.get("Parameter").get("Value")).get("SharedEfsFsId")
 
@@ -39,8 +36,11 @@ def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
     create_kubeconfig()
 
     api_CoreV1 = client.CoreV1Api()
+    userspace_dc = dynamic.DynamicClient(client=api_client.ApiClient()).resources.get(
+        group=ORBIT_API_GROUP, api_version=ORBIT_API_VERSION, kind=USERSPACE_CR_KIND
+    )
 
-    manage_user_namespace(event, api_CoreV1)
+    manage_user_namespace(event, api_CoreV1, userspace_dc)
 
 
 def run_command(cmd: str) -> None:
@@ -90,14 +90,8 @@ def create_user_efs_endpoint(user: str, team_name: str) -> Dict[str, Any]:
     )
 
 
-def get_dynamic_client(cr_kind: str):
-    api_dc = dynamic.DynamicClient(client=api_client.ApiClient()).resources.get(
-        group=ORBIT_API_GROUP, api_version=ORBIT_API_VERSION, kind=cr_kind
-    )
-    return api_dc
-
-
-def create_cr(
+def create_userspace(
+    userspace_dc: dynamic.DynamicClient,
     cr_kind: str,
     name: str,
     env: str,
@@ -131,13 +125,14 @@ def create_cr(
     if owner_reference is not None:
         userspace["metadata"]["ownerReferences"] = [owner_reference]
 
-    userspace_cr = USERSPACE_DYNAMIC_CIENT.create(namespace=name, body=userspace).to_dict()
+    userspace_cr = userspace_dc.create(namespace=name, body=userspace).to_dict()
 
     return userspace_cr
 
 
 def create_user_namespace(
     api: client.CoreV1Api,
+    userspace_dc: dynamic.DynamicClient,
     user_name: str,
     user_email: str,
     expected_user_namespaces: Dict[str, str],
@@ -188,7 +183,8 @@ def create_user_namespace(
 
             try:
                 # create userspace custom resource for the given user namespace
-                create_cr(
+                create_userspace(
+                    userspace_dc=dynamic.DynamicClient,
                     name=user_ns,
                     env=os.environ.get("ORBIT_ENV"),
                     space="user",
@@ -227,7 +223,11 @@ def delete_user_efs_endpoint(user_name: str, user_namespace: str, api: client.Co
 
 
 def delete_user_namespace(
-    api: client.CoreV1Api, user_name: str, expected_user_namespaces: Dict[str, str], namespaces: List[str]
+    api: client.CoreV1Api,
+    userspace_dc: dynamic.DynamicClient,
+    user_name: str,
+    expected_user_namespaces: Dict[str, str],
+    namespaces: List[str]
 ) -> None:
     for user_ns in namespaces:
         if user_ns not in expected_user_namespaces.values():
@@ -237,7 +237,7 @@ def delete_user_namespace(
 
             logger.info(f"User {user_name} is not expected to be part of the {user_ns} namespace. Removing...")
             try:
-                USERSPACE_DYNAMIC_CIENT.delete(name=user_ns, namespace=user_ns)
+                userspace_dc.delete(name=user_ns, namespace=user_ns)
                 logger.info(f"Removed userspace custom resource {user_ns}")
             except Exception as ae:
                 logger.error(f"Exception when trying to remove userspace custom resource {user_ns}")
@@ -259,7 +259,7 @@ def delete_user_profile(user_profile: str) -> None:
     time.sleep(5)
 
 
-def manage_user_namespace(event: Dict[str, Any], api: client.CoreV1Api) -> None:
+def manage_user_namespace(event: Dict[str, Any], api: client.CoreV1Api, userspace_dc: dynamic.DynamicClient) -> None:
     user_name = cast(str, event.get("user_name"))
     user_email = cast(str, event.get("user_email"))
     expected_user_namespaces = cast(Dict[str, str], event.get("expected_user_namespaces"))
@@ -273,6 +273,7 @@ def manage_user_namespace(event: Dict[str, Any], api: client.CoreV1Api) -> None:
 
     create_user_namespace(
         api=api,
+        userspace_dc=userspace_dc,
         user_name=user_name,
         user_email=user_email,
         expected_user_namespaces=expected_user_namespaces,
@@ -281,6 +282,7 @@ def manage_user_namespace(event: Dict[str, Any], api: client.CoreV1Api) -> None:
 
     delete_user_namespace(
         api=api,
+        userspace_dc=userspace_dc,
         user_name=user_name,
         expected_user_namespaces=expected_user_namespaces,
         namespaces=all_ns,
