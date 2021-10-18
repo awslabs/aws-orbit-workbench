@@ -27,7 +27,7 @@
             i=0
             while [ $i -lt 1 ];
             do
-              find /home/jovyan/shared/regression -mtime +5 -exec rm {} \;
+              find /efs/regression -mtime +5 -exec rm {} \;
               sleep 60
             done
             echo "DONE LOOP"
