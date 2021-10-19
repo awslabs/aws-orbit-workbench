@@ -39,6 +39,14 @@ permalink: orbit-pytest
 * AWS_ORBIT_ENV - Set to Orbit Environment name
 * AWS_ORBIT_TEAM_SPACE - Set to Orbit Teamspace
 
+## EKS Kubeconfig setup
+
+* Configure the EKS cluster details to allow KubeTest plugin interact with cluster via Python Dynamic client.
+* ```aws eks update-kubeconfig --name orbit-iter --role-arn arn:aws:iam::********:role/orbit-<ENV_NAME>-<REGION>-admin```
+
+## PyTest Configuration 
+* PyTest file based configurations are stored in below file. 
+* ```aws-orbit-workbench/test/regressions/pytest.ini```
 ## PyTest scripts
 
 * /aws-orbit-workbench/test/regressions/scripts
@@ -48,9 +56,17 @@ permalink: orbit-pytest
 
 
 ## Triggering PyTests
+
 * Above team specific scripts can run PyTests using Python envvironment specific PyTest and KubeTest modules.
+* Using PyTest markers, specific PyTest methods are executed to orchestrate the flow.
 * Orbit PyTest interanlly use KubeTest Python module to interact with EKS cluster. 
 * Orbit extends KubeTest [ApiObject](https://kubetest.readthedocs.io/en/latest/_modules/kubetest/objects/api_object.html) to allow interaction with Orbit defined Kubernetes Custom Resource Defination(s) and Custom Resource(s). 
 * Orbit PyTests will create, fetch status and delete the Orbit Custom Resources.
 * Orbit Controller image running the individual Custom Resource operators will act upon the Custom Resource object events and updates the relavent processing status to the Custom Resource object.
 * PyTest will utilize the Custom Resource status values to assert the testing outcome.
+
+
+## PyTest reporting
+
+* Above scripts can generate junit xml based reports. 
+* [pytest-html](https://pypi.org/project/pytest-html/) can generate HTML based reports.
