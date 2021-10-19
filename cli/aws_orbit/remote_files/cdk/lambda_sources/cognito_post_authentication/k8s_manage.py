@@ -92,7 +92,6 @@ def create_user_efs_endpoint(user: str, team_name: str) -> Dict[str, Any]:
 
 def create_userspace(
     userspace_dc: dynamic.DynamicClient,
-    cr_kind: str,
     name: str,
     env: str,
     space: str,
@@ -106,7 +105,7 @@ def create_userspace(
 ) -> Dict[str, Any]:
     userspace: Dict[str, Any] = {
         "apiVersion": f"{ORBIT_API_GROUP}/{ORBIT_API_VERSION}",
-        "kind": cr_kind,
+        "kind": USERSPACE_CR_KIND,
         "metadata": {
             "name": name,
             "labels": labels,
