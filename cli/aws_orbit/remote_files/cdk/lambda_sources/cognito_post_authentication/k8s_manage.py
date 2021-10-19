@@ -10,7 +10,6 @@ from kubernetes import client, config, dynamic
 from kubernetes.client import api_client
 from kubernetes.client.rest import ApiException
 
-
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -24,7 +23,6 @@ ORBIT_SYSTEM_NAMESPACE = os.environ.get("ORBIT_SYSTEM_NAMESPACE", "orbit-system"
 ORBIT_STATE_PATH = os.environ.get("ORBIT_STATE_PATH", "/state")
 USERSPACE_CR_KIND = "UserSpace"
 KUBECONFIG_PATH = "/tmp/.kubeconfig"
-
 
 
 ssm = boto3.client("ssm")
@@ -102,16 +100,11 @@ def create_userspace(
     owner_reference: Optional[Dict[str, str]] = None,
     labels: Optional[Dict[str, str]] = None,
     annnotations: Optional[Dict[str, str]] = None,
-) -> Dict[str, Any]:
+) -> None:
     userspace: Dict[str, Any] = {
         "apiVersion": f"{ORBIT_API_GROUP}/{ORBIT_API_VERSION}",
         "kind": USERSPACE_CR_KIND,
-        "metadata": {
-            "name": name,
-            "labels": labels,
-            "annotations": annnotations,
-            "namespace": name
-        },
+        "metadata": {"name": name, "labels": labels, "annotations": annnotations, "namespace": name},
         "spec": {
             "env": env,
             "space": space,
@@ -124,9 +117,7 @@ def create_userspace(
     if owner_reference is not None:
         userspace["metadata"]["ownerReferences"] = [owner_reference]
     logger.info(f"userspace={userspace}")
-    userspace_cr = userspace_dc.create(namespace=name, body=userspace).to_dict()
-
-    return userspace_cr
+    userspace_dc.create(namespace=name, body=userspace)
 
 
 def create_user_namespace(
@@ -137,6 +128,9 @@ def create_user_namespace(
     expected_user_namespaces: Dict[str, str],
     namespaces: List[str],
 ) -> None:
+    env = os.environ.get("ORBIT_ENV", "")
+    if not env:
+        raise ValueError("Orbit Environment ORBIT_ENV is required")
     for team, user_ns in expected_user_namespaces.items():
         try:
             team_namespace = api.read_namespace(name=team).to_dict()
@@ -146,9 +140,14 @@ def create_user_namespace(
             logger.exception("Error retrieving Team Namespace")
             team_uid = None
         if user_ns not in namespaces:
-            logger.info(f"Creating EFS endpoint for {user_ns}...")
-            resp = create_user_efs_endpoint(user=user_name, team_name=team)
-            access_point_id = resp.get("AccessPointId")
+            try:
+                logger.info(f"Creating EFS endpoint for {user_ns}...")
+                efs_ep_resp = create_user_efs_endpoint(user=user_name, team_name=team)
+                access_point_id = efs_ep_resp.get("AccessPointId", "")
+                if not access_point_id:
+                    raise ValueError(f"EFS access point is required. efs_ep_resp={efs_ep_resp}")
+            except Exception as e:
+                logger.error(f"Error while creating EFS access point for user_name={user_name} and team={team}: {e}")
 
             logger.info(f"User namespace {user_ns} doesnt exist. Creating...")
             kwargs = {
@@ -186,7 +185,7 @@ def create_user_namespace(
                 create_userspace(
                     userspace_dc=userspace_dc,
                     name=user_ns,
-                    env=os.environ.get("ORBIT_ENV"),
+                    env=env,
                     space="user",
                     team=team,
                     user=user_name,
@@ -226,7 +225,7 @@ def delete_user_namespace(
     userspace_dc: dynamic.DynamicClient,
     user_name: str,
     expected_user_namespaces: Dict[str, str],
-    namespaces: List[str]
+    namespaces: List[str],
 ) -> None:
     for user_ns in namespaces:
         if user_ns not in expected_user_namespaces.values():
@@ -246,7 +245,6 @@ def delete_user_namespace(
             except ApiException as ae:
                 logger.warning(f"Exception when trying to remove user namespace {user_ns}")
                 logger.warning(ae.body)
-
 
 
 def delete_user_profile(user_profile: str) -> None:
