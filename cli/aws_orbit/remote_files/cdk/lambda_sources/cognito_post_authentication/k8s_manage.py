@@ -192,7 +192,6 @@ def create_user_namespace(
                     user=user_name,
                     user_efsapid=access_point_id,
                     user_email=user_email,
-                    #owner_reference=kwargs["owner_references"],
                 )
                 logger.info(f"Created userspace custom resource {user_ns}")
             except ApiException as ae:

@@ -16,8 +16,8 @@ from typing import Any, Dict, List, Optional
 
 import kopf
 from kubernetes import dynamic
-from kubernetes.dynamic.client import DynamicClient
 from kubernetes.client.rest import ApiException
+from kubernetes.dynamic.client import DynamicClient
 
 KUBEFLOW_API_GROUP = "kubeflow.org"
 KUBEFLOW_API_VERSION = "v1alpha1"
@@ -119,6 +119,7 @@ def copy_poddefaults_to_user_namespaces(
                     "Failed to create PodDefault",
                     str(e),
                 )
+
 
 def modify_poddefaults_in_user_namespaces(
     poddefaults: List[Dict[str, Any]],

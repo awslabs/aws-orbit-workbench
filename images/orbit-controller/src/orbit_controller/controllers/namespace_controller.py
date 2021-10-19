@@ -25,7 +25,6 @@ from kubernetes.client import CoreV1Api, V1ConfigMap
 from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, dynamic_client, load_config, run_command
 from orbit_controller.utils import poddefault_utils, userspace_utils
 
-
 # @kopf.on.startup()
 # def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) -> None:
 #     settings.persistence.progress_storage = kopf.MultiProgressStorage(
@@ -42,7 +41,7 @@ def _should_index_podsetting(labels: kopf.Labels, **_: Any) -> bool:
     return labels.get("orbit/space") == "team" and "orbit/team" in labels and "orbit/disable-watcher" not in labels
 
 
-#@kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_index_podsetting)  # type: ignore
+# @kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_index_podsetting)  # type: ignore
 def podsettings_idx(
     namespace: str, name: str, labels: kopf.Labels, spec: kopf.Spec, **_: Any
 ) -> Optional[Dict[str, Dict[str, Any]]]:
@@ -117,8 +116,8 @@ def _should_process_namespace(annotations: kopf.Annotations, labels: kopf.Labels
     return "orbit/helm-chart-installation" not in annotations and labels.get("orbit/space", None) == "user"
 
 
-#@kopf.on.resume("namespaces", when=_should_process_namespace)  # type: ignore
-#@kopf.on.create("namespaces", when=_should_process_namespace)
+# @kopf.on.resume("namespaces", when=_should_process_namespace)  # type: ignore
+# @kopf.on.create("namespaces", when=_should_process_namespace)
 def install_team_charts(
     name: str,
     annotations: kopf.Annotations,
@@ -236,7 +235,7 @@ def install_team_charts(
     return "Complete"
 
 
-#@kopf.on.delete("namespaces", labels={"orbit/space": kopf.PRESENT})  # type: ignore
+# @kopf.on.delete("namespaces", labels={"orbit/space": kopf.PRESENT})  # type: ignore
 def uninstall_team_charts(
     name: str,
     annotations: kopf.Annotations,

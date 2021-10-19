@@ -41,6 +41,7 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
 def _should_index_podsetting(labels: kopf.Labels, **_: Any) -> bool:
     return labels.get("orbit/space") == "team" and "orbit/team" in labels and "orbit/disable-watcher" not in labels
 
+
 @kopf.index(ORBIT_API_GROUP, ORBIT_API_VERSION, "podsettings", when=_should_index_podsetting)  # type: ignore
 def podsettings_idx(
     namespace: str, name: str, labels: kopf.Labels, spec: kopf.Spec, **_: Any
@@ -67,7 +68,7 @@ def _install_helm_chart(
     package: str,
     logger: kopf.Logger,
 ) -> bool:
-    install_status= True
+    install_status = True
     # try to uninstall first
     try:
         cmd = f"helm uninstall --debug {helm_release} -n {team}"
@@ -90,12 +91,12 @@ def _install_helm_chart(
         logger.info("finished cmd: %s", cmd)
     except Exception:
         logger.error("errored cmd: %s", cmd)
-        install_status= False
+        install_status = False
     return install_status
 
 
 def _uninstall_chart(helm_release: str, namespace: str, logger: kopf.Logger) -> None:
-    install_status= True
+    install_status = True
     cmd = f"/usr/local/bin/helm uninstall --debug --namespace {namespace} {helm_release}"
     try:
         logger.debug("running uninstall cmd: %s", cmd)
@@ -104,8 +105,9 @@ def _uninstall_chart(helm_release: str, namespace: str, logger: kopf.Logger) -> 
         logger.info("finished uninstall cmd: %s", cmd)
     except Exception:
         logger.error("errored cmd: %s", cmd)
-        install_status= False
+        install_status = False
     return install_status
+
 
 def _get_team_context(team: str, logger: kopf.Logger) -> Dict[str, Any]:
     try:
@@ -125,13 +127,14 @@ def _get_team_context(team: str, logger: kopf.Logger) -> Dict[str, Any]:
 def _should_process_userspace(annotations: kopf.Annotations, spec: kopf.Spec, **_: Any) -> bool:
     return "orbit/helm-chart-installation" not in annotations and spec.get("space", None) == "user"
 
+
 @kopf.on.resume(
     ORBIT_API_GROUP,
     ORBIT_API_VERSION,
     "userspaces",
     # field="status.installation.installationStatus",
     # value=kopf.ABSENT,
-    when=_should_process_userspace
+    when=_should_process_userspace,
 )
 @kopf.on.create(
     ORBIT_API_GROUP,
@@ -139,17 +142,17 @@ def _should_process_userspace(annotations: kopf.Annotations, spec: kopf.Spec, **
     "userspaces",
     # field="status.installation.installationStatus",
     # value=kopf.ABSENT,
-    when=_should_process_userspace
+    when=_should_process_userspace,
 )
 def install_team(
-        name: str,
-        meta: kopf.Meta,
-        spec: kopf.Spec,
-        status: kopf.Status,
-        patch: kopf.Patch,
-        podsettings_idx: kopf.Index[str, Dict[str, Any]],
-        logger: kopf.Logger,
-        **_: Any
+    name: str,
+    meta: kopf.Meta,
+    spec: kopf.Spec,
+    status: kopf.Status,
+    patch: kopf.Patch,
+    podsettings_idx: kopf.Index[str, Dict[str, Any]],
+    logger: kopf.Logger,
+    **_: Any,
 ) -> str:
     logger.debug("loading kubeconfig")
     load_config()
@@ -201,7 +204,7 @@ def install_team(
     run_command(f"helm search repo --devel {repo} -o json > /tmp/{unique_hash}-charts.json")
     with open(f"/tmp/{unique_hash}-charts.json", "r") as f:
         charts = json.load(f)
-    #charts.append("user-space-1.4.0-0-blabla.tgz")
+    # charts.append("user-space-1.4.0-0-blabla.tgz")
     run_command(f"helm list -n {team} -o json > /tmp/{unique_hash}-releases.json")
     with open(f"/tmp/{unique_hash}-releases.json", "r") as f:
         releaseList = json.load(f)
@@ -216,7 +219,7 @@ def install_team(
         if helm_release not in releaseList:
             # install the helm package for this user space
             logger.info(f"install the helm package chart_name={chart_name} helm_release={helm_release}")
-            install_status= _install_helm_chart(
+            install_status = _install_helm_chart(
                 helm_release=helm_release,
                 namespace=name,
                 team=team,
@@ -225,23 +228,19 @@ def install_team(
                 user_efsapid=user_efsapid,
                 repo=repo,
                 package=chart_name,
-                logger=logger
+                logger=logger,
             )
             if install_status:
                 logger.info("Helm release %s installed at %s", helm_release, name)
                 continue
             else:
                 patch["status"] = {
-                    "userSpaceJobOperator": {
-                        "installationStatus": "Failed to install",
-                        "chart_name": chart_name
-                    }
+                    "userSpaceJobOperator": {"installationStatus": "Failed to install", "chart_name": chart_name}
                 }
-                return 'Failed'
+                return "Failed"
 
     logger.info("Copying PodDefaults from Team")
     logger.info("podsettings_idx:%s", podsettings_idx)
-
 
     # Construct pseudo poddefaults for each podsetting in the team namespace
     poddefaults = [
@@ -257,13 +256,10 @@ def install_team(
     )
 
     patch["metadata"] = {"annotations": {"orbit/helm-chart-installation": "Complete"}}
-    patch["status"] = {
-            "userSpaceJobOperator": {
-                "installationStatus": "Installed"
-            }
-        }
+    patch["status"] = {"userSpaceJobOperator": {"installationStatus": "Installed"}}
 
     return "Installed"
+
 
 @kopf.on.delete(ORBIT_API_GROUP, ORBIT_API_VERSION, "userspaces")
 def uninstall_team_charts(
@@ -325,23 +321,16 @@ def uninstall_team_charts(
             chart_name = chart["name"].split("/")[1]
             helm_release = f"{name}-{chart_name}"
             if helm_release in releases:
-                install_status=_uninstall_chart(helm_release=helm_release, namespace=team, logger=logger)
+                install_status = _uninstall_chart(helm_release=helm_release, namespace=team, logger=logger)
 
                 if install_status:
                     logger.info("Helm release %s installed at %s", helm_release, name)
                     continue
                 else:
                     patch["status"] = {
-                        "userSpaceJobOperator": {
-                            "installationStatus": "Failed to uninstall",
-                            "chart_name": chart_name
-                        }
+                        "userSpaceJobOperator": {"installationStatus": "Failed to uninstall", "chart_name": chart_name}
                     }
-                    return 'Failed'
+                    return "Failed"
 
-    patch["status"] = {
-            "userSpaceJobOperator": {
-                "installationStatus": "Uninstalled"
-            }
-        }
+    patch["status"] = {"userSpaceJobOperator": {"installationStatus": "Uninstalled"}}
     return "Uninstalled"
