@@ -64,3 +64,8 @@ docs:
         url: deploying-from-source
       - title: Orbit Controller
         url: orbit-controller
+  - group: Testing
+    sub:
+      - title: PyTest
+        url: orbit-pytest
+
