@@ -243,7 +243,7 @@ def test_lakecreator_glue_tables(kube: TestClient):
 @pytest.mark.order(5)
 @pytest.mark.namespace(create=False)
 @pytest.mark.testlakecreator_lf
-@pytest.mark.testlakecreator_noniso
+@pytest.mark.skipif("iso" in workspace.get("env_name"), reason="lakeformation endpoint is unreachable in iso env")
 def test_lakecreator_lf(kube: TestClient):
     notebook_to_run = {
         "apiVersion": "orbit.aws/v1",
