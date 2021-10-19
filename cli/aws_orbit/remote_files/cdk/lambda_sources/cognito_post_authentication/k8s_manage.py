@@ -183,6 +183,7 @@ def create_user_namespace(
 
             try:
                 # create userspace custom resource for the given user namespace
+                logger.info(f"Creating userspace custom resource {user_ns}")
                 create_userspace(
                     userspace_dc=userspace_dc,
                     name=user_ns,
@@ -195,7 +196,7 @@ def create_user_namespace(
                     owner_reference=kwargs["owner_references"],
                 )
                 logger.info(f"Created userspace custom resource {user_ns}")
-            except Exception as ae:
+            except ApiException as ae:
                 logger.error(f"Exception when trying to create userspace custom resource {user_ns}")
                 logger.error(ae.body)
 
