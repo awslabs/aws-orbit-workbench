@@ -123,7 +123,7 @@ def create_userspace(
     }
     if owner_reference is not None:
         userspace["metadata"]["ownerReferences"] = [owner_reference]
-
+    logger.info(f"userspace={userspace}")
     userspace_cr = userspace_dc.create(namespace=name, body=userspace).to_dict()
 
     return userspace_cr
@@ -192,7 +192,7 @@ def create_user_namespace(
                     user=user_name,
                     user_efsapid=access_point_id,
                     user_email=user_email,
-                    owner_reference=kwargs["owner_references"],
+                    #owner_reference=kwargs["owner_references"],
                 )
                 logger.info(f"Created userspace custom resource {user_ns}")
             except ApiException as ae:
@@ -232,14 +232,12 @@ def delete_user_namespace(
     for user_ns in namespaces:
         if user_ns not in expected_user_namespaces.values():
             delete_user_profile(user_profile=user_ns)
-
             delete_user_efs_endpoint(user_name=user_name, user_namespace=user_ns, api=api)
-
             logger.info(f"User {user_name} is not expected to be part of the {user_ns} namespace. Removing...")
             try:
                 userspace_dc.delete(name=user_ns, namespace=user_ns)
                 logger.info(f"Removed userspace custom resource {user_ns}")
-            except Exception as ae:
+            except ApiException as ae:
                 logger.error(f"Exception when trying to remove userspace custom resource {user_ns}")
                 logger.error(ae.body)
             try:
@@ -255,7 +253,6 @@ def delete_user_namespace(
 def delete_user_profile(user_profile: str) -> None:
     logger.info(f"Removing profile {user_profile}")
     run_command(f"kubectl delete profile {user_profile} --kubeconfig {KUBECONFIG_PATH}")
-
     time.sleep(5)
 
 
