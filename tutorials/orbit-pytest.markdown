@@ -28,12 +28,16 @@ permalink: orbit-pytest
 * [PyTest](https://docs.pytest.org)
 * [Kubetest](https://kubetest.readthedocs.io/en/latest/)
 
+
+## Python modules
+* pytest~=6.2.5
+* kubetest~=0.9.5
+* pytest-order~=1.0.0
+
 ## Environment variables
 
 * AWS_ORBIT_ENV - Set to Orbit Environment name
 * AWS_ORBIT_TEAM_SPACE - Set to Orbit Teamspace
-
-
 
 ## PyTest scripts
 
@@ -44,6 +48,7 @@ permalink: orbit-pytest
 
 
 ## Triggering PyTests
+* Above team specific scripts can run PyTests using Python envvironment specific PyTest and KubeTest modules.
 * Orbit PyTest interanlly use KubeTest Python module to interact with EKS cluster. 
 * Orbit extends KubeTest [ApiObject](https://kubetest.readthedocs.io/en/latest/_modules/kubetest/objects/api_object.html) to allow interaction with Orbit defined Kubernetes Custom Resource Defination(s) and Custom Resource(s). 
 * Orbit PyTests will create, fetch status and delete the Orbit Custom Resources.
