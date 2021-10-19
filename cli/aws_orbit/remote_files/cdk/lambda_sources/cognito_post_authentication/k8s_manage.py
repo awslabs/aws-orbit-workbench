@@ -177,8 +177,8 @@ def create_user_namespace(
                 api.create_namespace(body=body)
                 logger.info(f"Created namespace {user_ns}")
             except ApiException as ae:
-                logger.error(f"Exception when trying to create user namespace {user_ns}")
-                logger.error(ae.body)
+                logger.warning(f"Exception when trying to create user namespace {user_ns}")
+                logger.warning(ae.body)
 
             try:
                 # create userspace custom resource for the given user namespace
@@ -195,8 +195,8 @@ def create_user_namespace(
                 )
                 logger.info(f"Created userspace custom resource {user_ns}")
             except ApiException as ae:
-                logger.error(f"Exception when trying to create userspace custom resource {user_ns}")
-                logger.error(ae.body)
+                logger.warning(f"Exception when trying to create userspace custom resource {user_ns}")
+                logger.warning(ae.body)
 
 
 def delete_user_efs_endpoint(user_name: str, user_namespace: str, api: client.CoreV1Api) -> None:
@@ -237,15 +237,15 @@ def delete_user_namespace(
                 userspace_dc.delete(name=user_ns, namespace=user_ns)
                 logger.info(f"Removed userspace custom resource {user_ns}")
             except ApiException as ae:
-                logger.error(f"Exception when trying to remove userspace custom resource {user_ns}")
-                logger.error(ae.body)
+                logger.warning(f"Exception when trying to remove userspace custom resource {user_ns}")
+                logger.warning(ae.body)
             try:
                 api.delete_collection_namespaced_pod(namespace=user_ns, grace_period_seconds=0)
                 api.delete_namespace(name=user_ns)
                 logger.info(f"Removed namespace {user_ns}")
             except ApiException as ae:
-                logger.error(f"Exception when trying to remove user namespace {user_ns}")
-                logger.error(ae.body)
+                logger.warning(f"Exception when trying to remove user namespace {user_ns}")
+                logger.warning(ae.body)
 
 
 

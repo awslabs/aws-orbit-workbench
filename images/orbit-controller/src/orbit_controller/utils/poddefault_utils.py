@@ -108,14 +108,14 @@ def copy_poddefaults_to_user_namespaces(
                     logger=logger,
                 )
             except ApiException as e:
-                logger.warn(
+                logger.warning(
                     "Unable to create PodDefault %s in Namespace %s: %s",
                     poddefault["metadata"]["name"],
                     namespace,
                     str(e.body),
                 )
             except Exception as e:
-                logger.error(
+                logger.warning(
                     "Failed to create PodDefault",
                     str(e),
                 )

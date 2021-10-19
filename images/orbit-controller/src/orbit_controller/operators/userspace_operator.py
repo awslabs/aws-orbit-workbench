@@ -23,7 +23,7 @@ from typing import Any, Dict, Optional
 import kopf
 from kubernetes.client import CoreV1Api, V1ConfigMap
 from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, dynamic_client, load_config, run_command
-from orbit_controller.utils import poddefault_utils, userspace_utils
+from orbit_controller.utils import poddefault_utils
 
 
 @kopf.on.startup()
@@ -90,12 +90,12 @@ def _install_helm_chart(
         logger.debug(output)
         logger.info("finished cmd: %s", cmd)
     except Exception:
-        logger.error("errored cmd: %s", cmd)
+        logger.warning("errored cmd: %s", cmd)
         install_status = False
     return install_status
 
 
-def _uninstall_chart(helm_release: str, namespace: str, logger: kopf.Logger) -> None:
+def _uninstall_chart(helm_release: str, namespace: str, logger: kopf.Logger) -> bool:
     install_status = True
     cmd = f"/usr/local/bin/helm uninstall --debug --namespace {namespace} {helm_release}"
     try:
@@ -128,20 +128,20 @@ def _should_process_userspace(annotations: kopf.Annotations, spec: kopf.Spec, **
     return "orbit/helm-chart-installation" not in annotations and spec.get("space", None) == "user"
 
 
-@kopf.on.resume(
+@kopf.on.resume(  # type: ignore
     ORBIT_API_GROUP,
     ORBIT_API_VERSION,
     "userspaces",
-    # field="status.installation.installationStatus",
-    # value=kopf.ABSENT,
+    field="status.userSpaceOperator.installationStatus",
+    value=kopf.ABSENT,
     when=_should_process_userspace,
 )
 @kopf.on.create(
     ORBIT_API_GROUP,
     ORBIT_API_VERSION,
     "userspaces",
-    # field="status.installation.installationStatus",
-    # value=kopf.ABSENT,
+    field="status.userSpaceOperator.installationStatus",
+    value=kopf.ABSENT,
     when=_should_process_userspace,
 )
 def install_team(
@@ -199,7 +199,7 @@ def install_team(
         # In isolated envs, we cannot refresh stable, and since we don't use it, we remove it
         run_command("helm repo remove stable")
     except Exception:
-        logger.info("Tried to remove stable repo...got an error, but moving on")
+        logger.warning("Tried to remove stable repo...got an error, but moving on")
     run_command("helm repo update")
     run_command(f"helm search repo --devel {repo} -o json > /tmp/{unique_hash}-charts.json")
     with open(f"/tmp/{unique_hash}-charts.json", "r") as f:
@@ -235,7 +235,7 @@ def install_team(
                 continue
             else:
                 patch["status"] = {
-                    "userSpaceJobOperator": {"installationStatus": "Failed to install", "chart_name": chart_name}
+                    "userSpaceOperator": {"installationStatus": "Failed to install", "chart_name": chart_name}
                 }
                 return "Failed"
 
@@ -256,12 +256,12 @@ def install_team(
     )
 
     patch["metadata"] = {"annotations": {"orbit/helm-chart-installation": "Complete"}}
-    patch["status"] = {"userSpaceJobOperator": {"installationStatus": "Installed"}}
+    patch["status"] = {"userSpaceOperator": {"installationStatus": "Installed"}}
 
     return "Installed"
 
 
-@kopf.on.delete(ORBIT_API_GROUP, ORBIT_API_VERSION, "userspaces")
+@kopf.on.delete(ORBIT_API_GROUP, ORBIT_API_VERSION, "userspaces")  # type: ignore
 def uninstall_team_charts(
     name: str,
     annotations: kopf.Annotations,
@@ -328,9 +328,9 @@ def uninstall_team_charts(
                     continue
                 else:
                     patch["status"] = {
-                        "userSpaceJobOperator": {"installationStatus": "Failed to uninstall", "chart_name": chart_name}
+                        "userSpaceOperator": {"installationStatus": "Failed to uninstall", "chart_name": chart_name}
                     }
                     return "Failed"
 
-    patch["status"] = {"userSpaceJobOperator": {"installationStatus": "Uninstalled"}}
+    patch["status"] = {"userSpaceOperator": {"installationStatus": "Uninstalled"}}
     return "Uninstalled"
