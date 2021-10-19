@@ -243,6 +243,7 @@ def test_lakecreator_glue_tables(kube: TestClient):
 @pytest.mark.order(5)
 @pytest.mark.namespace(create=False)
 @pytest.mark.testlakecreator_lf
+@pytest.mark.testlakecreator_noniso
 def test_lakecreator_lf(kube: TestClient):
     notebook_to_run = {
         "apiVersion": "orbit.aws/v1",
