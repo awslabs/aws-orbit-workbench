@@ -77,7 +77,7 @@ def create_userspace(
     space: str,
     team: str,
     user: str,
-    user_efsid: str,
+    team_efsid: str,
     user_email: str,
     owner_reference: Optional[Dict[str, str]] = None,
     labels: Optional[Dict[str, str]] = None,
@@ -92,7 +92,7 @@ def create_userspace(
             "space": space,
             "team": team,
             "user": user,
-            "userEfsId": user_efsid,
+            "userEfsId": team_efsid,
             "userEmail": user_email,
         },
     }
@@ -100,7 +100,6 @@ def create_userspace(
         userspace["metadata"]["ownerReferences"] = [owner_reference]
     logger.info(f"userspace={userspace}")
     userspace_dc.create(namespace=name, body=userspace)
-
 
 def create_user_namespace(
     api: client.CoreV1Api,
@@ -161,7 +160,7 @@ def create_user_namespace(
                     space="user",
                     team=team,
                     user=user_name,
-                    user_efsid=EFS_FS_ID,
+                    team_efsid=EFS_FS_ID,
                     user_email=user_email,
                 )
                 logger.info(f"Created userspace custom resource {user_ns}")

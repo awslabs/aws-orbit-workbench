@@ -38,7 +38,7 @@ ORBIT_ENV="iter"
 TEAM_NAME = "lake-admin"
 
 USER_NAME = "orbitpytest"
-USER_EMAIL = F"{USER_NAME}@AMAZON.COM"
+USER_EMAIL = F"{USER_NAME}@amazon.com"
 USER_NS = "lake-admin-orbitpytest"
 
 class UserSpace(CustomApiObject):

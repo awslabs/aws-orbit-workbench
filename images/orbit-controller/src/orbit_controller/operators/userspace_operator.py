@@ -168,11 +168,11 @@ def _should_process_userspace(annotations: kopf.Annotations, spec: kopf.Spec, **
     return "orbit/helm-chart-installation" not in annotations and spec.get("space", None) == "user"
 
 
-@kopf.on.resume(
+@kopf.on.resume(  # type: ignore
     ORBIT_API_GROUP,
     ORBIT_API_VERSION,
     "userspaces",
-    field="status.installation.installationStatus",
+    field="status.userSpaceOperator.installationStatus",
     value=kopf.ABSENT,
     when=_should_process_userspace,
 )
@@ -180,7 +180,7 @@ def _should_process_userspace(annotations: kopf.Annotations, spec: kopf.Spec, **
     ORBIT_API_GROUP,
     ORBIT_API_VERSION,
     "userspaces",
-    field="status.installation.installationStatus",
+    field="status.userSpaceOperator.installationStatus",
     value=kopf.ABSENT,
     when=_should_process_userspace,
 )
@@ -283,7 +283,7 @@ def install_team(
                 continue
             else:
                 patch["status"] = {
-                    "userSpaceJobOperator": {"installationStatus": "Failed to install", "chart_name": chart_name}
+                    "userSpaceOperator": {"installationStatus": "Failed to install", "chart_name": chart_name}
                 }
                 return "Failed"
 
@@ -304,15 +304,14 @@ def install_team(
     )
 
     patch["metadata"] = {"annotations": {"orbit/helm-chart-installation": "Complete"}}
-    patch["status"] = {"userSpaceJobOperator": {"installationStatus": "Installed"}}
+    patch["status"] = {"userSpaceOperator": {"installationStatus": "Installed"}}
 
     return "Installed"
 
 
-@kopf.on.delete(ORBIT_API_GROUP, ORBIT_API_VERSION, "userspaces")
+@kopf.on.delete(ORBIT_API_GROUP, ORBIT_API_VERSION, "userspaces")  # type: ignore
 def uninstall_team_charts(
     name: str,
-    api: client.CoreV1Api,
     annotations: kopf.Annotations,
     labels: kopf.Labels,
     patch: kopf.Patch,
@@ -378,9 +377,9 @@ def uninstall_team_charts(
                     continue
                 else:
                     patch["status"] = {
-                        "userSpaceJobOperator": {"installationStatus": "Failed to uninstall", "chart_name": chart_name}
+                        "userSpaceOperator": {"installationStatus": "Failed to uninstall", "chart_name": chart_name}
                     }
                     return "Failed"
 
-    patch["status"] = {"userSpaceJobOperator": {"installationStatus": "Uninstalled"}}
+    patch["status"] = {"userSpaceOperator": {"installationStatus": "Uninstalled"}}
     return "Uninstalled"
