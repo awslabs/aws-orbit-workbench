@@ -18,9 +18,11 @@ import os
 import random
 import string
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
+import boto3
 import kopf
+from kubernetes import client
 from kubernetes.client import CoreV1Api, V1ConfigMap
 from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, dynamic_client, load_config, run_command
 from orbit_controller.utils import poddefault_utils
@@ -95,6 +97,41 @@ def _install_helm_chart(
     return install_status
 
 
+def _create_user_efs_endpoint(user: str, team_name: str, team_efsid: str) -> Dict[str, Any]:
+    efs = boto3.client("efs")
+
+    return cast(
+        Dict[str, str],
+        efs.create_access_point(
+            FileSystemId=team_efsid,
+            PosixUser={"Uid": 1000, "Gid": 100},
+            RootDirectory={
+                "Path": f"/{team_name}/private/{user}",
+                "CreationInfo": {"OwnerUid": 1000, "OwnerGid": 100, "Permissions": "770"},
+            },
+            Tags=[{"Key": "TeamSpace", "Value": team_name}, {"Key": "Env", "Value": os.environ.get("ORBIT_ENV")}],
+        ),
+    )
+
+
+def _delete_user_efs_endpoint(user_name: str, user_namespace: str, logger: kopf.Logger, meta: kopf.Meta) -> None:
+    efs = boto3.client("efs")
+
+    logger.info(f"Fetching the EFS access point in the namespace {user_namespace} for user {user_name}")
+
+    efs_access_point_id = meta.get("userEfsApId")
+
+    logger.info(f"Deleting the EFS access point {efs_access_point_id} for user {user_name}")
+
+    try:
+        efs.delete_access_point(AccessPointId=efs_access_point_id)
+        logger.info(f"Access point {efs_access_point_id} deleted")
+    except efs.exceptions.AccessPointNotFound:
+        logger.error(f"Access point not found: {efs_access_point_id}")
+    except efs.exceptions.InternalServerError as e:
+        logger.error(e)
+
+
 def _uninstall_chart(helm_release: str, namespace: str, logger: kopf.Logger) -> bool:
     install_status = True
     cmd = f"/usr/local/bin/helm uninstall --debug --namespace {namespace} {helm_release}"
@@ -164,28 +201,37 @@ def install_team(
     space = spec.get("space", None)
     team = spec.get("team", None)
     user = spec.get("user", None)
-    user_efsapid = spec.get("userEfsApId", None)
+    team_efsid = spec.get("teamEfsId", None)
     user_email = spec.get("userEmail", None)
 
     logger.debug("new namespace: %s,%s,%s,%s", team, user, user_email, name)
 
-    if not env or not space or not team or not user or not user_efsapid or not user_email:
+    if not env or not space or not team or not user or not team_efsid or not user_email:
         logger.error(
-            (
-                "All of env, space, team, user, user_efsapid, and user_email are required."
-                "Found: %s, %s, %s, %s, %s, %s"
-            ),
+            ("All of env, space, team, user, team_efsid, and user_email are required." "Found: %s, %s, %s, %s, %s, %s"),
             env,
             space,
             team,
             user,
-            user_efsapid,
+            team_efsid,
             user_email,
         )
         patch["metadata"] = {"annotations": {"orbit/helm-chart-installation": "Skipped"}}
         return "Skipping"
 
     client = dynamic_client()
+
+    try:
+        logger.info(f"Creating EFS endpoint for {team}-{user}...")
+        efs_ep_resp = _create_user_efs_endpoint(user=user, team_name=team, team_efsid=team_efsid)
+        access_point_id = efs_ep_resp.get("AccessPointId", "")
+        patch["metadata"] = {"labels": {"userEfsApId": access_point_id}}
+    except Exception as e:
+        logger.error(f"Error while creating EFS access point for user_name={user} and team={team}: {e}")
+        patch["status"] = {
+            "userSpaceOperator": {"installationStatus": "Failed to create EFS AccessPoint", "exception": str(e)}
+        }
+        return "Failed"
 
     team_context = _get_team_context(team=team, logger=logger)
     logger.info("team context keys: %s", team_context.keys())
@@ -199,7 +245,7 @@ def install_team(
         # In isolated envs, we cannot refresh stable, and since we don't use it, we remove it
         run_command("helm repo remove stable")
     except Exception:
-        logger.warning("Tried to remove stable repo...got an error, but moving on")
+        logger.info("Tried to remove stable repo...got an error, but moving on")
     run_command("helm repo update")
     run_command(f"helm search repo --devel {repo} -o json > /tmp/{unique_hash}-charts.json")
     with open(f"/tmp/{unique_hash}-charts.json", "r") as f:
@@ -224,7 +270,7 @@ def install_team(
                 team=team,
                 user=user,
                 user_email=user_email,
-                user_efsapid=user_efsapid,
+                user_efsapid=access_point_id,
                 repo=repo,
                 package=chart_name,
                 logger=logger,
@@ -263,10 +309,12 @@ def install_team(
 @kopf.on.delete(ORBIT_API_GROUP, ORBIT_API_VERSION, "userspaces")  # type: ignore
 def uninstall_team_charts(
     name: str,
+    api: client.CoreV1Api,
     annotations: kopf.Annotations,
     labels: kopf.Labels,
     patch: kopf.Patch,
     logger: kopf.Logger,
+    meta: kopf.Meta,
     **_: Any,
 ) -> str:
     logger.debug("loading kubeconfig")
@@ -300,6 +348,7 @@ def uninstall_team_charts(
             )
             return "Skipping"
 
+        _delete_user_efs_endpoint(user_name=user, user_namespace=f"{team}-{user}", logger=logger, meta=meta)
         team_context = _get_team_context(team=team, logger=logger)
         logger.info("team context keys: %s", team_context.keys())
         helm_repo_url = team_context["UserHelmRepository"]
