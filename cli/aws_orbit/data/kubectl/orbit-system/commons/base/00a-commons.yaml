@@ -115,7 +115,7 @@ spec:
         jsonPath: .spec.user
         type: string
       - name: InstallationStatus
-        jsonPath: .status.userSpaceJobOperator.installationStatus
+        jsonPath: .status.userSpaceOperator.installationStatus
         type: string
       # - name: HelmRepository
       #   jsonPath: .status.installation.helmRepository
