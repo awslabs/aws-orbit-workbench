@@ -18,8 +18,9 @@ import os
 import random
 import string
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
+import boto3
 import kopf
 from kubernetes.client import CoreV1Api, V1ConfigMap
 from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, dynamic_client, load_config, run_command
@@ -90,12 +91,29 @@ def _install_helm_chart(
         logger.debug(output)
         logger.info("finished cmd: %s", cmd)
     except Exception:
-        logger.warning("errored cmd: %s", cmd)
+        logger.error("errored cmd: %s", cmd)
         install_status = False
     return install_status
 
 
-def _uninstall_chart(helm_release: str, namespace: str, logger: kopf.Logger) -> bool:
+def _create_user_efs_endpoint(user: str, team_name: str, user_efsid: str) -> Dict[str, Any]:
+    efs = boto3.client("efs")
+
+    return cast(
+        Dict[str, str],
+        efs.create_access_point(
+            FileSystemId=user_efsid,
+            PosixUser={"Uid": 1000, "Gid": 100},
+            RootDirectory={
+                "Path": f"/{team_name}/private/{user}",
+                "CreationInfo": {"OwnerUid": 1000, "OwnerGid": 100, "Permissions": "770"},
+            },
+            Tags=[{"Key": "TeamSpace", "Value": team_name}, {"Key": "Env", "Value": os.environ.get("ORBIT_ENV")}],
+        ),
+    )
+
+
+def _uninstall_chart(helm_release: str, namespace: str, logger: kopf.Logger) -> None:
     install_status = True
     cmd = f"/usr/local/bin/helm uninstall --debug --namespace {namespace} {helm_release}"
     try:
@@ -128,11 +146,11 @@ def _should_process_userspace(annotations: kopf.Annotations, spec: kopf.Spec, **
     return "orbit/helm-chart-installation" not in annotations and spec.get("space", None) == "user"
 
 
-@kopf.on.resume(  # type: ignore
+@kopf.on.resume(
     ORBIT_API_GROUP,
     ORBIT_API_VERSION,
     "userspaces",
-    field="status.userSpaceOperator.installationStatus",
+    field="status.installation.installationStatus",
     value=kopf.ABSENT,
     when=_should_process_userspace,
 )
@@ -140,7 +158,7 @@ def _should_process_userspace(annotations: kopf.Annotations, spec: kopf.Spec, **
     ORBIT_API_GROUP,
     ORBIT_API_VERSION,
     "userspaces",
-    field="status.userSpaceOperator.installationStatus",
+    field="status.installation.installationStatus",
     value=kopf.ABSENT,
     when=_should_process_userspace,
 )
@@ -164,28 +182,32 @@ def install_team(
     space = spec.get("space", None)
     team = spec.get("team", None)
     user = spec.get("user", None)
-    user_efsapid = spec.get("userEfsApId", None)
+    user_efsid = spec.get("userEfsId", None)
     user_email = spec.get("userEmail", None)
 
     logger.debug("new namespace: %s,%s,%s,%s", team, user, user_email, name)
 
-    if not env or not space or not team or not user or not user_efsapid or not user_email:
+    if not env or not space or not team or not user or not user_efsid or not user_email:
         logger.error(
-            (
-                "All of env, space, team, user, user_efsapid, and user_email are required."
-                "Found: %s, %s, %s, %s, %s, %s"
-            ),
+            ("All of env, space, team, user, user_efsid, and user_email are required." "Found: %s, %s, %s, %s, %s, %s"),
             env,
             space,
             team,
             user,
-            user_efsapid,
+            user_efsid,
             user_email,
         )
         patch["metadata"] = {"annotations": {"orbit/helm-chart-installation": "Skipped"}}
         return "Skipping"
 
     client = dynamic_client()
+
+    try:
+        logger.info(f"Creating EFS endpoint for {team}-{user}...")
+        efs_ep_resp = _create_user_efs_endpoint(user=user, team_name=team, user_efsid=user_efsid)
+        access_point_id = efs_ep_resp.get("AccessPointId")
+    except Exception as e:
+        logger.error(f"Error while creating EFS access point for user_name={user} and team={team}: {e}")
 
     team_context = _get_team_context(team=team, logger=logger)
     logger.info("team context keys: %s", team_context.keys())
@@ -199,12 +221,11 @@ def install_team(
         # In isolated envs, we cannot refresh stable, and since we don't use it, we remove it
         run_command("helm repo remove stable")
     except Exception:
-        logger.warning("Tried to remove stable repo...got an error, but moving on")
+        logger.info("Tried to remove stable repo...got an error, but moving on")
     run_command("helm repo update")
     run_command(f"helm search repo --devel {repo} -o json > /tmp/{unique_hash}-charts.json")
     with open(f"/tmp/{unique_hash}-charts.json", "r") as f:
         charts = json.load(f)
-    # charts.append("user-space-1.4.0-0-blabla.tgz")
     run_command(f"helm list -n {team} -o json > /tmp/{unique_hash}-releases.json")
     with open(f"/tmp/{unique_hash}-releases.json", "r") as f:
         releaseList = json.load(f)
@@ -225,7 +246,7 @@ def install_team(
                 team=team,
                 user=user,
                 user_email=user_email,
-                user_efsapid=user_efsapid,
+                user_efsapid=access_point_id,
                 repo=repo,
                 package=chart_name,
                 logger=logger,
@@ -235,7 +256,7 @@ def install_team(
                 continue
             else:
                 patch["status"] = {
-                    "userSpaceOperator": {"installationStatus": "Failed to install", "chart_name": chart_name}
+                    "userSpaceJobOperator": {"installationStatus": "Failed to install", "chart_name": chart_name}
                 }
                 return "Failed"
 
@@ -256,12 +277,12 @@ def install_team(
     )
 
     patch["metadata"] = {"annotations": {"orbit/helm-chart-installation": "Complete"}}
-    patch["status"] = {"userSpaceOperator": {"installationStatus": "Installed"}}
+    patch["status"] = {"userSpaceJobOperator": {"installationStatus": "Installed"}}
 
     return "Installed"
 
 
-@kopf.on.delete(ORBIT_API_GROUP, ORBIT_API_VERSION, "userspaces")  # type: ignore
+@kopf.on.delete(ORBIT_API_GROUP, ORBIT_API_VERSION, "userspaces")
 def uninstall_team_charts(
     name: str,
     annotations: kopf.Annotations,
@@ -328,9 +349,9 @@ def uninstall_team_charts(
                     continue
                 else:
                     patch["status"] = {
-                        "userSpaceOperator": {"installationStatus": "Failed to uninstall", "chart_name": chart_name}
+                        "userSpaceJobOperator": {"installationStatus": "Failed to uninstall", "chart_name": chart_name}
                     }
                     return "Failed"
 
-    patch["status"] = {"userSpaceOperator": {"installationStatus": "Uninstalled"}}
+    patch["status"] = {"userSpaceJobOperator": {"installationStatus": "Uninstalled"}}
     return "Uninstalled"

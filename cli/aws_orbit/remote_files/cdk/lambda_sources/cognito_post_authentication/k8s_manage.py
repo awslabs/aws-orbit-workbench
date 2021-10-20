@@ -70,24 +70,6 @@ def create_kubeconfig() -> None:
     except config.ConfigException:
         raise Exception("Could not configure kubernetes python client")
 
-
-def create_user_efs_endpoint(user: str, team_name: str) -> Dict[str, Any]:
-    efs = boto3.client("efs")
-
-    return cast(
-        Dict[str, str],
-        efs.create_access_point(
-            FileSystemId=EFS_FS_ID,
-            PosixUser={"Uid": 1000, "Gid": 100},
-            RootDirectory={
-                "Path": f"/{team_name}/private/{user}",
-                "CreationInfo": {"OwnerUid": 1000, "OwnerGid": 100, "Permissions": "770"},
-            },
-            Tags=[{"Key": "TeamSpace", "Value": team_name}, {"Key": "Env", "Value": os.environ.get("ORBIT_ENV")}],
-        ),
-    )
-
-
 def create_userspace(
     userspace_dc: dynamic.DynamicClient,
     name: str,
@@ -95,7 +77,7 @@ def create_userspace(
     space: str,
     team: str,
     user: str,
-    user_efsapid: str,
+    user_efsid: str,
     user_email: str,
     owner_reference: Optional[Dict[str, str]] = None,
     labels: Optional[Dict[str, str]] = None,
@@ -110,7 +92,7 @@ def create_userspace(
             "space": space,
             "team": team,
             "user": user,
-            "userEfsApId": user_efsapid,
+            "userEfsId": user_efsid,
             "userEmail": user_email,
         },
     }
@@ -140,21 +122,11 @@ def create_user_namespace(
             logger.exception("Error retrieving Team Namespace")
             team_uid = None
         if user_ns not in namespaces:
-            try:
-                logger.info(f"Creating EFS endpoint for {user_ns}...")
-                efs_ep_resp = create_user_efs_endpoint(user=user_name, team_name=team)
-                access_point_id = efs_ep_resp.get("AccessPointId", "")
-                if not access_point_id:
-                    raise ValueError(f"EFS access point is required. efs_ep_resp={efs_ep_resp}")
-            except Exception as e:
-                logger.error(f"Error while creating EFS access point for user_name={user_name} and team={team}: {e}")
-
             logger.info(f"User namespace {user_ns} doesnt exist. Creating...")
             kwargs = {
                 "name": user_ns,
                 "annotations": {"owner": user_email},
                 "labels": {
-                    "orbit/efs-access-point-id": access_point_id,
                     "orbit/efs-id": EFS_FS_ID,
                     "orbit/env": os.environ.get("ORBIT_ENV"),
                     "orbit/space": "user",
@@ -189,7 +161,7 @@ def create_user_namespace(
                     space="user",
                     team=team,
                     user=user_name,
-                    user_efsapid=access_point_id,
+                    user_efsid=EFS_FS_ID,
                     user_email=user_email,
                 )
                 logger.info(f"Created userspace custom resource {user_ns}")
