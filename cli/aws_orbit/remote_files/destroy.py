@@ -52,6 +52,7 @@ def destroy_team_user_resources(team_name: str) -> None:
     except FailedShellCommand:
         _logger.error("Failed toexecute command to delete teamspace object: %s")
 
+
 def destroy_teams(args: Tuple[str, ...]) -> None:
     _logger.debug("args %s", args)
     env_name: str = args[0]
