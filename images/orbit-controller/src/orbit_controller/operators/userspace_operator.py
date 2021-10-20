@@ -204,7 +204,6 @@ def install_team(
     run_command(f"helm search repo --devel {repo} -o json > /tmp/{unique_hash}-charts.json")
     with open(f"/tmp/{unique_hash}-charts.json", "r") as f:
         charts = json.load(f)
-    # charts.append("user-space-1.4.0-0-blabla.tgz")
     run_command(f"helm list -n {team} -o json > /tmp/{unique_hash}-releases.json")
     with open(f"/tmp/{unique_hash}-releases.json", "r") as f:
         releaseList = json.load(f)

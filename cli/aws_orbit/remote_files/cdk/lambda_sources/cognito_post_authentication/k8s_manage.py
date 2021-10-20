@@ -144,10 +144,9 @@ def create_user_namespace(
                 logger.info(f"Creating EFS endpoint for {user_ns}...")
                 efs_ep_resp = create_user_efs_endpoint(user=user_name, team_name=team)
                 access_point_id = efs_ep_resp.get("AccessPointId", "")
-                if not access_point_id:
-                    raise ValueError(f"EFS access point is required. efs_ep_resp={efs_ep_resp}")
             except Exception as e:
-                logger.error(f"Error while creating EFS access point for user_name={user_name} and team={team}: {e}")
+                logger.warning(f"Error while creating EFS access point for user_name={user_name} and team={team}: {e}")
+                continue
 
             logger.info(f"User namespace {user_ns} doesnt exist. Creating...")
             kwargs = {
