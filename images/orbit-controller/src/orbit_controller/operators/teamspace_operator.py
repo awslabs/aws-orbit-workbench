@@ -107,9 +107,7 @@ def _remove_team_resources(namespace: str, team_spec: str, logger: kopf.Logger, 
     label_selector = f"orbit/team={team_spec}"
     all_namespaces = v1.list_namespace(label_selector=label_selector).to_dict()
     all_ns = [
-        item.get("metadata").get("name") 
-        for item in all_namespaces["items"] 
-        if item.get("metadata", {}).get("name")
+        item.get("metadata").get("name") for item in all_namespaces["items"] if item.get("metadata", {}).get("name")
     ]
     # List all the resources we want to force-delete:
     # group, version, plural, status_element
