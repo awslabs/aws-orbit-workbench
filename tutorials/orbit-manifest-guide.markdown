@@ -116,8 +116,6 @@ If you would like to provide an externally created SSL Certificate, below is the
 
 ***Required***: `Optional`
 
-***   
-
 
 ***
 
