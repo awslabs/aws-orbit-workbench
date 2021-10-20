@@ -118,6 +118,20 @@ If you would like to provide an externally created SSL Certificate, below is the
 
 ***   
 
+
+***
+
+#### CustomDomainName
+
+The default behavior of the Orbit framework is to give you the load balancer DNS name that points to the Orbit landing page. This property overwrites that URL with the FQDN you provide.
+Additionally, you will have to create a DNS record that points the FQDN you provide to the load balancer, which you can find in the EC2 console.
+
+> Syntax: orbit.mycompany.com
+
+***Required***: `Optional.`
+
+***
+
 #### ManagedNodegroups   
 
 Once we have the necessary networking support, Orbit's platform needs compute capacity for running workloads. AWS Orbit leverages AWS Elastic Container Service for Kubernetes and `ManagedNodegroups` attribute helps customers declare a list of hybrid style of managed worker nodes based on their workloads.    
