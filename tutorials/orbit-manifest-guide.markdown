@@ -130,9 +130,6 @@ Additionally, you will have to create a DNS record that points the FQDN you prov
 
 ***
 
-
-***
-
 #### CustomDomainName
 
 The default behavior of the Orbit framework is to give you the load balancer DNS name that points to the Orbit landing page. This property overwrites that URL with the FQDN you provide.
