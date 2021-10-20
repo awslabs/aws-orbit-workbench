@@ -6,4 +6,6 @@ set -e
 
 pytest -k testlakeuser -n auto --junitxml=regression_report.xml test_lake_user.py
 
-cat .pytest_cache/v/cache/lastfailed || echo "No failed test"
+if cat .pytest_cache/v/cache/lastfailed > /dev/null 2>&1; then
+    pytest -k testlakeuser -n auto --junitxml=regression_report_last_failed.xml test_lake_user.py
+fi
