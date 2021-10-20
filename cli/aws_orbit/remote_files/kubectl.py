@@ -594,9 +594,6 @@ def deploy_env(context: "Context") -> None:
         # sh.run(f"kubectl rollout restart deployments -n orbit-system --context {k8s_context}")
 
         _confirm_readiness(
-            name="namespace-controller", namespace="orbit-system", type="deployment", k8s_context=k8s_context
-        )
-        _confirm_readiness(
             name="podsetting-operator", namespace="orbit-system", type="deployment", k8s_context=k8s_context
         )
         _confirm_readiness(
