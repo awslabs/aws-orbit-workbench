@@ -135,7 +135,7 @@ spec:
               - space
               - team
               - user
-              - userEfsId
+              - teamEfsId
               - userEmail
               properties:
                 env:
@@ -146,7 +146,7 @@ spec:
                   type: string
                 user:
                   type: string
-                userEfsId:
+                teamEfsId:
                   type: string
                 userEmail:
                   type: string
