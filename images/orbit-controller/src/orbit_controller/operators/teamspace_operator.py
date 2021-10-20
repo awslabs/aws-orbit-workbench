@@ -45,19 +45,19 @@ def configure(settings: kopf.OperatorSettings, logger: kopf.Logger, **_: Any) ->
     ORBIT_API_GROUP,
     ORBIT_API_VERSION,
     "teamspaces",
-    field="status.installation.installationStatus",
+    field="status.teamspaceOperator.status",
     value=kopf.ABSENT,
 )
 @kopf.on.create(
     ORBIT_API_GROUP,
     ORBIT_API_VERSION,
     "teamspaces",
-    field="status.installation.installationStatus",
+    field="status.teamspaceOperator.status",
     value=kopf.ABSENT,
 )
 def install_team(patch: kopf.Patch, logger: kopf.Logger, **_: Any) -> str:
     logger.info("In INSTALL_TEAM  Teamspace Controller")
-    patch["status"] = {"installation": {"installationStatus": "Installed"}}
+    patch["status"] = {"teamspaceOperator": {"status": "Installed"}}
     return "Installed"
 
 
@@ -107,7 +107,9 @@ def _remove_team_resources(namespace: str, team_spec: str, logger: kopf.Logger, 
     label_selector = f"orbit/team={team_spec}"
     all_namespaces = v1.list_namespace(label_selector=label_selector).to_dict()
     all_ns = [
-        item.get("metadata").get("name") for item in all_namespaces["items"] if item.get("metadata", {}).get("name")
+        item.get("metadata").get("name") 
+        for item in all_namespaces["items"] 
+        if item.get("metadata", {}).get("name")
     ]
     # List all the resources we want to force-delete:
     # group, version, plural, status_element
