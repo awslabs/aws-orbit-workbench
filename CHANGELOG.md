@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - ISSUE-1149: fixed landing page images/links for Chrome
 
 ### **Changed**
+FIX - dependency mismatch due to missing patch number for boto3
 
 ### **Removed**
 
