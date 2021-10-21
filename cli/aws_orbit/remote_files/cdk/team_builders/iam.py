@@ -13,7 +13,7 @@
 #    limitations under the License.
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, cast
 
 import aws_cdk.aws_iam as iam
 import aws_cdk.aws_kms as kms
@@ -27,6 +27,47 @@ if TYPE_CHECKING:
     from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
+
+
+def process_policies(policy_names, account_id) -> Tuple[List[Any], List[Any]]:  # type: ignore
+    iam_client = boto3_client("iam")
+    aws_managed_user_policies = []
+    orbit_custom_policies = []
+
+    def _check_policy_exists(arn: str) -> bool:
+        try:
+            iam_client.get_policy(PolicyArn=arn)
+            return True
+        except iam_client.exceptions.NoSuchEntityException:
+            return False
+
+    def _check_for_orbit_tag(policyArn: str) -> bool:
+        response = iam_client.list_policy_tags(PolicyArn=policyArn)
+        for tag in response["Tags"]:
+            key, value = tag["Key"], tag["Value"]
+            if "orbit-available" in key and "true" in value:
+                return True
+        return False
+
+    for policy_name in policy_names:
+        aws_managed_arn = f"arn:aws:iam::aws:policy/{policy_name}"
+        customer_arn = f"arn:aws:iam::{account_id}:policy/{policy_name}"
+        _logger.info(f"Checking policy name {policy_name}")
+        if _check_policy_exists(aws_managed_arn):
+            aws_managed_user_policies.append(policy_name)
+            _logger.info(f"Found {policy_name} to be AWS-Managed..adding to build")
+        elif _check_policy_exists(customer_arn):
+            _logger.info(f"Found {policy_name} to be Customer-Managed...checking name or tag")
+            if _check_for_orbit_tag(customer_arn) or "orbit" in policy_name:
+                orbit_custom_policies.append(policy_name)
+                _logger.info(f"Found {policy_name} to be Customer-Managed and properly tagged/named...adding to build")
+            else:
+                _logger.info(
+                    f"Found {policy_name} to be Customer-Managed BUT not tagged or properly named... NOT added to build"
+                )
+        else:
+            _logger.info(f"Found {policy_name} not to exist...NOT added to build")
+    return aws_managed_user_policies, orbit_custom_policies
 
 
 class IamBuilder:
@@ -320,16 +361,17 @@ class IamBuilder:
         ]
 
         # Parse list to IAM policies
+        # First check if the policies are AWS managed or not, and if they have a tag
+        aws_policies, customer_policies = process_policies(policy_names=policy_names, account_id=context.account_id)
+
         aws_managed_user_policies = [
             iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name=policy_name)
-            for policy_name in policy_names
-            if "orbit" not in policy_name
+            for policy_name in aws_policies
         ]
 
         orbit_custom_policies = [
             iam.ManagedPolicy.from_managed_policy_name(scope=scope, id=policy_name, managed_policy_name=policy_name)
-            for policy_name in policy_names
-            if "orbit" in policy_name
+            for policy_name in customer_policies
         ]
 
         managed_policies = (
