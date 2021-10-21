@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### **Added**
 - Added tagging support for customer-managed policies in Teams  (orbit-available=true)
+- ISSUE-1149: fixed landing page images/links for Chrome
+
 ### **Changed**
 
 ### **Removed**
