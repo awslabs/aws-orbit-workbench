@@ -272,11 +272,6 @@ def deploy_env(
     help="The Custom Domain Name to associate the orbit framework with",
 )
 @click.option(
-    "--secondary-cidr",
-    type=bool,
-    help="Do the subnets provided belongs to secondary VPC CIDR?",
-)
-@click.option(
     "--role-prefix",
     type=str,
     help="The Prefix to attach to the IAM Role",
@@ -307,7 +302,6 @@ def deploy_foundation(
     name: Optional[str] = None,
     debug: bool = False,
     internet_accessibility: bool = True,
-    secondary_cidr: bool = False,
     codeartifact_domain: Optional[str] = None,
     codeartifact_repository: Optional[str] = None,
     ssl_cert_arn: Optional[str] = None,
@@ -331,7 +325,6 @@ def deploy_foundation(
     _logger.debug("ssl_cert_arn: %s", ssl_cert_arn)
     _logger.debug("custom_domain_name: %s", custom_domain_name)
     _logger.debug("max_availability_zones: %s", max_availability_zones)
-    _logger.debug("secondary_cidr: %s", secondary_cidr)
     _logger.debug("role_prefix: %s", role_prefix)
     deploy_commands.deploy_foundation(
         filename=filename,
@@ -342,7 +335,6 @@ def deploy_foundation(
         custom_domain_name=custom_domain_name,
         debug=debug,
         internet_accessibility=internet_accessibility,
-        secondary_cidr=secondary_cidr,
         max_availability_zones=max_availability_zones,
         role_prefix=role_prefix,
     )

@@ -161,7 +161,6 @@ def deploy_foundation(
     debug: bool = False,
     internet_accessibility: bool = True,
     codeartifact_domain: Optional[str] = None,
-    secondary_cidr: bool = False,
     codeartifact_repository: Optional[str] = None,
     ssl_cert_arn: Optional[str] = None,
     custom_domain_name: Optional[str] = None,
@@ -196,7 +195,6 @@ def deploy_foundation(
                 role_prefix=role_prefix,
                 networking=NetworkingManifest(
                     max_availability_zones=max_availability_zones,
-                    secondary_cidr=secondary_cidr,
                     frontend=FrontendNetworkingManifest(
                         ssl_cert_arn=ssl_cert_arn, custom_domain_name=custom_domain_name
                     ),

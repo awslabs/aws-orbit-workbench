@@ -166,7 +166,7 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
     tags = tags = {f"k8s.io/cluster-autoscaler/node-template/label/{k}": v for k, v in labels.items()}
     tags["Env"] = f"orbit-{context.name}"
 
-    MANIFEST["addOns"] = [{"name": "vpc-cni", "version": "v1.9.0"}]
+    MANIFEST["addons"] = [{"name": "vpc-cni", "version": "v1.9.0"}]
 
     # Env
     MANIFEST["managedNodeGroups"].append(
