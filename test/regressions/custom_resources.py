@@ -310,7 +310,7 @@ class OrbitUserSpaceCrObject(CustomApiObject):
             "orbit userspace status check",
             self.is_complete,
         )
-        # Wait until Orbit job completes
+        # Wait until UserSpace based Helm charts install
         utils.wait_for_condition(
             condition=userspace_condition,
             timeout=timeout,
