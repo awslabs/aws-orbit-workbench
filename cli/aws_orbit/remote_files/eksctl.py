@@ -24,8 +24,9 @@ from aws_orbit import sh
 from aws_orbit.models.changeset import Changeset, ListChangeset
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.models.manifest import ManagedNodeGroupManifest
+from aws_orbit.remote_files.kubectl import deploy_eniconfig, set_secondary_vpc_cidr_env_vars
 from aws_orbit.services import autoscaling, cfn, ec2, eks, iam
-from aws_orbit.services.ec2 import IpPermission, UserIdGroupPair
+from aws_orbit.services.ec2 import IpPermission, UserIdGroupPair, get_az_from_subnet
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -80,6 +81,31 @@ def create_nodegroup_structure(context: "Context", nodegroup: ManagedNodeGroupMa
         config["efaEnabled"] = nodegroup.efa_enabled
 
     return config
+
+
+# def generate_eniconfig(context: "Context", az_subnet_map) -> List[str]:
+#     config = {
+#         "apiVersion": "crd.k8s.amazonaws.com/v1alpha1",
+#         "kind": "ENIConfig",
+#         "metadata": {
+#             "name": "az"
+#         },
+#         "spec": {
+#             "securityGroups": "sg",
+#             "subnet": "subnet"
+#         }
+#     }
+
+#     config_list = []
+#     for subnet,az in az_subnet_map.items():
+#         config["apiVersion"] = "crd.k8s.amazonaws.com/v1alpha1"
+#         config["kind"] = "ENIConfig"
+#         config["metadata"]["name"] = az
+#         config["spec"]["securityGroups"] = ""
+#         config["spec"]["subnet"] = subnet
+#         config_list.append(config)
+
+#     return config_list
 
 
 def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[ManagedNodeGroupManifest]]) -> str:
@@ -140,7 +166,7 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
     tags = tags = {f"k8s.io/cluster-autoscaler/node-template/label/{k}": v for k, v in labels.items()}
     tags["Env"] = f"orbit-{context.name}"
 
-    MANIFEST["addOns"] = [{"name": "vpc-cni", "version": "1.9.0"}]
+    MANIFEST["addOns"] = [{"name": "vpc-cni", "version": "v1.9.0"}]
 
     # Env
     MANIFEST["managedNodeGroups"].append(
@@ -367,6 +393,12 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
             f"eksctl create iamidentitymapping --cluster {cluster_name} --arn {arn} "
             f"--username {username} --group system:masters"
         )
+
+        if context.networking.secondary_cidr:
+            set_secondary_vpc_cidr_env_vars()
+            az_subnet_map = get_az_from_subnet(subnets=cast(List[str], context.networking.private_subnets))
+            deploy_eniconfig(az_subnet_map=az_subnet_map, context=context)
+
         context.managed_nodegroups = requested_nodegroups
 
         for ng in requested_nodegroups:

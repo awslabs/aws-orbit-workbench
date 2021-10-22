@@ -180,6 +180,7 @@ class DataNetworkingManifest:
 class NetworkingManifest:
     Schema: ClassVar[Type[Schema]] = Schema
     vpc_id: Optional[str] = None
+    secondary_cidr: bool = False
     public_subnets: List[str] = field(default_factory=list)
     private_subnets: List[str] = field(default_factory=list)
     isolated_subnets: List[str] = field(default_factory=list)

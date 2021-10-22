@@ -15,7 +15,7 @@
 # flake8: noqa: F811
 
 import logging
-from typing import ClassVar, List, Type
+from typing import ClassVar, Dict, List, Optional, Type
 
 import botocore.exceptions
 from dataclasses import field
@@ -56,6 +56,25 @@ def authorize_security_group_ingress(group_id: str, ip_permissions: List[IpPermi
             raise
         else:
             _logger.debug("Ingress previously authorized")
+
+
+def get_az_from_subnet(subnets: List[str]) -> Dict[str, str]:
+    ec2_client = boto3_client("ec2")
+    az_subnet_map = {}
+    try:
+        response = ec2_client.describe_subnets(
+            SubnetIds=[
+                subnets,
+            ]
+        )
+        az_subnet_map = {entry["SubnetId"]: entry["AvailabilityZone"] for entry in response["Subnets"]}
+    except botocore.exceptions.ClientError as ex:
+        _logger.error("Error Describing Subnets", ex)
+        if ex.response.get("Error", {}).get("Code", "Unknown") != "InvalidSubnetID.NotFound":
+            raise
+        else:
+            _logger.debug("Exception caught while describing subnets: %s", ex)
+    return az_subnet_map
 
 
 def authorize_security_group_egress(group_id: str, ip_permissions: List[IpPermission]) -> None:

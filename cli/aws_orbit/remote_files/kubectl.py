@@ -18,6 +18,8 @@ import shutil
 import time
 from typing import Any, Dict, List, Optional, Tuple, cast
 
+import yaml
+
 import aws_orbit
 from aws_orbit import ORBIT_CLI_ROOT, exceptions, k8s, sh, utils
 from aws_orbit.exceptions import FailedShellCommand
@@ -284,6 +286,41 @@ def _generate_kube_system_manifest(context: "Context", clean_up: bool = True) ->
         )
         with open(output, "w") as file:
             file.write(content)
+
+    return output_path
+
+
+def set_secondary_vpc_cidr_env_vars() -> None:
+    sh.run("kubectl set env daemonset aws-node -n kube-system AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG=true")
+    sh.run(
+        "kubectl set env daemonset aws-node -n kube-system ENI_CONFIG_LABEL_DEF=failure-domain.beta.kubernetes.io/zone"
+    )
+
+
+def deploy_eniconfig(az_subnet_map: Dict[str, str], context: "Context") -> None:
+
+    output_path = _generate_eni_configs(az_subnet_map, context, clean_up=True)
+    sh.run(f"kubectl apply -f {output_path}")
+
+
+def _generate_eni_configs(az_subnet_map: Dict[str, str], context: "Context", clean_up: bool) -> str:
+    output_path = os.path.join(".orbit.out", context.name, "kubectl", "networking")
+    os.makedirs(output_path, exist_ok=True)
+    if clean_up:
+        _cleanup_output(output_path=output_path)
+
+    config_list = []
+    for subnet, az in az_subnet_map.items():
+        config = {
+            "apiVersion": "crd.k8s.amazonaws.com/v1alpha1",
+            "kind": "ENIConfig",
+            "metadata": {"name": az},
+            "spec": {"securityGroups": [context.cluster_pod_sg_id], "subnet": subnet},
+        }
+        config_list.append(config)
+
+    with open(output_path, "w") as outfile:
+        yaml.dump(config_list, outfile, default_flow_style=False)
 
     return output_path
 

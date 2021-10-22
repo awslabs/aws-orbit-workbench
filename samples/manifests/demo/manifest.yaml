@@ -2,22 +2,32 @@ Name: !ENV ${ORBIT_ENV_NAME::dev-env}
 EksSystemMastersRoles:
 - !ENV ${ORBIT_ADMIN_ROLE::Admin}
 - !ENV ${ORBIT_ADMIN_DEMO_ROLE::Admin}
-ScratchBucketArn: !SSM ${/orbit-f/demo-fndn/resources::ScratchBucketArn}
-UserPoolId: !SSM ${/orbit-f/demo-fndn/resources::UserPoolId}
-SharedEfsFsId: !SSM ${/orbit-f/demo-fndn/resources::SharedEfsFsId}
-SharedEfsSgId: !SSM ${/orbit-f/demo-fndn/resources::SharedEfsSgId}
+CodeartifactDomain: aws-orbit
+CodeartifactRepository: python-repository
+ScratchBucketArn: !SSM ${/orbit-f/dev-env/resources::ScratchBucketArn}
+UserPoolId: !SSM ${/orbit-f/dev-env/resources::UserPoolId}
+SharedEfsFsId: !SSM ${/orbit-f/dev-env/resources::SharedEfsFsId}
+SharedEfsSgId: !SSM ${/orbit-f/dev-env/resources::SharedEfsSgId}
 InstallSsmAgent: true
 Networking:
-    VpcId: !SSM ${/orbit-f/demo-fndn/resources::VpcId}
-    PublicSubnets: !SSM ${/orbit-f/demo-fndn/resources::PublicSubnets}
-    PrivateSubnets: !SSM ${/orbit-f/demo-fndn/resources::PrivateSubnets}
-    IsolatedSubnets: !SSM ${/orbit-f/demo-fndn/resources::IsolatedSubnets}
+    VpcId: vpc-0d8bd29898e92faf5
+    SecondaryCidr: true
+    PublicSubnets:
+    -   subnet-04dd151a651dbc71d
+    -   subnet-053909900839b8569
+    PrivateSubnets: 
+    -   subnet-0d7151b09eea09586
+    -   subnet-0a965841693ece377
     Data:
         InternetAccessible: true
-        NodesSubnets: !SSM ${/orbit-f/demo-fndn/resources::NodesSubnets}
+        NodesSubnets:
+        -   subnet-0d7151b09eea09586
+        -   subnet-0a965841693ece377
     Frontend:
-        LoadBalancersSubnets: !SSM ${/orbit-f/demo-fndn/resources::LoadBalancersSubnets}
-        SslCertArn: !SSM ${/orbit-f/demo-fndn/resources::SslCertArn}
+        LoadBalancersSubnets:
+        -   subnet-04dd151a651dbc71d
+        -   subnet-053909900839b8569
+        SslCertArn: !SSM ${/orbit-f/dev-env/resources::SslCertArn}
 ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge
@@ -27,12 +37,12 @@ ManagedNodegroups:
     NodesNumMin: 4
     Labels:
         instance-type: m5.2xlarge
--   Name: primary-gpu
-    InstanceType: g4dn.xlarge
-    LocalStorageSize: 128
-    NodesNumDesired: 1
-    NodesNumMax: 4
-    NodesNumMin: 0
+# -   Name: primary-gpu
+#     InstanceType: g4dn.xlarge
+#     LocalStorageSize: 128
+#     NodesNumDesired: 1
+#     NodesNumMax: 4
+#     NodesNumMin: 0
 Teams:
 -   Name: lake-admin
     Policies:
@@ -46,25 +56,25 @@ Teams:
     EfsLifeCycle: AFTER_7_DAYS
     AuthenticationGroups:
     - lake-admin
--   Name: lake-creator
-    Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-${AWS_DEFAULT_REGION::}-demo-lake-creator-add-policy
-    GrantSudo: true
-    Fargate: false
-    K8Admin: false
-    JupyterhubInboundRanges:
-    - 0.0.0.0/0
-    Plugins: !include lake-creator-plugins.yaml
-    EfsLifeCycle: AFTER_7_DAYS
-    AuthenticationGroups:
-    - lake-creator
--   Name: lake-user
-    Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-${AWS_DEFAULT_REGION::}-demo-lake-user-add-policy
-    JupyterhubInboundRanges:
-    - 0.0.0.0/0
-    GrantSudo: true
-    Plugins: !include lake-user-plugins.yaml
-    EfsLifeCycle: AFTER_7_DAYS
-    AuthenticationGroups:
-    - lake-user
+# -   Name: lake-creator
+#     Policies:
+#     - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-${AWS_DEFAULT_REGION::}-demo-lake-creator-add-policy
+#     GrantSudo: true
+#     Fargate: false
+#     K8Admin: false
+#     JupyterhubInboundRanges:
+#     - 0.0.0.0/0
+#     Plugins: !include lake-creator-plugins.yaml
+#     EfsLifeCycle: AFTER_7_DAYS
+#     AuthenticationGroups:
+#     - lake-creator
+# -   Name: lake-user
+#     Policies:
+#     - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-${AWS_DEFAULT_REGION::}-demo-lake-user-add-policy
+#     JupyterhubInboundRanges:
+#     - 0.0.0.0/0
+#     GrantSudo: true
+#     Plugins: !include lake-user-plugins.yaml
+#     EfsLifeCycle: AFTER_7_DAYS
+#     AuthenticationGroups:
+#     - lake-user
