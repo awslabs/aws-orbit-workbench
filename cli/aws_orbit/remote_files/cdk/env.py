@@ -318,7 +318,7 @@ class Env(Stack):
                 )
             ],
         )
-        name = f"{self.id}-{self.context.region}-cognito-authenticated-identity-role"
+        name = f"{self.id}-{self.context.region}-cognito-auth-identity-role"
         authenticated_role = iam.Role(
             scope=self,
             id=name,
@@ -360,7 +360,7 @@ class Env(Stack):
                 ),
             },
         )
-        name = f"{self.id}-{self.context.region}-cognito-unauthenticated-identity-role"
+        name = f"{self.id}-{self.context.region}-cognito-unauth-identity-role"
         unauthenticated_role = iam.Role(
             scope=self,
             id=name,
