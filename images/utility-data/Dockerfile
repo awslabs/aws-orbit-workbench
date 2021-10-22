@@ -11,11 +11,11 @@ RUN mkdir -p /opt/orbit/data
 RUN mkdir -p /opt/orbit/data/vscode
 COPY images/utility-data/extensions/ /opt/orbit/data/vscode/extensions/
 
-RUN mkdir -p /opt/orbit/data/vscode/drivers
-RUN curl -fsSL https://marketplace.visualstudio.com/_apis/public/gallery/publishers/mtxr/vsextensions/sqltools-driver-pg/0.2.0/vspackage \
--o /opt/orbit/data/vscode/drivers/mtxr.sqltools-driver-pg-0.2.0.gz
-RUN gunzip /opt/orbit/data/vscode/drivers/mtxr.sqltools-driver-pg-0.2.0.gz
-RUN mv /opt/orbit/data/vscode/drivers/mtxr.sqltools-driver-pg-0.2.0 /opt/orbit/data/vscode/drivers/mtxr.sqltools-driver-pg-0.2.0.vsix
+#RUN mkdir -p /opt/orbit/data/vscode/drivers
+#RUN curl -fsSL https://marketplace.visualstudio.com/_apis/public/gallery/publishers/mtxr/vsextensions/sqltools-driver-pg/0.2.0/vspackage \
+#-o /opt/orbit/data/vscode/drivers/mtxr.sqltools-driver-pg-0.2.0.gz
+#RUN gunzip /opt/orbit/data/vscode/drivers/mtxr.sqltools-driver-pg-0.2.0.gz
+#RUN mv /opt/orbit/data/vscode/drivers/mtxr.sqltools-driver-pg-0.2.0 /opt/orbit/data/vscode/drivers/mtxr.sqltools-driver-pg-0.2.0.vsix
 
 # CMS Date
 RUN wget https://www.cms.gov/Research-Statistics-Data-and-Systems/Downloadable-Public-Use-Files/SynPUFs/Downloads/DE1_0_2008_Beneficiary_Summary_File_Sample_1.zip \
