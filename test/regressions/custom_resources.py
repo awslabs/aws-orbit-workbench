@@ -21,8 +21,9 @@ from kubernetes.client import V1DeleteOptions, V1Status, api_client
 from kubetest.manifest import render
 from kubetest.objects import ApiObject
 from kubetest.client import TestClient
+from kubernetes.client.rest import ApiException
 from kubetest import condition, utils
-from common_utils import JOB_COMPLETION_STATUS, JOB_FAILED_STATUS
+from common_utils import *
 from kubernetes import config as k8_config
 
 # This elminates some collection warnings for all tests using the TestClient
@@ -250,6 +251,68 @@ class OrbitJobCustomApiObject(CustomApiObject):
         # Wait until Orbit job completes
         utils.wait_for_condition(
             condition=job_complete_condition,
+            timeout=timeout,
+            interval=interval,
+            fail_on_api_error=fail_on_api_error,
+        )
+
+
+class OrbitUserSpaceCrObject(CustomApiObject):
+    group = "orbit.aws"
+    api_version = "v1"
+    kind = "UserSpace"
+
+    def __init__(self, resource: Dict[str, Any]) -> None:
+        self.obj = resource
+        self._api_client = None
+
+    def get_status(self) -> Dict[str,Any]:
+        self.refresh()
+        status_dict = self.obj.get("status", {})
+        return status_dict
+
+    def check_userspace_exists(self) -> bool:
+        cr_status = False
+        try:
+            self.api_client.get
+            api_response = self.api_client.get(name=self.name,namespace=self.namespace)
+            log.info(api_response)
+            cr_status = True
+        except ApiException as e:
+            log.info(f"{e.body}")
+        return cr_status
+
+    # We are ready as soon as we see some status
+    def is_ready(self) -> bool:
+        self.refresh()
+        log.info(self.obj.get("status", {}).get("userSpaceOperator", {}))
+        return_status = False
+        if self.obj.get("status", {}).get("userSpaceOperator", {}).get("installationStatus"):
+            return_status = True
+        return return_status
+
+    # We are complete as soon as we see status as complete or Failed
+    def is_complete(self) -> bool:
+        self.refresh()
+        log.info(self.obj.get("status", {}).get("userSpaceOperator", {}))
+        return self.obj.get("status", {}).get("userSpaceOperator", {}).get("installationStatus") in [
+            USERSPACE_INSTALLED_STATUS,
+            USERSPACE_FAILED_STATUS
+        ]
+
+    def wait_until_userspace_installation(
+        self,
+        timeout: int = None,
+        interval: Union[int, float] = 5,
+        fail_on_api_error: bool = False,
+    ) -> None:
+        userspace_condition = condition.Condition(
+            "orbit userspace status check",
+            self.is_complete,
+        )
+        # Wait until Orbit job completes
+        utils.wait_for_condition(
+            condition=userspace_condition,
             timeout=timeout,
             interval=interval,
             fail_on_api_error=fail_on_api_error,
