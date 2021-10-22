@@ -17,7 +17,8 @@ Networking:
         NodesSubnets: !SSM ${/orbit-f/demo-fndn/resources::NodesSubnets}
     Frontend:
         LoadBalancersSubnets: !SSM ${/orbit-f/demo-fndn/resources::LoadBalancersSubnets}
-        SslCertArn: !SSM ${/orbit-f/demo-fndn/resources::SslCertArn}
+        SslCertArn: arn:aws:acm:us-east-2:885315059846:certificate/e1c922e7-9920-4fca-810f-388c8c6b26ca # Provide a reference to an SSL Cert
+        CustomDomainName: demo.orbit.oss.aws.dev # Conditionally required to integrate a DNS name to the custom created SSLCert
 ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge
