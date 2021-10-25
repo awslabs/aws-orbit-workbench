@@ -75,12 +75,11 @@ def helm_package(
     repo_location = team_context.team_helm_repository
     repo = team_context.name
     _logger.debug(script_body)
-    # _init_team_repo(context=context, team_context=team_context, repo_location=repo_location)
-    if ns_exists(team_context=team_context):
-        helm.add_repo(repo=repo, repo_location=repo_location)
-        chart_name, chart_version, chart_package = helm.package_chart(
-            repo=repo, chart_path=os.path.join(chart_path, "team-script-launcher"), values=vars
-        )
+    _init_team_repo(context=context, team_context=team_context, repo_location=repo_location)
+    helm.add_repo(repo=repo, repo_location=repo_location)
+    chart_name, chart_version, chart_package = helm.package_chart(
+        repo=repo, chart_path=os.path.join(chart_path, "team-script-launcher"), values=vars
+    )
     return (chart_name, chart_version, chart_package)
 
 
@@ -139,20 +138,21 @@ def destroy(
             helm.uninstall_chart(release_name, team_context.name)
             time.sleep(60)
 
-        helm.install_chart_no_upgrade(
-            repo=repo,
-            namespace=team_context.name,
-            name=release_name,
-            chart_name=chart_name,
-            chart_version=chart_version,
-        )
-        # wait for job completion
-        try:
-            sh.run(
-                f"kubectl wait --for=condition=complete --timeout=120s job/{plugin_id} --namespace {team_context.name}"
+        if ns_exists(team_context=team_context):
+            helm.install_chart_no_upgrade(
+                repo=repo,
+                namespace=team_context.name,
+                name=release_name,
+                chart_name=chart_name,
+                chart_version=chart_version,
             )
-        except Exception as e:
-            _logger.error(e)
+            # wait for job completion
+            try:
+                sh.run(
+                    f"kubectl wait --for=condition=complete --timeout=120s job/{plugin_id} --namespace {team_context.name}"
+                )
+            except Exception as e:
+                _logger.error(e)
 
         # destroy
         helm.uninstall_chart(release_name, namespace=team_context.name)
