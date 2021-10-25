@@ -83,31 +83,6 @@ def create_nodegroup_structure(context: "Context", nodegroup: ManagedNodeGroupMa
     return config
 
 
-# def generate_eniconfig(context: "Context", az_subnet_map) -> List[str]:
-#     config = {
-#         "apiVersion": "crd.k8s.amazonaws.com/v1alpha1",
-#         "kind": "ENIConfig",
-#         "metadata": {
-#             "name": "az"
-#         },
-#         "spec": {
-#             "securityGroups": "sg",
-#             "subnet": "subnet"
-#         }
-#     }
-
-#     config_list = []
-#     for subnet,az in az_subnet_map.items():
-#         config["apiVersion"] = "crd.k8s.amazonaws.com/v1alpha1"
-#         config["kind"] = "ENIConfig"
-#         config["metadata"]["name"] = az
-#         config["spec"]["securityGroups"] = ""
-#         config["spec"]["subnet"] = subnet
-#         config_list.append(config)
-
-#     return config_list
-
-
 def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[ManagedNodeGroupManifest]]) -> str:
     internet: bool = context.networking.data.internet_accessible
 
@@ -153,6 +128,7 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
         }
 
     MANIFEST["iam"]["serviceRoleARN"] = context.eks_cluster_role_arn
+    MANIFEST["iam"]["withOIDC"] = True
     MANIFEST["managedNodeGroups"] = []
 
     labels = {
@@ -166,7 +142,8 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
     tags = tags = {f"k8s.io/cluster-autoscaler/node-template/label/{k}": v for k, v in labels.items()}
     tags["Env"] = f"orbit-{context.name}"
 
-    MANIFEST["addons"] = [{"name": "vpc-cni", "version": "v1.9.0"}]
+    MANIFEST["addons"] = [{"name": "vpc-cni", "version": "v1.9.0", "attachPolicyARNs": ["arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"]}]
+
 
     # Env
     MANIFEST["managedNodeGroups"].append(
@@ -396,7 +373,7 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
 
         if context.networking.secondary_cidr:
             set_secondary_vpc_cidr_env_vars()
-            az_subnet_map = get_az_from_subnet(subnets=cast(List[str], context.networking.private_subnets))
+            az_subnet_map = get_az_from_subnet(subnets=cast(List[str], context.networking.fetch_private_subnet_ids()))
             deploy_eniconfig(az_subnet_map=az_subnet_map, context=context)
 
         context.managed_nodegroups = requested_nodegroups

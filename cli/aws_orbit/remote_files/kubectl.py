@@ -293,7 +293,7 @@ def _generate_kube_system_manifest(context: "Context", clean_up: bool = True) ->
 def set_secondary_vpc_cidr_env_vars() -> None:
     sh.run("kubectl set env daemonset aws-node -n kube-system AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG=true")
     sh.run(
-        "kubectl set env daemonset aws-node -n kube-system ENI_CONFIG_LABEL_DEF=failure-domain.beta.kubernetes.io/zone"
+        "kubectl set env daemonset aws-node -n kube-system ENI_CONFIG_LABEL_DEF=topology.kubernetes.io/zone"
     )
 
 
