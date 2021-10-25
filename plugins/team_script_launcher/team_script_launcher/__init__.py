@@ -75,11 +75,12 @@ def helm_package(
     repo_location = team_context.team_helm_repository
     repo = team_context.name
     _logger.debug(script_body)
-    _init_team_repo(context=context, team_context=team_context, repo_location=repo_location)
-    helm.add_repo(repo=repo, repo_location=repo_location)
-    chart_name, chart_version, chart_package = helm.package_chart(
-        repo=repo, chart_path=os.path.join(chart_path, "team-script-launcher"), values=vars
-    )
+    # _init_team_repo(context=context, team_context=team_context, repo_location=repo_location)
+    if ns_exists(team_context=team_context):
+        helm.add_repo(repo=repo, repo_location=repo_location)
+        chart_name, chart_version, chart_package = helm.package_chart(
+            repo=repo, chart_path=os.path.join(chart_path, "team-script-launcher"), values=vars
+        )
     return (chart_name, chart_version, chart_package)
 
 
@@ -171,3 +172,19 @@ def _init_team_repo(context: "Context", team_context: "TeamContext", repo_locati
         _logger.debug("Skipping initialization of existing Team Helm Repository at %s", repo_location)
 
     return repo_location
+
+
+def ns_exists(team_context: "TeamContext") -> bool:
+    namespace = team_context.name
+    try:
+        _logger.info("Checking if %s exists", namespace)
+        found = False
+        for line in sh.run_iterating(f"kubectl get ns"):
+            _logger.info(line)
+            if namespace in line:
+                found = True
+
+        return found
+    except sh.exceptions.FailedShellCommand as e:
+        _logger.error(e)
+        raise e
