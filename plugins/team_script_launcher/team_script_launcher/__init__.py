@@ -162,7 +162,7 @@ def destroy(
     helm.uninstall_chart(release_name, namespace=team_context.name)
 
 
-def _init_team_repo(context: "Context", team_context: "TeamContext", repo_location: str) -> str:
+def _init_team_repo(context: "Context", team_context: "TeamContext", repo_location: str) -> None:
     if not s3.object_exists(
         bucket=cast(str, context.toolkit.s3_bucket), key=f"helm/repositories/teams/{team_context.name}/index.yaml"
     ):
@@ -170,8 +170,6 @@ def _init_team_repo(context: "Context", team_context: "TeamContext", repo_locati
         sh.run(f"helm s3 init {repo_location}")
     else:
         _logger.debug("Skipping initialization of existing Team Helm Repository at %s", repo_location)
-
-    return repo_location
 
 
 def ns_exists(team_context: "TeamContext") -> bool:
