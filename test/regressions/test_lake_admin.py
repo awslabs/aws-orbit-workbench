@@ -17,6 +17,7 @@ import pytest
 from custom_resources import OrbitJobCustomApiObject
 from common_utils import JOB_COMPLETION_STATUS
 from kubetest.client import TestClient
+from aws_orbit_sdk.common import get_workspace
 import logging
 
 # Initialize parameters
@@ -27,6 +28,8 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger()
+
+workspace = get_workspace()
 
 LAKE_ADMIN_JOB = {
     "apiVersion": "orbit.aws/v1",
@@ -100,6 +103,7 @@ def test_lakeadmin_2_image_with_apps(kube: TestClient) -> None:
 
 @pytest.mark.namespace(create=False)
 @pytest.mark.testlakeadmin_lf
+@pytest.mark.skipif("iso" in workspace.get("env_name"), reason="lakeformation endpoint is unreachable in iso env")
 def test_lakeadmin_3_lf_account_settings(kube: TestClient) -> None:
     lake_admin_job_lf = LAKE_ADMIN_JOB
     lake_admin_job_lf["metadata"]["generateName"] = "test-orbit-job-lake-admin-lf-account-settings-"

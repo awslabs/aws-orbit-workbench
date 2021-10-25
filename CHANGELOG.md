@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added 'one-click' support for trial usage of AWS Workbench
 - Added Userspace Role and RoleBinding
 - Added TeamSpace operator
+- Added Userspace Operator PyTest
+
 
 ### **Changed**
 
@@ -25,10 +27,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Updating README.md
 - Fixed the expiring kubeconfig issue for long living k8s jobs
 - Fixing lake-creator pytest shell script and refactoring lake-creator pytest files
-- Removing lake user specific cron job notebooks from regression 
+- Removing lake user specific cron job notebooks from regression
+- Removing profiles section from JL UI
+- Removing lake user specific cron job notebooks from regression
+- Refactored namespace controller into userspace operator
+- adding userspace cr creation into post auth lambda
+- ISSUE-1149: fixed landing page images/links for Chrome
 
 ### **Removed**
 
+- removed namespace controller deployment
 
 ## **[1.3.0]**
 

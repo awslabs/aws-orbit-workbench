@@ -98,7 +98,7 @@ class FoundationStack(Stack):
 
         self.efs_fs = EfsBuilder.build_file_system(
             scope=self,
-            name="orbit-fs",
+            name=self.env_name,
             efs_life_cycle="AFTER_7_DAYS",
             vpc=cast(ec2.IVpc, self.vpc),
             efs_security_group=cast(ec2.ISecurityGroup, self._vpc_security_group),

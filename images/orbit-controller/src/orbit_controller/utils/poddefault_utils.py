@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional
 
 import kopf
 from kubernetes import dynamic
+from kubernetes.client.rest import ApiException
 from kubernetes.dynamic.client import DynamicClient
 
 KUBEFLOW_API_GROUP = "kubeflow.org"
@@ -106,11 +107,16 @@ def copy_poddefaults_to_user_namespaces(
                     client=client,
                     logger=logger,
                 )
-            except Exception as e:
-                logger.warn(
+            except ApiException as e:
+                logger.warning(
                     "Unable to create PodDefault %s in Namespace %s: %s",
                     poddefault["metadata"]["name"],
                     namespace,
+                    str(e.body),
+                )
+            except Exception as e:
+                logger.warning(
+                    "Failed to create PodDefault",
                     str(e),
                 )
 
