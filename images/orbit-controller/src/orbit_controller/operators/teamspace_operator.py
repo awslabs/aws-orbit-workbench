@@ -211,4 +211,4 @@ def _patch_and_delete_stubborn_custom_resources(  # type: ignore
                 name=item,
             )
         except ApiException as e:
-            logger.error("Trying to patch and delete failed: %s\n" % e)
+            logger.warn("Trying to patch and delete failed: %s\n" % e)
