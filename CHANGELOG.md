@@ -14,7 +14,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added PyTest for lake admin, creator and user
 - Added 'one-click' support for trial usage of AWS Workbench
 - Added Userspace Role and RoleBinding
+- Added TeamSpace operator
 - Added Userspace Operator PyTest
+
 
 ### **Changed**
 
