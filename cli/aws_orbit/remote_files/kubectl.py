@@ -298,10 +298,10 @@ def set_secondary_vpc_cidr_env_vars() -> None:
 
 
 def deploy_eniconfig(az_subnet_map: Dict[str, str], context: "Context") -> None:
-
+    _logger.debug("Prepping eniconfig deployments...")
     output_path = _generate_eni_configs(az_subnet_map, context, clean_up=True)
     sh.run(f"kubectl apply -f {output_path}")
-
+    _logger.debug("Deployted eniconfig deployments...")
 
 def _generate_eni_configs(az_subnet_map: Dict[str, str], context: "Context", clean_up: bool) -> str:
     output_path = os.path.join(".orbit.out", context.name, "kubectl", "networking")
@@ -318,7 +318,7 @@ def _generate_eni_configs(az_subnet_map: Dict[str, str], context: "Context", cle
             "spec": {"securityGroups": [context.cluster_pod_sg_id], "subnet": subnet},
         }
         config_list.append(config)
-
+    _logger.debug(f"Eniconfig deployments list...{config_list}")
     with open(output_path, "w") as outfile:
         yaml.dump(config_list, outfile, default_flow_style=False)
 
