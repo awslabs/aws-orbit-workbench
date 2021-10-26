@@ -292,9 +292,7 @@ def _generate_kube_system_manifest(context: "Context", clean_up: bool = True) ->
 
 def set_secondary_vpc_cidr_env_vars() -> None:
     sh.run("kubectl set env daemonset aws-node -n kube-system AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG=true")
-    sh.run(
-        "kubectl set env daemonset aws-node -n kube-system ENI_CONFIG_LABEL_DEF=topology.kubernetes.io/zone"
-    )
+    sh.run("kubectl set env daemonset aws-node -n kube-system ENI_CONFIG_LABEL_DEF=topology.kubernetes.io/zone")
 
 
 def deploy_eniconfig(az_subnet_map: Dict[str, str], context: "Context") -> None:
@@ -302,6 +300,7 @@ def deploy_eniconfig(az_subnet_map: Dict[str, str], context: "Context") -> None:
     output_path = _generate_eni_configs(az_subnet_map, context, clean_up=True)
     sh.run(f"kubectl apply -f {output_path}")
     _logger.debug("Deployted eniconfig deployments...")
+
 
 def _generate_eni_configs(az_subnet_map: Dict[str, str], context: "Context", clean_up: bool) -> str:
     output_path = os.path.join(".orbit.out", context.name, "kubectl", "networking")
@@ -320,8 +319,8 @@ def _generate_eni_configs(az_subnet_map: Dict[str, str], context: "Context", cle
         _logger.debug(f"Eniconfig deployments adding...{config}")
         with open(output, "a") as outfile:
             yaml.dump(config, outfile, default_flow_style=False)
-            outfile.write('---')
-            outfile.write('\n')
+            outfile.write("---")
+            outfile.write("\n")
     return output
 
 
@@ -664,10 +663,7 @@ def deploy_env(context: "Context") -> None:
         sh.run(f"kubectl apply -f {output_path} --context {k8s_context} --wait")
 
         # Enable ENIs
-        sh.run(f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} ENABLE_POD_ENI=true")
-        sh.run(
-            f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} DISABLE_TCP_EARLY_DEMUX=true"
-        )
+        _enable_eni(k8s_context=k8s_context)
 
         # kubeflow-namespaces
         output_path = _kubeflow_namespaces(context=context)
@@ -718,6 +714,18 @@ def deploy_env(context: "Context") -> None:
 
         # Confirm env Service Endpoints
         _confirm_endpoints(name="landing-page-service", namespace="orbit-system", k8s_context=k8s_context)
+
+
+def _enable_eni(k8s_context: str) -> None:
+    _logger.debug("Setting aws-node daemonset in kube-system -- ENABLE_POD_ENI=true")
+    sh.run(f"kubectl set env daemonset aws-node -n kube-system --context {k8s_context} ENABLE_POD_ENI=true")
+
+    _logger.debug("Patch aws-node daemonset, container aws-vpc-cni-init -- DISABLE_TCP_EARLY_DEMUX=true")
+    patch = (
+        '{"spec": {"template": {"spec": {"initContainers": '
+        '[{"env":[{"name":"DISABLE_TCP_EARLY_DEMUX","value":"true"}],"name":"aws-vpc-cni-init"}]}}}}'
+    )
+    sh.run(f"kubectl patch daemonset aws-node -n kube-system --context {k8s_context} --patch '{patch}'")
 
 
 def _apply_deployment_patch_force_env_nodes(namespace: str) -> None:
