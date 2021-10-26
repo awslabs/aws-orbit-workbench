@@ -309,7 +309,7 @@ def _generate_eni_configs(az_subnet_map: Dict[str, str], context: "Context", cle
     if clean_up:
         _cleanup_output(output_path=output_path)
 
-    config_list = []
+    output = os.path.join(output_path, "eniconfigs.yaml")
     for subnet, az in az_subnet_map.items():
         config = {
             "apiVersion": "crd.k8s.amazonaws.com/v1alpha1",
@@ -317,12 +317,12 @@ def _generate_eni_configs(az_subnet_map: Dict[str, str], context: "Context", cle
             "metadata": {"name": az},
             "spec": {"securityGroups": [context.cluster_pod_sg_id], "subnet": subnet},
         }
-        config_list.append(config)
-    _logger.debug(f"Eniconfig deployments list...{config_list}")
-    with open(output_path, "w") as outfile:
-        yaml.dump(config_list, outfile, default_flow_style=False)
-
-    return output_path
+        _logger.debug(f"Eniconfig deployments adding...{config}")
+        with open(output, "a") as outfile:
+            yaml.dump(config, outfile, default_flow_style=False)
+            outfile.write('---')
+            outfile.write('\n')
+    return output
 
 
 def _generate_orbit_system_manifest(context: "Context", clean_up: bool = True) -> str:

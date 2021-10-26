@@ -105,16 +105,7 @@ class NetworkingContext:
     data: DataNetworkingManifest = DataNetworkingManifest()
     max_availability_zones: Optional[int] = None
 
-    def fetch_private_subnet_ids(self) -> List[str]:
-        ids=[]
-        for id in self.private_subnets:
-            ids.append[id.subnet_id]
-        return ids
-
     def _fetch_vpc_cidr(self) -> None:
-        #if self.secondary_cidr_block:
-        #    self.vpc_cidr_block=self.secondary_cidr_block
-        #else:
         ec2 = boto3_resource("ec2")
         vpc = ec2.Vpc(self.vpc_id)
         self.vpc_cidr_block = str(vpc.cidr_block)

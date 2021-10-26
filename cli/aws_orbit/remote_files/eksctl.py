@@ -373,7 +373,12 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
 
         if context.networking.secondary_cidr:
             set_secondary_vpc_cidr_env_vars()
-            az_subnet_map = get_az_from_subnet(subnets=cast(List[str], context.networking.fetch_private_subnet_ids()))
+            subnet_ids = [
+                subnet.subnet_id
+                for subnet in context.networking.private_subnets
+            ] 
+            _logger.debug(f"Getting AZ'z for the subnets: {subnet_ids}")               
+            az_subnet_map = get_az_from_subnet(subnets=subnet_ids)
             deploy_eniconfig(az_subnet_map=az_subnet_map, context=context)
 
         context.managed_nodegroups = requested_nodegroups
