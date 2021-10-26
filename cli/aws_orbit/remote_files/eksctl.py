@@ -142,8 +142,9 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
     tags = tags = {f"k8s.io/cluster-autoscaler/node-template/label/{k}": v for k, v in labels.items()}
     tags["Env"] = f"orbit-{context.name}"
 
-    MANIFEST["addons"] = [{"name": "vpc-cni", "version": "v1.9.0", "attachPolicyARNs": ["arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"]}]
-
+    MANIFEST["addons"] = [
+        {"name": "vpc-cni", "version": "v1.9.0", "attachPolicyARNs": ["arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"]}
+    ]
 
     # Env
     MANIFEST["managedNodeGroups"].append(
@@ -373,11 +374,8 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
 
         if context.networking.secondary_cidr:
             set_secondary_vpc_cidr_env_vars()
-            subnet_ids = [
-                subnet.subnet_id
-                for subnet in context.networking.private_subnets
-            ] 
-            _logger.debug(f"Getting AZ'z for the subnets: {subnet_ids}")               
+            subnet_ids = [subnet.subnet_id for subnet in context.networking.private_subnets]
+            _logger.debug(f"Getting AZ'z for the subnets: {subnet_ids}")
             az_subnet_map = get_az_from_subnet(subnets=subnet_ids)
             deploy_eniconfig(az_subnet_map=az_subnet_map, context=context)
 

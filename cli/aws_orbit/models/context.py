@@ -360,7 +360,7 @@ def create_networking_context_from_manifest(networking: "NetworkingManifest") ->
         "frontend": networking.frontend,
         "data": networking.data,
         "max_availability_zones": networking.max_availability_zones,
-        "secondary_cidr": networking.secondary_cidr
+        "secondary_cidr": networking.secondary_cidr,
     }
     if networking.vpc_id:
         args["vpc_id"] = networking.vpc_id

@@ -63,9 +63,7 @@ def get_az_from_subnet(subnets: List[str]) -> Dict[str, str]:
     _logger.info("Subnets info: %s", subnets)
     az_subnet_map = {}
     try:
-        response = ec2_client.describe_subnets(
-            SubnetIds=subnets
-        )
+        response = ec2_client.describe_subnets(SubnetIds=subnets)
         az_subnet_map = {entry["SubnetId"]: entry["AvailabilityZone"] for entry in response["Subnets"]}
     except botocore.exceptions.ClientError as ex:
         _logger.error("Error Describing Subnets: %s", ex)
