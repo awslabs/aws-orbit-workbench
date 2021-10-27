@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Refactored namespace controller into userspace operator
 - adding userspace cr creation into post auth lambda
 - ISSUE-1149: fixed landing page images/links for Chrome
+- Adding env, region and team length validator to handle IAM role 64 character limit
 
 ### **Removed**
 
