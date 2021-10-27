@@ -436,19 +436,21 @@ def manifest_validations(manifest: Manifest) -> None:
         if managed_nodegroup.nodes_num_desired < 1:
             raise ValueError(f"{managed_nodegroup.name}  number of desired nodes should be greater than 0")
 
-        # Handle IAM role name 64 character limit validation
-        region_len = len(utils.get_region())
-        env_len = len(manifest.name)
-        env_region_len = env_len + region_len
-        env_region_max = 28
-        env_region_team_max = 51
-        if env_region_len <= env_region_max:
-            raise ValueError(f"Orbit accepts max combined length of {env_region_max} characters for env and region")
+    # Handle IAM role name 64 character limit validation
+    region_len = len(utils.get_region())
+    env_len = len(manifest.name)
+    env_region_len = env_len + region_len
+    env_region_max = 28
+    env_region_team_max = 51
+    if env_region_len <= env_region_max:
+        raise ValueError(f"Orbit accepts max combined length of {env_region_max} characters for env and region")
 
-        max_team_len = max([len(team.name) for team in manifest.teams])
-        env_region_team_len = env_region_len + max_team_len
-        if env_region_team_len <= env_region_team_max:
-            raise ValueError(
-                f"Orbit accepts max combined length of {env_region_team_max} characters for env, "
-                f"region, and team name(s)"
-            )
+    max_team_len = max([len(team.name) for team in manifest.teams])
+    env_region_team_len = env_region_len + max_team_len
+    if env_region_team_len <= env_region_team_max:
+        raise ValueError(
+            f"Orbit accepts max combined length of {env_region_team_max} characters for env, "
+            f"region, and team name(s)"
+        )
+
+    raise ValueError("Testing")
