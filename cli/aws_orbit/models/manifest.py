@@ -451,7 +451,5 @@ def manifest_validations(manifest: Manifest) -> None:
     _logger.debug(f"env_region_team_len={env_region_team_len}")
     if env_region_team_len > env_region_team_max:
         raise ValueError(
-            f"Orbit accepts max combined length of {env_region_team_max} characters for env, "
-            f"region, and team name"
+            f"Orbit accepts max combined length of {env_region_team_max} characters for env, region, and team name"
         )
-
