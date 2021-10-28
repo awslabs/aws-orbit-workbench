@@ -42,7 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## **[1.3.4] **
 
 ### **Added**
-- Added support for VPIC CIDR extensions (manifest boolean flag secondary_cidr)
+- Added support for VPC CIDR extensions (manifest boolean flag secondary_cidr)
 ### **Changed**
 
 ### **Removed**
