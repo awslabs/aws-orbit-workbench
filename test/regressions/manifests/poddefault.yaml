@@ -1,0 +1,19 @@
+apiVersion: kubeflow.org/v1alpha1
+kind: PodDefault
+metadata:
+  generateName: orbit-stuff-
+spec:
+  selector:
+    matchLabels:
+      orbit/stuff: ""
+  desc: Orbit Stuff
+---
+apiVersion: kubeflow.org/v1alpha1
+kind: PodDefault
+metadata:
+  name: orbit-stuff-2
+spec:
+  selector:
+    matchLabels:
+      orbit/stuff: ""
+  desc: Orbit Stuff

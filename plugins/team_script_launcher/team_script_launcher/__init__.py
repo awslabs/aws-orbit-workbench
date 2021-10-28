@@ -15,12 +15,13 @@
 import logging
 import os
 import time
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
 
 import aws_orbit
 from aws_orbit import sh, utils
 from aws_orbit.plugins import hooks
 from aws_orbit.remote_files import helm
+from aws_orbit.services import s3
 
 if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
@@ -74,6 +75,7 @@ def helm_package(
     repo_location = team_context.team_helm_repository
     repo = team_context.name
     _logger.debug(script_body)
+    _init_team_repo(context=context, team_context=team_context, repo_location=repo_location)
     helm.add_repo(repo=repo, repo_location=repo_location)
     chart_name, chart_version, chart_package = helm.package_chart(
         repo=repo, chart_path=os.path.join(chart_path, "team-script-launcher"), values=vars
@@ -136,20 +138,21 @@ def destroy(
             helm.uninstall_chart(release_name, team_context.name)
             time.sleep(60)
 
-        helm.install_chart_no_upgrade(
-            repo=repo,
-            namespace=team_context.name,
-            name=release_name,
-            chart_name=chart_name,
-            chart_version=chart_version,
-        )
-        # wait for job completion
-        try:
-            sh.run(
-                f"kubectl wait --for=condition=complete --timeout=120s job/{plugin_id} --namespace {team_context.name}"
+        if ns_exists(team_context=team_context):
+            helm.install_chart_no_upgrade(
+                repo=repo,
+                namespace=team_context.name,
+                name=release_name,
+                chart_name=chart_name,
+                chart_version=chart_version,
             )
-        except Exception as e:
-            _logger.error(e)
+            # wait for job completion
+            try:
+                sh.run(
+                    f"kubectl wait --for=condition=complete --timeout=120s job/{plugin_id} --namespace {team_context.name}"
+                )
+            except Exception as e:
+                _logger.error(e)
 
         # destroy
         helm.uninstall_chart(release_name, namespace=team_context.name)
@@ -157,3 +160,29 @@ def destroy(
 
     # For Deploy Scope
     helm.uninstall_chart(release_name, namespace=team_context.name)
+
+
+def _init_team_repo(context: "Context", team_context: "TeamContext", repo_location: str) -> None:
+    if not s3.object_exists(
+        bucket=cast(str, context.toolkit.s3_bucket), key=f"helm/repositories/teams/{team_context.name}/index.yaml"
+    ):
+        _logger.debug("Initializing Team Helm Respository at %s", repo_location)
+        sh.run(f"helm s3 init {repo_location}")
+    else:
+        _logger.debug("Skipping initialization of existing Team Helm Repository at %s", repo_location)
+
+
+def ns_exists(team_context: "TeamContext") -> bool:
+    namespace = team_context.name
+    try:
+        _logger.info("Checking if %s exists", namespace)
+        found = False
+        for line in sh.run_iterating(f"kubectl get ns"):
+            _logger.info(line)
+            if namespace in line:
+                found = True
+
+        return found
+    except sh.exceptions.FailedShellCommand as e:
+        _logger.error(e)
+        raise e

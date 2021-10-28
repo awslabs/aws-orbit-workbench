@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 #
 
+## **[1.4.0] - Unreleased **
+
+### **Added**
+
+- Added orbitjob-operator and CRD
+- Added schedule (cron string) to orbitjob CRD
+- Added monitoring to OrbitJob so pytest can evaluate the jobs execution
+- Added PyTest for lake admin, creator and user
+- Added 'one-click' support for trial usage of AWS Workbench
+- Added Userspace Role and RoleBinding
+- Added TeamSpace operator
+- Added Userspace Operator PyTest
+
+
+### **Changed**
+
+- Moved away from Job index to Status object of K8s job to report the current status
+- Updated SDK to use OrbitJobs instead of Jobs and CronJobs
+- Changed Lake Creator notebook
+- Added sleep to Orbit SDK based OrbitJob CR job status check
+- Updating README.md
+- Fixed the expiring kubeconfig issue for long living k8s jobs
+- Fixing lake-creator pytest shell script and refactoring lake-creator pytest files
+- Removing lake user specific cron job notebooks from regression
+- Removing profiles section from JL UI
+- Removing lake user specific cron job notebooks from regression
+- Refactored namespace controller into userspace operator
+- adding userspace cr creation into post auth lambda
+- ISSUE-1149: fixed landing page images/links for Chrome
+
+### **Removed**
+
+- removed namespace controller deployment
+
+
 ## **[1.3.4] **
 
 ### **Added**
@@ -25,6 +60,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## **[1.3.2] **
 
+- Added orbitjob-operator and CRD
+- Added schedule (cron string) to orbitjob CRD
+- Added monitoring to OrbitJob so pytest can evaluate the jobs execution
+- Added PyTest for lake admin, creator and user
+- Added 'one-click' support for trial usage of AWS Workbench
+- Added Userspace Role and RoleBinding
+- Added TeamSpace operator
+- Added Userspace Operator PyTest
+
 ### **Changed**
 FIX - Removed the istio-system pod disruption budget before tearing down the EKS cluster. The PDB was causing a dead-lock
 
@@ -36,7 +80,9 @@ FIX - Removed the istio-system pod disruption budget before tearing down the EKS
 - FIX - support for SAML authentication
 - FIX - updated logoc for AutenticatedGroups to team mappings
 - FIX - changed storage-driver for build image and image replicator
+
 ### **Removed**
+
 
 ## **[1.3.0]**
 
@@ -49,6 +95,7 @@ FIX - Removed the istio-system pod disruption budget before tearing down the EKS
 - TeamSpace CRD and Operator
 - UserSpace CRD and Operator
 - Added support for Path prefix to Orbit frameowork's IAM roles
+
 
 ### **Changed**
 

@@ -48,12 +48,87 @@ Please see our [Home](https://awslabs.github.io/aws-orbit-workbench) for install
 
 - AWS Analytic Services Integrations
   - Amazon Redshift
-  - Amazon SageMaker (api calls)
-  - Amazon EMR (coming soon)
+  - Amazon SageMaker api calls and Kubernetes Operator
+  - Amazon EMR on EKS Kubernetes Operator
   - Amazon Athena
-  - AWS Glue 
-  - AWS Lake Formation (coming soon)
+  - AWS Glue DataBrew
+  - AWS Lake Formation
     
+
+## Create an AWS Orbit Workbench trial environment
+
+Feel free to create a full AWS Orbit Workbench environment in its own VPC.  
+You can always clone or fork this repo and install via CLI, but if you are just investigating the Workbench,
+we have provided a standard deployment. 
+
+Please follow these steps.
+#### 1. Create the AWS Orbit Workbench
+
+Deploy | Region Name | Region  
+:---: | ------------ | -------------  
+[🚀][us-east-1] | US East (N. Virginia) | us-east-1  
+[🚀][us-east-2] | US East (Ohio) | us-east-2  
+[🚀][us-west-1] | US West (N. California) | us-west-1  
+[🚀][us-west-2] | US West (Oregon) | us-west-2  
+[🚀][eu-west-2] | EU (London) | eu-west-2  
+
+
+This reference deployment can only be deployed to Regions denoted above.
+
+The CloudFormation template has all the necessary parameters, but you may change as needed:
+
+- Cloudformation Parameters
+  - **Version**: The version of Orbit Workbench (corresponds to the versions of
+                [aws-orbit](https://pypi.org/project/aws-orbit/]aws-orbit) in pypi)
+  - **K8AdminRole**: An existing role in your account that has admin access to the EKS cluster
+
+
+- The Cloudformation stack will create two(2) [AWS CodePipelines](https://aws.amazon.com/codepipeline/):
+  - **Orbit_Deploy_trial** - which will start automatically and create your  workbench
+  - **Orbit_Destroy_trial** - which will start automatically and will destroy your workbench
+    - this pipeline has a Manual Approval stage that prevents your workbench from moving forward with 
+      the destroy process  
+
+Once your pipelines are created, the **Orbit_Destroy_trial** pipeline will wait for you to approve the next stage (which we don't want to do yet).
+
+Go to the **Orbit_Destroy_trial** pipeline, click `Stop Execution` then `Stop and Abandon`. Abandoning the
+pipeline prevents the job from timing out and stopping at a later time.
+
+The **Orbit_Deploy_trial** pipeline takes approximaeluy `70-90 minutes` to complete.
+
+#### 2. Get your access URL
+
+When the Orbit_Deploy_trial pipeline does complete, go to the EC2 page --> Load Balancing --> Load Balancers and 
+look for the alb we have created...it have a naming pattern of `xxxxxxxx-istiosystem-istio-xxxx`.  Get the DNS of the alb.
+
+The AWS Orbit Workbench homepage will be located at:
+```console
+https://xxxxxxxx-istiosystem-istio-xxxx-1234567890.{region}.elb.amazonaws.com/orbit/login
+```
+
+You can browse that url.  We are using self-signed certs, so your browser may complain, 
+but it is save to `Accept and Continue` to the site.
+
+The default username and password are:
+```console
+Username: orbit
+Password: OrbitPwd1!
+```
+You will be promted to change the password.
+
+
+### Cleaning up the example resources
+
+To remove all workbench resources , do the following:
+
+1. Goto the **Orbit_Destroy_trial** pipeline and click 'Release Change'
+   - When the `CLI_ApproveDestroy` stage is active, click `Review` and then `Approve` so the pipeline will continue
+2. Wait until the **Orbit_Destroy_trial** completes 
+3. Delete the Cloudformation Stack `trial`
+   - if the template fails to destroy due to objects in the S3 bucket, it is ok to 
+     `Empty` the bucket and delete the stack again
+
+
 ## Contributing
 
 Contributing Guidelines: [./CONTRIBUTING.md](././CONTRIBUTING.md)
@@ -64,3 +139,14 @@ Contributing Guidelines: [./CONTRIBUTING.md](././CONTRIBUTING.md)
 This project is licensed under the Apache-2.0 License.
 
 <a name="myfootnote1">**</a>: for detailed feature list by release, please see our release page in the wiki tab
+
+
+[us-east-1]: https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?region=us-east-1&templateURL=https://aws-orbit-workbench-public-us-east-1.s3.amazonaws.com/deploy/trial_pipeline_cfn.yaml&stackName=trial
+
+[us-east-2]: https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?region=us-east-2&templateURL=https://aws-orbit-workbench-public-us-east-2.s3.amazonaws.com/deploy/trial_pipeline_cfn.yaml&stackName=trial
+
+[us-west-1]: https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?region=us-west-1&templateURL=https://aws-orbit-workbench-public-us-west-1.s3.amazonaws.com/deploy/trial_pipeline_cfn.yaml&stackName=trial
+
+[us-west-2]: https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?region=us-west-2&templateURL=https://aws-orbit-workbench-public-us-west-2.s3.amazonaws.com/deploy/trial_pipeline_cfn.yaml&stackName=trial
+
+[eu-west-2]: https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?region=eu-west-2&templateURL=https://aws-orbit-workbench-public-eu-west-2.s3.amazonaws.com/deploy/trial_pipeline_cfn.yaml&stackName=trial

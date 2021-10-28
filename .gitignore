@@ -266,6 +266,7 @@ celerybeat.pid
 
 # Environments
 .venv
+.vsvenv
 # env/
 venv/
 # ENV/
@@ -395,3 +396,6 @@ zzz*
 *.bak
 *.vsix
 
+
+pip-wheel-metadata
+regression_report.xml

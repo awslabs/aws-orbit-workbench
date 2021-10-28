@@ -318,7 +318,7 @@ class Env(Stack):
                 )
             ],
         )
-        name = f"{self.id}-{self.context.region}-cognito-authenticated-identity-role"
+        name = f"{self.id}-{self.context.region}-cognito-auth-identity-role"
         authenticated_role = iam.Role(
             scope=self,
             id=name,
@@ -360,7 +360,7 @@ class Env(Stack):
                 ),
             },
         )
-        name = f"{self.id}-{self.context.region}-cognito-unauthenticated-identity-role"
+        name = f"{self.id}-{self.context.region}-cognito-unauth-identity-role"
         unauthenticated_role = iam.Role(
             scope=self,
             id=name,
@@ -509,6 +509,8 @@ class Env(Stack):
                 "ORBIT_ENV": self.context.name,
                 "ACCOUNT_ID": self.context.account_id,
                 "ROLE_PREFIX": f"/{self.context.role_prefix}/" if self.context.role_prefix else "/",
+                "ORBIT_API_VERSION": "v1",
+                "ORBIT_API_GROUP": "orbit.aws",
             },
             layers=[
                 aws_lambda.LayerVersion.from_layer_version_arn(
