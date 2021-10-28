@@ -18,7 +18,7 @@ import time
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
 
 import aws_orbit
-from aws_orbit import sh, utils
+from aws_orbit import exceptions, sh, utils
 from aws_orbit.plugins import hooks
 from aws_orbit.remote_files import helm
 from aws_orbit.services import s3
@@ -183,6 +183,6 @@ def ns_exists(team_context: "TeamContext") -> bool:
                 found = True
 
         return found
-    except sh.exceptions.FailedShellCommand as e:
+    except exceptions.FailedShellCommand as e:
         _logger.error(e)
         raise e
