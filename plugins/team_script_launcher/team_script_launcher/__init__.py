@@ -149,7 +149,8 @@ def destroy(
             # wait for job completion
             try:
                 sh.run(
-                    f"kubectl wait --for=condition=complete --timeout=120s job/{plugin_id} --namespace {team_context.name}"
+                    f"kubectl wait --for=condition=complete "
+                    f"--timeout=120s job/{plugin_id} --namespace {team_context.name}"
                 )
             except Exception as e:
                 _logger.error(e)
@@ -175,9 +176,9 @@ def _init_team_repo(context: "Context", team_context: "TeamContext", repo_locati
 def ns_exists(team_context: "TeamContext") -> bool:
     namespace = team_context.name
     try:
-        _logger.info("Checking if %s exists", namespace)
+        _logger.info(f"Checking if {namespace} exists")
         found = False
-        for line in sh.run_iterating(f"kubectl get ns"):
+        for line in sh.run_iterating("kubectl get ns"):
             _logger.info(line)
             if namespace in line:
                 found = True
