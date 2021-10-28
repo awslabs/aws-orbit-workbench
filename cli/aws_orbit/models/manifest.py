@@ -440,7 +440,7 @@ def manifest_validations(manifest: Manifest) -> None:
     region_len = len(utils.get_region())
     env_len = len(manifest.name)
     env_region_len = env_len + region_len
-    print(f"env_region_len={env_region_len}")
+    _logger.debug(f"env_region_len={env_region_len}")
     env_region_max = 28
     env_region_team_max = 51
     if env_region_len > env_region_max:
@@ -448,7 +448,7 @@ def manifest_validations(manifest: Manifest) -> None:
 
     max_team_len = max([len(team.name) for team in manifest.teams])
     env_region_team_len = env_region_len + max_team_len
-    print(f"env_region_team_len={env_region_team_len}")
+    _logger.debug(f"env_region_team_len={env_region_team_len}")
     if env_region_team_len > env_region_team_max:
         raise ValueError(
             f"Orbit accepts max combined length of {env_region_team_max} characters for env, "
