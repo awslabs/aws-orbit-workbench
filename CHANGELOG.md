@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added Userspace Role and RoleBinding
 - Added TeamSpace operator
 - Added Userspace Operator PyTest
+- Added Kube-proxy and CoreDNS EKS Addons
 
 
 ### **Changed**

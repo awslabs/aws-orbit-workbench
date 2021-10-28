@@ -143,7 +143,9 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
     tags["Env"] = f"orbit-{context.name}"
 
     MANIFEST["addons"] = [
-        {"name": "vpc-cni", "version": "v1.9.0", "attachPolicyARNs": ["arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"]}
+        {"name": "vpc-cni", "version": "v1.9.0", "attachPolicyARNs": ["arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"]},
+        {"name": "kube-proxy", "version": "v1.20.4-eksbuild.2"},
+        {"name": "coredns", "version": "v1.8.3-eksbuild.1"},
     ]
 
     # Env
