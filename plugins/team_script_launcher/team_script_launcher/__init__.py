@@ -18,7 +18,7 @@ import time
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
 
 import aws_orbit
-from aws_orbit import sh, utils
+from aws_orbit import exceptions, sh, utils
 from aws_orbit.plugins import hooks
 from aws_orbit.remote_files import helm
 from aws_orbit.services import s3
@@ -149,7 +149,8 @@ def destroy(
             # wait for job completion
             try:
                 sh.run(
-                    f"kubectl wait --for=condition=complete --timeout=120s job/{plugin_id} --namespace {team_context.name}"
+                    f"kubectl wait --for=condition=complete "
+                    f"--timeout=120s job/{plugin_id} --namespace {team_context.name}"
                 )
             except Exception as e:
                 _logger.error(e)
@@ -175,14 +176,14 @@ def _init_team_repo(context: "Context", team_context: "TeamContext", repo_locati
 def ns_exists(team_context: "TeamContext") -> bool:
     namespace = team_context.name
     try:
-        _logger.info("Checking if %s exists", namespace)
+        _logger.info(f"Checking if {namespace} exists")
         found = False
-        for line in sh.run_iterating(f"kubectl get ns"):
+        for line in sh.run_iterating("kubectl get ns"):
             _logger.info(line)
             if namespace in line:
                 found = True
 
         return found
-    except sh.exceptions.FailedShellCommand as e:
+    except exceptions.FailedShellCommand as e:
         _logger.error(e)
         raise e
