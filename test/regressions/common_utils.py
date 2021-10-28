@@ -37,6 +37,9 @@ logger = logging.getLogger()
 JOB_COMPLETION_STATUS = "Complete"
 JOB_FAILED_STATUS = "Failed"
 
+USERSPACE_INSTALLED_STATUS = "Installed"
+USERSPACE_FAILED_STATUS = "Failed to install"
+
 
 workspace = get_workspace()
 

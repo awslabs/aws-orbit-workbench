@@ -24,8 +24,9 @@ from aws_orbit import sh
 from aws_orbit.models.changeset import Changeset, ListChangeset
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.models.manifest import ManagedNodeGroupManifest
+from aws_orbit.remote_files.kubectl import deploy_eniconfig, set_secondary_vpc_cidr_env_vars
 from aws_orbit.services import autoscaling, cfn, ec2, eks, iam
-from aws_orbit.services.ec2 import IpPermission, UserIdGroupPair
+from aws_orbit.services.ec2 import IpPermission, UserIdGroupPair, get_az_from_subnet
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -127,6 +128,7 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
         }
 
     MANIFEST["iam"]["serviceRoleARN"] = context.eks_cluster_role_arn
+    MANIFEST["iam"]["withOIDC"] = True
     MANIFEST["managedNodeGroups"] = []
 
     labels = {
@@ -140,7 +142,11 @@ def generate_manifest(context: "Context", name: str, nodegroups: Optional[List[M
     tags = tags = {f"k8s.io/cluster-autoscaler/node-template/label/{k}": v for k, v in labels.items()}
     tags["Env"] = f"orbit-{context.name}"
 
-    MANIFEST["addOns"] = [{"name": "vpc-cni", "version": "1.9.0"}]
+    MANIFEST["addons"] = [
+        {"name": "vpc-cni", "version": "v1.9.0", "attachPolicyARNs": ["arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"]},
+        {"name": "kube-proxy", "version": "v1.20.4-eksbuild.2"},
+        {"name": "coredns", "version": "v1.8.3-eksbuild.1"},
+    ]
 
     # Env
     MANIFEST["managedNodeGroups"].append(
@@ -367,6 +373,14 @@ def deploy_env(context: "Context", changeset: Optional[Changeset]) -> None:
             f"eksctl create iamidentitymapping --cluster {cluster_name} --arn {arn} "
             f"--username {username} --group system:masters"
         )
+
+        if context.networking.secondary_cidr:
+            set_secondary_vpc_cidr_env_vars()
+            subnet_ids = [subnet.subnet_id for subnet in context.networking.private_subnets]
+            _logger.debug(f"Getting AZ'z for the subnets: {subnet_ids}")
+            az_subnet_map = get_az_from_subnet(subnets=subnet_ids)
+            deploy_eniconfig(az_subnet_map=az_subnet_map, context=context)
+
         context.managed_nodegroups = requested_nodegroups
 
         for ng in requested_nodegroups:

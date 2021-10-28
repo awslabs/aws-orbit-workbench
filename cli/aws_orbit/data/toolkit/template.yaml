@@ -136,6 +136,8 @@ Resources:
               - emr-containers:CancelJobRun
               - redshift:Describe*
               - s3:GetObject
+              - eks:Describe*
+              - eks:List*
             Resource: '*'
           - Effect: Allow
             Action:
@@ -222,6 +224,10 @@ Resources:
             Condition:
               StringEquals:
                 sts:AWSServiceName: codeartifact.amazonaws.com
+          - Effect: Allow
+            Action:
+              - eks:CreateAddon
+            Resource: '*'
           - Effect: Allow
             Action:
               - codecommit:*
@@ -338,6 +344,11 @@ Resources:
               - sts:AssumeRole
             Resource:
               - arn:aws:iam::${account_id}:role${role_prefix}${top_level}-${env_name}-${region}-admin
+          - Effect: Allow
+            Action:
+              - iam:ListPolicyTags
+            Resource:
+              - arn:aws:iam::${account_id}:policy/*
         Version: '2012-10-17'
       Description: ''
       ManagedPolicyName: ${top_level}-${env_name}-${region}-admin-iam-s3

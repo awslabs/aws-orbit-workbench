@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Added PyTest for lake admin, creator and user
 - Added 'one-click' support for trial usage of AWS Workbench
 - Added Userspace Role and RoleBinding
+- Added TeamSpace operator
+- Added Userspace Operator PyTest
+- Added Kube-proxy and CoreDNS EKS Addons
+
 
 ### **Changed**
 
@@ -25,14 +29,61 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Fixed the expiring kubeconfig issue for long living k8s jobs
 - Fixing lake-creator pytest shell script and refactoring lake-creator pytest files
 - Removing lake user specific cron job notebooks from regression
-- Removing profiles section from JL UI 
-- Removing lake user specific cron job notebooks from regression 
+- Removing profiles section from JL UI
+- Removing lake user specific cron job notebooks from regression
 - Refactored namespace controller into userspace operator
 - adding userspace cr creation into post auth lambda
+- ISSUE-1149: fixed landing page images/links for Chrome
 
 ### **Removed**
 
 - removed namespace controller deployment
+
+
+## **[1.3.4] **
+
+### **Added**
+- Added support for VPC CIDR extensions (manifest boolean flag secondary_cidr)
+### **Changed**
+
+### **Removed**
+
+
+## **[1.3.3] **
+
+### **Added**
+- Added tagging support for customer-managed policies in Teams  (orbit-available=true)
+- ISSUE-1149: fixed landing page images/links for Chrome
+
+### **Changed**
+
+### **Removed**
+
+## **[1.3.2] **
+
+- Added orbitjob-operator and CRD
+- Added schedule (cron string) to orbitjob CRD
+- Added monitoring to OrbitJob so pytest can evaluate the jobs execution
+- Added PyTest for lake admin, creator and user
+- Added 'one-click' support for trial usage of AWS Workbench
+- Added Userspace Role and RoleBinding
+- Added TeamSpace operator
+- Added Userspace Operator PyTest
+
+### **Changed**
+FIX - Removed the istio-system pod disruption budget before tearing down the EKS cluster. The PDB was causing a dead-lock
+
+## **[1.3.1]**
+
+### **Added**
+
+### **Changed**
+- FIX - support for SAML authentication
+- FIX - updated logoc for AutenticatedGroups to team mappings
+- FIX - changed storage-driver for build image and image replicator
+
+### **Removed**
+
 
 ## **[1.3.0]**
 

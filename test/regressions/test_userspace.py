@@ -17,10 +17,10 @@ import boto3
 import json
 import pytest
 import logging
-from typing import Any, Dict, List, Optional, cast
-from custom_resources import CustomApiObject
-from kubernetes import client
+from typing import Any, Dict, cast
+from custom_resources import OrbitUserSpaceCrObject
 from kubetest.client import TestClient
+from kubernetes.client.rest import ApiException
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -30,30 +30,17 @@ logging.basicConfig(
 
 logger = logging.getLogger()
 
-MANIFESTS_PATH = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)),
-    "manifests",
-)
-ORBIT_ENV="iter"
-TEAM_NAME = "lake-admin"
+AWS_ORBIT_ENV = os.environ.get("AWS_ORBIT_ENV")
+AWS_ORBIT_TEAM_SPACE = os.environ.get("AWS_ORBIT_TEAM_SPACE")
 
 USER_NAME = "orbitpytest"
 USER_EMAIL = F"{USER_NAME}@amazon.com"
-USER_NS = "lake-admin-orbitpytest"
-
-class UserSpace(CustomApiObject):
-    group = "orbit.aws"
-    api_version = "v1"
-    kind = "UserSpace"
-
-    def is_ready(self) -> bool:
-        self.refresh()
-        return self.obj.get("status", {}).get("installation", {}).get("installationStatus") == "Installed"
+USER_NS = f"{AWS_ORBIT_TEAM_SPACE}-orbitpytest"
 
 
-def create_user_efs_endpoint(user: str, team_name: str) -> Dict[str, Any]:
+def create_user_efs_acesspoint(user: str, env_name: str, team_name: str) -> Dict[str, Any]:
     ssm = boto3.client("ssm")
-    env_context = ssm.get_parameter(Name=f"/orbit/{ORBIT_ENV}/context")
+    env_context = ssm.get_parameter(Name=f"/orbit/{env_name}/context")
     EFS_FS_ID = json.loads(env_context.get("Parameter").get("Value")).get("SharedEfsFsId")
     efs = boto3.client("efs")
     return cast(
@@ -65,18 +52,31 @@ def create_user_efs_endpoint(user: str, team_name: str) -> Dict[str, Any]:
                 "Path": f"/{team_name}/private/{user}",
                 "CreationInfo": {"OwnerUid": 1000, "OwnerGid": 100, "Permissions": "770"},
             },
-            Tags=[{"Key": "TeamSpace", "Value": team_name}, {"Key": "Env", "Value": ORBIT_ENV}],
+            Tags=[{"Key": "TeamSpace", "Value": team_name}, {"Key": "Env", "Value": env_name}],
         ),
     )
 
 
+def delete_user_efs_acesspoint(efs_access_point_id: str) -> bool:
+    efs = boto3.client("efs")
+    efs_del_status = True
+    try:
+        efs.delete_access_point(AccessPointId=efs_access_point_id)
+    except Exception as e:
+        efs_del_status = False
+        logger.error(f"Error while deleting efs access point {e}")
+    return efs_del_status
+
+
 @pytest.mark.order(1)
 @pytest.mark.namespace(create=True, name=USER_NS)
-@pytest.mark.testuserspace_cr
+@pytest.mark.testlakeadmin_userspace_cr
 def test_userspace_creation(kube: TestClient) -> None:
     logger.info(f"Creating EFS endpoint for {USER_NAME}...")
-    resp = create_user_efs_endpoint(user=USER_NAME, team_name=TEAM_NAME)
+    resp = create_user_efs_acesspoint(user=USER_NAME, env_name=AWS_ORBIT_ENV, team_name=AWS_ORBIT_TEAM_SPACE)
+    logger.info(f"EFS access point response={resp}")
     access_point_id = resp.get("AccessPointId")
+    logger.info(f"access_point_id={access_point_id}")
 
     body = {
         "apiVersion": "orbit.aws/v1",
@@ -86,19 +86,27 @@ def test_userspace_creation(kube: TestClient) -> None:
             "namespace": USER_NS,
         },
         "spec": {
-            "env": ORBIT_ENV,
+            "env": AWS_ORBIT_ENV,
             "space": "user",
-            "team": TEAM_NAME,
+            "team": AWS_ORBIT_TEAM_SPACE,
             "user": USER_NAME,
             "userEfsApId": access_point_id,
             "userEmail": USER_EMAIL
         },
     }
     # Create UserSpace custom resource
-    userspace = UserSpace(body)
-    userspace.create(namespace=TEAM_NAME)
-    # Wait for creation
-    userspace.wait_until_ready(timeout=30)
-    # Check the Helm chart installation status
+    userspace_cr = OrbitUserSpaceCrObject(body)
+    userspace_cr.create(namespace=USER_NS)
+    # Wait for creation, check the Helm chart installation status
+    userspace_cr.wait_until_ready(timeout=30)
+    # Logic to pass or fail the pytest
+    userspace_cr.wait_until_userspace_installation(timeout=120)
+    current_status = userspace_cr.get_status().get("userSpaceOperator").get("installationStatus")
+    logger.info(f"current_status={current_status}")
+    assert current_status == "Installed"
     # Delete the UserSpace custom resource
-    userspace.delete()
+    assert userspace_cr.check_userspace_exists() == True
+    # Cleanup
+    userspace_cr.delete()
+    assert userspace_cr.check_userspace_exists() == False
+    assert delete_user_efs_acesspoint(access_point_id)
