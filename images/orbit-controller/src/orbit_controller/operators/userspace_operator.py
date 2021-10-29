@@ -22,7 +22,6 @@ from typing import Any, Dict, Optional, cast
 
 import boto3
 import kopf
-from kubernetes import client
 from kubernetes.client import CoreV1Api, V1ConfigMap
 from orbit_controller import ORBIT_API_GROUP, ORBIT_API_VERSION, dynamic_client, load_config, run_command
 from orbit_controller.utils import poddefault_utils
@@ -97,7 +96,7 @@ def _install_helm_chart(
     return install_status
 
 
-def _create_user_efs_endpoint(user: str, team_name: str, team_efsid: str) -> Dict[str, Any]:
+def _create_user_efs_endpoint(user: str, team_name: str, team_efsid: str, env: str) -> Dict[str, Any]:
     efs = boto3.client("efs")
 
     return cast(
@@ -109,7 +108,7 @@ def _create_user_efs_endpoint(user: str, team_name: str, team_efsid: str) -> Dic
                 "Path": f"/{team_name}/private/{user}",
                 "CreationInfo": {"OwnerUid": 1000, "OwnerGid": 100, "Permissions": "770"},
             },
-            Tags=[{"Key": "TeamSpace", "Value": team_name}, {"Key": "Env", "Value": os.environ.get("ORBIT_ENV")}],
+            Tags=[{"Key": "TeamSpace", "Value": team_name}, {"Key": "Env", "Value": env}],
         ),
     )
 
@@ -119,7 +118,7 @@ def _delete_user_efs_endpoint(user_name: str, user_namespace: str, logger: kopf.
 
     logger.info(f"Fetching the EFS access point in the namespace {user_namespace} for user {user_name}")
 
-    efs_access_point_id = meta.get("userEfsApId")
+    efs_access_point_id = meta.get("labels", {}).get("userEfsApId", None)
 
     logger.info(f"Deleting the EFS access point {efs_access_point_id} for user {user_name}")
 
@@ -127,9 +126,9 @@ def _delete_user_efs_endpoint(user_name: str, user_namespace: str, logger: kopf.
         efs.delete_access_point(AccessPointId=efs_access_point_id)
         logger.info(f"Access point {efs_access_point_id} deleted")
     except efs.exceptions.AccessPointNotFound:
-        logger.error(f"Access point not found: {efs_access_point_id}")
+        logger.warning(f"Access point not found: {efs_access_point_id}")
     except efs.exceptions.InternalServerError as e:
-        logger.error(e)
+        logger.warning(e)
 
 
 def _uninstall_chart(helm_release: str, namespace: str, logger: kopf.Logger) -> bool:
@@ -223,9 +222,9 @@ def install_team(
 
     try:
         logger.info(f"Creating EFS endpoint for {team}-{user}...")
-        efs_ep_resp = _create_user_efs_endpoint(user=user, team_name=team, team_efsid=team_efsid)
+        efs_ep_resp = _create_user_efs_endpoint(user=user, team_name=team, team_efsid=team_efsid, env=env)
         access_point_id = efs_ep_resp.get("AccessPointId", "")
-        patch["metadata"] = {"labels": {"userEfsApId": access_point_id}}
+        logger.info(f"AccessPointId is {access_point_id}")
     except Exception as e:
         logger.error(f"Error while creating EFS access point for user_name={user} and team={team}: {e}")
         patch["status"] = {
@@ -301,6 +300,7 @@ def install_team(
     )
 
     patch["metadata"] = {"annotations": {"orbit/helm-chart-installation": "Complete"}}
+    patch["metadata"] = {"labels": {"userEfsApId": access_point_id}}
     patch["status"] = {"userSpaceOperator": {"installationStatus": "Installed"}}
 
     return "Installed"
@@ -309,9 +309,9 @@ def install_team(
 @kopf.on.delete(ORBIT_API_GROUP, ORBIT_API_VERSION, "userspaces")  # type: ignore
 def uninstall_team_charts(
     name: str,
-    api: client.CoreV1Api,
     annotations: kopf.Annotations,
     labels: kopf.Labels,
+    spec: kopf.Spec,
     patch: kopf.Patch,
     logger: kopf.Logger,
     meta: kopf.Meta,
@@ -321,7 +321,7 @@ def uninstall_team_charts(
     load_config()
 
     logger.info("processing removed namespace %s", name)
-    space = labels.get("orbit/space", None)
+    space = spec.get("space", None)
 
     if space == "team":
         logger.info("delete all namespaces that belong to the team %s", name)
@@ -330,10 +330,10 @@ def uninstall_team_charts(
         run_command(f"kubectl delete namespace -l orbit/team={name},orbit/space=user")
         logger.info("all namespaces that belong to the team %s are deleted", name)
     elif space == "user":
-        env = labels.get("orbit/env", None)
-        team = labels.get("orbit/team", None)
-        user = labels.get("orbit/user", None)
-        user_email = annotations.get("owner", None)
+        env = spec.get("env", None)
+        team = spec.get("team", None)
+        user = spec.get("user", None)
+        user_email = spec.get("userEmail", None)
 
         logger.debug("removed namespace: %s,%s,%s,%s", team, user, user_email, name)
 

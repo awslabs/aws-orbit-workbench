@@ -70,6 +70,7 @@ def create_kubeconfig() -> None:
     except config.ConfigException:
         raise Exception("Could not configure kubernetes python client")
 
+
 def create_userspace(
     userspace_dc: dynamic.DynamicClient,
     name: str,
@@ -100,6 +101,7 @@ def create_userspace(
         userspace["metadata"]["ownerReferences"] = [owner_reference]
     logger.info(f"userspace={userspace}")
     userspace_dc.create(namespace=name, body=userspace)
+
 
 def create_user_namespace(
     api: client.CoreV1Api,
@@ -167,6 +169,7 @@ def create_user_namespace(
             except ApiException as ae:
                 logger.warning(f"Exception when trying to create userspace custom resource {user_ns}")
                 logger.warning(ae.body)
+
 
 def delete_user_namespace(
     api: client.CoreV1Api,
