@@ -247,7 +247,7 @@ def generate_spec(
         "echo '{\"data-root\": \"'${CODEBUILD_SRC_DIR}/docker'\"}' >> /etc/docker/daemon.json",
         (
             "nohup /usr/sbin/dockerd --host=unix:///var/run/docker.sock"
-            " --host=tcp://127.0.0.1:2375 --storage-driver=vfs --storage-opt size=96G &"
+            " --host=tcp://127.0.0.1:2375 --storage-driver=vfs &"
         ),
         'timeout 15 sh -c "until docker info; do echo .; sleep 1; done"',
     ]
