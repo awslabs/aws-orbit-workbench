@@ -136,6 +136,8 @@ Resources:
               - emr-containers:CancelJobRun
               - redshift:Describe*
               - s3:GetObject
+              - eks:Describe*
+              - eks:List*
             Resource: '*'
           - Effect: Allow
             Action:
@@ -222,6 +224,10 @@ Resources:
             Condition:
               StringEquals:
                 sts:AWSServiceName: codeartifact.amazonaws.com
+          - Effect: Allow
+            Action:
+              - eks:CreateAddon
+            Resource: '*'
           - Effect: Allow
             Action:
               - codecommit:*

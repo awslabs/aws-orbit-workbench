@@ -1,0 +1,52 @@
+Name: hrs
+EksSystemMastersRoles:
+- Admin
+- !ENV ${ORBIT_ADMIN_DEMO_ROLE::Admin}
+CodeartifactDomain: aws-orbit
+CodeartifactRepository: python-repository
+ScratchBucketArn: !SSM ${/orbit-f/fdn/resources::ScratchBucketArn}
+UserPoolId: !SSM ${/orbit-f/fdn/resources::UserPoolId}
+SharedEfsFsId: !SSM ${/orbit-f/fdn/resources::SharedEfsFsId}
+SharedEfsSgId: !SSM ${/orbit-f/fdn/resources::SharedEfsSgId}
+InstallSsmAgent: true
+Networking:
+    VpcId: vpc-099465a30cb167f8a
+    SecondaryCidr: true
+    PublicSubnets:
+    -   subnet-0b13a20524f026dfc
+    -   subnet-054d2c85c970c2fff
+    PrivateSubnets: 
+    -   subnet-0d398450976bf74fa
+    -   subnet-031bb5324c9d411fb
+    Data:
+        InternetAccessible: true
+        NodesSubnets:
+        -   subnet-0d398450976bf74fa
+        -   subnet-031bb5324c9d411fb
+    Frontend:
+        LoadBalancersSubnets:
+        -   subnet-0b13a20524f026dfc
+        -   subnet-054d2c85c970c2fff
+        SslCertArn: !SSM ${/orbit-f/fdn/resources::SslCertArn}
+ManagedNodegroups:
+-   Name: primary-compute
+    InstanceType: m5.2xlarge
+    LocalStorageSize: 128
+    NodesNumDesired: 6
+    NodesNumMax: 8
+    NodesNumMin: 4
+    Labels:
+        instance-type: m5.2xlarge
+Teams:
+-   Name: lake-admin
+    Policies:
+    - !ENV orbit-${ORBIT_ENV_NAME::hrs}-${AWS_DEFAULT_REGION::}-demo-lake-admin-add-policy
+    GrantSudo: true
+    Fargate: false
+    K8Admin: true
+    JupyterhubInboundRanges:
+    - 0.0.0.0/0
+    Plugins: !include lake-admin-plugins.yaml
+    EfsLifeCycle: AFTER_7_DAYS
+    AuthenticationGroups:
+    - lake-admin

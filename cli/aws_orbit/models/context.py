@@ -106,9 +106,6 @@ class NetworkingContext:
     max_availability_zones: Optional[int] = None
 
     def _fetch_vpc_cidr(self) -> None:
-        #if self.secondary_cidr_block:
-        #    self.vpc_cidr_block=self.secondary_cidr_block
-        #else:
         ec2 = boto3_resource("ec2")
         vpc = ec2.Vpc(self.vpc_id)
         self.vpc_cidr_block = str(vpc.cidr_block)
@@ -363,7 +360,7 @@ def create_networking_context_from_manifest(networking: "NetworkingManifest") ->
         "frontend": networking.frontend,
         "data": networking.data,
         "max_availability_zones": networking.max_availability_zones,
-        "secondary_cidr": networking.secondary_cidr
+        "secondary_cidr": networking.secondary_cidr,
     }
     if networking.vpc_id:
         args["vpc_id"] = networking.vpc_id
