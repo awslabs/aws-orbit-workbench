@@ -243,9 +243,11 @@ def generate_spec(
     build: List[str] = [] if cmds_build is None else cmds_build
     post: List[str] = [] if cmds_post is None else cmds_post
     install = [
+        "mkdir ${CODEBUILD_SRC_DIR}/docker",
+        "echo '{\"data-root\": \"'${CODEBUILD_SRC_DIR}/docker'\"}' >> /etc/docker/daemon.json",
         (
             "nohup /usr/sbin/dockerd --host=unix:///var/run/docker.sock"
-            " --host=tcp://127.0.0.1:2375 --storage-driver=vfs&"
+            " --host=tcp://127.0.0.1:2375 --storage-driver=vfs --storage-opt size=96G &"
         ),
         'timeout 15 sh -c "until docker info; do echo .; sleep 1; done"',
     ]
