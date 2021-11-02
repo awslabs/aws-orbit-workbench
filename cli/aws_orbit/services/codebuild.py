@@ -244,8 +244,8 @@ def generate_spec(
     post: List[str] = [] if cmds_post is None else cmds_post
     install = [
         (
-            "nohup /usr/sbin/dockerd --host=unix:///var/run/docker.sock"
-            " --host=tcp://127.0.0.1:2375 --storage-driver=vfs&"
+            "nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock"
+            " --host=tcp://127.0.0.1:2375 --storage-driver=overlay2&"
         ),
         'timeout 15 sh -c "until docker info; do echo .; sleep 1; done"',
     ]
