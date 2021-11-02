@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### **Added**
 
 ### **Changed**
-- Changed code build image to be baed on ubuntu 20 to support overlay2 drivers
+- Changed code build image to be based on ubuntu 20 to support overlay2 drivers
 ### **Removed**
 
 
