@@ -33,8 +33,8 @@ def _generate_buildspec(repo_host: str, repo_prefix: str, src: str, dest: str) -
                 "runtime-versions": {"python": 3.7, "docker": 19},
                 "commands": [
                     (
-                        "nohup /usr/sbin/dockerd --host=unix:///var/run/docker.sock "
-                        "--host=tcp://127.0.0.1:2375 --storage-driver=vfs&"
+                        "nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock "
+                        "--host=tcp://127.0.0.1:2375 --storage-driver=overlay2&"
                     ),
                     'timeout 15 sh -c "until docker info; do echo .; sleep 1; done"',
                 ],
