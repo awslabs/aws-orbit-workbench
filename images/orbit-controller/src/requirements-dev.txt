@@ -6,42 +6,43 @@
 #
 -e .
     # via -r requirements-dev.in
-aiohttp==3.7.4.post0
+aiohttp==3.8.0
     # via kopf
 aiojobs==0.3.0
     # via kopf
+aiosignal==1.2.0
+    # via aiohttp
 appdirs==1.4.4
     # via black
-async-timeout==3.0.1
+async-timeout==4.0.0
     # via aiohttp
 attrs==21.2.0
     # via aiohttp
 black==20.8b1
     # via -r requirements-dev.in
-bleach==4.0.0
+bleach==4.1.0
     # via readme-renderer
-boto3==1.18.21
+boto3==1.19.10
     # via orbit-controller
-botocore==1.21.21
+botocore==1.22.10
     # via
     #   boto3
-    #   orbit-controller
     #   s3transfer
-build==0.6.0.post1
+build==0.7.0
     # via check-manifest
-cachetools==4.2.2
+cachetools==4.2.4
     # via google-auth
-certifi==2021.5.30
+certifi==2021.10.8
     # via
     #   kubernetes
     #   requests
-cffi==1.14.6
+cffi==1.15.0
     # via cryptography
 chardet==4.0.0
-    # via
-    #   aiohttp
-    #   requests
-check-manifest==0.46
+    # via requests
+charset-normalizer==2.0.7
+    # via aiohttp
+check-manifest==0.47
     # via -r requirements-dev.in
 click==7.1.2
     # via
@@ -52,11 +53,11 @@ click==7.1.2
     #   pip-tools
 colorama==0.4.4
     # via twine
-cryptography==3.4.7
+cryptography==3.4.8
     # via orbit-controller
-decorator==5.0.9
+decorator==5.1.0
     # via jsonpath-ng
-docutils==0.17.1
+docutils==0.18
     # via
     #   pyroma
     #   readme-renderer
@@ -66,7 +67,11 @@ flake8==3.8.4
     # via -r requirements-dev.in
 flask==1.1.4
     # via orbit-controller
-google-auth==1.34.0
+frozenlist==1.2.0
+    # via
+    #   aiohttp
+    #   aiosignal
+google-auth==2.3.3
     # via kubernetes
 gunicorn==20.1.0
     # via orbit-controller
@@ -74,13 +79,8 @@ idna==2.10
     # via
     #   requests
     #   yarl
-importlib-metadata==4.6.4
-    # via
-    #   build
-    #   flake8
-    #   keyring
-    #   pep517
-    #   twine
+importlib-metadata==4.8.1
+    # via keyring
 iso8601==0.1.16
     # via kopf
 isort==5.7.0
@@ -97,9 +97,9 @@ jsonpatch==1.32
     # via orbit-controller
 jsonpath-ng==1.5.3
     # via orbit-controller
-jsonpointer==2.1
+jsonpointer==2.2
     # via jsonpatch
-keyring==23.0.1
+keyring==23.2.1
     # via twine
 kopf==1.33.0
     # via orbit-controller
@@ -109,7 +109,7 @@ markupsafe==2.0.1
     # via jinja2
 mccabe==0.6.1
     # via flake8
-multidict==5.1.0
+multidict==5.2.0
     # via
     #   aiohttp
     #   yarl
@@ -121,13 +121,13 @@ mypy==0.910
     # via -r requirements-dev.in
 oauthlib==3.1.1
     # via requests-oauthlib
-packaging==21.0
+packaging==21.2
     # via
     #   bleach
     #   build
 pathspec==0.9.0
     # via black
-pep517==0.11.0
+pep517==0.12.0
     # via build
 pip-tools==5.5.0
     # via -r requirements-dev.in
@@ -148,7 +148,7 @@ pycparser==2.20
     # via cffi
 pyflakes==2.2.0
     # via flake8
-pygments==2.9.0
+pygments==2.10.0
     # via
     #   pyroma
     #   readme-renderer
@@ -169,9 +169,9 @@ pyyaml==5.4.1
     #   kopf
     #   kubernetes
     #   orbit-controller
-readme-renderer==29.0
+readme-renderer==30.0
     # via twine
-regex==2021.8.3
+regex==2021.11.2
     # via black
 requests-oauthlib==1.3.0
     # via kubernetes
@@ -201,45 +201,40 @@ six==1.16.0
     #   kubernetes
     #   python-dateutil
     #   python-jose
-    #   readme-renderer
 toml==0.10.2
     # via
     #   black
     #   check-manifest
     #   mypy
-tomli==1.2.1
+tomli==1.2.2
     # via
     #   build
     #   pep517
-tqdm==4.62.0
+tqdm==4.62.3
     # via twine
 twine==3.3.0
     # via -r requirements-dev.in
 typed-ast==1.4.3
-    # via
-    #   black
-    #   mypy
+    # via black
 types-dataclasses==0.1.7
     # via -r requirements-dev.in
 types-python-dateutil==0.1.6
     # via -r requirements-dev.in
 types-python-slugify==0.1.2
     # via -r requirements-dev.in
-types-pyyaml==5.4.6
+types-pyyaml==5.4.12
     # via -r requirements-dev.in
-types-requests==2.25.6
+types-requests==2.25.11
     # via -r requirements-dev.in
 types-setuptools==57.0.2
     # via -r requirements-dev.in
-typing-extensions==3.10.0.0
+typing-extensions==3.10.0.2
     # via
-    #   aiohttp
+    #   async-timeout
     #   black
-    #   importlib-metadata
     #   kopf
     #   mypy
-    #   yarl
-urllib3==1.26.6
+urllib3==1.26.7
     # via
     #   botocore
     #   kubernetes
@@ -252,12 +247,10 @@ werkzeug==1.0.1
     # via flask
 wheel==0.36.2
     # via -r requirements-dev.in
-yarl==1.6.3
+yarl==1.7.2
     # via aiohttp
-zipp==3.5.0
-    # via
-    #   importlib-metadata
-    #   pep517
+zipp==3.6.0
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip

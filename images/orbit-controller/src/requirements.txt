@@ -4,47 +4,52 @@
 #
 #    pip-compile
 #
-aiohttp==3.7.4.post0
+aiohttp==3.8.0
     # via kopf
 aiojobs==0.3.0
     # via kopf
-async-timeout==3.0.1
+aiosignal==1.2.0
+    # via aiohttp
+async-timeout==4.0.0
     # via aiohttp
 attrs==21.2.0
     # via aiohttp
-boto3==1.18.21
+boto3==1.19.10
     # via orbit-controller (setup.py)
-botocore==1.21.21
+botocore==1.22.10
     # via
     #   boto3
-    #   orbit-controller (setup.py)
     #   s3transfer
-cachetools==4.2.2
+cachetools==4.2.4
     # via google-auth
-certifi==2021.5.30
+certifi==2021.10.8
     # via
     #   kubernetes
     #   requests
-cffi==1.14.6
+cffi==1.15.0
     # via cryptography
 chardet==4.0.0
-    # via
-    #   aiohttp
-    #   requests
+    # via requests
+charset-normalizer==2.0.7
+    # via aiohttp
 click==7.1.2
     # via
     #   flask
     #   kopf
     #   orbit-controller (setup.py)
-cryptography==3.4.7
+cryptography==3.4.8
     # via orbit-controller (setup.py)
-decorator==5.0.9
+decorator==5.1.0
     # via jsonpath-ng
 ecdsa==0.14.1
     # via python-jose
 flask==1.1.4
     # via orbit-controller (setup.py)
-google-auth==1.34.0
+frozenlist==1.2.0
+    # via
+    #   aiohttp
+    #   aiosignal
+google-auth==2.3.3
     # via kubernetes
 gunicorn==20.1.0
     # via orbit-controller (setup.py)
@@ -66,7 +71,7 @@ jsonpatch==1.32
     # via orbit-controller (setup.py)
 jsonpath-ng==1.5.3
     # via orbit-controller (setup.py)
-jsonpointer==2.1
+jsonpointer==2.2
     # via jsonpatch
 kopf==1.33.0
     # via orbit-controller (setup.py)
@@ -74,7 +79,7 @@ kubernetes==12.0.1
     # via orbit-controller (setup.py)
 markupsafe==2.0.1
     # via jinja2
-multidict==5.1.0
+multidict==5.2.0
     # via
     #   aiohttp
     #   yarl
@@ -125,12 +130,11 @@ six==1.16.0
     #   kubernetes
     #   python-dateutil
     #   python-jose
-typing-extensions==3.10.0.0
+typing-extensions==3.10.0.2
     # via
-    #   aiohttp
+    #   async-timeout
     #   kopf
-    #   yarl
-urllib3==1.26.6
+urllib3==1.26.7
     # via
     #   botocore
     #   kubernetes
@@ -139,7 +143,7 @@ websocket-client==1.2.1
     # via kubernetes
 werkzeug==1.0.1
     # via flask
-yarl==1.6.3
+yarl==1.7.2
     # via aiohttp
 
 # The following packages are considered to be unsafe in a requirements file:

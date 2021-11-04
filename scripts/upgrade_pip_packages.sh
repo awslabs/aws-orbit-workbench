@@ -66,11 +66,11 @@ for path in "${paths[@]}"; do
     pip-compile ${UPGRADE} --quiet --rebuild requirements-dev.in
 
     echo " - Replacing full paths with relative paths"
-    ${SED} -i "s|file://$path|.|g" requirements-dev.txt
+    ${SED} -i'' -e "s|file://$path|.|g" requirements-dev.txt
 
     if [[ "${path}" == *"plugins"* ]]; then
-        ${SED} -i "s|file://$ROOT_PATH|../..|g" requirements-dev.txt
+        ${SED} -i'' -e "s|file://$ROOT_PATH|../..|g" requirements-dev.txt
     else
-        ${SED} -i "s|file://$ROOT_PATH|..|g" requirements-dev.txt
+        ${SED} -i'' -e "s|file://$ROOT_PATH|..|g" requirements-dev.txt
     fi
 done
