@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### **Changed**
 
+- FIX: sleep and retry the ListPolicyTag api call after being throttled in destroy teams
+
 ### **Removed**
 
 
