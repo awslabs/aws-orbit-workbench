@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import logging
+import time
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, cast
 
 import aws_cdk.aws_iam as iam
@@ -42,7 +43,23 @@ def process_policies(policy_names, account_id) -> Tuple[List[Any], List[Any]]:  
             return False
 
     def _check_for_orbit_tag(policyArn: str) -> bool:
-        response = iam_client.list_policy_tags(PolicyArn=policyArn)
+        _logger.info(f"Fetching policy tags for {policyArn}")
+        retries = 3
+        while retries > 0:
+            try:
+                response = iam_client.list_policy_tags(PolicyArn=policyArn)
+                break
+            except iam_client.exceptions.ClientError as ce:
+                if ce.response["Error"]["Code"] == "Throttling" and ce.response["Error"]["Message"] == "Rate exceeded":
+                    _logger.warning(ce)
+                    _logger.info(f"Retrying. Retry count: {4 - retries}")
+
+                    time.sleep(60)
+                    retries -= 1
+
+                if retries == 0:
+                    raise Exception(ce)
+
         for tag in response["Tags"]:
             key, value = tag["Key"], tag["Value"]
             if "orbit-available" in key and "true" in value:
