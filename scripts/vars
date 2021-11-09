@@ -5,6 +5,7 @@ export SAMPLES_DIR="$(cd "$(dirname "${DIR}/../samples")"; pwd -P)/$(basename "$
 export IMAGES_DIR="$(cd "$(dirname "${DIR}/../images")"; pwd -P)/$(basename "${DIR}/../images")"
 export PLUGINS_DIR="$(cd "$(dirname "${DIR}/../plugins")"; pwd -P)/$(basename "${DIR}/../plugins")"
 
-export DOMAIN="aws-orbit"
+export DOMAIN="aws-slrt-orbit"
+export PACKAGE="aws-orbit"
 export REPOSITORY="python-repository"
 

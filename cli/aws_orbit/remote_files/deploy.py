@@ -20,6 +20,8 @@ import subprocess
 from concurrent.futures import Future
 from typing import Any, List, Optional, Tuple, cast
 
+from softwarelabs_remote_toolkit import __version__, create_output_dir, remotectl
+
 from aws_orbit import bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, TeamContext
@@ -29,6 +31,11 @@ from aws_orbit.services import codebuild, ecr, kms, secretsmanager
 from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
+
+
+def print_results(msg: str) -> None:
+    if msg.startswith("[RESULT] "):
+        _logger.info(msg)
 
 
 def _deploy_image(args: Tuple[str, ...]) -> None:
@@ -203,19 +210,21 @@ def deploy_credentials(args: Tuple[str, ...]) -> None:
     _logger.debug("Registry Credentials deployed")
 
 
-def deploy_foundation(args: Tuple[str, ...]) -> None:
-    _logger.debug("args: %s", args)
-    if len(args) != 1:
-        raise ValueError("Unexpected number of values in args")
-    env_name: str = args[0]
+def deploy_foundation(env_name: str) -> None:
+    _logger.debug("env_name: %s", env_name)
     context: "FoundationContext" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=FoundationContext)
     _logger.debug("Context loaded.")
-    docker.login(context=context)
-    _logger.debug("DockerHub and ECR Logged in")
-    cdk_toolkit.deploy(context=context)
-    _logger.debug("CDK Toolkit Stack deployed")
-    foundation.deploy(context=context)
-    _logger.debug("Demo Stack deployed")
+
+    @remotectl.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
+    def deploy_foundation(env_name: str) -> None:
+        docker.login(context=context)
+        _logger.debug("DockerHub and ECR Logged in")
+        cdk_toolkit.deploy(context=context)
+        _logger.debug("CDK Toolkit Stack deployed")
+        foundation.deploy(context=context)
+        _logger.debug("Demo Stack deployed")
+
+    deploy_foundation(env_name=env_name)
 
 
 def deploy_env(args: Tuple[str, ...]) -> None:

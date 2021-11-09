@@ -24,6 +24,7 @@ import botocore.exceptions
 from dataclasses import field
 from marshmallow import Schema
 from marshmallow_dataclass import dataclass
+from softwarelabs_remote_toolkit.services import cfn
 
 import aws_orbit
 from aws_orbit import utils
@@ -566,55 +567,16 @@ class ContextSerDe(Generic[T, V]):
 
         resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
 
-        slrt_toolkit_name: str = "orbit"
-        slrt_toolkit_stack_name: str = f"softwarelabs-remote-toolkit-{slrt_toolkit_name}"
-        slrt_prefix: str = f"slrt-{slrt_toolkit_name}"
+        slrt_toolkit_stack_name = cfn.get_stack_name("orbit")
+        slrt_toolkit_stack_exists, stack_outputs = cfn.does_stack_exist(stack_name=slrt_toolkit_stack_name)
 
-        try:
-            slrt_response: resp_type = boto3_client("cloudformation").describe_stacks(StackName=slrt_toolkit_stack_name)
-            _logger.debug("%s stack found.", slrt_toolkit_stack_name)
-        except botocore.exceptions.ClientError as ex:
-            slrt_error: Dict[str, Any] = ex.response["Error"]
-            if (
-                slrt_error["Code"] == "ValidationError"
-                and f"{slrt_toolkit_stack_name} not found" in slrt_error["Message"]
-            ):
-                _logger.debug("Software Labs Remote Toolkit stack not found.")
-                return
-            if (
-                slrt_error["Code"] == "ValidationError"
-                and f"{slrt_toolkit_stack_name} does not exist" in slrt_error["Message"]
-            ):
-                _logger.debug("Toolkit stack does not exist.")
-                return
-            raise
-
-        if len(slrt_response["Stacks"]) < 1:
-            _logger.debug("Software Labs Remote Toolkit stack not found.")
-            return
-        if "Outputs" not in slrt_response["Stacks"][0]:
-            _logger.debug("Software Labs Remote Toolkit stack with empty outputs")
-            return
-
-        for output in slrt_response["Stacks"][0]["Outputs"]:
-            if output["ExportName"] == f"{slrt_prefix}-kms-arn":
-                _logger.debug("Export value: %s", output["OutputValue"])
-                context.toolkit.kms_arn = output["OutputValue"]
-            if output["ExportName"] == f"{slrt_prefix}-bucket":
-                _logger.debug("Export value: %s", output["OutputValue"])
-                context.toolkit.s3_bucket = output["OutputValue"]
-            if output["ExportName"] == f"{slrt_prefix}-resources-policy":
-                _logger.debug("Export value: %s", output["OutputValue"])
-                context.toolkit.slrt_policy = output["OutputValue"]
-            if output["ExportName"] == f"{slrt_prefix}-codebuild-project":
-                _logger.debug("Export value: %s", output["OutputValue"])
-                context.toolkit.codebuild_project = output["OutputValue"]
-            if output["ExportName"] == f"{slrt_prefix}-codeartifact-domain":
-                _logger.debug("Export value: %s", output["OutputValue"])
-                context.toolkit.codeartifact_domain = output["OutputValue"]
-            if output["ExportName"] == f"{slrt_prefix}-codeartifact-repository":
-                _logger.debug("Export value: %s", output["OutputValue"])
-                context.toolkit.codeartifact_repo = output["OutputValue"]
+        if slrt_toolkit_stack_exists:
+            context.toolkit.kms_arn = stack_outputs["KmsKeyArn"]
+            context.toolkit.s3_bucket = stack_outputs["Bucket"]
+            context.toolkit.slrt_policy = stack_outputs["ToolkitResourcesPolicyArn"]
+            context.toolkit.codebuild_project = stack_outputs["CodeBuildProject"]
+            context.toolkit.codeartifact_domain = stack_outputs["CodeArtifactDomain"]
+            context.toolkit.codeartifact_repo = stack_outputs["CodeArtifactRepository"]
 
         try:
             response: resp_type = boto3_client("cloudformation").describe_stacks(StackName=context.toolkit.stack_name)

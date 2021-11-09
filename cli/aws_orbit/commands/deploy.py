@@ -19,6 +19,9 @@ import random
 import string
 from typing import List, Optional, Tuple, cast
 
+from softwarelabs_remote_toolkit import __version__, create_output_dir, remotectl
+from softwarelabs_remote_toolkit.remotectl import MODULE_IMPORTER, RemoteCtlConfig
+
 from aws_orbit import bundle, remote, toolkit
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.changeset import Changeset, dump_changeset_to_str, extract_changeset
@@ -33,6 +36,7 @@ from aws_orbit.models.manifest import (
     NetworkingManifest,
     manifest_validations,
 )
+from aws_orbit.remote_files import deploy
 from aws_orbit.services import cfn, codebuild
 from aws_orbit.services import cognito as orbit_cognito
 from aws_orbit.services import kms, ssm
@@ -220,22 +224,8 @@ def deploy_foundation(
         msg_ctx.info("Toolkit deployed")
         msg_ctx.progress(8)
 
-        bundle_path = bundle.generate_bundle(command_name="deploy_foundation", context=cast(Context, context))
-        msg_ctx.progress(10)
-        buildspec = codebuild.generate_spec(
-            context=cast(Context, context),
-            plugins=False,
-            cmds_build=[f"orbit remote --command deploy_foundation {context.name}"],
-        )
-        msg_ctx.progress(11)
-        remote.run(
-            command_name="deploy_foundation",
-            context=cast(Context, context),
-            bundle_path=bundle_path,
-            buildspec=buildspec,
-            codebuild_log_callback=msg_ctx.progress_bar_callback,
-            timeout=90,
-        )
+        deploy.deploy_foundation(env_name=context.name)
+
         msg_ctx.info("Orbit Foundation deployed")
         msg_ctx.progress(100)
 
