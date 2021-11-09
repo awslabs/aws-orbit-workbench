@@ -190,7 +190,7 @@ class TeamContext:
 class ToolkitManifest:
     stack_name: str
     codebuild_project: str
-    slrt_policy: str
+    slrt_policy: Optional[str] = None
     deploy_id: Optional[str] = None
     admin_role: Optional[str] = None
     admin_role_arn: Optional[str] = None
@@ -199,6 +199,8 @@ class ToolkitManifest:
     s3_bucket: Optional[str] = None
     codeartifact_domain: Optional[str] = None
     codeartifact_repo: Optional[str] = None
+
+
 @dataclass(base_schema=BaseSchema)
 class CdkToolkitManifest:
     stack_name: str
@@ -426,7 +428,8 @@ class ContextSerDe(Generic[T, V]):
                 ssm_parameter_name=context_parameter_name,
                 ssm_dockerhub_parameter_name=f"/orbit/{manifest.name}/dockerhub",
                 toolkit=ToolkitManifest(
-                    stack_name=f"orbit-{manifest.name}-toolkit", codebuild_project=f"orbit-{manifest.name}"
+                    stack_name=f"orbit-{manifest.name}-toolkit",
+                    codebuild_project=f"orbit-{manifest.name}",
                 ),
                 cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-{manifest.name}-cdk-toolkit"),
                 codeartifact_domain=manifest.codeartifact_domain,
@@ -571,18 +574,21 @@ class ContextSerDe(Generic[T, V]):
             slrt_response: resp_type = boto3_client("cloudformation").describe_stacks(StackName=slrt_toolkit_stack_name)
             _logger.debug("%s stack found.", slrt_toolkit_stack_name)
         except botocore.exceptions.ClientError as ex:
-            error: Dict[str, Any] = ex.response["Error"]
-            if error["Code"] == "ValidationError" and f"{slrt_toolkit_stack_name} not found" in error["Message"]:
+            slrt_error: Dict[str, Any] = ex.response["Error"]
+            if (
+                slrt_error["Code"] == "ValidationError"
+                and f"{slrt_toolkit_stack_name} not found" in slrt_error["Message"]
+            ):
                 _logger.debug("Software Labs Remote Toolkit stack not found.")
                 return
             if (
-                error["Code"] == "ValidationError"
-                and f"{slrt_toolkit_stack_name} does not exist" in error["Message"]
+                slrt_error["Code"] == "ValidationError"
+                and f"{slrt_toolkit_stack_name} does not exist" in slrt_error["Message"]
             ):
                 _logger.debug("Toolkit stack does not exist.")
                 return
             raise
-        
+
         if len(slrt_response["Stacks"]) < 1:
             _logger.debug("Software Labs Remote Toolkit stack not found.")
             return
@@ -659,7 +665,7 @@ class ContextSerDe(Generic[T, V]):
             raise RuntimeError(
                 f"Stack {context.toolkit.stack_name} does not have the expected {top_level}-{context.name}-admin-role-arn output."
             )
-        #context.toolkit.kms_alias = f"{top_level}-{context.name}-{context.toolkit.deploy_id}"
+        # context.toolkit.kms_alias = f"{top_level}-{context.name}-{context.toolkit.deploy_id}"
 
         context.cdk_toolkit.s3_bucket = (
             f"{top_level}-{context.name}-cdk-toolkit-{context.account_id}-{context.toolkit.deploy_id}"
