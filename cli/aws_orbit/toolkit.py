@@ -49,9 +49,9 @@ def synth(context: "Context", top_level: str = "orbit") -> str:
         context.toolkit.deploy_id,
     )
 
-    if context.policies:
+    if context.toolkit.slrt_policy:
         template["Resources"]["AdminRole"]["Properties"]["ManagedPolicyArns"].extend(
-            [f"arn:aws:iam::{context.account_id}:policy/{policy}" for policy in context.policies]
+            f"arn:aws:iam::{context.account_id}:policy/{context.toolkit.slrt_policy}"
         )
 
     content: str = yaml.dump(template, Dumper=yaml_dumper.get_dumper())

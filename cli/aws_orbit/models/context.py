@@ -190,14 +190,15 @@ class TeamContext:
 class ToolkitManifest:
     stack_name: str
     codebuild_project: str
+    slrt_policy: str
     deploy_id: Optional[str] = None
     admin_role: Optional[str] = None
     admin_role_arn: Optional[str] = None
     kms_arn: Optional[str] = None
     kms_alias: Optional[str] = None
     s3_bucket: Optional[str] = None
-
-
+    codeartifact_domain: Optional[str] = None
+    codeartifact_repo: Optional[str] = None
 @dataclass(base_schema=BaseSchema)
 class CdkToolkitManifest:
     stack_name: str
@@ -561,6 +562,54 @@ class ContextSerDe(Generic[T, V]):
         top_level = "orbit" if isinstance(context, Context) else "orbit-f"
 
         resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
+
+        slrt_toolkit_name: str = "orbit"
+        slrt_toolkit_stack_name: str = f"softwarelabs-remote-toolkit-{slrt_toolkit_name}"
+        slrt_prefix: str = f"slrt-{slrt_toolkit_name}"
+
+        try:
+            slrt_response: resp_type = boto3_client("cloudformation").describe_stacks(StackName=slrt_toolkit_stack_name)
+            _logger.debug("%s stack found.", slrt_toolkit_stack_name)
+        except botocore.exceptions.ClientError as ex:
+            error: Dict[str, Any] = ex.response["Error"]
+            if error["Code"] == "ValidationError" and f"{slrt_toolkit_stack_name} not found" in error["Message"]:
+                _logger.debug("Software Labs Remote Toolkit stack not found.")
+                return
+            if (
+                error["Code"] == "ValidationError"
+                and f"{slrt_toolkit_stack_name} does not exist" in error["Message"]
+            ):
+                _logger.debug("Toolkit stack does not exist.")
+                return
+            raise
+        
+        if len(slrt_response["Stacks"]) < 1:
+            _logger.debug("Software Labs Remote Toolkit stack not found.")
+            return
+        if "Outputs" not in slrt_response["Stacks"][0]:
+            _logger.debug("Software Labs Remote Toolkit stack with empty outputs")
+            return
+
+        for output in slrt_response["Stacks"][0]["Outputs"]:
+            if output["ExportName"] == f"{slrt_prefix}-kms-arn":
+                _logger.debug("Export value: %s", output["OutputValue"])
+                context.toolkit.kms_arn = output["OutputValue"]
+            if output["ExportName"] == f"{slrt_prefix}-bucket":
+                _logger.debug("Export value: %s", output["OutputValue"])
+                context.toolkit.s3_bucket = output["OutputValue"]
+            if output["ExportName"] == f"{slrt_prefix}-resources-policy":
+                _logger.debug("Export value: %s", output["OutputValue"])
+                context.toolkit.slrt_policy = output["OutputValue"]
+            if output["ExportName"] == f"{slrt_prefix}-codebuild-project":
+                _logger.debug("Export value: %s", output["OutputValue"])
+                context.toolkit.codebuild_project = output["OutputValue"]
+            if output["ExportName"] == f"{slrt_prefix}-codeartifact-domain":
+                _logger.debug("Export value: %s", output["OutputValue"])
+                context.toolkit.codeartifact_domain = output["OutputValue"]
+            if output["ExportName"] == f"{slrt_prefix}-codeartifact-repository":
+                _logger.debug("Export value: %s", output["OutputValue"])
+                context.toolkit.codeartifact_repo = output["OutputValue"]
+
         try:
             response: resp_type = boto3_client("cloudformation").describe_stacks(StackName=context.toolkit.stack_name)
             _logger.debug("%s stack found.", context.toolkit.stack_name)
@@ -587,9 +636,6 @@ class ContextSerDe(Generic[T, V]):
             if output["ExportName"] == f"{top_level}-{context.name}-deploy-id":
                 _logger.debug("Export value: %s", output["OutputValue"])
                 context.toolkit.deploy_id = output["OutputValue"]
-            if output["ExportName"] == f"{top_level}-{context.name}-kms-arn":
-                _logger.debug("Export value: %s", output["OutputValue"])
-                context.toolkit.kms_arn = output["OutputValue"]
             if output["ExportName"] == f"{top_level}-{context.name}-admin-role":
                 _logger.debug("Export value: %s", output["OutputValue"])
                 context.toolkit.admin_role = output["OutputValue"]
@@ -613,10 +659,8 @@ class ContextSerDe(Generic[T, V]):
             raise RuntimeError(
                 f"Stack {context.toolkit.stack_name} does not have the expected {top_level}-{context.name}-admin-role-arn output."
             )
-        context.toolkit.kms_alias = f"{top_level}-{context.name}-{context.toolkit.deploy_id}"
-        context.toolkit.s3_bucket = (
-            f"{top_level}-{context.name}-toolkit-{context.account_id}-{context.toolkit.deploy_id}"
-        )
+        #context.toolkit.kms_alias = f"{top_level}-{context.name}-{context.toolkit.deploy_id}"
+
         context.cdk_toolkit.s3_bucket = (
             f"{top_level}-{context.name}-cdk-toolkit-{context.account_id}-{context.toolkit.deploy_id}"
         )
