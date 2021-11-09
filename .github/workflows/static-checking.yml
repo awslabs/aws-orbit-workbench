@@ -5,10 +5,12 @@ on:
     branches:
       - main
       - kubeflow_shared_main
+      - feature/remote-toolkit
   pull_request:
     branches:
       - main
       - kubeflow_shared_main
+      - feature/remote-toolkit
 
 jobs:
 
