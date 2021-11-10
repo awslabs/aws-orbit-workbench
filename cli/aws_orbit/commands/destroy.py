@@ -21,6 +21,7 @@ import click
 from aws_orbit import bundle, remote
 from aws_orbit.messages import MessagesContext
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
+from aws_orbit.remote_files import destroy
 from aws_orbit.services import cfn, codebuild, ecr, elb, s3, secretsmanager, ssm
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -32,11 +33,6 @@ def destroy_toolkit(
     toolkit_bucket: Optional[str] = None,
     cdk_toolkit_bucket: Optional[str] = None,
 ) -> None:
-    try:
-        if toolkit_bucket:
-            s3.delete_bucket(bucket=toolkit_bucket)
-    except Exception as ex:
-        _logger.debug("Skipping Toolkit bucket deletion. Cause: %s", ex)
     try:
         if cdk_toolkit_bucket:
             s3.delete_bucket(bucket=cdk_toolkit_bucket)
@@ -185,23 +181,8 @@ def destroy_foundation(env: str, debug: bool) -> None:
             or cfn.does_stack_exist(stack_name=context.toolkit.stack_name)
             or cfn.does_stack_exist(stack_name=context.cdk_toolkit.stack_name)
         ):
-            bundle_path = bundle.generate_bundle(command_name="destroy", context=cast(Context, context))
-            msg_ctx.progress(5)
+            destroy.destroy_foundation(env_name=context.name)
 
-            buildspec = codebuild.generate_spec(
-                context=cast(Context, context),
-                plugins=False,
-                cmds_build=[f"orbit remote --command destroy_foundation {env}"],
-                changeset=None,
-            )
-            remote.run(
-                command_name="destroy",
-                context=cast(Context, context),
-                bundle_path=bundle_path,
-                buildspec=buildspec,
-                codebuild_log_callback=msg_ctx.progress_bar_callback,
-                timeout=45,
-            )
         msg_ctx.info("Foundation destroyed")
         msg_ctx.progress(95)
 

@@ -15,8 +15,8 @@ import os
 from enum import Enum
 from typing import Callable, Tuple
 
-from softwarelabs_remote_toolkit import create_output_dir, remotectl
-from softwarelabs_remote_toolkit.remotectl import MODULE_IMPORTER, RemoteCtlConfig
+from softwarelabs_remote_toolkit import LOGGER, remotectl
+from softwarelabs_remote_toolkit.remotectl import RemoteCtlConfig
 
 from aws_orbit import ORBIT_CLI_ROOT
 from aws_orbit.remote_files import build as build_image_module
@@ -43,13 +43,27 @@ class RemoteCommands(Enum):
 
 @remotectl.configure("orbit")
 def configure(configuration: RemoteCtlConfig) -> None:
+    LOGGER.debug("ORBIT_CLI_ROOT %s", ORBIT_CLI_ROOT)
     configuration.python_modules = ["aws-orbit~=1.5.0.dev0", "softwarelabs-remote-toolkit~=0.1.0.dev0"]
-    # configuration.local_modules = {
-    #     "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../cli")),
-    #     "aws-orbit-sdk": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../sdk")),
-    # }
+    configuration.local_modules = {
+        "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../cli")),
+        "aws-orbit-sdk": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../sdk")),
+        "aws-orbit-jupyterlab-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../jupyterlab_orbit")),
+        "aws-orbit-custom-cfn": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/custom_cfn")),
+        "aws-orbit-emr-on-eks": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/emr_on_eks")),
+        "aws-orbit-hello-world": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/hello_world")),
+        "aws-orbit-lustre": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/lustre")),
+        "aws-orbit-overprovisioning": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/overprovisioning")),
+        "aws-orbit-ray": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/ray")),
+        "aws-orbit-redshift": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/redshift")),
+        "aws-orbit-sm-operator": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/sm-operator")),
+        "aws-orbit-team-script-launcher": os.path.realpath(
+            os.path.join(ORBIT_CLI_ROOT, "../../plugins/team_script_launcher")
+        ),
+        "aws-orbit-voila": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/voila")),
+        "aws-orbit-code-commit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/code_commit")),
+    }
     configuration.requirements_files = {
         "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../requirements.txt")),
-        "slrt": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../remote-requirements.txt"))
+        "slrt": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../remote-requirements.txt")),
     }
-
