@@ -16,6 +16,8 @@ import logging
 import time
 from typing import Tuple
 
+from softwarelabs_remote_toolkit import __version__, remotectl
+
 from aws_orbit import cleanup, plugins, sh
 from aws_orbit.exceptions import FailedShellCommand
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
@@ -115,16 +117,18 @@ def destroy_env(args: Tuple[str, ...]) -> None:
     _logger.debug("CDK Toolkit Stack destroyed")
 
 
-def destroy_foundation(args: Tuple[str, ...]) -> None:
-    _logger.debug("args %s", args)
-    env_name: str = args[0]
+def destroy_foundation(env_name: str) -> None:
     context: "FoundationContext" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=FoundationContext)
     _logger.debug("context.name %s", context.name)
 
-    foundation.destroy(context=context)
-    _logger.debug("Demo Stack destroyed")
-    cdk_toolkit.destroy(context=context)
-    _logger.debug("CDK Toolkit Stack destroyed")
+    @remotectl.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
+    def destroy_foundation(env_name: str) -> None:
+        foundation.destroy(context=context)
+        _logger.debug("Demo Stack destroyed")
+        cdk_toolkit.destroy(context=context)
+        _logger.debug("CDK Toolkit Stack destroyed")
+
+    destroy_foundation(env_name)
 
 
 def destroy_credentials(args: Tuple[str, ...]) -> None:

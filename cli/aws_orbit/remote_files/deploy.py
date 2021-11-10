@@ -20,7 +20,7 @@ import subprocess
 from concurrent.futures import Future
 from typing import Any, List, Optional, Tuple, cast
 
-from softwarelabs_remote_toolkit import __version__, create_output_dir, remotectl
+from softwarelabs_remote_toolkit import __version__, remotectl
 
 from aws_orbit import bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
