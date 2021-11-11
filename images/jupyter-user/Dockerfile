@@ -60,21 +60,6 @@ ADD requirements.txt /etc/jupyter/requirements.txt
 RUN conda run pip install -r /etc/jupyter/requirements.txt && \
     conda clean --all -f -y
 
-# Python/Conda packages from CODEARTIFACT
-
-ADD pip.conf /etc/pip.conf
-ADD VERSION /opt/orbit/VERSION
-RUN chown jovyan /opt/orbit/VERSION
-RUN conda run pip install --upgrade \
-    aws-orbit==$(cat /opt/orbit/VERSION) \
-    aws-orbit-sdk==$(cat /opt/orbit/VERSION) \
-    aws-orbit-jupyterlab-orbit==$(cat /opt/orbit/VERSION)
-RUN rm /etc/pip.conf
-
-# add bundle with docker image sources
-COPY aws-orbit_jupyter-user.tar.gz /opt/orbit/aws-orbit_jupyter-user.tar.gz
-RUN chown jovyan /opt/orbit/aws-orbit_jupyter-user.tar.gz
-
 #=================   END conda  =================
 
 FROM conda AS lab
@@ -143,6 +128,22 @@ RUN curl -k -sS -O https://s3.us-west-2.amazonaws.com/amazon-sagemaker-operator-
 RUN cd /opt/orbit && \
     rm -rf /opt/orbit/sm-logs
 
+
+FROM smlogs AS orbit-libs
+# Python/Conda packages from CODEARTIFACT
+
+ADD pip.conf /etc/pip.conf
+ADD VERSION /opt/orbit/VERSION
+RUN chown jovyan /opt/orbit/VERSION
+RUN conda run pip install --upgrade \
+    aws-orbit==$(cat /opt/orbit/VERSION) \
+    aws-orbit-sdk==$(cat /opt/orbit/VERSION) \
+    aws-orbit-jupyterlab-orbit==$(cat /opt/orbit/VERSION)
+RUN rm /etc/pip.conf
+
+# add bundle with docker image sources
+COPY aws-orbit_jupyter-user.tar.gz /opt/orbit/aws-orbit_jupyter-user.tar.gz
+RUN chown jovyan /opt/orbit/aws-orbit_jupyter-user.tar.gz
 
 
 WORKDIR /home/${NB_USER}
