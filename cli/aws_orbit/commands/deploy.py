@@ -265,27 +265,33 @@ def deploy_env(
         msg_ctx.info("Toolkit deployed")
         msg_ctx.progress(10)
 
-        bundle_path = bundle.generate_bundle(
-            command_name="deploy",
-            context=context,
-            dirs=_get_images_dirs(context=context, manifest_filename=filename, skip_images=skip_images),
-        )
-        msg_ctx.progress(11)
         skip_images_remote_flag: str = "skip-images" if skip_images else "no-skip-images"
-        buildspec = codebuild.generate_spec(
-            context=context,
-            plugins=True,
-            cmds_build=[f"orbit remote --command deploy_env {context.name} {skip_images_remote_flag}"],
-            changeset=changeset,
+        msg_ctx.progress(11)
+
+        deploy.deploy_env(
+            env_name=context.name,
+            skip_images_remote_flag=skip_images_remote_flag,
+            # dirs=_get_images_dirs(context=context, manifest_filename=filename, skip_images=skip_images)
         )
-        remote.run(
-            command_name="deploy",
-            context=context,
-            bundle_path=bundle_path,
-            buildspec=buildspec,
-            codebuild_log_callback=msg_ctx.progress_bar_callback,
-            timeout=90,
-        )
+        # bundle_path = bundle.generate_bundle(
+        #     command_name="deploy",
+        #     context=context,
+        #     dirs=_get_images_dirs(context=context, manifest_filename=filename, skip_images=skip_images),
+        # )
+        # buildspec = codebuild.generate_spec(
+        #     context=context,
+        #     plugins=True,
+        #     cmds_build=[f"orbit remote --command deploy_env {context.name} {skip_images_remote_flag}"],
+        #     changeset=changeset,
+        # )
+        # remote.run(
+        #     command_name="deploy",
+        #     context=context,
+        #     bundle_path=bundle_path,
+        #     buildspec=buildspec,
+        #     codebuild_log_callback=msg_ctx.progress_bar_callback,
+        #     timeout=90,
+        # )
         msg_ctx.info("Orbit Workbench deployed")
         msg_ctx.progress(98)
 

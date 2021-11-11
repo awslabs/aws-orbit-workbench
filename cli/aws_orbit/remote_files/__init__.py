@@ -32,12 +32,12 @@ class RemoteCommands(Enum):
     build_image: REMOTE_FUNC_TYPE = build_image_module.build_image
     delete_image: REMOTE_FUNC_TYPE = delete_image_module.delete_image
     deploy_credentials: REMOTE_FUNC_TYPE = deploy_module.deploy_credentials
-    deploy_foundation: REMOTE_FUNC_TYPE = deploy_module.deploy_foundation
-    deploy_env: REMOTE_FUNC_TYPE = deploy_module.deploy_env
+    deploy_foundation: REMOTE_FUNC_TYPE = deploy_module.deploy_foundation  # type: ignore
+    deploy_env: REMOTE_FUNC_TYPE = deploy_module.deploy_env  # type: ignore
     deploy_teams: REMOTE_FUNC_TYPE = deploy_module.deploy_teams
     destroy_teams: REMOTE_FUNC_TYPE = destroy_module.destroy_teams
     destroy_env: REMOTE_FUNC_TYPE = destroy_module.destroy_env
-    destroy_foundation: REMOTE_FUNC_TYPE = destroy_module.destroy_foundation
+    destroy_foundation: REMOTE_FUNC_TYPE = destroy_module.destroy_foundation  # type: ignore
     destroy_credentials: REMOTE_FUNC_TYPE = destroy_module.destroy_credentials
 
 
@@ -67,3 +67,4 @@ def configure(configuration: RemoteCtlConfig) -> None:
         "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../requirements.txt")),
         "slrt": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../remote-requirements.txt")),
     }
+    configuration.install_commands = ["npm install -g aws-cdk@1.100.0"]
