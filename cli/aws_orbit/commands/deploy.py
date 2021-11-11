@@ -316,6 +316,8 @@ def deploy_env(
         else:
             RuntimeError("Landing Page URL not found.")
         msg_ctx.progress(100)
+
+
 def deploy_base_images(
     filename: str,
     skip_images: bool,
@@ -392,6 +394,7 @@ def deploy_base_images(
         else:
             RuntimeError("Landing Page URL not found.")
         msg_ctx.progress(100)
+
 
 def deploy_teams(
     filename: str,
