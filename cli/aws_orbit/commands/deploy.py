@@ -316,7 +316,82 @@ def deploy_env(
         else:
             RuntimeError("Landing Page URL not found.")
         msg_ctx.progress(100)
+def deploy_base_images(
+    filename: str,
+    skip_images: bool,
+    debug: bool,
+) -> None:
+    with MessagesContext("Deploying", debug=debug) as msg_ctx:
+        msg_ctx.progress(2)
 
+        manifest: "Manifest" = ManifestSerDe.load_manifest_from_file(filename=filename, type=Manifest)
+        msg_ctx.info(f"Manifest loaded: {filename}")
+        msg_ctx.progress(3)
+
+        manifest_validations(manifest)
+
+        context: "Context" = ContextSerDe.load_context_from_manifest(manifest=manifest)
+        image_manifests = {"code_build": manifest.images.code_build}
+
+        for name in context.images.names:
+            # We don't allow these images to be managed with an input Manifest
+            # These images should be changed/maintained in manifests.py
+            if name not in ["code_build", "k8s-utilities"]:
+                image_manifests[name] = getattr(context.images, name) if skip_images else getattr(manifest.images, name)
+        context.images = ImagesManifest(**image_manifests)  # type: ignore
+
+        msg_ctx.info("Current Context loaded")
+        msg_ctx.progress(4)
+
+        _logger.debug("Inspecting possible manifest changes...")
+        changeset: "Changeset" = extract_changeset(manifest=manifest, context=context, msg_ctx=msg_ctx)
+        _logger.debug(f"Changeset:\n{dump_changeset_to_str(changeset=changeset)}")
+        msg_ctx.progress(5)
+
+        _deploy_toolkit(
+            context=context,
+        )
+        msg_ctx.info("Toolkit deployed")
+        msg_ctx.progress(10)
+
+        bundle_path = bundle.generate_bundle(
+            command_name="deploy",
+            context=context,
+            dirs=_get_images_dirs(context=context, manifest_filename=filename, skip_images=skip_images),
+        )
+        msg_ctx.progress(11)
+        skip_images_remote_flag: str = "skip-images" if skip_images else "no-skip-images"
+        buildspec = codebuild.generate_spec(
+            context=context,
+            plugins=True,
+            cmds_build=[f"orbit remote --command deploy_env {context.name} {skip_images_remote_flag}"],
+            changeset=changeset,
+        )
+        remote.run(
+            command_name="deploy",
+            context=context,
+            bundle_path=bundle_path,
+            buildspec=buildspec,
+            codebuild_log_callback=msg_ctx.progress_bar_callback,
+            timeout=90,
+        )
+        msg_ctx.info("Orbit Workbench deployed")
+        msg_ctx.progress(98)
+
+        if cfn.does_stack_exist(stack_name=context.env_stack_name):
+            context = ContextSerDe.load_context_from_manifest(manifest=manifest)
+            msg_ctx.info(f"Context updated: {filename}")
+        msg_ctx.progress(99)
+
+        if context.cognito_users_url:
+            msg_ctx.tip(f"Add users: {stylize(context.cognito_users_url, underline=True)}")
+        else:
+            RuntimeError("Cognito Users URL not found.")
+        if context.landing_page_url:
+            msg_ctx.tip(f"Access Orbit Workbench: {stylize(f'{context.landing_page_url}/orbit/login', underline=True)}")
+        else:
+            RuntimeError("Landing Page URL not found.")
+        msg_ctx.progress(100)
 
 def deploy_teams(
     filename: str,
