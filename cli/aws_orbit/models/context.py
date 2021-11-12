@@ -24,6 +24,7 @@ import botocore.exceptions
 from dataclasses import field
 from marshmallow import Schema
 from marshmallow_dataclass import dataclass
+from softwarelabs_remote_toolkit.services import cfn
 
 import aws_orbit
 from aws_orbit import utils
@@ -190,12 +191,15 @@ class TeamContext:
 class ToolkitManifest:
     stack_name: str
     codebuild_project: str
+    slrt_policy: Optional[str] = None
     deploy_id: Optional[str] = None
     admin_role: Optional[str] = None
     admin_role_arn: Optional[str] = None
     kms_arn: Optional[str] = None
     kms_alias: Optional[str] = None
     s3_bucket: Optional[str] = None
+    codeartifact_domain: Optional[str] = None
+    codeartifact_repo: Optional[str] = None
 
 
 @dataclass(base_schema=BaseSchema)
@@ -425,7 +429,8 @@ class ContextSerDe(Generic[T, V]):
                 ssm_parameter_name=context_parameter_name,
                 ssm_dockerhub_parameter_name=f"/orbit/{manifest.name}/dockerhub",
                 toolkit=ToolkitManifest(
-                    stack_name=f"orbit-{manifest.name}-toolkit", codebuild_project=f"orbit-{manifest.name}"
+                    stack_name=f"orbit-{manifest.name}-toolkit",
+                    codebuild_project=f"orbit-{manifest.name}",
                 ),
                 cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-{manifest.name}-cdk-toolkit"),
                 codeartifact_domain=manifest.codeartifact_domain,
@@ -561,6 +566,18 @@ class ContextSerDe(Generic[T, V]):
         top_level = "orbit" if isinstance(context, Context) else "orbit-f"
 
         resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
+
+        slrt_toolkit_stack_name = cfn.get_stack_name("orbit")
+        slrt_toolkit_stack_exists, stack_outputs = cfn.does_stack_exist(stack_name=slrt_toolkit_stack_name)
+
+        if slrt_toolkit_stack_exists:
+            context.toolkit.kms_arn = stack_outputs["KmsKeyArn"]
+            context.toolkit.s3_bucket = stack_outputs["Bucket"]
+            context.toolkit.slrt_policy = stack_outputs["ToolkitResourcesPolicyArn"]
+            context.toolkit.codebuild_project = stack_outputs["CodeBuildProject"]
+            context.toolkit.codeartifact_domain = stack_outputs["CodeArtifactDomain"]
+            context.toolkit.codeartifact_repo = stack_outputs["CodeArtifactRepository"]
+
         try:
             response: resp_type = boto3_client("cloudformation").describe_stacks(StackName=context.toolkit.stack_name)
             _logger.debug("%s stack found.", context.toolkit.stack_name)
@@ -587,9 +604,6 @@ class ContextSerDe(Generic[T, V]):
             if output["ExportName"] == f"{top_level}-{context.name}-deploy-id":
                 _logger.debug("Export value: %s", output["OutputValue"])
                 context.toolkit.deploy_id = output["OutputValue"]
-            if output["ExportName"] == f"{top_level}-{context.name}-kms-arn":
-                _logger.debug("Export value: %s", output["OutputValue"])
-                context.toolkit.kms_arn = output["OutputValue"]
             if output["ExportName"] == f"{top_level}-{context.name}-admin-role":
                 _logger.debug("Export value: %s", output["OutputValue"])
                 context.toolkit.admin_role = output["OutputValue"]
@@ -613,10 +627,8 @@ class ContextSerDe(Generic[T, V]):
             raise RuntimeError(
                 f"Stack {context.toolkit.stack_name} does not have the expected {top_level}-{context.name}-admin-role-arn output."
             )
-        context.toolkit.kms_alias = f"{top_level}-{context.name}-{context.toolkit.deploy_id}"
-        context.toolkit.s3_bucket = (
-            f"{top_level}-{context.name}-toolkit-{context.account_id}-{context.toolkit.deploy_id}"
-        )
+        # context.toolkit.kms_alias = f"{top_level}-{context.name}-{context.toolkit.deploy_id}"
+
         context.cdk_toolkit.s3_bucket = (
             f"{top_level}-{context.name}-cdk-toolkit-{context.account_id}-{context.toolkit.deploy_id}"
         )

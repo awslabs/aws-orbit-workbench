@@ -386,6 +386,7 @@ cdk.json
 cli/.orbit.out
 cli/conf/
 .orbit.out
+cli/remotectl.out
 images/jupyter-user/notes.txt
 images/jupyter-user-spark/notes.txt
 images/jupyter-user/.workspace/shared/samples

@@ -2,58 +2,6 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: |
   Orbit Workbench Toolkit Stack - ${top_level}-${env_name}
 Resources:
-  Bucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: ${top_level}-${env_name}-toolkit-${account_id}-${deploy_id}
-      Tags:
-        - Key: Env
-          Value: ${top_level}-${env_name}
-      VersioningConfiguration:
-        Status: Suspended
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
-      BucketEncryption:
-        ServerSideEncryptionConfiguration:
-          - ServerSideEncryptionByDefault:
-              SSEAlgorithm: AES256
-      LifecycleConfiguration:
-        Rules:
-          - Id: CleaningUp
-            Status: Enabled
-            ExpirationInDays: 1
-            AbortIncompleteMultipartUpload:
-              DaysAfterInitiation: 1
-            NoncurrentVersionExpirationInDays: 1
-            Prefix: cli/remote/
-  OrbitCodeArtifactPolicy:
-    Type: AWS::IAM::ManagedPolicy
-    Properties:
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Action:
-              - codeartifact:Create*
-              - codeartifact:DeleteDomain
-              - codeartifact:DeleteRepository
-              - codeartifact:Describe*
-              - codeartifact:Get*
-              - codeartifact:List*
-              - codeartifact:TagResource
-              - codeartifact:Associate*
-            Resource:
-              - arn:aws:codeartifact:${region}:${account_id}:domain/aws-orbit*
-              - arn:aws:codeartifact:${region}:${account_id}:repository/aws-orbit*
-          - Effect: Allow
-            Action:
-              - codeartifact:GetAuthorizationToken
-              - codeartifact:GetRepositoryEndpoint
-              - codeartifact:ReadFromRepository
-            Resource: '*'
   OrbitAdminPolicyOther:
     Type: AWS::IAM::ManagedPolicy
     Properties:
@@ -141,21 +89,6 @@ Resources:
             Resource: '*'
           - Effect: Allow
             Action:
-              - codebuild:CreateReportGroup
-              - codebuild:CreateReport
-              - codebuild:UpdateReport
-              - codebuild:BatchPutTestCases
-              - codebuild:BatchPutCodeCoverages
-            Resource:
-              - arn:aws:codebuild:${region}:${account_id}:*
-          - Effect: Allow
-            Action:
-              - codebuild:StartBuild
-              - codebuild:BatchGetBuilds
-            Resource:
-              - arn:aws:codebuild:${region}:${account_id}:project/${top_level}-${env_name}
-          - Effect: Allow
-            Action:
               - ecr:*
             Resource:
               - arn:aws:ecr:${region}:${account_id}:repository/${top_level}-${env_name}-*
@@ -166,6 +99,11 @@ Resources:
               - states:*
             Resource:
               - arn:aws:states:${region}:${account_id}:stateMachine:${top_level}-${env_name}-*
+          - Effect: Allow
+            Action:
+              - cloudformation:DescribeStacks
+            Resource:
+              - arn:aws:cloudformation:us-east-1:560360184571:stack/softwarelabs-remote-toolkit*
           - Effect: Allow
             Action:
               - cloudformation:*
@@ -187,11 +125,6 @@ Resources:
               - ssm:DeleteParameters
             Resource:
               - arn:aws:ssm:${region}:${account_id}:parameter/${top_level}/${env_name}/*
-          - Effect: Allow
-            Action:
-              - ssm:DescribeParameters
-            Resource:
-              - arn:aws:ssm:${region}:${account_id}:*
           - Effect: Allow
             Action:
               - kms:*
@@ -217,13 +150,6 @@ Resources:
             Resource:
               - arn:aws:lambda:${region}:${account_id}:function:${top_level}-${env_name}-*
               - arn:aws:lambda:${region}:${account_id}:layer:${top_level}-${env_name}-*
-          - Effect: Allow
-            Action:
-              - sts:GetServiceBearerToken
-            Resource: '*'
-            Condition:
-              StringEquals:
-                sts:AWSServiceName: codeartifact.amazonaws.com
           - Effect: Allow
             Action:
               - eks:CreateAddon
@@ -280,18 +206,12 @@ Resources:
             Resource:
               - arn:aws:s3:::${top_level}-${env_name}-scratch-${account_id}-${deploy_id}/*
               - arn:aws:s3:::${top_level}-${env_name}-scratch-${account_id}-${deploy_id}
-              - arn:aws:s3:::${top_level}-${env_name}-toolkit-${account_id}-${deploy_id}/*
-              - arn:aws:s3:::${top_level}-${env_name}-toolkit-${account_id}-${deploy_id}
               - arn:aws:s3:::${top_level}-${env_name}-cdk-toolkit-${account_id}-${deploy_id}/*
               - arn:aws:s3:::${top_level}-${env_name}-cdk-toolkit-${account_id}-${deploy_id}
               - arn:aws:s3:::${top_level}-${env_name}-demo-lake-${account_id}-${deploy_id}/*
               - arn:aws:s3:::${top_level}-${env_name}-demo-lake-${account_id}-${deploy_id}
               - arn:aws:s3:::${top_level}-${env_name}-secured-demo-lake-${account_id}-${deploy_id}/*
               - arn:aws:s3:::${top_level}-${env_name}-secured-demo-lake-${account_id}-${deploy_id}
-          - Effect: Allow
-            Action:
-              - s3:GetEncryptionConfiguration
-            Resource: "*"
           - Effect: Allow
             Action:
               - iam:CreateRole
@@ -360,7 +280,6 @@ Resources:
       ManagedPolicyArns:
         - Ref: OrbitAdminPolicyOther
         - Ref: OrbitAdminPolicyIAMS3
-        - Ref: OrbitCodeArtifactPolicy
       RoleName: ${top_level}-${env_name}-${region}-admin
       MaxSessionDuration: 10000
       AssumeRolePolicyDocument:
@@ -382,88 +301,6 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
-  CodeBuild:
-    Type: AWS::CodeBuild::Project
-    Properties:
-      Name: ${top_level}-${env_name}
-      Tags:
-        - Key: Env
-          Value: ${top_level}-${env_name}
-      Description: Orbit Workbench CLI backend.
-      ServiceRole: !GetAtt AdminRole.Arn
-      Artifacts:
-        Type: NO_ARTIFACTS
-      Environment:
-        Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_LARGE
-        Image: aws/codebuild/standard:4.0
-        EnvironmentVariables:
-        - Name: AWS_ACCOUNT_ID
-          Value:
-            Ref: AWS::AccountId
-        - Name: AWS_ORBIT_ENV
-          Value: ${env_name}
-      Source:
-        Type: NO_SOURCE
-        BuildSpec:  |
-          version: 0.2
-          phases:
-            install:
-              runtime-versions:
-                python: 3.7
-                nodejs: 12
-            build:
-              commands:
-                - ls -la
-      TimeoutInMinutes: 120
-      LogsConfig:
-        CloudWatchLogs:
-          Status: ENABLED
-          GroupName: /aws/codebuild/${top_level}-${env_name}
-        S3Logs:
-          Status: DISABLED
-  KmsKeyAlias:
-    Type: AWS::KMS::Alias
-    Properties:
-      AliasName: alias/${top_level}-${env_name}-${deploy_id}
-      TargetKeyId:
-        Ref: KmsKey
-  KmsKey:
-    Type: AWS::KMS::Key
-    Properties:
-      Tags:
-        - Key: Env
-          Value: ${top_level}-${env_name}
-      Description: Orbit Workbench key for ${env_name}.
-      KeyPolicy:
-        Version: '2012-10-17'
-        Id: ${top_level}-${env_name}
-        Statement:
-          - Sid: Enable IAM User Permissions
-            Effect: Allow
-            Principal:
-              AWS: arn:aws:iam::${account_id}:root
-            Action: kms:*
-            Resource: '*'
-          - Sid: Allow administration of the key
-            Effect: Allow
-            Principal:
-              AWS:
-                Ref: AWS::AccountId
-            Action:
-              - kms:Create*
-              - kms:Describe*
-              - kms:Enable*
-              - kms:List*
-              - kms:Put*
-              - kms:Update*
-              - kms:Revoke*
-              - kms:Disable*
-              - kms:Get*
-              - kms:Delete*
-              - kms:ScheduleKeyDeletion
-              - kms:CancelKeyDeletion
-            Resource: '*'
 
 Outputs:
   DeployId:
@@ -481,10 +318,3 @@ Outputs:
         - Arn
     Export:
       Name: ${top_level}-${env_name}-admin-role-arn
-  KmsKeyArn:
-    Value:
-      Fn::GetAtt:
-        - KmsKey
-        - Arn
-    Export:
-      Name: ${top_level}-${env_name}-kms-arn

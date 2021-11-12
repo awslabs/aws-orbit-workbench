@@ -1,0 +1,47 @@
+Name: !ENV ${ORBIT_ENV_NAME::dev-env}
+CodeartifactDomain: !ENV ${CODEARTIFACT_DOMAIN::aws-orbit}
+CodeartifactRepository: !ENV ${CODEARTIFACT_REPOSITORY::python-repository}
+# Policies: 
+# - slrt-orbit-us-east-1-resources
+SlrtToolkit: orbit
+EksSystemMastersRoles:
+- !ENV ${ORBIT_ADMIN_ROLE::Admin}
+- !ENV ${ORBIT_ADMIN_DEMO_ROLE::Admin}
+ScratchBucketArn: !SSM ${/orbit-f/dev-env/resources::ScratchBucketArn}
+UserPoolId: !SSM ${/orbit-f/dev-env/resources::UserPoolId}
+SharedEfsFsId: !SSM ${/orbit-f/dev-env/resources::SharedEfsFsId}
+SharedEfsSgId: !SSM ${/orbit-f/dev-env/resources::SharedEfsSgId}
+InstallSsmAgent: true
+Networking:
+    VpcId: !SSM ${/orbit-f/dev-env/resources::VpcId}
+    PublicSubnets: !SSM ${/orbit-f/dev-env/resources::PublicSubnets}
+    PrivateSubnets: !SSM ${/orbit-f/dev-env/resources::PrivateSubnets}
+    IsolatedSubnets: !SSM ${/orbit-f/dev-env/resources::IsolatedSubnets}
+    Data:
+        InternetAccessible: true
+        NodesSubnets: !SSM ${/orbit-f/dev-env/resources::NodesSubnets}
+    Frontend:
+        LoadBalancersSubnets: !SSM ${/orbit-f/dev-env/resources::LoadBalancersSubnets}
+        SslCertArn: !SSM ${/orbit-f/dev-env/resources::SslCertArn}
+ManagedNodegroups:
+-   Name: primary-compute
+    InstanceType: m5.2xlarge
+    LocalStorageSize: 128
+    NodesNumDesired: 6
+    NodesNumMax: 8
+    NodesNumMin: 4
+    Labels:
+        instance-type: m5.2xlarge
+Teams:
+-   Name: lake-admin
+    Policies:
+    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-${AWS_DEFAULT_REGION::}-demo-lake-admin-add-policy
+    GrantSudo: true
+    Fargate: false
+    K8Admin: true
+    JupyterhubInboundRanges:
+    - 0.0.0.0/0
+    Plugins: !include lake-admin-plugins.yaml
+    EfsLifeCycle: AFTER_7_DAYS
+    AuthenticationGroups:
+    - lake-admin

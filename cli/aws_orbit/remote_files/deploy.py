@@ -20,6 +20,8 @@ import subprocess
 from concurrent.futures import Future
 from typing import Any, List, Optional, Tuple, cast
 
+from softwarelabs_remote_toolkit import remotectl
+
 from aws_orbit import bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, TeamContext
@@ -29,6 +31,11 @@ from aws_orbit.services import codebuild, ecr, kms, secretsmanager
 from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
+
+
+def print_results(msg: str) -> None:
+    if msg.startswith("[RESULT] "):
+        _logger.info(msg)
 
 
 def _deploy_image(args: Tuple[str, ...]) -> None:
@@ -203,29 +210,26 @@ def deploy_credentials(args: Tuple[str, ...]) -> None:
     _logger.debug("Registry Credentials deployed")
 
 
-def deploy_foundation(args: Tuple[str, ...]) -> None:
-    _logger.debug("args: %s", args)
-    if len(args) != 1:
-        raise ValueError("Unexpected number of values in args")
-    env_name: str = args[0]
+def deploy_foundation(env_name: str) -> None:
+    _logger.debug("env_name: %s", env_name)
     context: "FoundationContext" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=FoundationContext)
     _logger.debug("Context loaded.")
-    docker.login(context=context)
-    _logger.debug("DockerHub and ECR Logged in")
-    cdk_toolkit.deploy(context=context)
-    _logger.debug("CDK Toolkit Stack deployed")
-    foundation.deploy(context=context)
-    _logger.debug("Demo Stack deployed")
+
+    @remotectl.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
+    def deploy_foundation(env_name: str) -> None:
+        docker.login(context=context)
+        _logger.debug("DockerHub and ECR Logged in")
+        cdk_toolkit.deploy(context=context)
+        _logger.debug("CDK Toolkit Stack deployed")
+        foundation.deploy(context=context)
+        _logger.debug("Demo Stack deployed")
+
+    deploy_foundation(env_name=env_name)
 
 
-def deploy_env(args: Tuple[str, ...]) -> None:
-    _logger.debug("args: %s", args)
-    if len(args) == 2:
-        env_name: str = args[0]
-        skip_images_remote_flag: str = str(args[1])
-    else:
-        raise ValueError("Unexpected number of values in args")
-
+def deploy_env(env_name: str, skip_images_remote_flag: str) -> None:
+    _logger.debug("env_name: %s", env_name)
+    _logger.debug("skip_images_remote_flag: %s", skip_images_remote_flag)
     manifest: Optional[Manifest] = ManifestSerDe.load_manifest_from_ssm(env_name=env_name, type=Manifest)
     _logger.debug("Manifest loaded.")
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
@@ -236,35 +240,41 @@ def deploy_env(args: Tuple[str, ...]) -> None:
     if manifest is None:
         raise Exception("Unable to load Manifest")
 
-    docker.login(context=context)
-    _logger.debug("DockerHub and ECR Logged in")
-    cdk_toolkit.deploy(context=context)
-    _logger.debug("CDK Toolkit Stack deployed")
-    env.deploy(
-        context=context,
-        eks_system_masters_roles_changes=changeset.eks_system_masters_roles_changeset if changeset else None,
-    )
+    @remotectl.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
+    def deploy_env(env_name: str, skip_images_remote_flag: str) -> None:
+        docker.login(context=context)
+        _logger.debug("DockerHub and ECR Logged in")
+        cdk_toolkit.deploy(context=context)
+        _logger.debug("CDK Toolkit Stack deployed")
+        env.deploy(
+            context=context,
+            eks_system_masters_roles_changes=changeset.eks_system_masters_roles_changeset if changeset else None,
+        )
 
-    _logger.debug("Env Stack deployed")
-    deploy_images_remotely(manifest=manifest, context=context, skip_images=skip_images_remote_flag == "skip-images")
-    _logger.debug("Docker Images deployed")
-    eksctl.deploy_env(
-        context=context,
-        changeset=changeset,
-    )
-    _logger.debug("EKS Environment Stack deployed")
-    kubectl.deploy_env(context=context)
-    _logger.debug("Kubernetes Environment components deployed")
+        _logger.debug("Env Stack deployed")
+        deploy_images_remotely(
+            manifest=manifest, context=context, skip_images=skip_images_remote_flag == "skip-images"  # type: ignore
+        )
+        _logger.debug("Docker Images deployed")
+        eksctl.deploy_env(
+            context=context,
+            changeset=changeset,
+        )
+        _logger.debug("EKS Environment Stack deployed")
+        kubectl.deploy_env(context=context)
+        _logger.debug("Kubernetes Environment components deployed")
 
-    helm.deploy_env(context=context)
-    _logger.debug("Helm Charts installed")
+        helm.deploy_env(context=context)
+        _logger.debug("Helm Charts installed")
 
-    k8s_context = utils.get_k8s_context(context=context)
-    kubectl.fetch_kubectl_data(context=context, k8s_context=k8s_context)
-    ContextSerDe.dump_context_to_ssm(context=context)
-    _logger.debug("Updating userpool redirect")
-    _update_userpool_client(context=context)
-    _update_userpool(context=context)
+        k8s_context = utils.get_k8s_context(context=context)
+        kubectl.fetch_kubectl_data(context=context, k8s_context=k8s_context)
+        ContextSerDe.dump_context_to_ssm(context=context)
+        _logger.debug("Updating userpool redirect")
+        _update_userpool_client(context=context)
+        _update_userpool(context=context)
+
+    deploy_env(env_name=env_name, skip_images_remote_flag=skip_images_remote_flag)
 
 
 def _update_userpool(context: Context) -> None:
