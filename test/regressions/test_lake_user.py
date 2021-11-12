@@ -136,7 +136,7 @@ def test_lakeuser_notebooks(notebook_to_run, kube: TestClient) -> None:
     lakeuser = OrbitJobCustomApiObject(body)
     lakeuser.create(namespace="lake-user")
     # Logic to wait till OrbitJob creates
-    lakeuser.wait_until_ready(timeout=60)
+    lakeuser.wait_until_ready(timeout=120)
     # Logic to pass or fail the pytest
     lakeuser.wait_until_job_completes(timeout=7200)
     current_status = lakeuser.get_status().get("orbitJobOperator").get("jobStatus")
@@ -185,7 +185,7 @@ def test_lakeuser_notebooks_xfail(kube: TestClient) -> None:
     lakeuser = OrbitJobCustomApiObject(body)
     lakeuser.create(namespace="lake-user")
     # Logic to wait till OrbitJob creates
-    lakeuser.wait_until_ready(timeout=60)
+    lakeuser.wait_until_ready(timeout=120)
     # Logic to pass or fail the pytest
     lakeuser.wait_until_job_completes(timeout=1200)
     current_status = lakeuser.get_status().get("orbitJobOperator").get("jobStatus")
