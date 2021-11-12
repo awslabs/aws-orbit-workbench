@@ -36,7 +36,7 @@ class RemoteCommands(Enum):
     deploy_env: REMOTE_FUNC_TYPE = deploy_module.deploy_env  # type: ignore
     deploy_teams: REMOTE_FUNC_TYPE = deploy_module.deploy_teams
     destroy_teams: REMOTE_FUNC_TYPE = destroy_module.destroy_teams
-    destroy_env: REMOTE_FUNC_TYPE = destroy_module.destroy_env
+    destroy_env: REMOTE_FUNC_TYPE = destroy_module.destroy_env  # type: ignore
     destroy_foundation: REMOTE_FUNC_TYPE = destroy_module.destroy_foundation  # type: ignore
     destroy_credentials: REMOTE_FUNC_TYPE = destroy_module.destroy_credentials
 
@@ -44,24 +44,25 @@ class RemoteCommands(Enum):
 @remotectl.configure("orbit")
 def configure(configuration: RemoteCtlConfig) -> None:
     LOGGER.debug("ORBIT_CLI_ROOT %s", ORBIT_CLI_ROOT)
-    configuration.python_modules = ["aws-orbit~=1.5.0.dev0", "softwarelabs-remote-toolkit~=0.1.0.dev0"]
+    configuration.timeout = 120
+    configuration.python_modules = ["aws-orbit~=1.5.0.dev0"]
     configuration.local_modules = {
         "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../cli")),
         "aws-orbit-sdk": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../sdk")),
-        "aws-orbit-jupyterlab-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../jupyterlab_orbit")),
-        "aws-orbit-custom-cfn": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/custom_cfn")),
-        "aws-orbit-emr-on-eks": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/emr_on_eks")),
-        "aws-orbit-hello-world": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/hello_world")),
-        "aws-orbit-lustre": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/lustre")),
-        "aws-orbit-overprovisioning": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/overprovisioning")),
-        "aws-orbit-ray": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/ray")),
-        "aws-orbit-redshift": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/redshift")),
-        "aws-orbit-sm-operator": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/sm-operator")),
-        "aws-orbit-team-script-launcher": os.path.realpath(
-            os.path.join(ORBIT_CLI_ROOT, "../../plugins/team_script_launcher")
-        ),
-        "aws-orbit-voila": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/voila")),
-        "aws-orbit-code-commit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/code_commit")),
+        # "aws-orbit-jupyterlab-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../jupyterlab_orbit")),
+        # "aws-orbit-custom-cfn": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/custom_cfn")),
+        # "aws-orbit-emr-on-eks": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/emr_on_eks")),
+        # "aws-orbit-hello-world": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/hello_world")),
+        # "aws-orbit-lustre": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/lustre")),
+        # "aws-orbit-overprovisioning": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/overprovisioning")),
+        # "aws-orbit-ray": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/ray")),
+        # "aws-orbit-redshift": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/redshift")),
+        # "aws-orbit-sm-operator": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/sm-operator")),
+        # "aws-orbit-team-script-launcher": os.path.realpath(
+        #     os.path.join(ORBIT_CLI_ROOT, "../../plugins/team_script_launcher")
+        # ),
+        # "aws-orbit-voila": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/voila")),
+        # "aws-orbit-code-commit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/code_commit")),
     }
     configuration.requirements_files = {
         "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../requirements.txt")),

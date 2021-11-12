@@ -117,23 +117,7 @@ def destroy_env(env: str, preserve_credentials: bool, debug: bool) -> None:
             or cfn.does_stack_exist(stack_name=context.toolkit.stack_name)
             or cfn.does_stack_exist(stack_name=context.cdk_toolkit.stack_name)
         ):
-            bundle_path = bundle.generate_bundle(command_name="destroy", context=context)
-            msg_ctx.progress(5)
-
-            buildspec = codebuild.generate_spec(
-                context=context,
-                plugins=True,
-                cmds_build=[f"orbit remote --command destroy_env {env}"],
-                changeset=None,
-            )
-            remote.run(
-                command_name="destroy",
-                context=context,
-                bundle_path=bundle_path,
-                buildspec=buildspec,
-                codebuild_log_callback=msg_ctx.progress_bar_callback,
-                timeout=120,
-            )
+            destroy.destroy_env(env_name=context.name)
 
         if not preserve_credentials:
             secretsmanager.delete_docker_credentials(secret_id=f"orbit-{context.name}-docker-credentials")

@@ -227,9 +227,8 @@ def deploy_foundation(env_name: str) -> None:
     deploy_foundation(env_name=env_name)
 
 
-def deploy_env(env_name: str, skip_images_remote_flag: str) -> None:
+def deploy_env(env_name: str, manifest_dir: str) -> None:
     _logger.debug("env_name: %s", env_name)
-    _logger.debug("skip_images_remote_flag: %s", skip_images_remote_flag)
     manifest: Optional[Manifest] = ManifestSerDe.load_manifest_from_ssm(env_name=env_name, type=Manifest)
     _logger.debug("Manifest loaded.")
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
@@ -240,8 +239,14 @@ def deploy_env(env_name: str, skip_images_remote_flag: str) -> None:
     if manifest is None:
         raise Exception("Unable to load Manifest")
 
-    @remotectl.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
-    def deploy_env(env_name: str, skip_images_remote_flag: str) -> None:
+    @remotectl.remote_function(
+        "orbit",
+        codebuild_role=context.toolkit.admin_role,
+        extra_dirs={
+            "manifests": manifest_dir,
+        },
+    )
+    def deploy_env(env_name: str, manifest_dir: str) -> None:
         docker.login(context=context)
         _logger.debug("DockerHub and ECR Logged in")
         cdk_toolkit.deploy(context=context)
@@ -252,10 +257,6 @@ def deploy_env(env_name: str, skip_images_remote_flag: str) -> None:
         )
 
         _logger.debug("Env Stack deployed")
-        deploy_images_remotely(
-            manifest=manifest, context=context, skip_images=skip_images_remote_flag == "skip-images"  # type: ignore
-        )
-        _logger.debug("Docker Images deployed")
         eksctl.deploy_env(
             context=context,
             changeset=changeset,
@@ -274,7 +275,7 @@ def deploy_env(env_name: str, skip_images_remote_flag: str) -> None:
         _update_userpool_client(context=context)
         _update_userpool(context=context)
 
-    deploy_env(env_name=env_name, skip_images_remote_flag=skip_images_remote_flag)
+    deploy_env(env_name=env_name, manifest_dir=manifest_dir)
 
 
 def _update_userpool(context: Context) -> None:

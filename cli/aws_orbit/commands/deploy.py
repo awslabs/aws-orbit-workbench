@@ -27,7 +27,6 @@ from aws_orbit.models.manifest import (
     DataNetworkingManifest,
     FoundationManifest,
     FrontendNetworkingManifest,
-    ImagesManifest,
     Manifest,
     ManifestSerDe,
     NetworkingManifest,
@@ -239,17 +238,12 @@ def deploy_env(
         msg_ctx.info(f"Manifest loaded: {filename}")
         msg_ctx.progress(3)
 
+        manifest_dir: str = os.path.dirname(os.path.abspath(filename))
+        _logger.debug("manifest directory is set to %s", manifest_dir)
+
         manifest_validations(manifest)
 
         context: "Context" = ContextSerDe.load_context_from_manifest(manifest=manifest)
-        image_manifests = {"code_build": manifest.images.code_build}
-
-        for name in context.images.names:
-            # We don't allow these images to be managed with an input Manifest
-            # These images should be changed/maintained in manifests.py
-            if name not in ["code_build", "k8s-utilities"]:
-                image_manifests[name] = getattr(context.images, name) if skip_images else getattr(manifest.images, name)
-        context.images = ImagesManifest(**image_manifests)  # type: ignore
 
         msg_ctx.info("Current Context loaded")
         msg_ctx.progress(4)
@@ -265,33 +259,13 @@ def deploy_env(
         msg_ctx.info("Toolkit deployed")
         msg_ctx.progress(10)
 
-        skip_images_remote_flag: str = "skip-images" if skip_images else "no-skip-images"
         msg_ctx.progress(11)
 
         deploy.deploy_env(
             env_name=context.name,
-            skip_images_remote_flag=skip_images_remote_flag,
-            # dirs=_get_images_dirs(context=context, manifest_filename=filename, skip_images=skip_images)
+            manifest_dir=manifest_dir,
         )
-        # bundle_path = bundle.generate_bundle(
-        #     command_name="deploy",
-        #     context=context,
-        #     dirs=_get_images_dirs(context=context, manifest_filename=filename, skip_images=skip_images),
-        # )
-        # buildspec = codebuild.generate_spec(
-        #     context=context,
-        #     plugins=True,
-        #     cmds_build=[f"orbit remote --command deploy_env {context.name} {skip_images_remote_flag}"],
-        #     changeset=changeset,
-        # )
-        # remote.run(
-        #     command_name="deploy",
-        #     context=context,
-        #     bundle_path=bundle_path,
-        #     buildspec=buildspec,
-        #     codebuild_log_callback=msg_ctx.progress_bar_callback,
-        #     timeout=90,
-        # )
+
         msg_ctx.info("Orbit Workbench deployed")
         msg_ctx.progress(98)
 

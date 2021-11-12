@@ -81,40 +81,44 @@ def destroy_teams(args: Tuple[str, ...]) -> None:
     ssm.cleanup_teams(env_name=context.name)
 
 
-def destroy_env(args: Tuple[str, ...]) -> None:
-    _logger.debug("args %s", args)
-    env_name: str = args[0]
+def destroy_env(env_name: str) -> None:
+
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("context.name %s", context.name)
 
-    # Helps save time on target group issues with vpc
-    cleanup.delete_istio_ingress(context=context)
-    cleanup.delete_target_group(cluster_name=context.env_stack_name)
+    @remotectl.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
+    def destroy_env(env_name: str) -> None:
 
-    # Delete the optional Fargate Profile
-    cleanup.delete_system_fargate_profile(context=context)
+        # Helps save time on target group issues with vpc
+        cleanup.delete_istio_ingress(context=context)
+        cleanup.delete_target_group(cluster_name=context.env_stack_name)
 
-    # Delete istio-system pod disruption budget; Causes a dead lock
-    cleanup.delete_istio_pod_disruption_budget(context=context)
+        # Delete the optional Fargate Profile
+        cleanup.delete_system_fargate_profile(context=context)
 
-    # helm.destroy_env(context=context)
-    # _logger.debug("Helm Charts uninstalled")
+        # Delete istio-system pod disruption budget; Causes a dead lock
+        cleanup.delete_istio_pod_disruption_budget(context=context)
 
-    # kubeflow.destroy_kubeflow(context=context)
-    # _logger.debug("Kubeflow uninstalled")
+        # helm.destroy_env(context=context)
+        # _logger.debug("Helm Charts uninstalled")
 
-    # kubectl.destroy_env(context=context)
-    # _logger.debug("Kubernetes Environment components destroyed")
+        # kubeflow.destroy_kubeflow(context=context)
+        # _logger.debug("Kubeflow uninstalled")
 
-    eksctl.destroy_env(context=context)
-    _logger.debug("EKS Environment Stacks destroyed")
+        # kubectl.destroy_env(context=context)
+        # _logger.debug("Kubernetes Environment components destroyed")
 
-    cleanup.delete_elb_security_group(cluster_name=context.env_stack_name)
+        eksctl.destroy_env(context=context)
+        _logger.debug("EKS Environment Stacks destroyed")
 
-    env.destroy(context=context)
-    _logger.debug("Env Stack destroyed")
-    cdk_toolkit.destroy(context=context)
-    _logger.debug("CDK Toolkit Stack destroyed")
+        cleanup.delete_elb_security_group(cluster_name=context.env_stack_name)
+
+        env.destroy(context=context)
+        _logger.debug("Env Stack destroyed")
+        cdk_toolkit.destroy(context=context)
+        _logger.debug("CDK Toolkit Stack destroyed")
+
+    destroy_env(env_name=env_name)
 
 
 def destroy_foundation(env_name: str) -> None:

@@ -1,9 +1,6 @@
 Name: !ENV ${ORBIT_ENV_NAME::dev-env}
-CodeartifactDomain: !ENV ${CODEARTIFACT_DOMAIN::aws-orbit}
+CodeartifactDomain: !ENV ${CODEARTIFACT_DOMAIN::aws-slrt-orbit}
 CodeartifactRepository: !ENV ${CODEARTIFACT_REPOSITORY::python-repository}
-# Policies: 
-# - slrt-orbit-us-east-1-resources
-SlrtToolkit: orbit
 EksSystemMastersRoles:
 - !ENV ${ORBIT_ADMIN_ROLE::Admin}
 - !ENV ${ORBIT_ADMIN_DEMO_ROLE::Admin}
