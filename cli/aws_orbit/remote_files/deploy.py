@@ -245,6 +245,24 @@ def deploy_env(env_name: str, manifest_dir: str) -> None:
         extra_dirs={
             "manifests": manifest_dir,
         },
+        extra_pre_build_commands=[
+            "wget -O kfctl_v1.2.0-0_linux.tar.gz https://github.com/kubeflow/kfctl/releases/download/v1.2.0/kfctl_v1.2.0-0-gbc038f9_linux.tar.gz",
+            "tar xzf kfctl_v1.2.0-0_linux.tar.gz",
+            "chmod +x kfctl",
+            "mv kfctl /usr/local/bin",
+            'curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"',
+            "chmod +x ./kubectl",
+            "mv ./kubectl /usr/local/bin/kubectl",
+            'curl --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp',
+            "mv /tmp/eksctl /usr/local/bin",
+            "curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator",
+            "chmod +x ./aws-iam-authenticator",
+            "mv ./aws-iam-authenticator /usr/local/bin",
+            "curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash",
+            "helm version --short",
+            "helm plugin install https://github.com/hypnoglow/helm-s3.git",
+            "helm repo add stable https://charts.helm.sh/stable",
+        ],
     )
     def deploy_env(env_name: str, manifest_dir: str) -> None:
         docker.login(context=context)
