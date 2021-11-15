@@ -30,7 +30,6 @@ _logger: logging.Logger = logging.getLogger(__name__)
 def destroy_toolkit(
     env_name: str,
     top_level: str = "orbit",
-    toolkit_bucket: Optional[str] = None,
     cdk_toolkit_bucket: Optional[str] = None,
 ) -> None:
     try:
@@ -61,31 +60,14 @@ def destroy_teams(env: str, debug: bool) -> None:
             msg_ctx.progress(100)
             return
 
+        msg_ctx.progress(15)
         context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
         msg_ctx.info("Context loaded")
         msg_ctx.info(f"Teams: {','.join([t.name for t in context.teams])}")
-        msg_ctx.progress(2)
-
-        msg_ctx.progress(4)
+        msg_ctx.progress(25)
 
         if any(cfn.does_stack_exist(stack_name=t.stack_name) for t in context.teams):
-            bundle_path = bundle.generate_bundle(command_name="destroy", context=context)
-            msg_ctx.progress(5)
-
-            buildspec = codebuild.generate_spec(
-                context=context,
-                plugins=True,
-                cmds_build=[f"orbit remote --command destroy_teams {env}"],
-                changeset=None,
-            )
-            remote.run(
-                command_name="destroy",
-                context=context,
-                bundle_path=bundle_path,
-                buildspec=buildspec,
-                codebuild_log_callback=msg_ctx.progress_bar_callback,
-                timeout=120,
-            )
+            destroy.destroy_teams(env_name=context.name)
         msg_ctx.progress(95)
 
         msg_ctx.info("Teams Destroyed")
@@ -104,10 +86,10 @@ def destroy_env(env: str, preserve_credentials: bool, debug: bool) -> None:
             msg_ctx.progress(100)
             return
 
+        msg_ctx.progress(5)
         context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
         msg_ctx.info("Context loaded")
         msg_ctx.info(f"Teams: {','.join([t.name for t in context.teams])}")
-        msg_ctx.progress(2)
 
         if any(cfn.does_stack_exist(stack_name=t.stack_name) for t in context.teams):
             raise click.ClickException("Found Teams dependent on the Envrionment.")
@@ -117,6 +99,7 @@ def destroy_env(env: str, preserve_credentials: bool, debug: bool) -> None:
             or cfn.does_stack_exist(stack_name=context.toolkit.stack_name)
             or cfn.does_stack_exist(stack_name=context.cdk_toolkit.stack_name)
         ):
+            msg_ctx.progress(15)
             destroy.destroy_env(env_name=context.name)
 
         if not preserve_credentials:
@@ -129,7 +112,6 @@ def destroy_env(env: str, preserve_credentials: bool, debug: bool) -> None:
         try:
             destroy_toolkit(
                 env_name=context.name,
-                toolkit_bucket=context.toolkit.s3_bucket,
                 cdk_toolkit_bucket=context.cdk_toolkit.s3_bucket,
             )
         except botocore.exceptions.ClientError as ex:
@@ -156,9 +138,7 @@ def destroy_foundation(env: str, debug: bool) -> None:
 
         context: "FoundationContext" = ContextSerDe.load_context_from_ssm(env_name=env, type=FoundationContext)
         msg_ctx.info("Context loaded")
-        msg_ctx.progress(2)
-
-        msg_ctx.progress(4)
+        msg_ctx.progress(25)
 
         if (
             cfn.does_stack_exist(stack_name=cast(str, context.stack_name))
@@ -168,13 +148,12 @@ def destroy_foundation(env: str, debug: bool) -> None:
             destroy.destroy_foundation(env_name=context.name)
 
         msg_ctx.info("Foundation destroyed")
-        msg_ctx.progress(95)
+        msg_ctx.progress(75)
 
         try:
             destroy_toolkit(
                 env_name=context.name,
                 top_level="orbit-f",
-                toolkit_bucket=context.toolkit.s3_bucket,
                 cdk_toolkit_bucket=context.cdk_toolkit.s3_bucket,
             )
         except botocore.exceptions.ClientError as ex:

@@ -22,7 +22,7 @@ from typing import Any, List, Optional, Tuple, cast
 
 from softwarelabs_remote_toolkit import remotectl
 
-from aws_orbit import bundle, docker, plugins, remote, sh
+from aws_orbit import ORBIT_CLI_ROOT, bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, TeamContext
 from aws_orbit.models.manifest import ImageManifest, ImagesManifest, Manifest, ManifestSerDe
@@ -245,24 +245,6 @@ def deploy_env(env_name: str, manifest_dir: str) -> None:
         extra_dirs={
             "manifests": manifest_dir,
         },
-        extra_pre_build_commands=[
-            "wget -O kfctl_v1.2.0-0_linux.tar.gz https://github.com/kubeflow/kfctl/releases/download/v1.2.0/kfctl_v1.2.0-0-gbc038f9_linux.tar.gz",
-            "tar xzf kfctl_v1.2.0-0_linux.tar.gz",
-            "chmod +x kfctl",
-            "mv kfctl /usr/local/bin",
-            'curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"',
-            "chmod +x ./kubectl",
-            "mv ./kubectl /usr/local/bin/kubectl",
-            'curl --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp',
-            "mv /tmp/eksctl /usr/local/bin",
-            "curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/aws-iam-authenticator",
-            "chmod +x ./aws-iam-authenticator",
-            "mv ./aws-iam-authenticator /usr/local/bin",
-            "curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash",
-            "helm version --short",
-            "helm plugin install https://github.com/hypnoglow/helm-s3.git",
-            "helm repo add stable https://charts.helm.sh/stable",
-        ],
     )
     def deploy_env(env_name: str, manifest_dir: str) -> None:
         docker.login(context=context)
@@ -335,77 +317,102 @@ def _update_userpool_client(context: Context) -> None:
     )
 
 
-def deploy_teams(args: Tuple[str, ...]) -> None:
-    _logger.debug("args: %s", args)
-    if len(args) == 1:
-        env_name: str = args[0]
-    else:
-        raise ValueError("Unexpected number of values in args")
-
+def deploy_teams(env_name: str, manifest_dir: str) -> None:
+    _logger.debug("env_name: %s", env_name)
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("Context loaded.")
     changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=env_name)
     _logger.debug("Changeset loaded.")
 
-    if changeset:
-        plugins.PLUGINS_REGISTRIES.load_plugins(
-            context=context, plugin_changesets=changeset.plugin_changesets, teams_changeset=changeset.teams_changeset
-        )
-        _logger.debug("Plugins loaded")
+    @remotectl.remote_function(
+        "orbit",
+        codebuild_role=context.toolkit.admin_role,
+        extra_dirs={
+            "manifests": manifest_dir,
+        },
+        extra_local_modules={
+            "aws-orbit-jupyterlab-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../jupyterlab_orbit")),
+            "aws-orbit-emr-on-eks": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/emr_on_eks")),
+            "aws-orbit-custom-cfn": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/custom_cfn")),
+            "aws-orbit-hello-world": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/hello_world")),
+            "aws-orbit-lustre": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/lustre")),
+            "aws-orbit-overprovisioning": os.path.realpath(
+                os.path.join(ORBIT_CLI_ROOT, "../../plugins/overprovisioning")
+            ),
+            "aws-orbit-ray": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/ray")),
+            "aws-orbit-redshift": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/redshift")),
+            "aws-orbit-sm-operator": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/sm-operator")),
+            "aws-orbit-team-script-launcher": os.path.realpath(
+                os.path.join(ORBIT_CLI_ROOT, "../../plugins/team_script_launcher")
+            ),
+            "aws-orbit-voila": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/voila")),
+            "aws-orbit-code-commit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/code_commit")),
+        },
+    )
+    def deploy_teams(env_name: str, manifest_dir: str) -> None:
+        if changeset:
+            plugins.PLUGINS_REGISTRIES.load_plugins(
+                context=context,
+                plugin_changesets=changeset.plugin_changesets,
+                teams_changeset=changeset.teams_changeset,
+            )
+            _logger.debug("Plugins loaded")
 
-    docker.login(context=context)
-    _logger.debug("DockerHub and ECR Logged in")
-    if changeset and changeset.teams_changeset and changeset.teams_changeset.removed_teams_names:
+        docker.login(context=context)
+        _logger.debug("DockerHub and ECR Logged in")
+        if changeset and changeset.teams_changeset and changeset.teams_changeset.removed_teams_names:
+            kubectl.write_kubeconfig(context=context)
+            for team_name in changeset.teams_changeset.removed_teams_names:
+                team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_name)
+                if team_context is None:
+                    raise RuntimeError(f"TeamContext {team_name} not found!")
+                _logger.debug("Destory all user namespaces for %s", team_context.name)
+                sh.run(f"kubectl delete namespaces -l orbit/team={team_context.name},orbit/space=user --wait=true")
+                _logger.debug("Destroying team %s", team_name)
+                plugins.PLUGINS_REGISTRIES.destroy_team_plugins(context=context, team_context=team_context)
+                _logger.debug("Team Plugins destroyed")
+                helm.destroy_team(context=context, team_context=team_context)
+                _logger.debug("Team Helm Charts uninstalled")
+                kubectl.destroy_team(context=context, team_context=team_context)
+                _logger.debug("Kubernetes Team components destroyed")
+                eksctl.destroy_team(context=context, team_context=team_context)
+                _logger.debug("EKS Team Stack destroyed")
+                teams.destroy_team(context=context, team_context=team_context)
+                _logger.debug("Team %s destroyed", team_name)
+                context.remove_team_by_name(name=team_name)
+                ContextSerDe.dump_context_to_ssm(context=context)
+
+        team_names = [t.name for t in context.teams]
+        if changeset and changeset.teams_changeset and changeset.teams_changeset.added_teams_names:
+            team_names.extend(changeset.teams_changeset.added_teams_names)
+
+        manifest: Optional["Manifest"] = ManifestSerDe.load_manifest_from_ssm(env_name=context.name, type=Manifest)
+        if manifest is None:
+            raise RuntimeError(f"Manifest {context.name} not found!")
         kubectl.write_kubeconfig(context=context)
-        for team_name in changeset.teams_changeset.removed_teams_names:
-            team_context: Optional["TeamContext"] = context.get_team_by_name(name=team_name)
+        for team_name in team_names:
+            team_manifest = manifest.get_team_by_name(name=team_name)
+            if team_manifest is None:
+                raise RuntimeError(f"TeamManifest {team_name} not found!")
+            teams.deploy_team(context=context, manifest=manifest, team_manifest=team_manifest)
+            _logger.debug("Team Stacks deployed")
+            team_context = context.get_team_by_name(name=team_name)
             if team_context is None:
                 raise RuntimeError(f"TeamContext {team_name} not found!")
-            _logger.debug("Destory all user namespaces for %s", team_context.name)
-            sh.run(f"kubectl delete namespaces -l orbit/team={team_context.name},orbit/space=user --wait=true")
-            _logger.debug("Destroying team %s", team_name)
-            plugins.PLUGINS_REGISTRIES.destroy_team_plugins(context=context, team_context=team_context)
-            _logger.debug("Team Plugins destroyed")
-            helm.destroy_team(context=context, team_context=team_context)
-            _logger.debug("Team Helm Charts uninstalled")
-            kubectl.destroy_team(context=context, team_context=team_context)
-            _logger.debug("Kubernetes Team components destroyed")
-            eksctl.destroy_team(context=context, team_context=team_context)
-            _logger.debug("EKS Team Stack destroyed")
-            teams.destroy_team(context=context, team_context=team_context)
-            _logger.debug("Team %s destroyed", team_name)
-            context.remove_team_by_name(name=team_name)
+            eksctl.deploy_team(context=context, team_context=team_context)
+            _logger.debug("EKS Team Stack deployed")
+            kubectl.deploy_team(context=context, team_context=team_context)
+            _logger.debug("Kubernetes Team components deployed")
+            helm.deploy_team(context=context, team_context=team_context)
+            _logger.debug("Team Helm Charts installed")
+            plugins.PLUGINS_REGISTRIES.deploy_team_plugins(
+                context=context, team_context=team_context, changes=changeset.plugin_changesets if changeset else []
+            )
+
+            team_context.plugins = team_manifest.plugins
             ContextSerDe.dump_context_to_ssm(context=context)
+            _logger.debug("Team Plugins deployed")
 
-    team_names = [t.name for t in context.teams]
-    if changeset and changeset.teams_changeset and changeset.teams_changeset.added_teams_names:
-        team_names.extend(changeset.teams_changeset.added_teams_names)
+        _logger.debug("Teams deployed")
 
-    manifest: Optional["Manifest"] = ManifestSerDe.load_manifest_from_ssm(env_name=context.name, type=Manifest)
-    if manifest is None:
-        raise RuntimeError(f"Manifest {context.name} not found!")
-    kubectl.write_kubeconfig(context=context)
-    for team_name in team_names:
-        team_manifest = manifest.get_team_by_name(name=team_name)
-        if team_manifest is None:
-            raise RuntimeError(f"TeamManifest {team_name} not found!")
-        teams.deploy_team(context=context, manifest=manifest, team_manifest=team_manifest)
-        _logger.debug("Team Stacks deployed")
-        team_context = context.get_team_by_name(name=team_name)
-        if team_context is None:
-            raise RuntimeError(f"TeamContext {team_name} not found!")
-        eksctl.deploy_team(context=context, team_context=team_context)
-        _logger.debug("EKS Team Stack deployed")
-        kubectl.deploy_team(context=context, team_context=team_context)
-        _logger.debug("Kubernetes Team components deployed")
-        helm.deploy_team(context=context, team_context=team_context)
-        _logger.debug("Team Helm Charts installed")
-        plugins.PLUGINS_REGISTRIES.deploy_team_plugins(
-            context=context, team_context=team_context, changes=changeset.plugin_changesets if changeset else []
-        )
-
-        team_context.plugins = team_manifest.plugins
-        ContextSerDe.dump_context_to_ssm(context=context)
-        _logger.debug("Team Plugins deployed")
-
-    _logger.debug("Teams deployed")
+    deploy_teams(env_name=env_name, manifest_dir=manifest_dir)

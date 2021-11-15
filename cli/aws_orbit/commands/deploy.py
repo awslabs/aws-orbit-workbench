@@ -218,7 +218,7 @@ def deploy_foundation(
             top_level="orbit-f",
         )
         msg_ctx.info("Toolkit deployed")
-        msg_ctx.progress(8)
+        msg_ctx.progress(50)
 
         deploy.deploy_foundation(env_name=context.name)
 
@@ -236,7 +236,7 @@ def deploy_env(
 
         manifest: "Manifest" = ManifestSerDe.load_manifest_from_file(filename=filename, type=Manifest)
         msg_ctx.info(f"Manifest loaded: {filename}")
-        msg_ctx.progress(3)
+        msg_ctx.progress(5)
 
         manifest_dir: str = os.path.dirname(os.path.abspath(filename))
         _logger.debug("manifest directory is set to %s", manifest_dir)
@@ -246,20 +246,18 @@ def deploy_env(
         context: "Context" = ContextSerDe.load_context_from_manifest(manifest=manifest)
 
         msg_ctx.info("Current Context loaded")
-        msg_ctx.progress(4)
+        msg_ctx.progress(10)
 
         _logger.debug("Inspecting possible manifest changes...")
         changeset: "Changeset" = extract_changeset(manifest=manifest, context=context, msg_ctx=msg_ctx)
         _logger.debug(f"Changeset:\n{dump_changeset_to_str(changeset=changeset)}")
-        msg_ctx.progress(5)
+        msg_ctx.progress(15)
 
         _deploy_toolkit(
             context=context,
         )
         msg_ctx.info("Toolkit deployed")
-        msg_ctx.progress(10)
-
-        msg_ctx.progress(11)
+        msg_ctx.progress(30)
 
         deploy.deploy_env(
             env_name=context.name,
@@ -295,7 +293,10 @@ def deploy_teams(
         manifest: "Manifest" = ManifestSerDe.load_manifest_from_file(filename=filename, type=Manifest)
         msg_ctx.info(f"Manifest loaded: {filename}")
         msg_ctx.info(f"Teams: {','.join([t.name for t in manifest.teams])}")
-        msg_ctx.progress(3)
+        msg_ctx.progress(5)
+
+        manifest_dir: str = os.path.dirname(os.path.abspath(filename))
+        _logger.debug("manifest directory is set to %s", manifest_dir)
 
         context_parameter_name: str = f"/orbit/{manifest.name}/context"
         if not ssm.does_parameter_exist(name=context_parameter_name):
@@ -305,41 +306,26 @@ def deploy_teams(
         context: "Context" = ContextSerDe.load_context_from_manifest(manifest=manifest)
         msg_ctx.info("Current Context loaded")
         msg_ctx.info(f"Teams: {','.join([t.name for t in context.teams])}")
-        msg_ctx.progress(4)
+        msg_ctx.progress(10)
 
         _logger.debug("Inspecting possible manifest changes...")
         changeset: "Changeset" = extract_changeset(manifest=manifest, context=context, msg_ctx=msg_ctx)
         _logger.debug(f"Changeset:\n{dump_changeset_to_str(changeset=changeset)}")
-        msg_ctx.progress(5)
+        msg_ctx.progress(15)
 
-        msg_ctx.progress(7)
         _logger.debug("Preparing bundle directory")
         dirs: List[Tuple[str, str]] = []
         dirs += _get_config_dirs(context=context, manifest_filename=filename)
         _logger.debug(f"*Directory={dirs}")
         dirs += _get_images_dirs(context=context, manifest_filename=filename, skip_images=True)
         _logger.debug(f"**Directory={dirs}")
+        msg_ctx.progress(30)
 
-        bundle_path = bundle.generate_bundle(
-            command_name="deploy",
-            context=context,
-            dirs=dirs,
+        deploy.deploy_teams(
+            env_name=context.name,
+            manifest_dir=manifest_dir,
         )
-        msg_ctx.progress(11)
-        buildspec = codebuild.generate_spec(
-            context=context,
-            plugins=True,
-            cmds_build=[f"orbit remote --command deploy_teams {context.name}"],
-            changeset=changeset,
-        )
-        remote.run(
-            command_name="deploy",
-            context=context,
-            bundle_path=bundle_path,
-            buildspec=buildspec,
-            codebuild_log_callback=msg_ctx.progress_bar_callback,
-            timeout=90,
-        )
+
         msg_ctx.info("Orbit Workbench deployed")
         msg_ctx.progress(98)
 
