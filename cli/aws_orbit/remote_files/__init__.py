@@ -28,17 +28,17 @@ REMOTE_FUNC_TYPE = Callable[[Tuple[str, ...]], None]
 
 
 class RemoteCommands(Enum):
-    _deploy_image: REMOTE_FUNC_TYPE = deploy_module._deploy_image
-    build_image: REMOTE_FUNC_TYPE = build_image_module.build_image
-    delete_image: REMOTE_FUNC_TYPE = delete_image_module.delete_image
-    deploy_credentials: REMOTE_FUNC_TYPE = deploy_module.deploy_credentials
-    deploy_foundation: REMOTE_FUNC_TYPE = deploy_module.deploy_foundation  # type: ignore
-    deploy_env: REMOTE_FUNC_TYPE = deploy_module.deploy_env  # type: ignore
-    deploy_teams: REMOTE_FUNC_TYPE = deploy_module.deploy_teams  # type: ignore
-    destroy_teams: REMOTE_FUNC_TYPE = destroy_module.destroy_teams  # type: ignore
-    destroy_env: REMOTE_FUNC_TYPE = destroy_module.destroy_env  # type: ignore
-    destroy_foundation: REMOTE_FUNC_TYPE = destroy_module.destroy_foundation  # type: ignore
-    destroy_credentials: REMOTE_FUNC_TYPE = destroy_module.destroy_credentials
+    _deploy_image = deploy_module._deploy_image
+    build_image = build_image_module.build_image
+    delete_image = delete_image_module.delete_image
+    deploy_credentials = deploy_module.deploy_credentials
+    deploy_foundation = deploy_module.deploy_foundation
+    deploy_env = deploy_module.deploy_env
+    deploy_teams = deploy_module.deploy_teams
+    destroy_teams = destroy_module.destroy_teams
+    destroy_env = destroy_module.destroy_env
+    destroy_foundation = destroy_module.destroy_foundation
+    destroy_credentials = destroy_module.destroy_credentials
 
 
 @remotectl.configure("orbit")
