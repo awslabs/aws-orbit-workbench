@@ -50,6 +50,7 @@ setup(
         "cfn-flip~=1.2.3",
         "python-slugify~=4.0.1",
         "kubernetes~=12.0.1",
+        "softwarelabs-remote-toolkit~=0.1.0",
     ],
     entry_points={"console_scripts": ["orbit = aws_orbit.__main__:main"]},
     classifiers=[
