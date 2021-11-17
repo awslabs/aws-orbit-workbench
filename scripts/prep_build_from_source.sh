@@ -48,19 +48,19 @@ ${DIR}/set_jupyter_user_pip_conf.sh \
     || (echo "ERROR: Failed to set jupyter-user pip.conf"; exit 1)
 
 if [ $CLI -eq 1 ]; then
-    ${DIR}/update_repo.sh cli ${DOMAIN} ${IGNORE_TWINE_ERROR} \
+    ${DIR}/update_repo.sh cli ${PACKAGE} ${IGNORE_TWINE_ERROR} \
         && echo "Updated CLI codeartifact repository" \
         || (echo "ERROR: Failed to update CLI codeartifact repository"; exit 1)
 fi
 
 if [ $SDK -eq 1 ]; then
-    ${DIR}/update_repo.sh sdk ${DOMAIN}-sdk ${IGNORE_TWINE_ERROR} \
+    ${DIR}/update_repo.sh sdk ${PACKAGE}-sdk ${IGNORE_TWINE_ERROR} \
         && echo "Updated SDK codeartifact repository" \
         || (echo "ERROR: Failed to update SDK codeartifact repository"; exit 1)
 fi
 
 if [ $LAB -eq 1 ]; then
-    ${DIR}/update_repo.sh jupyterlab_orbit ${DOMAIN}-jupyterlab-orbit ${IGNORE_TWINE_ERROR} \
+    ${DIR}/update_repo.sh jupyterlab_orbit ${PACKAGE}-jupyterlab-orbit ${IGNORE_TWINE_ERROR} \
         && echo "Updated Jupyterlab-orbit codeartifact repository" \
         || (echo "ERROR: Failed to update Jupyterlab-orbit codeartifact repository"; exit 1)
 fi
