@@ -2,7 +2,7 @@ FROM public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s-utilities:1.0.0 as utilbase
 
 RUN pip install boto3
 
-RUN mkdir -p /opt/orbit/scripts &&
+RUN mkdir -p /opt/orbit/scripts
 RUN mkdir -p /opt/orbit/data
 RUN mkdir -p /opt/orbit/samples/manifests
 RUN mkdir -p /opt/orbit/samples/notebooks
