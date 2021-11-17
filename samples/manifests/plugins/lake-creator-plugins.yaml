@@ -1,7 +1,7 @@
 -   PluginId: custom_cfn
     Module: custom_cfn
     Parameters:
-        CfnTemplatePath: "./bundle/plugins/demo-lake-creator-cfn-template.yaml"
+        CfnTemplatePath: "./manifests/demo-lake-creator-cfn-template.yaml"
 -   PluginId: copy-sample-code
     Module: team_script_launcher
     Parameters:

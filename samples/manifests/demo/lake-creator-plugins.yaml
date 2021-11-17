@@ -12,7 +12,7 @@
 -   PluginId: custom_cfn
     Module: custom_cfn
     Parameters:
-        CfnTemplatePath: "./bundle/plugins/demo-lake-creator-cfn-template.yaml"
+        CfnTemplatePath: "./manifests/demo-lake-creator-cfn-template.yaml"
 -   PluginId: code_commit
     Module: code_commit
 -   PluginId: hello_world
