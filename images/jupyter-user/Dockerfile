@@ -1,6 +1,5 @@
 
 ARG BASE_IMAGE=public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter/base-notebook:python-3.8.8
-#ARG BASE_IMAGE=jupyter/base-notebook:python-3.8.8
 FROM $BASE_IMAGE as base
 
 USER root
