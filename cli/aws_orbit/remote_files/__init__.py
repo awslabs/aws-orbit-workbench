@@ -28,40 +28,34 @@ REMOTE_FUNC_TYPE = Callable[[Tuple[str, ...]], None]
 
 
 class RemoteCommands(Enum):
-    _deploy_image: REMOTE_FUNC_TYPE = deploy_module._deploy_image
-    build_image: REMOTE_FUNC_TYPE = build_image_module.build_image
-    delete_image: REMOTE_FUNC_TYPE = delete_image_module.delete_image
-    deploy_credentials: REMOTE_FUNC_TYPE = deploy_module.deploy_credentials
-    deploy_foundation: REMOTE_FUNC_TYPE = deploy_module.deploy_foundation  # type: ignore
-    deploy_env: REMOTE_FUNC_TYPE = deploy_module.deploy_env  # type: ignore
-    deploy_teams: REMOTE_FUNC_TYPE = deploy_module.deploy_teams
-    destroy_teams: REMOTE_FUNC_TYPE = destroy_module.destroy_teams
-    destroy_env: REMOTE_FUNC_TYPE = destroy_module.destroy_env
-    destroy_foundation: REMOTE_FUNC_TYPE = destroy_module.destroy_foundation  # type: ignore
-    destroy_credentials: REMOTE_FUNC_TYPE = destroy_module.destroy_credentials
+    _deploy_image = deploy_module._deploy_image
+    build_image = build_image_module.build_image
+    delete_image = delete_image_module.delete_image
+    deploy_credentials = deploy_module.deploy_credentials
+    deploy_foundation = deploy_module.deploy_foundation
+    deploy_env = deploy_module.deploy_env
+    deploy_teams = deploy_module.deploy_teams
+    destroy_teams = destroy_module.destroy_teams
+    destroy_env = destroy_module.destroy_env
+    destroy_foundation = destroy_module.destroy_foundation
+    destroy_credentials = destroy_module.destroy_credentials
 
 
 @remotectl.configure("orbit")
 def configure(configuration: RemoteCtlConfig) -> None:
     LOGGER.debug("ORBIT_CLI_ROOT %s", ORBIT_CLI_ROOT)
-    configuration.python_modules = ["aws-orbit~=1.5.0.dev0", "softwarelabs-remote-toolkit~=0.1.0.dev0"]
+    configuration.timeout = 120
+    configuration.codebuild_image = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base:2.0.0"
+    configuration.pre_build_commands = [
+        (
+            "nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock"
+            " --host=tcp://127.0.0.1:2375 --storage-driver=overlay2&"
+        ),
+        'timeout 15 sh -c "until docker info; do echo .; sleep 1; done"',
+    ]
     configuration.local_modules = {
         "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../cli")),
         "aws-orbit-sdk": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../sdk")),
-        "aws-orbit-jupyterlab-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../jupyterlab_orbit")),
-        "aws-orbit-custom-cfn": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/custom_cfn")),
-        "aws-orbit-emr-on-eks": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/emr_on_eks")),
-        "aws-orbit-hello-world": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/hello_world")),
-        "aws-orbit-lustre": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/lustre")),
-        "aws-orbit-overprovisioning": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/overprovisioning")),
-        "aws-orbit-ray": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/ray")),
-        "aws-orbit-redshift": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/redshift")),
-        "aws-orbit-sm-operator": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/sm-operator")),
-        "aws-orbit-team-script-launcher": os.path.realpath(
-            os.path.join(ORBIT_CLI_ROOT, "../../plugins/team_script_launcher")
-        ),
-        "aws-orbit-voila": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/voila")),
-        "aws-orbit-code-commit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../plugins/code_commit")),
     }
     configuration.requirements_files = {
         "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../requirements.txt")),
