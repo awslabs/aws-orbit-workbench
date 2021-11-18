@@ -1,9 +1,6 @@
-ARG BASE_IMAGE=public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter/base-notebook:python-3.8.8
-FROM $BASE_IMAGE
 
-######################################
-# System
-######################################
+ARG BASE_IMAGE=public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter/base-notebook:python-3.8.8
+FROM $BASE_IMAGE as base
 
 USER root
 
@@ -26,25 +23,22 @@ RUN apt-get update && apt-get install -yq --no-install-recommends \
 
 RUN update-alternatives --install /usr/bin/nano nano /bin/nano-tiny 10
 
-######################################
+#=================   END base  =================
+
+FROM base AS tools
+
 # Kubectl installation
-######################################
 RUN cd /usr/local/bin \
     && sudo curl -k -sS -O https://amazon-eks.s3.us-west-2.amazonaws.com/1.19.6/2021-01-05/bin/linux/amd64/kubectl \
     && sudo chmod 755 /usr/local/bin/kubectl
 
-######################################
 # Helm installation
-######################################
 RUN curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash && \
     helm version --short && \
     helm plugin install https://github.com/hypnoglow/helm-s3.git && \
     helm repo add stable https://charts.helm.sh/stable
 
-######################################
 # Container Run
-######################################
-
 ADD python-utils/ /opt/python-utils/
 RUN chmod -R 755 /opt/python-utils/
 ADD transformations/ /opt/transformations/
@@ -55,44 +49,19 @@ RUN mkdir -p /opt/orbit
 ADD bashrc /opt/orbit/bashrc
 RUN chown -R jovyan /opt/orbit
 
-######################################
-# Jupyter Environment configuration
-######################################
+#=================   END tools  =================
 
-#RUN mkdir -p /home/jovyan/.local/share/jupyter
-#RUN chown -R jovyan /home/jovyan/.local/share/jupyter
-#ADD jupyter_server_config.py /home/jovyan/.jupyter/jupyter_server_config.py
+FROM tools AS conda
 
-######################################
 # Python/Conda packages
-######################################
 
 ADD requirements.txt /etc/jupyter/requirements.txt
 RUN conda run pip install -r /etc/jupyter/requirements.txt && \
     conda clean --all -f -y
 
-######################################
-# Python/Conda packages from CODEARTIFACT
-######################################
+#=================   END conda  =================
 
-ADD pip.conf /etc/pip.conf
-ADD VERSION /opt/orbit/VERSION
-RUN chown jovyan /opt/orbit/VERSION
-RUN conda run pip install --upgrade \
-    aws-orbit==$(cat /opt/orbit/VERSION) \
-    aws-orbit-sdk==$(cat /opt/orbit/VERSION) \
-    aws-orbit-jupyterlab-orbit==$(cat /opt/orbit/VERSION)
-RUN rm /etc/pip.conf
-
-# add bundle with docker image sources
-COPY aws-orbit_jupyter-user.tar.gz /opt/orbit/aws-orbit_jupyter-user.tar.gz
-RUN chown jovyan /opt/orbit/aws-orbit_jupyter-user.tar.gz
-
-
-
-# ######################################
-# # Jupyter Lab extensions
-# ######################################
+FROM conda AS lab
 
 ENV JUPYTER_ENABLE_LAB yes
 RUN jupyter serverextension enable --py jupyterlab --sys-prefix && \
@@ -109,8 +78,9 @@ RUN jupyter serverextension enable --py jupyterlab --sys-prefix && \
     fix-permissions "${CONDA_DIR}" && \
     fix-permissions "/home/${NB_USER}"
 
-# ST - Removing extension source
-#ADD extensions/jupyterlab_orbit/ /etc/extensions/jupyterlab_orbit/
+#=================   END lab  =================
+
+FROM lab as databrew
 
 RUN mkdir -p /opt/orbit/databrew
 COPY aws-glue-databrew-jupyter-extension.tar.gz /opt/orbit/databrew/aws-glue-databrew-jupyter-extension.tar.gz
@@ -129,6 +99,10 @@ RUN npm install && \
 WORKDIR /opt/orbit/databrew
 RUN rm -rf ./databrew
 
+#=================   END databrew  =================
+
+FROM databrew AS vscode
+
 #Add in VSCode support
 RUN mkdir -p /opt/orbit/codeserver_proxy
 COPY codeserver_proxy /opt/orbit/codeserver_proxy
@@ -138,11 +112,12 @@ WORKDIR /opt/orbit/codeserver_proxy
 RUN /opt/orbit/codeserver_proxy/install.sh
 RUN chown -R jovyan /opt/orbit/codeserver_proxy
 
-# ######################################
-# Install SM-LOGS 
-# REF: https://docs.aws.amazon.com/sagemaker/latest/dg/amazon-sagemaker-operators-for-kubernetes.html
-# ######################################
 
+#=================   END vscode  =================
+
+FROM vscode AS smlogs
+
+# Install SM-LOGS   REF: https://docs.aws.amazon.com/sagemaker/latest/dg/amazon-sagemaker-operators-for-kubernetes.html
 RUN mkdir /opt/orbit/sm-logs && \
     cd /opt/orbit/sm-logs
 RUN curl -k -sS -O https://s3.us-west-2.amazonaws.com/amazon-sagemaker-operator-for-k8s-us-west-2/kubectl-smlogs-plugin/v1/linux.amd64.tar.gz && \
@@ -151,6 +126,24 @@ RUN curl -k -sS -O https://s3.us-west-2.amazonaws.com/amazon-sagemaker-operator-
     sudo chmod 755 /usr/local/bin/kubectl-smlogs
 RUN cd /opt/orbit && \
     rm -rf /opt/orbit/sm-logs
+
+
+FROM smlogs AS orbit-libs
+# Python/Conda packages from CODEARTIFACT
+
+ADD pip.conf /etc/pip.conf
+ADD VERSION /opt/orbit/VERSION
+RUN chown jovyan /opt/orbit/VERSION
+RUN conda run pip install --upgrade \
+    aws-orbit==$(cat /opt/orbit/VERSION) \
+    aws-orbit-sdk==$(cat /opt/orbit/VERSION) \
+    aws-orbit-jupyterlab-orbit==$(cat /opt/orbit/VERSION)
+RUN rm /etc/pip.conf
+
+# add bundle with docker image sources
+COPY aws-orbit_jupyter-user.tar.gz /opt/orbit/aws-orbit_jupyter-user.tar.gz
+RUN chown jovyan /opt/orbit/aws-orbit_jupyter-user.tar.gz
+
 
 WORKDIR /home/${NB_USER}
 
