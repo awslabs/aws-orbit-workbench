@@ -18,6 +18,7 @@ from typing import Callable, Tuple
 from softwarelabs_remote_toolkit import LOGGER, remotectl
 from softwarelabs_remote_toolkit.remotectl import RemoteCtlConfig
 
+from aws_orbit import ORBIT_CLI_ROOT
 from aws_orbit.remote_files import build as build_image_module
 from aws_orbit.remote_files import delete as delete_image_module
 from aws_orbit.remote_files import deploy as deploy_module
@@ -40,12 +41,9 @@ class RemoteCommands(Enum):
     destroy_credentials = destroy_module.destroy_credentials
 
 
-CURRENT_DIR = os.path.join(__file__)
-
-
 @remotectl.configure("orbit")
 def configure(configuration: RemoteCtlConfig) -> None:
-    LOGGER.debug("ORBIT_CLI_ROOT %s", CURRENT_DIR)
+    LOGGER.debug("ORBIT_CLI_ROOT %s", ORBIT_CLI_ROOT)
     configuration.timeout = 120
     configuration.codebuild_image = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base:2.0.0"
     configuration.pre_build_commands = [
@@ -56,11 +54,11 @@ def configure(configuration: RemoteCtlConfig) -> None:
         'timeout 15 sh -c "until docker info; do echo .; sleep 1; done"',
     ]
     configuration.local_modules = {
-        "aws-orbit": os.path.realpath(os.path.join(CURRENT_DIR, "../../../../cli")),
-        "aws-orbit-sdk": os.path.realpath(os.path.join(CURRENT_DIR, "../../../../sdk")),
+        "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../cli")),
+        "aws-orbit-sdk": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../sdk")),
     }
     configuration.requirements_files = {
-        "aws-orbit": os.path.realpath(os.path.join(CURRENT_DIR, "../../../requirements.txt")),
-        "slrt": os.path.realpath(os.path.join(CURRENT_DIR, "../../../remote-requirements.txt")),
+        "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../requirements.txt")),
+        "slrt": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../remote-requirements.txt")),
     }
     configuration.install_commands = ["npm install -g aws-cdk@1.100.0"]
