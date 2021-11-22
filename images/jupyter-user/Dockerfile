@@ -1,5 +1,4 @@
 ARG BASE_IMAGE=public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter/base-notebook:python-3.8.8
-ARG SLRT_VERSION=0.1.0
 FROM $BASE_IMAGE
 
 ######################################
@@ -80,7 +79,7 @@ ADD pip.conf /etc/pip.conf
 ADD VERSION /opt/orbit/VERSION
 RUN chown jovyan /opt/orbit/VERSION
 RUN conda run pip install --upgrade \
-    softwarelabs-remote-toolkit==$SLRT_VERSION \
+    softwarelabs-remote-toolkit==0.1.0 \
     aws-orbit==$(cat /opt/orbit/VERSION) \
     aws-orbit-sdk==$(cat /opt/orbit/VERSION) \
     aws-orbit-jupyterlab-orbit==$(cat /opt/orbit/VERSION)
