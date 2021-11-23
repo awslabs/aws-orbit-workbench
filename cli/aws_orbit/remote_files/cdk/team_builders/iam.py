@@ -275,6 +275,7 @@ class IamBuilder:
                     ],
                     resources=[
                         f"arn:{partition}:cloudformation:{region}:{account}:stack/orbit-{env_name}/*",
+                        f"arn:{partition}:cloudformation:{region}:{account}:stack/softwarelabs-remote-toolkit-orbit"
                     ],
                 ),
                 iam.PolicyStatement(
