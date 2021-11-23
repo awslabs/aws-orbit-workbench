@@ -35,7 +35,9 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
     ./aws/install
 
     # ---- Install kubectl CLI ----
-RUN wget "https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/${TARGETOS}/${TARGETARCH}/kubectl" && \
+#RUN wget "https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/${TARGETOS}/${TARGETARCH}/kubectl" && \
+#    chmod +x ./kubectl && mv ./kubectl /usr/local/bin/kubectl
+RUN wget "https://storage.googleapis.com/kubernetes-release/release/v1.19.2/bin/linux/amd64/kubectl" && \
     chmod +x ./kubectl && mv ./kubectl /usr/local/bin/kubectl
 
     # ---- Install helm CLI ----

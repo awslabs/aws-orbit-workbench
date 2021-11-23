@@ -1,4 +1,5 @@
-FROM public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s-utilities:1.0.0 as utilbase
+ARG BASE_IMAGE=1234567890.dkr.ecr.us-west-2.amazonaws.com/orbit/k8s-utilities:base
+FROM $BASE_IMAGE as utilbase
 
 RUN pip install boto3
 
@@ -8,10 +9,10 @@ RUN mkdir -p /opt/orbit/samples/manifests
 RUN mkdir -p /opt/orbit/samples/notebooks
 RUN mkdir -p /opt/orbit/cms/schema
 
-COPY images/utility-data/src/utility-data/*.sh /opt/orbit/scripts/
-COPY images/utility-data/src/utility-data/*.py /opt/orbit/scripts/
+COPY src/utility-data/*.sh /opt/orbit/scripts/
+COPY src/utility-data/*.py /opt/orbit/scripts/
 
-COPY images/utility-data/cms/schema /opt/orbit/cms/schema
+COPY cms/schema /opt/orbit/cms/schema
 
 #=================   END utilbase  =================
 

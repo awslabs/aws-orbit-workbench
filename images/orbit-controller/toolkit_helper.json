@@ -1,0 +1,5 @@
+{
+    "build_args":[
+        "BASE_IMAGE=${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/orbit/k8s-utilities:${ENV}"
+    ]
+}

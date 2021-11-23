@@ -340,6 +340,34 @@ def deploy_foundation(
     )
 
 
+@deploy.command(name="images")
+@click.option(
+    "--env",
+    "-e",
+    type=str,
+    help="The name of the ENV for these images. If non provided, 'base' is tagged on all images",
+    required=False,
+)
+@click.option(
+    "--image",
+    "-i",
+    type=str,
+    help="The name of ONE image you want to build...MUST match the name of the dir under 'images/'.  If not provided, ALL images built for the env",
+    required=False,
+)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def deploy_images(env: str, debug: bool, image: str) -> None:
+    """Deploy Orbit Workbench images based on a manifest file (yaml)."""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    deploy_commands.deploy_images(env=env, debug=debug, reqested_image=image)
+
+
 @click.group(name="destroy")
 def destroy() -> None:
     """Destroy foundation,env,etc in your Orbit Workbench."""

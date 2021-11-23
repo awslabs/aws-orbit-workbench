@@ -345,6 +345,14 @@ def deploy_teams(
         msg_ctx.progress(100)
 
 
+def deploy_images(debug: bool, env: Optional[str], reqested_image: Optional[str] = None) -> None:
+    with MessagesContext("Deploying", debug=debug) as msg_ctx:
+        msg_ctx.progress(2)
+        if not env:
+            env = "base"
+        deploy.deploy_images_remotely_v2(env=env, requested_image=reqested_image)
+
+
 def _deploy_image(
     env: str,
     dir: str,

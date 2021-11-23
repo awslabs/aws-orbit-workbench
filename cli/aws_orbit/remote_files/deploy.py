@@ -21,6 +21,7 @@ from concurrent.futures import Future
 from typing import Any, List, Optional, Tuple, cast
 
 from softwarelabs_remote_toolkit import remotectl
+from softwarelabs_remote_toolkit.services import cfn
 
 from aws_orbit import ORBIT_CLI_ROOT, bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
@@ -28,7 +29,7 @@ from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, T
 from aws_orbit.models.manifest import ImageManifest, ImagesManifest, Manifest, ManifestSerDe
 from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, teams, utils
 from aws_orbit.services import codebuild, ecr, kms, secretsmanager
-from aws_orbit.utils import boto3_client
+from aws_orbit.utils import boto3_client, get_account_id, get_region, resolve_parameters
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -89,6 +90,37 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
             source_repository=image_def.repository,
             source_version=image_def.version,
         )
+
+    _logger.debug("Docker Image Deployed to ECR")
+
+
+def _deploy_image_v2(image_name: str, env: str, build_args: Optional[List[str]]) -> None:
+    region = get_region()
+    account_id = get_account_id()
+    _logger.debug(f"_deploy_image_v2 args: {account_id}, {region}, {image_name}, {env}")
+
+    docker.login_v2(account_id=account_id, region=region)
+    _logger.debug("DockerHub and ECR Logged in")
+    _logger.debug("Deploying the %s Docker image", image_name)
+
+    # ref = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit/{image_name}"
+    ecr_repo = f"orbit/{image_name}"
+    if not ecr.describe_repositories(repository_names=[ecr_repo]):
+        ecr.create_repository_v2(repository_name=ecr_repo)
+
+    _logger.debug("Building and deploy docker image from source...")
+    path = os.path.join(os.getcwd(), image_name)
+    _logger.debug("path: %s", path)
+
+    # if script is not None:
+    # sh.run(f"sh {script}", cwd=path)
+    # tag = cast(str, image_def.version)
+    docker.deploy_image_from_source_v2(
+        dir=path,
+        name=ecr_repo,
+        build_args=build_args,
+        tag=env,
+    )
 
     _logger.debug("Docker Image Deployed to ECR")
 
@@ -158,6 +190,95 @@ def _deploy_images_batch(
 
         context.images = ImagesManifest(**new_images_manifest)
         ContextSerDe.dump_context_to_ssm(context=context)
+
+
+def _load_toolkit_helper(file_path: str, image_name: str, env: str) -> str:
+    with open(file_path, "r") as file:
+        helper: str = file.read()
+    params = {
+        "ACCOUNT_ID": get_account_id(),
+        "REGION": get_region(),
+        "IMAGE_NAME": image_name,
+        "ENV": env,
+    }
+    t = resolve_parameters(helper, dict(params))
+    # t = resolve_parameters(helper, dict())
+    j = json.loads(t)
+    if j.get("extra_dirs"):
+        new_extra_dirs = {}
+        for e in j["extra_dirs"]:
+            key = e
+            val = os.path.realpath(os.path.join(ORBIT_CLI_ROOT, j["extra_dirs"][e]))
+            new_extra_dirs[key] = val
+        _logger.debug(f" new extra dir = {new_extra_dirs}")
+        j["extra_dirs"] = new_extra_dirs
+
+    _logger.debug(f"OUT of HELPER {j}")
+    return j  # type: ignore
+
+
+def _deploy_images_batch_v2(
+    path: str,
+    image_name: str,
+    env: str,
+    build_args: List[str] = [],
+) -> None:
+    _logger.debug(f"_deploy_images_remotely_v2 args: {path} {image_name} {env}")
+    # image_name = image_name.replace("-", "_")
+
+    extra_dirs = {image_name: path}
+    pre_build_commands = []
+    if os.path.exists(os.path.join(path, "toolkit_helper.json")):
+        f = os.path.join(path, "toolkit_helper.json")
+        helper = _load_toolkit_helper(file_path=f, image_name=image_name, env=env)
+        _logger.debug(helper)
+        if helper.get("extra_dirs"):  # type: ignore
+            extra_dirs = {**extra_dirs, **helper["extra_dirs"]}  # type: ignore
+        if helper.get("build_args"):  # type: ignore
+            build_args = [*build_args, *helper["build_args"]]  # type: ignore
+        if helper.get("pre_build_commands"):  # type: ignore
+            pre_build_commands = [*build_args, *helper["pre_build_commands"]]  # type: ignore
+    else:
+        _logger.debug("No Toolkit Helper")
+
+    _logger.debug(f"extra_dirs: {extra_dirs}")
+    _logger.debug(f"build_args: {build_args}")
+
+    @remotectl.remote_function(
+        "orbit",
+        codebuild_role="Admin",
+        extra_dirs=extra_dirs,
+        bundle_id=image_name,
+        extra_pre_build_commands=pre_build_commands,
+    )
+    def _deploy_images_batch_v2(path: str, image_name: str, env: str, build_args: List[str]) -> None:
+        _logger.info(f"running ...{image_name} at {path}")
+        _deploy_image_v2(image_name=image_name, env=env, build_args=build_args)
+
+    _deploy_images_batch_v2(path, image_name, env, build_args)
+
+
+def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -> None:
+    _logger.debug(f"deploy_images_remotely_v2 args: {env} {requested_image}")
+    image_dir = os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../images"))
+
+    if requested_image:
+        if os.path.isdir(f"{image_dir}/{requested_image}"):
+            _logger.debug(f"Request build of single image {requested_image}")
+            _deploy_images_batch_v2(path=f"{image_dir}/{requested_image}", image_name=requested_image, env=env)
+        else:
+            _logger.error("An image was requested to be built, but it doesn't exist in the images/ dir")
+
+    else:
+        # first build k8s-utilities
+        _deploy_images_batch_v2(path=f"{image_dir}/k8s-utilities", image_name="k8s-utilities", env=env)
+
+        # now build the images dependent on k8s
+        list_subfolders_with_paths = [f.path for f in os.scandir(image_dir) if f.is_dir()]
+        for path in list_subfolders_with_paths:
+            if "k8s-utilities" not in path:
+                image = path.split("/")[-1]
+                _deploy_images_batch_v2(path=path, image_name=image, env=env)
 
 
 def deploy_images_remotely(manifest: Manifest, context: "Context", skip_images: bool = True) -> None:

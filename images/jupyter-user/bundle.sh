@@ -35,7 +35,25 @@ cp ${DIR}/Dockerfile ${ARCHIVE_DIR}/
 cp ${DIR}/VERSION ${ARCHIVE_DIR}/
 cp ${DIR}/bashrc ${ARCHIVE_DIR}/
 
-touch ${ARCHIVE_DIR}/pip.conf
+#touch ${ARCHIVE_DIR}/pip.conf
+
+#Copy the orbit src code
+rsync -av --progress ${DIR}/../aws-orbit/ ${ARCHIVE_DIR}/aws-orbit \
+--exclude remotectl.out --exclude .orbit.out --exclude .mypy_cache \
+--exclude build --exclude dist --exclude docs \
+--exclude aws_orbit.egg-info --exclude __pycache__
+
+rsync -av --progress ${DIR}/../aws-orbit-sdk/ ${ARCHIVE_DIR}/aws-orbit-sdk \
+--exclude remotectl.out --exclude .orbit.out --exclude .mypy_cache \
+--exclude build --exclude dist --exclude docs \
+--exclude aws_orbit_sdk.egg-info --exclude __pycache__
+
+rsync -av --progress ${DIR}/../jupyterlab_orbit/ ${ARCHIVE_DIR}/jupyterlab_orbit \
+--exclude aws_orbit_jupyterlab_orbit.egg-info --exclude build \
+--exclude dist --exclude jupyterlab_orbit.egg-info \
+--exclude lib --exclude node_modules \
+--exclude remotectl.out --exclude .orbit.out --exclude .mypy_cache \
+--exclude __pycache__
 
 cd ${DIR}
 tar czvf aws-orbit_jupyter-user.tar.gz ./aws-orbit_jupyter-user

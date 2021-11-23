@@ -129,21 +129,22 @@ RUN cd /opt/orbit && \
 
 
 FROM smlogs AS orbit-libs
-# Python/Conda packages from CODEARTIFACT
-
-ADD pip.conf /etc/pip.conf
-ADD VERSION /opt/orbit/VERSION
-RUN chown jovyan /opt/orbit/VERSION
-RUN conda run pip install --upgrade \
-    aws-orbit==$(cat /opt/orbit/VERSION) \
-    aws-orbit-sdk==$(cat /opt/orbit/VERSION) \
-    aws-orbit-jupyterlab-orbit==$(cat /opt/orbit/VERSION)
-RUN rm /etc/pip.conf
 
 # add bundle with docker image sources
 COPY aws-orbit_jupyter-user.tar.gz /opt/orbit/aws-orbit_jupyter-user.tar.gz
 RUN chown jovyan /opt/orbit/aws-orbit_jupyter-user.tar.gz
+WORKDIR /opt/orbit/
+RUN tar xvzf /opt/orbit/aws-orbit_jupyter-user.tar.gz
+WORKDIR /opt/orbit/aws-orbit_jupyter-user
 
+ADD pip.conf /etc/pip.conf
+RUN conda run pip install -e /opt/orbit/aws-orbit_jupyter-user/aws-orbit
+RUN conda run pip install -e /opt/orbit/aws-orbit_jupyter-user/aws-orbit-sdk
+RUN conda run pip install -e /opt/orbit/aws-orbit_jupyter-user/jupyterlab_orbit
+RUN conda run pip install softwarelabs-remote-toolkit==0.1.0
+RUN rm /etc/pip.conf
+
+RUN rm -rf /opt/orbit/aws-orbit_jupyter-user
 
 WORKDIR /home/${NB_USER}
 
