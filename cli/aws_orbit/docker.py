@@ -235,7 +235,6 @@ def deploy_image_from_source_v2(
     build_args = [] if build_args is None else build_args
     _logger.debug("Building docker image from %s", os.path.abspath(dir))
     sh.run(cmd="docker system prune --all --force --volumes")
-    ###here is where the docker file is updated with the jupyter-user-base
     # update_docker_file(context=context, dir=dir)
     build_v2(
         account_id=account_id,
