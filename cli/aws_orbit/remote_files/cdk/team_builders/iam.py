@@ -229,25 +229,6 @@ class IamBuilder:
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
-                        "logs:List*",
-                        "logs:Describe*",
-                        "logs:StartQuery",
-                        "logs:StopQuery",
-                        "logs:Get*",
-                        "logs:Filter*",
-                        "events:*",
-                    ],
-                    resources=[
-                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/sagemaker/*",
-                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/sagemaker/*:log-stream:*",
-                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/eks/orbit*",
-                        f"arn:{partition}:events:{region}:{account}:rule/orbit-{env_name}-{team_name}-*",
-                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws-glue-databrew/*",
-                    ],
-                ),
-                iam.PolicyStatement(
-                    effect=iam.Effect.ALLOW,
-                    actions=[
                         "ecr:*",
                     ],
                     resources=[f"arn:{partition}:ecr:{region}:{account}:repository/orbit-{env_name}/users/*"],
@@ -275,6 +256,7 @@ class IamBuilder:
                     ],
                     resources=[
                         f"arn:{partition}:cloudformation:{region}:{account}:stack/orbit-{env_name}/*",
+                        f"arn:{partition}:cloudformation:{region}:{account}:stack/softwarelabs-remote-toolkit-orbit*",
                     ],
                 ),
                 iam.PolicyStatement(
@@ -319,7 +301,10 @@ class IamBuilder:
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=["codebuild:StartBuild", "codebuild:BatchGetBuilds"],
-                    resources=[f"arn:{partition}:codebuild:{region}:{account}:project/orbit-{env_name}"],
+                    resources=[
+                        f"arn:{partition}:codebuild:{region}:{account}:project/orbit-{env_name}",
+                        f"arn:{partition}:codebuild:{region}:{account}:project/slrt-orbit",
+                    ],
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
@@ -331,6 +316,7 @@ class IamBuilder:
                     ],
                     resources=[
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}:log-stream:*",  # noqa
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/slrt-orbit:log-stream:*",
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws-glue-databrew/*:log-stream:*",
                     ],
                 ),
@@ -347,7 +333,13 @@ class IamBuilder:
                     ],
                     resources=[
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}*:log-stream:*",  # noqa
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/slrt-orbit:log-stream:*",
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws-glue-databrew/*:log-stream:*",
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/sagemaker/*",
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/sagemaker/*:log-stream:*",
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/eks/orbit*",
+                        f"arn:{partition}:events:{region}:{account}:rule/orbit-{env_name}-{team_name}-*",
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws-glue-databrew/*",
                     ],
                 ),
                 iam.PolicyStatement(

@@ -63,6 +63,7 @@ RUN conda run pip install -r /etc/jupyter/requirements.txt && \
 
 FROM conda AS lab
 
+
 ENV JUPYTER_ENABLE_LAB yes
 RUN jupyter serverextension enable --py jupyterlab --sys-prefix && \
     jupyter serverextension enable --sys-prefix jupyter_server_proxy && \

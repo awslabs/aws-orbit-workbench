@@ -55,6 +55,7 @@ def configure(configuration: RemoteCtlConfig) -> None:
     ]
     configuration.local_modules = {
         "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../cli")),
+
     }
     configuration.requirements_files = {
         "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../requirements.txt")),
@@ -65,3 +66,4 @@ def configure(configuration: RemoteCtlConfig) -> None:
         "aws-orbit-sdk": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../sdk")),
         "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../cli")),
     }
+

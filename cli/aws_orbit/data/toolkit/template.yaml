@@ -103,7 +103,8 @@ Resources:
             Action:
               - cloudformation:DescribeStacks
             Resource:
-              - arn:aws:cloudformation:us-east-1:560360184571:stack/softwarelabs-remote-toolkit*
+              - arn:aws:cloudformation:${region}:${account_id}:stack/softwarelabs-remote-toolkit*
+
           - Effect: Allow
             Action:
               - cloudformation:*
