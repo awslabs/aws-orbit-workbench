@@ -55,7 +55,6 @@ def configure(configuration: RemoteCtlConfig) -> None:
     ]
     configuration.local_modules = {
         "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../cli")),
-
     }
     # configuration.install_commands = ["npm install -g aws-cdk@1.100.0"]
     configuration.requirements_files = {
