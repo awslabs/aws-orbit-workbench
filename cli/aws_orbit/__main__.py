@@ -352,7 +352,7 @@ def deploy_foundation(
     "--image",
     "-i",
     type=str,
-    help="The name of ONE image you want to build...MUST match the name of the dir under 'images/'.  If not provided, ALL images built for the env",
+    help="The name of ONE image to build- MUST match dir in 'images/', else ALL built",
     required=False,
 )
 @click.option(
