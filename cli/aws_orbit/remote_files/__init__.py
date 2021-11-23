@@ -57,11 +57,11 @@ def configure(configuration: RemoteCtlConfig) -> None:
         "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../cli")),
 
     }
+    # configuration.install_commands = ["npm install -g aws-cdk@1.100.0"]
     configuration.requirements_files = {
         "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../requirements.txt")),
         "slrt": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../remote-requirements.txt")),
     }
-    # configuration.install_commands = ["npm install -g aws-cdk@1.100.0"]
     configuration.dirs = {
         "aws-orbit-sdk": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../sdk")),
         "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../cli")),
