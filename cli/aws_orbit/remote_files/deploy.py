@@ -21,8 +21,6 @@ from concurrent.futures import Future
 from typing import Any, List, Optional, Tuple, cast
 
 from softwarelabs_remote_toolkit import remotectl
-from softwarelabs_remote_toolkit.services import cfn
-
 
 from aws_orbit import ORBIT_CLI_ROOT, bundle, docker, plugins, remote, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
