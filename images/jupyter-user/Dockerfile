@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -yq --no-install-recommends \
     zip \
     less \
     jq \
+    rsync \
     # ---- Cleaning up ----
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -139,13 +140,14 @@ RUN tar xvzf /opt/orbit/aws-orbit_jupyter-user.tar.gz
 WORKDIR /opt/orbit/aws-orbit_jupyter-user
 
 ADD pip.conf /etc/pip.conf
-RUN conda run pip install -e /opt/orbit/aws-orbit_jupyter-user/aws-orbit
-RUN conda run pip install -e /opt/orbit/aws-orbit_jupyter-user/aws-orbit-sdk
-RUN conda run pip install -e /opt/orbit/aws-orbit_jupyter-user/jupyterlab_orbit
+RUN conda run pip install -r /opt/orbit/aws-orbit_jupyter-user/aws-orbit/requirements.txt
+RUN conda run pip install /opt/orbit/aws-orbit_jupyter-user/aws-orbit
+RUN conda run pip install /opt/orbit/aws-orbit_jupyter-user/aws-orbit-sdk
+RUN conda run pip install /opt/orbit/aws-orbit_jupyter-user/jupyterlab_orbit
 RUN conda run pip install softwarelabs-remote-toolkit==0.1.0
 RUN rm /etc/pip.conf
 
-RUN rm -rf /opt/orbit/aws-orbit_jupyter-user
+#RUN rm -rf /opt/orbit/aws-orbit_jupyter-user
 
 WORKDIR /home/${NB_USER}
 
