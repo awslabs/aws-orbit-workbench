@@ -347,7 +347,7 @@ def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -
             args_tuples = [
                 (path, path.split("/")[-1], env) for path in list_subfolders_with_paths if "k8s-utilities" not in path
             ]
-            results = list(executor.map(deploy_images_batch_helper, args_tuples))
+            list(executor.map(deploy_images_batch_helper, args_tuples))
 
 
 def deploy_user_image_v2(
