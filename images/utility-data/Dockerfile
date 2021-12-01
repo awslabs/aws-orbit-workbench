@@ -50,7 +50,7 @@ RUN wget https://github.com/mnielsen/neural-networks-and-deep-learning/raw/maste
 
 #=================   END smdata  =================  
 
-FROM smdata AS noetbooks
+FROM smdata AS notebooks
 
 # Sample Manifests
 COPY samples/manifests /opt/orbit/samples/manifests

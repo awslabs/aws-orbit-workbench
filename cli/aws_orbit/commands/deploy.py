@@ -36,6 +36,7 @@ from aws_orbit.remote_files import deploy
 from aws_orbit.services import cfn, codebuild
 from aws_orbit.services import cognito as orbit_cognito
 from aws_orbit.services import kms, ssm
+from aws_orbit.utils import get_account_id, get_region
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -351,6 +352,30 @@ def deploy_images(debug: bool, env: Optional[str], reqested_image: Optional[str]
         if not env:
             env = "base"
         deploy.deploy_images_remotely_v2(env=env, requested_image=reqested_image)
+        msg_ctx.progress(95)
+        msg_ctx.progress(100)
+
+
+def deploy_user_image(
+    debug: bool,
+    path: str,
+    env: str,
+    image_name: str,
+    script: Optional[str],
+    build_args: Optional[List[str]],
+    timeout: int = 45,
+) -> None:
+    with MessagesContext("Deploying", debug=debug) as msg_ctx:
+        msg_ctx.progress(2)
+        deploy.deploy_user_image_v2(
+            path=path, image_name=image_name, env=env, script=script, build_args=build_args, timeout=timeout
+        )
+        msg_ctx.progress(95)
+        address = f"{get_account_id()}.dkr.ecr.{get_region()}.amazonaws.com/orbit-{env}/users/{image_name}"
+
+        msg_ctx.info(f"ECR Image Address={address}")
+        msg_ctx.tip(f"ECR Image Address: {stylize(address, underline=True)}")
+        msg_ctx.progress(100)
 
 
 def _deploy_image(

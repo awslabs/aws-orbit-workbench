@@ -93,17 +93,17 @@ def _deploy_image(args: Tuple[str, ...]) -> None:
     _logger.debug("Docker Image Deployed to ECR")
 
 
-def _deploy_image_v2(image_name: str, env: str, build_args: Optional[List[str]]) -> None:
+def _deploy_image_v2(image_name: str, env: str, build_args: Optional[List[str]], use_cache: bool = True) -> None:
     region = get_region()
     account_id = get_account_id()
-    _logger.debug(f"_deploy_image_v2 args: {account_id}, {region}, {image_name}, {env}")
+    _logger.debug(f"_deploy_image_v2 args: {account_id}, {region}, {image_name}, {env} {build_args}")
 
     docker.login_v2(account_id=account_id, region=region)
     _logger.debug("DockerHub and ECR Logged in")
     _logger.debug("Deploying the %s Docker image", image_name)
 
-    # ref = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit/{image_name}"
-    ecr_repo = f"orbit/{image_name}"
+    # ACTUAL ref = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{env}/{image_name}
+    ecr_repo = f"orbit-{env}/{image_name}"
     if not ecr.describe_repositories(repository_names=[ecr_repo]):
         ecr.create_repository_v2(repository_name=ecr_repo)
 
@@ -111,16 +111,37 @@ def _deploy_image_v2(image_name: str, env: str, build_args: Optional[List[str]])
     path = os.path.join(os.getcwd(), image_name)
     _logger.debug("path: %s", path)
 
-    # if script is not None:
-    # sh.run(f"sh {script}", cwd=path)
-    # tag = cast(str, image_def.version)
+    docker.deploy_image_from_source_v2(
+        dir=path, name=ecr_repo, build_args=build_args, use_cache=use_cache, tag="latest", env=env
+    )
+
+    _logger.debug("Docker Image Deployed to ECR")
+
+
+def _deploy_user_image_v2(image_name: str, path: str, env: str, build_args: Optional[List[str]]) -> None:
+    region = get_region()
+    account_id = get_account_id()
+    _logger.debug(f"_deploy_user_image_v2 args: {account_id}, {region}, {image_name}, {env}")
+
+    docker.login_v2(account_id=account_id, region=region)
+    _logger.debug("DockerHub and ECR Logged in")
+    _logger.debug("Deploying the %s Docker image", image_name)
+
+    ecr_repo = f"orbit-{env}/users/{image_name}"
+    if not ecr.describe_repositories(repository_names=[ecr_repo]):
+        ecr.create_repository_v2(repository_name=ecr_repo)
+
+    _logger.debug("Building and deploy docker image from source...")
+    path = os.path.join(os.getcwd(), image_name)
+    _logger.debug("path: %s", path)
+
     docker.deploy_image_from_source_v2(
         dir=path,
         name=ecr_repo,
         build_args=build_args,
-        tag=env,
+        tag="latest",
+        env=env,
     )
-
     _logger.debug("Docker Image Deployed to ECR")
 
 
@@ -222,7 +243,7 @@ def _deploy_images_batch_v2(
     env: str,
     build_args: List[str] = [],
 ) -> None:
-    _logger.debug(f"_deploy_images_remotely_v2 args: {path} {image_name} {env}")
+    _logger.debug(f"_deploy_images_batch_v2 args: {path} {image_name} {env}")
     # image_name = image_name.replace("-", "_")
 
     extra_dirs = {image_name: path}
@@ -252,9 +273,55 @@ def _deploy_images_batch_v2(
     )
     def _deploy_images_batch_v2(path: str, image_name: str, env: str, build_args: List[str]) -> None:
         _logger.info(f"running ...{image_name} at {path}")
-        _deploy_image_v2(image_name=image_name, env=env, build_args=build_args)
+        _deploy_image_v2(image_name=image_name, env=env, build_args=build_args, use_cache=False)
 
     _deploy_images_batch_v2(path, image_name, env, build_args)
+
+
+def _deploy_remote_image_v2(
+    path: str,
+    image_name: str,
+    env: str,
+    script: Optional[str],
+    build_args: Optional[List[str]] = [],
+    timeout: int = 120,
+) -> None:
+    _logger.debug(f"_deploy_remote_image_v2 args: {path} {image_name} {script} {env}")
+
+    pre_build_commands = []
+    extra_dirs = {image_name: path}
+    # the script is relative to the bundle on remotectl
+    if script:
+        pre_build_commands = [f"bash {image_name}/{script}"]
+    if os.path.exists(os.path.join(path, "toolkit_helper.json")):
+        f = os.path.join(path, "toolkit_helper.json")
+        helper = _load_toolkit_helper(file_path=f, image_name=image_name, env=env)
+        _logger.debug(helper)
+        if helper.get("extra_dirs"):  # type: ignore
+            extra_dirs = {**extra_dirs, **helper["extra_dirs"]}  # type: ignore
+        if helper.get("build_args"):  # type: ignore
+            build_args = [*build_args, *helper["build_args"]]  # type: ignore
+        if helper.get("pre_build_commands"):  # type: ignore
+            pre_build_commands = [*build_args, *helper["pre_build_commands"]]  # type: ignore
+    else:
+        _logger.debug("No Toolkit Helper")
+
+    _logger.debug(f"extra_dirs: {extra_dirs}")
+    _logger.debug(f"build_arg: {build_args}")
+
+    @remotectl.remote_function(
+        "orbit",
+        codebuild_role="Admin",
+        extra_dirs=extra_dirs,
+        bundle_id=image_name,
+        extra_pre_build_commands=pre_build_commands,
+        timeout=timeout,
+    )
+    def _deploy_remote_image_v2(path: str, image_name: str, env: str, build_args: List[str]) -> None:
+        _logger.info(f"running ...{image_name} at {path}")
+        _deploy_user_image_v2(path=path, image_name=image_name, env=env, build_args=build_args)
+
+    _deploy_remote_image_v2(path, image_name, env, build_args)
 
 
 def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -> None:
@@ -278,6 +345,17 @@ def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -
             if "k8s-utilities" not in path:
                 image = path.split("/")[-1]
                 _deploy_images_batch_v2(path=path, image_name=image, env=env)
+
+
+def deploy_user_image_v2(
+    path: str, env: str, image_name: str, script: Optional[str], build_args: Optional[List[str]], timeout: int = 45
+) -> None:
+    _logger.debug(f"deploy_user_image_v2 args: {path} {env} {image_name} {script} {build_args} {timeout}")
+
+    _logger.debug(build_args)
+    _deploy_remote_image_v2(
+        path=path, env=env, image_name=image_name, script=script, build_args=build_args, timeout=timeout
+    )
 
 
 def deploy_images_remotely(manifest: Manifest, context: "Context", skip_images: bool = True) -> None:

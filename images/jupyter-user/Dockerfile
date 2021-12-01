@@ -149,6 +149,9 @@ RUN rm /etc/pip.conf
 
 #RUN rm -rf /opt/orbit/aws-orbit_jupyter-user
 
+RUN fix-permissions "${CONDA_DIR}" && \
+    fix-permissions "/home/${NB_USER}"
+
 WORKDIR /home/${NB_USER}
 
 USER $NB_UID

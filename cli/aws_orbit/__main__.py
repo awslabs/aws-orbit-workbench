@@ -496,9 +496,11 @@ def deploy_image_cli(
     _logger.debug("name: %s", name)
     _logger.debug("script: %s", script)
     _logger.debug("timeout: %s", timeout)
+    _logger.debug("build_arg: %s", build_arg)
     _logger.debug("debug: %s", debug)
-    build_image(
-        dir=dir, name=name, env=env, timeout=cast(int, timeout), script=script, build_args=build_arg, debug=debug
+
+    deploy_commands.deploy_user_image(
+        path=dir, image_name=name, env=env, timeout=cast(int, timeout), script=script, build_args=build_arg, debug=debug
     )
 
 
