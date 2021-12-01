@@ -5,7 +5,7 @@
 ![Static Checking](https://github.com/awslabs/aws-eks-data-maker/workflows/Static%20Checking/badge.svg?branch=main)
 
 
-<a href="url"><img src="https://github.com/awslabs/aws-orbit-workbench/blob/main/images/landing-page/src/images/orbit1.jpg?raw=true" align="right" height="30%" width="30%" style="float:right"></a>
+<a href="url"><img src="https://github.com/awslabs/aws-orbit-workbench/blob/main/misc/images/orbit1.jpg?raw=true" align="right" height="30%" width="30%" style="float:right"></a>
 
 Orbit Workbench is an open framework for building team-based secured data environment. Orbit workbench is built on Kubernetes using Amazon Managed Kubernetes Service (EKS), and provides both a command line tool for rapid deployment as well as Python SDK, Jupyter Plugins and more to accelerate data analysis and ML by integration with AWS analytics services such as Amazon Redshift, Amazon Athena, Amazon EMR, Amazon SageMaker and more. 
 
