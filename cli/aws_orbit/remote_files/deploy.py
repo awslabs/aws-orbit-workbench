@@ -340,11 +340,15 @@ def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -
         list_subfolders_with_paths = [f.path for f in os.scandir(image_dir) if f.is_dir()]
         max_workers = 5
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            def deploy_images_batch_helper(args_tuple):
+
+            def deploy_images_batch_helper(args_tuple: List[Any]) -> None:
                 _deploy_images_batch_v2(path=args_tuple[0], image_name=args_tuple[1], env=args_tuple[2])
 
-            args_tuples = [(path, path.split("/")[-1], env) for path in list_subfolders_with_paths if "k8s-utilities" not in path]
+            args_tuples = [
+                (path, path.split("/")[-1], env) for path in list_subfolders_with_paths if "k8s-utilities" not in path
+            ]
             results = list(executor.map(deploy_images_batch_helper, args_tuples))
+
 
 def deploy_user_image_v2(
     path: str, env: str, image_name: str, script: Optional[str], build_args: Optional[List[str]], timeout: int = 45
