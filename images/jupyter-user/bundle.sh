@@ -36,7 +36,7 @@ cp ${DIR}/Dockerfile ${ARCHIVE_DIR}/
 cp ${DIR}/VERSION ${ARCHIVE_DIR}/
 cp ${DIR}/bashrc ${ARCHIVE_DIR}/
 
-#touch ${ARCHIVE_DIR}/pip.conf
+touch ${ARCHIVE_DIR}/pip.conf
 
 #Copy the orbit src code
 if [ -d "${DIR}/../aws-orbit/" ]; then

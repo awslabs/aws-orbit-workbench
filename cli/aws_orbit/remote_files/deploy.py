@@ -102,7 +102,6 @@ def _deploy_image_v2(image_name: str, env: str, build_args: Optional[List[str]],
     _logger.debug("DockerHub and ECR Logged in")
     _logger.debug("Deploying the %s Docker image", image_name)
 
-    # ACTUAL ref = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{env}/{image_name}
     ecr_repo = f"orbit-{env}/{image_name}"
     if not ecr.describe_repositories(repository_names=[ecr_repo]):
         ecr.create_repository_v2(repository_name=ecr_repo)
@@ -222,7 +221,6 @@ def _load_toolkit_helper(file_path: str, image_name: str, env: str) -> str:
         "ENV": env,
     }
     t = resolve_parameters(helper, dict(params))
-    # t = resolve_parameters(helper, dict())
     j = json.loads(t)
     if j.get("extra_dirs"):
         new_extra_dirs = {}
@@ -244,7 +242,6 @@ def _deploy_images_batch_v2(
     build_args: List[str] = [],
 ) -> None:
     _logger.debug(f"_deploy_images_batch_v2 args: {path} {image_name} {env}")
-    # image_name = image_name.replace("-", "_")
 
     extra_dirs = {image_name: path}
     pre_build_commands = []

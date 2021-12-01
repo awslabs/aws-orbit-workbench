@@ -195,7 +195,6 @@ def update_docker_file_v2(account_id: str, region: str, env: str, tag: str, dir:
     if os.path.exists(docker_file):
         _logger.info("Building DockerFile %s", docker_file)
         jupyter_user_base = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{env}/jupyter-user:{tag}"
-        # jupyter_user_base = (f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit/jupyter-user:{tag}")
         _logger.debug(f"update_docker_file_v2: jupyter_user_base =  {jupyter_user_base}")
         with open(docker_file, "r") as file:
             content: str = file.read()
