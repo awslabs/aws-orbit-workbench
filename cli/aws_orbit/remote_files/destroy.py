@@ -124,15 +124,6 @@ def destroy_env(env_name: str) -> None:
         # Delete istio-system pod disruption budget; Causes a dead lock
         cleanup.delete_istio_pod_disruption_budget(context=context)
 
-        # helm.destroy_env(context=context)
-        # _logger.debug("Helm Charts uninstalled")
-
-        # kubeflow.destroy_kubeflow(context=context)
-        # _logger.debug("Kubeflow uninstalled")
-
-        # kubectl.destroy_env(context=context)
-        # _logger.debug("Kubernetes Environment components destroyed")
-
         eksctl.destroy_env(context=context)
         _logger.debug("EKS Environment Stacks destroyed")
 
