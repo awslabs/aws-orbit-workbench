@@ -89,6 +89,17 @@ def create_repository(repository_name: str, env_name: Optional[str] = None) -> N
         raise RuntimeError(response)
 
 
+def create_repository_v2(repository_name: str) -> None:
+    client = boto3_client("ecr")
+    params: Dict[str, Any] = {"repositoryName": repository_name}
+    response = client.create_repository(**params)
+    if "repository" in response and "repositoryName" in response["repository"]:
+        _logger.debug("ECR repository not exist, creating for %s", repository_name)
+    else:
+        _logger.error("ECR repository creation failed, response %s", response)
+        raise RuntimeError(response)
+
+
 def describe_repositories(repository_names: List[str]) -> List[Dict[str, Any]]:
     client = boto3_client("ecr")
     try:

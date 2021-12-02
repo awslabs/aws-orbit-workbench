@@ -1,0 +1,6 @@
+{
+    "pre_build_commands":["bash jupyter-user/build.sh"],
+    "extra_dirs":{
+        "jupyterlab_orbit":"../../jupyterlab_orbit"
+    }
+}

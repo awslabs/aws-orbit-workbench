@@ -39,6 +39,16 @@ def login(context: T) -> None:
     _logger.debug("ECR logged in.")
 
 
+def login_v2(account_id: str, region: str) -> None:
+    username, password = ecr.get_credential()
+    ecr_address = f"{account_id}.dkr.ecr.{region}.amazonaws.com"
+    sh.run(
+        f"docker login --username {username} --password {password} {ecr_address}",
+        hide_cmd=True,
+    )
+    _logger.debug("ECR logged in.")
+
+
 def login_ecr_only(context: "Context", account_id: Optional[str] = None, region: Optional[str] = None) -> None:
     if account_id is None:
         account_id = context.account_id
@@ -61,6 +71,10 @@ def ecr_pull(context: "Context", name: str, tag: str = "latest") -> None:
     sh.run(f"docker pull {name}:{tag}")
 
 
+def ecr_pull_v2(name: str, tag: str = "latest") -> None:
+    sh.run(f"docker pull {name}:{tag}")
+
+
 def ecr_pull_external(context: "Context", repository: str, tag: str = "latest") -> None:
     parts: List[str] = repository.split(".")
     if len(parts) < 6:
@@ -76,6 +90,13 @@ def tag_image(context: "Context", remote_name: str, remote_source: str, name: st
     if remote_source == "ecr" and not remote_name.startswith("public.ecr.aws"):
         remote_name = f"{ecr_address}/{remote_name}"
     sh.run(f"docker tag {remote_name}:{tag} {ecr_address}/{name}:{tag}")
+
+
+def tag_image_v2(account_id: str, region: str, name: str, tag: str = "latest") -> None:
+    ecr_address = f"{utils.get_account_id()}.dkr.ecr.{utils.get_region()}.amazonaws.com"
+    remote_name = f"{ecr_address}/{name}"
+    _logger.debug(f"Tagging {name}:{tag} as {remote_name}:{tag}")
+    sh.run(f"docker tag {name}:{tag} {remote_name}:{tag}")
 
 
 def build(
@@ -101,9 +122,41 @@ def build(
     sh.run(f"docker build {pull_str} {cache_str} {build_args_str} --tag {name}:{tag} .", cwd=dir)
 
 
+def build_v2(
+    account_id: str,
+    region: str,
+    dir: str,
+    name: str,
+    tag: str = "latest",
+    use_cache: bool = True,
+    pull: bool = False,
+    build_args: Optional[List[str]] = None,
+) -> None:
+    ecr_address = f"{account_id}.dkr.ecr.{region}.amazonaws.com"
+    repo_address = f"{ecr_address}/{name}"
+    repo_address_tag = f"{repo_address}:{tag}"
+    cache_str: str = ""
+    pull_str: str = "--pull" if pull else ""
+    build_args_str = " ".join([f"--build-arg {ba}" for ba in build_args]) if build_args else ""
+    if use_cache:
+        try:
+            ecr_pull_v2(name=repo_address, tag=tag)
+            cache_str = f"--cache-from {repo_address_tag}"
+        except exceptions.FailedShellCommand:
+            _logger.debug(f"Docker cache not found at ECR {name}:{tag}")
+    sh.run(f"docker build {pull_str} {cache_str} {build_args_str} --tag {name}:{tag} .", cwd=dir)
+
+
 def push(context: "Context", name: str, tag: str = "latest") -> None:
     ecr_address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com"
     repo_address = f"{ecr_address}/{name}:{tag}"
+    sh.run(f"docker push {repo_address}")
+
+
+def push_v2(account_id: str, region: str, name: str, tag: str = "latest") -> None:
+    ecr_address = f"{account_id}.dkr.ecr.{region}.amazonaws.com"
+    repo_address = f"{ecr_address}/{name}:{tag}"
+    _logger.debug(f"Pushing {repo_address}")
     sh.run(f"docker push {repo_address}")
 
 
@@ -128,6 +181,29 @@ def update_docker_file(context: "Context", dir: str) -> None:
                 region=context.region,
                 account=context.account_id,
                 env=context.name,
+                jupyter_user_base=jupyter_user_base,
+            ),
+        )
+        with open(docker_file, "w") as file:
+            file.write(content)
+
+
+def update_docker_file_v2(account_id: str, region: str, env: str, tag: str, dir: str) -> None:
+    _logger.debug("Docker directory before building: %s", os.path.abspath(dir))
+    utils.print_dir(dir)
+    docker_file = os.path.join(dir, "Dockerfile")
+    if os.path.exists(docker_file):
+        _logger.info("Building DockerFile %s", docker_file)
+        jupyter_user_base = f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{env}/jupyter-user:{tag}"
+        _logger.debug(f"update_docker_file_v2: jupyter_user_base =  {jupyter_user_base}")
+        with open(docker_file, "r") as file:
+            content: str = file.read()
+        content = utils.resolve_parameters(
+            content,
+            dict(
+                region=region,
+                account=account_id,
+                env=env,
                 jupyter_user_base=jupyter_user_base,
             ),
         )
@@ -162,6 +238,42 @@ def deploy_image_from_source(
     tag_image(context=context, remote_name=name, remote_source="local", name=name, tag=tag)
     _logger.debug("Docker Image tagged")
     push(context=context, name=name, tag=tag)
+    _logger.debug("Docker Image pushed")
+
+
+def deploy_image_from_source_v2(
+    dir: str,
+    name: str,
+    env: str,
+    tag: str = "latest",
+    use_cache: bool = True,
+    build_args: Optional[List[str]] = None,
+) -> None:
+    _logger.debug(f"deploy_image_from_source_v2 {dir} {name} {env} {tag} {build_args}")
+    if not os.path.exists(dir):
+        bundle_dir = os.path.join("bundle", dir)
+        if os.path.exists(bundle_dir):
+            dir = bundle_dir
+    account_id = utils.get_account_id()
+    region = utils.get_region()
+    build_args = [] if build_args is None else build_args
+    _logger.debug("Building docker image from %s", os.path.abspath(dir))
+    sh.run(cmd="docker system prune --all --force --volumes")
+    update_docker_file_v2(account_id=account_id, region=region, env=env, tag=tag, dir=dir)
+    build_v2(
+        account_id=account_id,
+        region=region,
+        dir=dir,
+        name=name,
+        tag=tag,
+        use_cache=use_cache,
+        pull=True,
+        build_args=build_args,
+    )
+    _logger.debug("Docker Image built")
+    tag_image_v2(account_id=account_id, region=region, name=name, tag=tag)
+    _logger.debug("Docker Image tagged")
+    push_v2(account_id=account_id, region=region, name=name, tag=tag)
     _logger.debug("Docker Image pushed")
 
 

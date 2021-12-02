@@ -403,3 +403,6 @@ zzz*
 
 pip-wheel-metadata
 regression_report.xml
+
+remotectl.out/
+image-testing/
