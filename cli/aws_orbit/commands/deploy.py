@@ -357,7 +357,7 @@ def deploy_images(debug: bool, filename: str, reqested_image: Optional[str] = No
         context_parameter_name: str = f"/orbit/{manifest.name}/context"
         if not ssm.does_parameter_exist(name=context_parameter_name):
             msg_ctx.error(f"Orbit Environment {manifest.name} cannot be found in the current account and region.")
-            return        
+            return
         env = manifest.name
         msg_ctx.info(f"Deploying images for env {env}")
         deploy.deploy_images_remotely_v2(env=env, requested_image=reqested_image)
