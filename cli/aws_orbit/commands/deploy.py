@@ -346,11 +346,20 @@ def deploy_teams(
         msg_ctx.progress(100)
 
 
-def deploy_images(debug: bool, env: Optional[str], reqested_image: Optional[str] = None) -> None:
+def deploy_images(debug: bool, filename: str, reqested_image: Optional[str] = None) -> None:
     with MessagesContext("Deploying", debug=debug) as msg_ctx:
         msg_ctx.progress(2)
-        if not env:
-            env = "base"
+
+        manifest: "Manifest" = ManifestSerDe.load_manifest_from_file(filename=filename, type=Manifest)
+        msg_ctx.info(f"Manifest loaded: {filename}")
+        msg_ctx.progress(3)
+
+        context_parameter_name: str = f"/orbit/{manifest.name}/context"
+        if not ssm.does_parameter_exist(name=context_parameter_name):
+            msg_ctx.error(f"Orbit Environment {manifest.name} cannot be found in the current account and region.")
+            return
+        env = manifest.name
+        msg_ctx.info(f"Deploying images for env {env}")
         deploy.deploy_images_remotely_v2(env=env, requested_image=reqested_image)
         msg_ctx.progress(95)
         msg_ctx.progress(100)
