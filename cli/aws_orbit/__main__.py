@@ -342,11 +342,11 @@ def deploy_foundation(
 
 @deploy.command(name="images")
 @click.option(
-    "--env",
-    "-e",
+    "--filename",
+    "-f",
     type=str,
-    help="The name of the ENV for these images. If non provided, 'base' is tagged on all images",
-    required=False,
+    help="The target Orbit Workbench manifest file (yaml).",
+    required=True,
 )
 @click.option(
     "--image",
@@ -361,11 +361,11 @@ def deploy_foundation(
     help="Enable detailed logging.",
     show_default=True,
 )
-def deploy_images(env: str, debug: bool, image: str) -> None:
+def deploy_images(filename: str, debug: bool, image: str) -> None:
     """Deploy Orbit Workbench images based on a manifest file (yaml)."""
     if debug:
         enable_debug(format=DEBUG_LOGGING_FORMAT)
-    deploy_commands.deploy_images(env=env, debug=debug, reqested_image=image)
+    deploy_commands.deploy_images(filename=filename, debug=debug, reqested_image=image)
 
 
 @click.group(name="destroy")
