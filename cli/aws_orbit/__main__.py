@@ -340,6 +340,34 @@ def deploy_foundation(
     )
 
 
+@deploy.command(name="images")
+@click.option(
+    "--env",
+    "-e",
+    type=str,
+    help="The name of the ENV for these images. If non provided, 'base' is tagged on all images",
+    required=False,
+)
+@click.option(
+    "--image",
+    "-i",
+    type=str,
+    help="The name of ONE image to build- MUST match dir in 'images/', else ALL built",
+    required=False,
+)
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def deploy_images(env: str, debug: bool, image: str) -> None:
+    """Deploy Orbit Workbench images based on a manifest file (yaml)."""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    deploy_commands.deploy_images(env=env, debug=debug, reqested_image=image)
+
+
 @click.group(name="destroy")
 def destroy() -> None:
     """Destroy foundation,env,etc in your Orbit Workbench."""
@@ -468,9 +496,11 @@ def deploy_image_cli(
     _logger.debug("name: %s", name)
     _logger.debug("script: %s", script)
     _logger.debug("timeout: %s", timeout)
+    _logger.debug("build_arg: %s", build_arg)
     _logger.debug("debug: %s", debug)
-    build_image(
-        dir=dir, name=name, env=env, timeout=cast(int, timeout), script=script, build_args=build_arg, debug=debug
+
+    deploy_commands.deploy_user_image(
+        path=dir, image_name=name, env=env, timeout=cast(int, timeout), script=script, build_args=build_arg, debug=debug
     )
 
 

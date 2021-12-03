@@ -53,12 +53,30 @@ def configure(configuration: RemoteCtlConfig) -> None:
         ),
         'timeout 15 sh -c "until docker info; do echo .; sleep 1; done"',
     ]
-    configuration.local_modules = {
-        "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../cli")),
-        "aws-orbit-sdk": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../sdk")),
-    }
-    configuration.requirements_files = {
-        "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../requirements.txt")),
-        "slrt": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../remote-requirements.txt")),
-    }
-    configuration.install_commands = ["npm install -g aws-cdk@1.100.0"]
+
+    if "yes" != os.environ.get("JUPYTER_ENABLE_LAB", "no").lower():
+        LOGGER.debug("Using src code references in toolkit")
+        configuration.local_modules = {
+            "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../cli")),
+        }
+        configuration.requirements_files = {
+            "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../requirements.txt")),
+            "slrt": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../remote-requirements.txt")),
+        }
+        configuration.dirs = {
+            "aws-orbit-sdk": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../sdk")),
+            "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../cli")),
+        }
+    else:
+        LOGGER.debug("Using path on Images for toolkit")
+        configuration.local_modules = {
+            "aws-orbit": "/opt/orbit/aws-orbit_jupyter-user/aws-orbit",
+        }
+        configuration.requirements_files = {
+            "aws-orbit": "/opt/orbit/aws-orbit_jupyter-user/aws-orbit/requirements.txt",
+            "slrt": "/opt/orbit/aws-orbit_jupyter-user/aws-orbit/remote-requirements.txt",
+        }
+        configuration.dirs = {
+            "aws-orbit-sdk": "/opt/orbit/aws-orbit_jupyter-user/aws-orbit-sdk",
+            "jupyterlab_orbit": "/opt/orbit/aws-orbit_jupyter-user/jupyterlab_orbit",
+        }

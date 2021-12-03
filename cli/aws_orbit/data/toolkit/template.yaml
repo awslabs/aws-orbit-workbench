@@ -104,6 +104,7 @@ Resources:
               - cloudformation:DescribeStacks
             Resource:
               - arn:aws:cloudformation:${region}:${account_id}:stack/softwarelabs-remote-toolkit*
+
           - Effect: Allow
             Action:
               - cloudformation:*

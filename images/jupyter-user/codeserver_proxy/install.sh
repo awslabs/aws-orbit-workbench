@@ -17,10 +17,10 @@
 set -ex
 
 echo `pwd`
-curl -fsSL https://code-server.dev/install.sh -o install.sh
-chmod +x install.sh
-./install.sh --method standalone --prefix /opt/orbit/apps/codeserver
-rm -f install.sh
+curl -fsSL https://code-server.dev/install.sh -o install_vs.sh
+chmod +x install_vs.sh
+./install_vs.sh --method standalone --prefix /opt/orbit/apps/codeserver
+rm -f install_vs.sh
 export PATH="/opt/orbit/apps/codeserver/bin:$PATH"
 
 code-server --install-extension ms-python.python --force

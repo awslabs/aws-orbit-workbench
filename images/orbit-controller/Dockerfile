@@ -1,4 +1,6 @@
-FROM public.ecr.aws/v3o4w1g6/aws-orbit-workbench/k8s-utilities:1.0.0
+ARG BASE_IMAGE=1234567890.dkr.ecr.us-west-2.amazonaws.com/orbit/k8s-utilities:base
+FROM $BASE_IMAGE
+
 
 COPY src/requirements.txt /
 RUN pip install -r /requirements.txt
