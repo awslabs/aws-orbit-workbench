@@ -16,7 +16,8 @@ permalink: detail-cli
 
 <br>
 
-### Steps
+----
+## **Steps**
 1. Go to the cloned repo
     ```
     cd <cloned_repo_dir>/aws-orbit-workbench/cli

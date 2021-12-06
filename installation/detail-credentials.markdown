@@ -15,9 +15,10 @@ permalink: detail-credentials
 - [Toolkit](detail-toolkit) deployed
 
 
-
-### Steps to Deploy
+----
+## **Steps to Deploy**
 TBD
 
-### Steps to Destroy
+----
+## **Steps to Destroy**
 TBD 

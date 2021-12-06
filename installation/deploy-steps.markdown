@@ -7,7 +7,7 @@ title: Deploy AWS Orbit Workbench
 permalink: deploy-steps
 ---
 
-# Steps to deploy AWS Orbit Workbench 
+# Steps to Deploy AWS Orbit Workbench 
 This page outlines the steps to deploy an AWS Orbit Workbench.  The workbench source code is found in
 the [AWS Labs github repository](https://github.com/awslabs/aws-orbit-workbench/).
 <br><br>
@@ -22,6 +22,7 @@ Please see the full list of elements in a [manifest](orbit-manifest-guide) for r
 #### Dependancies
 - Python 3.7 (recommended)
 
+----
 ### Outline
 
 1.   Clone [AWS Labs github repository](detail-fork)

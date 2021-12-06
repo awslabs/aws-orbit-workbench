@@ -15,9 +15,10 @@ permalink: detail-toolkit
 - [Foundation](detail-foundation) deployed
 
 
-
-### Steps to Deploy
+----
+## **Steps to Deploy**
 TBD
 
-### Steps to Destroy
+----
+## **Steps to Destroy**
 TBD

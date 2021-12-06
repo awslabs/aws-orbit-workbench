@@ -18,9 +18,10 @@ permalink: detail-teams
 - [Images](detail-images) deployed
 - [Environment](detail-environment) deployed
 
-
-### Steps to Deploy
+----
+## **Steps to Deploy**
 TBD
 
-### Steps to Destroy
+----
+## **Steps to Destroy**
 TBD 

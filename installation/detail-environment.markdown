@@ -17,9 +17,10 @@ permalink: detail-environment
 - [Credentials](detail-credentials) deployed
 - [Images](detail-images) deployed
 
-
-### Steps to Deploy
+----
+## **Steps to Deploy**
 TBD
 
-### Steps to Destroy
+----
+## **Steps to Destroy**
 TBD 

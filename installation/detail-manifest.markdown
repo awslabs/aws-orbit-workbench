@@ -15,3 +15,4 @@ This document refers to creating a manifest for your workbench.
 - [CLI](detail-cli) installed
 - [AWS CodeSeeder](detail-codeseeder) installed
 
+----

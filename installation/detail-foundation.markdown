@@ -8,7 +8,7 @@ permalink: detail-foundation
 ---
 
 
-# Deploy the AWS CodeSeeder toolkit
+# Deploy the AWS Orbit Foundation
 #### Prerequisites
 - [CLI](detail-cli) installed
 - [CodeSeeder](detail-codeseeder) installed
@@ -25,7 +25,8 @@ For the foundation, you may use an existing foundation. You must have defined th
 
 If the above is defined, then you can populate the [manifest](orbit-manifest-guide) with these values, removing the need to deploy a separate foundation.
 
-### Steps to Deploy
+----
+## **Steps to Deploy**
 There are two methods to deploy the foundation:
 1. CLI and manifest (preferred method)
 2. CLI and parameters (supported)
@@ -57,7 +58,9 @@ There are parameters that you can pass in without needing a manifest:
 ```
 orbit deploy foundation -n <name_of_foundation> --custom-domain-name <something> --internet-accessibility --max-availability-zones <int>
 ```
-### Steps to Destroy
+
+----
+## **Steps to Destroy**
 ```
 orbit destroy foundation -n <name_of_foundation>
 ```

@@ -16,7 +16,8 @@ the [AWS Labs github repository](https://github.com/awslabs/aws-orbit-workbench/
 #### Prerequisites
 None
 
-### Steps
+----
+## **Steps**
 ```
 git clone https://github.com/awslabs/aws-orbit-workbench
 cd aws-orbit-workbench
