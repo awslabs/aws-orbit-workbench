@@ -21,7 +21,7 @@ Some of these steps (as indicated) will only need to be run once, others can be 
 
 
 <ol>
-    <li>Clone <a href="https://github.com/awslabs/aws-orbit-workbench/">AWS Labs github repository</a> (only once)</li>
+    <li>Clone <a href="detail-fork">AWS Labs github repository</a> (only once)</li>
     <li>Install the <a href="detail-cli">CLI</a> (only once)</li>
     <li>Install <a href="detail-codeseeder"> AWS Codeseeder</a> (only once)</li>
     <li>Generate a new <a href="detail-manifest"> manifest</a> (only once)</li>
