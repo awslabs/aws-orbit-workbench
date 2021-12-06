@@ -16,10 +16,11 @@ Some of these steps (as indicated) will only need to be run once, others can be 
 
 
 ### Steps Outline
-- Python 3.7 (recommended)
+
 #### Dependancies
+- Python 3.7 (recommended)
 
-
+#### Outline
 <ol>
     <li>Clone <a href="detail-fork">AWS Labs github repository</a> (only once)</li>
     <li>Install the <a href="detail-cli">CLI</a> (only once)</li>
