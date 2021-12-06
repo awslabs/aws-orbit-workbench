@@ -14,11 +14,10 @@
 
 import logging
 
-from aws_orbit import bundle, remote
 from aws_orbit.messages import MessagesContext
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files import delete
-from aws_orbit.services import cfn, codebuild, ssm
+from aws_orbit.services import cfn, ssm
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -55,7 +54,7 @@ def delete_image(env: str, name: str, debug: bool) -> None:
         #     timeout=10,
         # )
 
-        delete.delete_image(env_name=env, image_name=name, context=context)
+        delete.delete_image(env_name=env, image_name=name)
 
         msg_ctx.info("Docker Image destroyed from ECR")
         msg_ctx.progress(100)

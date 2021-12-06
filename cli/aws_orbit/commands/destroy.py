@@ -18,11 +18,10 @@ from typing import Optional, cast
 import botocore.exceptions
 import click
 
-from aws_orbit import bundle, remote
 from aws_orbit.messages import MessagesContext
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
 from aws_orbit.remote_files import destroy
-from aws_orbit.services import cfn, codebuild, elb, s3, secretsmanager, ssm
+from aws_orbit.services import cfn, elb, s3, secretsmanager, ssm
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -179,23 +178,24 @@ def destroy_credentials(env: str, registry: str, debug: bool) -> None:
         msg_ctx.progress(4)
 
         if any(cfn.does_stack_exist(stack_name=t.stack_name) for t in context.teams):
-            bundle_path = bundle.generate_bundle(command_name="destroy", context=context)
-            msg_ctx.progress(5)
-
-            buildspec = codebuild.generate_spec(
-                context=context,
-                plugins=True,
-                cmds_build=[f"orbit remote --command destroy_credentials {env} {registry}"],
-                changeset=None,
-            )
-            remote.run(
-                command_name="destroy",
-                context=context,
-                bundle_path=bundle_path,
-                buildspec=buildspec,
-                codebuild_log_callback=msg_ctx.progress_bar_callback,
-                timeout=10,
-            )
+            # bundle_path = bundle.generate_bundle(command_name="destroy", context=context)
+            # msg_ctx.progress(5)
+            #
+            # buildspec = codebuild.generate_spec(
+            #     context=context,
+            #     plugins=True,
+            #     cmds_build=[f"orbit remote --command destroy_credentials {env} {registry}"],
+            #     changeset=None,
+            # )
+            # remote.run(
+            #     command_name="destroy",
+            #     context=context,
+            #     bundle_path=bundle_path,
+            #     buildspec=buildspec,
+            #     codebuild_log_callback=msg_ctx.progress_bar_callback,
+            #     timeout=10,
+            # )
+            destroy.destroy_credentials(env_name=env, registry=registry)
         msg_ctx.progress(95)
 
         msg_ctx.info("Registry Credentials Destroyed")
