@@ -28,7 +28,7 @@ Some of these steps (as indicated) will only need to be run once, others can be 
     <li>Deploy a new <a href="detail-foundation"> foundation</a> (only once)</li>
     <li>Deploy a new <a href="detail-toolkit"> toolkit</a> (only once)</li>
     <li>Deploy <a href="detail-credentials"> credentials</a> (only once)</li>
-    <li>Deploy <a href="detail-images"> docker iamges</a> (as needed, infrequently)</li>
+    <li>Deploy <a href="detail-images"> docker images</a> (as needed, infrequently)</li>
     <li>Deploy <a href="detail-environment"> environment</a> (as needed, infrequently)</li>
     <li>Deploy <a href="detail-teams"> teams</a>  (as many times as needed)</li>
 </ol>
