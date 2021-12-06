@@ -6,7 +6,7 @@ docs:
         url: deploy-steps
       - title: Steps to Destroy
         url: destroy-steps
-  - group: Orbit Deploy Details
+  - group: Orbit Deploy / Destroy Details
     sub:
       - title: Fork Repo
         url: detail-fork
