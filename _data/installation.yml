@@ -8,8 +8,8 @@ docs:
         url: destroy-steps
   - group: Orbit Deploy / Destroy Details
     sub:
-      - title: Fork Repo
-        url: detail-fork
+      - title: Clone Repo
+        url: detail-clone
       - title: Command Line Interface (CLI)
         url: detail-cli
       - title: AWS CodeSeeder

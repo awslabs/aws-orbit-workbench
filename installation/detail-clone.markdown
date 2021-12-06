@@ -4,7 +4,7 @@
 
 layout: installation
 title: Fork
-permalink: detail-fork
+permalink: detail-clone
 ---
 
 Something here 
