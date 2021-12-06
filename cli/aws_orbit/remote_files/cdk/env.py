@@ -81,7 +81,7 @@ class Env(Stack):
                 DeployCodeArtifact(self, id="CodeArtifact-from-Env")
             else:
                 _logger.debug(
-                    "Detected CodeArtifact domain: aws-orbit and CodeArtifact Repo: python-repository in the account"
+                    "Detected CodeArtifact domain: aws-slrt-orbit & CodeArtifact Repo: python-repository in the account"
                 )
         else:
             _logger.debug(
@@ -118,7 +118,7 @@ class Env(Stack):
 
     def _check_ca_domain_existence(self) -> bool:
         try:
-            CA_CLIENT.describe_domain(domain="aws-orbit")
+            CA_CLIENT.describe_domain(domain="aws-slrt-orbit")
         except ClientError as ex:
             if ex.response["Error"]["Code"] == "ResourceNotFoundException":
                 return False
@@ -128,7 +128,7 @@ class Env(Stack):
 
     def _check_ca_repo_existence(self) -> bool:
         try:
-            CA_CLIENT.describe_repository(domain="aws-orbit", repository="python-repository")
+            CA_CLIENT.describe_repository(domain="aws-slrt-orbit", repository="python-repository")
         except ClientError as ex:
             if ex.response["Error"]["Code"] == "ResourceNotFoundException":
                 return False
