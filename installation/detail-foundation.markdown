@@ -56,7 +56,8 @@ There are parameters that you can pass in without needing a manifest:
 
 
 ```
-orbit deploy foundation -n <name_of_foundation> --custom-domain-name <something> --internet-accessibility --max-availability-zones <int>
+orbit deploy foundation -n <name_of_foundation> --custom-domain-name <something> \
+--internet-accessibility --max-availability-zones <int>
 ```
 
 ----
