@@ -7,4 +7,17 @@ title: Toolkit
 permalink: detail-toolkit
 ---
 
-Something here 
+# Deploy the AWS Orbit Toolkit
+#### Prerequisites
+- [CLI](detail-cli) installed
+- [CodeSeeder](detail-codeseeder) installed
+- [Manifest](detail-manifest) created
+- [Foundation](detail-foundation) deployed
+
+
+
+### Steps to Deploy
+TBD
+
+### Steps to Destroy
+TBD

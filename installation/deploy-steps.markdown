@@ -27,7 +27,7 @@ Please see the full list of elements in a [manifest](orbit-manifest-guide) for r
 1.   Clone [AWS Labs github repository](detail-fork)
 2.   Install the [CLI](detail-cli)
      - _only once_
-3.   Install [AWS Codeseeder](detail-codeseeder) 
+3.   Install [AWS CodeSeeder](detail-codeseeder) 
      - _only once_
 4.   Generate a new [manifest](detail-manifest) 
      - _once created, you will add / remove from this manifest as your platform changes_

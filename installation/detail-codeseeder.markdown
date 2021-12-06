@@ -7,4 +7,9 @@ title: AWS Codeseeder
 permalink: detail-codeseeder
 ---
 
-Something here  
+# Deploy the AWS CodeSeeder toolkit
+#### Prerequisites
+- [CLI](detail-cli) installed
+
+### Steps
+TBD

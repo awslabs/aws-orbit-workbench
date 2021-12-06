@@ -7,4 +7,17 @@ title: Foundation
 permalink: detail-foundation
 ---
 
-Something here  
+
+# Deploy the AWS CodeSeeder toolkit
+#### Prerequisites
+- [CLI](detail-cli) installed
+- [CodeSeeder](detail-codeseeder) installed
+- [Manifest](detail-manifest) created
+
+
+
+### Steps to Deploy
+TBD
+
+### Steps to Destroy
+TBD

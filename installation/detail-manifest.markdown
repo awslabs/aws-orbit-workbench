@@ -7,4 +7,11 @@ title: Manifest
 permalink: detail-manifest
 ---
 
-Something here  
+
+# Generate Orbit Manifest
+
+This document refers to creating a manifest for your workbench.  
+#### Prerequisites
+- [CLI](detail-cli) installed
+- [AWS CodeSeeder](detail-codeseeder) installed
+

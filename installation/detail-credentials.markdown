@@ -7,4 +7,17 @@ title: Credentials
 permalink: detail-credentials
 ---
 
-Something here 
+# Deploy the AWS Orbit Credentials
+#### Prerequisites
+- [CLI](detail-cli) installed
+- [CodeSeeder](detail-codeseeder) installed
+- [Manifest](detail-manifest) created
+- [Toolkit](detail-toolkit) deployed
+
+
+
+### Steps to Deploy
+TBD
+
+### Steps to Destroy
+TBD 

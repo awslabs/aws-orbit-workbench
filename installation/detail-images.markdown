@@ -7,4 +7,16 @@ title: Images
 permalink: detail-images
 ---
 
-Something here 
+# Deploy the AWS Orbit Images
+#### Prerequisites
+- [CLI](detail-cli) installed
+- [CodeSeeder](detail-codeseeder) installed
+- [Manifest](detail-manifest) created
+
+
+
+### Steps to Deploy
+TBD
+
+### Steps to Destroy
+TBD
