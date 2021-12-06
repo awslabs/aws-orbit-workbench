@@ -1,0 +1,31 @@
+docs_list_title: Orbit Installation
+docs:
+  - group: Overview
+    sub:
+      - title: Steps to Deploy 
+        url: deploy-steps
+      - title: Steps to Destroy
+        url: destroy-steps
+  - group: Orbit Deploy Details
+    sub:
+      - title: Fork Repo
+        url: detail-fork
+      - title: Command Line Interface (CLI)
+        url: detail-cli
+      - title: AWS CodeSeeder
+        url: detail-codeseeder
+      - title: Generate Orbit Manifest
+        url: detail-manifest
+      - title: Foundation
+        url: detail-foundation
+      - title: Toolkit
+        url: detail-toolkit
+      - title: Credentials
+        url: detail-credentials
+      - title: Images
+        url: detail-images
+      - title: Environment
+        url: detail-environment
+      - title: Teams
+        url: detail-teams
+ 

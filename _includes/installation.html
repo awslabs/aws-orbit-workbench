@@ -1,0 +1,56 @@
+<div class="sidenav">
+    {% for item in site.data.installation.docs %}
+    <h4>{{ item.group }}</h4>
+    <ul class="nav-list">
+        {% for subitem in item.sub %}
+        <li>
+            <a href="{{ subitem.url }}">{{ subitem.title }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+    <br>
+    {% endfor %}
+</div>
+
+<style>
+
+    .sidenav {
+        height: 100%;
+        width: 300px;
+        z-index: 1;
+        top: 0;
+        left: 0;
+        overflow-x: hidden;
+        padding: 20px;
+    }
+
+    .sidenav a {
+        padding: 3px 0px 6px 6px;
+        text-decoration: none;
+        font-size: 14px;
+        color: #818181;
+        display: block;
+    }
+
+    .sidenav a:hover {
+        color: #00a1c9;
+    }
+
+    .nav-list {
+        list-style: none;
+        margin-block-end: 0;
+        margin-block-start: 0;
+        padding-inline-start: 20px;
+    }
+
+
+    @media screen and (max-height: 450px) {
+        .sidenav {
+            padding-top: 15px;
+        }
+
+        .sidenav a {
+            font-size: 18px;
+        }
+    }
+</style>
