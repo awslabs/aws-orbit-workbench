@@ -37,23 +37,6 @@ def delete_image(env: str, name: str, debug: bool) -> None:
 
         msg_ctx.progress(3)
 
-        # bundle_path = bundle.generate_bundle(command_name=f"delete_image-{name}", context=context, dirs=[])
-        # msg_ctx.progress(4)
-        # buildspec = codebuild.generate_spec(
-        #     context=context,
-        #     plugins=False,
-        #     cmds_build=[f"orbit remote --command delete_image {env} {name}"],
-        #     changeset=None,
-        # )
-        # remote.run(
-        #     command_name=f"delete_image-{name}",
-        #     context=context,
-        #     bundle_path=bundle_path,
-        #     buildspec=buildspec,
-        #     codebuild_log_callback=msg_ctx.progress_bar_callback,
-        #     timeout=10,
-        # )
-
         delete.delete_image(env_name=env, image_name=name)
 
         msg_ctx.info("Docker Image destroyed from ECR")

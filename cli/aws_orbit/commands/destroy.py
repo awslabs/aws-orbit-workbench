@@ -175,26 +175,7 @@ def destroy_credentials(env: str, registry: str, debug: bool) -> None:
         msg_ctx.info("Context loaded")
         msg_ctx.progress(2)
 
-        msg_ctx.progress(4)
-
         if any(cfn.does_stack_exist(stack_name=t.stack_name) for t in context.teams):
-            # bundle_path = bundle.generate_bundle(command_name="destroy", context=context)
-            # msg_ctx.progress(5)
-            #
-            # buildspec = codebuild.generate_spec(
-            #     context=context,
-            #     plugins=True,
-            #     cmds_build=[f"orbit remote --command destroy_credentials {env} {registry}"],
-            #     changeset=None,
-            # )
-            # remote.run(
-            #     command_name="destroy",
-            #     context=context,
-            #     bundle_path=bundle_path,
-            #     buildspec=buildspec,
-            #     codebuild_log_callback=msg_ctx.progress_bar_callback,
-            #     timeout=10,
-            # )
             destroy.destroy_credentials(env_name=env, registry=registry)
         msg_ctx.progress(95)
 

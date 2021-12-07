@@ -161,11 +161,6 @@ def destroy_foundation(env_name: str) -> None:
 
 
 def destroy_credentials(env_name: str, registry: str) -> None:
-    # _logger.debug("args: %s", args)
-    # if len(args) != 2:
-    #     raise ValueError("Unexpected number of values in args")
-    # env_name: str = args[0]
-    # registry: str = args[1]
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("Context loaded.")
 

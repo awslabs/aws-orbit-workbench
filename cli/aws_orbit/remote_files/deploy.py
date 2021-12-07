@@ -384,41 +384,7 @@ def deploy_images_remotely(manifest: Manifest, context: "Context", skip_images: 
     _deploy_images_batch(manifest=manifest, context=context, images=images)
 
 
-# def deploy_credentials(args: Tuple[str, ...]) -> None:
-#     _logger.debug("args: %s", args)
-#     if len(args) != 2:
-#         raise ValueError("Unexpected number of values in args")
-#     env_name: str = args[0]
-#     ciphertext: str = args[1]
-#     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
-#     _logger.debug("Context loaded.")
-#
-#     new_credentials = json.loads(kms.decrypt(context=context, ciphertext=ciphertext))
-#     secret_id = f"orbit-{env_name}-docker-credentials"
-#     existing_credentials = secretsmanager.get_secret_value(secret_id=secret_id)
-#     for registry, creds in new_credentials.items():
-#         username = creds.get("username", "")
-#         password = creds.get("password", "")
-#         try:
-#             subprocess.check_call(
-#                 f"docker login --username '{username}' --password '{password}' {registry}", shell=True
-#             )
-#         except Exception as e:
-#             _logger.error("Invalid Registry Credentials")
-#             _logger.exception(e)
-#             return
-#         else:
-#             existing_credentials = {**existing_credentials, **new_credentials}
-#     secretsmanager.put_secret_value(secret_id=secret_id, secret=existing_credentials)
-#     _logger.debug("Registry Credentials deployed")
-
-
 def deploy_credentials(env_name: str, ciphertext: str) -> None:
-    # _logger.debug("args: %s", args)
-    # if len(args) != 2:
-    #     raise ValueError("Unexpected number of values in args")
-    # env_name: str = args[0]
-    # ciphertext: str = args[1]
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("Context loaded.")
 

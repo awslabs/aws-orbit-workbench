@@ -120,12 +120,6 @@ def deploy_credentials(filename: str, username: str, password: str, registry: st
         msg_ctx.info("Current Context loaded")
         msg_ctx.progress(4)
 
-        # bundle_path = bundle.generate_bundle(
-        #     command_name="deploy",
-        #     context=context,
-        # )
-        msg_ctx.progress(11)
-
         msg_ctx.info("Encrypting credentials with Toolkit KMS Key")
         ciphertext = kms.encrypt(
             context=context, plaintext=json.dumps({registry: {"username": username, "password": password}})
@@ -133,20 +127,6 @@ def deploy_credentials(filename: str, username: str, password: str, registry: st
         msg_ctx.progress(20)
 
         msg_ctx.info("Starting Remote CodeBuild to deploy credentials")
-        # buildspec = codebuild.generate_spec(
-        #     context=context,
-        #     plugins=True,
-        #     cmds_build=[f"orbit remote --command deploy_credentials {context.name} '{ciphertext}'"],
-        # )
-        # remote.run(
-        #     command_name="deploy",
-        #     context=context,
-        #     bundle_path=bundle_path,
-        #     buildspec=buildspec,
-        #     codebuild_log_callback=msg_ctx.progress_bar_callback,
-        #     timeout=10,
-        #     overrides={"environmentVariablesOverride": [{"name": "CREDENTIALS_CIPHERTEXT", "value": ciphertext}]},
-        # )
 
         deploy.deploy_credentials(env_name=context.name, ciphertext=ciphertext)
 
