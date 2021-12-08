@@ -160,3 +160,14 @@ def destroy_credentials(args: Tuple[str, ...]) -> None:
         _logger.debug("Registry Credentials destroyed")
     else:
         _logger.debug("Registry Credentials not found, ignoring")
+
+
+def destroy_images(env: str) -> None:
+    context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
+    _logger.debug("env %s", env)
+
+    @remotectl.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
+    def destroy_images(env: str) -> None:
+        ecr.cleanup_remaining_repos(env_name=env)
+
+    destroy_images(env=env)
