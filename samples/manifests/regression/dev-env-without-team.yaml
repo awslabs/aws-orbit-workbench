@@ -10,13 +10,13 @@ SharedEfsSgId: !SSM ${/orbit-f/dev-env/resources::SharedEfsSgId}
 InstallSsmAgent: true
 Images:
     JupyterUser:
-        Repository: ${ACCOUNT_ID::}.dkr.ecr.${AWS_DEFAULT_REGION::}.amazonaws.com/orbit-${ORBIT_ENV_NAME::dev-env}/jupyter-user
+        Repository: !ENV ${ACCOUNT_ID::}.dkr.ecr.${AWS_DEFAULT_REGION::}.amazonaws.com/orbit-${ORBIT_ENV_NAME::dev-env}/jupyter-user
         Version: !ENV ${VERSION::latest}
     OrbitController:
-        Repository: ${ACCOUNT_ID::}.dkr.ecr.${AWS_DEFAULT_REGION::}.amazonaws.com/orbit-${ORBIT_ENV_NAME::dev-env}/orbit-controller
+        Repository: !ENV ${ACCOUNT_ID::}.dkr.ecr.${AWS_DEFAULT_REGION::}.amazonaws.com/orbit-${ORBIT_ENV_NAME::dev-env}/orbit-controller
         Version: !ENV ${VERSION::latest}
     UtilityData:
-        Repository: ${ACCOUNT_ID::}.dkr.ecr.${AWS_DEFAULT_REGION::}.amazonaws.com/orbit-${ORBIT_ENV_NAME::dev-env}/utility-data
+        Repository: !ENV ${ACCOUNT_ID::}.dkr.ecr.${AWS_DEFAULT_REGION::}.amazonaws.com/orbit-${ORBIT_ENV_NAME::dev-env}/utility-data
         Version: !ENV ${VERSION::latest}
 Networking:
     VpcId: !SSM ${/orbit-f/dev-env/resources::VpcId}
