@@ -13,16 +13,12 @@
 #    limitations under the License.
 
 import logging
-from typing import TYPE_CHECKING
 
 from softwarelabs_remote_toolkit import remotectl
 
-from aws_orbit.models.context import ContextSerDe
+from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files import env
 from aws_orbit.services import ecr
-
-if TYPE_CHECKING:
-    from aws_orbit.models.context import Context
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -36,7 +32,7 @@ def delete_image(env_name: str, image_name: str) -> None:
     def delete_image(env_name: str, image_name: str) -> None:
         env.deploy(context=context, eks_system_masters_roles_changes=None)
         _logger.debug("Env changes deployed")
-        ecr.delete_repo(repo=f"orbit-{context.name}-{image_name}")
+        ecr.delete_repo(repo=f"orbit-{context.name}/users/{image_name}")
         _logger.debug("Docker Image Destroyed from ECR")
 
     delete_image(env_name=env_name, image_name=image_name)
