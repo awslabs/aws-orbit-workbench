@@ -389,5 +389,3 @@ def deploy_user_image(
         msg_ctx.info(f"ECR Image Address={address}")
         msg_ctx.tip(f"ECR Image Address: {stylize(address, underline=True)}")
         msg_ctx.progress(100)
-
-

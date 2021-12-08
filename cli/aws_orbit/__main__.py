@@ -22,7 +22,7 @@ import click
 
 from aws_orbit.commands import deploy as deploy_commands
 from aws_orbit.commands import destroy as destroy_commands
-from aws_orbit.commands.build import build_image, build_podsetting
+from aws_orbit.commands.build import build_podsetting
 from aws_orbit.commands.delete import delete_image, delete_podsetting
 from aws_orbit.commands.init import init
 from aws_orbit.commands.list import list_env, list_images

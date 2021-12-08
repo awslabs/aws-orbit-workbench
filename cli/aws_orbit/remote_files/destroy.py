@@ -27,6 +27,7 @@ from aws_orbit.services import ecr, secretsmanager, ssm
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
+
 def destroy_team_user_resources(team_name: str) -> None:
     try:
         sh.run(
