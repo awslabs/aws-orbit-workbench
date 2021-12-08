@@ -229,7 +229,6 @@ def deploy_foundation(
 
 def deploy_env(
     filename: str,
-    skip_images: bool,
     debug: bool,
 ) -> None:
     with MessagesContext("Deploying", debug=debug) as msg_ctx:
