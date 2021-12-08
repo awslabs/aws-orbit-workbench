@@ -27,23 +27,6 @@ from aws_orbit.services import ecr, secretsmanager, ssm
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
-
-# def delete_image(args: Tuple[str, ...]) -> None:
-#     _logger.debug("args %s", args)
-#     env_name: str = args[0]
-#     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
-
-#     if len(args) == 2:
-#         image_name: str = args[1]
-#     else:
-#         raise ValueError("Unexpected number of values in args.")
-
-#     env.deploy(context=context, eks_system_masters_roles_changes=None)
-#     _logger.debug("Env changes deployed")
-#     ecr.delete_repo(repo=f"orbit-{context.name}/{image_name}")
-#     _logger.debug("Docker Image Destroyed from ECR")
-
-
 def destroy_team_user_resources(team_name: str) -> None:
     try:
         sh.run(
