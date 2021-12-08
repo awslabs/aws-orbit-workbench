@@ -12,13 +12,13 @@ CognitoExternalProvider: !ENV ${COGNITO_EXTERNAL_PROVIDER::}
 CognitoExternalProviderLabel: !ENV ${COGNITO_EXTERNAL_PROVIDER_LABEL::}
 Images:
     JupyterUser:
-        Repository: !ENV ${JUPYTER_USER_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/jupyter-user}
+        Repository: ${ACCOUNT_ID::}.dkr.ecr.${AWS_DEFAULT_REGION::}.amazonaws.com/orbit-${ORBIT_ENV_NAME::dev-env}/jupyter-user
         Version: !ENV ${VERSION::latest}
     OrbitController:
-        Repository: !ENV ${ORBIT_CONTROLLER_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/-controller}
+        Repository: ${ACCOUNT_ID::}.dkr.ecr.${AWS_DEFAULT_REGION::}.amazonaws.com/orbit-${ORBIT_ENV_NAME::dev-env}/orbit-controller
         Version: !ENV ${VERSION::latest}
     UtilityData:
-        Repository: !ENV ${UTILITY_DATA_REPO::public.ecr.aws/v3o4w1g6/aws-orbit-workbench/utility-data}
+        Repository: ${ACCOUNT_ID::}.dkr.ecr.${AWS_DEFAULT_REGION::}.amazonaws.com/orbit-${ORBIT_ENV_NAME::dev-env}/utility-data
         Version: !ENV ${VERSION::latest}
 Networking:
     VpcId: !SSM ${/orbit-f/dev-env/resources::VpcId}
