@@ -14,16 +14,19 @@
 
 import logging
 
-from aws_orbit import bundle, remote
 from aws_orbit.messages import MessagesContext
 from aws_orbit.models.context import Context, ContextSerDe
-from aws_orbit.services import cfn, codebuild, ssm
+from aws_orbit.remote_files import delete
+from aws_orbit.services import cfn, ssm
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
 def delete_image(env: str, name: str, debug: bool) -> None:
     with MessagesContext("Destroying Docker Image", debug=debug) as msg_ctx:
+        if not name:
+            raise ValueError("Image name required to delete")
+
         ssm.cleanup_changeset(env_name=env)
         ssm.cleanup_manifest(env_name=env)
         context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
@@ -34,22 +37,8 @@ def delete_image(env: str, name: str, debug: bool) -> None:
 
         msg_ctx.progress(3)
 
-        bundle_path = bundle.generate_bundle(command_name=f"delete_image-{name}", context=context, dirs=[])
-        msg_ctx.progress(4)
-        buildspec = codebuild.generate_spec(
-            context=context,
-            plugins=False,
-            cmds_build=[f"orbit remote --command delete_image {env} {name}"],
-            changeset=None,
-        )
-        remote.run(
-            command_name=f"delete_image-{name}",
-            context=context,
-            bundle_path=bundle_path,
-            buildspec=buildspec,
-            codebuild_log_callback=msg_ctx.progress_bar_callback,
-            timeout=10,
-        )
+        delete.delete_image(env_name=env, image_name=name)
+
         msg_ctx.info("Docker Image destroyed from ECR")
         msg_ctx.progress(100)
 

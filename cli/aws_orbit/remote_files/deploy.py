@@ -305,12 +305,16 @@ def _deploy_remote_image_v2(
     else:
         _logger.debug("No Toolkit Helper")
 
+    team_env = os.environ.get("AWS_ORBIT_TEAM_SPACE", None)
+    team_role = context.get_team_by_name(team_env).eks_pod_role_arn if team_env else None  # type: ignore
+    service_role = team_role if team_role else context.toolkit.admin_role
+    _logger.debug(f"service_role: {service_role}")
     _logger.debug(f"extra_dirs: {extra_dirs}")
     _logger.debug(f"build_arg: {build_args}")
 
     @remotectl.remote_function(
         "orbit",
-        codebuild_role=context.toolkit.admin_role,
+        codebuild_role=service_role,
         extra_dirs=extra_dirs,
         bundle_id=image_name,
         extra_pre_build_commands=pre_build_commands,
@@ -384,33 +388,32 @@ def deploy_images_remotely(manifest: Manifest, context: "Context", skip_images: 
     _deploy_images_batch(manifest=manifest, context=context, images=images)
 
 
-def deploy_credentials(args: Tuple[str, ...]) -> None:
-    _logger.debug("args: %s", args)
-    if len(args) != 2:
-        raise ValueError("Unexpected number of values in args")
-    env_name: str = args[0]
-    ciphertext: str = args[1]
+def deploy_credentials(env_name: str, ciphertext: str) -> None:
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("Context loaded.")
 
-    new_credentials = json.loads(kms.decrypt(context=context, ciphertext=ciphertext))
-    secret_id = f"orbit-{env_name}-docker-credentials"
-    existing_credentials = secretsmanager.get_secret_value(secret_id=secret_id)
-    for registry, creds in new_credentials.items():
-        username = creds.get("username", "")
-        password = creds.get("password", "")
-        try:
-            subprocess.check_call(
-                f"docker login --username '{username}' --password '{password}' {registry}", shell=True
-            )
-        except Exception as e:
-            _logger.error("Invalid Registry Credentials")
-            _logger.exception(e)
-            return
-        else:
-            existing_credentials = {**existing_credentials, **new_credentials}
-    secretsmanager.put_secret_value(secret_id=secret_id, secret=existing_credentials)
-    _logger.debug("Registry Credentials deployed")
+    @remotectl.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
+    def deploy_credentials(env_name: str, ciphertext: str) -> None:
+        new_credentials = json.loads(kms.decrypt(context=context, ciphertext=ciphertext))
+        secret_id = f"orbit-{env_name}-docker-credentials"
+        existing_credentials = secretsmanager.get_secret_value(secret_id=secret_id)
+        for registry, creds in new_credentials.items():
+            username = creds.get("username", "")
+            password = creds.get("password", "")
+            try:
+                subprocess.check_call(
+                    f"docker login --username '{username}' --password '{password}' {registry}", shell=True
+                )
+            except Exception as e:
+                _logger.error("Invalid Registry Credentials")
+                _logger.exception(e)
+                return
+            else:
+                existing_credentials = {**existing_credentials, **new_credentials}
+        secretsmanager.put_secret_value(secret_id=secret_id, secret=existing_credentials)
+        _logger.debug("Registry Credentials deployed")
+
+    deploy_credentials(env_name=env_name, ciphertext=ciphertext)
 
 
 def deploy_foundation(env_name: str) -> None:

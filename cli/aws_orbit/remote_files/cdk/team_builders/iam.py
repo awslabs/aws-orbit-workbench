@@ -128,10 +128,11 @@ class IamBuilder:
                 ),
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
-                    actions=["s3:List*", "s3:Get*"],
+                    actions=["s3:List*", "s3:Get*", "s3:Put*"],
                     resources=[
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}",
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/samples/*",
+                        f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/remotectl/*",
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/teams/{team_name}/*",
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/helm/repositories/env/*",
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/helm/repositories/teams/{team_name}/*",
@@ -399,6 +400,7 @@ class IamBuilder:
                     iam.ServicePrincipal("sagemaker.amazonaws.com"),
                     iam.ServicePrincipal("redshift.amazonaws.com"),
                     iam.ServicePrincipal("codepipeline.amazonaws.com"),
+                    iam.ServicePrincipal("codebuild.amazonaws.com"),
                     iam.ServicePrincipal("personalize.amazonaws.com"),
                     iam.ServicePrincipal("databrew.amazonaws.com"),
                 ),
