@@ -361,6 +361,7 @@ def deploy_foundation(
     help="Enable detailed logging.",
     show_default=True,
 )
+
 def deploy_images(filename: str, debug: bool, image: str) -> None:
     """Deploy Orbit Workbench images based on a manifest file (yaml)."""
     if debug:
