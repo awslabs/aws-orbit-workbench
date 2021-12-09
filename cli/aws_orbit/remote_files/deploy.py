@@ -305,12 +305,16 @@ def _deploy_remote_image_v2(
     else:
         _logger.debug("No Toolkit Helper")
 
+    team_env = os.environ.get("AWS_ORBIT_TEAM_SPACE", None)
+    team_role = context.get_team_by_name(team_env).eks_pod_role_arn if team_env else None  # type: ignore
+    service_role = team_role if team_role else context.toolkit.admin_role
+    _logger.debug(f"service_role: {service_role}")
     _logger.debug(f"extra_dirs: {extra_dirs}")
     _logger.debug(f"build_arg: {build_args}")
 
     @remotectl.remote_function(
         "orbit",
-        codebuild_role=context.toolkit.admin_role,
+        codebuild_role=service_role,
         extra_dirs=extra_dirs,
         bundle_id=image_name,
         extra_pre_build_commands=pre_build_commands,

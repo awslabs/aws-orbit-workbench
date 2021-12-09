@@ -400,6 +400,7 @@ class IamBuilder:
                     iam.ServicePrincipal("sagemaker.amazonaws.com"),
                     iam.ServicePrincipal("redshift.amazonaws.com"),
                     iam.ServicePrincipal("codepipeline.amazonaws.com"),
+                    iam.ServicePrincipal("codebuild.amazonaws.com"),
                     iam.ServicePrincipal("personalize.amazonaws.com"),
                     iam.ServicePrincipal("databrew.amazonaws.com"),
                 ),
