@@ -22,7 +22,7 @@ from aws_orbit import bundle, remote
 from aws_orbit.messages import MessagesContext
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
 from aws_orbit.remote_files import destroy
-from aws_orbit.services import cfn, codebuild, ecr, elb, s3, secretsmanager, ssm
+from aws_orbit.services import cfn, codebuild, elb, s3, secretsmanager, ssm
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
@@ -43,8 +43,11 @@ def destroy_toolkit(
     ssm.cleanup_env(env_name=env_name, top_level=top_level)
 
 
+def destroy_images(env: str) -> None:
+    destroy.destroy_images(env=env)
+
+
 def destroy_remaining_resources(env_name: str, top_level: str = "orbit") -> None:
-    ecr.cleanup_remaining_repos(env_name=env_name)
     env_cdk_toolkit: str = f"{top_level}-{env_name}-cdk-toolkit"
     if cfn.does_stack_exist(stack_name=env_cdk_toolkit):
         cfn.destroy_stack(stack_name=env_cdk_toolkit)

@@ -243,6 +243,9 @@ def _deploy_images_batch_v2(
 ) -> None:
     _logger.debug(f"_deploy_images_batch_v2 args: {path} {image_name} {env}")
 
+    context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
+    _logger.debug(f"context loaded: {env}")
+
     extra_dirs = {image_name: path}
     pre_build_commands = []
     if os.path.exists(os.path.join(path, "toolkit_helper.json")):
@@ -263,7 +266,8 @@ def _deploy_images_batch_v2(
 
     @remotectl.remote_function(
         "orbit",
-        codebuild_role="Admin",
+
+        codebuild_role=context.toolkit.admin_role,
         extra_dirs=extra_dirs,
         bundle_id=image_name,
         extra_pre_build_commands=pre_build_commands,
@@ -284,6 +288,8 @@ def _deploy_remote_image_v2(
     timeout: int = 120,
 ) -> None:
     _logger.debug(f"_deploy_remote_image_v2 args: {path} {image_name} {script} {env}")
+    context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
+    _logger.debug(f"context loaded: {env}")
 
     pre_build_commands = []
     extra_dirs = {image_name: path}
@@ -308,7 +314,7 @@ def _deploy_remote_image_v2(
 
     @remotectl.remote_function(
         "orbit",
-        codebuild_role="Admin",
+        codebuild_role=context.toolkit.admin_role,
         extra_dirs=extra_dirs,
         bundle_id=image_name,
         extra_pre_build_commands=pre_build_commands,
