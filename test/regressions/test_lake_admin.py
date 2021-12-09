@@ -77,7 +77,7 @@ def test_lakeadmin_1_ebs(kube: TestClient) -> None:
 
 
 @pytest.mark.namespace(create=False)
-#@pytest.mark.testlakeadmin_image_with_apps
+@pytest.mark.testlakeadmin_image_with_apps
 def test_lakeadmin_2_image_with_apps(kube: TestClient) -> None:
     lake_admin_job_mage_with_apps = LAKE_ADMIN_JOB
     lake_admin_job_mage_with_apps["metadata"]["generateName"]= "test-orbit-job-lake-admin-image-with-apps-"
