@@ -160,23 +160,23 @@ def destroy_foundation(env_name: str) -> None:
     destroy_foundation(env_name)
 
 
-def destroy_credentials(args: Tuple[str, ...]) -> None:
-    _logger.debug("args: %s", args)
-    if len(args) != 2:
-        raise ValueError("Unexpected number of values in args")
-    env_name: str = args[0]
-    registry: str = args[1]
+def destroy_credentials(env_name: str, registry: str) -> None:
+    context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("Context loaded.")
 
-    secret_id = f"orbit-{env_name}-docker-credentials"
-    credentials = secretsmanager.get_secret_value(secret_id=secret_id)
+    @remotectl.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
+    def destroy_credentials(env_name: str, registry: str) -> None:
+        secret_id = f"orbit-{env_name}-docker-credentials"
+        credentials = secretsmanager.get_secret_value(secret_id=secret_id)
 
-    if registry in credentials:
-        del credentials[registry]
-        secretsmanager.put_secret_value(secret_id=secret_id, secret=credentials)
-        _logger.debug("Registry Credentials destroyed")
-    else:
-        _logger.debug("Registry Credentials not found, ignoring")
+        if registry in credentials:
+            del credentials[registry]
+            secretsmanager.put_secret_value(secret_id=secret_id, secret=credentials)
+            _logger.debug("Registry Credentials destroyed")
+        else:
+            _logger.debug("Registry Credentials not found, ignoring")
+
+    destroy_credentials(env_name=env_name, registry=registry)
 
 
 def destroy_images(env: str) -> None:
