@@ -268,14 +268,20 @@ def _deploy_images_batch_v2(
         bundle_id=image_name,
         extra_pre_build_commands=pre_build_commands,
     )
-    def _deploy_images_batch_v2(path: str, image_name: str, env: str, build_execution_role: str, build_args: List[str],) -> None:
+    def _deploy_images_batch_v2(
+        path: str,
+        image_name: str,
+        env: str,
+        build_execution_role: str,
+        build_args: List[str],
+    ) -> None:
         _logger.info(f"running ...{image_name} at {path}")
         _deploy_image_v2(image_name=image_name, env=env, build_args=build_args, use_cache=False)
 
     _deploy_images_batch_v2(path, image_name, env, build_execution_role, build_args)
     ecr_address = f"{get_account_id()}.dkr.ecr.{get_region()}.amazonaws.com"
     remote_name = f"{ecr_address}/orbit-{env}/{image_name}"
-    return [image_name,remote_name,'latest']
+    return [image_name, remote_name, "latest"]  # type: ignore
 
 
 def _deploy_remote_image_v2(
@@ -333,55 +339,57 @@ def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -
     _logger.debug(f"deploy_images_remotely_v2 args: {env} {requested_image}")
     image_dir = os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../images"))
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
-    
+
     _logger.debug(f"context loaded: {env}")
-    codebuild_role=context.toolkit.admin_role
+    codebuild_role = context.toolkit.admin_role
     _logger.debug(f"The CODEBUILD_ROLE is {codebuild_role}")
 
-    new_images_manifest={}
+    new_images_manifest = {}
 
     if requested_image:
         if os.path.isdir(f"{image_dir}/{requested_image}"):
             _logger.debug(f"Request build of single image {requested_image}")
-            (image_name, image_addr, version) = _deploy_images_batch_v2(path=f"{image_dir}/{requested_image}", image_name=requested_image, env=env, build_execution_role=codebuild_role)
+            (image_name, image_addr, version) = _deploy_images_batch_v2(
+                path=f"{image_dir}/{requested_image}",
+                image_name=requested_image,
+                env=env,
+                build_execution_role=codebuild_role,  # type: ignore
+            )
             _logger.debug(f"Returned from _deploy_images_batch_v2: {image_name} {image_addr} {version}")
-            new_images_manifest[image_name.replace("-", "_")] = ImageManifest(
-                repository=image_addr,
-                version=version
-            )    
+            new_images_manifest[image_name.replace("-", "_")] = ImageManifest(repository=image_addr, version=version)  # type: ignore
         else:
             _logger.error("An image was requested to be built, but it doesn't exist in the images/ dir")
 
     else:
         # first build k8s-utilities
-        (image_name, image_addr, version) = _deploy_images_batch_v2(path=f"{image_dir}/k8s-utilities", image_name="k8s-utilities", env=env,build_execution_role=codebuild_role)
+        (image_name, image_addr, version) = _deploy_images_batch_v2(
+            path=f"{image_dir}/k8s-utilities", image_name="k8s-utilities", env=env, build_execution_role=codebuild_role  # type: ignore
+        )
         _logger.debug(f"Returned from _deploy_images_batch_v2: {image_name} {image_addr} {version}")
-        new_images_manifest[image_name.replace("-", "_")] = ImageManifest(
-            repository=image_addr,
-            version=version
-        )  
+        new_images_manifest[image_name.replace("-", "_")] = ImageManifest(repository=image_addr, version=version)  # type: ignore
 
-        # now build the images dependent on k8s
+        # now build the images dependent on k8s-utilities
         list_subfolders_with_paths = [f.path for f in os.scandir(image_dir) if f.is_dir()]
-        max_workers = 4 #decreasing threadpool due to shutils.make_archive not threadsafe
+        max_workers = 4
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
 
-            def deploy_images_batch_helper(args_tuple: List[Any]) -> List[Tuple[str,str,str]]:
-                return _deploy_images_batch_v2(path=args_tuple[0], image_name=args_tuple[1], env=args_tuple[2],build_execution_role=args_tuple[3])
+            def deploy_images_batch_helper(args_tuple: List[Any]) -> List[Tuple[str, str, str]]:
+                return _deploy_images_batch_v2(
+                    path=args_tuple[0], image_name=args_tuple[1], env=args_tuple[2], build_execution_role=args_tuple[3]
+                )
 
             args_tuples = [
-                (path, path.split("/")[-1], env,codebuild_role) for path in list_subfolders_with_paths if "k8s-utilities" not in path
+                (path, path.split("/")[-1], env, codebuild_role)
+                for path in list_subfolders_with_paths
+                if "k8s-utilities" not in path
             ]
 
             results = list(executor.map(deploy_images_batch_helper, args_tuples))
             for res in results:
-                new_images_manifest[res[0].replace("-", "_")] = ImageManifest(
-                repository=res[1],
-                version=res[2]
-        ) 
-    
+                new_images_manifest[res[0].replace("-", "_")] = ImageManifest(repository=res[1], version=res[2])  # type: ignore
+
     _logger.debug(new_images_manifest)
-    context.images = ImagesManifest(**new_images_manifest)
+    context.images = ImagesManifest(**new_images_manifest)  # type: ignore
     ContextSerDe.dump_context_to_ssm(context=context)
 
 
