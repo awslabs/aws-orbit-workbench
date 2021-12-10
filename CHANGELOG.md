@@ -12,7 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - FIX: sleep and retry the ListPolicyTag api call after being throttled in destroy teams
 - FIX: missing image ref in the README
-- FIX: updated Images block in manifest - no longer referencing public ECR as default 
+- FIX: updated Images block in manifest - no longer referencing public ECR as default
+- FIX: orbit build images funnction to update SSM on build  
 
 ### **Removed**
 
