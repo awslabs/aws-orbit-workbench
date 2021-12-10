@@ -356,17 +356,22 @@ def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -
                 build_execution_role=codebuild_role,  # type: ignore
             )
             _logger.debug(f"Returned from _deploy_images_batch_v2: {image_name} {image_addr} {version}")
-            new_images_manifest[image_name.replace("-", "_")] = ImageManifest(repository=image_addr, version=version)  # type: ignore
+            im = image_name.replace("-", "_")  # type: ignore
+            new_images_manifest[im] = ImageManifest(repository=image_addr, version=version)  # type: ignore
         else:
             _logger.error("An image was requested to be built, but it doesn't exist in the images/ dir")
 
     else:
         # first build k8s-utilities
         (image_name, image_addr, version) = _deploy_images_batch_v2(
-            path=f"{image_dir}/k8s-utilities", image_name="k8s-utilities", env=env, build_execution_role=codebuild_role  # type: ignore
+            path=f"{image_dir}/k8s-utilities",
+            image_name="k8s-utilities",
+            env=env,
+            build_execution_role=codebuild_role,  # type: ignore
         )
         _logger.debug(f"Returned from _deploy_images_batch_v2: {image_name} {image_addr} {version}")
-        new_images_manifest[image_name.replace("-", "_")] = ImageManifest(repository=image_addr, version=version)  # type: ignore
+        im = image_name.replace("-", "_")  # type: ignore
+        new_images_manifest[im] = ImageManifest(repository=image_addr, version=version)  # type: ignore
 
         # now build the images dependent on k8s-utilities
         list_subfolders_with_paths = [f.path for f in os.scandir(image_dir) if f.is_dir()]
@@ -386,7 +391,8 @@ def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -
 
             results = list(executor.map(deploy_images_batch_helper, args_tuples))
             for res in results:
-                new_images_manifest[res[0].replace("-", "_")] = ImageManifest(repository=res[1], version=res[2])  # type: ignore
+                im = res[0].replace("-", "_")  # type: ignore
+                new_images_manifest[im] = ImageManifest(repository=res[1], version=res[2])  # type: ignore
 
     _logger.debug(new_images_manifest)
     context.images = ImagesManifest(**new_images_manifest)  # type: ignore
