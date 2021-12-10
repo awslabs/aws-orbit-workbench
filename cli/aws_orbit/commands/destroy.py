@@ -26,7 +26,7 @@ from aws_orbit.services import cfn, elb, s3, secretsmanager, ssm
 _logger: logging.Logger = logging.getLogger(__name__)
 
 
-def destroy_toolkit(
+def _destroy_toolkit(
     env_name: str,
     top_level: str = "orbit",
     cdk_toolkit_bucket: Optional[str] = None,
@@ -50,7 +50,7 @@ def destroy_remaining_resources(env_name: str, top_level: str = "orbit") -> None
     env_cdk_toolkit: str = f"{top_level}-{env_name}-cdk-toolkit"
     if cfn.does_stack_exist(stack_name=env_cdk_toolkit):
         cfn.destroy_stack(stack_name=env_cdk_toolkit)
-    destroy_toolkit(env_name=env_name)
+    _destroy_toolkit(env_name=env_name)
 
 
 def destroy_teams(env: str, debug: bool) -> None:
@@ -88,7 +88,7 @@ def destroy_env(env: str, preserve_credentials: bool, debug: bool) -> None:
             msg_ctx.progress(100)
             return
 
-        msg_ctx.progress(5)
+        msg_ctx.progress(15)
         context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
         msg_ctx.info("Context loaded")
         msg_ctx.info(f"Teams: {','.join([t.name for t in context.teams])}")
@@ -101,28 +101,20 @@ def destroy_env(env: str, preserve_credentials: bool, debug: bool) -> None:
             or cfn.does_stack_exist(stack_name=context.toolkit.stack_name)
             or cfn.does_stack_exist(stack_name=context.cdk_toolkit.stack_name)
         ):
-            msg_ctx.progress(15)
+            msg_ctx.progress(50)
             destroy.destroy_env(env_name=context.name)
 
         if not preserve_credentials:
             secretsmanager.delete_docker_credentials(secret_id=f"orbit-{context.name}-docker-credentials")
             _logger.info("Removed docker credentials from SecretsManager")
 
-        msg_ctx.info("Env destroyed")
-        msg_ctx.progress(95)
-
         try:
-            destroy_toolkit(
-                env_name=context.name,
-                cdk_toolkit_bucket=context.cdk_toolkit.s3_bucket,
-            )
-        except botocore.exceptions.ClientError as ex:
-            error = ex.response["Error"]
-            if "does not exist" not in error["Message"]:
-                raise
-            _logger.debug(f"Skipping toolkit destroy: {error['Message']}")
-        msg_ctx.info("Toolkit destroyed")
-        ssm.cleanup_env(env_name=context.name)
+            if context.cdk_toolkit.s3_bucket:
+                s3.delete_bucket(bucket=context.cdk_toolkit.s3_bucket)
+        except Exception as ex:
+            _logger.debug("Skipping Environment CDK Toolkit bucket deletion. Cause: %s", ex)
+
+        msg_ctx.info("Env destroyed leaving the Env toolkit")
 
         msg_ctx.progress(100)
 
@@ -153,7 +145,7 @@ def destroy_foundation(env: str, debug: bool) -> None:
         msg_ctx.progress(75)
 
         try:
-            destroy_toolkit(
+            _destroy_toolkit(
                 env_name=context.name,
                 top_level="orbit-f",
                 cdk_toolkit_bucket=context.cdk_toolkit.s3_bucket,
@@ -180,4 +172,32 @@ def destroy_credentials(env: str, registry: str, debug: bool) -> None:
         msg_ctx.progress(95)
 
         msg_ctx.info("Registry Credentials Destroyed")
+        msg_ctx.progress(100)
+
+
+def destroy_toolkit(
+    env: str,
+    debug: bool,
+) -> None:
+    with MessagesContext("Destroying Environment Toolkit", debug=debug) as msg_ctx:
+        msg_ctx.progress(10)
+
+        context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
+        msg_ctx.info("Context loaded")
+        msg_ctx.progress(25)
+
+        try:
+            _destroy_toolkit(
+                env_name=context.name,
+                # cdk_toolkit_bucket=context.cdk_toolkit.s3_bucket,
+            )
+        except botocore.exceptions.ClientError as ex:
+            error = ex.response["Error"]
+            if "does not exist" not in error["Message"]:
+                raise
+            _logger.debug(f"Skipping toolkit destroy: {error['Message']}")
+        msg_ctx.info("Toolkit destroyed")
+        ssm.cleanup_env(env_name=context.name)
+
+        msg_ctx.info("Toolkit destroyed")
         msg_ctx.progress(100)
