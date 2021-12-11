@@ -187,10 +187,7 @@ def destroy_toolkit(
         msg_ctx.progress(25)
 
         try:
-            _destroy_toolkit(
-                env_name=context.name,
-                # cdk_toolkit_bucket=context.cdk_toolkit.s3_bucket,
-            )
+            _destroy_toolkit(env_name=context.name)
         except botocore.exceptions.ClientError as ex:
             error = ex.response["Error"]
             if "does not exist" not in error["Message"]:
