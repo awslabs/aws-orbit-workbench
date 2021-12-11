@@ -209,12 +209,6 @@ def deploy_teams(
     required=True,
 )
 @click.option(
-    "--skip-images/--build-images",
-    default=True,
-    help="Skip Docker images updates (Usually for development purpose).",
-    show_default=True,
-)
-@click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
@@ -222,7 +216,6 @@ def deploy_teams(
 )
 def deploy_env(
     filename: str,
-    skip_images: bool,
     debug: bool,
 ) -> None:
     """Deploy a Orbit Workbench environment based on a manisfest file (yaml)."""
@@ -230,10 +223,8 @@ def deploy_env(
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
-    _logger.debug("skip_images: %s", skip_images)
     deploy_commands.deploy_env(
         filename=filename,
-        skip_images=skip_images,
         debug=debug,
     )
 
