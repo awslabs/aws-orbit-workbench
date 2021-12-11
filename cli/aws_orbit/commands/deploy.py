@@ -17,7 +17,7 @@ import logging
 import os
 import random
 import string
-from typing import List, Optional, Tuple, cast
+from typing import List, Optional, cast
 
 from aws_orbit import bundle, remote, toolkit
 from aws_orbit.messages import MessagesContext, stylize
@@ -39,29 +39,6 @@ from aws_orbit.services import kms, ssm
 from aws_orbit.utils import get_account_id, get_region
 
 _logger: logging.Logger = logging.getLogger(__name__)
-
-
-def _get_images_dirs(context: "Context", manifest_filename: str, skip_images: bool) -> List[Tuple[str, str]]:
-    if skip_images:
-        dirs: List[Tuple[str, str]] = []
-    else:
-        refdir: str = os.path.dirname(os.path.abspath(manifest_filename))
-        _logger.debug("refdir: %s", refdir)
-        dirs = [
-            (os.path.join(refdir, getattr(context.images, name).path), name.replace("_", "-"))
-            for name in context.images.names
-            if getattr(context.images, name).get_source(account_id=context.account_id, region=context.region) == "code"
-        ]
-        _logger.debug("dirs: %s", dirs)
-    return dirs
-
-
-def _get_config_dirs(context: "Context", manifest_filename: str) -> List[Tuple[str, str]]:
-    manifest_dir: str = os.path.dirname(os.path.abspath(manifest_filename))
-    _logger.debug("manrefdir: %s", manifest_dir)
-    dirs = [(manifest_dir, "plugins")]
-    _logger.debug("dirs: %s", dirs)
-    return dirs
 
 
 def _deploy_toolkit(
@@ -212,7 +189,6 @@ def deploy_foundation(
 
 def deploy_env(
     filename: str,
-    skip_images: bool,
     debug: bool,
 ) -> None:
     with MessagesContext("Deploying", debug=debug) as msg_ctx:
@@ -295,14 +271,7 @@ def deploy_teams(
         _logger.debug("Inspecting possible manifest changes...")
         changeset: "Changeset" = extract_changeset(manifest=manifest, context=context, msg_ctx=msg_ctx)
         _logger.debug(f"Changeset:\n{dump_changeset_to_str(changeset=changeset)}")
-        msg_ctx.progress(15)
 
-        _logger.debug("Preparing bundle directory")
-        dirs: List[Tuple[str, str]] = []
-        dirs += _get_config_dirs(context=context, manifest_filename=filename)
-        _logger.debug(f"*Directory={dirs}")
-        dirs += _get_images_dirs(context=context, manifest_filename=filename, skip_images=True)
-        _logger.debug(f"**Directory={dirs}")
         msg_ctx.progress(30)
 
         deploy.deploy_teams(
