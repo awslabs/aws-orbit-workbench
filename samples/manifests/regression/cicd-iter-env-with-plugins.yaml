@@ -10,16 +10,6 @@ SharedEfsSgId: !SSM ${/orbit-f/iter/resources::SharedEfsSgId}
 InstallSsmAgent: true
 CognitoExternalProvider: !ENV ${COGNITO_EXTERNAL_PROVIDER::}
 CognitoExternalProviderLabel: !ENV ${COGNITO_EXTERNAL_PROVIDER_LABEL::}
-Images:
-    JupyterUser:
-        Repository: !ENV ${ACCOUNT_ID::}.dkr.ecr.${AWS_DEFAULT_REGION::}.amazonaws.com/orbit-${ORBIT_ENV_NAME::iter}/jupyter-user
-        Version: !ENV ${VERSION::latest}
-    OrbitController:
-        Repository: !ENV ${ACCOUNT_ID::}.dkr.ecr.${AWS_DEFAULT_REGION::}.amazonaws.com/orbit-${ORBIT_ENV_NAME::iter}/orbit-controller
-        Version: !ENV ${VERSION::latest}
-    UtilityData:
-        Repository: !ENV ${ACCOUNT_ID::}.dkr.ecr.${AWS_DEFAULT_REGION::}.amazonaws.com/orbit-${ORBIT_ENV_NAME::iter}/utility-data
-        Version: !ENV ${VERSION::latest}
 Networking:
     VpcId: !SSM ${/orbit-f/iter/resources::VpcId}
     PublicSubnets: !SSM ${/orbit-f/iter/resources::PublicSubnets}
