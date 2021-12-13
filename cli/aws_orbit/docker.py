@@ -49,6 +49,7 @@ def login_v2(account_id: str, region: str) -> None:
     )
     _logger.debug("ECR logged in.")
 
+
 def ecr_pul(name: str, tag: str = "latest") -> None:
     sh.run(f"docker pull {name}:{tag}")
 
@@ -113,6 +114,7 @@ def update_docker_file(account_id: str, region: str, env: str, tag: str, dir: st
         )
         with open(docker_file, "w") as file:
             file.write(content)
+
 
 def deploy_image_from_source(
     dir: str,

@@ -14,11 +14,11 @@
 
 import json
 import logging
-from typing import List, Optional
-from aws_orbit.messages import MessagesContext, stylize
 
+from aws_orbit.messages import MessagesContext
 
 _logger: logging.Logger = logging.getLogger(__name__)
+
 
 def build_podsetting(
     env_name: str,

@@ -20,7 +20,7 @@ from typing import Iterator, List, Optional, cast
 import boto3
 
 import aws_orbit
-from aws_orbit import ORBIT_CLI_ROOT, cdk, docker, plugins
+from aws_orbit import ORBIT_CLI_ROOT, cdk, plugins
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext, create_team_context_from_manifest
 from aws_orbit.models.manifest import Manifest, TeamManifest
 from aws_orbit.services import cfn
