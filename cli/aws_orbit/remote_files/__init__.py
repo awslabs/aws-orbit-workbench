@@ -19,7 +19,7 @@ from softwarelabs_remote_toolkit import LOGGER, remotectl
 from softwarelabs_remote_toolkit.remotectl import RemoteCtlConfig
 
 from aws_orbit import ORBIT_CLI_ROOT
-from aws_orbit.remote_files import build as build_image_module
+
 from aws_orbit.remote_files import delete as delete_image_module
 from aws_orbit.remote_files import deploy as deploy_module
 from aws_orbit.remote_files import destroy as destroy_module
@@ -28,8 +28,6 @@ REMOTE_FUNC_TYPE = Callable[[Tuple[str, ...]], None]
 
 
 class RemoteCommands(Enum):
-    _deploy_image = deploy_module._deploy_image
-    build_image = build_image_module.build_image
     delete_image = delete_image_module.delete_image
     deploy_credentials = deploy_module.deploy_credentials
     deploy_foundation = deploy_module.deploy_foundation
