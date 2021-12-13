@@ -93,7 +93,7 @@ def tag_image(context: "Context", remote_name: str, remote_source: str, name: st
 
 
 def tag_image_v2(account_id: str, region: str, name: str, tag: str = "latest") -> None:
-    ecr_address = f"{utils.get_account_id()}.dkr.ecr.{utils.get_region()}.amazonaws.com"
+    ecr_address = f"{account_id}.dkr.ecr.{region}.amazonaws.com"
     remote_name = f"{ecr_address}/{name}"
     _logger.debug(f"Tagging {name}:{tag} as {remote_name}:{tag}")
     sh.run(f"docker tag {name}:{tag} {remote_name}:{tag}")
