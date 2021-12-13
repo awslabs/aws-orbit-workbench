@@ -232,7 +232,7 @@ def _load_toolkit_helper(file_path: str, image_name: str, env: str) -> str:
         j["extra_dirs"] = new_extra_dirs
 
     _logger.debug(f"OUT of HELPER {j}")
-    return j  # type: ignore
+    return json.dumps(j)
 
 
 def _deploy_images_batch_v2(
@@ -247,14 +247,14 @@ def _deploy_images_batch_v2(
     pre_build_commands = []
     if os.path.exists(os.path.join(path, "toolkit_helper.json")):
         f = os.path.join(path, "toolkit_helper.json")
-        helper = _load_toolkit_helper(file_path=f, image_name=image_name, env=env)
+        helper = json.loads(_load_toolkit_helper(file_path=f, image_name=image_name, env=env))
         _logger.debug(helper)
-        if helper.get("extra_dirs"):  # type: ignore
-            extra_dirs = {**extra_dirs, **helper["extra_dirs"]}  # type: ignore
-        if helper.get("build_args"):  # type: ignore
-            build_args = [*build_args, *helper["build_args"]]  # type: ignore
-        if helper.get("pre_build_commands"):  # type: ignore
-            pre_build_commands = [*build_args, *helper["pre_build_commands"]]  # type: ignore
+        if helper.get("extra_dirs"):
+            extra_dirs = {**extra_dirs, **helper["extra_dirs"]}
+        if helper.get("build_args"):
+            build_args = [*build_args, *helper["build_args"]]
+        if helper.get("pre_build_commands"):
+            pre_build_commands = [*build_args, *helper["pre_build_commands"]]
     else:
         _logger.debug("No Toolkit Helper")
 
@@ -302,14 +302,15 @@ def _deploy_remote_image_v2(
         pre_build_commands = [f"bash {image_name}/{script}"]
     if os.path.exists(os.path.join(path, "toolkit_helper.json")):
         f = os.path.join(path, "toolkit_helper.json")
-        helper = _load_toolkit_helper(file_path=f, image_name=image_name, env=env)
+        helper = json.loads(_load_toolkit_helper(file_path=f, image_name=image_name, env=env))
         _logger.debug(helper)
-        if helper.get("extra_dirs"):  # type: ignore
-            extra_dirs = {**extra_dirs, **helper["extra_dirs"]}  # type: ignore
-        if helper.get("build_args"):  # type: ignore
+        if helper.get("extra_dirs"):
+            extra_dirs = {**extra_dirs, **helper["extra_dirs"]}
+        if helper.get("build_args"):
             build_args = [*build_args, *helper["build_args"]]  # type: ignore
-        if helper.get("pre_build_commands"):  # type: ignore
+        if helper.get("pre_build_commands"):
             pre_build_commands = [*build_args, *helper["pre_build_commands"]]  # type: ignore
+
     else:
         _logger.debug("No Toolkit Helper")
 
@@ -341,7 +342,7 @@ def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
 
     _logger.debug(f"context loaded: {env}")
-    codebuild_role = context.toolkit.admin_role
+    codebuild_role = str(context.toolkit.admin_role)
     _logger.debug(f"The CODEBUILD_ROLE is {codebuild_role}")
 
     new_images_manifest = {}
@@ -353,11 +354,11 @@ def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -
                 path=f"{image_dir}/{requested_image}",
                 image_name=requested_image,
                 env=env,
-                build_execution_role=codebuild_role,  # type: ignore
+                build_execution_role=codebuild_role,
             )
             _logger.debug(f"Returned from _deploy_images_batch_v2: {image_name} {image_addr} {version}")
-            im = image_name.replace("-", "_")  # type: ignore
-            new_images_manifest[im] = ImageManifest(repository=image_addr, version=version)  # type: ignore
+            im = str(image_name).replace("-", "_")
+            new_images_manifest[im] = ImageManifest(repository=str(image_addr), version=str(version))
         else:
             _logger.error("An image was requested to be built, but it doesn't exist in the images/ dir")
 
@@ -367,11 +368,11 @@ def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -
             path=f"{image_dir}/k8s-utilities",
             image_name="k8s-utilities",
             env=env,
-            build_execution_role=codebuild_role,  # type: ignore
+            build_execution_role=codebuild_role,
         )
         _logger.debug(f"Returned from _deploy_images_batch_v2: {image_name} {image_addr} {version}")
-        im = image_name.replace("-", "_")  # type: ignore
-        new_images_manifest[im] = ImageManifest(repository=image_addr, version=version)  # type: ignore
+        im = str(image_name).replace("-", "_")
+        new_images_manifest[im] = ImageManifest(repository=str(image_addr), version=str(version))
 
         # now build the images dependent on k8s-utilities
         list_subfolders_with_paths = [f.path for f in os.scandir(image_dir) if f.is_dir()]
@@ -391,9 +392,8 @@ def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -
 
             results = list(executor.map(deploy_images_batch_helper, args_tuples))
             for res in results:
-                im = res[0].replace("-", "_")  # type: ignore
-                new_images_manifest[im] = ImageManifest(repository=res[1], version=res[2])  # type: ignore
-
+                im = str(res[0]).replace("-", "_")
+                new_images_manifest[im] = ImageManifest(repository=str(res[1]), version=str(res[2]))
     _logger.debug(new_images_manifest)
     context.images = ImagesManifest(**new_images_manifest)  # type: ignore
     ContextSerDe.dump_context_to_ssm(context=context)
