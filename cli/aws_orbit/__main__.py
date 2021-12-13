@@ -453,6 +453,22 @@ def destroy_images(env: str, debug: bool) -> None:
     destroy_commands.destroy_images(env=env)
 
 
+@destroy.command(name="toolkit")
+@click.option("--env", "-e", type=str, required=True, help="Environment name is required")
+@click.option(
+    "--debug/--no-debug",
+    default=False,
+    help="Enable detailed logging.",
+    show_default=True,
+)
+def destroy_toolkit(env: str, debug: bool) -> None:
+    """Destroy Environment Toolkit"""
+    if debug:
+        enable_debug(format=DEBUG_LOGGING_FORMAT)
+    _logger.debug("env: %s", env)
+    destroy_commands.destroy_toolkit(env=env, debug=debug)
+
+
 @click.group(name="build")
 def build() -> None:
     """Build images,podsettings,etc in your Orbit Workbench."""
