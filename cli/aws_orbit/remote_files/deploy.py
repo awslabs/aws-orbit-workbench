@@ -395,8 +395,11 @@ def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -
                 new_images_manifest[im] = ImageManifest(repository=res[1], version=res[2])  # type: ignore
 
     _logger.debug(new_images_manifest)
-    context.images = ImagesManifest(**new_images_manifest)  # type: ignore
-    ContextSerDe.dump_context_to_ssm(context=context)
+    # Because this is multihreaded, we need to make sure we have the MOST UP TO DATE context
+    # So, fetch it again and rewrite...
+    context_latest: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
+    context_latest.images = ImagesManifest(**new_images_manifest)  # type: ignore
+    ContextSerDe.dump_context_to_ssm(context=context_latest)
 
 
 def deploy_user_image_v2(
