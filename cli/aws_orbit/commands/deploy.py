@@ -312,7 +312,7 @@ def deploy_images(debug: bool, filename: str, reqested_image: Optional[str] = No
             return
         env = manifest.name
         msg_ctx.info(f"Deploying images for env {env}")
-        deploy.deploy_images_remotely_v2(env=env, requested_image=reqested_image)
+        deploy.deploy_images_remotely(env=env, requested_image=reqested_image)
         msg_ctx.progress(95)
         msg_ctx.progress(100)
 
@@ -332,7 +332,7 @@ def deploy_user_image(
             msg_ctx.error(f"Orbit Environment {env} cannot be found in the current account and region.")
             return
         msg_ctx.progress(2)
-        deploy.deploy_user_image_v2(
+        deploy.deploy_user_image(
             path=path, image_name=image_name, env=env, script=script, build_args=build_args, timeout=timeout
         )
         msg_ctx.progress(95)

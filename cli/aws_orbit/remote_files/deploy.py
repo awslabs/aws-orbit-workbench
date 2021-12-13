@@ -37,66 +37,10 @@ def print_results(msg: str) -> None:
     if msg.startswith("[RESULT] "):
         _logger.info(msg)
 
-
-def _deploy_image(args: Tuple[str, ...]) -> None:
-    _logger.debug("_deploy_image args: %s", args)
-    if len(args) < 4:
-        raise ValueError("Unexpected number of values in args.")
-    env: str = args[0]
-    image_name: str = args[1]
-    dir: str = args[2]
-    script: Optional[str] = args[3] if args[3] != "NO_SCRIPT" else None
-    build_args = args[4:]
-
-    manifest = ManifestSerDe.load_manifest_from_ssm(env_name=env, type=Manifest)
-    context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
-    _logger.debug("context: %s", vars(context))
-
-    if manifest is None:
-        raise Exception("Unable to load required Manifest from SSM")
-
-    docker.login(context=context)
-    _logger.debug("DockerHub and ECR Logged in")
-    _logger.debug("Deploying the %s Docker image", image_name)
-
-    ecr_repo = f"orbit-{context.name}/{image_name}"
-    if not ecr.describe_repositories(repository_names=[ecr_repo]):
-        ecr.create_repository(repository_name=ecr_repo, env_name=context.name)
-
-    image_def: ImageManifest = getattr(manifest.images, image_name.replace("-", "_"))
-    source = image_def.get_source(account_id=context.account_id, region=context.region)
-    if source == "code":
-        _logger.debug("Building and deploy docker image from source...")
-        path = os.path.join(os.getcwd(), "bundle", dir)
-        _logger.debug("path: %s", path)
-        if script is not None:
-            sh.run(f"sh {script}", cwd=path)
-        tag = cast(str, image_def.version)
-        docker.deploy_image_from_source(
-            context=context,
-            dir=path,
-            name=ecr_repo,
-            build_args=cast(Optional[List[str]], build_args),
-            tag=tag,
-        )
-    else:
-        _logger.debug("Replicating docker image to ECR...")
-        docker.replicate_image(
-            context=context,
-            image_name=image_name,
-            deployed_name=ecr_repo,
-            source=source,
-            source_repository=image_def.repository,
-            source_version=image_def.version,
-        )
-
-    _logger.debug("Docker Image Deployed to ECR")
-
-
-def _deploy_image_v2(image_name: str, env: str, build_args: Optional[List[str]], use_cache: bool = True) -> None:
+def _deploy_image(image_name: str, env: str, build_args: Optional[List[str]], use_cache: bool = True) -> None:
     region = get_region()
     account_id = get_account_id()
-    _logger.debug(f"_deploy_image_v2 args: {account_id}, {region}, {image_name}, {env} {build_args}")
+    _logger.debug(f"_deploy_image args: {account_id}, {region}, {image_name}, {env} {build_args}")
 
     docker.login_v2(account_id=account_id, region=region)
     _logger.debug("DockerHub and ECR Logged in")
@@ -104,23 +48,23 @@ def _deploy_image_v2(image_name: str, env: str, build_args: Optional[List[str]],
 
     ecr_repo = f"orbit-{env}/{image_name}"
     if not ecr.describe_repositories(repository_names=[ecr_repo]):
-        ecr.create_repository_v2(repository_name=ecr_repo)
+        ecr.create_repository(repository_name=ecr_repo)
 
     _logger.debug("Building and deploy docker image from source...")
     path = os.path.join(os.getcwd(), image_name)
     _logger.debug("path: %s", path)
 
-    docker.deploy_image_from_source_v2(
+    docker.deploy_image_from_source(
         dir=path, name=ecr_repo, build_args=build_args, use_cache=use_cache, tag="latest", env=env
     )
 
     _logger.debug("Docker Image Deployed to ECR")
 
 
-def _deploy_user_image_v2(image_name: str, path: str, env: str, build_args: Optional[List[str]]) -> None:
+def _deploy_user_image(image_name: str, path: str, env: str, build_args: Optional[List[str]]) -> None:
     region = get_region()
     account_id = get_account_id()
-    _logger.debug(f"_deploy_user_image_v2 args: {account_id}, {region}, {image_name}, {env}")
+    _logger.debug(f"_deploy_user_image args: {account_id}, {region}, {image_name}, {env}")
 
     docker.login_v2(account_id=account_id, region=region)
     _logger.debug("DockerHub and ECR Logged in")
@@ -128,13 +72,13 @@ def _deploy_user_image_v2(image_name: str, path: str, env: str, build_args: Opti
 
     ecr_repo = f"orbit-{env}/users/{image_name}"
     if not ecr.describe_repositories(repository_names=[ecr_repo]):
-        ecr.create_repository_v2(repository_name=ecr_repo)
+        ecr.create_repository(repository_name=ecr_repo)
 
     _logger.debug("Building and deploy docker image from source...")
     path = os.path.join(os.getcwd(), image_name)
     _logger.debug("path: %s", path)
 
-    docker.deploy_image_from_source_v2(
+    docker.deploy_image_from_source(
         dir=path,
         name=ecr_repo,
         build_args=build_args,
@@ -142,73 +86,6 @@ def _deploy_user_image_v2(image_name: str, path: str, env: str, build_args: Opti
         env=env,
     )
     _logger.debug("Docker Image Deployed to ECR")
-
-
-def _deploy_image_remotely(context: "Context", name: str, bundle_path: str, buildspec: codebuild.SPEC_TYPE) -> None:
-    _logger.debug("Deploying %s Docker Image remotely into ECR", name)
-    remote.run(
-        command_name=f"deploy_image-{name}",
-        context=context,
-        bundle_path=bundle_path,
-        buildspec=buildspec,
-        codebuild_log_callback=None,
-        timeout=30,
-    )
-    _logger.debug("%s Docker Image deployed into ECR", name)
-
-
-def _deploy_images_batch(
-    manifest: Manifest, context: "Context", images: List[Tuple[str, Optional[str], Optional[str], List[str]]]
-) -> None:
-    _logger.debug("images:\n%s", images)
-
-    new_images_manifest = {name: getattr(context.images, name) for name in context.images.names}
-    max_workers = 5
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures: List[Future[Any]] = []
-        name: str = ""
-        dir: Optional[str] = None
-        script: Optional[str] = None
-        build_args: List[str] = []
-
-        for name, dir, script, build_args in images:
-            _logger.debug("name: %s | script: %s", name, script)
-
-            path = os.path.join(os.getcwd(), "bundle", name)
-            _logger.debug("path: %s", path)
-
-            image_attr_name = name.replace("-", "_")
-            image_def: ImageManifest = getattr(manifest.images, image_attr_name)
-            tag = image_def.version
-            if image_def.get_source(account_id=context.account_id, region=context.region) == "code":
-                dirs: List[Tuple[str, str]] = [(path, cast(str, dir))]
-            else:
-                dirs = []
-
-            bundle_path = bundle.generate_bundle(command_name=f"deploy_image-{name}", context=context, dirs=dirs)
-            _logger.debug("bundle_path: %s", bundle_path)
-            script_str = "NO_SCRIPT" if script is None else script
-            build_args = [] if build_args is None else build_args
-            buildspec = codebuild.generate_spec(
-                context=context,
-                plugins=False,
-                cmds_build=[
-                    "orbit remote --command _deploy_image "
-                    f"{context.name} {name} {dir} {script_str} {' '.join(build_args)}"
-                ],
-            )
-            new_images_manifest[image_attr_name] = ImageManifest(
-                repository=f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}/{name}",
-                version=tag,
-                path=None,
-            )
-            futures.append(executor.submit(_deploy_image_remotely, context, name, bundle_path, buildspec))
-
-        for f in futures:
-            f.result()
-
-        context.images = ImagesManifest(**new_images_manifest)
-        ContextSerDe.dump_context_to_ssm(context=context)
 
 
 def _load_toolkit_helper(file_path: str, image_name: str, env: str) -> str:
@@ -235,14 +112,14 @@ def _load_toolkit_helper(file_path: str, image_name: str, env: str) -> str:
     return json.dumps(j)
 
 
-def _deploy_images_batch_v2(
+def _deploy_images_batch(
     path: str,
     image_name: str,
     env: str,
     build_execution_role: str,
     build_args: List[str] = [],
 ) -> List[Tuple[str, str, str]]:
-    _logger.debug(f"_deploy_images_batch_v2 args: {path} {image_name} {env} {build_execution_role}")
+    _logger.debug(f"_deploy_images_batch args: {path} {image_name} {env} {build_execution_role}")
     extra_dirs = {image_name: path}
     pre_build_commands = []
     if os.path.exists(os.path.join(path, "toolkit_helper.json")):
@@ -268,7 +145,7 @@ def _deploy_images_batch_v2(
         bundle_id=image_name,
         extra_pre_build_commands=pre_build_commands,
     )
-    def _deploy_images_batch_v2(
+    def _deploy_images_batch(
         path: str,
         image_name: str,
         env: str,
@@ -276,15 +153,15 @@ def _deploy_images_batch_v2(
         build_args: List[str],
     ) -> None:
         _logger.info(f"running ...{image_name} at {path}")
-        _deploy_image_v2(image_name=image_name, env=env, build_args=build_args, use_cache=False)
+        _deploy_image(image_name=image_name, env=env, build_args=build_args, use_cache=False)
 
-    _deploy_images_batch_v2(path, image_name, env, build_execution_role, build_args)
+    _deploy_images_batch(path, image_name, env, build_execution_role, build_args)
     ecr_address = f"{get_account_id()}.dkr.ecr.{get_region()}.amazonaws.com"
     remote_name = f"{ecr_address}/orbit-{env}/{image_name}"
     return [image_name, remote_name, "latest"]  # type: ignore
 
 
-def _deploy_remote_image_v2(
+def _deploy_remote_image(
     path: str,
     image_name: str,
     env: str,
@@ -329,15 +206,15 @@ def _deploy_remote_image_v2(
         extra_pre_build_commands=pre_build_commands,
         timeout=timeout,
     )
-    def _deploy_remote_image_v2(path: str, image_name: str, env: str, build_args: List[str]) -> None:
+    def _deploy_remote_image(path: str, image_name: str, env: str, build_args: List[str]) -> None:
         _logger.info(f"running ...{image_name} at {path}")
-        _deploy_user_image_v2(path=path, image_name=image_name, env=env, build_args=build_args)
+        _deploy_user_image(path=path, image_name=image_name, env=env, build_args=build_args)
 
-    _deploy_remote_image_v2(path, image_name, env, build_args)
+    _deploy_remote_image(path, image_name, env, build_args)
 
 
-def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -> None:
-    _logger.debug(f"deploy_images_remotely_v2 args: {env} {requested_image}")
+def deploy_images_remotely(env: str, requested_image: Optional[str] = None) -> None:
+    _logger.debug(f"deploy_images_remotely args: {env} {requested_image}")
     image_dir = os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../images"))
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
 
@@ -350,13 +227,13 @@ def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -
     if requested_image:
         if os.path.isdir(f"{image_dir}/{requested_image}"):
             _logger.debug(f"Request build of single image {requested_image}")
-            (image_name, image_addr, version) = _deploy_images_batch_v2(
+            (image_name, image_addr, version) = _deploy_images_batch(
                 path=f"{image_dir}/{requested_image}",
                 image_name=requested_image,
                 env=env,
                 build_execution_role=codebuild_role,
             )
-            _logger.debug(f"Returned from _deploy_images_batch_v2: {image_name} {image_addr} {version}")
+            _logger.debug(f"Returned from _deploy_images_batch: {image_name} {image_addr} {version}")
             im = str(image_name).replace("-", "_")
             new_images_manifest[im] = ImageManifest(repository=str(image_addr), version=str(version))
         else:
@@ -364,13 +241,13 @@ def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -
 
     else:
         # first build k8s-utilities
-        (image_name, image_addr, version) = _deploy_images_batch_v2(
+        (image_name, image_addr, version) = _deploy_images_batch(
             path=f"{image_dir}/k8s-utilities",
             image_name="k8s-utilities",
             env=env,
             build_execution_role=codebuild_role,
         )
-        _logger.debug(f"Returned from _deploy_images_batch_v2: {image_name} {image_addr} {version}")
+        _logger.debug(f"Returned from _deploy_images_batch: {image_name} {image_addr} {version}")
         im = str(image_name).replace("-", "_")
         new_images_manifest[im] = ImageManifest(repository=str(image_addr), version=str(version))
 
@@ -380,7 +257,7 @@ def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
 
             def deploy_images_batch_helper(args_tuple: List[Any]) -> List[Tuple[str, str, str]]:
-                return _deploy_images_batch_v2(
+                return _deploy_images_batch(
                     path=args_tuple[0], image_name=args_tuple[1], env=args_tuple[2], build_execution_role=args_tuple[3]
                 )
 
@@ -402,36 +279,15 @@ def deploy_images_remotely_v2(env: str, requested_image: Optional[str] = None) -
     ContextSerDe.dump_context_to_ssm(context=context_latest)
 
 
-def deploy_user_image_v2(
+def deploy_user_image(
     path: str, env: str, image_name: str, script: Optional[str], build_args: Optional[List[str]], timeout: int = 45
 ) -> None:
-    _logger.debug(f"deploy_user_image_v2 args: {path} {env} {image_name} {script} {build_args} {timeout}")
+    _logger.debug(f"deploy_user_image args: {path} {env} {image_name} {script} {build_args} {timeout}")
 
     _logger.debug(build_args)
-    _deploy_remote_image_v2(
+    _deploy_remote_image(
         path=path, env=env, image_name=image_name, script=script, build_args=build_args, timeout=timeout
     )
-
-
-def deploy_images_remotely(manifest: Manifest, context: "Context", skip_images: bool = True) -> None:
-    # Required images we always build/replicate
-    images: List[Tuple[str, Optional[str], Optional[str], List[str]]] = []
-
-    # This isn't obvious to read, but when skipping image builds, we intentionally remove these images if the source
-    # is code. Otherwise, we build/deploy them
-    if not (manifest.images.k8s_utilities.get_source(context.account_id, context.region) == "code" and skip_images):
-        images.append(("k8s-utilities", "k8s-utilities", None, []))
-    if not (manifest.images.orbit_controller.get_source(context.account_id, context.region) == "code" and skip_images):
-        images.append(("orbit-controller", "orbit-controller", None, []))
-
-    # Secondary images we can optionally skip
-    if not skip_images:
-        # When not skipping images, include these secondaries if their source isn't the default ecr-public
-        if manifest.images.jupyter_user.get_source(context.account_id, context.region) != "ecr-public":
-            images.append(("jupyter-user", "jupyter-user", "build.sh", []))
-
-    _logger.debug("Building/repclicating Container Images")
-    _deploy_images_batch(manifest=manifest, context=context, images=images)
 
 
 def deploy_credentials(env_name: str, ciphertext: str) -> None:

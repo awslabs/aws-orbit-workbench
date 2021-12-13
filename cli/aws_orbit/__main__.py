@@ -22,7 +22,7 @@ import click
 
 from aws_orbit.commands import deploy as deploy_commands
 from aws_orbit.commands import destroy as destroy_commands
-from aws_orbit.commands.build import build_image, build_podsetting
+from aws_orbit.commands.build import build_podsetting
 from aws_orbit.commands.delete import delete_image, delete_podsetting
 from aws_orbit.commands.init import init
 from aws_orbit.commands.list import list_env, list_images
@@ -527,94 +527,6 @@ def deploy_image_cli(
     )
 
 
-@click.group(name="replicate")
-def replicate() -> None:
-    """Replicate images from external respositories into ECR"""
-    pass
-
-
-@replicate.command(name="image")
-@click.option("--env", "-e", type=str, required=True, help="Orbit Environment.")
-@click.option("--name", "-n", type=str, help="Image name.", required=True)
-@click.option(
-    "--script",
-    "-s",
-    type=str,
-    default=None,
-    help="Build script to run before the image build.",
-    required=False,
-)
-@click.option(
-    "--source-registry",
-    "-y",
-    type=str,
-    multiple=False,
-    default=None,
-    help="One or more Teams to deploy the image to (can de declared multiple times).",
-    required=True,
-)
-@click.option(
-    "--source-repository",
-    "-r",
-    type=str,
-    multiple=False,
-    default=None,
-    help="One or more Teams to deploy the image to (can de declared multiple times).",
-    required=True,
-)
-@click.option(
-    "--source-version",
-    "-v",
-    type=str,
-    multiple=False,
-    default=None,
-    help="One or more Teams to deploy the image to (can de declared multiple times).",
-    required=True,
-)
-@click.option(
-    "--build-arg",
-    type=str,
-    multiple=True,
-    default=[],
-    help="One or more --build-arg parameters to pass to the Docker build command.",
-    required=False,
-)
-@click.option(
-    "--debug/--no-debug",
-    default=False,
-    help="Enable detailed logging.",
-    show_default=True,
-)
-def replicate_image_cli(
-    env: str,
-    name: str,
-    script: Optional[str],
-    source_registry: str,
-    source_repository: str,
-    source_version: str,
-    build_arg: Optional[List[str]],
-    debug: bool,
-) -> None:
-    """Build and Deploy a new Docker image into ECR."""
-    if debug:
-        enable_debug(format=DEBUG_LOGGING_FORMAT)
-    _logger.debug("env: %s", env)
-    _logger.debug("name: %s", name)
-    _logger.debug("script: %s", script)
-    _logger.debug("debug: %s", debug)
-    build_image(
-        dir=None,
-        name=name,
-        env=env,
-        script=script,
-        source_registry=source_registry,
-        source_repository=source_repository,
-        source_version=source_version,
-        build_args=build_arg,
-        debug=debug,
-    )
-
-
 @build.command(name="profile")
 @click.option("--env", "-e", type=str, required=False, help="Orbit Environment.")
 @click.option("--team", "-t", type=str, help="Orbit Team.", required=False)
@@ -956,6 +868,5 @@ def main() -> int:
     cli.add_command(build)
     cli.add_command(delete)
     cli.add_command(list)
-    cli.add_command(replicate)
     cli()
     return 0

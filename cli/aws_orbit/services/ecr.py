@@ -76,20 +76,7 @@ def cleanup_remaining_repos(env_name: str) -> None:
         delete_repo(repo=repo)
 
 
-def create_repository(repository_name: str, env_name: Optional[str] = None) -> None:
-    client = boto3_client("ecr")
-    params: Dict[str, Any] = {"repositoryName": repository_name}
-    if env_name:
-        params["tags"] = [{"Key": "Env", "Value": env_name}]
-    response = client.create_repository(**params)
-    if "repository" in response and "repositoryName" in response["repository"]:
-        _logger.debug("ECR repository not exist, creating for %s", repository_name)
-    else:
-        _logger.error("ECR repository creation failed, response %s", response)
-        raise RuntimeError(response)
-
-
-def create_repository_v2(repository_name: str) -> None:
+def create_repository(repository_name: str) -> None:
     client = boto3_client("ecr")
     params: Dict[str, Any] = {"repositoryName": repository_name}
     response = client.create_repository(**params)

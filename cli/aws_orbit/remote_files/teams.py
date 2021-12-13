@@ -92,14 +92,6 @@ def _create_dockerfile(context: "Context", team_context: "TeamContext", image_na
     return outdir
 
 
-def _deploy_team_image(context: "Context", team_context: "TeamContext", image: str) -> None:
-    image_dir: str = _create_dockerfile(context=context, team_context=team_context, image_name=image)
-    image_name: str = f"orbit-{context.name}-{team_context.name}-{image}"
-    _logger.debug("Deploying the %s Docker image", image_name)
-    docker.deploy_image_from_source(context=context, dir=image_dir, name=image_name)
-    _logger.debug("Docker Image Deployed to ECR (%s).", image_name)
-
-
 def _deploy_team_bootstrap(context: "Context", team_context: "TeamContext") -> None:
     for plugin in team_context.plugins:
         hook: plugins.HOOK_TYPE = plugins.PLUGINS_REGISTRIES.get_hook(
