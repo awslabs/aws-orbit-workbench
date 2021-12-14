@@ -14,12 +14,8 @@ docs:
         url: code-of-conduct
   - group: For Admins
     sub:
-      - title: Deployment Guideline
-        url: deployment-guideline
       - title: Orbit Manifest Guide
         url: orbit-manifest-guide
-      - title: CLI Guide
-        url: cli-guide
       - title: Plugins Library
         url: plugin-library
       - title: Administrative Teams

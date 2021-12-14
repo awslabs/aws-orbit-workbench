@@ -71,19 +71,19 @@ The following command generates sample manifests to allow quick initiation.
 Orbit CLI can deploy required resources such as VPC, Cognito User Pool, File systems, etc.  
 Users can decide to deplot using existing resources, or use orbit to deploy these resources as follows:
 
-* `orbit deploy foundation --debug -f dev-env-foundation.yaml -u <dockerhub user> -p '****' `
+* See [Foundation](detail-foundation)
 
 ### Destroying Orbit Foundation
 
-* `orbit destroy foundation --name <foundation-name>`
+* See [Foundation](detail-foundation)
 
 ### Deploying Orbit Environment
 
-* `orbit deploy env -f my-env.yaml -u <dockerhub user> -p '****' `
+* See [Environment](detail-environment)
 
 ### Destroying Orbit Environment
 
-* `orbit destroy env --env <env-name>`
+* See [Environment](detail-environment)
 
 ## 4 - Assuming Admin Role to Access EKS
 
