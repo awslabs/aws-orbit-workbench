@@ -14,5 +14,6 @@ The following steps assume that you have an existing [deployed workbench](deploy
 
 1. Destroy [teams](detail-teams)
 1. Destroy [environment](detail-environment)
-1. Destroy [docker images](detail-images)    
-1. Destroy [foundation](detail-foundation)  
+2. Destroy [credentials](detail-credentials) (optional)
+3. Destroy [docker images](detail-images)    
+4. Destroy [foundation](detail-foundation)  

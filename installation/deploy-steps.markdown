@@ -39,6 +39,7 @@ Please see the full list of elements in a [manifest](orbit-manifest-guide) for r
      - _only once_
 7.   Deploy [credentials](detail-credentials) 
      - _only once_
+     -  **_this is OPTIONAL_**
 8.   Deploy [docker images](detail-images) 
      - _once deployed, you may deploy one or all the base workbench images as needed_
 9.   Deploy [environment](detail-environment)

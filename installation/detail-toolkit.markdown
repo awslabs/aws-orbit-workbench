@@ -8,6 +8,8 @@ permalink: detail-toolkit
 ---
 
 # Deploy the AWS Orbit Toolkit
+
+This step will deploy the Oribe Env Toolkit that supports the workbench for deployment artifacts.
 #### Prerequisites
 - [CLI](detail-cli) installed
 - [CodeSeeder](detail-codeseeder) installed
@@ -17,8 +19,26 @@ permalink: detail-toolkit
 
 ----
 ## **Steps to Deploy**
-TBD
+```
+orbit deploy toolkit -f <manifest.yaml>
+```
+```
+Options:
+  -f, --filename TEXT   The target Orbit Workbench manifest file (yaml).
+                        [required]
+
+  --debug / --no-debug  Enable detailed logging.  [default: False]
+  --help                Show this message and exit.
+```
 
 ----
 ## **Steps to Destroy**
-TBD
+```
+orbit destroy toolkit -e <env-name>
+```
+```
+Options:
+  -e, --env TEXT        Environment name is required  [required]
+  --debug / --no-debug  Enable detailed logging.  [default: False]
+  --help                Show this message and exit.
+```  
