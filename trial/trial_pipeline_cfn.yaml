@@ -585,7 +585,7 @@ Parameters:
   Version:
     Type: String
     Description: The version of Orbit from PyPi to deploy (1.3.1 and newer only)
-    Default: '1.3.1'
+    Default: '1.4.0'
   K8AdminRole:
     Type: String
     Description: An existing IAM role name for users that manage K8 in your accound 
