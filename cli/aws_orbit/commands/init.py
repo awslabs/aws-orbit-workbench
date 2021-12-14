@@ -33,41 +33,37 @@ def write_resolve_parameters(
     input = os.path.join(ORBIT_CLI_ROOT, "data", "init", manifest_name)
     with open(input, "r") as file:
         content: str = file.read()
-    content = utils.resolve_parameters(content, dict(region=region_str, name=name))
+    params = dict(
+        region=region_str, 
+        name=name,
+        account_id=utils.get_account_id(),
+
+    )
+    content = utils.resolve_parameters(content,params)
 
     with open(filename, "w") as file:
         file.write(content)
 
 
-def init(name: str, region: Optional[str], foundation: bool, debug: bool) -> None:
+def init(name: str, region: Optional[str], debug: bool) -> None:
     conf_dir = "conf"
     with MessagesContext("Initializing", debug=debug) as ctx:
         conf_dir_src = os.path.join(ORBIT_CLI_ROOT, "data", "init")
         if os.path.exists(conf_dir):
             shutil.rmtree(conf_dir)
-        foundation_manifest = "default-foundation.yaml"
         env_manifest = "default-env-manifest.yaml"
         shutil.copytree(src=conf_dir_src, dst=conf_dir)
         ctx.progress(50)
         name = name.lower()
 
         write_resolve_parameters(
-            name=name,
-            filename=os.path.join(conf_dir, foundation_manifest),
-            region=region,
-            manifest_name=foundation_manifest,
-        )
-        write_resolve_parameters(
             name=name, filename=os.path.join(conf_dir, env_manifest), region=region, manifest_name=env_manifest
         )
-        ctx.info("Env Manifest generated into conf folder")
+        p = os.getcwd()+"/"+conf_dir
+        ctx.info(f"Env Manifest generated into conf folder at {p}")
 
         ctx.progress(100)
-        if foundation:
-            ctx.tip(f"Recommended next step: {stylize(f'orbit deploy foundation -f {foundation_manifest}')}")
 
         ctx.tip(
-            f"Then, fill up the manifest file ({env_manifest}) "
-            f"and run: "
-            f"{stylize(f'orbit env -f {env_manifest}')}"
+            f"Please edit the manifest file ({env_manifest}) "
         )

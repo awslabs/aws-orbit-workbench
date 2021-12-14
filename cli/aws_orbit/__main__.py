@@ -55,7 +55,7 @@ def cli() -> None:
     "--name",
     "-n",
     type=str,
-    help="The name of the Orbit Workbench enviroment. MUST be unique per AWS account.",
+    help="The name of the Orbit Workbench enviroment. MUST be unique per AWS region.",
     required=False,
     default="my-env",
     show_default=True,
@@ -70,9 +70,6 @@ def cli() -> None:
     required=False,
 )
 @click.option(
-    "--foundation/--no-foundation", default=True, help="Create Orbit foundation default manifest.", show_default=True
-)
-@click.option(
     "--debug/--no-debug",
     default=False,
     help="Enable detailed logging.",
@@ -81,7 +78,6 @@ def cli() -> None:
 def init_cli(
     name: str,
     region: Optional[str],
-    foundation: bool,
     debug: bool,
 ) -> None:
     """Creates a Orbit Workbench manifest model file (yaml) where all your deployment settings will rest."""
@@ -89,9 +85,8 @@ def init_cli(
         enable_debug(format=DEBUG_LOGGING_FORMAT)
     _logger.debug("name: %s", name)
     _logger.debug("region: %s", region)
-    _logger.debug("foundation: %s", foundation)
     _logger.debug("debug: %s", debug)
-    init(name=name, region=region, foundation=foundation, debug=debug)
+    init(name=name, region=region,debug=debug)
 
 
 @click.group(name="deploy")
@@ -859,8 +854,7 @@ def run_notebook_container(
 
 
 def main() -> int:
-    # For now , we will not support init command and the deploy page points to manifest examples to be used.
-    # cli.add_command(init_cli)
+    cli.add_command(init_cli)
     cli.add_command(deploy)
     cli.add_command(destroy)
     cli.add_command(remote_cli)
