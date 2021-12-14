@@ -333,7 +333,7 @@ def create_team_context_from_manifest(manifest: "Manifest", team_manifest: "Team
     _logger.debug("Team Base Image: %s - %s", team_manifest.name, manifest.images.jupyter_user)
     base_image_address = (
         f"{account_id}.dkr.ecr.{region}.amazonaws.com/orbit-{manifest.name}/jupyter-user:{version}"
-        if manifest.images.jupyter_user.get_source(account_id=account_id, region=region) == "code"
+        if manifest.images.jupyter_user.repository is None
         else f"{manifest.images.jupyter_user.repository}:{version}"
     )
     final_image_address = base_image_address
