@@ -1,33 +1,39 @@
 Name: ${name}
-Region: ${region}
-CodeartifactDomain: aws-orbit
-CodeartifactRepository: python-repository
-ScratchBucketArn: !SSM ${/orbit/dev-env/demo::ScratchBucketArn}
-UserPoolId: !SSM ${/orbit/dev-env/demo::UserPoolId}
-SharedEfsFsId: !SSM ${/orbit/dev-env/demo::EFSFilesystemID}
-SharedEfsSgId: !SSM ${/orbit/dev-env/demo::SharedEFSSecurityGroup}
+ScratchBucketArn: !SSM ${/orbit-f/${name}/resources::ScratchBucketArn}
+UserPoolId: !SSM ${/orbit-f/${name}/resources::UserPoolId}
+SharedEfsFsId: !SSM ${/orbit-f/${name}/resources::SharedEfsFsId}
+SharedEfsSgId: !SSM ${/orbit-f/${name}/resources::SharedEfsSgId}
+Networking:
+    VpcId: !SSM ${/orbit-f/${name}/resources::VpcId}
+    PublicSubnets: !SSM ${/orbit-f/${name}/resources::PublicSubnets}
+    PrivateSubnets: !SSM ${/orbit-f/${name}/resources::PrivateSubnets}
+    IsolatedSubnets: !SSM ${/orbit-f/${name}/resources::IsolatedSubnets}
+    Data:
+        InternetAccessible: !ENV ${INTERNET_ACCESSIBLE::true}
+        NodesSubnets: !SSM ${/orbit-f/${name}/resources::NodesSubnets}
+    Frontend:
+        LoadBalancersSubnets: !SSM ${/orbit-f/${name}/resources::LoadBalancersSubnets}
+        SslCertArn: !SSM ${/orbit-f/${name}/resources::SslCertArn}
 Images:
     JupyterUser:
-        Repository: aws-orbit-jupyter-user
-        Source: public
+        Repository: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${name}/jupyter-user
         Version: latest
-    JupyterUserSpark:
-        Repository: aws-orbit-jupyter-user-spark
-        Source: public
+    OrbitController:
+        Repository: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${name}/orbit-controller
         Version: latest
-Networking:
-    VpcId: !SSM ${/orbit/dev-env/demo::VpcId}
-    Data:
-        InternetAccessible: true
-        NodesSubnets: []
-    Frontend:
-        LoadBalancersSubnets: []
+    UtilityData:
+        Repository: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${name}/utility-data
+        Version: latest
 Teams:
--   Name: my-team
-    InstanceType: m5.4xlarge
-    LocalStorageSize: 128
-    NodesNumDesired: 2
-    NodesNumMax: 3
-    NodesNumMin: 1
-    Grant-sudo: false
-    Policy: AdministratorAccess
+-   Name: sample-admin
+    Policies:
+    - None
+    GrantSudo: true
+    Fargate: false
+    K8Admin: true
+    JupyterhubInboundRanges:
+    - 0.0.0.0/0
+    EfsLifeCycle: AFTER_7_DAYS
+    Plugins: !include common_plugins.yaml
+    AuthenticationGroups:
+    - sample-admin

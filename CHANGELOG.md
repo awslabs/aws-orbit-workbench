@@ -175,6 +175,7 @@ FIX - Removed the istio-system pod disruption budget before tearing down the EKS
 - FIX: force alb-controller in kubeflow to use env nodes
 - FIX: redshift plugin describe cluster based on specific env and team tags
 - FIX: added region to team when deploying plugins
+- FIX: enable manifest generation from cli
 
 ### **Removed**
 -- REMOVED: call to install ~/.kube/config
