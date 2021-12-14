@@ -50,7 +50,7 @@ def login_v2(account_id: str, region: str) -> None:
     _logger.debug("ECR logged in.")
 
 
-def ecr_pul(name: str, tag: str = "latest") -> None:
+def ecr_pull(name: str, tag: str = "latest") -> None:
     sh.run(f"docker pull {name}:{tag}")
 
 
@@ -79,7 +79,7 @@ def build(
     build_args_str = " ".join([f"--build-arg {ba}" for ba in build_args]) if build_args else ""
     if use_cache:
         try:
-            ecr_pul(name=repo_address, tag=tag)
+            ecr_pull(name=repo_address, tag=tag)
             cache_str = f"--cache-from {repo_address_tag}"
         except exceptions.FailedShellCommand:
             _logger.debug(f"Docker cache not found at ECR {name}:{tag}")
