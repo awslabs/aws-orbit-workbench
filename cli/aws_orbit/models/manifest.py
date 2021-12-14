@@ -109,24 +109,22 @@ class CodeBuildImageManifest(ImageManifest):
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class JupyterUserImageManifest(ImageManifest):
-    repository: Optional[str] = "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/orbit-ENV/jupyter-user"
+    repository: Optional[str] = None
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class OrbitControllerImageManifest(ImageManifest):
-    repository: Optional[str] = "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/orbit-ENV/orbit-controller"
+    repository: Optional[str] = None
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class K8sUtilitiesImageManifest(ImageManifest):
-    repository: Optional[str] = "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/orbit-ENV/k8s-utilities"
-    version: Optional[str] = "1.0.0"
+    repository: Optional[str] = None
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
 class UtilityDataImageManifest(ImageManifest):
-    repository: Optional[str] = "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/orbit-ENV/utility-data"
-    version: Optional[str] = "1.0.0"
+    repository: Optional[str] = None
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
