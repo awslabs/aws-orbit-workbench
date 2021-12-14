@@ -19,7 +19,7 @@ import os
 import random
 import time
 from string import Template
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Iterator, List, Optional, Union
 
 import boto3
 import botocore.exceptions
@@ -102,24 +102,26 @@ def extract_plugin_module_name(func: Callable[..., Union[None, List[str], str]])
     return name
 
 
+def _filter_repos(env_name: str, page: Dict[str, Any]) -> Iterator[str]:
+    for repo in page["repositories"]:
+        if repo["repositoryName"].startswith(f"orbit-{env_name}/"):
+            yield repo["repositoryName"]
+
+
+def _fetch_repos(env_name: str) -> Iterator[str]:
+    client = boto3_client("ecr")
+    paginator = client.get_paginator("describe_repositories")
+    for page in paginator.paginate():
+        for repo_name in _filter_repos(env_name, page=page):
+            yield repo_name
+
+
 def extract_images_names(env_name: str) -> List[str]:
-    resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
-    try:
-        response: resp_type = boto3_client("cloudformation").describe_stacks(StackName=f"orbit-{env_name}")
-    except botocore.exceptions.ClientError as ex:
-        error: Dict[str, Any] = ex.response["Error"]
-        if error["Code"] == "ValidationError" and f"Stack with id orbit-{env_name} does not exist" in error["Message"]:
-            return []
-        raise
-    if len(response["Stacks"]) < 1:
-        return []
-    if "Outputs" not in response["Stacks"][0]:
-        return []
-    for output in response["Stacks"][0]["Outputs"]:
-        if output["ExportName"] == f"orbit-{env_name}-repos":
-            _logger.debug("Export value: %s", output["OutputValue"])
-            return output["OutputValue"].split(",")
-    raise RuntimeError(f"Stack orbit-{env_name} does not have the expected orbit-{env_name}-repos output.")
+    images = []
+    for output in _fetch_repos(env_name=env_name):
+        _logger.debug(f"image found with name {output}")
+        images.append(output.split("/")[1])
+    return images
 
 
 def try_it(
