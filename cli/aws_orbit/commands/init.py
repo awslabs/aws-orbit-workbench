@@ -33,13 +33,8 @@ def write_resolve_parameters(
     input = os.path.join(ORBIT_CLI_ROOT, "data", "init", manifest_name)
     with open(input, "r") as file:
         content: str = file.read()
-    params = dict(
-        region=region_str, 
-        name=name,
-        account_id=utils.get_account_id(),
 
-    )
-    content = utils.resolve_parameters(content,params)
+    content = utils.resolve_parameters(content, dict(region=region_str, name=name, account_id=utils.get_account_id()))
 
     with open(filename, "w") as file:
         file.write(content)
@@ -59,11 +54,9 @@ def init(name: str, region: Optional[str], debug: bool) -> None:
         write_resolve_parameters(
             name=name, filename=os.path.join(conf_dir, env_manifest), region=region, manifest_name=env_manifest
         )
-        p = os.getcwd()+"/"+conf_dir
+        p = os.getcwd() + "/" + conf_dir
         ctx.info(f"Env Manifest generated into conf folder at {p}")
 
         ctx.progress(100)
 
-        ctx.tip(
-            f"Please edit the manifest file ({env_manifest}) "
-        )
+        ctx.tip(f"Please edit the manifest file ({env_manifest}) ")

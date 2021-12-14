@@ -86,7 +86,7 @@ def init_cli(
     _logger.debug("name: %s", name)
     _logger.debug("region: %s", region)
     _logger.debug("debug: %s", debug)
-    init(name=name, region=region,debug=debug)
+    init(name=name, region=region, debug=debug)
 
 
 @click.group(name="deploy")
