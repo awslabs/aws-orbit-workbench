@@ -32,7 +32,6 @@ from botocore.exceptions import ClientError
 
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files.cdk import _lambda_path
-from aws_orbit.remote_files.cdk.team_builders.codeartifact import DeployCodeArtifact
 from aws_orbit.services import cognito as orbit_cognito
 from aws_orbit.utils import boto3_client
 
@@ -73,20 +72,6 @@ class Env(Stack):
             raise ValueError("self.context.networking.vpc_id is None.")
         if self.context.networking.availability_zones is None:
             raise ValueError("self.context.networking.availability_zones is None.")
-
-        # Checks if CodeArtifact exists outside of the scope of Orbit, else creates it.
-        if not self.context.codeartifact_domain and not self.context.codeartifact_repository:
-            if not self._check_ca_domain_existence() and not self._check_ca_repo_existence():
-                _logger.debug("Deploying Codeartifact resources via Orbit Environment")
-                DeployCodeArtifact(self, id="CodeArtifact-from-Env")
-            else:
-                _logger.debug(
-                    "Detected CodeArtifact domain: aws-slrt-orbit & CodeArtifact Repo: python-repository in the account"
-                )
-        else:
-            _logger.debug(
-                "Detected CodeArtifact resources from the framework's metadata, and not deploying Codeartifact"
-            )
 
         self.i_vpc = ec2.Vpc.from_vpc_attributes(
             scope=self,
