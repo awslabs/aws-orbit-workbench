@@ -30,7 +30,6 @@ from aws_cdk import core
 from aws_cdk.core import App, Aspects, CfnOutput, Construct, Duration, Stack, Tags
 
 from aws_orbit.models.context import ContextSerDe, FoundationContext
-from aws_orbit.remote_files.cdk.team_builders.codeartifact import DeployCodeArtifact
 from aws_orbit.remote_files.cdk.team_builders.efs import EfsBuilder
 from aws_orbit.remote_files.cdk.team_builders.s3 import S3Builder
 
@@ -108,14 +107,8 @@ class FoundationStack(Stack):
 
         self.user_pool: cognito.UserPool = self._create_user_pool()
 
-        # Checks if CodeArtifact exists outside of the scope of Orbit, else creates it.
-        if self.context.codeartifact_domain and self.context.codeartifact_repository:
-            self.domain_name = self.context.codeartifact_domain
-            self.repository_name = self.context.codeartifact_repository
-        else:
-            self.codeartifact = DeployCodeArtifact(self, id="CodeArtifact-from-Fndn")
-            self.domain_name = self.codeartifact.artifact_domain.domain_name
-            self.repository_name = self.codeartifact.pypi_repo.repository_name
+        self.domain_name = self.context.toolkit.codeartifact_domain
+        self.repository_name = self.context.toolkit.codeartifact_repo
 
         self._ssm_parameter = ssm.StringParameter(
             self,
@@ -140,9 +133,6 @@ class FoundationStack(Stack):
                     "SslCertArn": self.ssl_cert_arn,
                     "CodeartifactDomain": self.domain_name,
                     "CodeartifactRepository": self.repository_name,
-                    "IsCodeartifactExternal": True
-                    if self.context.codeartifact_domain and self.context.codeartifact_repository
-                    else False,
                 }
             ),
             type=ssm.ParameterType.STRING,
