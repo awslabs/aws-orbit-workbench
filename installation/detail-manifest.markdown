@@ -16,3 +16,26 @@ This document refers to creating a [manifest](orbit-manifest-guide) for your wor
 - [AWS CodeSeeder](detail-codeseeder) installed
 
 ----
+
+## **Steps**
+
+```
+orbit init -n <env-name> -r <region>
+```
+
+
+```
+Options:
+  -n, --name TEXT                 The name of the Orbit Workbench enviroment.
+                                  MUST be unique per AWS account.  [default:
+                                  my-env]
+
+  -r, --region TEXT               AWS Region name (e.g. us-east-1). If None,
+                                  it will be infered.
+
+  --foundation / --no-foundation  Create Orbit foundation default manifest.
+                                  [default: True]
+
+  --debug / --no-debug            Enable detailed logging.  [default: False]
+  --help                          Show this message and exit.
+```
