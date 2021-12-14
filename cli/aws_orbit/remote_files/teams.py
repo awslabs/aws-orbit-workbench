@@ -20,7 +20,7 @@ from typing import Iterator, List, Optional, cast
 import boto3
 
 import aws_orbit
-from aws_orbit import ORBIT_CLI_ROOT, cdk, docker, plugins
+from aws_orbit import ORBIT_CLI_ROOT, cdk, plugins
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext, create_team_context_from_manifest
 from aws_orbit.models.manifest import Manifest, TeamManifest
 from aws_orbit.services import cfn
@@ -90,14 +90,6 @@ def _create_dockerfile(context: "Context", team_context: "TeamContext", image_na
     with open(output_filename, "w") as file:
         file.write(content)
     return outdir
-
-
-def _deploy_team_image(context: "Context", team_context: "TeamContext", image: str) -> None:
-    image_dir: str = _create_dockerfile(context=context, team_context=team_context, image_name=image)
-    image_name: str = f"orbit-{context.name}-{team_context.name}-{image}"
-    _logger.debug("Deploying the %s Docker image", image_name)
-    docker.deploy_image_from_source(context=context, dir=image_dir, name=image_name)
-    _logger.debug("Docker Image Deployed to ECR (%s).", image_name)
 
 
 def _deploy_team_bootstrap(context: "Context", team_context: "TeamContext") -> None:

@@ -19,7 +19,7 @@ import random
 import string
 from typing import List, Optional, cast
 
-from aws_orbit import bundle, remote, toolkit
+from aws_orbit import toolkit
 from aws_orbit.messages import MessagesContext, stylize
 from aws_orbit.models.changeset import Changeset, dump_changeset_to_str, extract_changeset
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext
@@ -33,7 +33,7 @@ from aws_orbit.models.manifest import (
     manifest_validations,
 )
 from aws_orbit.remote_files import deploy
-from aws_orbit.services import cfn, codebuild
+from aws_orbit.services import cfn
 from aws_orbit.services import cognito as orbit_cognito
 from aws_orbit.services import kms, ssm
 from aws_orbit.utils import get_account_id, get_region
@@ -312,7 +312,7 @@ def deploy_images(debug: bool, filename: str, reqested_image: Optional[str] = No
             return
         env = manifest.name
         msg_ctx.info(f"Deploying images for env {env}")
-        deploy.deploy_images_remotely_v2(env=env, requested_image=reqested_image)
+        deploy.deploy_images_remotely(env=env, requested_image=reqested_image)
         msg_ctx.progress(95)
         msg_ctx.progress(100)
 
@@ -332,54 +332,12 @@ def deploy_user_image(
             msg_ctx.error(f"Orbit Environment {env} cannot be found in the current account and region.")
             return
         msg_ctx.progress(2)
-        deploy.deploy_user_image_v2(
+        deploy.deploy_user_image(
             path=path, image_name=image_name, env=env, script=script, build_args=build_args, timeout=timeout
         )
         msg_ctx.progress(95)
         address = f"{get_account_id()}.dkr.ecr.{get_region()}.amazonaws.com/orbit-{env}/users/{image_name}"
 
         msg_ctx.info(f"ECR Image Address={address}")
-        msg_ctx.tip(f"ECR Image Address: {stylize(address, underline=True)}")
-        msg_ctx.progress(100)
-
-
-def _deploy_image(
-    env: str,
-    dir: str,
-    name: str,
-    script: Optional[str],
-    build_args: Optional[List[str]],
-    region: Optional[str],
-    debug: bool,
-) -> None:
-    with MessagesContext("Deploying Docker Image", debug=debug) as msg_ctx:
-        context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
-
-        if cfn.does_stack_exist(stack_name=f"orbit-{context.name}") is False:
-            msg_ctx.error("Please, deploy your environment before deploy any additional docker image")
-            return
-
-        msg_ctx.progress(3)
-
-        bundle_path = bundle.generate_bundle(command_name=f"deploy_image-{name}", context=context, dirs=[(dir, name)])
-        msg_ctx.progress(4)
-        script_str = "NO_SCRIPT" if script is None else script
-        build_args = [] if build_args is None else build_args
-        buildspec = codebuild.generate_spec(
-            context=context,
-            plugins=True,
-            cmds_build=[f"orbit remote --command _deploy_image {env} {name} {dir} {script_str} {' '.join(build_args)}"],
-            changeset=None,
-        )
-        remote.run(
-            command_name=f"deploy_image-{name}",
-            context=context,
-            bundle_path=bundle_path,
-            buildspec=buildspec,
-            codebuild_log_callback=msg_ctx.progress_bar_callback,
-            timeout=30,
-        )
-        msg_ctx.info("Docker Image deploy into ECR")
-        address = f"{context.account_id}.dkr.ecr.{context.region}.amazonaws.com/orbit-{context.name}-{name}"
         msg_ctx.tip(f"ECR Image Address: {stylize(address, underline=True)}")
         msg_ctx.progress(100)
