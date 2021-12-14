@@ -18,7 +18,7 @@ import shutil
 from typing import Optional
 
 from aws_orbit import ORBIT_CLI_ROOT, utils
-from aws_orbit.messages import MessagesContext, stylize
+from aws_orbit.messages import MessagesContext
 
 _logger: logging.Logger = logging.getLogger(__name__)
 
