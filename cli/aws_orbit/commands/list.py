@@ -21,35 +21,20 @@ import click
 from aws_orbit import utils
 from aws_orbit.messages import print_list, stylize
 from aws_orbit.models.context import Context, ContextSerDe
-from aws_orbit.utils import boto3_client
 
 _logger: logging.Logger = logging.getLogger(__name__)
-
-
-def _fetch_repo_uri(names: List[str], context: "Context") -> Dict[str, str]:
-    names = [f"orbit-{context.name}-{x}" for x in names]
-    ret: Dict[str, str] = {x: "" for x in names}
-    client = boto3_client("ecr")
-    paginator = client.get_paginator("describe_repositories")
-    for page in paginator.paginate(repositoryNames=names):
-        for repo in page["repositories"]:
-            ret[repo["repositoryName"]] = repo["repositoryUri"]
-    ret = {k.replace(f"orbit-{context.name}-", ""): v for k, v in ret.items()}
-    return ret
 
 
 def list_images(env: str, region: Optional[str]) -> None:
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
     names = utils.extract_images_names(env_name=env)
-    _logger.debug("names: %s", names)
     if names:
-        uris = _fetch_repo_uri(names=names, context=context)
         print_list(
             tittle=f"Available docker images into the {stylize(context.name)} env:",
-            items=[f"{k} {stylize(':')} {v}" for k, v in uris.items()],
+            items=[k for k in names],
         )
     else:
-        click.echo(f"Thre is no docker images into the {stylize(context.name)} env.")
+        click.echo(f"There is no docker image(s) into the {stylize(context.name)} env.")
 
 
 def list_env(env: str, variable: str) -> None:
