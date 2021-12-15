@@ -38,20 +38,11 @@ permalink: cli-development
 
 ### Cloning the code base locally and enter the CLI component directory
 
-* `git clone https://github.com/awslabs/aws-eks-data-maker`
-* `cd aws-eks-data-maker/cli`
+* See [Clone Repo](detail-clone)
 
-### Setting up a Python Virtual Environment
+### Setting up a development environment
 
-* `python -m venv .venv`
-
-### Load the Python Virtual Environment
-
-* `source .venv/bin/activate`
-
-### Install all packages required for development
-
-* `pip install -r requirements-dev.txt`
+* See [Setup CLI](detail-cli)
 
 ## 3 - Deploying and Destroying
 
@@ -64,7 +55,7 @@ permalink: cli-development
 For deploy operations, the operator needs to provide a manifest.
 The following command generates sample manifests to allow quick initiation.
 
-* `orbit init`
+* See [Manifest](detail-manifest)
 
 ### Deploying Orbit Foundation
 

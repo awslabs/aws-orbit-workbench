@@ -40,8 +40,8 @@ docs:
         url: reusable-conda-environments
   - group: Plugins
     sub:
-      - title: Built-in Plugin Directory
-        url: built-in-plugin-directory
+      - title: Plugins Library
+        url: plugin-library
       - title: Plugins Development Guide
         url: plugin-development-guide
   - group: SSO Provider Integration
@@ -56,8 +56,6 @@ docs:
         url: contribution-guide
       - title: CLI Development
         url: cli-development
-      - title: Deploying From Source
-        url: deploying-from-source
       - title: Orbit Controller
         url: orbit-controller
   - group: Testing

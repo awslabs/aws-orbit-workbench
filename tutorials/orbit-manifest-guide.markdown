@@ -17,8 +17,6 @@ The following manifest example explain the basic structure of a manifest:
 ```yaml
 
 Name: # Name of the Orbit Environment .
-CodeartifactDomain: # The code artifact domain name used to load Python packages by Orbit
-CodeartifactRepository: # The code artifact repository used to load Python packages by Orbit
 EksSystemMastersRoles:
 -   # Any additional IAM roles that should be EKS Admin
 ScratchBucketArn: # The S3 bucket that will be access by all teams. Each team has dedicated isolated folder.
