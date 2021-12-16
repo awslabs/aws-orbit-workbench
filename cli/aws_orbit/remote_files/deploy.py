@@ -222,8 +222,6 @@ def deploy_images_remotely(env: str, requested_image: Optional[str] = None) -> N
     codebuild_role = str(context.toolkit.admin_role)
     _logger.debug(f"The CODEBUILD_ROLE is {codebuild_role}")
 
-    new_images_manifest = {}
-
     if requested_image:
         if os.path.isdir(f"{image_dir}/{requested_image}"):
             _logger.debug(f"Request build of single image {requested_image}")
@@ -235,11 +233,16 @@ def deploy_images_remotely(env: str, requested_image: Optional[str] = None) -> N
             )
             _logger.debug(f"Returned from _deploy_images_batch: {image_name} {image_addr} {version}")
             im = str(image_name).replace("-", "_")
-            new_images_manifest[im] = ImageManifest(repository=str(image_addr), version=str(version))
+            new_image_manifest = ImageManifest(repository=str(image_addr), version=str(version))
+            _logger.debug(f"New image manifest from single built image: {new_image_manifest}")
+            context_latest: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
+            context_latest.images.__dict__[im] = new_image_manifest
+            ContextSerDe.dump_context_to_ssm(context=context_latest)
         else:
             _logger.error("An image was requested to be built, but it doesn't exist in the images/ dir")
 
     else:
+        new_images_manifest = {}
         # first build k8s-utilities
         (image_name, image_addr, version) = _deploy_images_batch(
             path=f"{image_dir}/k8s-utilities",
@@ -271,12 +274,10 @@ def deploy_images_remotely(env: str, requested_image: Optional[str] = None) -> N
             for res in results:
                 im = str(res[0]).replace("-", "_")
                 new_images_manifest[im] = ImageManifest(repository=str(res[1]), version=str(res[2]))
-    _logger.debug(new_images_manifest)
-    # Because this is multihreaded, we need to make sure we have the MOST UP TO DATE context
-    # So, fetch it again and rewrite...
-    context_latest: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
-    context_latest.images = ImagesManifest(**new_images_manifest)  # type: ignore
-    ContextSerDe.dump_context_to_ssm(context=context_latest)
+        _logger.debug(f"New image manifest from all images: {new_images_manifest}")
+        context_latest_all: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
+        context_latest_all.images = ImagesManifest(**new_images_manifest)  # type: ignore
+        ContextSerDe.dump_context_to_ssm(context=context_latest_all)
 
 
 def deploy_user_image(
