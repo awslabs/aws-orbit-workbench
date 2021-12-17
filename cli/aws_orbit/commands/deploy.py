@@ -133,10 +133,8 @@ def deploy_foundation(
             manifest: "FoundationManifest" = ManifestSerDe.load_manifest_from_file(
                 filename=filename, type=FoundationManifest
             )
-            if name :
-                msg_ctx.warn(
-                    f'Reading parameters from {filename}, "name" ignored.'
-                )
+            if name:
+                msg_ctx.warn(f'Reading parameters from {filename}, "name" ignored.')
         elif name:
             if ssl_cert_arn:
                 if not custom_domain_name:
