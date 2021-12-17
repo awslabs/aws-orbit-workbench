@@ -10,7 +10,19 @@ permalink: detail-codeseeder
 # Deploy the AWS CodeSeeder toolkit
 #### Prerequisites
 - [CLI](detail-cli) installed
+- VirtualEnv (.venv) is active and the same that has AWS Orbit installed
+<br>
+
+**_IMPORTANT_**<br>
+You only need ONE Seedkit per AWS Region for ALL Orbit Workbench deployments<br>
 
 ----
 ## **Steps**
-TBD
+1. Install the AWS CodeSeeder python library
+```
+pip install aws-codeseeder
+``` 
+2. Create a Seedkit for orbit  
+```
+codeseeder deploy seedkit orbit
+```
