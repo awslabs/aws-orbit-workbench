@@ -1,6 +1,4 @@
 Name: !ENV ${ORBIT_ENV_NAME::iter-iso}
-CodeartifactDomain: !ENV ${CODEARTIFACT_DOMAIN::}
-CodeartifactRepository: !ENV ${CODEARTIFACT_REPOSITORY::}
 EksSystemMastersRoles:
 -   !ENV ${ORBIT_ADMIN_ROLE::Admin}
 ScratchBucketArn: !SSM ${/orbit-f/iter-iso/resources::ScratchBucketArn}

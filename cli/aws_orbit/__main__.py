@@ -238,16 +238,6 @@ def deploy_env(
     help="The Name of the Orbit Foundation deployment",
 )
 @click.option(
-    "--codeartifact-domain",
-    type=str,
-    help="CodeArtifact Domain to pull packages from.",
-)
-@click.option(
-    "--codeartifact-repository",
-    type=str,
-    help="CodeArtifact Repository to pull packages from.",
-)
-@click.option(
     "--ssl-cert-arn",
     type=str,
     help="SSL Certificate to integrate the ALB with.",
@@ -288,8 +278,8 @@ def deploy_foundation(
     name: Optional[str] = None,
     debug: bool = False,
     internet_accessibility: bool = True,
-    codeartifact_domain: Optional[str] = None,
-    codeartifact_repository: Optional[str] = None,
+    # codeartifact_domain: Optional[str] = None,
+    # codeartifact_repository: Optional[str] = None,
     ssl_cert_arn: Optional[str] = None,
     custom_domain_name: Optional[str] = None,
     max_availability_zones: Optional[int] = None,
@@ -306,8 +296,8 @@ def deploy_foundation(
         filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
     _logger.debug("name: %s", name)
-    _logger.debug("codeartifact_domain: %s", codeartifact_domain)
-    _logger.debug("codeartifact_repository: %s", codeartifact_repository)
+    # _logger.debug("codeartifact_domain: %s", codeartifact_domain)
+    # _logger.debug("codeartifact_repository: %s", codeartifact_repository)
     _logger.debug("ssl_cert_arn: %s", ssl_cert_arn)
     _logger.debug("custom_domain_name: %s", custom_domain_name)
     _logger.debug("max_availability_zones: %s", max_availability_zones)
@@ -315,8 +305,8 @@ def deploy_foundation(
     deploy_commands.deploy_foundation(
         filename=filename,
         name=name,
-        codeartifact_domain=codeartifact_domain,
-        codeartifact_repository=codeartifact_repository,
+        # codeartifact_domain=codeartifact_domain,
+        # codeartifact_repository=codeartifact_repository,
         ssl_cert_arn=ssl_cert_arn,
         custom_domain_name=custom_domain_name,
         debug=debug,

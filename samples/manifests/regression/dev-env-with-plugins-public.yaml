@@ -1,6 +1,4 @@
 Name: !ENV ${ORBIT_ENV_NAME::public2}
-CodeartifactDomain: !ENV ${CODEARTIFACT_DOMAIN::}
-CodeartifactRepository: !ENV ${CODEARTIFACT_REPOSITORY::}
 EksSystemMastersRoles:
 -   !ENV ${ORBIT_ADMIN_ROLE::Admin}
 ScratchBucketArn: !SSM ${/orbit-f/public2/resources::ScratchBucketArn}
