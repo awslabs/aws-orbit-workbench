@@ -17,7 +17,7 @@ import os
 import time
 from typing import Tuple
 
-from softwarelabs_remote_toolkit import remotectl
+from aws_codeseeder import codeseeder
 
 from aws_orbit import ORBIT_CLI_ROOT, cleanup, plugins, sh
 from aws_orbit.exceptions import FailedShellCommand
@@ -60,7 +60,7 @@ def destroy_teams(env_name: str) -> None:
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("context.name %s", context.name)
 
-    @remotectl.remote_function(
+    @codeseeder.remote_function(
         "orbit",
         codebuild_role=context.toolkit.admin_role,
         extra_local_modules={
@@ -111,7 +111,7 @@ def destroy_env(env_name: str) -> None:
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("context.name %s", context.name)
 
-    @remotectl.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
+    @codeseeder.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
     def destroy_env(env_name: str) -> None:
 
         # Helps save time on target group issues with vpc
@@ -150,7 +150,7 @@ def destroy_foundation(env_name: str) -> None:
     context: "FoundationContext" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=FoundationContext)
     _logger.debug("context.name %s", context.name)
 
-    @remotectl.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
+    @codeseeder.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
     def destroy_foundation(env_name: str) -> None:
         foundation.destroy(context=context)
         _logger.debug("Demo Stack destroyed")
@@ -164,7 +164,7 @@ def destroy_credentials(env_name: str, registry: str) -> None:
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("Context loaded.")
 
-    @remotectl.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
+    @codeseeder.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
     def destroy_credentials(env_name: str, registry: str) -> None:
         secret_id = f"orbit-{env_name}-docker-credentials"
         credentials = secretsmanager.get_secret_value(secret_id=secret_id)
@@ -183,7 +183,7 @@ def destroy_images(env: str) -> None:
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env, type=Context)
     _logger.debug("env %s", env)
 
-    @remotectl.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
+    @codeseeder.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
     def destroy_images(env: str) -> None:
         ecr.cleanup_remaining_repos(env_name=env)
 

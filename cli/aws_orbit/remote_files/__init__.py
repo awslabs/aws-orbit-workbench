@@ -15,8 +15,8 @@ import os
 from enum import Enum
 from typing import Callable, Tuple
 
-from softwarelabs_remote_toolkit import LOGGER, remotectl
-from softwarelabs_remote_toolkit.remotectl import RemoteCtlConfig
+from aws_codeseeder import LOGGER, codeseeder
+from aws_codeseeder.codeseeder import RemoteCtlConfig
 
 from aws_orbit import ORBIT_CLI_ROOT
 from aws_orbit.remote_files import delete as delete_image_module
@@ -38,7 +38,7 @@ class RemoteCommands(Enum):
     destroy_credentials = destroy_module.destroy_credentials
 
 
-@remotectl.configure("orbit")
+@codeseeder.configure("orbit")
 def configure(configuration: RemoteCtlConfig) -> None:
     LOGGER.debug("ORBIT_CLI_ROOT %s", ORBIT_CLI_ROOT)
     configuration.timeout = 120
@@ -58,7 +58,7 @@ def configure(configuration: RemoteCtlConfig) -> None:
         }
         configuration.requirements_files = {
             "aws-orbit": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../requirements.txt")),
-            "slrt": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../remote-requirements.txt")),
+            "codeseeder": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../remote-requirements.txt")),
         }
         configuration.dirs = {
             "aws-orbit-sdk": os.path.realpath(os.path.join(ORBIT_CLI_ROOT, "../../sdk")),
@@ -71,7 +71,7 @@ def configure(configuration: RemoteCtlConfig) -> None:
         }
         configuration.requirements_files = {
             "aws-orbit": "/opt/orbit/aws-orbit_jupyter-user/aws-orbit/requirements.txt",
-            "slrt": "/opt/orbit/aws-orbit_jupyter-user/aws-orbit/remote-requirements.txt",
+            "codeseeder": "/opt/orbit/aws-orbit_jupyter-user/aws-orbit/remote-requirements.txt",
         }
         configuration.dirs = {
             "aws-orbit-sdk": "/opt/orbit/aws-orbit_jupyter-user/aws-orbit-sdk",

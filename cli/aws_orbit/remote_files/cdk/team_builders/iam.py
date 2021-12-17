@@ -132,7 +132,7 @@ class IamBuilder:
                     resources=[
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}",
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/samples/*",
-                        f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/remotectl/*",
+                        f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/codeseeder/*",
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/teams/{team_name}/*",
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/helm/repositories/env/*",
                         f"arn:{partition}:s3:::{context.toolkit.s3_bucket}/helm/repositories/teams/{team_name}/*",
@@ -257,7 +257,7 @@ class IamBuilder:
                     ],
                     resources=[
                         f"arn:{partition}:cloudformation:{region}:{account}:stack/orbit-{env_name}/*",
-                        f"arn:{partition}:cloudformation:{region}:{account}:stack/softwarelabs-remote-toolkit-orbit*",
+                        f"arn:{partition}:cloudformation:{region}:{account}:stack/aws-codeseeder-orbit*",
                     ],
                 ),
                 iam.PolicyStatement(
@@ -304,7 +304,7 @@ class IamBuilder:
                     actions=["codebuild:StartBuild", "codebuild:BatchGetBuilds"],
                     resources=[
                         f"arn:{partition}:codebuild:{region}:{account}:project/orbit-{env_name}",
-                        f"arn:{partition}:codebuild:{region}:{account}:project/slrt-orbit",
+                        f"arn:{partition}:codebuild:{region}:{account}:project/codeseeder-orbit",
                     ],
                 ),
                 iam.PolicyStatement(
@@ -317,7 +317,7 @@ class IamBuilder:
                     ],
                     resources=[
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}:log-stream:*",  # noqa
-                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/slrt-orbit:log-stream:*",
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/codeseeder-orbit:log-stream:*",
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws-glue-databrew/*:log-stream:*",
                     ],
                 ),
@@ -334,7 +334,7 @@ class IamBuilder:
                     ],
                     resources=[
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}*:log-stream:*",  # noqa
-                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/slrt-orbit:log-stream:*",
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/codeseeder-orbit:log-stream:*",
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws-glue-databrew/*:log-stream:*",
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/sagemaker/*",
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/sagemaker/*:log-stream:*",
