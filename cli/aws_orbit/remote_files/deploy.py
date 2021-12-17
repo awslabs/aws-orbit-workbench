@@ -155,7 +155,7 @@ def _deploy_images_batch(
         _logger.info(f"running ...{image_name} at {path}")
         _deploy_image(image_name=image_name, env=env, build_args=build_args, use_cache=False)
 
-    #_deploy_images_batch(path, image_name, env, build_execution_role, build_args)
+    # _deploy_images_batch(path, image_name, env, build_execution_role, build_args)
     ecr_address = f"{get_account_id()}.dkr.ecr.{get_region()}.amazonaws.com"
     remote_name = f"{ecr_address}/orbit-{env}/{image_name}"
     return [image_name, remote_name, "latest"]  # type: ignore

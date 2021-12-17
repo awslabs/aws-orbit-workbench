@@ -55,7 +55,9 @@ def synth(context: "Context", top_level: str = "orbit") -> str:
         )
 
     if context.toolkit.codeseeder_policy:
-        template["Resources"]["AdminRole"]["Properties"]["ManagedPolicyArns"].extend([context.toolkit.codeseeder_policy])
+        template["Resources"]["AdminRole"]["Properties"]["ManagedPolicyArns"].extend(
+            [context.toolkit.codeseeder_policy]
+        )
 
     content: str = yaml.dump(template, Dumper=yaml_dumper.get_dumper())
     content = content.replace("$", "").format(

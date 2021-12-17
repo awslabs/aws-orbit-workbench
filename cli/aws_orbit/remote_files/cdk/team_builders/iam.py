@@ -317,7 +317,7 @@ class IamBuilder:
                     ],
                     resources=[
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}:log-stream:*",  # noqa
-                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/codeseeder-orbit:log-stream:*",
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/codeseeder-orbit:log-stream:*",  # noqa
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws-glue-databrew/*:log-stream:*",
                     ],
                 ),
@@ -334,7 +334,7 @@ class IamBuilder:
                     ],
                     resources=[
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/orbit-{env_name}*:log-stream:*",  # noqa
-                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/codeseeder-orbit:log-stream:*",
+                        f"arn:{partition}:logs:{region}:{account}:log-group:/aws/codebuild/codeseeder-orbit:log-stream:*",  # noqa
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws-glue-databrew/*:log-stream:*",
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/sagemaker/*",
                         f"arn:{partition}:logs:{region}:{account}:log-group:/aws/sagemaker/*:log-stream:*",

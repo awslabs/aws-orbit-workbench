@@ -21,10 +21,10 @@ from enum import IntEnum, auto
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, Generic, List, Optional, Type, TypeVar, Union, cast
 
 import botocore.exceptions
+from aws_codeseeder.services import cfn
 from dataclasses import field
 from marshmallow import Schema
 from marshmallow_dataclass import dataclass
-from aws_codeseeder.services import cfn
 
 import aws_orbit
 from aws_orbit import utils
