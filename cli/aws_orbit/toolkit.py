@@ -54,8 +54,10 @@ def synth(context: "Context", top_level: str = "orbit") -> str:
             [f"arn:aws:iam::{context.account_id}:policy/{policy}" for policy in context.policies]
         )
 
-    if context.toolkit.slrt_policy:
-        template["Resources"]["AdminRole"]["Properties"]["ManagedPolicyArns"].extend([context.toolkit.slrt_policy])
+    if context.toolkit.codeseeder_policy:
+        template["Resources"]["AdminRole"]["Properties"]["ManagedPolicyArns"].extend(
+            [context.toolkit.codeseeder_policy]
+        )
 
     content: str = yaml.dump(template, Dumper=yaml_dumper.get_dumper())
     content = content.replace("$", "").format(

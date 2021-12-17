@@ -19,7 +19,7 @@ import os
 import subprocess
 from typing import Any, List, Optional, Tuple
 
-from softwarelabs_remote_toolkit import remotectl
+from aws_codeseeder import codeseeder
 
 from aws_orbit import ORBIT_CLI_ROOT, docker, plugins, sh
 from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
@@ -138,7 +138,7 @@ def _deploy_images_batch(
     _logger.debug(f"extra_dirs: {extra_dirs}")
     _logger.debug(f"build_args: {build_args}")
 
-    @remotectl.remote_function(
+    @codeseeder.remote_function(
         "orbit",
         codebuild_role=build_execution_role,
         extra_dirs=extra_dirs,
@@ -174,7 +174,7 @@ def _deploy_remote_image(
     _logger.debug(f"context loaded: {env}")
     pre_build_commands = []
     extra_dirs = {image_name: path}
-    # the script is relative to the bundle on remotectl
+    # the script is relative to the bundle on codeseeder
     if script:
         pre_build_commands = [f"bash {image_name}/{script}"]
     if os.path.exists(os.path.join(path, "toolkit_helper.json")):
@@ -198,7 +198,7 @@ def _deploy_remote_image(
     _logger.debug(f"extra_dirs: {extra_dirs}")
     _logger.debug(f"build_arg: {build_args}")
 
-    @remotectl.remote_function(
+    @codeseeder.remote_function(
         "orbit",
         codebuild_role=service_role,
         extra_dirs=extra_dirs,
@@ -295,7 +295,7 @@ def deploy_credentials(env_name: str, ciphertext: str) -> None:
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("Context loaded.")
 
-    @remotectl.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
+    @codeseeder.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
     def deploy_credentials(env_name: str, ciphertext: str) -> None:
         new_credentials = json.loads(kms.decrypt(context=context, ciphertext=ciphertext))
         secret_id = f"orbit-{env_name}-docker-credentials"
@@ -324,7 +324,7 @@ def deploy_foundation(env_name: str) -> None:
     context: "FoundationContext" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=FoundationContext)
     _logger.debug("Context loaded.")
 
-    @remotectl.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
+    @codeseeder.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
     def deploy_foundation(env_name: str) -> None:
         docker.login(context=context)
         _logger.debug("DockerHub and ECR Logged in")
@@ -348,7 +348,7 @@ def deploy_env(env_name: str, manifest_dir: str) -> None:
     if manifest is None:
         raise Exception("Unable to load Manifest")
 
-    @remotectl.remote_function(
+    @codeseeder.remote_function(
         "orbit",
         codebuild_role=context.toolkit.admin_role,
         extra_dirs={
@@ -433,7 +433,7 @@ def deploy_teams(env_name: str, manifest_dir: str) -> None:
     changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=env_name)
     _logger.debug("Changeset loaded.")
 
-    @remotectl.remote_function(
+    @codeseeder.remote_function(
         "orbit",
         codebuild_role=context.toolkit.admin_role,
         extra_dirs={

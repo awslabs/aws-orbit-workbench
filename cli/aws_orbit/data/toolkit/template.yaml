@@ -103,7 +103,7 @@ Resources:
             Action:
               - cloudformation:DescribeStacks
             Resource:
-              - arn:aws:cloudformation:${region}:${account_id}:stack/softwarelabs-remote-toolkit*
+              - arn:aws:cloudformation:${region}:${account_id}:stack/aws-codeseeder-toolkit*
 
           - Effect: Allow
             Action:

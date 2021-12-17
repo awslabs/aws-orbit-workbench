@@ -103,7 +103,7 @@ class Env(Stack):
 
     def _check_ca_domain_existence(self) -> bool:
         try:
-            CA_CLIENT.describe_domain(domain="aws-slrt-orbit")
+            CA_CLIENT.describe_domain(domain="aws-codeseeder-orbit")
         except ClientError as ex:
             if ex.response["Error"]["Code"] == "ResourceNotFoundException":
                 return False
@@ -113,7 +113,7 @@ class Env(Stack):
 
     def _check_ca_repo_existence(self) -> bool:
         try:
-            CA_CLIENT.describe_repository(domain="aws-slrt-orbit", repository="python-repository")
+            CA_CLIENT.describe_repository(domain="aws-codeseeder-orbit", repository="python-repository")
         except ClientError as ex:
             if ex.response["Error"]["Code"] == "ResourceNotFoundException":
                 return False

@@ -144,7 +144,7 @@ RUN conda run pip install -r /opt/orbit/aws-orbit_jupyter-user/aws-orbit/require
 RUN conda run pip install /opt/orbit/aws-orbit_jupyter-user/aws-orbit
 RUN conda run pip install /opt/orbit/aws-orbit_jupyter-user/aws-orbit-sdk
 RUN conda run pip install /opt/orbit/aws-orbit_jupyter-user/jupyterlab_orbit
-RUN conda run pip install softwarelabs-remote-toolkit~=0.1.1
+RUN conda run pip install aws-codeseeder~=0.1.0
 RUN rm /etc/pip.conf
 
 #RUN rm -rf /opt/orbit/aws-orbit_jupyter-user

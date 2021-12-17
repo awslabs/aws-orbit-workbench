@@ -21,10 +21,10 @@ from enum import IntEnum, auto
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, Generic, List, Optional, Type, TypeVar, Union, cast
 
 import botocore.exceptions
+from aws_codeseeder.services import cfn
 from dataclasses import field
 from marshmallow import Schema
 from marshmallow_dataclass import dataclass
-from softwarelabs_remote_toolkit.services import cfn
 
 import aws_orbit
 from aws_orbit import utils
@@ -191,7 +191,7 @@ class TeamContext:
 class ToolkitManifest:
     stack_name: str
     codebuild_project: str
-    slrt_policy: Optional[str] = None
+    codeseeder_policy: Optional[str] = None
     deploy_id: Optional[str] = None
     admin_role: Optional[str] = None
     admin_role_arn: Optional[str] = None
@@ -559,13 +559,13 @@ class ContextSerDe(Generic[T, V]):
 
         resp_type = Dict[str, List[Dict[str, List[Dict[str, str]]]]]
 
-        slrt_toolkit_stack_name = cfn.get_stack_name("orbit")
-        slrt_toolkit_stack_exists, stack_outputs = cfn.does_stack_exist(stack_name=slrt_toolkit_stack_name)
+        codeseeder_toolkit_stack_name = cfn.get_stack_name("orbit")
+        codeseeder_toolkit_stack_exists, stack_outputs = cfn.does_stack_exist(stack_name=codeseeder_toolkit_stack_name)
 
-        if slrt_toolkit_stack_exists:
+        if codeseeder_toolkit_stack_exists:
             context.toolkit.kms_arn = stack_outputs["KmsKeyArn"]
             context.toolkit.s3_bucket = stack_outputs["Bucket"]
-            context.toolkit.slrt_policy = stack_outputs["ToolkitResourcesPolicyArn"]
+            context.toolkit.codeseeder_policy = stack_outputs["SeedkitResourcesPolicyArn"]
             context.toolkit.codebuild_project = stack_outputs["CodeBuildProject"]
             context.toolkit.codeartifact_domain = stack_outputs["CodeArtifactDomain"]
             context.toolkit.codeartifact_repo = stack_outputs["CodeArtifactRepository"]

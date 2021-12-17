@@ -14,7 +14,7 @@
 
 import logging
 
-from softwarelabs_remote_toolkit import remotectl
+from aws_codeseeder import codeseeder
 
 from aws_orbit.models.context import Context, ContextSerDe
 from aws_orbit.remote_files import env
@@ -28,7 +28,7 @@ def delete_image(env_name: str, image_name: str) -> None:
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("context.name %s", context.name)
 
-    @remotectl.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
+    @codeseeder.remote_function("orbit", codebuild_role=context.toolkit.admin_role)
     def delete_image(env_name: str, image_name: str) -> None:
         env.deploy(context=context, eks_system_masters_roles_changes=None)
         _logger.debug("Env changes deployed")

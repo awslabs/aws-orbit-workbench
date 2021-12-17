@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## **[1.5.0] - Unreleased **
 
 ### **Added**
-
+- Added support for codeseeder 
 ### **Changed**
 
 - FIX: sleep and retry the ListPolicyTag api call after being throttled in destroy teams
@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: orbit build images funnction to update SSM on build  
 
 ### **Removed**
+- REMOVED software-toolkit / slrt / remotectl
 
 
 ## **[1.4.0] **
