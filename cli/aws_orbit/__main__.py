@@ -278,8 +278,6 @@ def deploy_foundation(
     name: Optional[str] = None,
     debug: bool = False,
     internet_accessibility: bool = True,
-    # codeartifact_domain: Optional[str] = None,
-    # codeartifact_repository: Optional[str] = None,
     ssl_cert_arn: Optional[str] = None,
     custom_domain_name: Optional[str] = None,
     max_availability_zones: Optional[int] = None,
@@ -296,8 +294,6 @@ def deploy_foundation(
         filename = filename if filename[0] in (".", "/") else f"./{filename}"
     _logger.debug("filename: %s", filename)
     _logger.debug("name: %s", name)
-    # _logger.debug("codeartifact_domain: %s", codeartifact_domain)
-    # _logger.debug("codeartifact_repository: %s", codeartifact_repository)
     _logger.debug("ssl_cert_arn: %s", ssl_cert_arn)
     _logger.debug("custom_domain_name: %s", custom_domain_name)
     _logger.debug("max_availability_zones: %s", max_availability_zones)
@@ -305,8 +301,6 @@ def deploy_foundation(
     deploy_commands.deploy_foundation(
         filename=filename,
         name=name,
-        # codeartifact_domain=codeartifact_domain,
-        # codeartifact_repository=codeartifact_repository,
         ssl_cert_arn=ssl_cert_arn,
         custom_domain_name=custom_domain_name,
         debug=debug,
