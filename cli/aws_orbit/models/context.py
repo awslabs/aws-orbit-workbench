@@ -411,8 +411,6 @@ class ContextSerDe(Generic[T, V]):
             context.shared_efs_sg_id = manifest.shared_efs_sg_id
             context.scratch_bucket_arn = manifest.scratch_bucket_arn
             context.policies = manifest.policies
-            context.codeartifact_domain = manifest.codeartifact_domain
-            context.codeartifact_repository = manifest.codeartifact_repository
             context.role_prefix = manifest.role_prefix
             context.cognito_external_provider = manifest.cognito_external_provider
             context.cognito_external_provider_label = manifest.cognito_external_provider_label
@@ -433,8 +431,6 @@ class ContextSerDe(Generic[T, V]):
                     codebuild_project=f"orbit-{manifest.name}",
                 ),
                 cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-{manifest.name}-cdk-toolkit"),
-                codeartifact_domain=manifest.codeartifact_domain,
-                codeartifact_repository=manifest.codeartifact_repository,
                 role_prefix=manifest.role_prefix,
                 scratch_bucket_arn=manifest.scratch_bucket_arn,
                 networking=create_networking_context_from_manifest(networking=manifest.networking),
@@ -468,8 +464,6 @@ class ContextSerDe(Generic[T, V]):
             )
             context.images = manifest.images
             context.policies = manifest.policies
-            context.codeartifact_domain = manifest.codeartifact_domain
-            context.codeartifact_repository = manifest.codeartifact_repository
             context.role_prefix = manifest.role_prefix
             context.networking = create_networking_context_from_manifest(networking=manifest.networking)
         else:
@@ -485,8 +479,6 @@ class ContextSerDe(Generic[T, V]):
                     codebuild_project=f"orbit-f-{manifest.name}",
                 ),
                 cdk_toolkit=CdkToolkitManifest(stack_name=f"orbit-f-{manifest.name}-cdk-toolkit"),
-                codeartifact_domain=manifest.codeartifact_domain,
-                codeartifact_repository=manifest.codeartifact_repository,
                 role_prefix=manifest.role_prefix,
                 networking=create_networking_context_from_manifest(networking=manifest.networking),
                 images=manifest.images,

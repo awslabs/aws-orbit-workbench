@@ -121,8 +121,6 @@ def deploy_foundation(
     name: Optional[str] = None,
     debug: bool = False,
     internet_accessibility: bool = True,
-    codeartifact_domain: Optional[str] = None,
-    codeartifact_repository: Optional[str] = None,
     ssl_cert_arn: Optional[str] = None,
     custom_domain_name: Optional[str] = None,
     max_availability_zones: Optional[int] = None,
@@ -135,11 +133,8 @@ def deploy_foundation(
             manifest: "FoundationManifest" = ManifestSerDe.load_manifest_from_file(
                 filename=filename, type=FoundationManifest
             )
-            if name or codeartifact_domain or codeartifact_repository:
-                msg_ctx.warn(
-                    f'Reading parameters from {filename}, "name", "codeartifact-domain", '
-                    'and "codeartifact-repository" ignored.'
-                )
+            if name:
+                msg_ctx.warn(f'Reading parameters from {filename}, "name" ignored.')
         elif name:
             if ssl_cert_arn:
                 if not custom_domain_name:
@@ -150,8 +145,6 @@ def deploy_foundation(
 
             manifest: FoundationManifest = FoundationManifest(  # type: ignore
                 name=name,
-                codeartifact_domain=codeartifact_domain,
-                codeartifact_repository=codeartifact_repository,
                 ssm_parameter_name=f"/orbit-f/{name}/manifest",
                 role_prefix=role_prefix,
                 networking=NetworkingManifest(

@@ -1,6 +1,4 @@
 Name: !ENV ${ORBIT_ENV_NAME::path}
-CodeartifactDomain: !ENV ${CODEARTIFACT_DOMAIN::}
-CodeartifactRepository: !ENV ${CODEARTIFACT_REPOSITORY::}
 EksSystemMastersRoles:
 -   !ENV ${ORBIT_ADMIN_ROLE::Admin}
 RolePrefix: !ENV ${ORBIT_ROLE_PREFIX::inf}
