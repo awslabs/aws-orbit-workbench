@@ -26,8 +26,6 @@ docs:
     sub:
       - title: Your Team Guideline
         url: your-team-guideline
-      - title: Performing Data Analysis in your Notebooks
-        url: data-analysis-notebook
       - title: Running and Scheduling Tasks as Containers
         url: running-and-scheduling-tasks-as-containers
       - title: Building your docker images
