@@ -16,7 +16,7 @@ from enum import Enum
 from typing import Callable, Tuple
 
 from aws_codeseeder import LOGGER, codeseeder
-from aws_codeseeder.codeseeder import RemoteCtlConfig
+from aws_codeseeder.codeseeder import CodeSeederConfig
 
 from aws_orbit import ORBIT_CLI_ROOT
 from aws_orbit.remote_files import delete as delete_image_module
@@ -39,7 +39,7 @@ class RemoteCommands(Enum):
 
 
 @codeseeder.configure("orbit")
-def configure(configuration: RemoteCtlConfig) -> None:
+def configure(configuration: CodeSeederConfig) -> None:
     LOGGER.debug("ORBIT_CLI_ROOT %s", ORBIT_CLI_ROOT)
     configuration.timeout = 120
     configuration.codebuild_image = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base:2.0.0"
