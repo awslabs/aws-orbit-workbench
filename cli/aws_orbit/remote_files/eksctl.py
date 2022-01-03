@@ -568,6 +568,23 @@ def destroy_env(context: "Context") -> None:
         sh.run(f"eksctl delete cluster -f {output_filename} --wait --verbose 4")
         _logger.debug("EKSCTL Envrionment destroyed")
 
+        # Be sure to remove the reference to IAM Trust for OIDC on the Admin role
+        iam.remove_assume_role_statement(
+            role_name=cast(str, context.toolkit.admin_role),
+            statement={
+                "Effect": "Allow",
+                "Principal": {
+                    "Federated": f"arn:aws:iam::{context.account_id}:oidc-provider/{context.eks_oidc_provider}"
+                },
+                "Action": "sts:AssumeRoleWithWebIdentity",
+                "Condition": {
+                    "StringLike": {
+                        f"{context.eks_oidc_provider}:sub": f"system:serviceaccount:orbit-system:orbit-{context.name}-admin"
+                    }
+                },
+            },
+        )
+
 
 def destroy_teams(context: "Context") -> None:
     stack_name: str = f"orbit-{context.name}"

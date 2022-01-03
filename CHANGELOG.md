@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: missing image ref in the README
 - FIX: updated Images block in manifest - no longer referencing public ECR as default
 - FIX: orbit build images funnction to update SSM on build  
+- FIX: deleted OIDC reference to trust policy of Admin when cluster is deleted
 
 ### **Removed**
 - REMOVED software-toolkit / slrt / remotectl

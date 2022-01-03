@@ -108,3 +108,24 @@ def add_assume_role_statement(role_name: str, statement: Dict[str, Any]) -> None
         policy_body = json.dumps(assume_role_policy)
         _logger.debug("policy_body: %s", policy_body)
         iam_client.update_assume_role_policy(RoleName=role_name, PolicyDocument=policy_body)
+
+
+def remove_assume_role_statement(role_name: str, statement: Dict[str, Any]) -> None:
+    _logger.debug(f"Removing AssumeRolePolicy for {role_name}, Removing: {statement}")
+
+    iam_client = boto3_client("iam")
+    assume_role_policy = iam_client.get_role(RoleName=role_name)["Role"]["AssumeRolePolicyDocument"]
+    statements = assume_role_policy["Statement"]
+
+    if statement in statements:
+        try:
+            _logger.debug("Statement found in AssumeRolePolicy .. removing")
+            statements.remove(statement)
+            assume_role_policy["Statement"] = statements
+            policy_body = json.dumps(assume_role_policy)
+            _logger.debug("policy_body: %s", policy_body)
+            iam_client.update_assume_role_policy(RoleName=role_name, PolicyDocument=policy_body)
+        except iam_client.exceptions.NoSuchEntityException:
+            _logger.error(f"Issues with finding the role....moving on")
+    else:
+        _logger.debug("Statement not found in policy, moving on")
