@@ -579,7 +579,7 @@ def destroy_env(context: "Context") -> None:
                 "Action": "sts:AssumeRoleWithWebIdentity",
                 "Condition": {
                     "StringLike": {
-                        f"{context.eks_oidc_provider}:sub": f"system:serviceaccount:orbit-system:orbit-{context.name}-admin"
+                        f"{context.eks_oidc_provider}:sub": f"system:serviceaccount:orbit-system:orbit-{context.name}-admin"  # noqa
                     }
                 },
             },
