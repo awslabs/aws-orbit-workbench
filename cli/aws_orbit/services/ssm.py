@@ -14,6 +14,7 @@
 
 import json
 import logging
+import time
 from typing import Any, Dict, List, Optional, cast
 
 from aws_orbit.utils import boto3_client
@@ -23,13 +24,25 @@ _logger: logging.Logger = logging.getLogger(__name__)
 
 def put_parameter(name: str, obj: Dict[str, Any]) -> None:
     client = boto3_client(service_name="ssm")
-    client.put_parameter(
-        Name=name,
-        Value=str(json.dumps(obj=obj, sort_keys=True)),
-        Overwrite=True,
-        Tier="Intelligent-Tiering",
-        Type="String",
-    )
+    retries = 3
+    while retries > 0:
+        try:
+            client.put_parameter(
+                Name=name,
+                Value=str(json.dumps(obj=obj, sort_keys=True)),
+                Overwrite=True,
+                Tier="Intelligent-Tiering",
+                Type="String",
+            )
+            break
+        except client.exceptions.TooManyUpdates as err:
+            if retries < 3:
+                _logger.warning("An error occurred (TooManyUpdates) when calling the PutParameter operation. Retrying")
+                retries -= 1
+                time.sleep(2 ** (4 - retries))
+
+            if retries == 0:
+                raise Exception(err)
 
 
 def get_parameter(name: str) -> Dict[str, Any]:
