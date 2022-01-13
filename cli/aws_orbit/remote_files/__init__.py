@@ -42,7 +42,7 @@ class RemoteCommands(Enum):
 def configure(configuration: CodeSeederConfig) -> None:
     LOGGER.debug("ORBIT_CLI_ROOT %s", ORBIT_CLI_ROOT)
     configuration.timeout = 120
-    configuration.codebuild_image = "public.ecr.aws/v3o4w1g6/aws-orbit-workbench/code-build-base:2.0.0"
+    configuration.codebuild_image = "public.ecr.aws/v3o4w1g6/aws-codeseeder/code-build-base:2.0.0"
     configuration.pre_build_commands = [
         (
             "nohup /usr/local/bin/dockerd --host=unix:///var/run/docker.sock"
