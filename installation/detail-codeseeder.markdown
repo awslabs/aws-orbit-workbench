@@ -16,7 +16,7 @@ permalink: detail-codeseeder
 **_IMPORTANT_**<br>
 You only need ONE Seedkit per AWS Region for ALL Orbit Workbench deployments<br>
 <br>
-REF: The AWS CodeSeeder documentation
+REF: The AWS CodeSeeder [documentation](https://aws-codeseeder.readthedocs.io/en/release-0.1.3/)
 <br>
 
 ----
