@@ -10,7 +10,7 @@ docs:
     sub:
       - title: Clone Repo
         url: detail-clone
-      - title: Command Line Interface (CLI)
+      - title: Install CLI
         url: detail-cli
       - title: AWS CodeSeeder
         url: detail-codeseeder
