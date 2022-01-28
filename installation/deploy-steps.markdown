@@ -25,7 +25,7 @@ Please see the full list of elements in a [manifest](orbit-manifest-guide) for r
 ----
 ### Outline
 
-1.   Clone [AWS Labs github repository](detail-fork)
+1.   Clone [AWS Labs github repository](detail-clone)
 2.   Install the [CLI](detail-cli)
      - _only once_
 3.   Install [AWS CodeSeeder](detail-codeseeder) 
