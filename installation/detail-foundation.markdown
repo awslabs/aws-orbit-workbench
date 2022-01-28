@@ -12,7 +12,6 @@ permalink: detail-foundation
 #### Prerequisites
 - [CLI](detail-cli) installed
 - [CodeSeeder](detail-codeseeder) installed
-- [Manifest](detail-manifest) created
 
 **_IMPORTANT_**
 <br>
@@ -26,14 +25,43 @@ For the foundation, you may use an existing foundation. You must have defined th
 If the above is defined, then you can populate the [manifest](orbit-manifest-guide) with these values, removing the need to deploy a separate foundation.
 
 ----
-## **Steps to Deploy**
+## **Steps to Deploy a NEW foundation**
 There are two methods to deploy the foundation:
 1. CLI and manifest (preferred method)
 2. CLI and parameters (supported)
 
 #### CLI and Manifest
+The Orbit Workbench leverages [manifests](orbit-manifest-guide) to define parameters.  For the foundation, we will use a
+subset of the manifest as defined below.  The ONLY required field is **Name**, all others are either set with a default or are None.  
+<br>
+NOTE: the Name field is NOT the same as the Orbit Workbench Name!!
+<br>
+
 ```
-orbit deploy foundation -f <manifest.yaml>
+Name: <name>
+Networking:
+    Data:
+        InternetAccessible: true         #Optional - defaults to true 
+    Frontend:
+        SslCertArn: <ARN of CERT>        #Optional
+        CustomDomainName: <DOMAIN NAME>  #Optional
+    MaxAvailabilityZones: 2              #Optional - defaults to 2
+
+```
+<br>
+Here is an example of a valid foundation template named *foundation_manifest.yaml*: <br>
+
+```
+Name: fdn
+Networking:
+    Data:
+        InternetAccessible: true 
+```
+
+<br>
+
+```
+orbit deploy foundation -f foundation_manifest.yaml
 ```
 #### CLI and Parameters
 There are parameters that you can pass in without needing a manifest:
