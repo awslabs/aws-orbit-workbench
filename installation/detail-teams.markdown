@@ -10,7 +10,7 @@ This step deploys the teams associated with the workbench.
 
 It can be deployed multiple times to support:
 - addition / removal of teams
-- deplpoyment / destruction of [plugins](plugin-library) per team
+- deployment / destruction of [plugins](plugin-library) per team
 # Deploy the AWS Orbit Teams
 #### Prerequisites
 - [CLI](detail-cli) installed
