@@ -310,12 +310,6 @@ def extract_changeset(manifest: "Manifest", context: "Context", msg_ctx: "Messag
     return changeset
 
 
-def dump_changeset_to_ssm(env_name: str, changeset: Changeset) -> None:
-    _logger.debug("Writing changeset to SSM parameter.")
-    manifest_parameter_name: str = f"/orbit/{env_name}/changeset"
-    ssm.put_parameter(name=manifest_parameter_name, obj=Changeset.Schema().dump(changeset))
-
-
 def dump_changeset_to_s3(env_name: str, bucket: str, changeset: Changeset) -> None:
     _logger.debug("Writing changeset to S3 bucket.")
     key = f"deployment/orbit/{env_name}/changeset.json"
