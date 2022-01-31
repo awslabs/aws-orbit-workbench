@@ -120,4 +120,4 @@ def object_exists(bucket: str, key: str) -> bool:
 def get_object(bucket: str, key: str) -> bytes:
     client_s3 = boto3_client("s3")
     response = client_s3.get_object(Bucket=bucket, Key=key)
-    return response["Body"].read()
+    return bytes(response["Body"].read())

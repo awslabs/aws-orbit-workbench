@@ -187,12 +187,13 @@ def main() -> None:
         team_name: str = sys.argv[2]
     else:
         raise ValueError("Unexpected number of values in sys.argv.")
-    bucket = context.toolkit.s3_bucket
+    bucket = str(context.toolkit.s3_bucket)
+    changeset: Optional["Changeset"] = None
     if check_changeset_from_s3_exists(bucket=bucket, env_name=context.name):
-        changeset: Optional["Changeset"] = load_changeset_from_s3(env_name=context.name, bucket=bucket)
+        changeset = load_changeset_from_s3(env_name=context.name, bucket=bucket)
         _logger.debug("Changeset loaded from S3.")
     else:
-        changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=context.name)
+        changeset = load_changeset_from_ssm(env_name=context.name)
         _logger.debug("Changeset loaded from SSM.")
 
     team_policies: Optional[List[str]] = None

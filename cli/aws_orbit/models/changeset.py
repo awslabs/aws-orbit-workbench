@@ -306,7 +306,7 @@ def extract_changeset(manifest: "Manifest", context: "Context", msg_ctx: "Messag
         eks_system_masters_roles_changeset=eks_system_masters_roles_changeset,
         managed_nodegroups_changeset=managed_nodegroups_changeset,
     )
-    dump_changeset_to_s3(env_name=context.name, bucket=context.toolkit.s3_bucket, changeset=changeset)
+    dump_changeset_to_s3(env_name=context.name, bucket=str(context.toolkit.s3_bucket), changeset=changeset)
     return changeset
 
 
@@ -320,7 +320,7 @@ def dump_changeset_to_s3(env_name: str, bucket: str, changeset: Changeset) -> No
     _logger.debug("Writing changeset to S3 bucket.")
     key = f"deployment/orbit/{env_name}/changeset.json"
     body = cast(Dict[str, Any], Changeset.Schema().dump(changeset))
-    s3.upload_bytes(src=json.dumps(body), bucket=bucket, key=key)
+    s3.upload_bytes(src=str.encode(json.dumps(body)), bucket=bucket, key=key)
 
 
 def dump_changeset_to_str(changeset: Changeset) -> str:
