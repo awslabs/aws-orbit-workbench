@@ -22,7 +22,12 @@ from typing import Any, List, Optional, Tuple
 from aws_codeseeder import codeseeder
 
 from aws_orbit import ORBIT_CLI_ROOT, docker, plugins, sh
-from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
+from aws_orbit.models.changeset import (
+    Changeset,
+    check_changeset_from_s3_exists,
+    load_changeset_from_s3,
+    load_changeset_from_ssm,
+)
 from aws_orbit.models.context import Context, ContextSerDe, FoundationContext, TeamContext
 from aws_orbit.models.manifest import ImageManifest, ImagesManifest, Manifest, ManifestSerDe
 from aws_orbit.remote_files import cdk_toolkit, eksctl, env, foundation, helm, kubectl, teams, utils
@@ -342,8 +347,13 @@ def deploy_env(env_name: str, manifest_dir: str) -> None:
     _logger.debug("Manifest loaded.")
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("Context loaded.")
-    changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=env_name)
-    _logger.debug("Changeset loaded.")
+    bucket = context.toolkit.s3_bucket
+    if check_changeset_from_s3_exists(bucket=bucket, env_name=context.name):
+        changeset: Optional["Changeset"] = load_changeset_from_s3(env_name=env_name, bucket=bucket)
+        _logger.debug("Changeset loaded from S3.")
+    else:
+        changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=env_name)
+        _logger.debug("Changeset loaded from SSM.")
 
     if manifest is None:
         raise Exception("Unable to load Manifest")
@@ -430,8 +440,13 @@ def deploy_teams(env_name: str, manifest_dir: str) -> None:
     _logger.debug("env_name: %s", env_name)
     context: "Context" = ContextSerDe.load_context_from_ssm(env_name=env_name, type=Context)
     _logger.debug("Context loaded.")
-    changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=env_name)
-    _logger.debug("Changeset loaded.")
+    bucket = context.toolkit.s3_bucket
+    if check_changeset_from_s3_exists(bucket=bucket, env_name=context.name):
+        changeset: Optional["Changeset"] = load_changeset_from_s3(env_name=env_name, bucket=bucket)
+        _logger.debug("Changeset loaded from S3.")
+    else:
+        changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=env_name)
+        _logger.debug("Changeset loaded.")
 
     @codeseeder.remote_function(
         "orbit",

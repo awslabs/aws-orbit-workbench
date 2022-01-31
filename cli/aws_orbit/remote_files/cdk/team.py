@@ -29,7 +29,12 @@ import jsii
 from aws_cdk import core
 from aws_cdk.core import App, Aspects, Construct, Duration, Environment, IAspect, IConstruct, Stack, Tags
 
-from aws_orbit.models.changeset import Changeset, load_changeset_from_ssm
+from aws_orbit.models.changeset import (
+    Changeset,
+    check_changeset_from_s3_exists,
+    load_changeset_from_s3,
+    load_changeset_from_ssm,
+)
 from aws_orbit.models.context import Context, ContextSerDe, TeamContext
 from aws_orbit.models.manifest import Manifest, ManifestSerDe, TeamManifest
 from aws_orbit.remote_files.cdk.team_builders.ec2 import Ec2Builder
@@ -182,9 +187,13 @@ def main() -> None:
         team_name: str = sys.argv[2]
     else:
         raise ValueError("Unexpected number of values in sys.argv.")
-
-    changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=context.name)
-    _logger.debug("Changeset loaded.")
+    bucket = context.toolkit.s3_bucket
+    if check_changeset_from_s3_exists(bucket=bucket, env_name=context.name):
+        changeset: Optional["Changeset"] = load_changeset_from_s3(env_name=context.name, bucket=bucket)
+        _logger.debug("Changeset loaded from S3.")
+    else:
+        changeset: Optional["Changeset"] = load_changeset_from_ssm(env_name=context.name)
+        _logger.debug("Changeset loaded from SSM.")
 
     team_policies: Optional[List[str]] = None
     image: Optional[str] = None

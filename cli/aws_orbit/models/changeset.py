@@ -14,6 +14,7 @@
 
 # flake8: noqa: F811
 
+import json
 import logging
 import os
 from copy import deepcopy
@@ -26,7 +27,7 @@ from marshmallow_dataclass import dataclass
 
 from aws_orbit.models.common import BaseSchema
 from aws_orbit.models.manifest import ManagedNodeGroupManifest
-from aws_orbit.services import ssm
+from aws_orbit.services import s3, ssm
 
 if TYPE_CHECKING:
     from aws_orbit.messages import MessagesContext
@@ -305,7 +306,7 @@ def extract_changeset(manifest: "Manifest", context: "Context", msg_ctx: "Messag
         eks_system_masters_roles_changeset=eks_system_masters_roles_changeset,
         managed_nodegroups_changeset=managed_nodegroups_changeset,
     )
-    dump_changeset_to_ssm(env_name=context.name, changeset=changeset)
+    dump_changeset_to_s3(env_name=context.name, bucket=context.toolkit.s3_bucket, changeset=changeset)
     return changeset
 
 
@@ -313,6 +314,13 @@ def dump_changeset_to_ssm(env_name: str, changeset: Changeset) -> None:
     _logger.debug("Writing changeset to SSM parameter.")
     manifest_parameter_name: str = f"/orbit/{env_name}/changeset"
     ssm.put_parameter(name=manifest_parameter_name, obj=Changeset.Schema().dump(changeset))
+
+
+def dump_changeset_to_s3(env_name: str, bucket: str, changeset: Changeset) -> None:
+    _logger.debug("Writing changeset to S3 bucket.")
+    key = f"deployment/orbit/{env_name}/changeset.json"
+    body = cast(Dict[str, Any], Changeset.Schema().dump(changeset))
+    s3.upload_bytes(src=json.dumps(body), bucket=bucket, key=key)
 
 
 def dump_changeset_to_str(changeset: Changeset) -> str:
@@ -325,3 +333,17 @@ def load_changeset_from_ssm(env_name: str) -> Optional[Changeset]:
     if content is None:
         return None
     return cast(Changeset, Changeset.Schema().load(data=content, many=False, partial=False, unknown="EXCLUDE"))
+
+
+def load_changeset_from_s3(env_name: str, bucket: str) -> Optional[Changeset]:
+    key = f"deployment/orbit/{env_name}/changeset.json"
+    content = s3.get_object(bucket=bucket, key=key)
+    if content is None:
+        return None
+    c = json.loads(content)
+    return cast(Changeset, Changeset.Schema().load(data=dict(c), many=False, partial=False, unknown="EXCLUDE"))
+
+
+def check_changeset_from_s3_exists(env_name: str, bucket: str) -> bool:
+    key = f"deployment/orbit/{env_name}/changeset.json"
+    return s3.object_exists(bucket=bucket, key=key)
