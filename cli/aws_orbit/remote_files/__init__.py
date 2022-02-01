@@ -41,7 +41,7 @@ class RemoteCommands(Enum):
 @codeseeder.configure("orbit")
 def configure(configuration: CodeSeederConfig) -> None:
     LOGGER.debug("ORBIT_CLI_ROOT %s", ORBIT_CLI_ROOT)
-    configuration.timeout = 120
+    configuration.timeout = 240
     configuration.codebuild_image = "public.ecr.aws/v3o4w1g6/aws-codeseeder/code-build-base:2.0.0"
     configuration.pre_build_commands = [
         (

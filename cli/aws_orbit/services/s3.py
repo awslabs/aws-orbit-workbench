@@ -87,6 +87,11 @@ def upload_file(src: str, bucket: str, key: str) -> None:
     client_s3.upload_file(Filename=src, Bucket=bucket, Key=key)
 
 
+def upload_bytes(src: bytes, bucket: str, key: str) -> None:
+    client_s3 = boto3_client("s3")
+    client_s3.put_object(Body=src, Bucket=bucket, Key=key)
+
+
 def list_s3_objects(bucket: str, key: str) -> Dict[str, Any]:
     client_s3 = boto3_client("s3")
     response = client_s3.list_objects_v2(Bucket=bucket, Prefix=key)
@@ -110,3 +115,9 @@ def object_exists(bucket: str, key: str) -> bool:
             raise
     else:
         return True
+
+
+def get_object(bucket: str, key: str) -> bytes:
+    client_s3 = boto3_client("s3")
+    response = client_s3.get_object(Bucket=bucket, Key=key)
+    return bytes(response["Body"].read())

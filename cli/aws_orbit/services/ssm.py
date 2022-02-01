@@ -93,8 +93,12 @@ def list_parameters(prefix: str) -> List[str]:
 
 def delete_parameters(parameters: List[str]) -> None:
     if parameters:
-        client = boto3_client(service_name="ssm")
-        client.delete_parameters(Names=parameters)
+        if len(parameters) < 10:
+            client = boto3_client(service_name="ssm")
+            client.delete_parameters(Names=parameters)
+        else:
+            delete_parameters(parameters[0:9])
+            delete_parameters(parameters[9 : len(parameters)])
 
 
 def cleanup_env(env_name: str, top_level: str = "orbit") -> None:
