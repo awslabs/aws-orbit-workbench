@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: moved changeset from SSM to S3 to support larger number of teams
 - FIX: increased default codebuild timout
 - FIX: modified SSM to support deleting more than 10 teams at once 
-
+- FIX: updated papermill to 2.3.4 in jupyter-user to fix inabilty to run lake-creator tests
 ### **Removed**
 
 
