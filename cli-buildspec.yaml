@@ -14,33 +14,20 @@ phases:
       - MANIFEST=$CONF_DIR/demo/manifest.yaml
       - python3 -m venv .venv
       - . .venv/bin/activate
+      - export CODEARTIFACT_DOMAIN=aws-codeseeder-orbit
+      - export CODEARTIFACT_REPOSITORY=python-repository
+      - MANIFEST=$CONF_DIR/plugins/dev-env-with-plugins.yaml
+      - ORBIT_FOUNDATION_NAME=dev-env
+      - aws codeartifact login --tool pip --domain ${CODEARTIFACT_DOMAIN} --repository ${CODEARTIFACT_REPOSITORY}
+      - cp ~/.config/pip/pip.conf .
+      - pip install -e ../cli
+      - pip install -e ../sdk
+      - pip install -r requirements.txt
+      - pip install -e ../images/jupyter-hub/utils/
       - |
-        if [ "${VERSION}" = "latest" ]; then
-          export CODEARTIFACT_DOMAIN=aws-orbit
-          export CODEARTIFACT_REPOSITORY=python-repository
-          MANIFEST=$CONF_DIR/plugins/dev-env-with-plugins.yaml
-          ORBIT_FOUNDATION_NAME=dev-env
-          aws codeartifact login --tool pip --domain ${CODEARTIFACT_DOMAIN} --repository ${CODEARTIFACT_REPOSITORY}
-          cp ~/.config/pip/pip.conf .
-          pip install -e ../cli
-          pip install -e ../sdk
-          pip install -r requirements.txt
-          pip install -e ../images/jupyter-hub/utils/
-
-          for module in `ls ../plugins`; do
-            pip install -e ../plugins/"${module}/"
-          done
-        else
-          pip install --upgrade aws-orbit[utils]=="${VERSION}"
-          pip install --upgrade aws-orbit-sdk=="${VERSION}"
-
-          for module in `ls ../plugins`; do
-            MODULE_NAME_FORMATTED=`echo ${module} | sed "s/_/-/g"`
-            MODULE_PKG="aws-orbit-${MODULE_NAME_FORMATTED}"
-
-            pip install --upgrade "${MODULE_PKG}"=="${VERSION}"
-          done
-        fi
+        for module in `ls ../plugins`; do
+          pip install -e ../plugins/"${module}/"
+        done
   build:
     commands:
       - pwd
