@@ -23,7 +23,6 @@ phases:
       - pip install -e ../cli
       - pip install -e ../sdk
       - pip install -r requirements.txt
-      - pip install -e ../images/jupyter-hub/utils/
       - |
         for module in `ls ../plugins`; do
           pip install -e ../plugins/"${module}/"
