@@ -1,4 +1,4 @@
-Name: !ENV ${ORBIT_ENV_NAME::dev-env}
+Name: !ENV ${ORBIT_ENV_NAME::demo-env}
 EksSystemMastersRoles:
 - !ENV ${ORBIT_ADMIN_ROLE::Admin}
 - !ENV ${ORBIT_ADMIN_DEMO_ROLE::Admin}
@@ -17,7 +17,8 @@ Networking:
         NodesSubnets: !SSM ${/orbit-f/demo-fndn/resources::NodesSubnets}
     Frontend:
         LoadBalancersSubnets: !SSM ${/orbit-f/demo-fndn/resources::LoadBalancersSubnets}
-        SslCertArn: !SSM ${/orbit-f/demo-fndn/resources::SslCertArn}
+        SslCertArn: arn:aws:acm:us-west-2:885315059846:certificate/a10e0e40-ef5c-44fc-8dd8-b5fd9fc8a333
+        CustomDomainName: demo.orbit.oss.aws.dev
 ManagedNodegroups:
 -   Name: primary-compute
     InstanceType: m5.2xlarge
@@ -36,7 +37,7 @@ ManagedNodegroups:
 Teams:
 -   Name: lake-admin
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-${AWS_DEFAULT_REGION::}-demo-lake-admin-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::demo-env}-${AWS_DEFAULT_REGION::us-west-2}-demo-lake-admin-add-policy
     GrantSudo: true
     Fargate: false
     K8Admin: true
@@ -48,7 +49,7 @@ Teams:
     - lake-admin
 -   Name: lake-creator
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-${AWS_DEFAULT_REGION::}-demo-lake-creator-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::demo-env}-${AWS_DEFAULT_REGION::us-west-2}-demo-lake-creator-add-policy
     GrantSudo: true
     Fargate: false
     K8Admin: false
@@ -60,10 +61,12 @@ Teams:
     - lake-creator
 -   Name: lake-user
     Policies:
-    - !ENV orbit-${ORBIT_ENV_NAME::dev-env}-${AWS_DEFAULT_REGION::}-demo-lake-user-add-policy
+    - !ENV orbit-${ORBIT_ENV_NAME::demo-env}-${AWS_DEFAULT_REGION::us-west-2}-demo-lake-user-add-policy
     JupyterhubInboundRanges:
     - 0.0.0.0/0
     GrantSudo: true
+    Fargate: false
+    K8Admin: false
     Plugins: !include lake-user-plugins.yaml
     EfsLifeCycle: AFTER_7_DAYS
     AuthenticationGroups:

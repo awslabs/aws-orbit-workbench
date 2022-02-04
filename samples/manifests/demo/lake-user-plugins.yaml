@@ -4,11 +4,6 @@
         CfnTemplatePath: "./manifests/demo-lake-user-cfn-template.yaml"
 -   PluginId: code_commit
     Module: code_commit
--   PluginId: hello_world
-    Module: hello_world
-    Parameters:
-        foo: boo
-        xoo: 1234
 -   PluginId: clean-regression-files
     Module: team_script_launcher
     Parameters:
@@ -42,6 +37,8 @@
         number_of_nodes: "2"
 -   PluginId: enable_emr_on_eks
     Module: emr_on_eks
+-   PluginId: sm-operator
+    Module: sm-operator
 # provide ability for containers to create fast fs for data science loads
 # -   PluginId: fast_fs_lustre
 #     Module: lustre
@@ -50,5 +47,3 @@
 #     Parameters:
 #         workers: 2
 #         release_tag: 1.3.0
-# -   PluginId: sm-operator
-#     Module: sm-operator

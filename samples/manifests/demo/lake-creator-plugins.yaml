@@ -15,11 +15,6 @@
         CfnTemplatePath: "./manifests/demo-lake-creator-cfn-template.yaml"
 -   PluginId: code_commit
     Module: code_commit
--   PluginId: hello_world
-    Module: hello_world
-    Parameters:
-        foo: boo
-        xoo: 1234
 -   PluginId: clean_regression_files
     Module: team_script_launcher
     Parameters:
