@@ -236,7 +236,7 @@ def package_team_space_pkg(context: Context, repo: str, team_charts_path: str, t
         values={
             "env_name": context.name,
             "team": team_context.name,
-            "efsid": context.shared_efs_fs_id,
+            "efsid": team_context.team_efs_fs_id if team_context.team_efs_fs_id else context.shared_efs_fs_id,
             "efsapid": team_context.efs_ap_id,
             "region": context.region,
             "cluster_pod_security_group_id": context.cluster_pod_sg_id,
@@ -264,7 +264,7 @@ def package_user_space_pkg(context: Context, repo: str, team_charts_path: str, t
         values={
             "env_name": context.name,
             "team": team_context.name,
-            "efsid": context.shared_efs_fs_id,
+            "efsid": team_context.team_efs_fs_id if team_context.team_efs_fs_id else context.shared_efs_fs_id,
             "efsapid": team_context.efs_ap_id,
             "region": context.region,
             "cluster_pod_security_group_id": context.cluster_pod_sg_id,

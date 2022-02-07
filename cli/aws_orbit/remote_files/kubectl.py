@@ -192,7 +192,7 @@ def _team(context: "Context", team_context: "TeamContext", output_path: str) -> 
         content,
         dict(
             team=team_context.name,
-            efsid=context.shared_efs_fs_id,
+            efsid=team_context.team_efs_fs_id if team_context.team_efs_fs_id else context.shared_efs_fs_id,
             efsapid=team_context.efs_ap_id,
             efsprivateapid=team_context.efs_private_ap_id if team_context.efs_private_ap_id else "",
             account_id=context.account_id,

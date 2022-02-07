@@ -60,6 +60,7 @@ class TeamManifest:
     plugins: List[PluginManifest] = field(default_factory=list)
     efs_life_cycle: Optional[str] = None
     authentication_groups: Optional[List[str]] = None
+    team_efs_fs_id: Optional[str] = None
 
 
 @dataclass(base_schema=BaseSchema, frozen=True)
