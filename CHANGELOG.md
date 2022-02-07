@@ -4,7 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 #
 
-## **[1.5.1] - Unreleased **
+## **[1.5.2] - [Unreleased]**
+
+### **Added**
+
+- New TeamEfsFsId in Team Manifest enabling team specific EFS shares
+
+### **Changed**
+
+### **Removed**
+
+
+## **[1.5.1] **
 
 ### **Added**
 
@@ -12,8 +23,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - FIX: moved changeset from SSM to S3 to support larger number of teams
 - FIX: increased default codebuild timout
-- FIX: modified SSM to support deleting more than 10 teams at once 
+- FIX: modified SSM to support deleting more than 10 teams at once
 - FIX: updated papermill to 2.3.4 in jupyter-user to fix inabilty to run lake-creator tests
+
 ### **Removed**
 
 
@@ -21,13 +33,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## **[1.5.0] **
 
 ### **Added**
-- Added support for codeseeder 
+- Added support for codeseeder
 ### **Changed**
 
 - FIX: sleep and retry the ListPolicyTag api call after being throttled in destroy teams
 - FIX: missing image ref in the README
 - FIX: updated Images block in manifest - no longer referencing public ECR as default
-- FIX: orbit build images funnction to update SSM on build  
+- FIX: orbit build images funnction to update SSM on build
 - FIX: deleted OIDC reference to trust policy of Admin when cluster is deleted
 
 ### **Removed**

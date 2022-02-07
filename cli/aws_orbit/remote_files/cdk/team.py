@@ -53,6 +53,7 @@ class Team(Stack):
         team_name: str,
         team_policies: List[str],
         image: Optional[str],
+        efs_fs_id: Optional[str] = None,
     ) -> None:
         self.scope = scope
         self.id = id
@@ -143,7 +144,7 @@ class Team(Stack):
             efs.FileSystem.from_file_system_attributes(
                 scope=self,
                 id=shared_fs_name,
-                file_system_id=context.shared_efs_fs_id,
+                file_system_id=efs_fs_id if efs_fs_id else context.shared_efs_fs_id,
                 security_group=ec2.SecurityGroup.from_security_group_id(
                     scope=self, id="team_sec_group", security_group_id=context.shared_efs_sg_id
                 ),
@@ -207,6 +208,7 @@ def main() -> None:
         if team_manifest:
             team_policies = team_manifest.policies
             image = team_manifest.image
+            efs_fs_id = team_manifest.team_efs_fs_id
         else:
             raise ValueError(f"{team_name} not found in manifest!")
     else:
@@ -214,6 +216,7 @@ def main() -> None:
         if team_context:
             team_policies = team_context.policies
             image = team_context.image
+            efs_fs_id = team_context.team_efs_fs_id
         else:
             raise ValueError(f"Team {team_name} not found in the context.")
 
@@ -237,7 +240,13 @@ def main() -> None:
                 node.path = f"/{context.role_prefix}/" if context.role_prefix else "/"
 
     team_stack = Team(
-        scope=app, id=stack_name, context=context, team_name=team_name, team_policies=team_policies, image=image
+        scope=app,
+        id=stack_name,
+        context=context,
+        team_name=team_name,
+        team_policies=team_policies,
+        image=image,
+        efs_fs_id=efs_fs_id,
     )
     Aspects.of(scope=cast(IConstruct, team_stack)).add(cast(IAspect, AddDeployPathIAM()))
     app.synth(force=True)

@@ -170,6 +170,7 @@ class TeamContext:
     k8_admin: bool = False
     team_helm_repository: Optional[str] = None
     user_helm_repository: Optional[str] = None
+    team_efs_fs_id: Optional[str] = None
 
     # Manifest default
     authentication_groups: Optional[List[str]] = None
