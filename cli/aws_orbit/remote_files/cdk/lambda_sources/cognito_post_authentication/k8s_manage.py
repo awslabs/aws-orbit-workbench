@@ -27,7 +27,6 @@ KUBECONFIG_PATH = "/tmp/.kubeconfig"
 
 ssm = boto3.client("ssm")
 context = ssm.get_parameter(Name=f"/orbit/{ORBIT_ENV}/context")
-EFS_FS_ID = json.loads(context.get("Parameter").get("Value")).get("SharedEfsFsId")
 
 
 def handler(event: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Any:
@@ -115,6 +114,11 @@ def create_user_namespace(
     if not env:
         raise ValueError("Orbit Environment ORBIT_ENV is required")
     for team, user_ns in expected_user_namespaces.items():
+        team_context = ssm.get_parameter(Name=f"/orbit/{ORBIT_ENV}/teams/{team}/context")
+        SHARED_EFS_FS_ID = json.loads(team_context.get("Parameter").get("Value")).get("EfsId")
+        TEAM_EFS_FS_ID = json.loads(team_context.get("Parameter").get("Value")).get("TeamEfsFsId")
+        EFS_FS_ID = TEAM_EFS_FS_ID if TEAM_EFS_FS_ID else SHARED_EFS_FS_ID
+
         try:
             team_namespace = api.read_namespace(name=team).to_dict()
             team_uid = team_namespace.get("metadata", {}).get("uid", None)
