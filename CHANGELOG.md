@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### **Added**
 
 - New TeamEfsFsId in Team Manifest enabling team specific EFS shares
-
+- New TeamEfsFsId support in creation of userspace
 ### **Changed**
 
 ### **Removed**
