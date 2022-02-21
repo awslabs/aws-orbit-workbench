@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### **Added**
 
 ### **Changed**
-- FIX: added sm-operator pluting ability to pull region-specifc sm images
+- FIX: added sm-operator plugin ability to pull region-specifc sm images
 
 ### **Removed**
 
