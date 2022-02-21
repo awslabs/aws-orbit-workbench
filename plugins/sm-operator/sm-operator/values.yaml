@@ -10,5 +10,5 @@ serviceAccountName: default-editor
 team: ${team}
 
 image:
-  repository: public.ecr.aws/v3o4w1g6/aws-orbit-workbench/amazon/amazon-sagemaker-operator-for-k8s
-  tag: v1
+  repository: ${sm_image}
+  tag: ${sm_version}
