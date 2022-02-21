@@ -14,7 +14,7 @@
 
 import logging
 import os
-from typing import TYPE_CHECKING, Any, Dict, Optional, cast
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, cast
 
 from aws_orbit import sh, utils
 from aws_orbit.plugins import hooks
@@ -24,6 +24,16 @@ if TYPE_CHECKING:
     from aws_orbit.models.context import Context, TeamContext
 _logger: logging.Logger = logging.getLogger("aws_orbit")
 CHART_PATHS = os.path.join(os.path.dirname(__file__))
+
+
+def _get_image(region) -> Tuple[str, str]:
+    images_dict = {
+        "us-east-1": "957583890962.dkr.ecr.us-east-1.amazonaws.com/amazon-sagemaker-operator-for-k8s:v1",
+        "us-east-2": "922499468684.dkr.ecr.us-east-2.amazonaws.com/amazon-sagemaker-operator-for-k8s:v1",
+        "us-west-2": "640106867763.dkr.ecr.us-west-2.amazonaws.com/amazon-sagemaker-operator-for-k8s:v1",
+        "us-west-1": "613661167059.dkr.ecr.eu-west-1.amazonaws.com/amazon-sagemaker-operator-for-k8s:v1",
+    }
+    return images_dict[region].split(":")
 
 
 @hooks.deploy
@@ -43,12 +53,16 @@ def deploy(
     if helm.is_exists_chart_release(release_name, team_context.name):
         _logger.info("Chart %s already installed, removing to begin new install", release_name)
 
+    sm_image, sm_version = _get_image(context.region)
+
     vars: Dict[str, Optional[str]] = dict(
         team=team_context.name,
         region=context.region,
         account_id=context.account_id,
         env_name=context.name,
         plugin_id=plugin_id,
+        sm_image=sm_image,
+        sm_version=sm_version,
     )
 
     chart_path = helm.create_team_charts_copy(team_context=team_context, path=CHART_PATHS, target_path=plugin_id)
