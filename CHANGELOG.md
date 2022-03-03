@@ -10,7 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### **Changed**
 - FIX: added sm-operator plugin ability to pull region-specifc sm images
-- FIX: updated sm-operator notebook regression test
+- FIX: updated sm-operator notebook regression test - data parsing
+- FIX: updated sm-operator notebook to fetch xgboost image based off region
 
 ### **Removed**
 
