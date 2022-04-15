@@ -52,7 +52,7 @@ ipython-genutils==0.2.0
     #   jupyter-server
     #   nbformat
     #   notebook
-ipython==7.29.0
+ipython==7.31.1
     # via
     #   ipykernel
     #   jupyterlab
