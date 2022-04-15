@@ -85,7 +85,7 @@ jupyter-core==4.9.1
     #   nbconvert
     #   nbformat
     #   notebook
-jupyter-server==1.11.2
+jupyter-server==1.15.4
     # via
     #   jupyterlab
     #   jupyterlab-server
