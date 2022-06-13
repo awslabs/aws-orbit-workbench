@@ -26,4 +26,3 @@ plotly~=4.14.3
 scikit-learn~=0.24.1
 bokeh~=2.3.1
 git-remote-codecommit==1.15.1
-cookiecutter~=2.1.1
