@@ -122,7 +122,7 @@ nest-asyncio==1.5.1
     # via
     #   jupyter-client
     #   nbclient
-notebook==6.4.10
+notebook==6.4.12
     # via nbclassic
 packaging==21.2
     # via
