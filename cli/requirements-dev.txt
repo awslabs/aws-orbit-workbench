@@ -822,7 +822,7 @@ networkx==2.6.3
     # via cfn-lint
 notebook==6.4.12
     # via nbclassic
-numpy==1.21.3
+numpy==1.22.0
     # via pandas
 oauthlib==3.1.1
     # via requests-oauthlib
