@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - FIX: updated sm-operator notebook regression test - data parsing
 - FIX: updated sm-operator notebook to fetch xgboost image based off region
 - FIX: version locked jsii and constructs libraries in remote-requirements.txt to address CDK hang
+- FIX: sample manifest from init command missing a compute node-group
 
 ### **Removed**
 
