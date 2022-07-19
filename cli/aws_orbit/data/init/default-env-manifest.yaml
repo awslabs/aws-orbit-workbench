@@ -24,6 +24,15 @@ Images:
     UtilityData:
         Repository: ${account_id}.dkr.ecr.${region}.amazonaws.com/orbit-${name}/utility-data
         Version: latest
+ManagedNodegroups:
+-   Name: primary-compute
+    InstanceType: m5.2xlarge
+    LocalStorageSize: 128
+    NodesNumDesired: 1
+    NodesNumMax: 4
+    NodesNumMin: 0
+    Labels:
+        instance-type: m5.2xlarge
 Teams:
 -   Name: sample-admin
     Policies:
