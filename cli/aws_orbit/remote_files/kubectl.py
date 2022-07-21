@@ -645,10 +645,11 @@ def deploy_env(context: "Context") -> None:
                 name="imagereplication-operator", namespace="orbit-system", type="deployment", k8s_context=k8s_context
             )
             _confirm_endpoints(name="imagereplication-pod-webhook", namespace="orbit-system", k8s_context=k8s_context)
-            sh.run(
-                "kubectl rollout restart daemonsets -n orbit-system-ssm-daemons "
-                f"ssm-agent-installer --context {k8s_context}"
-            )
+            if context.install_ssm_agent:
+                sh.run(
+                    "kubectl rollout restart daemonsets -n orbit-system-ssm-daemons "
+                    f"ssm-agent-installer --context {k8s_context}"
+                )
 
         # kube-system kustomizations
         output_paths = _generate_kube_system_kustomizations(context=context)

@@ -3,6 +3,7 @@ ScratchBucketArn: !SSM ${/orbit-f/${name}/resources::ScratchBucketArn}
 UserPoolId: !SSM ${/orbit-f/${name}/resources::UserPoolId}
 SharedEfsFsId: !SSM ${/orbit-f/${name}/resources::SharedEfsFsId}
 SharedEfsSgId: !SSM ${/orbit-f/${name}/resources::SharedEfsSgId}
+InstallSsmAgent: true
 Networking:
     VpcId: !SSM ${/orbit-f/${name}/resources::VpcId}
     PublicSubnets: !SSM ${/orbit-f/${name}/resources::PublicSubnets}
