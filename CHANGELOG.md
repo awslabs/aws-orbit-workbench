@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### **Changed**
 - FIX: fail to check for ssm-agent installation when deploying in isolated subnets
 - FIX: sample manifest from init command missing InstallSsmAgent: true recommendation
+- FIX: updated Sagemaker library and related dependencies
 
 ### **Removed**
 
