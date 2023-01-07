@@ -8,8 +8,6 @@
     # via -r requirements-dev.in
 appdirs==1.4.4
     # via black
-appnope==0.1.2
-    # via ipython
 backcall==0.2.0
     # via ipython
 black==20.8b1
@@ -17,7 +15,7 @@ black==20.8b1
 bleach==4.1.0
     # via readme-renderer
 boto3==1.19.10
-    # via aws-orbit-sdk
+    # via sanitized-package
 botocore==1.22.10
     # via
     #   boto3
@@ -30,6 +28,8 @@ certifi==2021.10.8
     # via
     #   kubernetes
     #   requests
+cffi==1.15.1
+    # via cryptography
 charset-normalizer==2.0.7
     # via requests
 check-manifest==0.47
@@ -40,6 +40,8 @@ click==8.0.3
     #   pip-tools
 colorama==0.4.4
     # via twine
+cryptography==38.0.4
+    # via secretstorage
 decorator==5.1.0
     # via ipython
 docutils==0.18
@@ -55,11 +57,15 @@ idna==3.3
 importlib-metadata==4.8.1
     # via keyring
 ipython==7.23.1
-    # via aws-orbit-sdk
+    # via sanitized-package
 isort==5.7.0
     # via -r requirements-dev.in
 jedi==0.18.0
     # via ipython
+jeepney==0.8.0
+    # via
+    #   keyring
+    #   secretstorage
 jmespath==0.10.0
     # via
     #   boto3
@@ -67,17 +73,17 @@ jmespath==0.10.0
 keyring==23.2.1
     # via twine
 kubernetes==12.0.1
-    # via aws-orbit-sdk
+    # via sanitized-package
 matplotlib-inline==0.1.3
     # via ipython
 mccabe==0.6.1
     # via flake8
+mypy==0.910
+    # via -r requirements-dev.in
 mypy-extensions==0.4.3
     # via
     #   black
     #   mypy
-mypy==0.910
-    # via -r requirements-dev.in
 numpy==1.22.0
     # via pandas
 oauthlib==3.1.1
@@ -87,7 +93,7 @@ packaging==21.2
     #   bleach
     #   build
 pandas==1.2.0
-    # via aws-orbit-sdk
+    # via sanitized-package
 parso==0.8.2
     # via jedi
 pathspec==0.9.0
@@ -105,17 +111,19 @@ pkginfo==1.7.1
 prompt-toolkit==3.0.22
     # via ipython
 psycopg2-binary==2.8.6
-    # via aws-orbit-sdk
+    # via sanitized-package
 ptyprocess==0.7.0
     # via pexpect
-pyasn1-modules==0.2.8
-    # via google-auth
 pyasn1==0.4.8
     # via
     #   pyasn1-modules
     #   rsa
+pyasn1-modules==0.2.8
+    # via google-auth
 pycodestyle==2.6.0
     # via flake8
+pycparser==2.21
+    # via cffi
 pyflakes==2.2.0
     # via flake8
 pygments==2.10.0
@@ -133,46 +141,48 @@ python-dateutil==2.8.2
     #   kubernetes
     #   pandas
 python-slugify==4.0.1
-    # via aws-orbit-sdk
+    # via sanitized-package
 pytz==2021.3
     # via pandas
 pyyaml==5.4.1
     # via
-    #   aws-orbit-sdk
     #   kubernetes
+    #   sanitized-package
 readme-renderer==30.0
     # via twine
 regex==2021.11.2
     # via black
+requests==2.26.0
+    # via
+    #   kubernetes
+    #   requests-oauthlib
+    #   requests-toolbelt
+    #   sanitized-package
+    #   twine
 requests-oauthlib==1.3.0
     # via kubernetes
 requests-toolbelt==0.9.1
     # via twine
-requests==2.26.0
-    # via
-    #   aws-orbit-sdk
-    #   kubernetes
-    #   requests-oauthlib
-    #   requests-toolbelt
-    #   twine
 rfc3986==1.5.0
     # via twine
 rsa==4.7.2
     # via google-auth
 s3transfer==0.5.0
     # via boto3
+secretstorage==3.3.3
+    # via keyring
 six==1.16.0
     # via
     #   bleach
     #   google-auth
     #   kubernetes
     #   python-dateutil
-sqlalchemy-redshift==0.7.9
-    # via aws-orbit-sdk
 sqlalchemy==1.3.15
     # via
-    #   aws-orbit-sdk
+    #   sanitized-package
     #   sqlalchemy-redshift
+sqlalchemy-redshift==0.7.9
+    # via sanitized-package
 text-unidecode==1.3
     # via python-slugify
 toml==0.10.2
@@ -221,7 +231,7 @@ webencodings==0.5.1
     # via bleach
 websocket-client==1.2.1
     # via kubernetes
-wheel==0.36.2
+wheel==0.38.1
     # via -r requirements-dev.in
 zipp==3.6.0
     # via importlib-metadata
