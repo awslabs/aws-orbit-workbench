@@ -37,7 +37,7 @@ click==7.1.2
     #   flask
     #   kopf
     #   orbit-controller (setup.py)
-cryptography==3.4.8
+cryptography==39.0.1
     # via orbit-controller (setup.py)
 decorator==5.1.0
     # via jsonpath-ng
