@@ -40,7 +40,7 @@ click==8.0.3
     #   pip-tools
 colorama==0.4.4
     # via twine
-cryptography==38.0.4
+cryptography==39.0.1
     # via secretstorage
 decorator==5.1.0
     # via ipython
