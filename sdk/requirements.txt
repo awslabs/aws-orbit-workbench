@@ -28,7 +28,7 @@ google-auth==2.3.3
     # via kubernetes
 idna==3.3
     # via requests
-ipython==7.31.1
+ipython==8.10.0
     # via aws-orbit-sdk (setup.py)
 jedi==0.18.0
     # via ipython
