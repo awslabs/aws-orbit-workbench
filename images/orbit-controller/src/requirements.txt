@@ -83,7 +83,7 @@ multidict==5.2.0
     # via
     #   aiohttp
     #   yarl
-oauthlib==3.2.1
+oauthlib==3.2.2
     # via requests-oauthlib
 ply==3.11
     # via jsonpath-ng
