@@ -43,7 +43,7 @@ decorator==5.1.0
     # via jsonpath-ng
 ecdsa==0.14.1
     # via python-jose
-flask==1.1.4
+flask==2.3.2
     # via orbit-controller (setup.py)
 frozenlist==1.2.0
     # via
