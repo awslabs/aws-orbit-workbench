@@ -111,7 +111,7 @@ pyyaml==5.4.1
     #   orbit-controller (setup.py)
 requests-oauthlib==1.3.0
     # via kubernetes
-requests==2.25.1
+requests==2.31.0
     # via
     #   kubernetes
     #   orbit-controller (setup.py)
