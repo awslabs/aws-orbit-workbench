@@ -28,7 +28,7 @@ setup(
         "click~=7.1.0",
         "kubernetes~=12.0.1",
         "pyyaml~=5.4",
-        "requests~=2.25.1",
+        "requests>=2.25.1,<2.32.0",
         "jsonpatch~=1.32",
         "flask~=1.1.2",
         "gunicorn~=20.1.0",
