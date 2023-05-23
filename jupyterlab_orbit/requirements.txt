@@ -167,7 +167,7 @@ pyzmq==22.3.0
     #   jupyter-client
     #   jupyter-server
     #   notebook
-requests==2.26.0
+requests==2.31.0
     # via jupyterlab-server
 send2trash==1.8.0
     # via
