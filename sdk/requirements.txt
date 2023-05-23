@@ -81,7 +81,7 @@ pyyaml==5.4.1
     #   kubernetes
 requests-oauthlib==1.3.0
     # via kubernetes
-requests==2.26.0
+requests==2.31.0
     # via
     #   aws-orbit-sdk (setup.py)
     #   kubernetes
