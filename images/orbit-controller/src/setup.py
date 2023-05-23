@@ -30,7 +30,7 @@ setup(
         "pyyaml~=5.4",
         "requests>=2.25.1,<2.32.0",
         "jsonpatch~=1.32",
-        "flask~=1.1.2",
+        "flask>=1.1.2,<2.3.0",
         "gunicorn~=20.1.0",
         "jsonpath-ng~=1.5.0",
         "cryptography>=3.4.7,<39.1.0",
