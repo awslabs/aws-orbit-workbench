@@ -149,7 +149,7 @@ ptyprocess==0.7.0
     #   terminado
 pycparser==2.20
     # via cffi
-pygments==2.10.0
+pygments==2.15.0
     # via
     #   ipython
     #   jupyterlab-pygments
