@@ -7,6 +7,9 @@
 
 <a href="url"><img src="https://github.com/awslabs/aws-orbit-workbench/blob/main/misc/images/orbit1.jpg?raw=true" align="right" height="30%" width="30%" style="float:right"></a>
 
+AWS Orbit Workbench is currently archived and is accessible via READ-ONLY means.
+
+
 Orbit Workbench is an open framework for building team-based secured data environment. Orbit workbench is built on Kubernetes using Amazon Managed Kubernetes Service (EKS), and provides both a command line tool for rapid deployment as well as Python SDK, Jupyter Plugins and more to accelerate data analysis and ML by integration with AWS analytics services such as Amazon Redshift, Amazon Athena, Amazon EMR, Amazon SageMaker and more. 
 
 Orbit Workbench deploys secured team spaces that are mapped to Kubernetes namespaces and span into AWS cloud resources.  Each team is a secured zone where only members of the team can access allowed data and share data and code freely within the team.  Orbit automatically creates file storage for each team using Amazon EFS,  security group and IAM role for each team , as well as their own JupyterHub and Jupyter Server.  Orbit workbench users are also capable of launching python code or Jupyter Notebooks as Kubernetes containers or as Amazon Fargate containers. Orbit workbench provides CLI tool for users to build their own custom images and use it to deploy containers or customize their Jupyter environment.
