@@ -33,7 +33,7 @@ setup(
         "flask~=1.1.2",
         "gunicorn~=20.1.0",
         "jsonpath-ng~=1.5.0",
-        "cryptography>=3.4.7,<39.1.0",
+        "cryptography>=3.4.7,<41.1.0",
         "python-jose~=3.2.0",
         "kopf~=1.33.0",
     ],
